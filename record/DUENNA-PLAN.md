@@ -12,7 +12,7 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~15:02 PST.
+**Last checked against the record:** 2026-11-10, ~15:12 PST.
 
 **THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
 lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
@@ -88,9 +88,28 @@ Gate and authority:
    zip (sha256 934ecd65…) remains an archival artefact — no longer
    the transport; nothing on this track waits on files being
    carried by hand.
-5. ⏳ Independent re-examination of the three repairs.
+5. 🔶 Independent re-examination of the three repairs.
+   **Claude's report IN (2026-11-10, pulled from the shelf himself;
+   CLAUDE-VERIFICATION-REPORT-V010.md, sha256 8686624a…):** R47 PASS
+   (narrow — content examined and recorded; a failing-content case
+   is covered by construction, not by a fixture of its own), **R60
+   FAIL (partial repair)** — the REQ-I-2 trio and its rejections
+   hold, but the preservation check's digest-mismatch branch is
+   never exercised: FX-R60d's invalid case exits through the
+   self-set `corrupt` flag before the digest comparison runs, and
+   removing the comparison (his sabotage S1) leaves all 31 green.
+   FX-R61 tests its own copy, not `_preservation_check`;
+   `pinned=True` remains caller-supplied. Remmy confirmed the
+   mechanism in the source the same day. R65 PASS (caveat: values
+   checked against the test's own constants). All regression
+   conditions confirmed; all 59 manifest entries matched his clone.
+   **Vane's re-examination still outstanding** (forum copies, or
+   the pull letter once he is connected).
 6. ⏳ Adjudication of the re-examination (Alex; Grok's v0.9 adjudication
-   lands on its own track whenever delivered).
+   lands on its own track whenever delivered). A further R60 repair
+   (one fixture: wrong-digest payload, no flag, through run()) is
+   specified by Claude's closing note but is NOT authorised —
+   it waits on this adjudication, like v0.10 waited on v0.9's.
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
 
@@ -400,6 +419,8 @@ implementation revision starts from this track until the plan is agreed.
    next Alex round opens on Ben's word — the Stage 0 scope card is
    outstanding — or on the re-examination reports after the pull
    letter.
-4. **Examiners:** re-examine the v0.10 repairs when the package arrives.
+4. **Examiners:** Claude's re-examination is IN (R47 PASS narrow,
+   R60 FAIL partial, R65 PASS — see Track 1 step 5). Vane's
+   re-examination outstanding.
 
 *End of list. Maintained vigorously — see the rule at the top.*
