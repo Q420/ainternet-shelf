@@ -1,0 +1,466 @@
+"use strict";
+/* Pulse Bridge — content script (v0.4, the letterbox).
+ *
+ * ONE content script; the platform knowledge lives in the adapter
+ * (adapters/chatgpt.js / adapters/claude.js expose window.PB_ADAPTER).
+ *
+ * v0.4 replaces both earlier detectors with Alex's simplified
+ * mechanism: watch the region, find the reserved marker, climb to
+ * the enclosing bubble, verify the bubble is the assistant's, verify
+ * the marker stands alone on a line in the bubble (the v0.12.0
+ * delimiter rule — before v0.12.0 it had to be the first line),
+ * wait for THAT bubble to stop changing, extract the letter the
+ * marker delimits, hold one envelope.
+ * (letterbox.js carries the mechanism; this file only wires it:
+ * registration gating, the seen-ledger sync, envelope building, and
+ * the popup's state query.)
+ *
+ * The v0.3.2 mutation witness and the v0.3.0 turn-capture loop are
+ * retired: their files stay in the repo as evidence but are no
+ * longer loaded (manifest), per Alex's "stop expanding the
+ * diagnostics" ruling and Ben's build order, 2026-11-06.
+ *
+ * Detection produces a HELD envelope and hands it to the background
+ * router, which dedups and records it. STAGE 3 (v0.5.0): this script
+ * also receives pb-deliver for letters addressed to THIS seat's
+ * conversation and performs the send through the adapter — only when
+ * this tab is the registered seat and the bridge is unpaused, both
+ * re-checked at delivery time in the background and here.
+ */
+(function () {
+  const adapter = window.PB_ADAPTER;
+  if (!adapter) return; // no adapter for this host — stay silent
+  if (!window.PB_LETTERBOX) return; // letterbox missing — stay silent
+
+  let enabled = false;
+  let letterbox = null;
+
+  function safeGenerating(ad) {
+    try { return !!ad.isGenerating(); } catch (e) { return false; }
+  }
+
+  async function refreshEnabled() {
+    try {
+      const res = await chrome.runtime.sendMessage({ kind: "pb-get-state" });
+      const state = res && res.state;
+      if (!state) { enabled = false; return null; }
+      /* V8 (0.8.0): the seat is Ben's registration, not this page's
+       * platform. If the background says this tab is registered
+       * under a seat, adopt it BEFORE the letterbox starts (the
+       * letterbox reads adapter.seat live, so the adoption carries
+       * into fingerprints, markers and the envelope's from). With
+       * no registration naming this tab, the adapter's built-in
+       * default stands — tonight's two surfaces behave exactly as
+       * before. */
+      if (res.yourSeat && res.yourSeat !== adapter.seat) {
+        adapter.seat = res.yourSeat;
+      }
+      const reg = state.registrations[adapter.seat];
+      // This tab speaks only if it IS the registered tab for its seat.
+      enabled = !state.paused && !!reg;
+      return state;
+    } catch (e) {
+      enabled = false;
+      return null;
+    }
+  }
+
+  function startLetterbox(state) {
+    if (letterbox) return;
+    letterbox = window.PB_LETTERBOX.pbCreateLetterbox({
+      adapter,
+      seenSeed: (state && state.seen) || [],
+      onHandoff: ({ from, to, body, fingerprint, supersedesFingerprint, capture }) => {
+        if (!enabled) return;
+        const envelope = PB.pbEnvelope({ from, to, body });
+        // Keep the detector's fingerprint so background dedup and
+        // the detector agree on what "the same message" means.
+        envelope.fingerprint = fingerprint;
+        // V6.3: lineage + capture evidence ride the envelope.
+        if (supersedesFingerprint) envelope.supersedesFingerprint = supersedesFingerprint;
+        if (capture) envelope.capture = capture;
+        chrome.runtime.sendMessage({ kind: "pb-detection", envelope }).catch(() => {});
+      },
+      /* V0.12.1: capture drops (speaker verdict, twin, duplicate,
+       * baseline history) are reported to the background, which
+       * puts them on the popup log — a letter the letterbox
+       * decided not to carry leaves a trace Ben can read. */
+      onDrop: ({ reason, firstLine, seat }) => {
+        chrome.runtime.sendMessage({ kind: "pb-capture-drop", reason, firstLine, seat }).catch(() => {});
+      },
+    });
+    try { letterbox.start(); } catch (e) { letterbox = null; }
+  }
+
+  /* The popup asks this tab (via the background) what it sees. */
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg && msg.kind === "pb-state-query") {
+      (async () => {
+        let regTabId = null;
+        try {
+          const res = await chrome.runtime.sendMessage({ kind: "pb-get-state" });
+          const reg = res && res.state && res.state.registrations[adapter.seat];
+          regTabId = reg ? reg.tabId : null;
+        } catch (e) { /* background unreachable — stays null */ }
+        sendResponse({
+          ok: true,
+          seat: adapter.seat,
+          platform: adapter.platform,
+          enabled,
+          registeredTabId: regTabId,
+          messages: adapter.listBubbles ? adapter.listBubbles().length : 0,
+          generating: adapter.isGenerating ? !!safeGenerating(adapter) : false, // V6.1: the adapter's real signal (v0.4 hardcoded false — no detector by design; the deference gate now reads it)
+          regionFound: !!(adapter.regionEl && adapter.regionEl()),
+          turnChars: 0, // v0.4: no region text is read for detection
+        });
+      })();
+      return true; // async response
+    }
+    if (msg && msg.kind === "pb-deliver") {
+      (async () => {
+        const st = await refreshEnabled();
+        if (!enabled) {
+          sendResponse({ ok: false, stage: "gating", error: "bridge paused or this tab is not the registered seat" });
+          return;
+        }
+        if (!adapter.deliverText) {
+          sendResponse({ ok: false, stage: "adapter", error: "adapter has no deliverText" });
+          return;
+        }
+        try {
+          const r = await adapter.deliverText(String(msg.text || ""));
+          // V6.1: forward the confirmation verdict + duplicate
+          // count — the router's retry policy turns on them.
+          // V0.11.0 P2: forward rollover evidence too — the router
+          // records that the letter changed conversations.
+          sendResponse(r && r.ok
+            ? { ok: true, duplicates: (r && r.duplicates) || 0, rollover: (r && r.rollover) || undefined }
+            : { ok: false, stage: (r && r.stage) || "deliver", verdict: (r && r.verdict) || undefined, error: (r && r.error) || "delivery failed" });
+        } catch (e) {
+          sendResponse({ ok: false, stage: "deliver", error: String(e && e.message || e) });
+        }
+      })();
+      return true; // async response
+    }
+    if (msg && msg.kind === "pb-selfcheck") {
+      try {
+        sendResponse({ ok: true, selfcheck: adapter.selfCheck ? adapter.selfCheck() : null });
+      } catch (e) {
+        sendResponse({ ok: false, error: String(e && e.message || e) });
+      }
+    }
+    if (msg && msg.kind === "pb-generation-state") {
+      /* V0.14.0 Mechanism A: the gate asks, this page answers —
+       * the adapter's own button signal, nothing invented. A
+       * surface that cannot report reliably answers "unknown",
+       * and unknown never blocks (spec A3). */
+      let s = "unknown";
+      try {
+        if (adapter.composerButtonState) s = adapter.composerButtonState();
+        else if (adapter.isGenerating) s = adapter.isGenerating() ? "generating" : "ready";
+      } catch (e) { s = "unknown"; }
+      if (s !== "generating" && s !== "ready") s = "unknown";
+      sendResponse({ ok: true, state: s });
+    }
+    if (msg && msg.kind === "pb-wait-state") {
+      /* V0.15.0: the background pushes the seat's whole FACE.
+       * The panel renders it verbatim — every string was
+       * computed backstage from the spec's copy table. */
+      if (msg.face) pbPanelSetFace(msg.face);
+    }
+    return false;
+  });
+
+  /* ===== V0.14.0 Mechanism A (content half): the cleared watch.
+   * The same button the receipt machinery watches, polled once a
+   * second (cheap, adapter-agnostic): when it LEAVES its stop
+   * face, tell the background once — the gate's letters earn
+   * their re-check. An edge detector, not a state repeater. */
+  let pbLastGen = null;
+  setInterval(() => {
+    let s = null;
+    try {
+      if (adapter.composerButtonState) s = adapter.composerButtonState();
+      else if (adapter.isGenerating) s = adapter.isGenerating() ? "generating" : "ready";
+    } catch (e) { s = null; }
+    if (s && pbLastGen === "generating" && s !== "generating") {
+      chrome.runtime.sendMessage({ kind: "pb-generation-cleared" }).catch(() => {});
+    }
+    if (s) pbLastGen = s;
+  }, 1000);
+
+  /* ===== V0.15.0: THE PANEL IS THE INTERFACE (spec 2-3).
+   * Two forms. Collapsed: one live terminal-style line — the
+   * face's word (idle / sending… / waiting / paused / needs
+   * you / not a seat). Expanded: the control face — status
+   * sentence, this tab's seat (assign / disconnect), bridge
+   * pause / resume, live letters with their eligible controls,
+   * and today's Earlier lines. The background computes every
+   * string and every eligibility (pbFaceFor); the panel only
+   * renders and, on Ben's click, issues the spec's commands.
+   * The B6 gate-timeout popup still rides the face: a letter
+   * whose face entry carries popup:true raises it, once. */
+  const PB_PANEL_CSS = `
+  #pb-wait-panel { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000;
+    width: 300px; max-width: 92vw; background: rgba(17,19,26,.96); color: #e8eaf2;
+    border: 1px solid rgba(140,150,255,.45); border-radius: 10px;
+    font: 12px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5); user-select: none; }
+  #pb-wait-panel .pb-head { display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; cursor: move; border-bottom: 1px solid rgba(140,150,255,.25); }
+  #pb-wait-panel .pb-word { font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; color: #9fe8c1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pb-wait-panel .pb-word.pb-severe { color: #ffb3ab; }
+  #pb-wait-panel .pb-title { margin-left: auto; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; color: #9aa3c7; white-space: nowrap; }
+  #pb-wait-panel .pb-toggle { background: none; border: 1px solid rgba(140,150,255,.4);
+    color: #e8eaf2; border-radius: 6px; width: 20px; height: 20px; line-height: 1; cursor: pointer; flex: none; }
+  #pb-wait-panel .pb-body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+  #pb-wait-panel .pb-status { font-size: 12.5px; }
+  #pb-wait-panel .pb-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  #pb-wait-panel .pb-sec { border-top: 1px solid rgba(140,150,255,.18); padding-top: 7px;
+    display: flex; flex-direction: column; gap: 6px; }
+  #pb-wait-panel .pb-sec-title { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #9aa3c7; }
+  #pb-wait-panel .pb-letter { display: flex; flex-direction: column; gap: 4px; }
+  #pb-wait-panel .pb-earlier-line { color: #aab1cc; }
+  #pb-wait-panel button.pb-btn { background: rgba(99,102,241,.18); color: #e8eaf2;
+    border: 1px solid rgba(140,150,255,.5); border-radius: 6px; padding: 3px 9px;
+    font-size: 11.5px; cursor: pointer; }
+  #pb-wait-panel button.pb-btn:hover { background: rgba(99,102,241,.35); }
+  #pb-wait-panel .pb-popup { border: 1px solid #ff8a75; background: rgba(80,26,18,.92);
+    border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  `;
+
+  const pbPanel = {
+    root: null, bodyEl: null, wordEl: null, face: null,
+    identityBad: false, seat: null, collapsed: false,
+    popupShown: new Set(), popupEl: null, x: null, y: null,
+  };
+  const PB_CMD_LABELS = { pause: "Pause", resume: "Resume", retry: "Try again", abandon: "Let it go" };
+  const PB_CMD_KINDS = { pause: "pb-cmd-letter-pause", resume: "pb-cmd-letter-resume", retry: "pb-cmd-letter-retry", abandon: "pb-cmd-letter-abandon" };
+
+  function pbSeatName(seat) { return seat === "alex" ? "Alex" : seat === "remmy" ? "Remmy" : String(seat || ""); }
+
+  function pbPanelSetFace(face) {
+    if (!face || !face.seat) return;
+    if (pbPanel.seat && face.seat !== pbPanel.seat) return; // bound: never render another seat
+    pbPanel.seat = face.seat;
+    pbPanel.face = face;
+    pbPanel.identityBad = false;
+    pbRenderPanel();
+  }
+
+  function pbPanelCommand(msg) {
+    chrome.runtime.sendMessage(msg).then((res) => {
+      if (!res) return;
+      if (res.face) { pbPanelSetFace(res.face); return; }
+      if (res.ok && res.seat) { pbPanel.seat = res.seat; pbPanel.identityBad = false; if (res.face) pbPanelSetFace(res.face); return; }
+      if ((res.ok && res.seat === null) || res.identityUnavailable) {
+        pbPanel.identityBad = true; pbPanel.face = null; pbRenderPanel();
+      }
+    }).catch(() => { /* the face re-pulls on its tick */ });
+  }
+
+  function pbBtn(label, fn) {
+    const b = document.createElement("button");
+    b.className = "pb-btn";
+    b.textContent = label;
+    b.addEventListener("click", (ev) => { ev.stopPropagation(); fn(); });
+    return b;
+  }
+
+  function pbShowGatePopup(letter) {
+    if (!pbPanel.root || pbPanel.popupShown.has(letter.id)) return;
+    pbPanel.popupShown.add(letter.id);
+    const name = pbSeatName(pbPanel.seat);
+    const el = document.createElement("div");
+    el.className = "pb-popup";
+    const t = document.createElement("div");
+    t.textContent = "⏰ This letter was NOT delivered. " + name + " stayed busy past the five-minute limit, so no attempt was made. The letter is stopped — Try again or Let it go below, when you're ready.";
+    const row = document.createElement("div");
+    row.className = "pb-row";
+    const btn = pbBtn("Dismiss", () => {
+      el.remove();
+      if (pbPanel.popupEl === el) pbPanel.popupEl = null;
+    });
+    row.appendChild(btn);
+    el.appendChild(t); el.appendChild(row);
+    pbPanel.bodyEl.prepend(el);
+    pbPanel.popupEl = el;
+    chrome.runtime.sendMessage({ kind: "pb-popup-shown", message_id: letter.id }).catch(() => {});
+  }
+
+  function pbRenderPanel() {
+    if (!pbPanel.root) return;
+    const face = pbPanel.face;
+    pbPanel.wordEl.textContent = pbPanel.identityBad ? "not a seat" : face ? face.word : "…";
+    pbPanel.wordEl.className = "pb-word" + (face && face.word === "needs you" ? " pb-severe" : "");
+    const body = pbPanel.bodyEl;
+    body.innerHTML = "";
+    body.style.display = pbPanel.collapsed ? "none" : "";
+    if (pbPanel.collapsed) return;
+    if (pbPanel.identityBad || !face) {
+      const line = document.createElement("div");
+      line.className = "pb-status";
+      line.textContent = "This tab is not a seat.";
+      body.appendChild(line);
+      const row = document.createElement("div");
+      row.className = "pb-row";
+      row.appendChild(pbBtn("Make this Remmy's seat", () => pbPanelCommand({ kind: "pb-cmd-assign", seat: "remmy" })));
+      row.appendChild(pbBtn("Make this Alex's seat", () => pbPanelCommand({ kind: "pb-cmd-assign", seat: "alex" })));
+      body.appendChild(row);
+      return;
+    }
+    const status = document.createElement("div");
+    status.className = "pb-status";
+    status.textContent = face.sentence;
+    body.appendChild(status);
+    // seat section
+    const seatSec = document.createElement("div");
+    seatSec.className = "pb-sec";
+    const seatRow = document.createElement("div");
+    seatRow.className = "pb-row";
+    const seatLine = document.createElement("span");
+    seatLine.textContent = "This tab is " + pbSeatName(face.seat) + "'s seat.";
+    seatRow.appendChild(seatLine);
+    seatRow.appendChild(pbBtn("Disconnect", () => pbPanelCommand({ kind: "pb-cmd-disconnect" })));
+    seatSec.appendChild(seatRow);
+    const bridgeRow = document.createElement("div");
+    bridgeRow.className = "pb-row";
+    if (face.bridgePaused) {
+      const bl = document.createElement("span"); bl.textContent = "The bridge is paused."; bridgeRow.appendChild(bl);
+      bridgeRow.appendChild(pbBtn("Resume the bridge", () => pbPanelCommand({ kind: "pb-cmd-bridge-resume" })));
+    } else {
+      bridgeRow.appendChild(pbBtn("Pause the bridge", () => pbPanelCommand({ kind: "pb-cmd-bridge-pause" })));
+    }
+    seatSec.appendChild(bridgeRow);
+    body.appendChild(seatSec);
+    // letters
+    for (const letter of face.letters || []) {
+      const sec = document.createElement("div");
+      sec.className = "pb-sec pb-letter";
+      const s = document.createElement("div");
+      s.textContent = letter.sentence;
+      sec.appendChild(s);
+      if (letter.controls && letter.controls.length) {
+        const row = document.createElement("div");
+        row.className = "pb-row";
+        for (const ctl of letter.controls) {
+          row.appendChild(pbBtn(PB_CMD_LABELS[ctl] || ctl, () =>
+            pbPanelCommand({ kind: PB_CMD_KINDS[ctl], message_id: letter.id })));
+        }
+        sec.appendChild(row);
+      }
+      body.appendChild(sec);
+      if (letter.popup) pbShowGatePopup(letter);
+    }
+    // earlier
+    if (face.earlier && face.earlier.length) {
+      const sec = document.createElement("div");
+      sec.className = "pb-sec";
+      const title = document.createElement("div");
+      title.className = "pb-sec-title";
+      title.textContent = "Earlier";
+      sec.appendChild(title);
+      for (const item of face.earlier) {
+        const row = document.createElement("div");
+        row.className = "pb-row";
+        const l = document.createElement("span");
+        l.className = "pb-earlier-line";
+        l.textContent = item.line;
+        row.appendChild(l);
+        for (const ctl of item.controls || []) {
+          row.appendChild(pbBtn(PB_CMD_LABELS[ctl] || ctl, () =>
+            pbPanelCommand({ kind: PB_CMD_KINDS[ctl], message_id: item.id })));
+        }
+        sec.appendChild(row);
+      }
+      body.appendChild(sec);
+    }
+  }
+
+  function pbCreatePanel() {
+    if (pbPanel.root) return;
+    if (typeof document === "undefined") return; // no DOM (fixtures, odd embeddings): no panel, no throw
+    if (!document.body) { setTimeout(pbCreatePanel, 500); return; }
+    if (!document.getElementById("pb-panel-style")) {
+      const st = document.createElement("style");
+      st.id = "pb-panel-style";
+      st.textContent = PB_PANEL_CSS;
+      document.head.appendChild(st);
+    }
+    const root = document.createElement("div");
+    root.id = "pb-wait-panel";
+    const head = document.createElement("div");
+    head.className = "pb-head";
+    const word = document.createElement("span");
+    word.className = "pb-word";
+    word.textContent = "…";
+    const title = document.createElement("span");
+    title.className = "pb-title";
+    title.textContent = "Pulse Bridge";
+    const toggle = document.createElement("button");
+    toggle.className = "pb-toggle";
+    toggle.textContent = "–";
+    toggle.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      pbPanel.collapsed = !pbPanel.collapsed;
+      toggle.textContent = pbPanel.collapsed ? "+" : "–";
+      pbRenderPanel();
+    });
+    head.appendChild(word); head.appendChild(title); head.appendChild(toggle);
+    const body = document.createElement("div");
+    body.className = "pb-body";
+    root.appendChild(head); root.appendChild(body);
+    document.body.appendChild(root);
+    pbPanel.root = root; pbPanel.bodyEl = body; pbPanel.wordEl = word;
+    // Drag by the head (per-instance position only).
+    let drag = null;
+    head.addEventListener("mousedown", (ev) => {
+      if (ev.target === toggle) return;
+      drag = { dx: (ev.clientX || 0) - (pbPanel.x == null ? root.offsetLeft || 0 : pbPanel.x), dy: (ev.clientY || 0) - (pbPanel.y == null ? root.offsetTop || 0 : pbPanel.y) };
+    });
+    document.addEventListener("mousemove", (ev) => {
+      if (!drag) return;
+      const maxX = Math.max(0, (window.innerWidth || 0) - (root.offsetWidth || 0));
+      const maxY = Math.max(0, (window.innerHeight || 0) - (root.offsetHeight || 0));
+      pbPanel.x = Math.min(maxX, Math.max(0, (ev.clientX || 0) - drag.dx));
+      pbPanel.y = Math.min(maxY, Math.max(0, (ev.clientY || 0) - drag.dy));
+      root.style.left = pbPanel.x + "px";
+      root.style.top = pbPanel.y + "px";
+      root.style.right = "auto";
+      root.style.bottom = "auto";
+    });
+    document.addEventListener("mouseup", () => { drag = null; });
+    /* Binding: pulled at creation from THIS tab's registration,
+     * immutable per seat for the instance's life (a face naming
+     * another seat is refused in pbPanelSetFace). Fail closed:
+     * no identity → the assign face, and no records ever. */
+    const pull = () => chrome.runtime.sendMessage({ kind: "pb-panel-state" }).then((res) => {
+      if (res && res.ok && res.face) { pbPanelSetFace(res.face); return; }
+      pbPanel.identityBad = true; pbPanel.face = null; pbRenderPanel();
+    }).catch(() => { pbPanel.identityBad = true; pbRenderPanel(); });
+    pull();
+    /* A slow re-pull keeps the line honest across events the
+     * pushes might miss (registration from the popup, another
+     * tab's commands). It changes nothing by itself. */
+    setInterval(() => { if (pbPanel.root) pull(); }, 10000);
+    pbRenderPanel();
+  }
+
+  refreshEnabled().then((state) => {
+    if (enabled) startLetterbox(state);
+    pbCreatePanel(); // V0.14.0: the panel lives on every seat page
+    // Registration can arrive after load (Ben registers from the
+    // popup): re-check on an interval and start when this tab
+    // becomes the registered seat.
+    setInterval(async () => {
+      const was = enabled;
+      const st = await refreshEnabled();
+      if (enabled && !letterbox) startLetterbox(st);
+      if (!pbPanel.root) pbCreatePanel();
+      if (!enabled && was) { /* paused/unregistered: detector stays
+        loaded but onHandoff is gated by `enabled` */ }
+    }, 4000);
+  });
+})();
