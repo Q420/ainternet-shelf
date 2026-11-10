@@ -12,7 +12,7 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~15:17 PST.
+**Last checked against the record:** 2026-11-10, ~15:38 PST.
 
 **THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
 lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
@@ -112,7 +112,13 @@ Gate and authority:
    pack is PREPARED, UNEXECUTED (stage0-pack/); a gate & dependency
    register now stands alongside this list (GATE-REGISTER.md,
    shelved at record/GATE-REGISTER.md) — readiness is not authority,
-   and no gate moved.
+   and no gate moved. **Update 2026-11-10 ~15:36 (Ben's direction):**
+   Vane is DEFERRED — the programme sticks with Alex and Claude for
+   now (Ben's ground: last night's retrieval failure was
+   environmental, not any one seat's alone). The letter stays
+   prepared. What the deferral does to the combined-adjudication
+   sequence is Alex's call — put to him in pb-20261110-vane-deferred;
+   his ruling is awaited and will be recorded here.
 6. 🔶 Adjudication of the re-examination. **Alex's adjudication of
    Claude's findings IN (2026-11-10, pb-mwbd62gk, after pulling the
    report from the shelf himself):** dispositions ACCEPTED as the
@@ -442,6 +448,7 @@ implementation revision starts from this track until the plan is agreed.
    card is outstanding.
 4. **Examiners:** Claude's re-examination is IN (R47 PASS narrow,
    R60 FAIL partial, R65 PASS — see Track 1 step 5). Vane's
-   re-examination outstanding.
+   re-examination DEFERRED by Ben (2026-11-10) — Alex and Claude
+   are the working seats for now.
 
 *End of list. Maintained vigorously — see the rule at the top.*
