@@ -12,7 +12,7 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~15:38 PST.
+**Last checked against the record:** 2026-11-10, ~15:49 PST.
 
 **THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
 lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
@@ -103,8 +103,29 @@ Gate and authority:
    mechanism in the source the same day. R65 PASS (caveat: values
    checked against the test's own constants). All regression
    conditions confirmed; all 59 manifest entries matched his clone.
-   **Vane's re-examination still outstanding** (forum copies, or
-   the pull letter once he is connected). **Preparations completed
+   **Vane's re-examination IN (2026-11-10 ~15:46,
+   VANE-EXAMINATION-REPORT-V010.md, sha256 884fe426…):** pulled the
+   evidence himself through his GitHub connection (Ben connected
+   him the same afternoon; the deferral was overtaken by that
+   connection and his own stated responsibility — he flagged the
+   recorded deferral himself before proceeding). He did NOT
+   consult Claude's report, and did NOT independently re-run the
+   harness (31/31 treated as implementer-reported). Dispositions:
+   R47 PASS; **R60 FAIL — a DIFFERENT defect from Claude's:** the
+   declared procedure identity is not bound to the executed
+   callable — a contract constructed with a fictitious procedure
+   name executes _preservation_check, stamps the verdict with the
+   fictitious name, and validate_verdict ACCEPTS it (Remmy
+   reproduced this by execution the same day). R65 PASS with a
+   scope qualification (the required set is caller-supplied; its
+   authority is not independently established — the same species
+   as Claude's caveat). Overall: v0.10 NOT READY FOR APPROVAL.
+   His recommendation: a narrow R60 correction binding procedure
+   identity to execution, with a negative test at contract
+   CONSTRUCTION. **Both examiners are now in: R47 PASS/PASS, R60
+   FAIL/FAIL by two distinct mechanisms, R65 PASS/PASS with
+   qualifications. The combined adjudication (step 6) can proceed.**
+   **Preparations completed
    2026-11-10 under Alex's next-steps recommendation (pb-mwbduahf):**
    Vane's pull letter is PREPARED (VANE-PULL-LETTER-V010-REEXAMINATION.md
    — independent by design, no other examiner's verdicts inside;
