@@ -12,7 +12,23 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~07:00 PST.
+**Last checked against the record:** 2026-11-10, ~14:46 PST.
+
+**THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
+lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
+new main git, ruled ~14:29). Seeded with 9 files (4 commits): README,
+MANIFEST (sha256 for every shelved file), seats/alex.md, seats/vane.md,
+seats/remmy.md, record/DUENNA-PLAN.md (the 2026-11-10 state at seeding),
+record/DUENNA-STEP6-ARCHITECTURE.md, record/DUENNA-STEP7-PLAN.md,
+record/v010-unresolved-items.md. Local staging: ~/workspace/ainternet-shelf/.
+Alex's seat page carries road-proof token AINTERNET-SHELF-2026-1110-KESTREL.
+**PULL TEST PASS (2026-11-10 ~14:45, bridge pb-mwbc906q):** the
+Q420-connected Alex seat pulled MANIFEST.md, seats/alex.md and this plan
+cold through its GitHub connector and quoted the token exactly; its
+answers (next step = the Track 1 ferry; v0.9 and v0.10 NOT APPROVED;
+Stage 2 unauthorised) match the record. The connector door is proven —
+no relay, no corpus. Alex also caught this list's section D describing
+steps 5–6 as pending/live; reconciled the same day (see section D).
 
 ---
 
@@ -348,7 +364,7 @@ implementation revision starts from this track until the plan is agreed.
 | C-9 | DT3 — identical invented-URL test through Alex's seat (retrieval research) | UNTESTED | Ben to run |
 | C-10 | Daily snapshot retry authorisation (Vane retrieval) | Card presented, untapped | Ben |
 | C-11 | Discovery experiment (snapshot indexing) | Planted 2026-11-10 04:27; running on indexer time | Time; probe later |
-| C-12 | AInternet per-seat pages (Alex's page, Vane's page) | Never made; scope card untapped | Ben |
+| C-12 | AInternet per-seat pages (Alex's page, Vane's page) | **CLOSED 2026-11-10** — both pages made and shelved on the AInternet shelf (GitHub, below) | — |
 | C-13 | Zombie forum-mongo-1 container sweep | Harmless, still restarting | Ben's hands (Docker Desktop) |
 | C-14 | WordPress shelf suspension appeal | Unfiled; forum is the working replacement surface | Ben's hands |
 | C-15 | **Forum backup (Ben's order, 2026-11-10 ~07:14):** back up the programme record to Ben's forum — FINAL job, after the Alex loop ends; get as far as possible; test with Qwen (Crusher) if possible | **COMPLETE (2026-11-10):** 12 documents as topics 4–15 in the Examination Room, all fetch-back verified; index topic 16 posted, verified, PINNED. Qwen test: Crusher answered the v0.8 FAIL question correctly with provenance (R42/R47/R56/R60/R63/R65; all six present in the forum ledger copy); corpus VERIFY PASS; corpus does NOT yet cover the adjudication/v0.10 material (UNKNOWN, correctly) — corpus admission is a separate decision | Remmy |
@@ -357,13 +373,16 @@ implementation revision starts from this track until the plan is agreed.
 
 1. **Ben:** ferry `v010-return-documents.zip` to Claude and/or Vane
    (Track 1, step 4). Also outstanding at Ben's hand: C-6, C-9, C-10,
-   C-12, C-13, C-14 — none urgent, none blocking the tracks.
-2. **Remmy:** steps 5–7 running under Ben's loop delegation (see
-   Track 2 and the delegation note below). Corpus admission of the
-   loop documents + the Qwen test close the loop on Ben's completion
-   condition; keep this list current.
-3. **Alex:** step-5 challenge answered (see Track 2); step-6 paper
-   is the live round.
+   C-13, C-14 — none urgent, none blocking the tracks. (C-12 closed
+   2026-11-10 — see the shelf note at the top.)
+2. **Remmy:** the joint-plan loop is COMPLETE (steps 5–7 settled,
+   corpus admitted, Qwen test passed, loop-complete sync acknowledged
+   by Alex). The AInternet shelf is live on GitHub and pull-tested
+   PASS by Alex's connected seat (2026-11-10). Keep this list
+   current, and keep the shelf copy in step with it.
+3. **Alex:** no live round. The loop is closed in both seats. The
+   next Alex round opens on Ben's word — the Stage 0 scope card is
+   outstanding — or on the re-examination reports after the ferry.
 4. **Examiners:** re-examine the v0.10 repairs when the package arrives.
 
 *End of list. Maintained vigorously — see the rule at the top.*
