@@ -13,7 +13,7 @@ full corpus sweep was shelved the same day.
 | `seats/alex.md` | 5099957afe09d590efb232a8cffc7dbe406e257f7428cce46f537872fabe6dc3 | Alex's page — roles, seats, rules, state |
 | `seats/vane.md` | 599ad33b2559ad57c4547a0d552572beddc187a6254814c98e07499b1fa1b26a | Vane's page — examiner role and record |
 | `seats/remmy.md` | 9c149a2c8feb4812bcb202e1831e0be1b853987462b97a00654de768d2add893 | Remmy's page — standing processes |
-| `record/DUENNA-PLAN.md` | 2ee265f029d3fd4b7dd85408f10cdd7e0bd32a17e84dda730ab63d860dd3e022 | THE plan list — the programme's authoritative state |
+| `record/DUENNA-PLAN.md` | d617355f56da0fdc29220de2d3272fb4ba5ff13bfe217ee52ce82114d959150a | THE plan list — the programme's authoritative state |
 | `record/DUENNA-STEP6-ARCHITECTURE.md` | 69664387ed302c54d2b77baa0ba235c3cc79d04595d50b5279ecafcf1556637d | The agreed four-component architecture (step 6, agreed text) |
 | `record/DUENNA-STEP7-PLAN.md` | 929b2378a40dc45fa1f58c5014d60cc1aa014acfb6c70870d9bf823b2ae06a64 | The joint implementation plan (step 7, agreed text with amendments) |
 | `record/v010-unresolved-items.md` | b9e8e457c4858def403f8a9321bf5e16ef537015eb102c76ec3659776efecb33 | What v0.10 deliberately does not claim — gaps, statuses, the open gate |
@@ -38,6 +38,7 @@ full corpus sweep was shelved the same day.
 | `duenna/D3-V010-TRACEABILITY.md` | 931da270f422308faa3ac74f1cc72b515a6dab4affda91b2575e1ee307ef1333 | v0.10 traceability |
 | `duenna/CLAUDE-VERIFICATION-REPORT.md` | 18de602d1101d6e9e03eabf105981c2c3da1ec166a080593f1bd96bb4df20a11 | Claude's verification report on v0.8 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V09.md` | 1b760ac00efea716dd32a96755eaa6150580f04abc6bbe0388a743fbda00ca45 | Claude's verification report on v0.9 |
+| `duenna/CLAUDE-VERIFICATION-REPORT-V010.md` | 8686624ae4dabbcff71f4886a2077dedc68c8ed20cb38d38ff3181087c23ec08 | Claude's re-examination report on v0.10 (R47 PASS narrow, R60 FAIL partial, R65 PASS) |
 | `duenna/VANE-EXAMINATION-REPORT-V09.md` | 643923ec8f0433ab67b71d484bb5aeaca17240d986eaa3001e1672f48fa09b2a | Vane's examination report on v0.9 |
 | `duenna/V09-EXAMINATION-FINDINGS-LEDGER.md` | cf116ba28d822c15d70c82ad7e02be8fccde932d749c4c5a2bae02dd5ad20af3 | The consolidated v0.9 findings ledger |
 | `duenna/V09-VERIFICATION-EXAM-PACK-R4.md` | db429e3a1f85ac4a388cfccf726a62d21b96e62637f6d6efaeba9c836ed30434 | The v0.9 verification exam pack, edition R4 (current) |
