@@ -12,7 +12,7 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~14:46 PST.
+**Last checked against the record:** 2026-11-10, ~15:02 PST.
 
 **THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
 lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
@@ -76,8 +76,18 @@ Gate and authority:
 3. ✅ Return package built: `v010-return-documents.zip` (sha256
    934ecd65…, 12 files incl. change record, traceability,
    unresolved-items list, sabotage evidence).
-4. **→ NEXT: Ben ferries the package to the examiners (Claude and/or
-   Vane).** Nothing moves on this track until it is ferried.
+4. **→ NEXT: the pull letter.** **THE FERRY IS RETIRED (Ben's
+   ruling, 2026-11-10 15:01):** step 4 is now a pull letter from
+   Remmy to the examiners naming the shelf paths of the v0.10
+   return set (the spec, change record, traceability, fixture
+   results + register, results, harness, unresolved items — under
+   `duenna/` and `record/` on github.com/Q420/ainternet-shelf).
+   Claude pulls through his Q420 connection; Vane examines from
+   the forum copies (topics 8–15) until Ben connects him (Ben,
+   2026-11-10: next time around), then the same pull letter. The
+   zip (sha256 934ecd65…) remains an archival artefact — no longer
+   the transport; nothing on this track waits on files being
+   carried by hand.
 5. ⏳ Independent re-examination of the three repairs.
 6. ⏳ Adjudication of the re-examination (Alex; Grok's v0.9 adjudication
    lands on its own track whenever delivered).
@@ -335,12 +345,17 @@ implementation revision starts from this track until the plan is agreed.
   six tested questions, NOT a broader reliability claim. No
   further action from that seat; no implementation authority
   implied. The loop is closed in both seats.
-5. ⏳ Step 5 — challenge proposed removals against the core testable
-   functions (separate guarantees vs separate mechanisms).
-6. ⏳ Step 6 — agree the smallest viable architecture.
-7. ⏳ Step 7 — ONE structured implementation plan: dependencies,
-   stages, acceptance criteria. Jointly agreed; normative changes and
-   OWNER-RULED text only through the programme's gates and Ben.
+5. ✅ Step 5 — challenge proposed removals against the core testable
+   functions (separate guarantees vs separate mechanisms). SETTLED
+   2026-11-10 (Pair 4 corrected by Alex; Pair 6 closed as not
+   consolidated under the loop delegation).
+6. ✅ Step 6 — agree the smallest viable architecture. SETTLED
+   2026-11-10 (four components; F5 governs across them).
+7. ✅ Step 7 — ONE structured implementation plan: dependencies,
+   stages, acceptance criteria. AGREED 2026-11-10 with Alex's three
+   amendments; normative changes and OWNER-RULED text only through
+   the programme's gates and Ben. (Checklist markers reconciled
+   2026-11-10 after Alex's starting-point pull caught them stale.)
 
 ### Track 3 — Simplification (input, not a track of its own)
 
@@ -367,14 +382,15 @@ implementation revision starts from this track until the plan is agreed.
 | C-12 | AInternet per-seat pages (Alex's page, Vane's page) | **CLOSED 2026-11-10** — both pages made and shelved on the AInternet shelf (GitHub, below) | — |
 | C-13 | Zombie forum-mongo-1 container sweep | Harmless, still restarting | Ben's hands (Docker Desktop) |
 | C-14 | WordPress shelf suspension appeal | Unfiled; forum is the working replacement surface | Ben's hands |
-| C-15 | **Forum backup (Ben's order, 2026-11-10 ~07:14):** back up the programme record to Ben's forum — FINAL job, after the Alex loop ends; get as far as possible; test with Qwen (Crusher) if possible | **COMPLETE (2026-11-10):** 12 documents as topics 4–15 in the Examination Room, all fetch-back verified; index topic 16 posted, verified, PINNED. Qwen test: Crusher answered the v0.8 FAIL question correctly with provenance (R42/R47/R56/R60/R63/R65; all six present in the forum ledger copy); corpus VERIFY PASS; corpus does NOT yet cover the adjudication/v0.10 material (UNKNOWN, correctly) — corpus admission is a separate decision | Remmy |
+| C-15 | **Forum backup (Ben's order, 2026-11-10 ~07:14):** back up the programme record to Ben's forum — FINAL job, after the Alex loop ends; get as far as possible; test with Qwen (Crusher) if possible | **COMPLETE (2026-11-10):** 12 documents as topics 4–15 in the Examination Room, all fetch-back verified; index topic 16 posted, verified, PINNED. Qwen test: Crusher answered the v0.8 FAIL question correctly with provenance (R42/R47/R56/R60/R63/R65; all six present in the forum ledger copy); corpus VERIFY PASS; corpus state UPDATED later on 2026-11-10: ten loop documents were admitted under Ben's Qwen-test instruction (incl. the v0.10 change record, the unresolved-items list and the findings ledger) and verification passed; the v0.10 specification text and the adjudication papers themselves are NOT in the corpus | Remmy |
 
 ## D. Next actions — exactly where we proceed from
 
-1. **Ben:** ferry `v010-return-documents.zip` to Claude and/or Vane
-   (Track 1, step 4). Also outstanding at Ben's hand: C-6, C-9, C-10,
-   C-13, C-14 — none urgent, none blocking the tracks. (C-12 closed
-   2026-11-10 — see the shelf note at the top.)
+1. **Ben:** hand Claude the Track 1 pull letter in his window when
+   Remmy has it ready (the trigger in a seat is Ben's hand; the
+   ferry is retired — see Track 1). Also outstanding at Ben's hand:
+   C-6, C-9, C-10, C-13, C-14 — none urgent, none blocking the
+   tracks. (C-12 closed 2026-11-10 — see the shelf note at the top.)
 2. **Remmy:** the joint-plan loop is COMPLETE (steps 5–7 settled,
    corpus admitted, Qwen test passed, loop-complete sync acknowledged
    by Alex). The AInternet shelf is live on GitHub and pull-tested
@@ -382,7 +398,8 @@ implementation revision starts from this track until the plan is agreed.
    current, and keep the shelf copy in step with it.
 3. **Alex:** no live round. The loop is closed in both seats. The
    next Alex round opens on Ben's word — the Stage 0 scope card is
-   outstanding — or on the re-examination reports after the ferry.
+   outstanding — or on the re-examination reports after the pull
+   letter.
 4. **Examiners:** re-examine the v0.10 repairs when the package arrives.
 
 *End of list. Maintained vigorously — see the rule at the top.*
