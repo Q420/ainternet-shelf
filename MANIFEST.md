@@ -11,7 +11,7 @@ record, quote it from these files. Shelf state at opening:
 | `seats/alex.md` | 5099957afe09d590efb232a8cffc7dbe406e257f7428cce46f537872fabe6dc3 | Alex's page — roles, seats, rules, state |
 | `seats/vane.md` | 599ad33b2559ad57c4547a0d552572beddc187a6254814c98e07499b1fa1b26a | Vane's page — examiner role and record |
 | `seats/remmy.md` | 9c149a2c8feb4812bcb202e1831e0be1b853987462b97a00654de768d2add893 | Remmy's page — standing processes |
-| `record/DUENNA-PLAN.md` | d1990357a389f4a3efccfbdd8bd371e4fa8cdb6854f3b9b261f30e7c7bd46f9f | THE plan list — the programme's authoritative state |
+| `record/DUENNA-PLAN.md` | 2f556d3d4f6c710133304f31adfe183ae303e969842e0ec447f42e1e0e42e49e | THE plan list — the programme's authoritative state |
 | `record/DUENNA-STEP6-ARCHITECTURE.md` | 69664387ed302c54d2b77baa0ba235c3cc79d04595d50b5279ecafcf1556637d | The agreed four-component architecture (step 6, agreed text) |
 | `record/DUENNA-STEP7-PLAN.md` | 929b2378a40dc45fa1f58c5014d60cc1aa014acfb6c70870d9bf823b2ae06a64 | The joint implementation plan (step 7, agreed text with amendments) |
 | `record/v010-unresolved-items.md` | b9e8e457c4858def403f8a9321bf5e16ef537015eb102c76ec3659776efecb33 | What v0.10 deliberately does not claim — gaps, statuses, the open gate |
