@@ -132,9 +132,16 @@ Gate and authority:
    branch; removing the comparison must make it fail. Nothing else
    — no trio redesign, no R47/R65 changes, no unrelated hardening.
    **But the revision step is NOT OPENED:** Claude's report is the
-   first examination, not the complete one. Vane examines the same
-   three repairs independently; then Alex adjudicates the COMBINED
-   examination and decides on the R60 step. (Grok's v0.9
+   first examination, not the complete one. **Alex's ruling on the
+   Vane deferral (2026-11-10, pb-mwbe3szw):** the FULL adjudication
+   remains gated on Vane — Ben deferred him; he did not waive the
+   two-examiner safeguard, and no waiver is inferred. An INTERIM
+   adjudication proceeds now: Claude's report formally assessed as
+   a single-examiner evidence review, its limit stated on its face
+   (the pb-mwbd62gk dispositions stand as that assessment). The
+   interim review does NOT open the R60 revision — Alex decides
+   that after the full adjudication, unless Ben explicitly changes
+   the authority or the examination requirement. (Grok's v0.9
    adjudication lands on its own track whenever delivered.)
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
