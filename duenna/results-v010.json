@@ -1,0 +1,527 @@
+{
+ "harness": "fixtures-v010/harness.py v2.1",
+ "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+ "command": "python3 harness.py",
+ "results": [
+  {
+   "fixture": "FX-R62",
+   "finding": "R62",
+   "requirement": "REQ-K-1 outcome (i)",
+   "expected": [
+    "NO DEFECT FOUND",
+    "absence-of-demonstrated-defect"
+   ],
+   "observed": [
+    "NO DEFECT FOUND",
+    "absence-of-demonstrated-defect"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R40a",
+   "finding": "R40",
+   "requirement": "REQ-A-2/A-1 unconditional creation at binding",
+   "expected": true,
+   "observed": true,
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R40b",
+   "finding": "R40",
+   "requirement": "REQ-A-1 conditional creation; kind preserved; separate CREATION entry",
+   "expected": true,
+   "observed": true,
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R40c",
+   "finding": "R40",
+   "requirement": "REQ-A-1 creation-entry validation: harness-authored accepted; bearer-authored and third-party-authored rejected",
+   "expected": [
+    "accepted",
+    "rejected: bearer-authored",
+    "rejected: author is not the harness"
+   ],
+   "observed": [
+    "accepted",
+    "rejected: bearer-authored",
+    "rejected: author is not the harness"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R40d",
+   "finding": "R40",
+   "requirement": "REQ-A-2 unresolvable role fails loudly and totally",
+   "expected": [
+    null,
+    "loud total failure"
+   ],
+   "observed": [
+    null,
+    "loud total failure"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R40e",
+   "finding": "R40",
+   "requirement": "REQ-A-3 classification procedure over bearer-present and bearer-missing instances",
+   "expected": [
+    "assigned: researcher",
+    "machinery defect"
+   ],
+   "observed": [
+    "assigned: researcher",
+    "machinery defect"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R47a",
+   "finding": "R47",
+   "requirement": "REQ-B-6 named-judge validation: named+basis-cited accepted; missing, mismatched and unnamed rejected",
+   "expected": [
+    "accepted",
+    "rejected: no judge identity",
+    "rejected: basis does not cite the judge",
+    "rejected: judge not named by the authority"
+   ],
+   "observed": [
+    "accepted",
+    "rejected: no judge identity",
+    "rejected: basis does not cite the judge",
+    "rejected: judge not named by the authority"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R47b",
+   "finding": "R47",
+   "requirement": "REQ-C-1 conditional trigger: qualifying content is examined by the fold and establishes nothing; removing the content empties the examination record and changes no outcome; admitted determinations with the same predicates satisfy",
+   "expected": [
+    [
+     "NOT_STARTED",
+     [],
+     [
+      "PROGRESS",
+      "SATISFACTION"
+     ]
+    ],
+    [
+     "NOT_STARTED",
+     []
+    ],
+    "SATISFIED"
+   ],
+   "observed": [
+    [
+     "NOT_STARTED",
+     [],
+     [
+      "PROGRESS",
+      "SATISFACTION"
+     ]
+    ],
+    [
+     "NOT_STARTED",
+     []
+    ],
+    "SATISFIED"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R47c",
+   "finding": "R47",
+   "requirement": "REQ-C-2 unpreservable artefact: fold resolves INDETERMINATE",
+   "expected": "INDETERMINATE",
+   "observed": "INDETERMINATE",
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R63a",
+   "finding": "R63",
+   "requirement": "REQ-K-3 creation block validated on a machinery-produced stream; interleaved block rejected",
+   "expected": [
+    "accepted",
+    "rejected: block not contiguous after the trigger"
+   ],
+   "observed": [
+    "accepted",
+    "rejected: block not contiguous after the trigger"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R63c",
+   "finding": "R63",
+   "requirement": "REQ-K-3 every entry: stable identity, record position, instance identity or declared instance-free; tampered position and missing identity rejected",
+   "expected": [
+    "accepted",
+    "rejected: entry CE-R-B record position mismatch",
+    "rejected: entry at position 1 has no stable identity"
+   ],
+   "observed": [
+    "accepted",
+    "rejected: entry CE-R-B record position mismatch",
+    "rejected: entry at position 1 has no stable identity"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R63b",
+   "finding": "R63",
+   "requirement": "REQ-K-3 entry validator: declared instance-free non-CREATION accepted; undeclared and CREATION-instance-free rejected; valid entry carrying no predicate roles accepted",
+   "expected": [
+    "accepted: instance-free (declared)",
+    "rejected: no instance and no instance-free declaration",
+    "rejected: CREATION entry must identify its instance",
+    "accepted"
+   ],
+   "observed": [
+    "accepted: instance-free (declared)",
+    "rejected: no instance and no instance-free declaration",
+    "rejected: CREATION entry must identify its instance",
+    "accepted"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R44",
+   "finding": "R44",
+   "requirement": "REQ-B-2 reverse mix: artefact progress + event satisfaction",
+   "expected": [
+    "SATISFIED",
+    2
+   ],
+   "observed": [
+    "SATISFIED",
+    2
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R52",
+   "finding": "R52",
+   "requirement": "REQ-D-3 artefact satisfaction locks before blocker; closure discharged-as-SATISFIED",
+   "expected": [
+    "SATISFIED",
+    "discharged-as-SATISFIED"
+   ],
+   "observed": [
+    "SATISFIED",
+    "discharged-as-SATISFIED"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R49a",
+   "finding": "R49",
+   "requirement": "D3-CANON-1 composition-distinct strings/keys are distinct",
+   "expected": true,
+   "observed": true,
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R49b",
+   "finding": "R49",
+   "requirement": "D3-CANON-1 duplicate exact keys rejected at parse, recursively",
+   "expected": [
+    "rejected-loud",
+    "rejected-loud"
+   ],
+   "observed": [
+    "rejected-loud",
+    "rejected-loud"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R49c",
+   "finding": "R49",
+   "requirement": "D3-CANON-1 member order + whitespace variants share one digest",
+   "expected": true,
+   "observed": true,
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R49d",
+   "finding": "R49",
+   "requirement": "D3-CANON-1 canonical numbers vs RFC 8785 example values; non-finite rejected",
+   "expected": [
+    [
+     "0",
+     "0",
+     "4.5",
+     "0.002",
+     "1e+30",
+     "333333333.3333333",
+     "1e+21",
+     "0.000001",
+     "1e-7",
+     "123456789012345680000",
+     "0.1",
+     "-2.5"
+    ],
+    "rejected"
+   ],
+   "observed": [
+    [
+     "0",
+     "0",
+     "4.5",
+     "0.002",
+     "1e+30",
+     "333333333.3333333",
+     "1e+21",
+     "0.000001",
+     "1e-7",
+     "123456789012345680000",
+     "0.1",
+     "-2.5"
+    ],
+    "rejected"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R54a",
+   "finding": "R54",
+   "requirement": "REQ-E-3 one response, two event-specific requirements, no multi-use permission",
+   "expected": [
+    "unresolved",
+    []
+   ],
+   "observed": [
+    "unresolved",
+    []
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R54b",
+   "finding": "R54",
+   "requirement": "REQ-E-3 multi-use expressly permitted by the rule",
+   "expected": [
+    "satisfied",
+    [
+     "Q1",
+     "Q2"
+    ]
+   ],
+   "observed": [
+    "satisfied",
+    [
+     "Q1",
+     "Q2"
+    ]
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R56a",
+   "finding": "R56",
+   "requirement": "REQ-E-6 full three-way separation holds; each role's verdict independently necessary",
+   "expected": [
+    "PASS",
+    "FAIL: missing evaluator verdict (independently necessary)",
+    "FAIL: missing examiner verdict (independently necessary)",
+    "FAIL: missing gate verdict (independently necessary)"
+   ],
+   "observed": [
+    "PASS",
+    "FAIL: missing evaluator verdict (independently necessary)",
+    "FAIL: missing examiner verdict (independently necessary)",
+    "FAIL: missing gate verdict (independently necessary)"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R56b",
+   "finding": "R56",
+   "requirement": "REQ-E-6 prohibited substitutions rejected: evaluator->examiner, examiner->gate, evaluator->gate, and self-verification",
+   "expected": [
+    "FAIL: examiner slot holds a evaluator verdict (substitution)",
+    "FAIL: gate slot holds a examiner verdict (substitution)",
+    "FAIL: gate slot holds a evaluator verdict (substitution)",
+    "FAIL: one hand holds two roles (self-verification / substitution)"
+   ],
+   "observed": [
+    "FAIL: examiner slot holds a evaluator verdict (substitution)",
+    "FAIL: gate slot holds a examiner verdict (substitution)",
+    "FAIL: gate slot holds a evaluator verdict (substitution)",
+    "FAIL: one hand holds two roles (self-verification / substitution)"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R57",
+   "finding": "R57",
+   "requirement": "REQ-G-2 accurate BLOCKED report: honesty credit AND task incomplete, independently",
+   "expected": [
+    true,
+    false
+   ],
+   "observed": [
+    true,
+    false
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R64",
+   "finding": "R64",
+   "requirement": "REQ-K-4 report validation: compliant report passes; omitted caveat, unrecorded reliance and overstated evidence class fail",
+   "expected": [
+    "PASS",
+    "FAIL: independence caveat missing or incomplete",
+    "FAIL: checker reliance unrecorded",
+    "FAIL: checker verdict not carried as REPORTED"
+   ],
+   "observed": [
+    "PASS",
+    "FAIL: independence caveat missing or incomplete",
+    "FAIL: checker reliance unrecorded",
+    "FAIL: checker verdict not carried as REPORTED"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R65",
+   "finding": "R65",
+   "requirement": "REQ-K-4 all five provenance relationships: intact report passes; a mismatch or a deletion of any one of evaluation_record, content_identity, procedure, defect_link, verdict_trio fails; empty references, an unexpected reference, and a components_present that disagrees with the required set all fail",
+   "expected": [
+    "PASS",
+    "FAIL: evaluation_record reference mismatch",
+    "FAIL: content_identity reference mismatch",
+    "FAIL: procedure reference mismatch",
+    "FAIL: defect_link reference mismatch",
+    "FAIL: verdict_trio reference mismatch",
+    "FAIL: missing reference: evaluation_record",
+    "FAIL: missing reference: content_identity",
+    "FAIL: missing reference: procedure",
+    "FAIL: missing reference: defect_link",
+    "FAIL: missing reference: verdict_trio",
+    "FAIL: missing reference: content_identity",
+    "FAIL: unexpected reference: surprise_extra",
+    "FAIL: components_present does not match the required relationships"
+   ],
+   "observed": [
+    "PASS",
+    "FAIL: evaluation_record reference mismatch",
+    "FAIL: content_identity reference mismatch",
+    "FAIL: procedure reference mismatch",
+    "FAIL: defect_link reference mismatch",
+    "FAIL: verdict_trio reference mismatch",
+    "FAIL: missing reference: evaluation_record",
+    "FAIL: missing reference: content_identity",
+    "FAIL: missing reference: procedure",
+    "FAIL: missing reference: defect_link",
+    "FAIL: missing reference: verdict_trio",
+    "FAIL: missing reference: content_identity",
+    "FAIL: unexpected reference: surprise_extra",
+    "FAIL: components_present does not match the required relationships"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60a",
+   "finding": "R60",
+   "requirement": "REQ-I-2 defined input artefact: defined input accepted; a different artefact refused",
+   "expected": [
+    "verdict",
+    "REJECTED: artefact is not the defined input (ART-INPUT-1)"
+   ],
+   "observed": [
+    "verdict",
+    "REJECTED: artefact is not the defined input (ART-INPUT-1)"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60b",
+   "finding": "R60",
+   "requirement": "REQ-I-2 validation procedure and reproducibility trio: genuine verdict accepted; forged procedure, missing/altered implementation hash, missing input identity and missing version all rejected",
+   "expected": [
+    "ACCEPTED",
+    "REJECTED: procedure mismatch",
+    "REJECTED: missing implementation hash",
+    "REJECTED: implementation hash mismatch",
+    "REJECTED: missing input identity",
+    "REJECTED: missing version"
+   ],
+   "observed": [
+    "ACCEPTED",
+    "REJECTED: procedure mismatch",
+    "REJECTED: missing implementation hash",
+    "REJECTED: implementation hash mismatch",
+    "REJECTED: missing input identity",
+    "REJECTED: missing version"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60c",
+   "finding": "R60",
+   "requirement": "REQ-I-2 reproducible result: repeated runs produce identical verdicts",
+   "expected": true,
+   "observed": true,
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60d",
+   "finding": "R60",
+   "requirement": "REQ-I-2 failure paths: missing artefact and invalid artefact both take the failure path, never a verdict",
+   "expected": [
+    "FAILURE-PATH: missing input artefact",
+    "FAILURE-PATH: invalid artefact"
+   ],
+   "observed": [
+    "FAILURE-PATH: missing input artefact",
+    "FAILURE-PATH: invalid artefact"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60e",
+   "finding": "R60",
+   "requirement": "REQ-I-2 pinned/recorded version: verdict records the pinned version; unpinned checker rejected",
+   "expected": [
+    "checker-v1.3",
+    "REJECTED: unpinned version"
+   ],
+   "observed": [
+    "checker-v1.3",
+    "REJECTED: unpinned version"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R61",
+   "finding": "R61",
+   "requirement": "REQ-I-3 deleted and corrupted payloads: INDETERMINATE / RECORD-PRESERVATION, never a pass, never AGENT attribution",
+   "expected": [
+    [
+     "INDETERMINATE / RECORD-PRESERVATION",
+     null
+    ],
+    [
+     "INDETERMINATE / RECORD-PRESERVATION",
+     null
+    ]
+   ],
+   "observed": [
+    [
+     "INDETERMINATE / RECORD-PRESERVATION",
+     null
+    ],
+    [
+     "INDETERMINATE / RECORD-PRESERVATION",
+     null
+    ]
+   ],
+   "verdict": "PASS"
+  }
+ ]
+}
