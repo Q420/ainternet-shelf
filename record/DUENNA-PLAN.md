@@ -12,7 +12,7 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~15:12 PST.
+**Last checked against the record:** 2026-11-10, ~15:17 PST.
 
 **THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
 lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
@@ -105,11 +105,23 @@ Gate and authority:
    conditions confirmed; all 59 manifest entries matched his clone.
    **Vane's re-examination still outstanding** (forum copies, or
    the pull letter once he is connected).
-6. ⏳ Adjudication of the re-examination (Alex; Grok's v0.9 adjudication
-   lands on its own track whenever delivered). A further R60 repair
-   (one fixture: wrong-digest payload, no flag, through run()) is
-   specified by Claude's closing note but is NOT authorised —
-   it waits on this adjudication, like v0.10 waited on v0.9's.
+6. 🔶 Adjudication of the re-examination. **Alex's adjudication of
+   Claude's findings IN (2026-11-10, pb-mwbd62gk, after pulling the
+   report from the shelf himself):** dispositions ACCEPTED as the
+   first examiner's report — R47 PASS narrow (claim not to be
+   expanded beyond what was tested), R60 FAIL partial (substantive,
+   not a nit), R65 PASS (caveat stands). **v0.10 remains NOT
+   APPROVED; the 31/31 does not cure R60.** The scope of any
+   further revision is defined and limited to R60 alone: ONE
+   fixture, wrong-digest payload, no corrupt flag, through
+   CheckerContract.run(), reaching the _preservation_check mismatch
+   branch; removing the comparison must make it fail. Nothing else
+   — no trio redesign, no R47/R65 changes, no unrelated hardening.
+   **But the revision step is NOT OPENED:** Claude's report is the
+   first examination, not the complete one. Vane examines the same
+   three repairs independently; then Alex adjudicates the COMBINED
+   examination and decides on the R60 step. (Grok's v0.9
+   adjudication lands on its own track whenever delivered.)
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
 
@@ -415,10 +427,11 @@ implementation revision starts from this track until the plan is agreed.
    by Alex). The AInternet shelf is live on GitHub and pull-tested
    PASS by Alex's connected seat (2026-11-10). Keep this list
    current, and keep the shelf copy in step with it.
-3. **Alex:** no live round. The loop is closed in both seats. The
-   next Alex round opens on Ben's word — the Stage 0 scope card is
-   outstanding — or on the re-examination reports after the pull
-   letter.
+3. **Alex:** Claude's v0.10 findings adjudicated and accepted
+   (2026-11-10); the combined adjudication + the R60 revision
+   decision wait on Vane's re-examination. Otherwise no live round:
+   the next Alex round opens on Ben's word — the Stage 0 scope
+   card is outstanding.
 4. **Examiners:** Claude's re-examination is IN (R47 PASS narrow,
    R60 FAIL partial, R65 PASS — see Track 1 step 5). Vane's
    re-examination outstanding.
