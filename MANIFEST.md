@@ -13,11 +13,11 @@ full corpus sweep was shelved the same day.
 | `seats/alex.md` | 5099957afe09d590efb232a8cffc7dbe406e257f7428cce46f537872fabe6dc3 | Alex's page — roles, seats, rules, state |
 | `seats/vane.md` | 599ad33b2559ad57c4547a0d552572beddc187a6254814c98e07499b1fa1b26a | Vane's page — examiner role and record |
 | `seats/remmy.md` | 9c149a2c8feb4812bcb202e1831e0be1b853987462b97a00654de768d2add893 | Remmy's page — standing processes |
-| `record/DUENNA-PLAN.md` | fbed8664ce507191d9b381715b0243e756000a9b722bffeee66387eb05f7d8a1 | THE plan list — the programme's authoritative state |
+| `record/DUENNA-PLAN.md` | abd02137a4519f9443b712d7a17de3f0f2a7328be40753bf581b2d0ee28d4236 | THE plan list — the programme's authoritative state |
 | `record/DUENNA-STEP6-ARCHITECTURE.md` | 69664387ed302c54d2b77baa0ba235c3cc79d04595d50b5279ecafcf1556637d | The agreed four-component architecture (step 6, agreed text) |
 | `record/DUENNA-STEP7-PLAN.md` | 929b2378a40dc45fa1f58c5014d60cc1aa014acfb6c70870d9bf823b2ae06a64 | The joint implementation plan (step 7, agreed text with amendments) |
 | `record/v010-unresolved-items.md` | b9e8e457c4858def403f8a9321bf5e16ef537015eb102c76ec3659776efecb33 | What v0.10 deliberately does not claim — gaps, statuses, the open gate |
-| `record/GATE-REGISTER.md` | 3de55378df348968a44e9b47056eececcc594cfa8bda17a1155f50039164c898 | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
+| `record/GATE-REGISTER.md` | 239398946d72331b26da5334db7c6d35a55a185f49aca72d76dbebcd518b24dd | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
 
 ## duenna/ — the specification corpus
 
@@ -40,6 +40,7 @@ full corpus sweep was shelved the same day.
 | `duenna/CLAUDE-VERIFICATION-REPORT.md` | 18de602d1101d6e9e03eabf105981c2c3da1ec166a080593f1bd96bb4df20a11 | Claude's verification report on v0.8 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V09.md` | 1b760ac00efea716dd32a96755eaa6150580f04abc6bbe0388a743fbda00ca45 | Claude's verification report on v0.9 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V010.md` | 8686624ae4dabbcff71f4886a2077dedc68c8ed20cb38d38ff3181087c23ec08 | Claude's re-examination report on v0.10 (R47 PASS narrow, R60 FAIL partial, R65 PASS) |
+| `duenna/VANE-EXAMINATION-REPORT-V010.md` | 884fe426c32cd1f7641f2a965d3e39053ec626a5d7829eaae367883a2772b0a3 | Vane's independent examination of v0.10 (R47 PASS, R60 FAIL — unbound procedure identity, R65 PASS qualified) |
 | `duenna/VANE-EXAMINATION-REPORT-V09.md` | 643923ec8f0433ab67b71d484bb5aeaca17240d986eaa3001e1672f48fa09b2a | Vane's examination report on v0.9 |
 | `duenna/V09-EXAMINATION-FINDINGS-LEDGER.md` | cf116ba28d822c15d70c82ad7e02be8fccde932d749c4c5a2bae02dd5ad20af3 | The consolidated v0.9 findings ledger |
 | `duenna/V09-VERIFICATION-EXAM-PACK-R4.md` | db429e3a1f85ac4a388cfccf726a62d21b96e62637f6d6efaeba9c836ed30434 | The v0.9 verification exam pack, edition R4 (current) |
