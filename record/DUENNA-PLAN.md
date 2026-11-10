@@ -104,7 +104,15 @@ Gate and authority:
    checked against the test's own constants). All regression
    conditions confirmed; all 59 manifest entries matched his clone.
    **Vane's re-examination still outstanding** (forum copies, or
-   the pull letter once he is connected).
+   the pull letter once he is connected). **Preparations completed
+   2026-11-10 under Alex's next-steps recommendation (pb-mwbduahf):**
+   Vane's pull letter is PREPARED (VANE-PULL-LETTER-V010-REEXAMINATION.md
+   — independent by design, no other examiner's verdicts inside;
+   dispatch waits on his connection); the Stage 0 baseline evidence
+   pack is PREPARED, UNEXECUTED (stage0-pack/); a gate & dependency
+   register now stands alongside this list (GATE-REGISTER.md,
+   shelved at record/GATE-REGISTER.md) — readiness is not authority,
+   and no gate moved.
 6. 🔶 Adjudication of the re-examination. **Alex's adjudication of
    Claude's findings IN (2026-11-10, pb-mwbd62gk, after pulling the
    report from the shelf himself):** dispositions ACCEPTED as the
