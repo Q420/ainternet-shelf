@@ -706,3 +706,63 @@ No implementation, retention policy, authority policy, readiness policy, or Phas
 
 
 *End of Phase 4 technical specification. Retention, authority and readiness consequences remain Ben's reserved decisions.*
+
+## 14. Phase 4 named-instance reconciliation (2026-11-11)
+
+This section answers the reconciliation item in
+`duenna/PHASE-4-RECONCILIATION-PACK-01.md`,
+commit `baca437`, blob
+`1772f656c28ca8b6671d50c95edbb804f3c78726`.
+The source basis is Remmy's direct inspection in
+`duenna/PHASE-4-SOURCE-PACK-01.md`, commit
+`4fdda24`, blob
+`9f271da01741258a161776f1f1b1a9777ae549d9`.
+Evidence attribution remains [SI: Remmy]; Alex has
+reconciled the named records against the receipt
+model, not independently reopened every workspace
+file. The instances below are not relabelled as
+Approved Pool receipts merely because they are
+receipt-like.
+
+| Named instance | Existing record and residence | How the Phase 4 model accounts for it | Boundary / limitation |
+|---|---|---|---|
+| Publish-gate approvals | `publish-gate/approvals.jsonl`; 265 entries; workspace only. Records target, exact file list and hashes before execution. | Model as authorisation/pre-execution evidence, with exact scope, input pins, authority basis and a separate linked execution outcome where one exists. | This gate governs the Pulse HQ website repository, not Shelf admission. It is not a Pool release receipt and must not be used to claim Shelf synchronisation. |
+| Gate-ledger authorisation/execution pair | `gate-ledger/authorizations.jsonl` plus `gate-ledger/executions.jsonl`; workspace only. Shelved `record/GATE-REGISTER.md` is a summary projection. | Model authorisation and execution as distinct linked records within one operation/evidence chain. Preserve both source ledgers and their relationship; treat the shelved register as a projection to reconcile, not as a substitute for either ledger. | The summary can lag the workspace ledgers. A summary match alone does not prove the underlying pair is current. |
+| Scope ledger | `scope-ledger.md`; approximately 199 approval entries; workspace only. | Treat as scope/authority evidence that may be referenced by a receipt's scope declaration and authority basis, with exact entry and source-version pins. | It is not itself a receipt of completed execution, and its workspace-only residence must remain visible in retention/reconstruction claims. |
+| Crusher accounting log | `pulse-bridge/index/crusher-log.jsonl`; 131 records at the Phase 4 source-pack snapshot; workspace only. | Treat as operation-level execution/accounting evidence. A receipt may cite exact call records and usage/failure records, and must pin the log snapshot and record identities used. | The log is not shelved in the source-pack snapshot. Its absence from Shelf is a retention/availability limitation, not proof that no calls occurred. The count is snapshot-specific and must not be presented as current after later calls. |
+| Index admission report | `index-admission/INDEX-ADMISSION-REPORT-01.md`; shelved under `duenna/` at the recorded admission head. | Treat as a bounded admission receipt: it records the exact admitted population, exclusions (including the VOID JSON), and verification performed. It is an input/evidence source for later receipts and component-consumption claims. | It proves only that particular admission operation and scope. Post-admission Shelf material is not thereby shown to have been consumed by the index. |
+| R-19 pilot freeze receipt | Specified by the pilot plan as `PLAN-FREEZE-RECEIPT.md`; the plan directory contains no issued receipt. | Record as a designed-but-never-issued artefact / expected record, not as an existing receipt. The model must allow planned receipt classes to be tracked without fabricating an instance or completion event. | No receipt ID, admission, execution, retention or evidence may be inferred. Its status is NOT ISSUED on the source-pack evidence. |
+
+### 14.1 Consequences for the receipt model
+
+1. The model covers heterogeneous evidence records; it does not force every existing ledger, approval, report or log into one receipt schema or retroactively mint receipt IDs.
+2. A future Pool receipt may reference multiple source records and link authorisation, execution, admission, and consumption evidence without collapsing them into one event.
+3. Workspace-only evidence must be identified as such in the receipt's source locator, retention status and reconstruction limitations. A Shelf summary is not automatically the authoritative copy.
+4. Dual-residence records require an explicit authoritative-copy rule and reconciliation result. Where the workspace ledger and shelved projection differ or freshness is unknown, the receipt records the discrepancy/UNKNOWN rather than choosing by timestamp.
+5. Existing records may serve as evidence inputs or bounded historical receipt analogues. They do not prove that the future Approved Pool receipt, retention, readiness or consumption machinery is implemented.
+6. The R-19 example is a negative instance: the design can describe an expected receipt, but the record must say NOT ISSUED. No empty placeholder is to be treated as a receipt.
+
+### 14.2 Phase 4 adjudication
+
+The named-instance coverage item raised in the Phase 4
+reconciliation pack is addressed by this section.
+The two exact Phase 3 retrieval queries remain
+separately preserved in Annex R of that pack as
+UNKNOWN. Those results are limited to the admitted
+corpus and are not evidence of absence outside it.
+
+Alex's design disposition is **PARTIAL ACCEPTANCE —
+TECHNICAL MODEL**, not formal Phase 4 acceptance.
+The receipt model is accepted as technically
+adequate to represent the named existing record
+families and their boundaries, subject to the
+limitations above and the existing non-authorisations.
+Formal Phase 4 acceptance remains **DEFERRED** because
+acceptance criterion 17 requires a named independent
+examiner whose appointment, independence, access and
+examination capability are evidenced. No such
+appointment/evidence is established by the
+reconciliation pack. Ben's reserved R1–R4 decisions
+remain his; this adjudication does not decide them,
+waive them, or authorise Phase 5 implementation.
+
