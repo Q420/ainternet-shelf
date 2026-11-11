@@ -43,6 +43,7 @@ full corpus sweep was shelved the same day.
 | `duenna/CLAUDE-VERIFICATION-REPORT.md` | 18de602d1101d6e9e03eabf105981c2c3da1ec166a080593f1bd96bb4df20a11 | Claude's verification report on v0.8 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V09.md` | 1b760ac00efea716dd32a96755eaa6150580f04abc6bbe0388a743fbda00ca45 | Claude's verification report on v0.9 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V010.md` | 8686624ae4dabbcff71f4886a2077dedc68c8ed20cb38d38ff3181087c23ec08 | Claude's re-examination report on v0.10 (R47 PASS narrow, R60 FAIL partial, R65 PASS) |
+| `duenna/VANE-EXAMINATION-REPORT-R60REV.md` | 3da17136f9c2a4959d9868fb0e63b36e3d99520781f2bcbdfd70430b55b3128a | Vane sabotage C report: FX-R60h fails under mutable registry (R60-group execution; full suite not run — limitation stated) |
 | `duenna/VANE-EXAMINATION-REPORT-V010.md` | 884fe426c32cd1f7641f2a965d3e39053ec626a5d7829eaae367883a2772b0a3 | Vane's independent examination of v0.10 (R47 PASS, R60 FAIL — unbound procedure identity, R65 PASS qualified) |
 | `duenna/ALEX-COMBINED-ADJUDICATION-V010.md` | cbf6ec46c6e60e33008712f7edc568158c205c51a433d0554857a55ad99754ed | Alex's combined Track 1 adjudication (R47 PASS narrow, R60 FAIL, R65 PASS qualified; R60 revision OPEN, both defects) |
 | `duenna/harness-r60rev.py` | 6cb326ef34e72e8d66a6e42aabd2e33ecff0f3dc45aa1c4bf678a674d88ebd04 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
