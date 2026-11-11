@@ -41,6 +41,7 @@ mechanism makes exactly the repaired fixture fail (see
 D3-V010-CHANGE-RECORD).
 """
 import hashlib, inspect, json, sys
+from types import MappingProxyType
 
 RESULTS = []
 
@@ -712,7 +713,11 @@ def _implementation_hash(procedure_fn=None):
 # complete set of identities a contract may claim; the claim IS
 # the dispatch key, so a contract cannot claim one procedure
 # while executing another.
-PROCEDURE_REGISTRY = {"REQ-I-3 preservation check": _preservation_check}
+# Bounded repair (Alex's examination of the revision, pb-mwbg46ui):
+# the registry is IMMUTABLE — a MappingProxyType over a dict no
+# other reference exists to, so a recognised identity cannot be
+# remapped to a substitute callable after definition.
+PROCEDURE_REGISTRY = MappingProxyType({"REQ-I-3 preservation check": _preservation_check})
 
 class CheckerContract:
     """REQ-I-2 checker contract (v0.10 repair — R60 FAIL at
@@ -859,6 +864,21 @@ def fixture_r60():
     check("FX-R60g", "R60", "REQ-I-2 procedure identity binding: fictitious procedure identity rejected at contract construction",
           ("REJECTED: unrecognised procedure identity (fictitious procedure XYZ)",),
           (construction,))
+    # (h) Bounded repair (Alex, pb-mwbg46ui): the registry itself
+    # must be immutable — remapping a recognised identity to a
+    # substitute callable before construction would recreate the
+    # identity/execution mismatch. The substitution attempt must
+    # be rejected, and the accepted identity must still dispatch
+    # to its originally bound callable.
+    try:
+        PROCEDURE_REGISTRY["REQ-I-3 preservation check"] = lambda payload, sha: sha
+        mutation = "MUTATED"
+    except TypeError:
+        mutation = "REJECTED: registry immutable"
+    still = contract.run(art)
+    check("FX-R60h", "R60", "REQ-I-2 registry immutability: remapping a recognised identity to a substitute callable is rejected; the identity still dispatches to its originally bound procedure",
+          ("REJECTED: registry immutable", "verdict"),
+          (mutation, "verdict" if isinstance(still, dict) else still))
 
 # ---------------------------------------------------------------- R61 — REQ-I-3 preservation outcomes
 def fixture_r61():

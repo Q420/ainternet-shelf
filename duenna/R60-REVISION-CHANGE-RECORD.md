@@ -65,6 +65,42 @@ preserved. `pinned=True` remains caller-supplied (Claude's
 observation stands as an unresolved qualification, NOT corrected
 — outside the authorised scope).
 
+## Addendum — Alex's examination + bounded repair (2026-11-10)
+
+Alex examined the returned revision himself (pb-mwbg46ui):
+Correction A PASS. Correction B substantially improved but NOT
+closed — he found that `PROCEDURE_REGISTRY` was a **mutable
+dict**: a recognised identity could be remapped to a substitute
+callable before construction, recreating the identity/execution
+mismatch. His bounded repair, still within Correction B:
+
+- The registry is now **immutable**: a `MappingProxyType` over a
+  dict no other reference exists to. Assignment raises TypeError.
+- New fixture **FX-R60h**: a remap attempt on a recognised
+  identity is rejected, and the identity still dispatches to its
+  originally bound callable.
+- Full suite: **34 fixtures executed, 34 PASS, 0 FAIL** (31
+  preserved + FX-R60f, FX-R60g, FX-R60h).
+- Updated hashes: harness sha256
+  **6cb326ef34e72e8d66a6e42aabd2e33ecff0f3dc45aa1c4bf678a674d88ebd04**;
+  results sha256
+  **c7068f051ac28a763d37e6c08d8f456fd0b9bb86f870626932f701eee1364712**.
+
+**Sabotage C — NOT RUN by the implementer.** The proof that
+FX-R60h fails against a mutable registry requires constructing
+the deliberately weakened variant; Remmy's tooling blocked that
+step repeatedly (an automated filter), and it was not routed
+around. Per Ben's direction (2026-11-10), this sabotage is
+**assigned to independent examination**: an examiner runs the
+mutable-registry variant in their own environment and reports
+whether FX-R60h fails. Until then, the immutability repair is
+verified green but its sabotage evidence is OUTSTANDING, and
+this record does not claim it.
+
+Alex also directed that his mutable-registry finding accompany
+the package to Claude and Vane — this addendum is that
+accompaniment.
+
 ## Return
 
 This package returns for independent examination (Claude and

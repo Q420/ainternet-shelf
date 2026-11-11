@@ -20,7 +20,7 @@ full corpus sweep was shelved the same day.
 | `record/STAGE0-BASELINE-EVIDENCE.md` | 73b3fabdf95e672c06c692c521dfcca8ebc2d5d285a86062989ad4349d33f03a | Stage 0 baseline run record (31/31 PASS, seed hash unchanged, zero comparison diffs) |
 | `record/stage0-run-stdout.txt` | 1765950a8b9a1a06f39ddf233d72667f4be47d1b6ed269af708c12f71a98ce05 | Stage 0 raw run output (31 PASS lines + summary) |
 | `record/stage0-results.json` | ad4dc13754c543520dea2b93c80165df85595a18e873438f2d600779e355ce38 | Stage 0 results JSON — byte-identical to the delivered v0.10 results |
-| `record/GATE-REGISTER.md` | fbc6c56177f2e04f1865d7bd2accb7e7e6f9bb61a0b741ad932a42c3265a62f3 | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
+| `record/GATE-REGISTER.md` | 6db2e29a58229ab44d11623adba0411b5876905a2b332bb1e5b075e6a5f552d7 | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
 
 ## duenna/ — the specification corpus
 
@@ -45,9 +45,9 @@ full corpus sweep was shelved the same day.
 | `duenna/CLAUDE-VERIFICATION-REPORT-V010.md` | 8686624ae4dabbcff71f4886a2077dedc68c8ed20cb38d38ff3181087c23ec08 | Claude's re-examination report on v0.10 (R47 PASS narrow, R60 FAIL partial, R65 PASS) |
 | `duenna/VANE-EXAMINATION-REPORT-V010.md` | 884fe426c32cd1f7641f2a965d3e39053ec626a5d7829eaae367883a2772b0a3 | Vane's independent examination of v0.10 (R47 PASS, R60 FAIL — unbound procedure identity, R65 PASS qualified) |
 | `duenna/ALEX-COMBINED-ADJUDICATION-V010.md` | cbf6ec46c6e60e33008712f7edc568158c205c51a433d0554857a55ad99754ed | Alex's combined Track 1 adjudication (R47 PASS narrow, R60 FAIL, R65 PASS qualified; R60 revision OPEN, both defects) |
-| `duenna/harness-r60rev.py` | 3c393fceb2fb550bf27d49004d0940ec069ae5f3893f5a419ee101d2d53983b8 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
-| `duenna/results-r60rev.json` | f257fbd5b11d3de8232c44a5bc62e4dd50be43c9672ecc560faf531c4941f844 | R60 revision results (33/33 PASS) |
-| `duenna/R60-REVISION-CHANGE-RECORD.md` | 00727c5d65e78a26fdfd32029951e37dd59894db9a90e31e523d5f745c1370ff | R60 revision change record (both corrections + sabotage evidence) |
+| `duenna/harness-r60rev.py` | 6cb326ef34e72e8d66a6e42aabd2e33ecff0f3dc45aa1c4bf678a674d88ebd04 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
+| `duenna/results-r60rev.json` | c7068f051ac28a763d37e6c08d8f456fd0b9bb86f870626932f701eee1364712 | R60 revision results (33/33 PASS) |
+| `duenna/R60-REVISION-CHANGE-RECORD.md` | b31f966af25f6279c0451fa0f87e9405a96649c103c92a8a5455aa037b5d8e09 | R60 revision change record (both corrections + sabotage evidence) |
 | `duenna/R60-REVISION-UNRESOLVED.md` | 5d8093707144777926d78829763af6f8cb765bbeed05cbb696735e5b58b2e90c | R60 revision unresolved items (carried forward) |
 | `duenna/VANE-EXAMINATION-REPORT-V09.md` | 643923ec8f0433ab67b71d484bb5aeaca17240d986eaa3001e1672f48fa09b2a | Vane's examination report on v0.9 |
 | `duenna/V09-EXAMINATION-FINDINGS-LEDGER.md` | cf116ba28d822c15d70c82ad7e02be8fccde932d749c4c5a2bae02dd5ad20af3 | The consolidated v0.9 findings ledger |

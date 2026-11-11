@@ -522,6 +522,20 @@
    "verdict": "PASS"
   },
   {
+   "fixture": "FX-R60h",
+   "finding": "R60",
+   "requirement": "REQ-I-2 registry immutability: remapping a recognised identity to a substitute callable is rejected; the identity still dispatches to its originally bound procedure",
+   "expected": [
+    "REJECTED: registry immutable",
+    "verdict"
+   ],
+   "observed": [
+    "REJECTED: registry immutable",
+    "verdict"
+   ],
+   "verdict": "PASS"
+  },
+  {
    "fixture": "FX-R61",
    "finding": "R61",
    "requirement": "REQ-I-3 deleted and corrupted payloads: INDETERMINATE / RECORD-PRESERVATION, never a pass, never AGENT attribution",
