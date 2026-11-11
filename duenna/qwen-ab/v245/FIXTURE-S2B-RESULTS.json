@@ -1,0 +1,56 @@
+{
+ "G1_explicit_attribution": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated attribution assertions in other admitted documents: [{'section': 'programme-register#001', 'sentence': 'The adjudication grok-adjudication-v09 records the ruling issued by Grok on the v0'}]",
+  "stage5_classification": "SOURCE LOCATED"
+ },
+ "G2_mere_mention": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "G3_explicit_denial": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "F4_real_corpus": {
+  "stage1_corpus_search_hits": [
+   "v09-examination-findings-ledger#010",
+   "v09-examination-findings-ledger#023",
+   "v09-examination-findings-ledger#024",
+   "v010-unresolved-items#001",
+   "duenna-plan#002",
+   "duenna-plan#004",
+   "duenna-plan#007",
+   "alex-combined-adjudication-v010#006",
+   "r60-revision-unresolved#001"
+  ],
+  "stage2_candidates": [],
+  "stage3_admission": "candidate documents admitted: none",
+  "stage4_author_attribution": "NOT PERFORMED \u2014 no admitted candidate to attribute",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "assertions": "all passed"
+}
