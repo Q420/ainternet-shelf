@@ -148,6 +148,49 @@ covers substitution through ordinary module-level attribute
 assignment; it claims nothing against an actor who rewrites the
 module's own functions or reaches into closure cells directly.
 
+## Addendum 3 — Verdict provenance implemented (2026-11-10)
+
+Alex authorised implementation of the revised FX-R60j/k
+proposal (pb-mwbhu9zh), with his precision requirement: identity
+by retained object references and `is` comparisons, not id()
+integers. Implemented as harness **v2.4**:
+
+- The factory closure holds a private **issuance record**. Each
+  entry retains the actual contract instance, the actual
+  verdict object it returned, and the fingerprint of the
+  verdict's canonical contents at issuance.
+- `validate_verdict` (after the existing field checks, which
+  are unchanged and fire first) requires: an entry where
+  `recorded contract is this contract` and `recorded verdict is
+  this verdict` — else "REJECTED: verdict not issued by this
+  contract" — and the current fingerprint equal to the issuance
+  fingerprint — else "REJECTED: verdict altered after
+  issuance".
+- New fixtures **FX-R60j** (forgery with the genuine pinned
+  hash rejected; genuine verdict accepted), **FX-R60k**
+  (cross-contract replay rejected — different digest, and
+  identical issued contents; same-contract control accepted),
+  **FX-R60l** (issued object mutated after return rejected;
+  genuine accepted).
+- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31
+  original identities + FX-R60f/g/h/i/j/k/l). Harness sha256
+  **854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5**;
+  results sha256
+  **902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66**.
+
+**Sabotage evidence:** the **integrity sabotage was executed
+by the implementer** — with the fingerprint comparison removed,
+**FX-R60l fails alone (37 PASS / 1 FAIL)**, the rest of the
+suite unaffected. The **identity sabotage** (removing the
+object-identity provenance check) could not be constructed by
+the implementer — her tooling blocked the weakened variant
+again — and is **assigned to independent examination**, with
+the still-outstanding v2.3 sabotage runs (mutable-registry
+variant vs FX-R60h under the factory; restored-global-dispatch
+variant vs FX-R60i) and the executed reproduction of the v2.3
+cross-contract replay (FX-R60k, established by inspection).
+This record claims none of those as implementer-run.
+
 ## Return
 
 This package returns for independent examination (Claude and

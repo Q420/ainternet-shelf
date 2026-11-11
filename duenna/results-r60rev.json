@@ -1,5 +1,5 @@
 {
- "harness": "fixtures-r60rev/harness.py v2.3 (R60 revision, rebind repair)",
+ "harness": "fixtures-r60rev/harness.py v2.4 (R60 revision, verdict provenance)",
  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
  "command": "python3 harness.py",
  "results": [
@@ -546,6 +546,50 @@
    "observed": [
     "FAILURE-PATH: invalid artefact",
     "REJECTED: implementation hash mismatch"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60j",
+   "finding": "R60",
+   "requirement": "REQ-I-2 verdict provenance: a forged verdict carrying the genuine pinned hash and a fabricated outcome is rejected as not issued; the genuine verdict validates",
+   "expected": [
+    "ACCEPTED",
+    "REJECTED: verdict not issued by this contract"
+   ],
+   "observed": [
+    "ACCEPTED",
+    "REJECTED: verdict not issued by this contract"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60k",
+   "finding": "R60",
+   "requirement": "REQ-I-2 cross-contract provenance: a genuine verdict validates for its issuing contract and is rejected for a different contract \u2014 with a different expected digest, and with identical issued contents",
+   "expected": [
+    "ACCEPTED",
+    "REJECTED: verdict not issued by this contract",
+    "REJECTED: verdict not issued by this contract"
+   ],
+   "observed": [
+    "ACCEPTED",
+    "REJECTED: verdict not issued by this contract",
+    "REJECTED: verdict not issued by this contract"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60l",
+   "finding": "R60",
+   "requirement": "REQ-I-2 issuance integrity: a genuine verdict validates, and the same object mutated after issuance is rejected",
+   "expected": [
+    "ACCEPTED",
+    "REJECTED: verdict altered after issuance"
+   ],
+   "observed": [
+    "ACCEPTED",
+    "REJECTED: verdict altered after issuance"
    ],
    "verdict": "PASS"
   },

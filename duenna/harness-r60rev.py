@@ -735,6 +735,22 @@ def _implementation_hash(procedure_fn=None):
 def _make_checker_system():
     registry = MappingProxyType({"REQ-I-3 preservation check": _preservation_check})
     pinned_hashes = {"REQ-I-3 preservation check": _implementation_hash(_preservation_check)}
+    # v2.4 — VERDICT PROVENANCE (FX-R60j/k/l; Alex's finding and
+    # refinement, authorised pb-mwbhu9zh): a private issuance
+    # record, held only in this closure. Each entry retains the
+    # ACTUAL contract instance and the ACTUAL verdict object it
+    # returned, plus the fingerprint of the verdict's canonical
+    # contents at issuance. Validation confirms object identity
+    # with `is` comparisons — never integer ids or content
+    # matching alone — and then compares the current fingerprint
+    # against the issuance fingerprint (mutation after issuance
+    # is detectable). Entries retain references, so recorded
+    # objects cannot be garbage-collected out from under the
+    # record.
+    issuance = []
+
+    def _fingerprint(verdict):
+        return hashlib.sha256(json.dumps(verdict, sort_keys=True).encode()).hexdigest()
 
     class CheckerContract:
         """REQ-I-2 checker contract (v0.10 repair — R60 FAIL at
@@ -775,9 +791,14 @@ def _make_checker_system():
             digest = self._procedure_fn(artefact["payload"], self.expected_sha)
             if digest is None:
                 return "FAILURE-PATH: invalid artefact"
-            return {"verdict": f"preserved sha={digest[:12]}", "input": self.input_id,
-                    "procedure": self.procedure, "version": self.version,
-                    "implementation_hash": _implementation_hash(self._procedure_fn)}
+            verdict = {"verdict": f"preserved sha={digest[:12]}", "input": self.input_id,
+                       "procedure": self.procedure, "version": self.version,
+                       "implementation_hash": _implementation_hash(self._procedure_fn)}
+            # Record the issuance: this contract instance, this
+            # verdict object, its contents as issued.
+            issuance.append({"contract": self, "verdict": verdict,
+                             "fingerprint": _fingerprint(verdict)})
+            return verdict
 
     def validate_verdict(verdict, contract):
         """REQ-I-2 verdict validation: a verdict counts as this
@@ -806,6 +827,19 @@ def _make_checker_system():
             return "REJECTED: missing input identity"
         if verdict["input"] != contract.input_id:
             return "REJECTED: input identity mismatch"
+        # Provenance (v2.4): the submitted object must be the
+        # actual verdict object THIS contract issued — identity
+        # by `is`, not by copied fields or matching contents —
+        # and its contents must still equal what was issued.
+        entry = None
+        for candidate in issuance:
+            if candidate["contract"] is contract and candidate["verdict"] is verdict:
+                entry = candidate
+                break
+        if entry is None:
+            return "REJECTED: verdict not issued by this contract"
+        if _fingerprint(verdict) != entry["fingerprint"]:
+            return "REJECTED: verdict altered after issuance"
         return "ACCEPTED"
 
     return CheckerContract, validate_verdict, registry
@@ -927,6 +961,42 @@ def fixture_r60():
     check("FX-R60i", "R60", "REQ-I-2 rebind resistance: module-level registry rebinding does not change dispatch (a tampered artefact still fails), and a substitute's forged verdict fails pinned-anchor validation",
           ("FAILURE-PATH: invalid artefact", "REJECTED: implementation hash mismatch"),
           (rebound_run, validate_verdict(forged, contract)))
+    # (j) v2.4 provenance — forgery with the trusted hash (Alex's
+    # FX-R60j finding, reproduced against v2.3): a fabricated
+    # dictionary copying every checked field from a genuine
+    # verdict, genuine pinned hash included, was never issued by
+    # the contract and is rejected; the genuine verdict still
+    # validates (control).
+    genuine_j = contract.run(art)
+    forged_j = dict(genuine_j)
+    forged_j["verdict"] = "preserved sha=000000000000"
+    check("FX-R60j", "R60", "REQ-I-2 verdict provenance: a forged verdict carrying the genuine pinned hash and a fabricated outcome is rejected as not issued; the genuine verdict validates",
+          ("ACCEPTED", "REJECTED: verdict not issued by this contract"),
+          (validate_verdict(genuine_j, contract), validate_verdict(forged_j, contract)))
+    # (k) v2.4 cross-contract replay (Alex's FX-R60k): a genuine
+    # verdict is its issuing contract's alone — rejected for a
+    # different contract whose terms differ only in the expected
+    # digest, and rejected between two contracts whose issued
+    # contents are identical.
+    contract_b = CheckerContract("ART-INPUT-1", "REQ-I-3 preservation check", "checker-v1.3",
+                                 hashlib.sha256(b"payload-2").hexdigest())
+    contract_c = CheckerContract("ART-INPUT-1", "REQ-I-3 preservation check", "checker-v1.3",
+                                 hashlib.sha256(b"payload-1").hexdigest())
+    verdict_c = contract_c.run(art)
+    check("FX-R60k", "R60", "REQ-I-2 cross-contract provenance: a genuine verdict validates for its issuing contract and is rejected for a different contract — with a different expected digest, and with identical issued contents",
+          ("ACCEPTED", "REJECTED: verdict not issued by this contract", "REJECTED: verdict not issued by this contract"),
+          (validate_verdict(run_defined, contract), validate_verdict(run_defined, contract_b),
+           validate_verdict(verdict_c, contract)))
+    # (l) v2.4 issuance integrity: the issued object itself,
+    # altered after return, fails the issuance fingerprint.
+    contract_l = CheckerContract("ART-INPUT-1", "REQ-I-3 preservation check", "checker-v1.3",
+                                 hashlib.sha256(b"payload-1").hexdigest())
+    verdict_l = contract_l.run(art)
+    before_l = validate_verdict(verdict_l, contract_l)
+    verdict_l["verdict"] = "preserved sha=000000000000"
+    check("FX-R60l", "R60", "REQ-I-2 issuance integrity: a genuine verdict validates, and the same object mutated after issuance is rejected",
+          ("ACCEPTED", "REJECTED: verdict altered after issuance"),
+          (before_l, validate_verdict(verdict_l, contract_l)))
 
 # ---------------------------------------------------------------- R61 — REQ-I-3 preservation outcomes
 def fixture_r61():
@@ -953,7 +1023,7 @@ if __name__ == "__main__":
     fixture_r60(); fixture_r61()
     fails = [r for r in RESULTS if r["verdict"] != "PASS"]
     print(f"\n{len(RESULTS)} fixtures executed, {len(RESULTS) - len(fails)} PASS, {len(fails)} FAIL")
-    json.dump({"harness": "fixtures-r60rev/harness.py v2.3 (R60 revision, rebind repair)",
+    json.dump({"harness": "fixtures-r60rev/harness.py v2.4 (R60 revision, verdict provenance)",
                "python_version": sys.version,
                "command": "python3 harness.py",
                "results": RESULTS}, open("results.json", "w"), indent=1)

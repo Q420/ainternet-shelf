@@ -51,9 +51,9 @@ full corpus sweep was shelved the same day.
 | `duenna/VANE-EXAMINATION-REPORT-R60REV.md` | 3da17136f9c2a4959d9868fb0e63b36e3d99520781f2bcbdfd70430b55b3128a | Vane sabotage C report: FX-R60h fails under mutable registry (R60-group execution; full suite not run — limitation stated) |
 | `duenna/VANE-EXAMINATION-REPORT-V010.md` | 884fe426c32cd1f7641f2a965d3e39053ec626a5d7829eaae367883a2772b0a3 | Vane's independent examination of v0.10 (R47 PASS, R60 FAIL — unbound procedure identity, R65 PASS qualified) |
 | `duenna/ALEX-COMBINED-ADJUDICATION-V010.md` | cbf6ec46c6e60e33008712f7edc568158c205c51a433d0554857a55ad99754ed | Alex's combined Track 1 adjudication (R47 PASS narrow, R60 FAIL, R65 PASS qualified; R60 revision OPEN, both defects) |
-| `duenna/harness-r60rev.py` | 30bdd25ead4ab6085106a1f91f09b24c2ef563e3eaaedc93f127344055f54a2a | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
-| `duenna/results-r60rev.json` | 6068d873ffce27d8c1e06d64879a0c98ea70d4846c3d83e13fbdc690f14b2da3 | R60 revision results (33/33 PASS) |
-| `duenna/R60-REVISION-CHANGE-RECORD.md` | 4b1a53057dd9e6ac0118bde6d178dcf4caa98f6f15df607f2378938affe6a251 | R60 revision change record (both corrections + sabotage evidence) |
+| `duenna/harness-r60rev.py` | 854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
+| `duenna/results-r60rev.json` | 902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66 | R60 revision results (33/33 PASS) |
+| `duenna/R60-REVISION-CHANGE-RECORD.md` | 25f65218a5d65d1253319830423b9212184592c3f6c0f6d5e4ac90b8476feb8e | R60 revision change record (both corrections + sabotage evidence) |
 | `duenna/R60-REVISION-UNRESOLVED.md` | 5d8093707144777926d78829763af6f8cb765bbeed05cbb696735e5b58b2e90c | R60 revision unresolved items (carried forward) |
 | `duenna/VANE-EXAMINATION-REPORT-V09.md` | 643923ec8f0433ab67b71d484bb5aeaca17240d986eaa3001e1672f48fa09b2a | Vane's examination report on v0.9 |
 | `duenna/V09-EXAMINATION-FINDINGS-LEDGER.md` | cf116ba28d822c15d70c82ad7e02be8fccde932d749c4c5a2bae02dd5ad20af3 | The consolidated v0.9 findings ledger |
