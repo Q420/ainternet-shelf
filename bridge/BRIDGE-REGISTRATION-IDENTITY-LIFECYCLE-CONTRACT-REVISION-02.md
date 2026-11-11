@@ -1,6 +1,6 @@
-# Bridge Registration Identity and Lifecycle Contract — Draft 01
+# Bridge Registration Identity and Lifecycle Contract — Revision 02
 
-**Status:** DRAFT FOR REMMY REVIEW AND BEN'S DECISION  
+**Status:** PACKAGE ADOPTED; CONTRACT REVISION 02 PREPARED FOR REMMY REVIEW; CONVENE SHEET INCORPORATION PENDING; NOT READY FOR BUILD; NO IMPLEMENTATION AUTHORITY  
 **Authority:** Commissioned by Ben on 2026-11-11: “Adopt the principle — have Alex draft the full contract.”  
 **Scope:** Logical identity, registration, routing record, lifecycle events, status projection and transition rules for Bridge messages.  
 **Not authorised:** Convene Sheet amendment, code, implementation, tests, runtime probes, migration, deployment or production activation.
