@@ -19,6 +19,13 @@ extension-point addition arrived; this revision
 supersedes it as the draft of record. Nothing else
 changed.
 
+**Revision 4 (2026-11-11):** one clarification —
+§3.6 now states explicitly that allocation semantics
+are specified while the allocator mechanism and its
+concurrency guarantees remain unimplemented and
+UNKNOWN; Gap 3 stays OPEN/UNKNOWN. Alex's
+clarification; no other change.
+
 **Revision 3 (2026-11-11):** Alex's six corrections
 applied — retirement's tombstone becomes the head
 (status RETIRED, never NONE); unknown type moved to
@@ -231,6 +238,17 @@ version stem. Gaps in an item's accepted sequence
 are therefore normal and are explained by the
 ledger's candidate history (§10's skipped-generation
 rule states the same from the reader's side).
+
+**Semantics vs machinery (Alex's clarification,
+Revision 4):** the above specifies allocation
+*semantics* only. Simultaneous proposals require an
+atomic allocation/reservation mechanism of their
+own, and Gap 2's live-head compare-and-set does not
+establish one — it governs advancing the head, not
+reserving numbers. The allocator and its concurrency
+guarantees are unimplemented and UNKNOWN, pending
+design and independent testing. Gap 3 (concurrency
+and conflict resolution) remains OPEN/UNKNOWN.
 
 ## 4. Dependency declarations and graph ownership
 Each layer declares its own dependencies: which items
