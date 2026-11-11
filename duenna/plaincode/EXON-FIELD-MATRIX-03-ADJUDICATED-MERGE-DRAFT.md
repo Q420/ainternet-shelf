@@ -99,7 +99,7 @@ interchangeable with INCOMPLETE [§5 boundary].
 
 CORRECTION carries evidence through its `basis` field
 (§I), not through a standalone evidence_refs field.
-REQUIREMENT carries no evidence fields; its
+REQUIREMENT carries no evidence_class or evidence_refs fields; its
 expected_evidence (§F) types what its verification
 will produce.
 
@@ -255,7 +255,7 @@ verbatim, so the layers agree by construction.
 3. **REQUIREMENT** — owner (Req), condition (Req),
    verification (Req), expected_evidence (Req),
    failure_action (Req), criteria_ref (Opt),
-   supersedes (Opt). REQUIREMENT carries no evidence
+   supersedes (Opt). REQUIREMENT carries no evidence_class or evidence_refs
    fields (§D).
 4. **RESULT** — outcome (Req), evidence_class (Req),
    evidence_refs (per §D), artifact_ref (Opt),
