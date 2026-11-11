@@ -19,7 +19,7 @@ The plan preserves these decisions:
 - **Sequencing: POOL FIRST.** Design and operational capability of the pool precede Dictionary 0.4 becoming its first ledgered generation.
 - **Dictionary 0.4 freeze: DEFERRED.** Dictionary 0.4 Rev 3 remains DRAFT. Challenge 03 PASS is not a freeze. The EXON 0.2 self-flag correction remains OPEN; existence of a separate correction record was UNKNOWN in the bounded retrieval.
 - **Generation zero: NOT DECLARED.** It waits for an inspectable initial ledger, identities, versioned dependency declarations, defined validation scope, initial sweep, independent factual validation and a receipt identifying exactly what was checked.
-- **Authority:** Ben adopted the plan. This does not transfer reserved authority over governance decisions, publication, spend, accounts or other matters retained by Ben.
+- **Authority:** Ben adopted the plan. Phase 5 build-spec adoption was subsequently delegated to Alex by Ben's amendment, preserved in `duenna/PHASE-4-DELEGATION-RECORD-01.md`, commit `2e6a639`. Ben retains reserved governance authority, publication, spend, accounts and the right to revoke the delegation.
 - **Build discipline:** no build begins without its own approved, shelved specification. A design being accepted does not mean its mechanism exists.
 - **Evidence discipline:** designed, implemented, fixture-tested, independently examined and operationally demonstrated are distinct states. A report of a test is not the same as an independently reproduced test.
 
@@ -213,11 +213,11 @@ The readiness gate must not turn a scoped clean receipt into a claim that all Te
 
 **Build specifications, each separately approved and shelved before its build:**
 1. `APPROVED-POOL-LEDGER-IMPLEMENTATION-SPEC-01.md`
-2. `APPROVED-POOL-DEPENDENCY-SWEEP-IMPLEMENTATION-SPEC-01.md`
-3. `APPROVED-POOL-RECEIPT-READINESS-IMPLEMENTATION-SPEC-01.md`
+2. `APPROVED-POOL-SWEEP-IMPLEMENTATION-SPEC-01.md`
+3. `APPROVED-POOL-RECEIPT-GATE-IMPLEMENTATION-SPEC-01.md`
 4. Any integration/migration specification required by the accepted designs.
 
-**Decision owner:** Ben for adoption of each build specification and any reserved authority decision.  
+**Decision owner:** Alex for adoption of each Phase 5 build specification under Ben's amended delegation (recorded at `duenna/PHASE-4-DELEGATION-RECORD-01.md`, commit `2e6a639`); Ben retains reserved governance decisions, publication, spend, accounts and revocation authority.  
 **Implementation owner:** named in each build specification.  
 **Technical reviewer:** Alex or another named non-implementer.  
 **Source/operational reviewer:** Remmy or another named non-implementer.  
@@ -342,12 +342,25 @@ A phase may be complete while one or more freeze conditions remain open. No phas
 | Ledger location, minting authority, type governance and policy choices | Ben, informed by Alex/Remmy specifications |
 | Technical specifications for atomicity, dependency/sweep and receipts | Alex |
 | Current source, index, component and operational inventory | Remmy |
-| Adoption of each build specification | Ben |
+| Adoption of each Phase 5 build specification | Alex, under Ben's amended delegation; revocable by Ben |
 | Implementation ownership | Named in each approved build specification |
 | Independent examination and acceptance evidence | Named non-builder examiner; assignment/authority recorded before gate |
 | Generation-zero and Dictionary-freeze decisions | Alex under existing delegation, subject to Ben's reserved authority and all gates |
 
 A role label does not itself confer a new authority. Each delegation and decision must be traceable to its governing record.
+
+
+### 6.1 Phase 5 adoption-authority amendment — 2026-11-11
+
+The original Phase 5 decision-owner entries above named Ben as adopter of each build specification. That allocation is superseded by Ben's direct amendment to the Phase 4 delegation. The governing record is `duenna/PHASE-4-DELEGATION-RECORD-01.md`, commit `2e6a639`, which preserves Ben's exact operative instruction: **“Phase 5 build-spec adoption is also yours.”**
+
+Accordingly:
+- Alex holds the decision authority to review and adopt each of the three Phase 5 build specifications under the adopted plan, in the prescribed order.
+- Each adoption must be recorded against the exact artefact commit and blob. Adoption remains specification-level only and does not itself authorise implementation.
+- Ben retains the reserved governance decisions not delegated, publication, spend, accounts and the right to revoke the delegation at any time.
+- This amendment changes decision ownership only. It does not transfer implementation ownership, examiner independence, or any authority expressly retained by Ben.
+- The delegation record governs if any older plan wording conflicts with it. The original plan history is preserved; this amendment makes the active plan consistent with the later authority record.
+
 
 ## 7. Phase gates and status vocabulary
 
@@ -372,6 +385,19 @@ Do not collapse these into one green status. A specification can pass while impl
 5. Phase 1 specification work has not begun; it requires its own explicit trigger under the adopted plan.
 
 **No Phase 1–6 implementation is authorised by this document.** Each build remains subject to a separately approved, shelved specification.
+
+
+### 8.1 Subsequent Phase 5 status — 2026-11-11
+
+This subsection updates the operational status recorded at Phase 0 completion; it does not rewrite that historical baseline.
+
+- Phase 5 build-spec adoption authority: Alex, under the amended delegation at commit `2e6a639`.
+- Ledger Implementation Specification 01 Rev 4: **NOT ADOPTED — RETURN FOR REVISION**, Alex review at `duenna/ALEX-LEDGER-IMPLEMENTATION-REV4-REVIEW-01.md`, commit `df16d68`. The outstanding expected-predecessor/idempotency conflict with adopted Phase 2 §5.1 prevents adoption.
+- Sweep Implementation Specification 01 Rev 4: **ADOPTED**, decision at commit `1c713768ac43c0cc87e09e5cd6ce27d52fdbe68d`.
+- Receipt Gate Implementation Specification 01 Rev 4: **ADOPTED WITH EXPLICIT LEDGER-DEPENDENCY HOLD**, decision at commit `93d5b97af4650ba5db867efa4e6926edded2fc2e`. Its M-ADMIT implementation cannot claim conformance to the Ledger Rev 4 §9 retry contract until that contract is separately adopted or replaced by an independently adopted equivalent.
+- Phase 5 is **NOT YET COMPLETE** while the ledger specification remains unadopted. No implementation is authorised by these specification decisions.
+- No Phase 6 issuance follows automatically. The seats convene on Ben's list before any Bridge Fix work begins, as directed in the Phase 5 close-out instruction.
+
 
 ## 9. Final authority and status
 
