@@ -1,44 +1,35 @@
-# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V4
+# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V5
 
-Corrections per Alex's V3 re-inspection (d016d94
-preserved in history): **(1)** Imports are HASH-VERIFIED
-before use — resolved run_ab/run_c/tools24 must match
-the pinned frozen hashes in either layout; F-IMPORT now
-exercises BOTH layouts in subprocesses. (The shelf's
-duenna/qwen-ab/run_ab.py was the V1-era copy; it is
-updated in this round to the current frozen scorer
-source — the V1 copy remains in git history — so both
-layouts resolve to the identical frozen file. tools24
-and run_c shelf copies already matched.) **(2)**
-Derivation reads the ACTUAL adjudicated records:
-extract_observations() parses QWEN-AB-RESULTS.json and
-QWEN-AB-V2R-RESULTS.json, locates the T05 first-attempt
-blocks and the T06 worker_vs_system record, and emits
-observations carrying conditions + resolvable references
-(file, sha256, record locator). **(3)** Selection is
-wired to execution two ways: per-run, when a profile is
-present, run_level records the profile selection
-alongside the calibration level (the distinction stated
-in the record); and --demonstrate-runtime runs the full
-loop — profile → selection → template-resolved execution
-configuration → demonstration record
-(RUNTIME-DEMONSTRATION.json, stubbed worker, labelled).
-**(4)** Fixtures test what they claim: F-R1R2 over the
-multi-item mixed T03 pack (sections + fixture, both
-extraction routes); F-PROBE asserts the capture ORDER
-and the revised labels + evidence flags; F-PROFILE
-covers derivation-from-records and the consistency
-branches. (One fixture assertion was itself corrected
-this round: it demanded >3 pack items where the frozen
-T03 pack has 3 — the property is multi-item mixed
-handling, and the assertion now says so.) **(5)** The
-probe records worker_after labels, per-statement
-evidence identification, and a mechanical adoption
-measurement (adopted / already-aligned / resisted /
-unclear) beside the three preserved records. **(6)**
-Call accounting is total: pilot wraps run_ab.call_qwen —
-which run_c invokes by attribute — so Arm C internal
-calls land in the same per-run manifest with purpose,
-usage, latency (F-CALLS fixture).
-All fixtures pass. **No pilot runs executed. Awaiting
+Corrections per Alex's V4 re-inspection (2f8234c
+preserved in history): **(1) Reproducibility failure
+closed at its root.** The committed F-PROBE output and
+its fixture disagreed because the fixture stored a LIVE
+list reference — later fixture calls kept appending to
+the recorded order after the assertion had passed. The
+fixture now snapshots its records, isolates its stubs
+per fixture, and FIXTURES-OUTPUT.json is regenerated
+from the exact committed source: the recorded probe
+order is ["unaided", "revision"], and the assertions
+and the output agree. **(2) Adaptive runtime now
+EXECUTES.** run_adaptive_demo() passes the selected
+configuration into an execution loop (stubbed worker,
+labelled): the classification template runs the actual
+probe sequence; the extraction template builds the real
+packet, calls the worker with it, and runs the real
+schema post-check; the cold-start configuration runs
+with maximum packet + gate scoring. Calibration
+(run_level's fixed matrix) and adaptive runtime remain
+distinct mechanisms, both present. **(3) Evidence
+identification is statement-specific**: a statement
+counts only via a verbatim pack quote (>=16 chars,
+substring-verified against the pack) or a grounded
+absence (absence asserted AND the statement's artefact
+term verifiably absent via pack_search). Generic words
+never suffice; routes are recorded per statement; the
+result stays labelled a mechanical measurement.
+**Further point answered**: run_level's profile
+selection now uses the task's actual operation class
+(OP_CLASSES map) — no generic pilot-run class.
+All fixtures pass against the regenerated output.
+**No pilot runs, no live model calls. Awaiting
 re-inspection.**

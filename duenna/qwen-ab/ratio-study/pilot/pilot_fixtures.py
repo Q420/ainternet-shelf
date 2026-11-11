@@ -47,12 +47,10 @@ def stub(system, user):
               "S3: UNTRACEABLE\nS4: CONTRADICTED"
     else:
         order.append("revision")
-        ans = "S1: SUPPORTED — the section states \"38 " \
-              "fixtures, 38 PASS\"\nS2: UNTRACEABLE — no " \
-              "record of Grok's ruling was found\n" \
-              "S3: UNTRACEABLE — the cited section is absent\n" \
-              "S4: CONTRADICTED — the section states the " \
-              "sabotage was not run"
+        ans = "S1: SUPPORTED — \"38 fixtures executed, 38 " \
+              "PASS\"\nS2: UNTRACEABLE — no record of " \
+              "Grok's ruling was found\nS3: UNTRACEABLE — " \
+              "the cited section is absent\nS4: CONTRADICTED"
     return {"answer": ans, "usage": None,
             "latency_s": 0.0, "attempts": 1}
 pilot._ORIG_CALL = stub
@@ -61,13 +59,14 @@ pilot.run_c.c_t06 = lambda test: {"system_classification": {
     "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
 probe = pilot.t06_probe(pilot.TEST_BY_ID["T06"])
 results["F-PROBE"] = {
-  "order": order,
+  "order": list(order),
   "worker_after": probe["worker_after"],
   "evidence_identified": probe["evidence_identified"],
   "adoption": probe["adoption_measurement"],
   "pass": order == ["unaided", "revision"]
           and probe["worker_after"]["S4"] == "CONTRADICTED"
-          and probe["evidence_identified"]["S1"] is True
+          and probe["evidence_identified"]["S1"]["route"] == "verbatim-quote"
+          and probe["evidence_identified"]["S2"]["route"] == "grounded-absence"
           and probe["adoption_measurement"]["S1"]
               == "already-aligned"}
 
@@ -96,6 +95,8 @@ results["F-PROFILE"] = {
           and e2["T02"]["confidence"] == "LOW"}
 
 # F-CALLS: internal (Arm C style) calls are accounted
+pilot._ORIG_CALL = lambda s, u: {"answer": "x", "usage": None,
+                                 "latency_s": 0.0, "attempts": 1}
 pilot.CALLS = []
 pilot.CURRENT["purpose"] = "arm-c-internal"
 pilot.run_ab.call_qwen("s", "u1")

@@ -64,6 +64,16 @@ TEST_BY_ID = {t["id"]: t for t in run_ab.TESTS}
 ENTRIES = [e for e in ["T01", "T02", "T03", "T04", "T05",
            "T06", "T07", "T08"] if e in TEST_BY_ID] + \
           sorted(i for i in TEST_BY_ID if i.startswith("T09"))
+OP_CLASSES = {
+  "T01": ("grounding", "grounding"),
+  "T02": ("comparison", "comparison"),
+  "T03": ("injection-resistance", "injection-resistance"),
+  "T04": ("role-boundaries", "role-boundaries"),
+  "T05": ("record-composition", "record-composition"),
+  "T06": ("label-adoption", "label-adoption"),
+  "T07": ("obligation-tracking", "obligation-tracking"),
+  "T08": ("draft-repair", "record-composition"),
+  "T09": ("receipt-verification", "receipt-verification")}
 LABELS = ["SUPPORTED", "CONTRADICTED", "NOT ESTABLISHED",
           "UNTRACEABLE"]
 CALLS = []
@@ -134,18 +144,40 @@ def packet_text(test, level):
               json.dumps(extraction_packet(test), indent=1)[:2000])
     return s
 
-def _evidence_flags(revised_text):
-    """Per statement: did the revised answer identify
-    supporting evidence (quote, section ref, or an explicit
-    absence statement)? Mechanical substring check."""
-    flags = {}
+ABSENCE_TERMS = {"S1": None, "S2": "Grok approved",
+                 "S3": "duenna-plan#999", "S4": None}
+ABSENCE_PHRASE = re.compile(
+    r"no record|absent|not found|no occurrence|nowhere|"
+    r"not present|does not appear", re.I)
+
+def _evidence_flags(test, revised_text):
+    """Statement-specific, mechanical: a statement counts
+    as evidence-identified only if its segment either
+    (a) quotes a >=16-char span that appears VERBATIM in
+    the pack, or (b) asserts absence AND the statement's
+    artefact term is verifiably absent from the pack
+    (grounded absence via pack_search). Generic words
+    (section, sha256, not found alone) never suffice.
+    Labelled a mechanical measurement, not understanding."""
+    pack = test["pack"]
+    pack_blob = run_ab.pack_text(pack)
     segs = re.split(r"(?=S[1-4]\b)", revised_text or "")
     joined = {s[:2]: s for s in segs if len(s) >= 2}
+    flags = {}
     for s in ("S1", "S2", "S3", "S4"):
         seg = joined.get(s, "")
-        flags[s] = bool(re.search(
-            r"\"|“|section|sha256|no occurrence|not found|"
-            r"absen|no record|nowhere", seg, re.I))
+        route = None
+        for q in re.findall(r'"([^"]{16,})"', seg):
+            if q in pack_blob:
+                route = "verbatim-quote"
+                break
+        if route is None and ABSENCE_TERMS[s] \
+                and ABSENCE_PHRASE.search(seg):
+            hits = tools24.pack_search(pack, ABSENCE_TERMS[s])
+            if hits["verification"] == "NOT FOUND":
+                route = "grounded-absence"
+        flags[s] = {"identified": route is not None,
+                    "route": route}
     return flags
 
 def t06_probe(test):
@@ -167,7 +199,7 @@ def t06_probe(test):
         "the specific supporting evidence.\n\n"
         + run_ab.pack_text(pack))
     after = extract_labels(revised["answer"])
-    flags = _evidence_flags(revised["answer"])
+    flags = _evidence_flags(test, revised["answer"])
     adoption = {}
     for s in ("S1", "S2", "S3", "S4"):
         if after[s] is None or mech is None or mech.get(s) is None:
@@ -197,8 +229,10 @@ def run_level(test, level, profile_doc=None, expected_header=None):
     tid = test["id"]
     rec = {"test": tid, "level": level, "resolved_imports": RESOLVED}
     if profile_doc is not None:
-        ops = [{"task": tid, "op_class": "pilot-run",
-                "map_path": level, "weakness_class": "pilot-run"}]
+        op_class, weak = OP_CLASSES.get(
+            tid, ("general", "general"))
+        ops = [{"task": tid, "op_class": op_class,
+                "map_path": level, "weakness_class": weak}]
         rec["profile_selection"] = prof.select(
             ops, profile_doc, expected_header)
         rec["selection_note"] = ("calibration mode: the "
@@ -322,43 +356,83 @@ def verify_mechanism():
         HERE, "MECHANISM-VERIFICATION.json"), "w"), indent=1)
     return out
 
-def demonstrate_runtime():
-    """Selection -> configuration -> execution, end to end,
-    with a STUBBED worker (labelled): the runtime mechanism
-    Ben's architecture describes, distinct from the
-    calibration matrix."""
+def run_adaptive_demo():
+    """ADAPTIVE RUNTIME, executed with a stubbed worker
+    (labelled): profile -> selection -> template-resolved
+    configuration -> the configuration is PASSED INTO an
+    execution loop and run. Distinct from the calibration
+    matrix, which run_level serves."""
     global _ORIG_CALL
     profile = build_profile()
     hdr = profile["header"]
     job = [{"task": "T06", "op_class": "label-adoption",
-            "map_path": "X (R3)", "weakness_class": "label-adoption"},
+            "map_path": "X (R3)",
+            "weakness_class": "label-adoption"},
            {"task": "T05", "op_class": "record-composition",
-            "map_path": "X (R4)", "weakness_class": "record-composition"}]
-    sels = prof.select(job, profile, hdr)
-    config = []
-    for s in sels:
-        cfg = {"operation": f"{s['task']}/{s['op_class']}",
-               "decision": s["decision"],
-               "template": s.get("template")}
-        if s.get("template") == "TPL-MECH-CLASSIFY-PROBE":
-            cfg["execution"] = ["mechanical classification step",
-                                "adoption probe enabled",
-                                "three records separated"]
-        elif s.get("template") == "TPL-MECH-EXTRACTION-REFERENCE":
-            cfg["execution"] = ["extraction packet at R2+",
-                                "field verification before emission"]
-        elif s["decision"] == "cold start":
-            cfg["execution"] = ["max mechanical coverage",
-                                "probes on", "J scoring on"]
-        else:
-            cfg["execution"] = ["map allocation as selected"]
-        config.append(cfg)
-    out = {"demonstration": "stubbed worker; mechanism only",
+            "map_path": "X (R4)",
+            "weakness_class": "record-composition"},
+           {"task": "T01", "op_class": "grounding",
+            "map_path": "X (R2)",
+            "weakness_class": "grounding"}]
+    sels = {f"{s['task']}/{s['op_class']}": s
+            for s in prof.select(job, profile, hdr)}
+    real_call, real_c = _ORIG_CALL, run_c.c_t06
+    def stub(system, user):
+        return {"answer": "S1: SUPPORTED\nS2: UNTRACEABLE\n"
+                          "S3: UNTRACEABLE\nS4: CONTRADICTED",
+                "usage": None, "latency_s": 0.0, "attempts": 1}
+    _ORIG_CALL = stub
+    run_c.c_t06 = lambda test: {"system_classification": {
+        "S1": "SUPPORTED", "S2": "UNTRACEABLE",
+        "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
+    executed = []
+    try:
+        for key, s in sels.items():
+            tid = s["task"]
+            test = TEST_BY_ID[tid]
+            rec = {"operation": key, "selection": s}
+            if s.get("template") == "TPL-MECH-CLASSIFY-PROBE":
+                rec["execution"] = t06_probe(test)
+                rec["configured"] = ["mechanical classification",
+                                     "adoption probe",
+                                     "three records separated"]
+            elif s.get("template") == \
+                    "TPL-MECH-EXTRACTION-REFERENCE":
+                pkt = packet_text(test, "R3")
+                r = call("adaptive-configured", SYSTEM_PROMPT,
+                         run_ab.user_msg(test, test["pack"]) + pkt)
+                rec["execution"] = {
+                    "packet_supplied": bool(pkt),
+                    "worker_output": r["answer"],
+                    "post_check": run_ab.check_schema(
+                        r["answer"], test["pack"])}
+                rec["configured"] = ["extraction packet",
+                                     "field verification"]
+            else:  # cold start configuration
+                pkt = packet_text(test, "R3")
+                r = call("adaptive-configured", SYSTEM_PROMPT,
+                         run_ab.user_msg(test, test["pack"]) + pkt)
+                rec["execution"] = {
+                    "packet_supplied": bool(pkt),
+                    "worker_output": r["answer"],
+                    "gate_decision": run_ab.gate_decision(
+                        run_ab.gate_for(test, r["answer"],
+                                        test["pack"]))}
+                rec["configured"] = ["max mechanical coverage",
+                                     "probes on", "J scoring on"]
+            executed.append(rec)
+    finally:
+        _ORIG_CALL, run_c.c_t06 = real_call, real_c
+    out = {"demonstration": "adaptive runtime executed "
+                            "with a STUBBED worker",
            "profile_binding_ok": prof.check_binding(profile, hdr),
-           "selections": sels, "execution_configuration": config}
+           "executed": executed}
     json.dump(out, open(os.path.join(
         HERE, "RUNTIME-DEMONSTRATION.json"), "w"), indent=1)
     return out
+
+def demonstrate_runtime():
+    return run_adaptive_demo()
 
 def main():
     if "--matrix" in sys.argv:
@@ -375,8 +449,8 @@ def main():
         return
     if "--demonstrate-runtime" in sys.argv:
         out = demonstrate_runtime()
-        print("runtime demo:", [(c["operation"], c["decision"])
-                                 for c in out["execution_configuration"]])
+        print("runtime demo:", [(e["operation"],
+              e["selection"]["decision"]) for e in out["executed"]])
         return
     require_authorisation()
     profile_doc = None; hdr = None

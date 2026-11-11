@@ -1,56 +1,138 @@
 {
- "demonstration": "stubbed worker; mechanism only",
+ "demonstration": "adaptive runtime executed with a STUBBED worker",
  "profile_binding_ok": true,
- "selections": [
-  {
-   "task": "T06",
-   "op_class": "label-adoption",
-   "map_path": "X (R3)",
-   "weakness_class": "label-adoption",
-   "decision": "template",
-   "template": "TPL-MECH-CLASSIFY-PROBE",
-   "template_version": 1,
-   "requires": [
-    "mechanical classification computed independently",
-    "adoption probe with hard capture order",
-    "three records kept separate"
-   ],
-   "basis": "profile weak: T06/label-adoption; evidence [{'file': 'QWEN-AB-V2R-RESULTS.json', 'sha256': 'fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9', 'locator': 'runs[T06/C].process.worker_vs_system'}]"
-  },
-  {
-   "task": "T05",
-   "op_class": "record-composition",
-   "map_path": "X (R4)",
-   "weakness_class": "record-composition",
-   "decision": "template",
-   "template": "TPL-MECH-EXTRACTION-REFERENCE",
-   "template_version": 1,
-   "requires": [
-    "extraction mechanically owned",
-    "reference insertion by the machinery",
-    "field verification before emission"
-   ],
-   "basis": "profile weak: T05/record-composition; evidence [{'file': 'QWEN-AB-RESULTS.json', 'sha256': '87cfa2cec10a663bf3f14c1768141009bde87bbeb9e600592dfbb59c33f9cf97', 'locator': 'runs[T05/A].attempts[0] + final_gate_decision'}, {'file': 'QWEN-AB-V2R-RESULTS.json', 'sha256': 'fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9', 'locator': 'runs[T05/A].attempts[0] + final_gate_decision'}]"
-  }
- ],
- "execution_configuration": [
+ "executed": [
   {
    "operation": "T06/label-adoption",
-   "decision": "template",
-   "template": "TPL-MECH-CLASSIFY-PROBE",
-   "execution": [
-    "mechanical classification step",
-    "adoption probe enabled",
+   "selection": {
+    "task": "T06",
+    "op_class": "label-adoption",
+    "map_path": "X (R3)",
+    "weakness_class": "label-adoption",
+    "decision": "template",
+    "template": "TPL-MECH-CLASSIFY-PROBE",
+    "template_version": 1,
+    "requires": [
+     "mechanical classification computed independently",
+     "adoption probe with hard capture order",
+     "three records kept separate"
+    ],
+    "basis": "profile weak: T06/label-adoption; evidence [{'file': 'QWEN-AB-V2R-RESULTS.json', 'sha256': 'fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9', 'locator': 'runs[T06/C].process.worker_vs_system'}]"
+   },
+   "execution": {
+    "record_type": "adoption-probe (not scored)",
+    "worker_before": {
+     "S1": "SUPPORTED",
+     "S2": "UNTRACEABLE",
+     "S3": "UNTRACEABLE",
+     "S4": "CONTRADICTED"
+    },
+    "worker_before_raw": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
+    "mechanical": {
+     "S1": "SUPPORTED",
+     "S2": "UNTRACEABLE",
+     "S3": "UNTRACEABLE",
+     "S4": "CONTRADICTED"
+    },
+    "worker_after": {
+     "S1": "SUPPORTED",
+     "S2": "UNTRACEABLE",
+     "S3": "UNTRACEABLE",
+     "S4": "CONTRADICTED"
+    },
+    "worker_after_raw": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
+    "evidence_identified": {
+     "S1": {
+      "identified": false,
+      "route": null
+     },
+     "S2": {
+      "identified": false,
+      "route": null
+     },
+     "S3": {
+      "identified": false,
+      "route": null
+     },
+     "S4": {
+      "identified": false,
+      "route": null
+     }
+    },
+    "adoption_measurement": {
+     "S1": "already-aligned",
+     "S2": "already-aligned",
+     "S3": "already-aligned",
+     "S4": "already-aligned"
+    },
+    "adoption_note": "mechanical comparison of the three records; agreement is not scored as understanding \u2014 evidence_identified is recorded alongside"
+   },
+   "configured": [
+    "mechanical classification",
+    "adoption probe",
     "three records separated"
    ]
   },
   {
    "operation": "T05/record-composition",
-   "decision": "template",
-   "template": "TPL-MECH-EXTRACTION-REFERENCE",
-   "execution": [
-    "extraction packet at R2+",
-    "field verification before emission"
+   "selection": {
+    "task": "T05",
+    "op_class": "record-composition",
+    "map_path": "X (R4)",
+    "weakness_class": "record-composition",
+    "decision": "template",
+    "template": "TPL-MECH-EXTRACTION-REFERENCE",
+    "template_version": 1,
+    "requires": [
+     "extraction mechanically owned",
+     "reference insertion by the machinery",
+     "field verification before emission"
+    ],
+    "basis": "profile weak: T05/record-composition; evidence [{'file': 'QWEN-AB-RESULTS.json', 'sha256': '87cfa2cec10a663bf3f14c1768141009bde87bbeb9e600592dfbb59c33f9cf97', 'locator': 'runs[T05/A].attempts[0] + final_gate_decision'}, {'file': 'QWEN-AB-V2R-RESULTS.json', 'sha256': 'fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9', 'locator': 'runs[T05/A].attempts[0] + final_gate_decision'}]"
+   },
+   "execution": {
+    "packet_supplied": true,
+    "worker_output": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
+    "post_check": [
+     {
+      "check": "output is a single JSON object",
+      "pass": false,
+      "detail": "no parseable JSON object"
+     }
+    ]
+   },
+   "configured": [
+    "extraction packet",
+    "field verification"
+   ]
+  },
+  {
+   "operation": "T01/grounding",
+   "selection": {
+    "task": "T01",
+    "op_class": "grounding",
+    "map_path": "X (R2)",
+    "weakness_class": "grounding",
+    "decision": "cold start",
+    "template": "TPL-COLD-START",
+    "template_version": 1,
+    "requires": [
+     "highest map-allowed mechanical coverage",
+     "full reciprocal constraint set",
+     "adoption probes on judgment classes",
+     "independent scoring on every output"
+    ],
+    "basis": "no demonstrated entry"
+   },
+   "execution": {
+    "packet_supplied": true,
+    "worker_output": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
+    "gate_decision": "ELIGIBLE"
+   },
+   "configured": [
+    "max mechanical coverage",
+    "probes on",
+    "J scoring on"
    ]
   }
  ]

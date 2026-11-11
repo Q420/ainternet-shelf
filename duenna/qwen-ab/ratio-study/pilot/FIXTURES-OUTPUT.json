@@ -35,8 +35,6 @@
  "F-PROBE": {
   "order": [
    "unaided",
-   "revision",
-   "revision",
    "revision"
   ],
   "worker_after": {
@@ -46,10 +44,22 @@
    "S4": "CONTRADICTED"
   },
   "evidence_identified": {
-   "S1": true,
-   "S2": true,
-   "S3": true,
-   "S4": true
+   "S1": {
+    "identified": true,
+    "route": "verbatim-quote"
+   },
+   "S2": {
+    "identified": true,
+    "route": "grounded-absence"
+   },
+   "S3": {
+    "identified": true,
+    "route": "grounded-absence"
+   },
+   "S4": {
+    "identified": false,
+    "route": null
+   }
   },
   "adoption": {
    "S1": "already-aligned",
