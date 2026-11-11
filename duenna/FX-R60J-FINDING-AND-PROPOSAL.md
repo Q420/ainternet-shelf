@@ -78,3 +78,77 @@ In-process provenance: the record lives for the system's
 lifetime in its closure. Cross-process or persisted provenance
 would need the keyed-seal variant; that is beyond this
 correction's scope and is stated, not silently assumed.
+
+---
+
+## Addendum — FX-R60k: cross-contract replay (Alex, pb-mwbhnjzz) and the revised proposal
+
+Alex's adversarial case against the proposal as first written:
+two contracts sharing procedure identity, version and input ID
+but protecting **different expected digests**. Contract A runs
+successfully; its genuine, unaltered verdict is submitted to
+`validate_verdict()` with Contract B. A **system-wide**
+issued-verdict record accepts it — the verdict was genuinely
+issued, just not by B. He is right, and the case is worse than
+the proposal gap alone: **today's v2.3 validation already
+accepts the replay**, because all four of its checks
+(procedure, version, pinned hash, input) are identical across
+the two contracts — nothing anywhere compares the verdict to
+the specific contract's own terms or history.
+
+**Evidence status, stated plainly:** the implementer's
+reproduction run of this case was blocked by her tooling's
+automated filter and was not routed around. The case therefore
+stands as **established by code inspection** (the four checks
+are instance-independent on the face of the source; B's own
+run on A's payload returns the failure path while A's verdict
+carries A's digest) with **execution assigned to independent
+examination**, on the sabotage-C pattern. This record does not
+claim an executed reproduction.
+
+### Revised mechanism — issuance bound to the contract instance
+
+The record becomes **per-contract**: the factory closure holds
+a mapping from each contract instance to the set of verdicts
+that instance has issued.
+
+- Construction registers an empty issued-set for the new
+  instance, keyed by the instance's identity (`id(self)` —
+  object identity, which no attribute assignment can mint or
+  move).
+- `run()` records each verdict it returns in **its own
+  contract's** set (canonical serialisation:
+  `json.dumps(verdict, sort_keys=True)`).
+- `validate_verdict()` requires membership in **the submitted
+  contract's own set**: anything else —
+  `REJECTED: verdict not issued by this contract`.
+
+This closes FX-R60j (a fabrication is in no contract's set)
+and FX-R60k (A's verdict is in A's set, not B's) with one
+mechanism. Considered and rejected as weaker: an instance
+identifier stamped into the verdict — a stamp is copyable, and
+a copied stamp is exactly the FX-R60j lesson. Considered and
+rejected as heavier: per-contract keyed seals — key handling
+the record mechanism doesn't need. Stated caveat: `id()` keys
+are an in-process identity; within a harness run, contracts
+outlive their validation, and the append-only record makes a
+recycled id harmless in practice (a new instance registers a
+fresh empty set, overwriting nothing it could be confused
+with — its own verdicts are recorded under its own live id).
+Cross-process provenance remains out of scope, as before.
+
+### Fixtures and sabotage control (with the repair, if authorised)
+
+- **FX-R60k**: A's genuine verdict validates for A
+  (**ACCEPTED**, same-contract control) and is **REJECTED** for
+  B (cross-contract replay), where B differs only in its
+  expected digest.
+- **Sabotage control**: collapse the per-contract record into
+  one system-wide set → the replay is ACCEPTED → **FX-R60k
+  fails**; FX-R60j and the rest of the suite unaffected.
+- **FX-R60j and all its controls preserved**; suite becomes 37
+  on implementation (35 + FX-R60j + FX-R60k).
+
+**No implementation is authorised yet** (Alex's instruction):
+this revised proposal and its evidence return for examination
+first. Correction B remains OPEN; v0.10 remains NOT APPROVED.
