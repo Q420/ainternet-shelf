@@ -37,6 +37,14 @@ Derivation (mechanical, from shelved sources):
   remains OPEN. This dictionary's classification
   carries the adjudicated replacement usage; the flag
   closes only through its separate CORRECTION record.
+- REVISION 2 (2026-11-11): integrated revision
+  answering Alex's Independent Challenge 01 of this
+  dictionary (shelf commit 3ec54b1c, blob b7d7e17a…;
+  findings D04-01…D04-09) as one whole-document
+  reconciliation. The challenged draft was commit
+  3216dfb (blob 1db6d942…), preserved in git history.
+  No finding is declared closed by this revision; the
+  revision returns for challenge.
 
 ## Rules of the dictionary
 
@@ -243,8 +251,8 @@ will produce.
 | EVIDENCE_FOUND | the search act found material within its stated scope | RESULT outcome | §E pins present; search record preserved | finding material ≠ establishing a claim (≠ SUPPORTED) |
 | EVIDENCE_NOT_FOUND | the search act found no material within its stated scope | RESULT outcome | §E pins present; search record preserved | ≠ ABSENT: absence is the dictionary's scoped finding about the target itself |
 | NOT_DETERMINED | the act ran; the matter it addressed was not established | RESULT outcome | — | ≠ NOT_ESTABLISHED (classification); ≠ INDETERMINATE (completeness) |
-| attempt_events | ordered list of attempt records {attempt_n, gate_decision} for gated runs [FM-11] | RESULT | Req when a gate acted in the run; attempt numbers sequential; NEVER overwritten by outcome | attempt_events may record BLOCKED at attempt 1 while outcome = COMPLETED — corrected-on-retry; outcome always remains the run's terminal result. A RESULT is a terminal run report, not an interim progress message. |
-| completeness_assessment | COMPLETE / DEFICIENT / INDETERMINATE [FM-07: RESULT only; ACCEPT does not carry it] | RESULT | see values | — |
+| attempt_events | ordered list of attempt records {attempt_n, gate_decision} for gated runs [FM-11] | RESULT | Req when a gate acted in the run; attempt numbers sequential; NEVER overwritten by outcome | attempt_events may record BLOCKED at attempt 1 while outcome = COMPLETED — corrected-on-retry; outcome always remains the run's terminal result. A RESULT is a terminal run report, not an interim progress message. gate_decision takes values from the closed gate vocabulary {ELIGIBLE, BLOCKED}: the release gate's verdict at that attempt (ELIGIBLE — the attempt passed the gate; BLOCKED — release was prevented at that attempt). The vocabulary is the one recorded by the frozen battery harnesses; no canonical schema for it was retrieved (Crusher: UNKNOWN), so this is a stated domain definition. gate_decision is attempt-scope only; it is never the run's outcome. |
+| completeness_assessment | COMPLETE / DEFICIENT / INDETERMINATE [FM-07: RESULT only; ACCEPT does not carry it] | RESULT | Req on any RESULT reporting method-dependent work; absent only where no completeness claim is made. Where any of the declared method, application evidence, or evaluation is missing, this field is REQUIRED and its value is INDETERMINATE — omission may not bypass that result | — |
 | COMPLETE | → Dictionary COMPLETE | (value) | set enumerated; per-element status present | — |
 | DEFICIENT | every element assessed; at least one unsatisfied — SCHEMA-ONLY value, not a dictionary term | (value) | as COMPLETE | ≠ PARTIAL |
 | INDETERMINATE | any of declared method, application evidence, or evaluation missing | (value) | mandatory in that condition | — |
@@ -307,9 +315,10 @@ CORRECTION fields — legal: CORRECTION only.
 | authority_ref | authority relied on | Req | resolves; scope is MEANING |
 | reason_ref / bounded_explanation | why the target was wrong | Req — exactly one of the two | resolves / bounded |
 | basis | evidence_refs or adjudication_ref | Req (≥1) | resolves |
-| reliance_dispositions | per known reliance: {relying_act, claim_relied_on, disposition, disposition_authority_ref, disposition_act_ref, pending_condition} | Req | each entry complete; the enum alone effects nothing |
+| artifact_ref | the artefact this correction produces or concerns | Opt | resolves; hash matches |
+| reliance_dispositions | per known reliance: {relying_act, claim_relied_on, disposition, disposition_authority_ref, disposition_act_ref, pending_condition} | Req | each entry complete; pending_condition is present in an entry exactly when that entry's disposition is PENDING and is forbidden in entries with any other disposition; the enum alone effects nothing |
 | disposition values | STANDS / REASSESS / RETRACTED / PENDING | — | PENDING = identified reliance awaiting disposition; PENDING entries REQUIRE pending_condition [FM-10] |
-| pending_condition | bounded statement of what a PENDING disposition waits on | Req iff any disposition = PENDING | stated; never the dictionary's UNRESOLVED or DEFERRED |
+| pending_condition | bounded statement of what a PENDING disposition waits on | Req in an entry iff that entry's disposition = PENDING; FORBIDDEN otherwise | stated; never the dictionary's UNRESOLVED or DEFERRED |
 | unresolved_reliance | reliance that could NOT be identified or enumerated at all | Req | explicit statement; the value NONE = no unidentifiable reliance is known (it does NOT assert that no known reliance exists) [§5.7]; never omitted |
 | in_response_to_flag_ref | the flag this correction closes | Req when closing a flag | resolves; the flag's correction_ref points back here |
 
@@ -379,6 +388,12 @@ named set remains outside.
 enumerated subset only; the subset may contain only
 MET criteria (schema rule). Everything unlisted is
 unaccepted and unauthorised by the acceptance.
+FORM: the §C-1 cross-field checks — accepted_scope is
+a non-empty proper subset of the criteria set, every
+member MET, excluded_scope its exact complement,
+release_effect RELEASE_ARTEFACT_WITH_EXCLUSIONS.
+MEANING: whether the MET attestations are genuinely
+supported; the subset check never proves them.
 Boundary: not a criterion result (≠ UNMET, ≠
 UNASSESSED); not a degree of COMPLETE.
 
@@ -523,7 +538,13 @@ exposure to it.
 FORM: before-answer (differs), exposure event,
 after-answer (agrees) — all three records resolve,
 and their sequence is established by verified chain
-position (Part VII), never by timestamps.
+position within ONE valid chain (Part VII), never by
+timestamps. Records from different seats' chains
+cannot be ordered by chain position alone: a
+cross-chain instance requires an independently
+established causal-order mechanism, and where neither
+same-chain order nor such a mechanism exists, the
+instance is UNKNOWN.
 Boundary: ≠ ALIGNMENT (no change; prior agreement).
 Instance status: NO live event is established in the
 current record; F-PROBE demonstrates the record shape
@@ -534,8 +555,11 @@ instances are UNKNOWN.
 agreed with the named established answer before
 exposure to it.
 FORM: a pre-exposure answer record matching the
-established answer, its position in a verified chain
-preceding the exposure record's position.
+established answer, its position in the SAME verified
+chain preceding the exposure record's position;
+cross-chain pre-exposure claims require an
+independently established causal-order mechanism,
+failing which the instance is UNKNOWN.
 Boundary: ≠ ADOPTION — a post-exposure comparison
 alone (e.g. worker_vs_system) establishes neither
 term. Instance status: as ADOPTION.
@@ -686,7 +710,10 @@ a reason reference or bounded explanation; the basis
 each identified downstream reliance with its
 disposition, authority, and act record; and an explicit
 statement of reliance that could not be identified or
-resolved. The original remains immutable, visible, and
+enumerated (unresolved_reliance) — distinct from known
+reliance awaiting a disposition, which is encoded as
+PENDING with its pending_condition; the same reliance
+never appears in both. The original remains immutable, visible, and
 linked; repair is append-only, including against
 FROZEN records.
 FORM: all fields present; corrected_value and
@@ -759,8 +786,9 @@ verbatim, so the layers agree by construction.
 4. **RESULT** — outcome (Req), evidence_class (Req),
    evidence_refs (per §D), artifact_ref (Opt),
    adjudication_ref (Opt), attempt_events (conditional,
-   §G), completeness_assessment (Opt, method-dependent
-   results), claim_classification + target +
+   §G), completeness_assessment (per §G: required for
+   method-dependent results; INDETERMINATE mandatory
+   when any required input is missing), claim_classification + target +
    search_scope + method (Req on classification and
    absence results, §§E/H), in_reply_to (Opt).
 5. **REQUEST** — ask (Req), asked_seat (Req). No
@@ -786,7 +814,7 @@ verbatim, so the layers agree by construction.
    corrected_value XOR withdrawn, original_author_id,
    correcting_actor_id, correction_authority_shape,
    authority_ref, reason_ref XOR bounded_explanation,
-   basis, reliance_dispositions (with pending_condition
+   basis, artifact_ref (Opt), reliance_dispositions (with pending_condition
    per §I), unresolved_reliance,
    in_response_to_flag_ref (conditional).
    The ⚑ flag block (§I) may ride any type, including
@@ -850,14 +878,18 @@ verbatim, so the layers agree by construction.
 - Adversarial set: FC-01…FC-28 (Alex's schema proposal)
   stands as the design test set for this Part, to be
   executed only after freeze and authorisation.
-- First completed run, for the record: Remmy's
+- The 0.2 self-flag, for the record: Remmy's
   self-flag on Dictionary 0.2's NOT_ESTABLISHED
   (raised pb-20261111-dictionary-02-for-challenge) was
-  independently reviewed by Alex (pb-mwbzj7cq),
-  CONFIRMED, and is CORRECTED by this document's
-  NOT_DETERMINED rename — disposition CORRECTED,
-  correction record: this draft, subject to Alex's
-  challenge confirming the repair.
+  independently reviewed by Alex (pb-mwbzj7cq) and the
+  defect CONFIRMED. The substantive repair — the
+  classification/outcome split, with NOT_DETERMINED
+  carrying the outcome duty — is incorporated in this
+  dictionary. The flag's disposition nevertheless
+  remains OPEN: it closes only through a separate,
+  valid, authorised CORRECTION record, and this
+  dictionary is not that record. No such record exists
+  yet (Crusher retrieval, 2026-11-11: UNKNOWN).
 
 
 ## Part VI — FORM / MEANING audit table (key checks)
@@ -873,7 +905,7 @@ verbatim, so the layers agree by construction.
 | COMPLETE | set enumerated; per-element status present | the statuses are justified |
 | ADOPTION / ALIGNMENT | before/exposure/after records resolve; chain positions verified | the answers genuinely adopt / pre-agree |
 | SUPERSEDE | predecessor named; authority ref present | live-head effect on dispute (Gap 2) |
-| ⚑ flag | marker in schema position; target resolves; raiser recorded; key unique while open | the concern is material |
+| ⚑ flag | marker in schema position; target resolves; raiser recorded; the declared key's shape validates and the intended invariant is one open obligation per key — actual uniqueness is NOT mechanically established until a versioned registry and concurrency-safe enforcement exist and are independently tested (Gaps 2–3) | the concern is material |
 | CORRECTION | fields present; XOR holds; basis present; original intact | corrected value is right; reliance adequate |
 | ABSENT | scope, method, target, search record present | search was adequate to its scope |
 | Ordering | every chain link resolves; hashes match | a fork or competing successor needs an authorised conflict decision |
