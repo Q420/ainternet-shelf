@@ -2,12 +2,26 @@
 property its name claims. No live model calls."""
 import json, os, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-SHELF_ROOT = os.path.abspath(os.path.join(
-    HERE, "..", "..", "..", "ainternet-shelf", "duenna", "qwen-ab"))
+def _first_with(fname, cands):
+    for c in cands:
+        if os.path.exists(os.path.join(c, fname)):
+            return c
+    return cands[0]
+
+SHELF_ROOT = _first_with("run_ab.py", [
+    os.path.abspath(os.path.join(HERE, "..", "..")),
+    os.path.abspath(os.path.join(
+        HERE, "..", "..", "..", "ainternet-shelf",
+        "duenna", "qwen-ab"))])
+WS_ROOT = _first_with("run_ab.py", [
+    os.path.abspath(os.path.join(HERE, "..")),
+    os.path.abspath(os.path.join(
+        HERE, "..", "..", "..", "..", "..",
+        "agent-factory", "qwen-ab-test"))])
 results = {}
 
 # F-IMPORT: BOTH layouts, hash-verified, in subprocesses
-for layout, extra in [("workspace", {}),
+for layout, extra in [("workspace", {"PILOT_WS_ROOT": WS_ROOT}),
                       ("shelf", {"PILOT_SHELF_ROOT": SHELF_ROOT})]:
     env = {**os.environ, "PILOT_LAYOUT": layout, **extra}
     code = ("import pilot, json; "
@@ -41,7 +55,10 @@ results["F-R1R2"] = {
 # F-PROBE: order asserted; after-labels + evidence recorded
 order = []
 def stub(system, user):
-    if "Classify each statement" in user:
+    if user == "compose report":
+        order.append("flow-call")
+        ans = "stub report text"
+    elif "Classify each statement" in user:
         order.append("unaided")
         ans = "S1: SUPPORTED\nS2: UNTRACEABLE\n" \
               "S3: UNTRACEABLE\nS4: CONTRADICTED"
@@ -54,16 +71,23 @@ def stub(system, user):
     return {"answer": ans, "usage": None,
             "latency_s": 0.0, "attempts": 1}
 pilot._ORIG_CALL = stub
-pilot.run_c.c_t06 = lambda test: {"system_classification": {
-    "S1": "SUPPORTED", "S2": "UNTRACEABLE",
-    "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
+def _fake_c06(test):
+    # simulates the frozen flow's internal WORKER call
+    pilot.run_ab.call_qwen("s", "compose report")
+    return {"system_classification": {
+        "S1": "SUPPORTED", "S2": "UNTRACEABLE",
+        "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
+pilot.run_c.c_t06 = _fake_c06
 probe = pilot.t06_probe(pilot.TEST_BY_ID["T06"])
 results["F-PROBE"] = {
   "order": list(order),
   "worker_after": probe["worker_after"],
   "evidence_identified": probe["evidence_identified"],
   "adoption": probe["adoption_measurement"],
-  "pass": order == ["unaided", "revision"]
+  "flow_calls_accounted":
+      len(probe["mechanical_source"]["flow_calls"]) == 1,
+  "pass": order == ["unaided", "flow-call", "revision"]
+          and len(probe["mechanical_source"]["flow_calls"]) == 1
           and probe["worker_after"]["S4"] == "CONTRADICTED"
           and probe["evidence_identified"]["S1"]["route"] == "verbatim-quote"
           and probe["evidence_identified"]["S2"]["route"] == "grounded-absence"
@@ -106,6 +130,14 @@ results["F-CALLS"] = {
   "purposes": [c["purpose"] for c in pilot.CALLS],
   "pass": len(pilot.CALLS) == 2 and all(
       c["purpose"] == "arm-c-internal" for c in pilot.CALLS)}
+
+# F-ADAPTIVE-NEG: a defective T05 emission is caught by
+# the template's post-check (expected-failure fixture)
+_bad = pilot.run_ab.check_schema("not a record at all",
+                                 pilot.TEST_BY_ID["T05"]["pack"])
+results["F-ADAPTIVE-NEG"] = {
+  "checks_failed": sum(1 for c in _bad if not c["pass"]),
+  "pass": any(not c["pass"] for c in _bad)}
 
 print(json.dumps(results, indent=1))
 sys.exit(0 if all(v.get("pass") for v in results.values())

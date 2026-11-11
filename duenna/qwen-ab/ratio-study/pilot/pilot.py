@@ -30,14 +30,21 @@ def _resolve(fname, candidates):
     raise ImportError(f"{fname}: no hash-verified copy in {candidates}")
 
 LAYOUT = os.environ.get("PILOT_LAYOUT", "auto")
-_ROOTS = {"workspace": BASE, "shelf": SHELF_QA}
+WS = os.environ.get("PILOT_WS_ROOT") or BASE
+_PER_LAYOUT = {
+  "run_ab.py": {"workspace": [WS],
+                "shelf": [SHELF_QA]},
+  "run_c.py": {"workspace": [WS],
+               "shelf": [os.path.join(SHELF_QA,
+                                       "v248-foundation")]},
+  "tools24.py": {"workspace": [os.path.join(WS, "v24")],
+                 "shelf": [os.path.join(SHELF_QA, "v24")]},
+}
 RESOLVED = {}
-for fname, subs in [("run_ab.py", ["", ""]),
-                    ("run_c.py", ["", "v248-foundation"]),
-                    ("tools24.py", ["v24", "v24"])]:
-    roots = [BASE, SHELF_QA] if LAYOUT == "auto" else [_ROOTS[LAYOUT]]
-    cands = [os.path.join(r, s) if s else r
-             for r in roots for s in [subs[0] if r == BASE else subs[1]]]
+for fname, per in _PER_LAYOUT.items():
+    layouts = ["workspace", "shelf"] if LAYOUT == "auto" \
+        else [LAYOUT]
+    cands = [c for lv in layouts for c in per[lv]]
     p = _resolve(fname, cands)
     RESOLVED[fname] = p
     d = os.path.dirname(p)
@@ -188,8 +195,10 @@ def t06_probe(test):
         "/ UNTRACEABLE. One label per statement.\n\n"
         + run_ab.pack_text(pack))
     before = extract_labels(unaided["answer"])
-    CURRENT["purpose"] = "probe-mechanical (frozen c_t06)"
+    CURRENT["purpose"] = "frozen-arm-c-flow"
+    _before = len(CALLS)
     mech_flow = run_c.c_t06(test)
+    flow_calls = list(CALLS[_before:])
     mech = mech_flow.get("system_classification") or \
            mech_flow.get("classification")
     revised = call("probe-revision", SYSTEM_PROMPT,
@@ -211,6 +220,16 @@ def t06_probe(test):
         else:
             adoption[s] = "resisted"
     return {"record_type": "adoption-probe (not scored)",
+            "mechanical_source": {
+                "from": "frozen c_t06 flow — classification "
+                        "sub-record only",
+                "flow_calls": flow_calls,
+                "note": "the frozen flow also composes a "
+                        "worker report (its STEP-E call): "
+                        "that is a WORKER call, counted in "
+                        "flow_calls, never described as a "
+                        "mechanical operation; the probe "
+                        "discards the flow's report"},
             "worker_before": before,
             "worker_before_raw": unaided["answer"],
             "mechanical": mech,
@@ -267,7 +286,8 @@ def run_level(test, level, profile_doc=None, expected_header=None):
     return rec
 
 def _find_record_file(name):
-    for root in (BASE, SHELF_QA):
+    for root in (BASE, SHELF_QA,
+                 os.path.join(SHELF_QA, "v248-results")):
         p = os.path.join(root, name)
         if os.path.exists(p):
             return p
@@ -298,7 +318,16 @@ def extract_observations():
         doc = json.load(open(p))
         ref = {"file": fname, "sha256": _sha(p)}
         cond = {"model": doc.get("model"), "temperature": 0,
-                "battery": battery}
+                "battery": battery,
+                "binding_status": "legacy-unbound",
+                "binding_established":
+                    "model string + temperature + battery, "
+                    "from the record and its harness",
+                "binding_missing":
+                    "historical system-prompt hash, provider "
+                    "deployment record, adapter and tool "
+                    "versions at run time — not recoverable "
+                    "from the frozen records"}
         for run in doc["runs"]:
             if run["test"] == "T05" and run["arm"] == "A":
                 first = run["attempts"][0]
@@ -356,12 +385,25 @@ def verify_mechanism():
         HERE, "MECHANISM-VERIFICATION.json"), "w"), indent=1)
     return out
 
+def _t05_mechanical_record(test):
+    """The extraction template's declared workflow — the
+    frozen production construction itself (run_c.t05_record):
+    shelf_lookup + source_extract -> reference_insert per
+    field -> assembled record -> verify_field per field
+    plus the cross-record agreement check."""
+    tools24.load_contract()
+    record, ledger, ok = run_c.t05_record(None)
+    verifs = [tools24.verify_field(f, record.get(f), w)
+              ["verification"]
+              for f, w in run_ab.EXPECTED_RECORD.items()]
+    return record, ledger, verifs, ok
+
 def run_adaptive_demo():
-    """ADAPTIVE RUNTIME, executed with a stubbed worker
-    (labelled): profile -> selection -> template-resolved
-    configuration -> the configuration is PASSED INTO an
-    execution loop and run. Distinct from the calibration
-    matrix, which run_level serves."""
+    """ADAPTIVE RUNTIME executed end to end. The worker is
+    stubbed at the TRANSPORT level only (labelled): every
+    production path runs for real — including the frozen
+    c_t06 flow, whose internal worker calls are counted by
+    the accounting wrapper and never called mechanical."""
     global _ORIG_CALL
     profile = build_profile()
     hdr = profile["header"]
@@ -376,15 +418,19 @@ def run_adaptive_demo():
             "weakness_class": "grounding"}]
     sels = {f"{s['task']}/{s['op_class']}": s
             for s in prof.select(job, profile, hdr)}
-    real_call, real_c = _ORIG_CALL, run_c.c_t06
+    t05 = TEST_BY_ID["T05"]
+    assembled, _led, _ver, _ok = _t05_mechanical_record(t05)
+    real_call = _ORIG_CALL
     def stub(system, user):
+        if "status record" in user or "EXPECTED" in user \
+                or "emit" in user.lower():
+            return {"answer": json.dumps(assembled),
+                    "usage": None, "latency_s": 0.0,
+                    "attempts": 1}
         return {"answer": "S1: SUPPORTED\nS2: UNTRACEABLE\n"
                           "S3: UNTRACEABLE\nS4: CONTRADICTED",
                 "usage": None, "latency_s": 0.0, "attempts": 1}
     _ORIG_CALL = stub
-    run_c.c_t06 = lambda test: {"system_classification": {
-        "S1": "SUPPORTED", "S2": "UNTRACEABLE",
-        "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
     executed = []
     try:
         for key, s in sels.items():
@@ -398,17 +444,26 @@ def run_adaptive_demo():
                                      "three records separated"]
             elif s.get("template") == \
                     "TPL-MECH-EXTRACTION-REFERENCE":
-                pkt = packet_text(test, "R3")
+                record, ledger, verifs, all_ok = \
+                    _t05_mechanical_record(test)
                 r = call("adaptive-configured", SYSTEM_PROMPT,
-                         run_ab.user_msg(test, test["pack"]) + pkt)
+                         "Emit exactly this status record as a "
+                         "single JSON object and nothing else:\n"
+                         + json.dumps(record))
                 rec["execution"] = {
-                    "packet_supplied": bool(pkt),
-                    "worker_output": r["answer"],
-                    "post_check": run_ab.check_schema(
-                        r["answer"], test["pack"])}
-                rec["configured"] = ["extraction packet",
-                                     "field verification"]
-            else:  # cold start configuration
+                    "reference_insert_ledger": ledger,
+                    "assembled_record": record,
+                    "verify_field": verifs, "all_fields_verified": all_ok,
+                    "worker_emission": r["answer"],
+                    "emission_schema_check":
+                        run_ab.check_schema(r["answer"],
+                                            test["pack"])}
+                rec["configured"] = ["extraction mechanically "
+                                     "owned", "reference "
+                                     "insertion performed",
+                                     "field verification "
+                                     "before emission"]
+            else:
                 pkt = packet_text(test, "R3")
                 r = call("adaptive-configured", SYSTEM_PROMPT,
                          run_ab.user_msg(test, test["pack"]) + pkt)
@@ -422,9 +477,11 @@ def run_adaptive_demo():
                                      "probes on", "J scoring on"]
             executed.append(rec)
     finally:
-        _ORIG_CALL, run_c.c_t06 = real_call, real_c
-    out = {"demonstration": "adaptive runtime executed "
-                            "with a STUBBED worker",
+        _ORIG_CALL = real_call
+    out = {"demonstration": "adaptive runtime executed; "
+                            "worker stubbed at transport "
+                            "level only; all production "
+                            "paths real",
            "profile_binding_ok": prof.check_binding(profile, hdr),
            "executed": executed}
     json.dump(out, open(os.path.join(

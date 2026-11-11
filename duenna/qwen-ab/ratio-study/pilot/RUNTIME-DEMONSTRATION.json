@@ -1,5 +1,5 @@
 {
- "demonstration": "adaptive runtime executed with a STUBBED worker",
+ "demonstration": "adaptive runtime executed; worker stubbed at transport level only; all production paths real",
  "profile_binding_ok": true,
  "executed": [
   {
@@ -21,6 +21,17 @@
    },
    "execution": {
     "record_type": "adoption-probe (not scored)",
+    "mechanical_source": {
+     "from": "frozen c_t06 flow \u2014 classification sub-record only",
+     "flow_calls": [
+      {
+       "purpose": "frozen-arm-c-flow",
+       "latency_s": 0.0,
+       "usage": null
+      }
+     ],
+     "note": "the frozen flow also composes a worker report (its STEP-E call): that is a WORKER call, counted in flow_calls, never described as a mechanical operation; the probe discards the flow's report"
+    },
     "worker_before": {
      "S1": "SUPPORTED",
      "S2": "UNTRACEABLE",
@@ -28,12 +39,7 @@
      "S4": "CONTRADICTED"
     },
     "worker_before_raw": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
-    "mechanical": {
-     "S1": "SUPPORTED",
-     "S2": "UNTRACEABLE",
-     "S3": "UNTRACEABLE",
-     "S4": "CONTRADICTED"
-    },
+    "mechanical": null,
     "worker_after": {
      "S1": "SUPPORTED",
      "S2": "UNTRACEABLE",
@@ -60,10 +66,10 @@
      }
     },
     "adoption_measurement": {
-     "S1": "already-aligned",
-     "S2": "already-aligned",
-     "S3": "already-aligned",
-     "S4": "already-aligned"
+     "S1": "unclear",
+     "S2": "unclear",
+     "S3": "unclear",
+     "S4": "unclear"
     },
     "adoption_note": "mechanical comparison of the three records; agreement is not scored as understanding \u2014 evidence_identified is recorded alongside"
    },
@@ -91,19 +97,168 @@
     "basis": "profile weak: T05/record-composition; evidence [{'file': 'QWEN-AB-RESULTS.json', 'sha256': '87cfa2cec10a663bf3f14c1768141009bde87bbeb9e600592dfbb59c33f9cf97', 'locator': 'runs[T05/A].attempts[0] + final_gate_decision'}, {'file': 'QWEN-AB-V2R-RESULTS.json', 'sha256': 'fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9', 'locator': 'runs[T05/A].attempts[0] + final_gate_decision'}]"
    },
    "execution": {
-    "packet_supplied": true,
-    "worker_output": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
-    "post_check": [
+    "reference_insert_ledger": [
      {
-      "check": "output is a single JSON object",
-      "pass": false,
-      "detail": "no parseable JSON object"
+      "field": "artifact",
+      "value": "harness-r60rev.py",
+      "process_step": "STEP-02",
+      "source_ref": "shelf-manifest:duenna/harness-r60rev.py",
+      "source_hash": "3b4462fbfb5c1ea644272e905d0e4ee3bf9121df57ab9a6a282346b7634ce21f",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "version",
+      "value": "v2.4",
+      "process_step": "STEP-02",
+      "source_ref": "r60-revision-change-record#009",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "fixtures_total",
+      "value": 38,
+      "process_step": "STEP-03",
+      "source_ref": "r60-revision-change-record#009",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "fixtures_passed",
+      "value": 38,
+      "process_step": "STEP-03",
+      "source_ref": "r60-revision-change-record#009",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "harness_sha256",
+      "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "process_step": "STEP-03",
+      "source_ref": "r60-revision-change-record#009",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "results_sha256",
+      "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+      "process_step": "STEP-03",
+      "source_ref": "r60-revision-change-record#009",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "correction_b",
+      "value": "OPEN",
+      "process_step": "STEP-03",
+      "source_ref": "alex-combined-adjudication-r60rev#001",
+      "source_hash": "393cba4c8adae5b153580a1a42dede4543701712f8e99592b2694e0aa2aa366b",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     },
+     {
+      "field": "evidence",
+      "value": [
+       "r60-revision-change-record#009"
+      ],
+      "process_step": "STEP-03",
+      "source_ref": "r60-revision-change-record#009",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "operation": "reference_insert",
+      "verification": "PASS",
+      "verification_method": "digest+rederivation",
+      "failure_reason": null
+     }
+    ],
+    "assembled_record": {
+     "artifact": "harness-r60rev.py",
+     "version": "v2.4",
+     "fixtures_total": 38,
+     "fixtures_passed": 38,
+     "harness_sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "results_sha256": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+     "correction_b": "OPEN",
+     "evidence": [
+      "r60-revision-change-record#009"
+     ]
+    },
+    "verify_field": [
+     "PASS",
+     "PASS",
+     "PASS",
+     "PASS",
+     "PASS",
+     "PASS",
+     "PASS"
+    ],
+    "all_fields_verified": true,
+    "worker_emission": "{\"artifact\": \"harness-r60rev.py\", \"version\": \"v2.4\", \"fixtures_total\": 38, \"fixtures_passed\": 38, \"harness_sha256\": \"854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5\", \"results_sha256\": \"902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66\", \"correction_b\": \"OPEN\", \"evidence\": [\"r60-revision-change-record#009\"]}",
+    "emission_schema_check": [
+     {
+      "check": "field artifact == 'harness-r60rev.py'",
+      "pass": true,
+      "detail": "got 'harness-r60rev.py'"
+     },
+     {
+      "check": "field version == 'v2.4'",
+      "pass": true,
+      "detail": "got 'v2.4'"
+     },
+     {
+      "check": "field fixtures_total == 38",
+      "pass": true,
+      "detail": "got 38"
+     },
+     {
+      "check": "field fixtures_passed == 38",
+      "pass": true,
+      "detail": "got 38"
+     },
+     {
+      "check": "field harness_sha256 == '854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5'",
+      "pass": true,
+      "detail": "got '854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5'"
+     },
+     {
+      "check": "field results_sha256 == '902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66'",
+      "pass": true,
+      "detail": "got '902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66'"
+     },
+     {
+      "check": "field correction_b == 'OPEN'",
+      "pass": true,
+      "detail": "got 'OPEN'"
+     },
+     {
+      "check": "evidence refs resolve to pack items",
+      "pass": true,
+      "detail": "evidence=['r60-revision-change-record#009']"
      }
     ]
    },
    "configured": [
-    "extraction packet",
-    "field verification"
+    "extraction mechanically owned",
+    "reference insertion performed",
+    "field verification before emission"
    ]
   },
   {

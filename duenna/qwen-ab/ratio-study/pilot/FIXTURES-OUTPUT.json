@@ -35,6 +35,7 @@
  "F-PROBE": {
   "order": [
    "unaided",
+   "flow-call",
    "revision"
   ],
   "worker_after": {
@@ -67,6 +68,7 @@
    "S3": "already-aligned",
    "S4": "already-aligned"
   },
+  "flow_calls_accounted": true,
   "pass": true
  },
  "F-PROFILE": {
@@ -83,6 +85,10 @@
    "arm-c-internal",
    "arm-c-internal"
   ],
+  "pass": true
+ },
+ "F-ADAPTIVE-NEG": {
+  "checks_failed": 1,
   "pass": true
  }
 }

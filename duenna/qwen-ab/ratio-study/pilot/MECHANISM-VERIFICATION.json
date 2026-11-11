@@ -10,7 +10,10 @@
    "conditions": {
     "model": "qwen/qwen3.8-27b",
     "temperature": 0,
-    "battery": "V1"
+    "battery": "V1",
+    "binding_status": "legacy-unbound",
+    "binding_established": "model string + temperature + battery, from the record and its harness",
+    "binding_missing": "historical system-prompt hash, provider deployment record, adapter and tool versions at run time \u2014 not recoverable from the frozen records"
    },
    "evidence_refs": [
     {
@@ -30,7 +33,10 @@
    "conditions": {
     "model": "qwen/qwen3.8-27b",
     "temperature": 0,
-    "battery": "V2R"
+    "battery": "V2R",
+    "binding_status": "legacy-unbound",
+    "binding_established": "model string + temperature + battery, from the record and its harness",
+    "binding_missing": "historical system-prompt hash, provider deployment record, adapter and tool versions at run time \u2014 not recoverable from the frozen records"
    },
    "evidence_refs": [
     {
@@ -50,7 +56,10 @@
    "conditions": {
     "model": "qwen/qwen3.8-27b",
     "temperature": 0,
-    "battery": "V2R"
+    "battery": "V2R",
+    "binding_status": "legacy-unbound",
+    "binding_established": "model string + temperature + battery, from the record and its harness",
+    "binding_missing": "historical system-prompt hash, provider deployment record, adapter and tool versions at run time \u2014 not recoverable from the frozen records"
    },
    "evidence_refs": [
     {
@@ -78,6 +87,7 @@
     "Alex adjudication of V2R"
    ],
    "critical_failures": [],
+   "evidence_class": "bound",
    "evidence": [
     {
      "file": "QWEN-AB-RESULTS.json",
@@ -106,6 +116,7 @@
     "Alex review pb-mwbps5ss (V2R)"
    ],
    "critical_failures": [],
+   "evidence_class": "bound",
    "evidence": [
     {
      "file": "QWEN-AB-V2R-RESULTS.json",

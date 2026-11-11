@@ -30,10 +30,27 @@ TEMPLATES = {
                  "independent scoring on every output"]},
 }
 
+TOOLS24_SHA = ("89a70606a7bbfeafb1fe7b610ff28fce4ec"
+               "f0109ad2676520f519b63b4f4f9c0")
+
 def tools_version():
-    p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                     "..", "v24", "tools24.py")
-    return hashlib.sha256(open(p, "rb").read()).hexdigest()
+    """Resolve the frozen tools24.py by HASH across the
+    known layouts (workspace: ../v24; shelf:
+    ../../v24 from the pilot package). A descriptive
+    path is not verification — the digest must match."""
+    import hashlib as _h
+    here = os.path.dirname(os.path.abspath(__file__))
+    cands = [os.path.join(here, "..", "v24", "tools24.py"),
+             os.path.join(here, "..", "..", "v24", "tools24.py")]
+    root = os.environ.get("PILOT_SHELF_ROOT")
+    if root:
+        cands.append(os.path.join(root, "v24", "tools24.py"))
+    for p in cands:
+        if os.path.exists(p) and \
+                _h.sha256(open(p, "rb").read()).hexdigest() == TOOLS24_SHA:
+            return TOOLS24_SHA
+    raise FileNotFoundError("no hash-verified tools24.py "
+                            f"in {cands}")
 
 def make_header(worker_id, system_prompt):
     return {
@@ -125,6 +142,10 @@ def derive_entries(observations):
           "adjudication": sorted({o["adjudication"] for o in obs}),
           "critical_failures":
             [c for o in obs for c in o["critical_failures"]],
+          "evidence_class":
+            "legacy-unbound" if any(
+                o.get("binding_status") == "legacy-unbound"
+                for o in obs) else "bound",
           "evidence": [r for o in obs for r in o["evidence_refs"]]})
     return entries
 
@@ -158,6 +179,16 @@ def select(job_ops, profile, expected_header):
             if tpl is None:
                 out.append(_cold(op, "weak but no template "
                                      "for weakness class"))
+            elif e.get("evidence_class") == "legacy-unbound":
+                t = TEMPLATES[tpl]
+                out.append({**op, "decision": "template",
+                            "template": tpl,
+                            "template_version": t["version"],
+                            "requires": t["requires"],
+                            "basis": "legacy-unbound weakness "
+                                     "hypothesis — support may "
+                                     "be added, never removed; "
+                                     f"evidence {e['evidence']}"})
             else:
                 t = TEMPLATES[tpl]
                 out.append({**op, "decision": "template",
@@ -167,6 +198,13 @@ def select(job_ops, profile, expected_header):
                             "basis": f"profile weak: {op['task']}/"
                                      f"{op['op_class']}; evidence "
                                      f"{e['evidence']}"})
+        elif e.get("evidence_class") == "legacy-unbound":
+            # Legacy rule: unbound historical evidence may
+            # justify ADDING support (weak -> template,
+            # handled above) but never REDUCING coverage.
+            out.append(_cold(op, "legacy-unbound evidence: "
+                "a demonstrated claim from unbound history "
+                "cannot justify reduced coverage"))
         else:
             out.append({**op, "decision": op["map_path"],
                         "template": None,
