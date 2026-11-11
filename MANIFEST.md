@@ -13,14 +13,14 @@ full corpus sweep was shelved the same day.
 | `seats/alex.md` | 5099957afe09d590efb232a8cffc7dbe406e257f7428cce46f537872fabe6dc3 | Alex's page — roles, seats, rules, state |
 | `seats/vane.md` | 599ad33b2559ad57c4547a0d552572beddc187a6254814c98e07499b1fa1b26a | Vane's page — examiner role and record |
 | `seats/remmy.md` | 9c149a2c8feb4812bcb202e1831e0be1b853987462b97a00654de768d2add893 | Remmy's page — standing processes |
-| `record/DUENNA-PLAN.md` | 81de4ea236672846426423b955fb19c7ee7972d0574a2997b794ac4569a864cf | THE plan list — the programme's authoritative state |
+| `record/DUENNA-PLAN.md` | 22f7e0133dad90ace3ae83911be72e0f84db37591fc931e24bbb0a8d5a648c3d | THE plan list — the programme's authoritative state |
 | `record/DUENNA-STEP6-ARCHITECTURE.md` | 69664387ed302c54d2b77baa0ba235c3cc79d04595d50b5279ecafcf1556637d | The agreed four-component architecture (step 6, agreed text) |
 | `record/DUENNA-STEP7-PLAN.md` | 929b2378a40dc45fa1f58c5014d60cc1aa014acfb6c70870d9bf823b2ae06a64 | The joint implementation plan (step 7, agreed text with amendments) |
 | `record/v010-unresolved-items.md` | b9e8e457c4858def403f8a9321bf5e16ef537015eb102c76ec3659776efecb33 | What v0.10 deliberately does not claim — gaps, statuses, the open gate |
 | `record/STAGE0-BASELINE-EVIDENCE.md` | 73b3fabdf95e672c06c692c521dfcca8ebc2d5d285a86062989ad4349d33f03a | Stage 0 baseline run record (31/31 PASS, seed hash unchanged, zero comparison diffs) |
 | `record/stage0-run-stdout.txt` | 1765950a8b9a1a06f39ddf233d72667f4be47d1b6ed269af708c12f71a98ce05 | Stage 0 raw run output (31 PASS lines + summary) |
 | `record/stage0-results.json` | ad4dc13754c543520dea2b93c80165df85595a18e873438f2d600779e355ce38 | Stage 0 results JSON — byte-identical to the delivered v0.10 results |
-| `record/GATE-REGISTER.md` | 6db2e29a58229ab44d11623adba0411b5876905a2b332bb1e5b075e6a5f552d7 | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
+| `record/GATE-REGISTER.md` | c090e221cda2f23eb2188e8a0c6591aee64afdd8ea66b00b6ed1ffe02597195d | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
 
 ## duenna/ — the specification corpus
 

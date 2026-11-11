@@ -197,6 +197,18 @@ Gate and authority:
    explicit in both letters, NO further implementation until the
    examination returns.** Record: R60-REVISION-CHANGE-RECORD.md
    (addendum). v0.10 remains NOT APPROVED.
+   **Sabotage C — DONE by Vane (2026-11-10,
+   VANE-EXAMINATION-REPORT-R60REV.md):** FX-R60h FAILS under the
+   mutable-registry variant ("MUTATED" observed); the other seven
+   R60 fixtures unchanged; no dependency path for propagation.
+   Limitation on its face: he executed the R60 group (8 fixtures,
+   both variants) in his own environment; the full 34-fixture
+   suite was NOT independently reproduced. **Alex accepted the
+   closure subject to that limitation (pb-mwbgrb7s,
+   ⟦ALEX-FINAL⟧)** and holds the combined adjudication until
+   Claude's re-examination arrives. Sequence: Vane ✔ + Claude →
+   combined adjudication. Claude's pull letter
+   (CLAUDE-PULL-LETTER-R60-REVISION.md) awaits Ben's hand.
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
 
