@@ -39,10 +39,7 @@ MEANING route where one exists.
 | previous_record_hash | predecessor hash in the sender's chain | Opt | resolves and matches, where chain ordering is claimed | cross-chain order is NOT established by this field |
 | ⚑ | review marker (schema property, U+2691), boolean | Opt | if true, a flag block (§I) is mandatory; inert outside this property | — |
 
-Task-reference family, closed [FM-13]: task_id
-(envelope; must resolve now against its pin) ·
-task_ref (§F; a DELEGATION reference object that must
-resolve against its own pin) · proposed_task_id (§J; a
+Task-reference family, closed [FM-13]: task_id (envelope; resolves now against its pin) · task_ref (§F; object {task_id, task_registry_ref}, with the nested registry pin shaped {kind, id, hash}) · proposed_task_id (§J; a
 proposal — must be well-formed and must NOT yet
 resolve; its uniqueness in the target registry is an
 invariant, enforcement UNKNOWN) · parent_task_ref (§J;
@@ -182,8 +179,8 @@ reference/read access. (This is the rule Dictionary
 | claim_ref | the claim within the target, or the sentinel WHOLE_RECORD | Req | identifies one claim, or WHOLE_RECORD |
 | concern_id | one attributed concern | Req, ≥1 | unique within its flag |
 | raiser_id | seat that raised each concern | Req per concern | resolves; raiser holds flagging authority |
-| review_assignment | ASSIGNED / UNASSIGNED [FM-18: assignment is its own field, not folded into OPEN] | Req in block | UNASSIGNED ⟺ review_owner omitted; ASSIGNED ⟺ review_owner present |
-| review_assignment | ASSIGNED / UNASSIGNED | Req in block | UNASSIGNED iff review_owner is absent; ASSIGNED iff review_owner is present | Assignment state is explicit; it is not inferred from OPEN. |\n| review_owner | authorised reviewer, independent of every attached raiser | Req iff review_assignment = ASSIGNED | resolves; differs from every raiser_id; holds authority for the target's class |
+| review_assignment | ASSIGNED / UNASSIGNED | Req in block | UNASSIGNED iff review_owner is absent; ASSIGNED iff review_owner is present | Assignment state is explicit; it is not inferred from OPEN. |
+| review_owner | authorised reviewer, independent of every attached raiser | Req iff review_assignment = ASSIGNED | resolves; differs from every raiser_id; holds authority for the target's class |
 | review_disposition | the obligation's current state: OPEN / CLEARED / CORRECTED [FM-18] | Req in block | OPEN = non-terminal, no disposition yet assigned; CLEARED and CORRECTED are the ONLY terminal values; OPEN is never a disposition in the terminal sense and never implies resolution |
 | correction_ref | the CORRECTION record closing the flag | Req iff review_disposition = CORRECTED | resolves to an existing CORRECTION record |
 | prior_flag_ref | the closed obligation a new flag succeeds | Opt | resolves; the new obligation never mutates the closed one |
@@ -278,8 +275,7 @@ verbatim, so the layers agree by construction.
 7. **STOP** — operation_ref (Req), reason_code (Req),
    resume_condition (Req), release_authority_ref
    (Req), defective_field (conditional, §F),
-   required_correction (Opt), reason_ref /
-   reason_ref (Opt).
+   required_correction (Opt), reason_ref (Opt), bounded_explanation (Opt; at most one of reason_ref/bounded_explanation).
 8. **REGISTER_TASK** — proposed_task_id (Req),
    authority_ref (Req), scope (Req), owner (Req),
    parent_task_ref (Opt), constraints (Req),
@@ -320,7 +316,19 @@ verbatim, so the layers agree by construction.
    not close it; a separate CORRECTION record does,
    when it exists.
 
-## N. Adjudicated merge decisions and enforcement honesty\n\nThe parallel comparison was adjudicated by Alex on 2026-11-11:\n- D1: {kind, id, hash} retained. Uniformity with the established artefact-reference shape outweighs the proposed two-member simplification.\n- D2: Remmy's attempt_events model adopted. `outcome` is the final outcome of the reported run; ordered `attempt_events` preserve each gated attempt. There is no separate `final_outcome` field. This deliberately models terminal run reports; interim progress reporting is outside this message shape.\n- D3: Remmy's structural separation adopted: REQUIREMENT has no evidence_class/evidence_refs; CORRECTION uses basis rather than standalone evidence_refs. Optional artifact_ref remains available on CORRECTION to identify a correction artefact.\n- D4: explicit review_assignment enum adopted; no null sentinel. OPEN remains the obligation lifecycle state and does not encode assignment.\n\nConcessions incorporated: bounded_explanation is not legal on RULING; STOP may carry at most one optional reason_ref/bounded_explanation, while CORRECTION requires exactly one; defective_field must name a schema field (or a required-but-absent field for MISSING_FIELD); task_ref must agree with envelope task_id when both are supplied; UNASSESSED may carry optional assessment_note without changing its meaning.\n\nCrusher's targeted retrieval returned UNKNOWN for serialized ACCEPT, RESULT, task-registration, and evidence/reference examples. These choices therefore remain labelled design decisions, not claims of corpus precedent.\n\n## N. Enforcement honesty
+## N. Adjudicated merge decisions and enforcement honesty
+
+The parallel comparison was adjudicated by Alex on 2026-11-11:
+- D1: {kind, id, hash} retained. Uniformity with the established artefact-reference shape outweighs the proposed two-member simplification.
+- D2: Remmy's attempt_events model adopted. `outcome` is the final outcome of the reported run; ordered `attempt_events` preserve each gated attempt. There is no separate `final_outcome` field. This deliberately models terminal run reports; interim progress reporting is outside this message shape.
+- D3: Remmy's structural separation adopted: REQUIREMENT has no evidence_class/evidence_refs; CORRECTION uses basis rather than standalone evidence_refs. Optional artifact_ref remains available on CORRECTION to identify a correction artefact.
+- D4: explicit review_assignment enum adopted; no null sentinel. OPEN remains the obligation lifecycle state and does not encode assignment.
+
+Concessions incorporated: bounded_explanation is not legal on RULING; STOP may carry at most one optional reason_ref/bounded_explanation, while CORRECTION requires exactly one; defective_field must name a schema field (or a required-but-absent field for MISSING_FIELD); task_ref must agree with envelope task_id when both are supplied; UNASSESSED may carry optional assessment_note without changing its meaning.
+
+Crusher's targeted retrieval returned UNKNOWN for serialized ACCEPT, RESULT, task-registration, and evidence/reference examples. These choices therefore remain labelled design decisions, not claims of corpus precedent.
+
+## N. Enforcement honesty
 
 Every FORM rule here specifies a check; no checker
 exists or is authorised. Uniqueness, coalescing,
