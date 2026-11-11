@@ -19,6 +19,17 @@ extension-point addition arrived; this revision
 supersedes it as the draft of record. Nothing else
 changed.
 
+**Revision 3 (2026-11-11):** Alex's six corrections
+applied — retirement's tombstone becomes the head
+(status RETIRED, never NONE); unknown type moved to
+REQUIRED; generation allocation specified (§3.6);
+the §3.3 STOP rule corrected in place (no reader
+should have to reconcile an obsolete rule against a
+later note); extension compatibility precedence made
+explicit (§12); chunk identity distinguished as its
+own tier with Ben's chunk requirement stated as
+unmet by document-level IDs (§11).
+
 ## 1. Ben's wording, verbatim
 
 The pool, in Ben's original words (carried by Alex,
@@ -123,7 +134,12 @@ each segment one job.
 Segment jobs: the **generation counter** carries the
 ordering claim; the **date** is informational only,
 never proof; the **hash tail** carries integrity.
-Disagreement among the three is a STOP, not a detail.
+The disagreement rule, stated once and governing
+everywhere: **generation disagreement with the
+ledger is a STOP; full-digest disagreement with the
+ledger is a STOP; date disagreement is metadata
+drift — recorded, and never used to infer
+ordering.**
 Type vocabulary (proposed closed starter set, for
 ruling): DOC document · SPEC specification · DATA
 record set/results · CODE harness/tool · RPT report ·
@@ -197,6 +213,24 @@ the exact version ID they consumed AND the ledger
 snapshot they were evaluated against. The identifier
 makes staleness legible; the dependency record makes
 it machine-checkable. Both are required.
+
+### 3.6 Generation allocation (Alex's correction 3)
+The counter's rules, specified: generation numbers
+are **unique within an item** and **monotonically
+advancing**. A number is allocated when a version is
+proposed, not when it is approved — so two competing
+successors to the same predecessor each hold their
+own number, and only the atomic override decides
+which becomes head; the loser remains recorded,
+visible and non-operative, and must never silently
+become current. A proposed version that is rejected
+or abandoned **consumes its number permanently**:
+numbers are never reused, because a reused number
+would let two different contents answer to one
+version stem. Gaps in an item's accepted sequence
+are therefore normal and are explained by the
+ledger's candidate history (§10's skipped-generation
+rule states the same from the reader's side).
 
 ## 4. Dependency declarations and graph ownership
 Each layer declares its own dependencies: which items
@@ -354,14 +388,22 @@ REQUIRED:
   which components are current.
 - Ledger corruption or conflicting heads → affected
   operations stop pending reconciliation.
+- Type unknown → quarantined pending classification;
+  not consumable meanwhile. A safety invariant, not
+  a convenience: a type cannot become consumable
+  merely because nobody has classified it yet.
+  (Moved here from OPTIONAL on Alex's correction.)
 
 OPTIONAL (default dispositions recorded):
 - Date differs from the ledger's record → metadata
   drift, logged; ordering never inferred from it.
-- Type unknown → quarantined pending classification;
-  not consumable meanwhile.
-- Item retired with no successor → tombstone entry;
-  head set to NONE, reason recorded. (Added here.)
+- Item retired with no successor → a tombstone
+  record is minted as a version of the item and
+  BECOMES its head, with status RETIRED and no
+  active successor; the chain remains addressable.
+  (Head is never NONE: Gap 2 requires one
+  authoritative head per chain. Corrected on Alex's
+  review.)
 - Item splits or merges → new item IDs minted; the
   old item's head points to a SPLIT/MERGE record
   naming the successors. (Added here.)
@@ -385,14 +427,24 @@ authority is Ben's to grant).
 
 **Open design questions:** sweep triggers (on
 change, pre-flight only, or both); receipt retention
-and where receipts are ledgered; whether chunk-level
-IDs (Ben's "every appended chunk") extend below the
-document level — the corpus index already mints
-section identities, so a chunk tier exists to be
-governed rather than invented; the exact atomicity
+and where receipts are ledgered; the exact atomicity
 mechanism for the override, which is Gap 2's
 machinery and remains to be built and independently
 tested before any FORM claim.
+
+**Chunk identity (Alex's correction 6).** Three
+identity tiers must stay distinct: document/item
+identity, version identity, and section/chunk
+identity. Ben's original requirement is at the chunk
+tier — "every appended chunk of verified
+information" — and document-level IDs do NOT by
+themselves satisfy it; this paper does not claim
+otherwise. The corpus index already mints section
+identities (section_id, per-section sha256, chain
+hashes). The open design task is to investigate
+governing those existing section identities under
+this same identity model — item, version, head —
+rather than inventing a competing scheme.
 
 **Closing honesty:** everything in §§3–10 is a
 proposed mechanism. What exists today is: a shelf,
@@ -446,11 +498,15 @@ Candidate extension points:
   handled predictably: preserved, ignored for
   behaviour, and recorded.
 
-Failure rule: a component encountering an extension
-it does not understand continues safely where the
-extension is inert for it, and **fails closed** where
-the extension touches a required dependency or an
-authority decision. Reserved capacity is not
+Failure rule, with its precedence made explicit: a
+component encountering an extension it does not
+understand may preserve and ignore it **only when
+the extension is genuinely inert to that
+component**. Where an extension affects a required
+dependency, an authority decision, or a required
+validation result, the component **fails closed** —
+that precedence overrides the preserve-and-ignore
+default in every case. Reserved capacity is not
 implemented functionality: an extension point's
 existence claims nothing about what will fill it,
 and activation is a separate, approved event.
