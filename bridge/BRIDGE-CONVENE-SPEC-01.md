@@ -436,7 +436,7 @@ The following are deliberately not decided by this sheet:
 9. **Gemini sidebar target:** Gemini-native sidebar versus Chrome side panel.
 10. **Append serialization:** confirm the proposed same-PB-ID, separately attributed Ben segment and whether append applies to both directions.
 11. **Disconnect semantics:** confirm whether the current per-seat Disconnect control should be renamed Unregister this seat while a separate global Disconnect bridge clears both registrations.
-13. **Basic-fix code snippet:** Ben has been asked to identify the exact snippet. It has not been inspected and must not be guessed, reconstructed or treated as a source requirement until supplied.
+12. **Basic-fix code snippet:** Ben has been asked to identify the exact snippet. It has not been inspected and must not be guessed, reconstructed or treated as a source requirement until supplied.
 
 No open decision may be resolved by implementation convenience or silence.
 
