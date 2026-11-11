@@ -55,7 +55,7 @@ Source references at the pinned commit:
 >
 > “if the fix works, there should be no reason a message doesn't go through.”
 
-The admitted Shelf artefact `bridge/BEN-RULING-JOURNAL-AND-PAUSE-01.md` (blob `d843d5c5c81950098896e4ec6df37c0ff598b6e2`) preserves this provenance. Its §1 contains Ben's exact journal-content words; §2 labels Remmy's daily-log interpretation separately; §3 records Ben's later pause rulings. The interpretation that sent IDs persist through pause/disconnect is explicitly superseded before adoption. The journal's treatment of DISPATCHED-UNCONFIRMED remains awaiting Ben's explicit ruling.
+The admitted Shelf artefact `bridge/BEN-RULING-JOURNAL-AND-PAUSE-01.md` (blob `d843d5c5c81950098896e4ec6df37c0ff598b6e2`) preserves this provenance. Its §1 contains Ben's exact journal-content words; §2 labels Remmy's daily-log interpretation separately; §3 records Ben's later pause rulings. The interpretation that sent IDs persist through pause/disconnect is explicitly superseded before adoption. The journal's treatment of DISPATCHED-UNCONFIRMED was ruled by Ben on 2026-11-11 (delivered → journalled; §2.4) and is incorporated in this revision by Remmy at Alex's assignment (pb-mwcoarq7).
 
 **Evidence class:** source inspected at the pinned Shelf commit. The v0.18.0 report records 819 fixture checks passed across 34 fixture files, one R9 recovery timing flake under load, and no live proof of the final v0.18.0 send path. Alex did not independently execute those tests or observe live two-seat behaviour. No new tests have been run for this convene.
 
@@ -212,7 +212,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - The control applies to one named stuck message only. It does not clear or force the entire queue.
 - It is distinct from Retry. Retry is an ordinary re-attempt under the normal fence and recovery rules.
 - It may override only: a non-veto HOLD caused by UNKNOWN; a defer-ceiling return; or pair state that cannot be verified after restart.
-- It must never bypass Ben's STOP, pause/disconnect, an ID already journalised as sent/delivered, a superseded pair, an incomplete/truncated message, or a positively observed Stop-face/proven-negative veto.
+- It must never bypass Ben's STOP, pause/disconnect, an ID already journalised as sent/delivered, a superseded pair, an incomplete/truncated message, or a positively observed Stop-face/proven-negative veto **[PENDING BEN - F-5, §2.5: this clause presumes the exception reading; under the strict two-of-three reading it does not apply] **.
 - The action records actor Ben, exact message ID, reason, prior state/verdict, override class and result in the event log.
 - The review journal receives the ID only if a force-send is actually dispatched. A refused or pre-dispatch failed force action creates no journal entry.
 - Once the named item is actually sent, it leaves the actionable queue/pair slot according to the same pair transition rules as an ordinary dispatch.
@@ -240,13 +240,15 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 - One ring holds the last 20 message IDs across both directions.
 - The journal contains IDs only: no message body, file content or copied payload. Direction and disposition may be recorded in the separate event log, not as additional journal payload.
-- Insert an ID only when a send was actually dispatched, a message was actually delivered, or a force-send was actually dispatched. An unsent queue item, skipped message, abandoned message, pre-click failure or purge-discarded message does not enter the journal.
-- A dispatched-but-unconfirmed message is still a real dispatch: record its ID and event state as DISPATCHED-UNCONFIRMED; a late receipt updates the event record to DELIVERED-LATE without a second send.
+- Insert an ID only when delivery is CONFIRMED, or when a force-send was actually dispatched at Ben's hand (§2.2). An unsent queue item, skipped message, abandoned message, pre-click failure or owner-discarded message does not enter the journal.
+- A dispatched-but-unconfirmed message is NOT journalled on dispatch (Ben's ruling, 2026-11-11: "If the message is delivered, the ID must go to the journal"). It is held in OWNER-REVIEW and the event record with delivery_confirmation = UNKNOWN (§2.4a); no delivery value is asserted for it. On CONFIRMED, its ID enters the journal and a late receipt updates the event record to DELIVERED-LATE without a second send. On REFUTED, it never enters the journal.
+
+**§2.4a Fact and knowledge (Ben's pairing, 2026-11-11, governing).** Ben's words: "Did it deliver? can only have two states, yes or no." and "Unknown is the right middle ground." The record therefore carries two separate fields: **delivery** — a binary fact, DELIVERED or NOT_DELIVERED, asserted only on evidence; and **delivery_confirmation** — a ternary knowledge state, CONFIRMED, REFUTED or UNKNOWN, with its evidence. DISPATCHED-UNCONFIRMED names a knowledge state about a delivery, never a delivery state; UNKNOWN is never converted into a guessed fact. (Incorporated by Remmy at Alex's assignment, pb-mwcoarq7.)
 - Ring order is oldest-first. On insertion of the 21st ID, evict the oldest and log the eviction. The protection claim is always "last 20 IDs", never lifetime deduplication.
 - The journal is the sole authoritative message-ID duplicate guard. completedSerials remains pair-order bookkeeping only. Legacy seenIds, deliveredIds and deliveryFailedIds must not remain competing duplicate authorities. Transient fingerprints may be used during one detector run only if they are cleared on purge and are not advertised as a second durable journal.
 - A stable source identity is a prerequisite: re-fetching the same source bubble after purge must derive the same PB-ID, or the ID-only journal cannot recognise it. The current random PB-ID plus 32-bit fingerprint arrangement does not meet that requirement.
 - Unsent messages may have a temporary internal queue key while pending; this draft interprets "keep no ID" as no review-journal entry. If Ben means no PB-ID may be minted at all before actual dispatch, that is a schema change and must be decided before implementation.
-- The journal is distinct from the held-item review and remains governed by the journal-content rule. The former SURVIVES/PURGED branch is withdrawn: Ben's later ruling replaces automatic purge with owner review, so there is no journal-survival-across-purge decision to make. DISPATCHED-UNCONFIRMED remains a separate unresolved journal-treatment question.
+- The journal is distinct from the held-item review and remains governed by the journal-content rule. The former SURVIVES/PURGED branch is withdrawn: Ben's later ruling replaces automatic purge with owner review, so there is no journal-survival-across-purge decision to make. DISPATCHED-UNCONFIRMED's journal treatment is settled by Ben's 2026-11-11 ruling (above): journal on confirmed delivery only.
 
 **Blocking reconciliation:** the existing proven-absence retry can re-attempt after a send click when the destination positively reports absence. That may conflict with the new rule that a sent ID is not sent again. The revised contract must decide whether a proven-absence result removes/never admits the ID to the journal, or whether any actual click is final and the old retry is retired. Do not implement both interpretations.
 
@@ -366,6 +368,16 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 ---
 
+### 2.13 NEW-9 - New-chat buffer and context trigger
+
+**Governing words (Ben, 2026-11-11, convene):** the buffer message "should send him to the Shelf" and name the most recent tasks; "make sure that it's not just the same message every time"; and "If we can find a way to trigger you when a new chat is created that can trigger you to update the shelf with his updated context."
+
+- When a seat opens in a new chat, a buffer message directs the seat to the Shelf and names the most recent tasks. It is a signpost, not a briefing: the seat reads the current state from the Shelf itself.
+- The tasks named are the current tasks at the time the chat opens. A static, canned buffer is a defect: a stale signpost misleads exactly as a stale record does.
+- Required sequence: (1) a new chat is created; (2) a signal reaches Remmy; (3) Remmy updates the Shelf with the seat's updated context; (4) the buffer sends the seat to the Shelf. The currency of the seat's context is produced by the trigger, not hoped for.
+- The signal's route to Remmy is an OPEN design question, recorded as such. The bridge observing new-chat creation is the candidate source, not a verified mechanism.
+- Design only in this specification. Acceptance cases for this sequence are Alex's offered work (pb-mwcoarq7); the independent source cross-check of the trigger is also his.
+
 ## 3. Cross-cutting lifecycle and data model
 
 ### 3.1 Proposed message states
@@ -417,7 +429,7 @@ The letterbox handoff must become acknowledged. It may not mark a message perman
 
 The following are deliberately not decided by this sheet:
 
-1. **DISPATCHED-UNCONFIRMED journal treatment:** Ben's decision remains outstanding. The item must be surfaced in OWNER-REVIEW with dispatch and receipt uncertainty visible; do not silently classify it as sent, unsent or safe to retry.
+1. **DISPATCHED-UNCONFIRMED journal treatment:** CLOSED by Ben's ruling of 2026-11-11 (§2.4): the item is surfaced in OWNER-REVIEW with its uncertainty visible; its ID enters the journal if and only if delivery is CONFIRMED; on REFUTED it never enters.
 2. **F-5 strict two-of-three interpretation:** Ben has been asked to decide whether a positively observed NEGATIVE button state is still outweighed when serial and message status are positive, or whether the earlier proven-stop exception remains. The button remains one recorded evidence state; do not mark this interpretation settled until Ben answers.
 3. **Journal insertion versus proven-absence retry:** resolve whether a positive absence result means the ID was never journalised as sent, or whether all actual click dispatches are final. Existing v0.18.0 retries after positive absence; the new journal rule may supersede that.
 4. **Meaning of "no ID" for unsent work:** this draft interprets it as no review-journal ID. Confirm whether Ben also means no temporary PB-ID may exist while queued.
@@ -466,6 +478,9 @@ A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run 
 - [x] Ben's latest F-5 ruling is quoted inline; the older UNKNOWN-HOLD rule is explicitly historical and superseded.
 - [ ] F-2 never-bypass list is copied without weakening; the button condition remains one vote under the two-of-three rule, including when its state is NEGATIVE.
 - [ ] Every other governing ruling is cited at the contract point it controls.
+
+- [ ] Ben's 2026-11-11 rulings incorporated with governing words cited inline: DISPATCHED-UNCONFIRMED closed (§2.4), delivery / delivery_confirmation fields separated (§2.4a), NEW-9 buffer and trigger added (§2.13).
+- [ ] F-5 verified as the sole remaining Ben decision; no section presumes its answer (the §2.2 never-bypass clause carries its PENDING marker).
 
 ### Routing, state and cache checks
 - [ ] Every state has one entry condition, one exit condition, an owner and a durable/ephemeral classification.
