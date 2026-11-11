@@ -55,7 +55,7 @@ Source references at the pinned commit:
 >
 > “if the fix works, there should be no reason a message doesn't go through.”
 
-The log records the resulting interpretation that sent IDs persist through pause/disconnect while queue and unsent IDs purge. This is provenance evidence, but the log has not been admitted as a separate Shelf artefact. The separate DISPATCHED-UNCONFIRMED treatment remains awaiting Ben's explicit ruling.
+The admitted Shelf artefact `bridge/BEN-RULING-JOURNAL-AND-PAUSE-01.md` (blob `d843d5c5c81950098896e4ec6df37c0ff598b6e2`) preserves this provenance. Its §1 contains Ben's exact journal-content words; §2 labels Remmy's daily-log interpretation separately; §3 records Ben's later pause rulings. The interpretation that sent IDs persist through pause/disconnect is explicitly superseded before adoption. The journal's treatment of DISPATCHED-UNCONFIRMED remains awaiting Ben's explicit ruling.
 
 **Evidence class:** source inspected at the pinned Shelf commit. The v0.18.0 report records 819 fixture checks passed across 34 fixture files, one R9 recovery timing flake under load, and no live proof of the final v0.18.0 send path. Alex did not independently execute those tests or observe live two-seat behaviour. No new tests have been run for this convene.
 
@@ -88,7 +88,7 @@ handleDetection does not reject a detection merely because the bridge is paused.
 
 There is no coordinated cancellation of an in-progress adapter call. A global pause during the 45-second defer or after typing does not provide an abort signal to the content script. The current per-letter pausePending mechanism waits for an attempt to settle; it does not implement the new global purge rule.
 
-**Required design response:** a persisted bridge epoch, immediate pause/disconnect command handling, stale-epoch rejection, coordinated tab-side detector stop/clear, and a stage-aware in-flight policy. The pause state must be written before any purge work so that late detections are rejected.
+**Required design response:** a persisted bridge epoch and immediate pause/disconnect command handling remain necessary to stop new automatic dispatch and reject stale events. Instead of automatic purge, pause enters an owner-review state. The bridge presents every held item with ID, direction and state; Ben chooses its disposition. Until he decides, no item moves, is sent, or is destroyed. The design must define how in-flight pre-dispatch and post-dispatch items are represented in that review without silently resolving their fate.
 
 ### 1.2 The content-side letterbox cannot currently be stopped or cleared
 
@@ -219,26 +219,18 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 **Acceptance:** one test per permitted override class and one per never-bypass class; no force action sends while paused/disconnected or across a proven negative; ordinary Retry and Force send are observably different.
 
-### 2.3 F-3 — Pause/disconnect purge
+### 2.3 F-3 — Pause/disconnect owner review
 
-**Governing ruling:** BRIDGE-FIX-SPEC-01-CLARIFICATIONS.md, F-3/F-8 lifecycle reconciliation. Ben's current list item 4. The journal-survival decision across deliberate pause remains open under prior §13.1; the new rule about journal contents does not itself decide survival.
+**Governing ruling:** Ben's later pause rulings, admitted in `bridge/BEN-RULING-JOURNAL-AND-PAUSE-01.md` §3 (blob `d843d5c5c81950098896e4ec6df37c0ff598b6e2`), supersede the automatic-purge design in BRIDGE-FIX-SPEC-02 §7 and the earlier F-3/F-8 lifecycle reconciliation.
 
-- Pause is a global STOP. It immediately rejects new detections, increments the persisted bridge epoch, cancels unsent work, clears the active pair, pending reply, append windows, outbound buffer, transient queue, detector pending state and retry timers/alarms.
-- Resume starts from an empty transient state. It does not replay work purged by the pause.
-- Disconnect also purges transient message work. A global Disconnect clears both seat registrations. A per-seat Unregister clears that seat and purges all pending work; the other registration may remain visible but cannot route a complete pair until the missing seat is registered again. The UI must distinguish Pause, Unregister this seat and Disconnect bridge.
-- Crash/restart is not a deliberate purge: active pair and outbound buffer persist and are re-verified before any send. Restart while paused recovers paused and does not resurrect purged work.
-- Every registered content script receives an immediate purge/epoch event. A four-second polling interval is not an adequate stop mechanism.
-- All in-flight operations carry the epoch and attempt ID. A stale epoch cannot type or click.
-- Stage treatment:
-  - Detected/queued/append-window/buffered, not dispatched: discard; no journal entry.
-  - Composer engaged or text typed but not clicked: abort. Clear only if the same bridge-owned composer still contains the exact bridge payload; otherwise do not mutate it and report the unresolved stage. No journal entry.
-  - Send click actually dispatched: cannot be recalled. Record the ID as dispatched/sent-unconfirmed in the journal, preserve the uncertain outcome, and never automatically resend it.
-  - Receipt arrives later: update the event record to DELIVERED-LATE; do not send again.
-  - Already confirmed delivered: journal ID remains subject only to the ruled journal-survival policy.
-- Before destruction, show a purge notice listing the unsent constituent IDs being discarded. This notice is an event record, not a journal insertion.
-- Emergency alerts are a separate subsystem; this transport purge does not silently erase or acknowledge alerts.
+- Pause suspends automatic dispatch and enters OWNER-REVIEW. It does not automatically purge, send, discard, or otherwise move held work.
+- The review presents every held item with its ID, direction and current state, including whether dispatch occurred and whether receipt is confirmed. Ben decides each item's disposition.
+- Until Ben decides, the item remains held and unchanged. The review must not silently expire, evict, reclassify, auto-retry or otherwise dispose of an item.
+- Disconnect enters the same review process for the affected bridge scope. The exact distinction between per-seat unregister and global disconnect remains as specified below, but neither action silently destroys held work.
+- Crash/restart preserves the review and its held items. Restart while paused returns to OWNER-REVIEW; no item is automatically replayed.
+- Every registered content script receives an immediate suspend/epoch event so no stale event can initiate a new send. This is not a purge command.
 
-**Acceptance:** pause during append window, queue wait, composer typing and post-click receipt wait; each stage produces the specified result. Disconnect and tab-close tests. Restart-while-paused test. No stale content script can submit after epoch change.
+**Acceptance:** pause with items in every lifecycle state; every held item appears in review; no item moves or disappears before Ben's disposition; each disposition is recorded; late events cannot mutate a reviewed item without an explicit reconciliation path; restart preserves the review and its decisions.
 
 ### 2.4 F-4 / F-10 — 20-ID review journal and duplicate authority
 
@@ -254,7 +246,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - The journal is the sole authoritative message-ID duplicate guard. completedSerials remains pair-order bookkeeping only. Legacy seenIds, deliveredIds and deliveryFailedIds must not remain competing duplicate authorities. Transient fingerprints may be used during one detector run only if they are cleared on purge and are not advertised as a second durable journal.
 - A stable source identity is a prerequisite: re-fetching the same source bubble after purge must derive the same PB-ID, or the ID-only journal cannot recognise it. The current random PB-ID plus 32-bit fingerprint arrangement does not meet that requirement.
 - Unsent messages may have a temporary internal queue key while pending; this draft interprets "keep no ID" as no review-journal entry. If Ben means no PB-ID may be minted at all before actual dispatch, that is a schema change and must be decided before implementation.
-- Journal survival across deliberate pause remains unresolved. Proposed default for Ben's decision: SURVIVES, because it contains only IDs and is the duplicate memory. PURGED is the alternative; if chosen, the UI must state that duplicate protection restarts empty. No build may choose silently.
+- The journal is distinct from the held-item review and remains governed by the journal-content rule. The former SURVIVES/PURGED branch is withdrawn: Ben's later ruling replaces automatic purge with owner review, so there is no journal-survival-across-purge decision to make. DISPATCHED-UNCONFIRMED remains a separate unresolved journal-treatment question.
 
 **Blocking reconciliation:** the existing proven-absence retry can re-attempt after a send click when the destination positively reports absence. That may conflict with the new rule that a sent ID is not sent again. The revised contract must decide whether a proven-absence result removes/never admits the ID to the journal, or whether any actual click is final and the old retry is retired. Do not implement both interpretations.
 
@@ -311,7 +303,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - Aggregate manifest lists every constituent PB-ID in order. Each constituent retains its own content and completeness proof. Aggregate transport identity never replaces constituent identity.
 - Proposed capacity remains at most 10 constituents or 60,000 payload characters. Overflow is visible and held; it is never silently dropped.
 - Restart preserves the aggregate and re-verifies every constituent before release.
-- Deliberate pause/disconnect purges the unsent aggregate after announcing its constituent IDs. Unsent constituents do not enter the review journal.
+- Deliberate pause/disconnect places the unsent aggregate and its constituents into OWNER-REVIEW. No constituent is sent, discarded or copied until Ben explicitly decides. Unsent constituents do not enter the review journal.
 - Partial receipt is adjudicated per constituent; complete constituents are not confused with incomplete ones.
 
 **Acceptance:** two or more messages in one open pair arrive as one aggregate after the reply, in order, with all constituent IDs preserved; overflow, restart, partial truncation and deliberate purge tests.
@@ -354,7 +346,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - If Ben commits an append before expiry, preserve the original payload byte-for-byte and attach Ben's exact text as a separately attributed segment. Do not ask an LLM to rewrite, summarise or blend either segment.
 - Proposed default: the appended segment belongs to the same logical delivery and PB-ID, with provenance explicitly labelled "Ben appended". The completeness digest is computed over the final serialised composite payload. This default requires review because the exact user-facing format was not specified.
 - Late append after expiry is refused and visibly explained.
-- Pause/disconnect during the window discards the unsent message; it adds no journal ID.
+- Pause during the window places the unsent message into OWNER-REVIEW without sending or discarding it. It adds no journal ID unless and until an actual send occurs.
 - The append right must work for either direction unless the live clarification says it is restricted to one direction.
 - Multiple pending messages each retain their own timer; a superseded/discarded item cancels its timer. The UI must not imply that one append window applies to every buffered constituent.
 
@@ -411,9 +403,9 @@ The current background marks DELIVERING before the content script clicks. The re
 
 The implementation must handle a worker/content-script interruption between steps 3 and 4. A pre-click intent is not a journal entry. An actually dispatched but unconfirmed send is not silently retried. The exact durable recovery record must be reconciled with the ID-only journal and F-4 before implementation.
 
-### 3.3 Purge epoch
+### 3.3 Pause epoch and owner review
 
-Every detection and delivery attempt carries the bridge epoch. Pause/disconnect increments and persists the epoch before clearing transient state. A stale event from an old epoch is rejected. Every seat tab receives a purge command that stops the observer, clears pending timers and local capture state, and confirms the new epoch. Resume creates a fresh detector baseline. The old four-second polling loop is not the authority for an immediate STOP.
+Every detection and delivery attempt carries the bridge epoch. Pause/disconnect increments and persists the epoch before changing dispatch eligibility, so stale events cannot initiate new sends. Every seat tab receives an immediate suspend command that stops new capture/dispatch activity and acknowledges the new epoch. Held items and their associated state are retained for OWNER-REVIEW; they are not automatically cleared. Ben's item-by-item disposition is recorded before any held item moves, is sent, copied or discarded. Resume creates a fresh detector baseline only after review state and outstanding decisions reconcile. The old four-second polling loop is not the authority for an immediate STOP.
 
 ### 3.4 Detection acknowledgement
 
@@ -425,8 +417,8 @@ The letterbox handoff must become acknowledged. It may not mark a message perman
 
 The following are deliberately not decided by this sheet:
 
-1. **Journal survival across deliberate pause:** SURVIVES or PURGED remains Ben's decision. The §13.1 content rule does not settle it.
-2. **Exact §13.1 source record:** exact Ben quotations and Remmy's surrounding contemporaneous interpretation have now been retrieved from `~/memory/2026-11-10.md` (logged 2026-11-11 ~12:38 MST) and distinguished above. This is not yet a separately admitted Shelf artefact; source admission/pinning remains outstanding.
+1. **DISPATCHED-UNCONFIRMED journal treatment:** Ben's decision remains outstanding. The item must be surfaced in OWNER-REVIEW with dispatch and receipt uncertainty visible; do not silently classify it as sent, unsent or safe to retry.
+2. **F-5 strict two-of-three interpretation:** Ben has been asked to decide whether a positively observed NEGATIVE button state is still outweighed when serial and message status are positive, or whether the earlier proven-stop exception remains. The button remains one recorded evidence state; do not mark this interpretation settled until Ben answers.
 3. **Journal insertion versus proven-absence retry:** resolve whether a positive absence result means the ID was never journalised as sent, or whether all actual click dispatches are final. Existing v0.18.0 retries after positive absence; the new journal rule may supersede that.
 4. **Meaning of "no ID" for unsent work:** this draft interprets it as no review-journal ID. Confirm whether Ben also means no temporary PB-ID may exist while queued.
 5. **Bare-ID schema:** this draft uses an ID-only journal and keeps direction/disposition in the separate event log. Confirm that this matches "just the IDs".
@@ -448,7 +440,7 @@ No open decision may be resolved by implementation convenience or silence.
 |---|---|---|---|
 | F-1 centre animation and notifications | Ben convene item 2; prior spec §§1–2 | §2.1 | Both-direction live walk; click-time start; true receipt/failure states |
 | F-2 force-send control | Clarifications addendum F-2 | §2.2 | Permitted and never-bypass cases tested |
-| F-3 pause/disconnect purge | Ben item 4; clarifications F-3/F-8 | §2.3 | Stage-by-stage purge, epoch and restart tests |
+| F-3 pause/disconnect owner review | Ben pause rulings, `bridge/BEN-RULING-JOURNAL-AND-PAUSE-01.md` §3 | §2.3 | Held-item inventory, no-move-before-decision, disposition and restart tests |
 | F-4 20-ID journal | Ben §13.1 summary; prior spec §5 | §2.4 | 20/21 ring test, no unsent journal IDs, re-fetch dedup |
 | F-5 button quorum | Ben latest F-5 ruling, PB-ID pb-mwcmqax3-1l-6suy | §2.5 | Full three-state matrix on all five adapters |
 | F-6 completeness | Prior spec §6 and addendum F-6 | §2.6 | Hash/truncation and same-ID repair tests; protocol adoption |
@@ -480,7 +472,9 @@ A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run 
 - [ ] Detection acknowledgement and retry behaviour are specified; no handoff is consumed before router acceptance.
 - [ ] Pause/disconnect epoch order and stale-event rejection are specified.
 - [ ] Observer, interval and per-letter timer teardown is specified and testable.
-- [ ] Every queue, pair, pending reply, aggregate, append window, retry timer, alarm and local cache has a purge/restart disposition.
+- [ ] Owner-review inventory covers every queue, pair, pending reply, aggregate, append window, retry timer, alarm and local cache.
+- [ ] No held item moves, sends, copies or is destroyed before Ben's explicit disposition.
+- [ ] Observer suspension and restart/resume behaviour preserve held items and review decisions.
 - [ ] In-flight pre-click and post-click behaviour is distinct.
 - [ ] The 20-ID journal is the sole duplicate authority; no legacy cache silently competes.
 - [ ] Stable source identity survives a purge and source-history re-fetch.
@@ -510,7 +504,7 @@ A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run 
 - [ ] Claude's findings and dispositions are recorded against this exact revision.
 - [ ] Only after Claude review may Ben make the separate build decision.
 
-**Current checklist status:** NOT READY. The source inspection covered the pinned v0.18.0 routing, trigger, queue, cache and five-adapter send/ownership paths. It was not a line-by-line review of unrelated UI or alert internals, and no runtime probe was performed. The exact §13.1 source record, basic-fix snippet and open design decisions above are not yet closed. No implementation authority is created by this sheet.
+**Current checklist status:** NOT READY. The source inspection covered the pinned v0.18.0 routing, trigger, queue, cache and five-adapter send/ownership paths. It was not a line-by-line review of unrelated UI or alert internals, and no runtime probe was performed. The §13.1 ruling is now admitted and cited; the owner-review process is specified at design level but requires complete lifecycle/retention contracts and acceptance cases. The basic-fix snippet, DISPATCHED-UNCONFIRMED journal treatment, F-5 interpretation and other open decisions above remain unresolved. No implementation authority is created by this sheet.
 
 ---
 
