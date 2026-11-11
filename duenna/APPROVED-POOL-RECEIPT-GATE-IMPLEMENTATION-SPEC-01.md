@@ -42,7 +42,19 @@ Where this build specification and a
 design-basis artefact differ, the design-basis
 artefact governs.
 
-**Revision:** Rev 1 — first issue.
+**Revision:** Rev 2 — prepared in response to
+Alex's review `pb-20261111-receipt-gate-rev1-
+review` (report shelved at commit 3bc3ab15,
+blob 7c2039ba…): three corrections
+(RG-R1-01 admission path for gate-internal
+records; RG-R1-02 digest construction made
+non-circular; RG-R1-03 a deterministic
+read-side resolution contract) plus a
+concrete implementation traceability matrix
+(§13.1). Rev 1: commit 2db7d59e, git blob
+74ac55ae…. The prior revision is preserved in
+the repository history; this revision
+supersedes it as the review candidate only.
 
 ---
 
@@ -137,15 +149,40 @@ plus an **admission block**:
 - `admitted_at`: metadata, not ordering
   authority; ordering is the store's append
   order.
-- `content_digest`: SHA-256 over the
-  canonical receipt content (candidate plus
-  admission block) **with the digest field
-  itself omitted**, under a canonicalisation
-  rule named **CANON-RCPT-1** (the ledger
-  specification's omission pattern, restated
-  here as this specification's own rule).
-- `source_commit` / immutable locator of the
-  admitted bytes in the Shelf repository.
+
+**Digest construction (exact, non-circular).**
+Two digests exist and are never conflated:
+- `candidate_digest`: SHA-256 over the
+  candidate content under CANON-RCPT-1 with
+  the digest field omitted, computed by the
+  producer and verified at intake (§4.2).
+- `record_digest`: SHA-256 over the **admitted
+  content** under CANON-RCPT-1 with the digest
+  field omitted, where the admitted content is
+  exactly: the candidate (complete, as
+  verified) plus the admission block fields
+  `admission_serial`, `admitted_by`,
+  `authority_ref`, `admitted_at`,
+  `candidate_digest`, and `intake_record_ref`.
+
+The storage commit and immutable locator of
+the admitted bytes are **never part of the
+digested content**: they are recorded in the
+store's index entry for the serial (serial →
+{record_digest, locator, commit}), a wrapper
+outside the record. Phase 4 §2.2's
+`source_commit` requirement is satisfied by
+that index entry. Construction order is
+therefore: verify candidate → assign serial →
+build admission block → compute record_digest
+→ append → record the resulting commit in the
+index. Any implementation that places a
+locator or commit inside the digested record
+is non-conformant: the digest would depend on
+the commit that contains it. CANON-RCPT-1 is
+this specification's own canonicalisation
+rule, restated from the ledger specification's
+omission pattern.
 
 Immutability: after admission, no field of a
 receipt changes. Any later fact arrives as a
@@ -175,6 +212,63 @@ correction record's references, so the
 historical bytes stay exactly as admitted
 (Phase 4 §2.1, §5.1).
 
+### 3.4 Read-side resolution
+
+Consumers never receive a bare record from the
+gate. **ResolveRecord**(serial | record_digest
+| locator) returns the admitted record plus a
+**resolution bundle**:
+
+1. **Reverse correction linkage.** The store
+   maintains a reverse-link index (target
+   serial → correction/supersession record
+   serials). The index is not a separate
+   source of truth: every correction admission
+   appends its reverse-link entries **in the
+   same store transition** as the correction
+   record itself, so the index is exactly as
+   complete as the store's admitted correction
+   records. The bundle lists every linked
+   correction and supersession, in store
+   order.
+2. **Coverage proof.** The bundle states its
+   lookup coverage explicitly: the store
+   revision at which the index was read, and
+   whether the index was verified against the
+   store for this resolution — verification
+   being a rebuild of the index from the
+   admitted correction records and a comparison
+   (a full rebuild on every read is not
+   required; the verification cadence and the
+   last-verified revision are store policy,
+   recorded in the bundle). **Any divergence,
+   unreadable snapshot, or gap in the
+   correction history makes the coverage
+   statement UNKNOWN, and the bundle must say
+   so** — a consumer is never told "no
+   corrections exist" on an unverified lookup;
+   it is told "none found, coverage UNKNOWN."
+3. **Disposition staleness evaluation.** For a
+   readiness disposition, the bundle adds a
+   staleness evaluation computed at read time:
+   each validity condition (§6.3) is re-checked
+   against the current pins it names (ledger
+   heads/revisions, freshness boundaries,
+   correction linkage from step 1). Result:
+   **VALID** (every condition re-checked and
+   holding), **STALE** (the lapsed conditions
+   named), or **UNKNOWN** (any condition that
+   cannot be evaluated — an unreadable head, an
+   incomplete event history, an unverifiable
+   coverage statement). UNKNOWN never defaults
+   to VALID.
+4. The original record's bytes are returned
+   exactly as admitted, in all cases. The
+   bundle is a read-time artefact, not a store
+   record; it is identified by the store
+   revision and evaluation time it was computed
+   at, as metadata.
+
 
 ## 4. Intake: candidate validation (M-INTAKE)
 
@@ -190,6 +284,25 @@ historical bytes stay exactly as admitted
 - **Consumption attestations** and **targeted
   recheck** records in the Phase 4 §2.2/§8
   field shape.
+- **Readiness disposition candidates**,
+  prepared by the readiness function (§6.1):
+  scope declaration, the receipt references it
+  rests on, the recomputation record (§6.2),
+  and its proposed validity conditions (§6.3).
+- **Correction and supersession candidates**,
+  prepared by the correction function (§7.1):
+  target reference, correction evidence,
+  replacement reference where one exists, the
+  reliance search record (§7.2), and per-use
+  dispositions (§7.3).
+
+The last two kinds close the gate's own
+admission path: every record type the store
+holds — receipts, dispositions, corrections —
+enters through the same intake (§4.2) and the
+same admission (§5). M-READY and M-CORRECT
+**prepare** candidates; they hold no separate
+write path to the store.
 - Standalone **examination reports are not
   candidates**: they are evidence artefacts,
   referenced by receipts and dispositions
@@ -265,6 +378,28 @@ candidate.
    required by §2.3 is itself pinned and
    referenced.
 
+**Kind-specific checks** (in addition to the
+seven steps, which apply to every kind):
+- *Disposition candidates*: the recomputation
+  record must be present and must reproduce
+  from the referenced receipts' pinned check
+  records at intake; a candidate whose outcome
+  the gate cannot reproduce is REFUSED
+  (INTEGRITY), and the disagreement is logged.
+  The declared scope must equal the evaluated
+  closure (§6.3).
+- *Correction candidates*: the target must
+  resolve to an admitted record; the reliance
+  search record must be present with its
+  coverage statement (UNKNOWN coverage is
+  admissible — an *absent* search is not);
+  every known use must carry a disposition;
+  where the admitting authority authored or
+  executed the target artefact, the
+  independent-examination precondition (R2) is
+  checked at intake and blocks admission until
+  satisfied.
+
 ### 4.3 Intake outcomes
 
 ADMITTED (via §5) · REFUSED (named reason
@@ -334,9 +469,12 @@ candidate digest.
 
 **IssueReadiness**(scope_declaration,
 receipt_refs) → disposition record admitted
-through §5 | REFUSED | UNKNOWN. The issuer is
-Alex under R2/R3, for the exact declared work
-scope.
+through §§4–5 | REFUSED | UNKNOWN. The
+readiness function prepares the disposition
+candidate (§4.1); its issuance is its
+admission, by Alex under R2/R3, for the exact
+declared work scope. There is no issuance
+outside the intake-and-admission path.
 
 ### 6.2 Outcome computation — verified, not trusted
 
@@ -398,7 +536,9 @@ correction (a FLAG or a correction proposal
 with evidence — Phase 4 §5.3: a FLAG is a
 second-look mechanism, not a correction and
 not a STOP). **AdmitCorrection** is Alex's act
-under R2/R4, append-only. Where Alex authored
+under R2/R4, append-only, performed by
+admitting a correction candidate through
+§§4–5 (§4.1). Where Alex authored
 or executed the affected artefact, independent
 examination is required before adjudication
 (R2, §15.2 table). A correction record
@@ -626,6 +766,52 @@ future work, in the test classes named.)
 | 16 EXON vocabulary reconciliation before operational values adopted | §§3–6 passim — all value sets herein are labelled proposals or R3's decided set | T-SCOPE |
 | 17 named independent examiner before formal Phase 4 acceptance | §9 — design examination is Vane's pending Phase 4 act; implementation examination separate | T-EXAM |
 
+### 13.1 Implementation traceability matrix (concrete cases)
+
+Fixture classes: **F-STORE** (synthetic
+receipt store), **F-AUTH** (synthetic
+authority records, including a revoked
+delegation variant — TEST-ONLY assignments
+inside fixtures, conferring no real
+authority), **F-GRAPH** (synthetic
+declarations and graph snapshots), **F-LEDGER**
+(synthetic ledger snapshot and heads), **F-EXT**
+(mutable workspace-evidence stand-in).
+Fixtures run against synthetic stores only,
+isolated from any production record, and are
+discarded or reset on rollback; no fixture
+writes to the real Shelf store. Each case's
+evidence is its fixture run record (inputs,
+store revisions before/after, emitted
+records). An independent examiner must be able
+to reproduce each case from its fixture
+definition; cases marked † additionally
+require the examiner to inspect the
+construction, not only the outcome.
+
+| Case | Module | Fixture / setup | Expected outcome |
+|---|---|---|---|
+| RG-01 Idempotent admission | M-ADMIT | F-STORE+F-AUTH; one valid candidate admitted twice | One admission, one serial; second call returns the existing admission |
+| RG-02 Changed candidate, same intake identity | M-INTAKE | Candidate resubmitted with one field altered | Treated as a new candidate; new intake record; no relation to the first admission |
+| RG-03 Disposition candidate intake † | M-INTAKE/M-READY | F-GRAPH+F-LEDGER; disposition candidate with reproducible recomputation | Admitted through §§4–5; no side path exists |
+| RG-04 Correction candidate intake † | M-INTAKE/M-CORRECT | Correction candidate with reliance search present, coverage UNKNOWN | Admitted with UNKNOWN coverage recorded; absent search instead → REFUSED |
+| RG-05 Digest construction † | M-ADMIT | Record built per §3.1; locator/commit withheld until after digest | record_digest verifies from content alone; a variant placing the locator inside the digest is rejected as non-conformant |
+| RG-06 Authority revocation | M-ADMIT | F-AUTH revoked variant cited at admission | REFUSED/UNKNOWN-authority; no append; refusal logged |
+| RG-07 Author self-admission | M-INTAKE | Candidate whose author attempts admission | REFUSED (SEPARATION), logged |
+| RG-08 Missing evidence | M-INTAKE | Evidence reference unresolvable | REFUSED (EVIDENCE_RESIDENCE) or UNKNOWN per §4.3; never admitted |
+| RG-09 Mutable evidence | M-INTAKE | F-EXT evidence changed after candidate issued | Digest mismatch → REFUSED (INTEGRITY); snapshot-first path shown to admit |
+| RG-10 Secrets in evidence | M-INTAKE | Evidence bundle containing a credential | REFUSED (SECRETS); omission + limitation path exercised |
+| RG-11 Full-system claim, incomplete inventory | M-INTAKE | Claim-4 candidate without completeness evidence | REFUSED (CLAIM_SHAPE) |
+| RG-12 Scope recomputation disagreement | M-INTAKE | Candidate closure exceeds recomputed closure | Scope beyond recomputed part UNKNOWN; admission of the excess refused |
+| RG-13 Outcome recomputation disagreement | M-READY | Sweep candidate outcome ≠ gate recomputation | No disposition; disagreement recorded as integrity finding |
+| RG-14 Waiver attempt | M-READY | Operation attempted to convert required UNKNOWN → READY | No such operation exists; attempt fails at the interface (negative test) |
+| RG-15 Correction, incomplete reliance | M-CORRECT | F-GRAPH partial reverse coverage | Correction admitted; coverage UNKNOWN in the record; known uses dispositioned; no "no reliance" claim |
+| RG-16 DirtyNotice delivered, not consumed | M-CORRECT | Notice delivered; no consumption record | Reliance state unchanged; delivery ≠ consumption preserved in records |
+| RG-17 Stale disposition read | Read (§3.4) | F-LEDGER head advances past a disposition's validity condition | ResolveRecord returns STALE naming the lapsed condition; an unevaluable condition variant returns UNKNOWN, never VALID |
+| RG-18 Reverse-link coverage † | Read (§3.4) | Index entry removed in fixture (divergence) | Bundle reports coverage UNKNOWN; never "no corrections" |
+| RG-19 Interrupted append | M-ADMIT | Store append interrupted mid-transition | Read-back classification per §5; no partial record; retry follows the decision table; ambiguous case stops all mutation |
+| RG-20 Reconstruction from historical pins | M-RETAIN | Rules/graph/inventory advanced after admission | Reconstruction reproduces the receipt's meaning from its historical pins, not current state |
+
 ## 14. Adoption boundary
 
 Adoption of this specification settles the
@@ -644,6 +830,6 @@ its own gates, exactly as the adopted plan
 requires.
 
 *End of Receipt and Readiness Gate
-Implementation Specification 01 Rev 1 —
+Implementation Specification 01 Rev 2 —
 prepared for Alex's review and adoption
 decision under the amended delegation.*
