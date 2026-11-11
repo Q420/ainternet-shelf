@@ -628,4 +628,81 @@ Each Phase 5 build requires its own approved, shelved implementation specificati
 
 ---
 
+
+---
+
+## 13. Phase 4 source reconciliation — source pack 01
+
+**Source:** `duenna/PHASE-4-SOURCE-PACK-01.md`, commit `4fdda24`, blob `9f271da01741258a161776f1f1b1a9777ae549d9`, 9,581 characters.
+
+**Evidence attribution:** Sections 1–6 are direct source inspection reported by Remmy [SI: Remmy]. Alex inspected the source-pack artefact and reconciled its claims against this specification; Alex did not independently reopen every underlying workspace-side source. Part R is a Crusher v2.2 retrieval record, not direct source inspection. These evidence classes remain separate.
+
+### 13.1 Existing receipt-like records
+
+The source pack identifies publish-gate approvals, gate authorisation/execution ledgers, the BridgePress registry, battery/run receipts, the index admission report, and the Crusher log. These are distinct, scope-specific precedents—not one unified Approved Pool receipt system.
+
+Important boundaries:
+- Publish-gate approvals govern Pulse HQ website publication, not Shelf admission.
+- Gate authorisation/execution ledgers are workspace-side; the shelved GATE-REGISTER summary may lag.
+- BridgePress registry is workspace-side; its WordPress output surface is DOWN.
+- Battery/run receipts have workspace and shelved copies.
+- Index admission report records one bounded admission and its exclusions; it is not a continuously current release receipt.
+- Crusher log is reported as 131 records and workspace-only, not admitted to Shelf.
+- The pilot R-19 freeze receipt was designed but never issued.
+- The Approved Pool release receipt remains design-only and has not been issued.
+
+No existing record family can be promoted into a system-wide readiness receipt by analogy.
+
+### 13.2 Correction, supersession and reliance
+
+The source pack reports selected errata practices, dictionary and pool-paper revision chains, and BridgePress conflict/reconciliation records. It also confirms:
+- the EXON Dictionary 0.2 self-FLAG remains OPEN;
+- its distinct CORRECTION record is still unwritten;
+- **no downstream reliance-tracking mechanism exists**.
+
+Reliance discovery is therefore currently anecdotal/manual, not a complete machine-readable registry. A correction process cannot claim that all downstream consumers have been found, notified or re-evaluated. The receipt design's UNKNOWN treatment is necessary. This source pack does not close the self-FLAG.
+
+### 13.3 Authority and examiner records
+
+The scope ledger and related approvals are workspace-side. Examiner reports and adjudications are split across Shelf artefacts, bridge letters and workspace files. EXON ACCEPT artefacts provide structured acceptance records, but no unified authority or examiner registry is established.
+
+A recorded approval is evidence of that approval, not proof that every current authority relationship is registered and machine-resolvable. A shelved examiner report proves that a report exists, not that access, independence or execution capability was sufficient for every claim. Historical reconstruction may need both Shelf and workspace/letter records. No new authority is conferred here.
+
+### 13.4 Consumption evidence
+
+The pack identifies Crusher answers with exact surfaced section IDs/package sizes, index admission receipts, Alex's fetch/read-back verifications, and historical cases where delivery did not equal consumption (including a delivered letter whose blocks were not consumed and a seat-occupant mismatch).
+
+This supports the distinction between publication, delivery, receipt, storage, loading and actual consumption. Existing evidence is operation-specific and incomplete; no universal component-consumption mechanism exists. Each receipt must state the strongest stage actually evidenced.
+
+### 13.5 Retention and dual residence
+
+The pack reports Git history and selected backup/branch/archive artefacts supporting reconstruction of particular records. It reports **no formal expiry/disposal rules** for any artefact class; retention is currently indefinite-by-default. This is a description of practice, not an adopted retention policy. Ben's R1 decision remains open.
+
+The receipt family's centre of gravity is workspace-side while many subjects are Shelf-side. Reported dual-residence pairs include GATE-REGISTER versus workspace ledgers, OPEN-ITEMS-REGISTER, and DUENNA-PLAN. For each pair, future receipts must identify the authoritative copy for the relevant purpose, projection/secondary copy, version/digest relationship, reconciliation procedure and mismatch consequence. Timestamp or apparent recency alone cannot select the authoritative copy.
+
+The source pack's backup examples do not establish complete backup coverage, a recovery point, restore guarantee or formal retention policy. Git history is not by itself a disaster-recovery commitment.
+
+### 13.6 Crusher retrieval qualification and query reconciliation
+
+Part R contains four Crusher v2.2 queries, each reported UNKNOWN, with surfaced section IDs and package sizes. Q4's first attempt was reportedly refused by a per-minute token limit; the full provider body and failed attempt were logged, then a spaced rerun returned UNKNOWN. Final daily accounting is reported as 25,256 known tokens.
+
+These are findings about those exact retrieval attempts and admitted-corpus coverage. They do not establish absence from workspace source or the wider Shelf. The source-pack claim that mechanisms reside in workspace machinery is attributed to Remmy's direct source inspection, not inferred from Crusher's UNKNOWN responses.
+
+**Query discrepancy:** Part R's four queries are not text-identical to the two verbatim queries Alex supplied in his immediately preceding bridge response. The four Part R queries remain preserved as their own retrieval set; they are not relabelled as the two later queries. Those two exact queries remain outstanding unless separately rerun and recorded verbatim.
+
+### 13.7 Consequences for the receipt design
+
+The original design stands with these source-grounded clarifications:
+- existing receipt-like mechanisms are fragmented and scope-specific;
+- workspace/Shelf dual residence is a first-order reconciliation concern;
+- no complete downstream reliance mechanism is demonstrated;
+- the EXON self-FLAG correction remains OPEN;
+- no formal expiry/disposal rules are evidenced;
+- authority and examiner records are split;
+- delivery and consumption have demonstrably diverged;
+- the workspace-only Crusher log is not a Shelf-retained receipt source.
+
+No implementation, retention policy, authority policy, readiness policy, or Phase 5 build is authorised by these findings.
+
+
 *End of Phase 4 technical specification. Retention, authority and readiness consequences remain Ben's reserved decisions.*
