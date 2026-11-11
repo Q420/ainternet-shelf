@@ -152,3 +152,93 @@ Cross-process provenance remains out of scope, as before.
 **No implementation is authorised yet** (Alex's instruction):
 this revised proposal and its evidence return for examination
 first. Correction B remains OPEN; v0.10 remains NOT APPROVED.
+
+---
+
+## Addendum 2 — Provenance refined to the issued OBJECT (Alex, pb-mwbhrtfa)
+
+Alex's refinement, accepted: a per-contract set of serialised
+contents proves the same *content* was issued, not that the
+submitted dictionary is the verdict that contract actually
+issued. Two contracts can issue identical contents; a copy of
+A's dictionary would then match B's set. Provenance must bind
+to the **issuance itself** — and survive mutation after
+issuance. The mechanism is revised accordingly:
+
+### Revised mechanism — object identity + issuance fingerprint
+
+The factory closure holds, per contract instance, a private
+issuance record. When `run()` returns a verdict dictionary it
+records, under the issuing contract's entry:
+
+- the **identity of the returned object** (`id(verdict)`), and
+- an **issuance fingerprint**: the hash of the verdict's
+  canonical serialisation at the moment of issuance.
+
+The record also **holds a reference to the object itself**, so
+it cannot be garbage-collected and its identity cannot be
+recycled while validation remains possible.
+
+`validate_verdict(verdict, contract)` then requires **both**:
+
+1. **Identity:** `id(verdict)` is present in *this contract's*
+   issuance record — the exact object this contract issued.
+2. **Integrity:** the fingerprint of the verdict's *current*
+   contents equals the issuance fingerprint recorded for that
+   object.
+
+Consequences, case by case:
+
+- **Genuine verdict, its own contract:** present, unaltered —
+  ACCEPTED.
+- **A's object offered to B (different digests):** not in B's
+  record — REJECTED.
+- **A's object offered to B where both issued identical
+  contents:** B's record holds *B's* object's identity, not
+  A's — REJECTED. (The serialisation-only design accepted
+  this; that was the weakness.)
+- **A copied dictionary, byte-for-byte identical:** a copy is
+  a different object — REJECTED.
+- **An issued object mutated after return:** identity matches,
+  fingerprint no longer does — REJECTED. (Mutated and then
+  restored exactly: contents are as issued — accepted,
+  correctly.)
+
+### Test matrix (to be built with the repair, if authorised)
+
+- **FX-R60k** (provenance/identity): genuine verdict ACCEPTED
+  by its issuing contract; A's verdict REJECTED by B with
+  different expected digests; A's verdict REJECTED by B where
+  both contracts produced identical contents; a byte-identical
+  copy REJECTED.
+- **FX-R60l** (integrity): genuine verdict ACCEPTED; the same
+  object mutated after return REJECTED.
+- **Sabotage controls:** removing the identity check makes
+  FX-R60k fail (the copy and identical-content cases pass
+  without it); removing the integrity check makes FX-R60l fail
+  (the mutated object passes without it). Each sabotage leaves
+  the rest of the suite unaffected.
+- FX-R60j and all existing controls preserved. Suite becomes
+  **38** on implementation (35 + FX-R60j + FX-R60k + FX-R60l).
+
+### Evidence classification — explicit, per Alex's instruction
+
+- **Executed:** the FX-R60j reproduction (implementer-run
+  against v2.3 as shelved; repro-fx-r60j.py).
+- **Established by inspection only:** the FX-R60k
+  cross-contract replay against v2.3 (the four validation
+  checks are instance-independent on the face of the source);
+  the implementer's execution run was blocked by her tooling
+  and not routed around — **execution is assigned to
+  independent examination**.
+- **Design-stage (not yet executed anywhere):** every case in
+  the FX-R60k/FX-R60l matrix — they test a mechanism that does
+  not exist until implementation is authorised; on
+  implementation they are implementer-run first and then
+  independently examined, sabotage controls included.
+
+### Boundary — unchanged
+
+In-process provenance only. No claim against arbitrary runtime
+or closure tampering. **No implementation authorised.**
+Correction B remains OPEN; v0.10 remains NOT APPROVED.

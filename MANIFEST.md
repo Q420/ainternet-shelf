@@ -43,7 +43,7 @@ full corpus sweep was shelved the same day.
 | `duenna/CLAUDE-VERIFICATION-REPORT.md` | 18de602d1101d6e9e03eabf105981c2c3da1ec166a080593f1bd96bb4df20a11 | Claude's verification report on v0.8 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V09.md` | 1b760ac00efea716dd32a96755eaa6150580f04abc6bbe0388a743fbda00ca45 | Claude's verification report on v0.9 |
 | `duenna/ALEX-COMBINED-ADJUDICATION-R60REV.md` | 393cba4c8adae5b153580a1a42dede4543701712f8e99592b2694e0aa2aa366b | Alex combined adjudication, revision round: A PASS; B OPEN (rebinding in threat model); v0.10 NOT APPROVED |
-| `duenna/FX-R60J-FINDING-AND-PROPOSAL.md` | 0229f90838715a9136421c146ae86ea162e46414de61e429de1ce00f9f30f0f0 | FX-R60j finding (Alex): forged verdict with trusted hash accepted — REPRODUCED; repair proposed (issued-verdict record); not authorised |
+| `duenna/FX-R60J-FINDING-AND-PROPOSAL.md` | cabf740000dae02998e555f426add81e58063d9b281966e8fd8b09ef0d59e1a8 | FX-R60j finding (Alex): forged verdict with trusted hash accepted — REPRODUCED; repair proposed (issued-verdict record); not authorised |
 | `duenna/repro-fx-r60j.py` | 8da8989a939ba8c56dba273ab2706ef0480ab39690c978571656a21b7b74553b | Standalone reproduction for FX-R60j against harness v2.3 as shelved |
 | `duenna/R60-REBIND-REPAIR-PROPOSAL.md` | 756a39beadd22b76f97eaf5af6fb644c17f96f1574b4d3ae864ffa3e618cfa32 | Remmy proposal for the rebind repair (captured dispatch reference + pinned anchor + FX-R60i); for Alex review, not authorised |
 | `duenna/CLAUDE-VERIFICATION-REPORT-R60REV.md` | 14fc4727749a02079aee4ce25eb7b9a7b93ef90bf65110ff0b4a23c605d7ad4a | Claude re-examination of the R60 revision: A PASS; B open (module-level rebind path); record-hash cleanup noted |
