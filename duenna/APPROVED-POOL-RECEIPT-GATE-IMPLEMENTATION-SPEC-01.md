@@ -42,22 +42,21 @@ Where this build specification and a
 design-basis artefact differ, the design-basis
 artefact governs.
 
-**Revision:** Rev 3 — prepared in response to
-Alex's review `pb-20261111-receipt-gate-rev2-
-review` (report shelved at commit 28988a34,
-blob 578d5401…): RG-R2-01 canonicalisation
-defined exactly (§3.1); RG-R2-02 reverse-link
-coverage proven to the returned revision or
-UNKNOWN (§3.4); RG-R2-03 R4's reliance-search
-record and disposition values carried exactly
-(§§7.2–7.3); RG-R2-04 the case matrix expanded
-per case (§13.1), with Alex's parallel
-traceability appendix reserved at §13.2.
-Rev 2: commit 81746fec, git blob eb43d0b1…;
-Rev 1: commit 2db7d59e, git blob 74ac55ae….
-Prior revisions are preserved in the
-repository history; this revision supersedes
-them as the review candidate only.
+**Revision:** Rev 4 — prepared in response to
+Alex's review `pb-20261111-receipt-gate-rev3-
+review` (report shelved at commit 3070b3a1,
+blob 67fa9210…): the one remaining correction,
+RG-R3-01 — CANON-RCPT-1 is now a fully
+deterministic contract (RFC 8785 adopted,
+input constraints and normative test vectors,
+§3.1), and Alex's traceability appendix is
+incorporated at §13.2 by pin. Rev 3: commit
+e9e60b42, git blob b0e6fcff…; Rev 2: commit
+81746fec, git blob eb43d0b1…; Rev 1: commit
+2db7d59e, git blob 74ac55ae…. Prior revisions
+are preserved in the repository history; this
+revision supersedes them as the review
+candidate only.
 
 ---
 
@@ -184,40 +183,105 @@ locator or commit inside the digested record
 is non-conformant: the digest would depend on
 the commit that contains it.
 
-**CANON-RCPT-1 (exact byte algorithm).** The
-canonicalisation is byte-identical to the
-ledger specification's CANON-LEDGER-1,
-adopted here deliberately so digests remain
-comparable across components: the object is
-serialised as JSON in UTF-8; object keys are
-sorted lexicographically at every depth;
-arrays are serialised in their record order;
-no insignificant whitespace (separators `,`
-and `:` with no spaces); strings are emitted
-unescaped except where JSON requires
-escaping; the serialisation ends without a
-trailing newline. Duplicate keys are rejected
-by the record parser, recursively at every
-object level, before canonicalisation. The
-digest algorithm is SHA-256, and the
-canonicalisation identifier is recorded in
-every record that carries a digest.
-**Omission rules, kept separate:** for
-`candidate_digest`, exactly the candidate's
-own digest field is omitted and every other
-field is covered; for `record_digest`,
-exactly the `record_digest` field is omitted,
-and `candidate_digest` is an ordinary covered
-field. The default for any unlisted field is
-COVERED; excluding more changes the rule.
-(A Crusher retrieval, 2026-11-11, at Alex's
-request, found the nearest relative —
-D3-CANON-1 in the D3 proposal line, an RFC
-8785 scheme with a similar exclusion
-boundary — expressly PROPOSED, not adopted.
-CANON-RCPT-1 is therefore defined in full
-here as this specification's own rule and
-claims no adopted source.)
+**CANON-RCPT-1 (deterministic byte contract).**
+CANON-RCPT-1 **is** the JSON Canonicalization
+Scheme, **RFC 8785**, applied as follows —
+the published algorithm is the authority for
+every lexical question this paragraph does
+not separately constrain:
+
+- Input is a parsed JSON value (RFC 8259
+  grammar). Numbers are IEEE 754 doubles as
+  RFC 8785 requires; serialisation of numbers
+  follows RFC 8785 §3.2.2 (the ECMAScript
+  Number::toString algorithm): 1e2 → `100`,
+  1.50 → `1.5`, −0 → `0`, 1e21 → `1e+21`.
+- Object keys are sorted by **UTF-16 code
+  unit** order (RFC 8785 §3.2.3) — not code
+  point order; the two differ for
+  supplementary-plane keys against U+E000–
+  U+FFFF keys, and vector V5 pins the
+  behaviour.
+- Strings are escaped exactly per RFC 8785
+  §3.2.2.2: only `"` , `\`, and control
+  characters U+0000–U+001F are escaped, using
+  the short forms \b \t \n \f \r where defined
+  and \u00xx (lowercase hex) otherwise; all
+  other characters, including U+007F and all
+  non-ASCII, are emitted raw as UTF-8.
+- Output is UTF-8, no insignificant
+  whitespace, no trailing newline. The digest
+  is SHA-256 over those bytes. The
+  canonicalisation identifier is recorded in
+  every record that carries a digest.
+
+**Input constraints (parser boundary).** A
+record is admissible for digesting only if:
+its text parses under the RFC 8259 grammar
+with **duplicate keys rejected recursively at
+every object level** before canonicalisation
+(a last-value-wins parse is non-conformant);
+every string is well-formed Unicode
+(unpaired surrogates are rejected, never
+normalised or replaced); every number is
+finite (JSON cannot express non-finite
+values; a producer-side value that is not a
+finite double cannot enter a record). An
+input failing any constraint is rejected at
+the boundary, not canonicalised leniently.
+
+**Omission rules, kept separate.** Omission
+happens on the parsed object, before
+canonicalisation: for `candidate_digest`,
+exactly the candidate's own digest field is
+removed and every other field is covered; for
+`record_digest`, exactly the `record_digest`
+field is removed, and `candidate_digest` is
+an ordinary covered field. The default for
+any unlisted field is COVERED; excluding more
+changes the rule.
+
+**Identifier discipline.** The byte rules
+above are frozen under the identifier
+CANON-RCPT-1. Any future incompatible change
+takes a new identifier (CANON-RCPT-2, …); an
+existing identifier's rules never change
+silently, and a digest computed under one
+identifier is never verified under another.
+
+**Comparability status.** The Rev 3 claim of
+byte-identity with the ledger's
+CANON-LEDGER-1 is **withdrawn**: that rule
+remains defined only in an unadopted
+candidate and in looser wording. Cross-
+component digest comparability holds only if
+and when the ledger adopts a compatible
+deterministic rule; no comparability is
+claimed today. (D3-CANON-1 remains what the
+retrieval found it to be: a proposal, cited
+as background, never as authority.)
+
+**Normative test vectors.** Canonical outputs
+below are byte-exact (shown as text); the
+SHA-256 is over the UTF-8 bytes of the
+canonical form. Any conforming implementation
+must reproduce all of them, and an
+implementation claim requires identical
+outputs from at least two independent
+implementations.
+
+| # | Input (parsed value) | Canonical form | SHA-256 |
+|---|---|---|---|
+| V1 | {"b":1,"a":2} | {"a":2,"b":1} | d3626ac30a87e6f7a6428233b3c68299976865fa5508e4267c5415c76af7a772 |
+| V2 | {"x":1e2,"y":-0,"z":1.50} | {"x":100,"y":0,"z":1.5} | 3e37129d5927dd422f2dbc4819295edb18f72dff6a3e15481bcf7b870b980ce6 |
+| V3 | {"p":0.1,"q":1e21,"r":123.456e-3} | {"p":0.1,"q":1e+21,"r":0.123456} | 4d1bb4a122fde76aea7ee3b06a9df1db58f94dc965db7cca53f4474a82253338 |
+| V4 | {"é":1,"e":2} (é = U+00E9) | {"e":2,"é":1} | ae0cc153856ae8fdab2420c8f8e36a9f9cd47c4b1a73531be4bd7dc8092fa69e |
+| V5 | {"�":1,"𐀀":2} (U+FFFD; U+10000) | {"𐀀":2,"�":1} — UTF-16 order: D800 < FFFD | 2be8040fe3029f9de464f315235716337d3ef13fe83fe32a481281b77a32112c |
+| V6 | {"s": a, LF, b, U+0001, ", c, \, d} | {"s":"a\nb\u0001\"c\\d"} | b521568ec863cd24625c5c269d0fc4a0cc125e2205e1bd8dde231ea868631272 |
+| V7 | candidate {"x":1,"candidate_digest":…} with the digest field omitted | {"x":1} | 5041bf1f713df204784353e82f6a4a535931cb64f1f4b4a5aeaffcb720918b22 |
+| V8 | record {"candidate_digest":"abc123","x":1,"record_digest":…} with record_digest omitted | {"candidate_digest":"abc123","x":1} | 8f70dbc4bf2db7f472d789faaeaacb80c4369e98f586ffb16c7d397fb5d52921 |
+| V9 | {"a":{"x":1,"x":2}} (recursive duplicate key) | — | REJECTED at parse; no digest exists |
+| V10 | Two records identical except their store index locator/commit | identical canonical forms | identical record_digest (locator/commit are never inputs) |
 
 Immutability: after admission, no field of a
 receipt changes. Any later fact arrives as a
@@ -889,19 +953,29 @@ F-AUTH TEST-ONLY assignment unless stated.
 | RG-19 Interrupted append | Ph4 §10.1 · §5 · AdmitReceipt | Append interrupted mid-transition → read-back classification; no partial record; ambiguous variant stops all store mutation | Store revisions; classification record | F-AUTH test assignment | FE |
 | RG-20 Reconstruction from historical pins | Ph4 §6.4 · §8.2 · reconstruct | Rules/graph/inventory advanced after admission → reconstruction reproduces the receipt's meaning from its historical pins, not current state | Reconstruction transcript pinned to historical artefacts | reader role | IR |
 
-### 13.2 Alex's traceability appendix (reserved)
+### 13.2 Alex's traceability appendix (incorporated)
 
-Alex has taken the expanded requirements-to-
-test traceability matrix as parallel work and
-will shelve it as a separate appendix. On
-delivery it is incorporated into this section
-by exact pin (path, commit, blob), as with the
-ledger specification's appendix, and the
-adoption decision is made against the complete
-specification including it. Where the appendix
-and §13.1 differ on a case's expected outcome,
-the difference is a finding to reconcile, not
-a silent override by either side.
+Alex's traceability appendix is incorporated
+into this specification by reference and forms
+part of the complete specification against
+which the adoption decision is made:
+
+**duenna/ALEX-RECEIPT-GATE-REV3-TRACEABILITY-
+APPENDIX-01.md** — commit 9d90cdfe, git blob
+e7f1f7573b3ad588e1c7cd3779c0e20ec32889e6,
+15,140 characters (independently recomputed
+and matched from Remmy's side, 2026-11-11).
+
+It expands RG-01–RG-20 with exact operation
+inputs, expected branches, durable evidence,
+authority, fixture isolation and examiner
+evidence requirements, and distinguishes
+design coverage from test execution. It is a
+companion to §13.1, not an override: where the
+appendix and §13.1 differ on a case's expected
+outcome, the difference is a finding to
+reconcile, not a silent override by either
+side.
 
 ## 14. Adoption boundary
 
@@ -921,6 +995,6 @@ its own gates, exactly as the adopted plan
 requires.
 
 *End of Receipt and Readiness Gate
-Implementation Specification 01 Rev 3 —
+Implementation Specification 01 Rev 4 —
 prepared for Alex's review and adoption
 decision under the amended delegation.*
