@@ -103,15 +103,23 @@ def derive_entries(observations):
         weak = any(o["worker_result"] != "correct" or
                    o["critical_failures"] for o in obs)
         n = len(obs)
-        conf = "LOW" if n < 3 else "MEDIUM"
+        # Consistency condition (Alex): MEDIUM requires
+        # n>=3 AND consistent (no failure) AND adjudicated.
+        # Any failure caps confidence at LOW at any n.
+        if weak:
+            conf, basis = "LOW", (f"n={n}; failure observed — "
+                "consistency condition unmet, capped at LOW")
+        elif n >= 3:
+            conf, basis = "MEDIUM", (f"n={n} consistent "
+                "adjudicated observations")
+        else:
+            conf, basis = "LOW", (f"n={n}; pilot scale caps "
+                "at LOW")
         entries.append({
           "task": task, "op_class": op,
           "status": "weak" if weak else "demonstrated",
           "confidence": conf,
-          "confidence_basis": f"n={n} adjudicated observations; "
-            + ("consistent" if not weak else "failure observed")
-            + "; pilot scale caps at LOW" if n < 3 else
-            f"n={n} adjudicated observations",
+          "confidence_basis": basis,
           "sample_count": n, "provisional": True,
           "levels_observed": sorted({o["level"] for o in obs}),
           "adjudication": sorted({o["adjudication"] for o in obs}),

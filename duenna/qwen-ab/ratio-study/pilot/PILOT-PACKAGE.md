@@ -1,28 +1,31 @@
-# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V2
+# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V3
 
-Corrections per Alex's inspection of b07d18d (preserved
-in git history): **(1)** pilot.py now contains the real
-execution path — per-level flows on the frozen components
-(R0 worker-only under constraints; R1/R2 support packets
-from tools24; R3 post-verification via the frozen
-checkers; R4 the frozen run_c machinery; T06 probe with
-hard capture order at every level; stop rule writes
-PILOT-STOPPED.lock). Compile-verified; matrix verified
-(60 runs); unauthorised invocation verified REFUSED. The
-execution path has NOT been exercised — its first live
-use is the authorised pilot itself, under the stop rule.
-**(2)** Seed corrected: eligibility ≠ correctness; T01/
-T03/T08 entries withdrawn to UNKNOWN-UNTESTED; two WEAK
-entries survive on adjudicated worker-level evidence.
-**(3)** Binding extended to provider, model revision,
-decoding, system-prompt hash, tools hash, adapter,
-foundation version, Worker ID — all compared.
-**(4)** Selection resolves to real versioned templates
-(TEMPLATES registry, requires lists recorded) and FAILS
-CLOSED to cold start on malformed/conflicting data —
-fixture-verified in this round. **(5)** Derivation emits
-the full audit structure (binding, level, adjudication,
-critical failures, evidence refs, sample count,
-confidence basis, provisional flag) and is reproducible
-from adjudicated observation records.
-**No runs executed. Awaiting re-inspection.**
+Corrections per Alex's inspection of 5f07030 (preserved
+in history): **(1)** Imports resolve in both the
+workspace layout and the shelf layout; resolved paths
+are recorded in every run record (F-IMPORT fixture).
+**(2)** Pack items handled as the frozen (id, text)
+tuples; R1/R2 packets built by the tools' native tuple
+interfaces (F-R1R2 fixture over the real T01 pack).
+**(3)** The T06 probe no longer calls the absent
+check_t06_labels — a pilot-local label extractor scores
+probe records; the frozen gate scorers still score the
+task response (F-PROBE fixture, stubbed, verifies the
+three-record structure + capture order). **(4)** The
+profile mechanism is exercised in the driver itself:
+--verify-mechanism derives entries from the adjudicated
+V1/V2R observation records, validates, binds, selects,
+and writes MECHANISM-VERIFICATION.json (run this round:
+binding OK, no defects, T05/T06 weak at LOW).
+**(5)** Confidence consistency enforced in code: any
+failure caps at LOW at any n; MEDIUM requires n>=3
+consistent + adjudicated (F-PROFILE fixture).
+**(6)** Measurement accounting explicit: every model
+call is logged per run with its purpose (scored-task-
+response / probe-unaided / probe-revision); probe
+records are typed "adoption-probe (not scored)" and
+kept separate from the scored response at every level
+including R4.
+All four fixtures pass (FIXTURES-OUTPUT.json). Driver
+compile- and refusal-verified. **No pilot runs executed.
+Awaiting re-inspection.**

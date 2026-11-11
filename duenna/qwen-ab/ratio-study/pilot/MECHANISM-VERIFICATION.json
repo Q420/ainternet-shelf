@@ -1,0 +1,114 @@
+{
+ "observations": [
+  {
+   "task": "T05",
+   "op_class": "record-composition",
+   "level": "R0",
+   "worker_result": "incorrect",
+   "adjudication": "Alex adjudication of V1",
+   "critical_failures": [],
+   "evidence_refs": [
+    "QWEN-AB-RESULTS.json T05 scores"
+   ]
+  },
+  {
+   "task": "T05",
+   "op_class": "record-composition",
+   "level": "R0",
+   "worker_result": "incorrect",
+   "adjudication": "Alex review pb-mwbps5ss (V2R)",
+   "critical_failures": [],
+   "evidence_refs": [
+    "QWEN-AB-V2R-RESULTS.json T05 first-attempt BLOCKED"
+   ]
+  },
+  {
+   "task": "T06",
+   "op_class": "label-adoption",
+   "level": "R3",
+   "worker_result": "incorrect",
+   "adjudication": "Alex review pb-mwbps5ss (V2R)",
+   "critical_failures": [],
+   "evidence_refs": [
+    "QWEN-AB-V2R-RESULTS.json worker_vs_system"
+   ]
+  }
+ ],
+ "entries": [
+  {
+   "task": "T05",
+   "op_class": "record-composition",
+   "status": "weak",
+   "confidence": "LOW",
+   "confidence_basis": "n=2; failure observed \u2014 consistency condition unmet, capped at LOW",
+   "sample_count": 2,
+   "provisional": true,
+   "levels_observed": [
+    "R0"
+   ],
+   "adjudication": [
+    "Alex adjudication of V1",
+    "Alex review pb-mwbps5ss (V2R)"
+   ],
+   "critical_failures": [],
+   "evidence": [
+    "QWEN-AB-RESULTS.json T05 scores",
+    "QWEN-AB-V2R-RESULTS.json T05 first-attempt BLOCKED"
+   ]
+  },
+  {
+   "task": "T06",
+   "op_class": "label-adoption",
+   "status": "weak",
+   "confidence": "LOW",
+   "confidence_basis": "n=1; failure observed \u2014 consistency condition unmet, capped at LOW",
+   "sample_count": 1,
+   "provisional": true,
+   "levels_observed": [
+    "R3"
+   ],
+   "adjudication": [
+    "Alex review pb-mwbps5ss (V2R)"
+   ],
+   "critical_failures": [],
+   "evidence": [
+    "QWEN-AB-V2R-RESULTS.json worker_vs_system"
+   ]
+  }
+ ],
+ "validation_defects": [],
+ "binding_ok": true,
+ "selections": [
+  {
+   "task": "T06",
+   "op_class": "label-adoption",
+   "map_path": "X (R3)",
+   "weakness_class": "label-adoption",
+   "decision": "template",
+   "template": "TPL-MECH-CLASSIFY-PROBE",
+   "template_version": 1,
+   "requires": [
+    "mechanical classification computed independently",
+    "adoption probe with hard capture order",
+    "three records kept separate"
+   ],
+   "basis": "profile weak: T06/label-adoption; evidence ['QWEN-AB-V2R-RESULTS.json worker_vs_system']"
+  },
+  {
+   "task": "T01",
+   "op_class": "grounding",
+   "map_path": "X (R2)",
+   "weakness_class": "grounding",
+   "decision": "cold start",
+   "template": "TPL-COLD-START",
+   "template_version": 1,
+   "requires": [
+    "highest map-allowed mechanical coverage",
+    "full reciprocal constraint set",
+    "adoption probes on judgment classes",
+    "independent scoring on every output"
+   ],
+   "basis": "no demonstrated entry"
+  }
+ ]
+}
