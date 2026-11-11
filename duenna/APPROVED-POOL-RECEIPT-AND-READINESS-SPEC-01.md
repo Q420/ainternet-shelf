@@ -1,6 +1,6 @@
 # APPROVED POOL — RECEIPT, RETENTION AND READINESS SPECIFICATION 01
 
-**Status:** PHASE 4 TECHNICAL SPECIFICATION — BEN'S RESERVED POLICY DECISIONS REQUIRED  
+**Status:** PHASE 4 TECHNICAL SPECIFICATION — R1–R4 DELEGATED RULINGS RECORDED; INDEPENDENT EXAMINATION PENDING  
 **Prepared by:** Alex  
 **Date:** 2026-11-11  
 **Repository:** `Q420/ainternet-shelf`  
@@ -765,4 +765,336 @@ appointment/evidence is established by the
 reconciliation pack. Ben's reserved R1–R4 decisions
 remain his; this adjudication does not decide them,
 waive them, or authorise Phase 5 implementation.
+
+## 15. R1–R4 policy rulings and examiner appointment
+**Decision authority:** Ben's bounded delegation to Alex, recorded in
+Pulse Bridge letter `pb-mwcg3cl9-y-cc0q`,
+`pb-20261111-phase-4-delegation`, dated 2026-11-11.
+Ben delegated the four Phase 4 gate decisions and the
+criterion-17 examiner appointment question. The
+delegation does not include Phase 5 build-spec
+adoption, spend, publication, account actions, or
+other expressly retained decisions. Ben may revoke
+the delegation at any time.
+
+The open questions listed in §1.2 and §9 are
+superseded, for Phase 4 policy purposes, by the
+following rulings. They remain in the historical
+text to preserve the decision trail. These rulings
+do not implement the machinery they govern.
+
+### 15.1 R1 — Retention policy (DECIDED)
+
+1. **Canonical location for admitted receipts:** the
+   AInternet Shelf Git repository is the canonical
+   record location for Approved Pool receipts,
+   correction/supersession records, readiness
+   dispositions and their immutable decision
+   references. This is a receipt-retention decision;
+   it does not decide Phase 1 G1's physical location
+   for the master identity ledger.
+2. **Evidence retention:** every admitted receipt
+   must have a durable, immutable reference to the
+   exact evidence used. Any evidence that exists only
+   in a mutable or workspace-only location and is
+   necessary to substantiate or reconstruct the
+   receipt must be captured as a pinned snapshot in
+   the Shelf evidence record before the receipt is
+   admitted. The originating workspace copy remains
+   separately identified; a Shelf copy does not
+   silently become the authoritative operational
+   source.
+3. **Minimum duration:** admitted receipts and
+   evidence necessary to reconstruct or challenge
+   them are retained permanently. No receipt class
+   expires automatically. No disposal or destructive
+   pruning is permitted without Ben's explicit
+   subsequent decision. A later policy revision may
+   define a narrower rule prospectively; it may not
+   silently erase historical records.
+4. **Holds:** an open FLAG, correction, dispute,
+   examination, known reliance, unresolved
+   reconstruction defect or legal/operational hold
+   prevents disposal in any event. Original records
+   remain immutable when superseded or corrected.
+5. **Backup:** each admitted release receipt and its
+   evidence bundle must receive an independent
+   second-residence copy after admission. A weekly
+   full-repository snapshot is the minimum ongoing
+   backup cadence. A restore test is required at
+   least quarterly and before relying on the backup
+   for a release if the last successful restore test
+   is more than 90 days old. The current forum
+   backup and Git history are useful existing
+   materials, but do not prove this policy is
+   implemented. No provider purchase or spend is
+   authorised by this ruling.
+6. **Custody and access:** Ben retains ultimate
+   ownership and authority over custody. Access is
+   least-privilege: Alex receives access needed for
+   delegated adjudication; Remmy may write assigned
+   Shelf artefacts; an appointed examiner receives
+   read-only access to the exact examination set.
+   This is a policy allocation, not a claim that a
+   new access-control or backup mechanism exists.
+7. **Secrets:** credentials, passwords and other
+   authentication secrets are not copied into
+   receipt evidence. If a necessary evidence item
+   cannot safely be retained, its omission and
+   resulting reconstruction limitation must be
+   explicit; the receipt cannot imply full evidence
+   retention.
+
+Existing workspace-only records are not retroactively
+declared compliant. They remain subject to the
+known residence and reconstruction limitations
+recorded in §14 and the Phase 4 source pack.
+
+### 15.2 R2 — Authority (DECIDED)
+
+The authority model is separated by act. Technical
+access, authorship or successful execution does not
+confer approval.
+
+| Act | Authority ruling |
+|---|---|
+| Prepare a candidate receipt | Any worker assigned the task may prepare it. |
+| Attest to execution | The executor may attest only to actions it actually performed and evidence it directly observed. |
+| Admit an Approved Pool receipt | Alex, acting under the recorded Ben delegation, after required evidence and examination gates are satisfied. The author/executor cannot self-admit. |
+| Independent examination | The named examiner reports findings and limitations; the examiner does not admit the receipt or waive policy. |
+| Issue a technical readiness disposition | Alex, for the exact declared work scope, under this delegation. |
+| Propose a correction | Any authorised seat may raise a FLAG or submit a correction proposal with evidence. |
+| Approve/admit a correction or supersession | Alex under this delegation, append-only and with the reliance search required by R4. If Alex authored or executed the affected artefact, independent examination is required before Alex adjudicates it. |
+| Retrieve/reconstruct | Ben, Alex and Remmy for their authorised duties; an examiner only for the assigned read-only examination scope. |
+| Restrict access | Ben retains ultimate authority. Alex may impose a temporary, narrowly scoped restriction to protect sensitive evidence or preserve an examination, with reason and scope recorded; no restriction may conceal a finding or destroy access history. |
+| Approve an exclusion | Alex may approve only a narrowly scoped exclusion supported by the registered dependency model and evidence that the excluded item is not required for the named work. The exclusion, rationale, affected scope and authority must be recorded. |
+| Waive a required check or accept residual risk | No waiver may convert a required FAILED, stale, integrity-invalid or UNKNOWN dependency into READY. Alex may narrow a technical claim to a genuinely independent passing sub-scope. Ben retains decisions concerning public release, spend, accounts and any broader risk acceptance outside this delegated technical scope. |
+
+The delegation itself and this decision record
+are the authority basis for Alex's in-scope acts.
+A machine-readable, versioned authority registry
+does not yet exist (Phase 1 Gap 5). Until one is
+implemented under a separately authorised build,
+each act must cite the exact delegation and
+decision-record reference. This ruling does not
+create or imply that registry.
+
+### 15.3 R3 — Readiness consequences (DECIDED)
+
+Readiness is always scoped to the exact work and
+dependency closure named in the receipt. There is
+no global READY status by implication.
+
+1. **READY_WITHIN_SCOPE:** every required check for
+   the exact scope passes; all required dependencies
+   are identified and current under their declared
+   version policies; no required UNKNOWN, FAILED,
+   stale/dirty state, unresolved conflict, missing
+   evidence or unauthorised exclusion remains.
+2. **NOT_READY_WITHIN_SCOPE:** a required check has
+   a proven failure, a required dependency is stale
+   or dirty, authority is denied, or an integrity
+   check fails.
+3. **INDETERMINATE_WITHIN_SCOPE:** evidence is
+   missing, inaccessible, conflicting or
+   insufficient to establish readiness or a proven
+   failure. A required UNKNOWN blocks the affected
+   dependent operation pending resolution; it is not
+   silently treated as a pass or as absence.
+4. **PARTIAL_WITHIN_SCOPE:** permitted only for a
+   named sub-scope whose entire required dependency
+   closure is independently bounded and evaluated.
+   The receipt must list the passing sub-scope and
+   all other failed, UNKNOWN, skipped or unchecked
+   scope. PARTIAL is never a synonym for READY and
+   cannot be represented as a full release result.
+5. **OUT_OF_SCOPE:** no readiness claim is made for
+   the named entity or operation.
+
+**Blocking rules:**
+- A required FAILED, DIRTY or STALE dependency
+  blocks that dependency's affected work scope and
+  downstream dependents. Unrelated work may proceed
+  only if its own dependency closure is complete
+  and independently passing.
+- A required UNKNOWN blocks the affected scope until
+  resolved. A missing dependency declaration or
+  unknown endpoint is treated as required/UNKNOWN
+  until an authorised classification establishes
+  otherwise; a consumer cannot classify its own
+  dependency as optional.
+- An OPTIONAL dependency may fail or be UNKNOWN
+  without blocking a work scope only where its
+  optional classification was registered and
+  authorised before the check. The result remains
+  visible.
+- DOWN blocks only an operation whose declared
+  dependency requires current availability and has
+  no approved alternative. It does not block
+  unrelated work.
+- Failure of the current authoritative head's full
+  integrity check is terminal for that identity
+  chain. No search around a corrupt head and no
+  fallback to an older version may be represented
+  as current; follow the Phase 2 STOP rule.
+- A release-wide READY claim requires complete
+  coverage of the declared release population.
+  Unknown inventory coverage, unregistered
+  components or unaccounted dependencies prevent
+  a full release claim. A narrower, explicitly
+  bounded sub-scope may still be assessed.
+- A passing branch is not contaminated merely
+  because an unrelated branch is blocked; however,
+  shared dependencies block every scope that
+  actually depends on them.
+
+No exception may waive a required integrity check,
+conceal a required UNKNOWN, or turn incomplete
+coverage into a full-system claim. Risk acceptance
+cannot rewrite evidence or change a FAILED/UNKNOWN
+finding into PASS.
+
+### 15.4 R4 — Reliance and correction policy (DECIDED)
+
+1. **Append-only correction:** admitted receipts,
+   source records and prior readiness decisions are
+   never edited in place. A correction or
+   supersession is a new linked record identifying
+   the exact affected claim, old and corrected
+   values (or WITHDRAWN), evidence, actor, authority,
+   time and full digest.
+2. **Reliance search:** before admitting a material
+   correction or supersession, search every
+   available declared dependency/reliance register
+   and the receipt's recorded references. Record
+   the exact sources, query/scope, time, results and
+   method. Identify each known downstream receipt,
+   decision, component and work item.
+3. **Incomplete coverage:** because no complete
+   downstream reliance registry currently exists,
+   every such search must state its coverage
+   limitation. If completeness cannot be evidenced,
+   reliance coverage is UNKNOWN. No zero-reliance,
+   all-notified or all-reconciled claim may be made.
+4. **Effect on future work:** a confirmed correction
+   that affects a required source or claim marks
+   known dependent scopes DIRTY and requires
+   re-evaluation before further dependent work.
+   Affected work is blocked only within those
+   dependency closures. Unrelated work continues
+   where its own closure remains complete.
+5. **Historical work:** a correction does not
+   silently erase or retroactively rewrite prior
+   outputs. Each known downstream use receives an
+   explicit disposition: remains valid, requires
+   recheck, withdrawn, superseded or UNKNOWN.
+   Where the evidence cannot establish whether a
+   prior result remains valid, record UNKNOWN; do
+   not presume either validity or invalidity.
+6. **Notification:** notify known affected owners
+   through a verified available route and record
+   delivery separately from consumption. Where no
+   verified route exists, mark notification
+   NOT_DELIVERED/UNKNOWN as applicable. No automatic
+   complete notification mechanism is claimed.
+7. **FLAG:** a FLAG triggers the prescribed second
+   look; it is not itself a correction or a STOP.
+   Existing FLAG lifecycle and authority rules
+   remain in force. A confirmed correction is
+   handled through the separate CORRECTION record.
+
+### 15.5 Criterion 17 — independent examiner appointment
+
+**Appointment decision:** Vane is appointed as the
+independent design examiner for Phase 4's receipt,
+retention and readiness specification, specifically
+the version at commit
+`989409d76001d3c7e0efe26c406879e1a06bcac1`,
+blob `a1a26dcab8888e781da5796fec9fa4c2a5503234`,
+and the pinned Phase 1–3 specifications, Phase 4
+source/reconciliation packs and named-instance
+reconciliation in §14.
+
+**Independence boundary:** Vane is not the author,
+implementer or readiness adjudicator for this
+specification. Vane's task is to examine and report;
+Vane cannot approve policy on Ben's behalf, admit
+the receipt, or waive an acceptance criterion.
+The appointment requires Vane to declare any
+authoring, implementation or other conflict before
+proceeding. If a material conflict exists, the
+appointment is invalid and must return for a
+different examiner.
+
+**Access evidence:** the programme's Information
+Path Audit P-07 and Vane's prior examination report
+at `duenna/VANE-EXAMINATION-REPORT-V24.md`,
+blob `4287850ed2297438ae4c909c1ecfb51a63080796`,
+establish prior GitHub source retrieval and
+source-inspection access. They do not prove Vane has
+retrieved the current Phase 4 commit. For this
+appointment, Vane must fetch the exact commit and
+confirm the full blob SHA above, plus the required
+cross-phase pins, in his return report.
+
+**Capability boundary:** Vane's report explicitly
+states that his environment can retrieve and inspect
+repository source but cannot execute the retrieved
+Python files. Phase 4 is a design/specification
+examination; the assigned criteria require document
+and source inspection, cross-phase consistency
+review, and adversarial reasoning, not Python
+fixture execution or live operational testing.
+That source-level capability is sufficient for this
+specific design examination. It is not sufficient
+to certify implementation, runtime behaviour,
+backup restoration, concurrency or live readiness
+enforcement. Those claims remain outside this
+appointment.
+
+**Examination requirements:** Vane must:
+- confirm independence and disclose conflicts;
+- fetch and verify the exact current Phase 4 spec
+  commit/blob and every cross-phase artefact needed;
+- examine the R1–R4 rulings for internal consistency,
+  authority boundaries and fit with Phases 1–3;
+- assess the six named existing record families and
+  the NOT-ISSUED R-19 case;
+- challenge scope, retention, correction/reliance,
+  readiness and examiner boundaries;
+- identify findings by exact section and classify
+  each as PASS, defect, limitation or UNKNOWN;
+- state explicitly that the work is source-level
+  design examination and that no Python execution
+  or live behaviour is claimed.
+
+**Criterion-17 status:** APPOINTMENT MADE; access to
+the exact current commit, independence declaration
+and completed examination are still awaiting
+Vane's return evidence. Therefore criterion 17 is
+not yet MET and formal Phase 4 acceptance remains
+DEFERRED. Remmy is requested to deliver this
+assignment through the established Vane route and
+return Vane's acknowledgement and examination
+record. No claim of delivery, access or completed
+examination is made by this appointment alone.
+
+### 15.6 Resulting Phase 4 disposition and authority boundary
+
+R1–R4 are DECIDED under the recorded bounded
+delegation. The technical model's named-instance
+coverage remains accepted as recorded in §14.
+Formal Phase 4 acceptance remains DEFERRED until
+Vane's appointment conditions and examination
+evidence above are satisfied and any material
+findings are adjudicated.
+
+These policy rulings do not implement retention,
+backup, authority registry, reliance tracking,
+receipt generation, dependency sweeping or
+readiness enforcement. They do not authorise Phase
+5 implementation, Phase 5 build-spec adoption,
+generation zero, Dictionary 0.4 freeze, publication,
+spend, account changes, validator, replay or pilot.
+Ben retains the right to revoke this delegation.
 
