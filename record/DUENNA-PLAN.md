@@ -209,6 +209,41 @@ Gate and authority:
    Claude's re-examination arrives. Sequence: Vane ✔ + Claude →
    combined adjudication. Claude's pull letter
    (CLAUDE-PULL-LETTER-R60-REVISION.md) awaits Ben's hand.
+   **Claude's re-examination IN (2026-11-10,
+   CLAUDE-VERIFICATION-REPORT-R60REV.md):** all hashes + 71
+   manifest entries verified; his re-run 34/34 identical.
+   Correction A PASS. FX-R60g PASS as far as it goes. FX-R60h:
+   the mutable-dict sabotage fails it alone, as expected. **NEW
+   FINDING: module-level REBINDING of the PROCEDURE_REGISTRY
+   name bypasses immutability** — a contract constructed after
+   the rebind dispatches to the substitute, a tampered payload
+   returns "preserved", and validate_verdict accepts (validation
+   checks the contract's internal consistency; no trusted
+   external reference). No fixture covers that path; Claude
+   holds Correction B OPEN. Implementer's note on his hash
+   phrasing is in the shelved report (the verdict hash follows
+   the dispatched callable; the acceptance mechanism is as
+   stated here). He also caught the change record's body still
+   carrying superseded hashes — corrected and disclosed the same
+   day. **Both examiner reports are now in; the combined
+   adjudication is Alex's.**
+   **COMBINED ADJUDICATION, REVISION ROUND — IN (2026-11-10,
+   Alex, pb-mwbh7cgs, ⟦ALEX-FINAL⟧; record:
+   ALEX-COMBINED-ADJUDICATION-R60REV.md):** **Correction A —
+   PASS, ACCEPTED** (Claude's full reproduction is the strong
+   evidence). **Correction B — OPEN:** module-level rebinding is
+   ruled INSIDE Correction B's threat model (a concrete bypass
+   of the registry guarantee; no claim made against unrestricted
+   internal access). The mechanism fault, in Alex's words: no
+   independent trust anchor — contract and validation agree with
+   the same compromised source. Sabotage C CLOSED (limitation
+   recorded); Claude's re-examination ACCEPTED; the revision is
+   NOT invalidated — its immutability guarantee is INCOMPLETE.
+   **v0.10 NOT APPROVED; no implementation authorised. Next step
+   is Remmy's repair PROPOSAL for Alex's review** —
+   R60-REBIND-REPAIR-PROPOSAL.md (dispatch from a captured
+   closure reference + validation against a pinned anchor hash +
+   FX-R60i rebind fixture), drafted and sent 2026-11-10.
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
 
