@@ -1,0 +1,61 @@
+{
+ "manifest": "V2 battery frozen foundation (prepared 2026-11-10, pre-authorisation)",
+ "rule": "Every component's sha256 must match at battery startup; the runner aborts on any mismatch. Corpus files are hash-listed without shelf copies (verified additionally by query.py verify).",
+ "components": {
+  "tools24.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/tools24.py",
+   "sha256": "89a70606a7bbfeafb1fe7b610ff28fce4ecf0109ad2676520f519b63b4f4f9c0",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/tools24.py"
+  },
+  "run_c.py (Arm C driver)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_c.py",
+   "sha256": "341dc7daebb207ceb97ab76021f2fab72508f275f13265c02174021603e6a0fb",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/run_c.py"
+  },
+  "run_v2.py (runner)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_v2.py",
+   "sha256": "1132a2b8ff0951c12ed94f2ddbc6ef74e374cead63695db87fa9b799530a0413",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/run_v2.py"
+  },
+  "run_ab.py (A/B harness, packs, gate)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_ab.py",
+   "sha256": "0d506ef04e397e3538cea89f4c4394ab3e98fbe1498211a9b9914a16ff6cea85",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/run_ab.py"
+  },
+  "query.py (BM25 ranker)": {
+   "path": "/home/hatch/workspace/pulse-bridge/index/query.py",
+   "sha256": "f8f2c7cad78089451399564dff19e22aa1c6fc6038f9efb832a9c01954905e32",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/query.py"
+  },
+  "PROCESS-TREES.md (v2)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v2/PROCESS-TREES.md",
+   "sha256": "5528ab69bec2f7fcdea776748e9bdc2e84ec97b4fa1d4be35bf7fd386e24b0ad",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/PROCESS-TREES.md"
+  },
+  "PROCESS-TREES-V21.md (amendments)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v21/PROCESS-TREES-V21.md",
+   "sha256": "76150ef4c5b11d44b6a1408214d79dec9f7e3db066f7a4a4a6a73e5483f78632",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/PROCESS-TREES-V21.md"
+  },
+  "TREES-V24-AMENDMENTS.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/TREES-V24-AMENDMENTS.md",
+   "sha256": "d0a4581ab0f007e0e81216e540bf35c1eda7b395bd8db5cd592503c145c03571",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/TREES-V24-AMENDMENTS.md"
+  },
+  "DEMO24-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/DEMO24-RESULTS.json",
+   "sha256": "c7dd2a813f20e66ac9796d0383fef027c9181d0d15919982e427b936c54f696b",
+   "shelf_copy": "duenna/qwen-ab/v24/DEMO24-RESULTS.json"
+  },
+  "corpus sections.jsonl": {
+   "path": "/home/hatch/workspace/pulse-bridge/index/sections.jsonl",
+   "sha256": "9ad80622094187d01f44e6d0cdefcb05dd9d8bb3143c6ef48cb46408d88ca2de",
+   "shelf_copy": null
+  },
+  "corpus manifest.json": {
+   "path": "/home/hatch/workspace/pulse-bridge/index/manifest.json",
+   "sha256": "79e91a6d6f340ccac3b130e157b82c637e9b30dd761660ded60445bcde54a2d8",
+   "shelf_copy": null
+  }
+ }
+}
