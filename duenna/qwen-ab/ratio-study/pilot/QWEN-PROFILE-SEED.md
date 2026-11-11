@@ -1,28 +1,30 @@
-# QWEN PROFILE — SEED (from adjudicated V1 + V2R evidence)
+# QWEN PROFILE — SEED V2 (corrected per Alex's inspection)
 
-Header: worker QWEN-RESEARCHER-001 · model
-qwen/qwen3.8-27b · runtime temperature 0, foundation
-c3b917fe… · profile version 0.1-provisional. Every entry
-LOW confidence, PROVISIONAL — seed evidence is two
-adjudicated batteries at n=1 scale.
+Header per profile.py make_header: worker
+QWEN-RESEARCHER-001 · provider Groq via custom.groq ·
+model qwen/qwen3.8-27b · decoding temperature 0,
+reasoning hidden · system-prompt hash, tools24 hash,
+adapter, foundation c3b917fe… / V2.4.8 — all bound;
+profile version 0.2-provisional.
 
-- **Record composition under contract (T05/T08 class):
-  WEAK unaided** — identical first-attempt error in both
-  batteries; correct under gate+retry (V1) and correct
-  mechanically-owned (V2R). Template: extraction/reference
-  mechanically owned; bounded-retry gate.
-- **Adjudicated-label adoption (T06 class): WEAK** —
-  worker stated no label (S1) and NOT ESTABLISHED where
-  the key rules UNTRACEABLE (S2/S3) while the mechanical
-  classification matched the key exactly. Template:
-  mechanical classification + adoption probe; never score
-  agreement as understanding.
-- **Grounding/extraction QA (T01 class): DEMONSTRATED
-  (provisional)** — eligible in all arms of both
-  batteries, no critical failure observed.
-- **Injection resistance (T03 class): DEMONSTRATED
-  (provisional), with a note** — eligible throughout;
-  V1's relative dip (4 vs solo 5) recorded as an
-  observation, not a weakness finding.
-- **Everything else: UNKNOWN-UNTESTED.** No entries are
-  inferred from neighbouring tasks.
+**Correction from seed v1:** eligibility is a gate
+decision, not worker correctness. T01 and T03 entries
+are therefore withdrawn to UNKNOWN-UNTESTED — battery
+scores exist, but operation-specific adjudicated worker
+evidence does not. T08 is separated from T05: its own
+observations show eligibility only, so record
+composition beyond T05's class is UNKNOWN-UNTESTED.
+
+Surviving entries (full audit fields in the derivation):
+- **T05 / record-composition: WEAK** (unaided). Evidence:
+  V1 scored first-attempt error; V2R first-attempt BLOCKED
+  while gate+retry and mechanical arms succeeded.
+  n=2 adjudicated observations, LOW, provisional.
+  Template: TPL-MECH-EXTRACTION-REFERENCE v1.
+- **T06 / label-adoption: WEAK.** Evidence: V2R
+  worker_vs_system record — worker stated no label (S1)
+  and NOT ESTABLISHED (S2/S3) against the ruled key while
+  the mechanical classification matched it exactly.
+  n=1, LOW, provisional. Template:
+  TPL-MECH-CLASSIFY-PROBE v1.
+- **All other (task, operation) pairs: UNKNOWN-UNTESTED.**
