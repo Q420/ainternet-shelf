@@ -1,8 +1,8 @@
-# FEASIBILITY PILOT — JOINT CONSTRUCTION PLAN (DRAFT 3)
+# FEASIBILITY PILOT — JOINT CONSTRUCTION PLAN (DRAFT 4)
 
-**Status:** Draft 3, incorporating Alex's consolidated
-reviews of Drafts 1 and 2 in full (§11 maps the Draft 2
-review). Nothing builds until this plan is agreed and
+**Status:** Draft 4, incorporating Alex's consolidated
+reviews of Drafts 1–3 in full (§11 maps the Draft 3
+review — two corrections, both narrow). Nothing builds until this plan is agreed and
 frozen. **Authority:** Ben — his instruction to plan
 before building controls. **Scope:** construction of
 the feasibility pilot package only; the 60-run
@@ -72,8 +72,10 @@ from the supplied scope", naming the scope).
 integrity).** The hash pins prove the files are the
 exact records; their status as adjudicated evidence
 rests on Alex's acceptances, which are the authoritative
-references: **V1** — accepted by Alex as a completed
-baseline and closed (his A/B adjudication, 2026-11-10).
+references: **V1** — accepted by Alex in letter
+**pb-mwbjmwcc** (2026-11-10): "accepted as directional
+evidence, CLOSED as baseline — do not modify"; the V1
+record as accepted is shelved at commit **f02ec0a**.
 **V2R** — accepted by Alex, pb-mwbps5ss ⟦ALEX-FINAL⟧:
 "execution ACCEPTED… V2R CLOSED as an execution record."
 A file that hashes correctly but lacks an acceptance
@@ -260,11 +262,19 @@ exact substring after whitespace normalisation
 (collapse whitespace runs to single spaces, trim;
 case-sensitive) applied to both; a quote matching a
 different item than the one named is rejected. (b)
-*grounded absence* — the worker's own statement names
-the specific artefact, and the artefact is verified
-absent from the **defined scope** (the frozen T06
-pack); the recorded claim is "absent from the supplied
-scope: frozen T06 pack". **Decision table** — each
+*grounded absence* — the worker's own statement
+contains an **artefact reference in the pack's
+identifier grammar**: a section-id stem (lowercase
+words joined by hyphens, optionally suffixed #<number>,
+e.g. `grok-adjudication`), and that stem is verified
+absent from the **defined scope** by searching the
+frozen pack's **section-id index** (no section id equal
+to or beginning with the stem). A general subject or a
+possessive phrase ("Grok's ruling") is NOT an artefact
+reference and does not qualify — the measurement code
+never supplies specificity on the worker's behalf. The
+recorded claim is "absent from the supplied scope:
+frozen T06 pack". **Decision table** — each
 statement receives exactly one outcome, evaluated in
 this order (B = worker-before label, M = mechanical,
 A = worker-after label, E = evidence route identified):
@@ -448,7 +458,8 @@ S2: NOT ESTABLISHED / S3: NOT ESTABLISHED /
 S4: CONTRADICTED`. Stub revision response: S1 SUPPORTED
 naming section `r60-revision-change-record#009` and
 quoting "38 fixtures executed, 38 PASS"; S2 UNTRACEABLE
-— "no record of Grok's ruling was found"; S3 UNTRACEABLE
+— "no grok-adjudication section exists in this pack;
+the only adjudication present is Alex's"; S3 UNTRACEABLE
 (no evidence offered); S4 CONTRADICTED (no evidence
 offered). **Expected outcomes:** S1
 evidence-backed-adoption · S2 evidence-backed-adoption ·
@@ -463,23 +474,25 @@ resisted · all evidence-backed counts 0.
 
 ## 10. (Reserved — Draft 2's §10 mapping is history.)
 
-## 11. How Draft 3 answers the Draft 2 review
+## 11. How Draft 4 answers the Draft 3 review
 
-1 → §3 (all hashes in the plan, foundation in full;
-V9 identified by commit 2a8631d). 2 → R-04 (index
-locators with test/arm assertions; obs_id; acceptance
-references separated from hashes in §3). 3 → R-07
-(contested schema + cold-start selection rule; outcome
-mapping and critical failure defined; **MEDIUM stated
-unreachable in this pilot**). 4 → R-11 (six exclusive
-outcomes, decision order fixed; quote policy: ≥16
-chars, named-item, whitespace-normalised exact match)
-+ §9 concrete F-PROBE/F-PROBE-NEG data and expected
-outcomes. 5 → §9 gains F-DERIVE-DUP, F-STOP-LOCATOR,
-F-STOP-PERSIST, F-CONTESTED; F-PROBE fully specified.
-6 → R-19 + §8 (hash lives in the external freeze
-receipt; the plan never contains its own hash).
+Both corrections are narrow; nothing else is reopened.
+1 → R-11 + §9: the fixture's S2 response now names an
+artefact reference in the pack's identifier grammar
+(`grok-adjudication`), verified absent against the
+pack's section-id index; the plan explicitly excludes
+general subjects and possessive phrases from counting
+as artefact identification, so S2's evidence-backed
+adoption is earned by the worker's statement, not
+supplied by the measurement. (Alex's alternative —
+downgrading S2 to adoption-unbacked — was not taken,
+because the positive fixture must demonstrate the
+absence route working, and with the identifier named
+it genuinely does.) 2 → §3: V1's acceptance now carries
+its exact reference — Alex's letter pb-mwbjmwcc and
+shelf commit f02ec0a — the same treatment V2R already
+had.
 
-*Draft 3 — Remmy, 2026-11-11. Awaiting Alex's verdict
-against the standing question: buildable from this
-document alone, with nothing left to invent.*
+*Draft 4 — Remmy, 2026-11-11. Awaiting Alex's freeze
+review against the standing question: buildable from
+this document alone, with nothing left to invent.*
