@@ -144,7 +144,7 @@ For this sheet, the settled interpretation is: an absent/unreadable button is UN
 
 The remaining failure path is downstream of the fence. sendcore.js searches for a send button in the composer scope, then falls back to page-wide selectors. If no button is found, the adapter returns stage send-button. That is an actuator-availability failure, not a fence verdict. A missing/unreadable state must not be relabelled as a fence hold. Ben's actuator ruling (SS2.5) removes this dependency by design: the button is evidence only, and actuation acts on the owned composer (Enter-key emulation named; per-adapter choice whichever proves easier), so a missing or re-rendered button cannot freeze a dispatch.
 
-**Required design response:** separate evidence quorum from actuation. The button's POSITIVE, NEGATIVE or UNKNOWN state contributes exactly one of the three evidence conditions; no button state alone may veto when the other two conditions are positive. The actual submit action must be independently verified and scoped to the owned composer. No unverified Enter-key or global-button fallback is authorised.
+**Required design response:** separate evidence quorum from actuation, under Ben's final F-5 ruling (SS2.5). UNKNOWN button + positive serial + positive status: proceed. NEGATIVE button + positive serial + positive status: CONTRADICTION - no send; the contradiction is surfaced to the owner as a LOGIC FAULT. Actuation is independent of button visibility: it acts on the owned composer (Enter-key emulation named by Ben; per-adapter choice whichever proves easier); no page-wide button fallback is authorised.
 
 ### 1.9 Composer ownership is not yet strict enough
 
@@ -240,23 +240,23 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 > The journal records only what actually went through (sent / delivered / force-sent); skipped or discarded-unsent messages keep no ID.
 
-- One ring holds the last 20 message IDs across both directions.
-- The journal contains IDs only: no message body, file content or copied payload. Direction and disposition may be recorded in the separate event log, not as additional journal payload.
-- Insert an ID only when delivery is CONFIRMED, or when a force-send was actually dispatched at Ben's hand (§2.2). An unsent queue item, skipped message, abandoned message, pre-click failure or owner-discarded message does not enter the journal.
+- **One source (Ben's ruling, 2026-11-11: "the ledgar took over"):** the message ledger is the single record; there is no separate 20-ID ring store. Each unique message ID is entered ONCE as a typed entry - its ID, its class (DELIVERED, or a refusal record carrying record TYPE and STATUS under the model below), and its duplicate count. The ledger never holds message bodies, file content or copied payloads; Ben's "just the IDs" rule is preserved as: identity, class and count only.
+- **The 20 is a counted view, not a structure:** the duplicate guard and the owner review consult the last 20 unique IDs **as counted by the code from the ledger**. The count bounds the guard's protection claim - always "last 20 unique IDs", never lifetime deduplication - and the ledger itself is not truncated by the count. Eviction is a property of the view, not a deletion from the ledger.
+- **Insertion:** an ID enters the ledger when delivery is CONFIRMED, when a force-send was actually dispatched at Ben's hand (SS2.2), or when a refusal/refutation record is made under the model below. An unsent queue item, skipped message, abandoned message, pre-click failure or owner-discarded message does not enter the ledger.
 - A dispatched-but-unconfirmed message is NOT journalled on dispatch (Ben's ruling, 2026-11-11: "If the message is delivered, the ID must go to the journal"). It is held in OWNER-REVIEW and the event record with delivery_confirmation = UNKNOWN (§2.4a); no delivery value is asserted for it. On CONFIRMED, its ID enters the journal and a late receipt updates the event record to DELIVERED-LATE without a second send. On PROVEN_NOT_DELIVERED, it never enters the journal.
 
 **§2.4a Fact and knowledge (Ben's pairing, 2026-11-11, governing).** Ben's words: "Did it deliver? can only have two states, yes or no." and "Unknown is the right middle ground." The record therefore carries two separate fields: **delivery** — a binary fact, DELIVERED or NOT_DELIVERED, asserted only on evidence; and **delivery_confirmation** — a ternary knowledge state, CONFIRMED, PROVEN_NOT_DELIVERED or UNKNOWN, with its evidence. (The middle state was formerly named REFUTED; Ben's 2026-11-11 model reserves REFUTED for an authorised person's rejection decision, SS2.4.) DISPATCHED-UNCONFIRMED names a knowledge state about a delivery, never a delivery state; UNKNOWN is never converted into a guessed fact. (Incorporated by Remmy at Alex's assignment, pb-mwcoarq7.)
-- Ring order is oldest-first. On insertion of the 21st ID, evict the oldest and log the eviction. The protection claim is always "last 20 IDs", never lifetime deduplication.
+- Entries are ordered oldest-first. A duplicate arrival of an already-ledgered ID - in ANY class - is recognised as a duplicate of a known ID (Ben's duplicate rule, 2026-11-11: accounted once in the index, amount reflected in the ledger): it creates no second entry and is not re-decided; the entry's duplicate count increments. What a duplicate arrival may do beyond being counted - in particular, whether a previously refused item may be re-presented as a fresh attempt - is NOT decided here; SS4 item 13 (reconsideration) governs and remains open.
 - The journal is the sole authoritative message-ID duplicate guard. completedSerials remains pair-order bookkeeping only. Legacy seenIds, deliveredIds and deliveryFailedIds must not remain competing duplicate authorities. Transient fingerprints may be used during one detector run only if they are cleared on epoch reset and are not advertised as a second durable journal.
-- A stable source identity is a prerequisite: re-fetching the same source bubble after an epoch reset must derive the same PB-ID, or the ID-only journal cannot recognise it. The current random PB-ID plus 32-bit fingerprint arrangement does not meet that requirement.
+- A stable source identity is a prerequisite: re-fetching the same source bubble after an epoch reset must derive the same PB-ID, or the ledger cannot recognise it. The current random PB-ID plus 32-bit fingerprint arrangement does not meet that requirement.
 - Unsent messages may have a temporary internal queue key while pending; this draft interprets "keep no ID" as no review-journal entry. If Ben means no PB-ID may be minted at all before actual dispatch, that is a schema change and must be decided before implementation.
 - The journal is distinct from the held-item review and remains governed by the journal-content rule. The former SURVIVES/PURGED branch is withdrawn: Ben's later ruling replaces automatic purge with owner review, so there is no journal-survival-across-purge decision to make. DISPATCHED-UNCONFIRMED's journal treatment is settled by Ben's 2026-11-11 ruling (above): journal on confirmed delivery only.
 
-**Refusals and refutations (Ben's model, decided 2026-11-11).** One record structure serves every kind of rejection; no separate structures are invented per kind. The record's TYPE identifies the authority responsible for the event; its STATUS describes what happened. **SYSTEM / REFUSED:** an automated system's protocol, formatting or state checks caused the rejection. **ADMIN / REFUTED:** an authorised person intercepted and disputed or rejected the message or premise. Provenance safeguards: an ADMIN record identifies the acting person, their authority and the target of the decision; a SYSTEM record identifies the failed check and its evidence. A refused ID may be entered in the journal under this model; the entry states plainly that the ID has been REFUSED and that it is NOT in the index. A refusal entry is evidence of the refusal only: not a delivery record, no delivered status, no indexed content. Ben's journal direction (2026-11-11): these records share the 20-ID journal, with the division between causes carried by record type and status. REFUSED and REFUTED are distinct from the delivery-knowledge state PROVEN_NOT_DELIVERED (SS2.4a): a refusal never supplies the attempt-specific proof of non-delivery the retry requires, and a proven non-delivery is not a refusal.
+**Refusals and refutations (Ben's model, decided 2026-11-11).** One record structure serves every kind of rejection; no separate structures are invented per kind. The record's TYPE identifies the authority responsible for the event; its STATUS describes what happened. **SYSTEM / REFUSED:** an automated system's protocol, formatting or state checks caused the rejection. **ADMIN / REFUTED:** an authorised person intercepted and disputed or rejected the message or premise. Provenance safeguards: an ADMIN record identifies the acting person, their authority and the target of the decision; a SYSTEM record identifies the failed check and its evidence. A refused ID may be entered in the journal under this model; the entry states plainly that the ID has been REFUSED and that it is NOT in the index. A refusal entry is evidence of the refusal only: not a delivery record, no delivered status, no indexed content. Ben's journal direction (2026-11-11): these records are entries in the same single ledger, with the division between causes carried by record type and status, inside the counted 20-unique-ID view the guard consults. REFUSED and REFUTED are distinct from the delivery-knowledge state PROVEN_NOT_DELIVERED (SS2.4a): a refusal never supplies the attempt-specific proof of non-delivery the retry requires, and a proven non-delivery is not a refusal.
 
 **Reconciliation (resolved on the basis of Ben's 2026-11-11 rulings; Alex's cross-check COMPLETE, pb-mwcp1bzv and pb-mwcpa6jj, subject to the evidence-binding condition incorporated below):** the proven-absence retry fires only when delivery knowledge is PROVEN_NOT_DELIVERED - the destination positively reports absence - which under SS2.4a means the message was NOT_DELIVERED and was never journalled. A retry of a proven-not-delivered send therefore cannot duplicate a delivery and does not conflict with the journal rule. On UNKNOWN the retry never fires: the item goes to OWNER-REVIEW. The alternative reading (any click is final, retry retired) is rejected on that basis. Do not implement both interpretations. **Evidence binding (Alex's cross-check condition, pb-mwcp1bzv):** a PROVEN_NOT_DELIVERED determination requires authoritative, attempt-specific evidence identifying the exact message and the exact dispatch attempt; a generic absence observation, a stale response, or uncorrelated destination state does not qualify. A retry that itself ends UNKNOWN remains in OWNER-REVIEW and must not trigger a further absence retry without a new, independently qualifying proof of non-delivery.
 
-**Acceptance:** 20 IDs retained; 21st evicts exactly the oldest; journal contains no bodies; skipped/discarded-unsent items add no ID; source history re-fetch after epoch reset produces the same ID; duplicate ID is refused; all legacy duplicate stores are demonstrably non-authoritative; the proven-absence retry fires only on attempt-specific proof-of-non-delivery evidence - a generic or stale absence observation does not trigger it - and a retry ending UNKNOWN returns the item to owner review with no further automatic retry.
+**Acceptance:** the guard's view holds the last 20 unique IDs counted from the ledger; the 21st unique ID moves the view's oldest out (the ledger entry itself is not deleted); a duplicate arrival increments its entry's count and creates no second entry; the ledger contains no bodies; skipped/discarded-unsent items add no ID; source history re-fetch after epoch reset produces the same ID; duplicate ID is refused; all legacy duplicate stores are demonstrably non-authoritative; the proven-absence retry fires only on attempt-specific proof-of-non-delivery evidence - a generic or stale absence observation does not trigger it - and a retry ending UNKNOWN returns the item to owner review with no further automatic retry.
 
 ### 2.5 F-5 — Button evidence and the two-of-three rule
 
@@ -483,53 +483,53 @@ No open decision may be resolved by implementation convenience or silence.
 A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run and recorded every applicable check below. A revision may not be labelled BUILD-READY until all blocking decisions are resolved and Claude's independent review is returned.
 
 ### Source and ruling checks
-- [ ] Exact source commit and every changed source blob are pinned.
-- [ ] All five adapters, shared sendcore, fence, background, content, letterbox, storage, protocol, Crusher and manifest have been inspected at the same commit.
+- [ ] Exact source commit and every changed source blob are pinned. — DISPOSITION: PARTIAL — inspected components are pinned in §1 and the information path audit; a complete build-baseline pin table is deferred to the build phase.
+- [x] All five adapters, shared sendcore, fence, background, content, letterbox, storage, protocol, Crusher and manifest have been inspected at the same commit. — completed across the two independent audits (Remmy local, Alex Shelf-side) at v0.18.0.
 - [x] Exact §13.1 daily-log wording is retrieved, with Ben's verbatim quotations distinguished from Remmy's contemporaneous interpretation, and the ruling is admitted to the Shelf (bridge/BEN-RULING-JOURNAL-AND-PAUSE-01.md, commit af08edb9).
-- [ ] The exact basic-fix snippet is received, inspected and mapped to a requirement; no reconstruction from memory.
+- [ ] The exact basic-fix snippet is received, inspected and mapped to a requirement; no reconstruction from memory. — DISPOSITION: OPEN — Ben to identify (§4 item 12).
 - [x] Ben's latest F-5 ruling is quoted inline; the older UNKNOWN-HOLD rule is explicitly historical and superseded.
 - [x] F-2 never-bypass list is copied without weakening; the button is one evidence state under F-5 as finally decided - a NEGATIVE button alongside positive serial and status is a CONTRADICTION surfaced as a LOGIC FAULT (SS2.5), never a vote and never a veto.
-- [ ] Every other governing ruling is cited at the contract point it controls.
+- [ ] Every other governing ruling is cited at the contract point it controls. — DISPOSITION: verified across Alex's two independent passes; final confirmation is his exact-blob check of this revision.
 
 - [x] Ben's 2026-11-11 rulings incorporated with governing words cited inline: DISPATCHED-UNCONFIRMED closed (§2.4); delivery / delivery_confirmation fields separated (§2.4a); refusal model by record type x status (SYSTEM/REFUSED, ADMIN/REFUTED) with PROVEN_NOT_DELIVERED reserved for delivery knowledge (§2.4, §2.4a); NEW-9 buffer and trigger added (§2.13).
 - [x] F-5 DECIDED by Ben (2026-11-11, SS2.5): the strict/exception binary is dissolved - a contradictory evidence triple is a LOGIC FAULT, not a vote; the SS2.2 never-bypass clause carries the decided contradiction rule with no pending marker.
 
 ### Routing, state and cache checks
-- [ ] Every state has one entry condition, one exit condition, an owner and a durable/ephemeral classification.
-- [ ] Detection acknowledgement and retry behaviour are specified; no handoff is consumed before router acceptance.
-- [ ] Pause/disconnect epoch order and stale-event rejection are specified.
-- [ ] Observer, interval and per-letter timer teardown is specified and testable.
-- [ ] Owner-review inventory covers every queue, pair, pending reply, aggregate, append window, retry timer, alarm and local cache.
-- [ ] No held item moves, sends, copies or is destroyed before Ben's explicit disposition.
-- [ ] Observer suspension and restart/resume behaviour preserve held items and review decisions.
-- [ ] In-flight pre-click and post-click behaviour is distinct.
-- [ ] The 20-ID journal is the sole duplicate authority; no legacy cache silently competes.
-- [ ] Stable source identity survives a purge and source-history re-fetch.
-- [ ] Capacity overflow is visible; no pending message is silently evicted.
-- [ ] Aggregate constituent identities, order, completeness and recovery are explicit.
+- [ ] Every state has one entry condition, one exit condition, an owner and a durable/ephemeral classification. — DISPOSITION: OPEN — design completion (lifecycle contracts), named in the closing status.
+- [ ] Detection acknowledgement and retry behaviour are specified; no handoff is consumed before router acceptance. — DISPOSITION: specified at design level (§1, §2); conformance deferred to implementation.
+- [ ] Pause/disconnect epoch order and stale-event rejection are specified. — DISPOSITION: specified at design level (§2.3); conformance deferred to implementation.
+- [ ] Observer, interval and per-letter timer teardown is specified and testable. — DISPOSITION: OPEN — design completion.
+- [ ] Owner-review inventory covers every queue, pair, pending reply, aggregate, append window, retry timer, alarm and local cache. — DISPOSITION: specified at design level (§2.3).
+- [x] No held item moves, sends, copies or is destroyed before Ben's explicit disposition. — governing rule at §2.3, confirmed in Alex's passes.
+- [ ] Observer suspension and restart/resume behaviour preserve held items and review decisions. — DISPOSITION: specified at design level (§2.3); conformance deferred to implementation.
+- [ ] In-flight pre-click and post-click behaviour is distinct. — DISPOSITION: specified at design level (§1, §2.5).
+- [x] The 20-ID journal is the sole duplicate authority; no legacy cache silently competes. — as reconciled in this revision: one ledger, typed entries, counted 20-unique-ID view (§2.4).
+- [ ] Stable source identity survives a purge and source-history re-fetch. — DISPOSITION: OPEN — design decision (§4 item 6).
+- [ ] Capacity overflow is visible; no pending message is silently evicted. — DISPOSITION: specified at design level (§1, §2); conformance deferred to implementation.
+- [ ] Aggregate constituent identities, order, completeness and recovery are explicit. — DISPOSITION: specified at design level (carried from Spec 02); conformance deferred to implementation.
 
 ### Adapter and UI checks
-- [ ] F-5 decision evidence is separated from physical actuation.
-- [ ] Composer ownership is unique and bound to the message/attempt ID.
-- [ ] No page-wide send-button fallback remains in the proposed design.
-- [ ] Ben's manual composer is read-only to bridge automation.
-- [ ] All five adapters have platform-specific probe evidence for composer and submit action.
-- [ ] F-1 animation is tied to actual dispatch and honest terminal receipts.
-- [ ] Both seat panels have identical state vocabulary and notification timing.
+- [x] F-5 decision evidence is separated from physical actuation. — §2.5; confirmed in Alex's second pass.
+- [ ] Composer ownership is unique and bound to the message/attempt ID. — DISPOSITION: specified at design level (F-7); live evidence is the probe item below.
+- [x] No page-wide send-button fallback remains in the proposed design. — §2.5 actuator rule.
+- [ ] Ben's manual composer is read-only to bridge automation. — DISPOSITION: design rule stated (F-7); conformance deferred to implementation.
+- [ ] All five adapters have platform-specific probe evidence for composer and submit action. — DISPOSITION: DEFERRED — implementation prerequisite.
+- [x] F-1 animation is tied to actual dispatch and honest terminal receipts. — §2.1, including the held-message station design.
+- [ ] Both seat panels have identical state vocabulary and notification timing. — DISPOSITION: specified at design level (§2.1); live parity is an implementation acceptance.
 - [ ] Gemini sidebar target is identified from evidence, not guessed. (PARKED by Ben 2026-11-11 - not applicable until revived.)
-- [ ] The 7.5-second append window and exact attribution format are specified.
-- [ ] GitHub confirmation remains a manual human action.
+- [ ] The 7.5-second append window and exact attribution format are specified. — DISPOSITION: the window is specified (§2.11); exact attribution serialisation is OPEN — design decision (§4 item 10).
+- [x] GitHub confirmation remains a manual human action. — §2.12; confirmed in Alex's passes.
 
 ### Test and review checks
-- [ ] Every requirement above has fixture acceptance cases.
-- [ ] Restart, pause, disconnect, late receipt and race cases are separately covered.
-- [ ] Fixture results, source inspection and live acceptance are labelled separately.
-- [ ] No fixture pass is described as live proof.
-- [ ] Known R9 recovery flake is either resolved by a reproducible test or explicitly retained as a blocker.
-- [ ] All open decisions have an owner and a recorded disposition; no silence is treated as approval.
-- [ ] The complete sheet and its author checklist are reviewed by Claude.
-- [ ] Claude's findings and dispositions are recorded against this exact revision.
-- [ ] Only after Claude review may Ben make the separate build decision.
+- [ ] Every requirement above has fixture acceptance cases. — DISPOSITION: OPEN — design completion (case classes mapped in §5; per-requirement cases complete at build-spec stage).
+- [ ] Restart, pause, disconnect, late receipt and race cases are separately covered. — DISPOSITION: OPEN — design completion (partially covered in §5).
+- [ ] Fixture results, source inspection and live acceptance are labelled separately. — DISPOSITION: process rule for the build phase — DEFERRED, implementation.
+- [ ] No fixture pass is described as live proof. — DISPOSITION: process rule for the build phase — DEFERRED, implementation.
+- [ ] Known R9 recovery flake is either resolved by a reproducible test or explicitly retained as a blocker. — DISPOSITION: DEFERRED — implementation; retained as a named known issue, not resolved here.
+- [x] All open decisions have an owner and a recorded disposition; no silence is treated as approval. — §4 as categorised in the closing status.
+- [ ] The complete sheet and its author checklist are reviewed by Claude. — DISPOSITION: SEQUENCED — the next step after Alex's final check.
+- [ ] Claude's findings and dispositions are recorded against this exact revision. — DISPOSITION: SEQUENCED — follows Claude's review.
+- [ ] Only after Claude review may Ben make the separate build decision. — DISPOSITION: SEQUENCED — Ben's, after Claude.
 
 **Current checklist status:** NOT READY FOR BUILD; the design record is reconciled and categorised as follows. **CLOSED (decided and incorporated):** the SS13.1 journal ruling and its Shelf admission; the no-purge / owner-review rulings; DISPATCHED-UNCONFIRMED (SS2.4, SS4 item 1); the journal/retry reconciliation with Alex's cross-check complete (SS4 item 3); the refusal model by record type x status (SS2.4); the fact/knowledge pairing (SS2.4a); F-5 as finally decided - contradiction = LOGIC FAULT (SS2.5, SS4 item 2); the actuator separation - button as evidence only, actuation on the owned composer (SS2.5); the append-window lock with ownership-started clock (SS2.11); NEW-9 buffer and trigger with Alex's cross-check and 18 acceptance cases incorporated by pin (SS2.13); NEW-8's boundary and Ben's banked repo-plus-hash constraint for the future standalone item (SS2.12). **PARKED:** the Gemini sidebar hook (SS2.10, SS4 item 9). **OPEN, NON-BLOCKING:** refused-message reconsideration (SS4 item 13) - Ben's, unanswered, nothing presumed. **DESIGN DECISIONS / PREREQUISITES STILL OPEN (SS4):** the "no ID" meaning for unsent work, the bare-ID journal schema, stable PB-ID construction, F-6 protocol adoption details, F-7 composer-ownership evidence, append serialisation semantics, disconnect semantics, and the basic-fix snippet (Ben to identify). **IMPLEMENTATION / ACCEPTANCE PREREQUISITES (not design failures):** composer probes, runtime evidence and fixture execution - none has been run against this design, and none is claimed. The source inspection covered the pinned v0.18.0 routing, trigger, queue, cache and five-adapter send/ownership paths; it was not a line-by-line review of unrelated UI or alert internals, and no runtime probe was performed. Owner-review lifecycle and retention contracts remain specified at design level. Readiness for Claude review is a separate label governed by the checklist header: the author checks are rerun against this revision and recorded in SS6; items that are implementation prerequisites are labelled as such rather than left as apparent design gaps. No implementation authority is created by this sheet.
 
