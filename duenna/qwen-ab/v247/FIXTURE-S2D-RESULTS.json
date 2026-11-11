@@ -1,0 +1,125 @@
+{
+ "H1_title_label": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "H2_imperative_possessive": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "H2b_imperative_agentive": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "H3_quoted_question": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "P_retained_patterns": {
+  "adjudication by grok": "SOURCE LOCATED",
+  "authored by grok": "SOURCE LOCATED",
+  "written by grok": "SOURCE LOCATED",
+  "issued by grok": "SOURCE LOCATED",
+  "approved by grok": "SOURCE LOCATED",
+  "grok authored": "SOURCE LOCATED",
+  "grok approved": "SOURCE LOCATED"
+ },
+ "G1_regression": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: [{'section': 'programme-register#001', 'pattern': 'issued by Grok', 'sentence': 'The adjudication grok-adjudication-v09 records the ruling issued by Grok on the v0.9 gate.'}]",
+  "stage5_classification": "SOURCE LOCATED"
+ },
+ "G3_regression_denial": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "G4_regression_interrogative": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "G5_regression_hedged": {
+  "stage1_corpus_search_hits": [
+   "grok-adjudication-v09#001",
+   "programme-register#001"
+  ],
+  "stage2_candidates": [
+   "grok-adjudication-v09#001"
+  ],
+  "stage3_admission": "candidate documents admitted: ['grok-adjudication-v09']",
+  "stage4_author_attribution": "unnegated, unhedged attribution assertions in other admitted documents: none found",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "F4_real_corpus": {
+  "stage1_corpus_search_hits": [
+   "v09-examination-findings-ledger#010",
+   "v09-examination-findings-ledger#023",
+   "v09-examination-findings-ledger#024",
+   "v010-unresolved-items#001",
+   "duenna-plan#002",
+   "duenna-plan#004",
+   "duenna-plan#007",
+   "alex-combined-adjudication-v010#006",
+   "r60-revision-unresolved#001"
+  ],
+  "stage2_candidates": [],
+  "stage3_admission": "candidate documents admitted: none",
+  "stage4_author_attribution": "NOT PERFORMED \u2014 no admitted candidate to attribute",
+  "stage5_classification": "UNTRACEABLE"
+ },
+ "assertions": "all passed"
+}

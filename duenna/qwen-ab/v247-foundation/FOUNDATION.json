@@ -1,0 +1,173 @@
+{
+ "manifest": "V2 battery frozen foundation \u2014 V2.4.7 (prepared 2026-11-10, pre-authorisation)",
+ "inspected_prior_commit": "b502ae9",
+ "authorisation_binding": "foundation-hash binding: ALEX-AUTHORISATION.json must name this file's sha256; the commit recorded in the artefact is for the record and is not compared by the runner",
+ "rule": "Runner verifies every component (live + shelved copies) BEFORE importing any experiment module; battery mode additionally requires no stop-lock, the authorisation artefact, no pre-existing results file, full 36-run scope.",
+ "components": {
+  "tools24.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/tools24.py",
+   "sha256": "89a70606a7bbfeafb1fe7b610ff28fce4ecf0109ad2676520f519b63b4f4f9c0",
+   "shelf_copy": "duenna/qwen-ab/v242-foundation/tools24.py"
+  },
+  "run_c.py (Arm C driver)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_c.py",
+   "sha256": "48d9d6c0d207da063e4a7d153318562661c8ef7878ab2f8baa356239e05a12fb",
+   "shelf_copy": "duenna/qwen-ab/v247-foundation/run_c.py"
+  },
+  "run_v2.py (runner)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_v2.py",
+   "sha256": "d3bcb1780de7928d3667206edb6bdc6a0a04077c9b6bcf55467d8d07787735fd",
+   "shelf_copy": "duenna/qwen-ab/v243-foundation/run_v2.py"
+  },
+  "run_ab.py (A/B harness, packs, scorers)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_ab.py",
+   "sha256": "acb647bd50bfa2f6a219415dd60242a3efbacbf5a68a2d16ac7c3dbd57663d53",
+   "shelf_copy": "duenna/qwen-ab/v243-foundation/run_ab.py"
+  },
+  "query.py (BM25 ranker)": {
+   "path": "/home/hatch/workspace/pulse-bridge/index/query.py",
+   "sha256": "f8f2c7cad78089451399564dff19e22aa1c6fc6038f9efb832a9c01954905e32",
+   "shelf_copy": "duenna/qwen-ab/v242-foundation/query.py"
+  },
+  "PROCESS-TREES.md (v2)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v2/PROCESS-TREES.md",
+   "sha256": "5528ab69bec2f7fcdea776748e9bdc2e84ec97b4fa1d4be35bf7fd386e24b0ad",
+   "shelf_copy": "duenna/qwen-ab/v242-foundation/PROCESS-TREES.md"
+  },
+  "PROCESS-TREES-V21.md (amendments)": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v21/PROCESS-TREES-V21.md",
+   "sha256": "76150ef4c5b11d44b6a1408214d79dec9f7e3db066f7a4a4a6a73e5483f78632",
+   "shelf_copy": "duenna/qwen-ab/v242-foundation/PROCESS-TREES-V21.md"
+  },
+  "TREES-V24-AMENDMENTS.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/TREES-V24-AMENDMENTS.md",
+   "sha256": "d0a4581ab0f007e0e81216e540bf35c1eda7b395bd8db5cd592503c145c03571",
+   "shelf_copy": "duenna/qwen-ab/v242-foundation/TREES-V24-AMENDMENTS.md"
+  },
+  "TREES-V241-AMENDMENTS.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v241/TREES-V241-AMENDMENTS.md",
+   "sha256": "9282251f5eb6b88b25dc2aa9f6c1e610843e1aedf51ff450eda576d7f6f4c58d",
+   "shelf_copy": "duenna/qwen-ab/v242-foundation/TREES-V241-AMENDMENTS.md"
+  },
+  "TREES-V242-AMENDMENTS.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v242/TREES-V242-AMENDMENTS.md",
+   "sha256": "64041591ad56be0ecf012ea31db854bae09b6f3410f7b3703e1373c09a0138ce",
+   "shelf_copy": "duenna/qwen-ab/v243-foundation/TREES-V242-AMENDMENTS.md"
+  },
+  "CLAUDE-FINDINGS-DISPOSITIONS.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/CLAUDE-FINDINGS-DISPOSITIONS.md",
+   "sha256": "31a8820ce098d1ba3514e93c8253e570826299271b63e3fe72c16eb6a92d947f",
+   "shelf_copy": "duenna/qwen-ab/v24-foundation/CLAUDE-FINDINGS-DISPOSITIONS.md"
+  },
+  "RECONCILIATION-V242.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v242/RECONCILIATION-V242.md",
+   "sha256": "bd655ebf264c67be0fd11e3b51cbb1791d4d893e9994afb1f0a4d1deee570f17",
+   "shelf_copy": "duenna/qwen-ab/v242/RECONCILIATION-V242.md"
+  },
+  "CORPUS-VERIFY-RECORD.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v241/CORPUS-VERIFY-RECORD.md",
+   "sha256": "3a5d8e6d10c99b0acdc83ea1615ad16784b4da1957cee02a80b938f796e4b670",
+   "shelf_copy": "duenna/qwen-ab/v241/CORPUS-VERIFY-RECORD.md"
+  },
+  "TOOLS-DIFF-23-24.txt": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v241/TOOLS-DIFF-23-24.txt",
+   "sha256": "81d4f6ff7bf2a486ef53764e75303dd143ca346a0355993df370671123d37353",
+   "shelf_copy": "duenna/qwen-ab/v241/TOOLS-DIFF-23-24.txt"
+  },
+  "DEMO24-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/DEMO24-RESULTS.json",
+   "sha256": "c7dd2a813f20e66ac9796d0383fef027c9181d0d15919982e427b936c54f696b",
+   "shelf_copy": "duenna/qwen-ab/v24/DEMO24-RESULTS.json"
+  },
+  "corpus sections.jsonl": {
+   "path": "/home/hatch/workspace/pulse-bridge/index/sections.jsonl",
+   "sha256": "9ad80622094187d01f44e6d0cdefcb05dd9d8bb3143c6ef48cb46408d88ca2de",
+   "shelf_copy": null
+  },
+  "corpus manifest.json": {
+   "path": "/home/hatch/workspace/pulse-bridge/index/manifest.json",
+   "sha256": "79e91a6d6f340ccac3b130e157b82c637e9b30dd761660ded60445bcde54a2d8",
+   "shelf_copy": null
+  },
+  "RECONCILIATION-V243.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v243/RECONCILIATION-V243.md",
+   "sha256": "4232e37acec42332fd963b4585dc34e363ac2673994022d3a9038b136a3a881c",
+   "shelf_copy": "duenna/qwen-ab/v243/RECONCILIATION-V243.md"
+  },
+  "fixture_t06.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v243/fixture_t06.py",
+   "sha256": "eec9521142bf7cb056b8f7ee542710d37ae172b82a64a2b745055f4f15cd213f",
+   "shelf_copy": "duenna/qwen-ab/v243/fixture_t06.py"
+  },
+  "FIXTURE-T06-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v243/FIXTURE-T06-RESULTS.json",
+   "sha256": "685779926e65080c2d0ddb50c305257cb312025c99821ffd386dc75abce167b7",
+   "shelf_copy": "duenna/qwen-ab/v243/FIXTURE-T06-RESULTS.json"
+  },
+  "FOUNDATION-MANIFEST.md": {
+   "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v244-foundation/FOUNDATION-MANIFEST.md",
+   "sha256": "ad5a69d6d69ef194bcd330eb70b2f601bb1b0ec51691ffc18b9d78bfbd06ad31",
+   "shelf_copy": "duenna/qwen-ab/v244-foundation/FOUNDATION-MANIFEST.md"
+  },
+  "RECONCILIATION-V244.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v244/RECONCILIATION-V244.md",
+   "sha256": "076ab61be9b5dc676835779e4dea678bf0358d308deff4cc5e205566d7ef3cc0",
+   "shelf_copy": "duenna/qwen-ab/v244/RECONCILIATION-V244.md"
+  },
+  "fixture_s2.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v244/fixture_s2.py",
+   "sha256": "66ba10f1157406a70fb73b69a15ed4e57bf79217b931b4a3a86587159790fa6e",
+   "shelf_copy": "duenna/qwen-ab/v244/fixture_s2.py"
+  },
+  "FIXTURE-S2-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v244/FIXTURE-S2-RESULTS.json",
+   "sha256": "dd664dedce98fde6b789a305d4390e32a0a675f08833a7146075e9127969d415",
+   "shelf_copy": "duenna/qwen-ab/v244/FIXTURE-S2-RESULTS.json"
+  },
+  "RECONCILIATION-V245.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v245/RECONCILIATION-V245.md",
+   "sha256": "4e0672be639f358b7d906ec6d30c4cb7253b637c4df7f4469e6e79f07d6da7b2",
+   "shelf_copy": "duenna/qwen-ab/v245/RECONCILIATION-V245.md"
+  },
+  "fixture_s2b.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v245/fixture_s2b.py",
+   "sha256": "7a555c533832081e62bf97494091e0a95e810b54c313845b8fb8b5cff963982f",
+   "shelf_copy": "duenna/qwen-ab/v245/fixture_s2b.py"
+  },
+  "FIXTURE-S2B-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v245/FIXTURE-S2B-RESULTS.json",
+   "sha256": "a3ad1814c53870f517d21cfe2880508a6e8edaf1bee8e9360be374b5461316ae",
+   "shelf_copy": "duenna/qwen-ab/v245/FIXTURE-S2B-RESULTS.json"
+  },
+  "RECONCILIATION-V246.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v246/RECONCILIATION-V246.md",
+   "sha256": "6d7b9748c7d6de0d53583193db32a9de57f70e3f8a734d4aeaec427e404ffbab",
+   "shelf_copy": "duenna/qwen-ab/v246/RECONCILIATION-V246.md"
+  },
+  "fixture_s2c.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v246/fixture_s2c.py",
+   "sha256": "5eac917c77edbc675220b67b4f8b9f8c1bbcd0a0bb2cfbe8d2a893487d6b915a",
+   "shelf_copy": "duenna/qwen-ab/v246/fixture_s2c.py"
+  },
+  "FIXTURE-S2C-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v246/FIXTURE-S2C-RESULTS.json",
+   "sha256": "ebfe65b8308c9e3f7276eec805102801e4d84d178c9286ab4e3485b27d94705c",
+   "shelf_copy": "duenna/qwen-ab/v246/FIXTURE-S2C-RESULTS.json"
+  },
+  "RECONCILIATION-V247.md": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v247/RECONCILIATION-V247.md",
+   "sha256": "64315233127cd962c1c0ac672b1d3d37acfbd5e928b3dd7d29c1da4d1bee7a7d",
+   "shelf_copy": "duenna/qwen-ab/v247/RECONCILIATION-V247.md"
+  },
+  "fixture_s2d.py": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v247/fixture_s2d.py",
+   "sha256": "45dd5901efc4405a36d504d0372ccbbd6d813281ce7fd148a2b5f48fd4f09a63",
+   "shelf_copy": "duenna/qwen-ab/v247/fixture_s2d.py"
+  },
+  "FIXTURE-S2D-RESULTS.json": {
+   "path": "/home/hatch/workspace/agent-factory/qwen-ab-test/v247/FIXTURE-S2D-RESULTS.json",
+   "sha256": "a9573184194ad46e867e1112db9d83536253bc18ded564e9069161fb48cf244b",
+   "shelf_copy": "duenna/qwen-ab/v247/FIXTURE-S2D-RESULTS.json"
+  }
+ }
+}
