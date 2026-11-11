@@ -86,7 +86,7 @@ Both global pause paths set state.paused; resume invokes sweepHeld and can retry
 
 handleDetection does not reject a detection merely because the bridge is paused. content.js refreshes enabled state on a four-second interval, so a stale enabled flag can still submit a detection after a pause. The background then stores it while the pump refuses to send.
 
-There is no coordinated cancellation of an in-progress adapter call. A global pause during the 45-second defer or after typing does not provide an abort signal to the content script. The current per-letter pausePending mechanism waits for an attempt to settle; it does not implement the new global purge rule.
+There is no coordinated cancellation of an in-progress adapter call. A global pause during the 45-second defer or after typing does not provide an abort signal to the content script. The current per-letter pausePending mechanism waits for an attempt to settle; it does not implement the new owner-review process.
 
 **Required design response:** a persisted bridge epoch and immediate pause/disconnect command handling remain necessary to stop new automatic dispatch and reject stale events. Instead of automatic purge, pause enters an owner-review state. The bridge presents every held item with ID, direction and state; Ben chooses its disposition. Until he decides, no item moves, is sent, or is destroyed. The design must define how in-flight pre-dispatch and post-dispatch items are represented in that review without silently resolving their fate.
 
@@ -264,7 +264,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - Fence evidence and physical actuation are separate. A passing quorum is not converted into a fence HOLD because the button read is UNKNOWN. If no safe submit actuator exists, report ACTUATOR-UNAVAILABLE, not a false generation verdict.
 - No page-wide button fallback is permitted as an actuator.
 
-**Acceptance matrix:** button UNKNOWN + serial POSITIVE + status POSITIVE = proceed to the owned actuator; button UNKNOWN with fewer than two positives = hold; positively observed Stop-face = proven negative hold; already-delivered status = no send; out-of-order serial = no send. Repeat on all five adapters, including button removal and composer re-render races.
+**Acceptance matrix:** button UNKNOWN + serial POSITIVE + status POSITIVE = proceed to the owned actuator; button UNKNOWN with fewer than two positives = hold; the positively observed Stop-face outcome remains blocked on Ben's pending ruling between the strict two-of-three reading and the earlier proven-stop exception; already-delivered status = no send; out-of-order serial = no send. Repeat on all five adapters, including button removal and composer re-render races.
 
 ### 2.6 F-6 — Whole-message completeness
 
@@ -306,7 +306,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - Deliberate pause/disconnect places the unsent aggregate and its constituents into OWNER-REVIEW. No constituent is sent, discarded or copied until Ben explicitly decides. Unsent constituents do not enter the review journal.
 - Partial receipt is adjudicated per constituent; complete constituents are not confused with incomplete ones.
 
-**Acceptance:** two or more messages in one open pair arrive as one aggregate after the reply, in order, with all constituent IDs preserved; overflow, restart, partial truncation and deliberate purge tests.
+**Acceptance:** two or more messages in one open pair arrive as one aggregate after the reply, in order, with all constituent IDs preserved; overflow, restart, partial truncation and owner-review hold/disposition tests.
 
 ### 2.9 F-9 — Defer, visible timing and pair recovery
 
@@ -449,7 +449,7 @@ No open decision may be resolved by implementation convenience or silence.
 | F-9 defer/recovery | Prior spec §9; v0.18.0 R9 report | §2.9 | Visible 45s timer, 20s recheck, restart recovery |
 | F-10 one duplicate authority | Prior spec §5/§12 and clarification review | §2.4 | Legacy stores demoted; journal is sole ID authority |
 | NEW-1 Gemini sidebar hook | Ben convene item 1 | §2.10 | Target probe and no-routing-regression test |
-| NEW-7 7.5s append window | Ben convene item 7 | §2.11 | Timeout, append, late append, purge and integrity tests |
+| NEW-7 7.5s append window | Ben convene item 7 | §2.11 | Timeout, append, late append, owner-review hold and integrity tests |
 | NEW-8 GitHub approval boundary | Ben convene item 8; Remmy flag | §2.12 | Human confirmation remains manual; post-confirmation receipt |
 
 ---
