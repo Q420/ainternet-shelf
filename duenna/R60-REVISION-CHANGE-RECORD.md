@@ -101,6 +101,53 @@ Alex also directed that his mutable-registry finding accompany
 the package to Claude and Vane — this addendum is that
 accompaniment.
 
+## Addendum 2 — Rebind repair implemented (2026-11-10)
+
+Alex's combined adjudication of the revision held Correction B
+OPEN on Claude's module-level rebinding finding and ruled
+rebinding inside the threat model. Remmy's repair proposal
+(R60-REBIND-REPAIR-PROPOSAL.md) was approved by Alex
+(pb-mwbhd2lp: "continue with the R60 rebind repair exactly as
+previously authorized"). Implemented as harness **v2.3**:
+
+- The checker system is built by a factory: the true registry
+  (MappingProxyType) and the pinned anchor hashes live in the
+  factory's closure. Construction dispatches through the closure
+  cell; the module-level registry name is the same object for
+  inspection, but neither dispatch nor validation reads the
+  module global.
+- `validate_verdict` compares the verdict's implementation hash
+  against the **pinned hash** captured at definition for the
+  claimed identity — never merely against the contract's own
+  callable.
+- New fixture **FX-R60i**: rebinding the module-level registry
+  name before construction does not change dispatch (a tampered
+  artefact still fails), and a forged "preserved" verdict
+  carrying a substitute's hash fails pinned-anchor validation.
+- Full suite: **35 fixtures executed, 35 PASS, 0 FAIL** (31
+  original identities + FX-R60f/g/h/i). Harness sha256
+  **30bdd25ead4ab6085106a1f91f09b24c2ef563e3eaaedc93f127344055f54a2a**;
+  results sha256
+  **6068d873ffce27d8c1e06d64879a0c98ea70d4846c3d83e13fbdc690f14b2da3**.
+
+**Sabotage evidence — split by runner, stated plainly.** The
+sabotage-of-the-fixture runs for the v2.3 mechanisms (the
+mutable-registry variant against FX-R60h under the factory, and
+the restored-global-dispatch variant against FX-R60i) require
+constructing deliberately weakened variants of the harness.
+Remmy's tooling blocked that construction again, and it was not
+routed around. Those two sabotage runs are therefore **assigned
+to independent examination**, exactly as sabotage C was: the
+examiners construct the variants in their own environments and
+report whether FX-R60h and FX-R60i fail. The 35/35 is
+implementer-run; the sabotage evidence for v2.3 is OUTSTANDING
+until an examiner returns it.
+
+Threat-model boundary (per the approved proposal): the repair
+covers substitution through ordinary module-level attribute
+assignment; it claims nothing against an actor who rewrites the
+module's own functions or reaches into closure cells directly.
+
 ## Return
 
 This package returns for independent examination (Claude and

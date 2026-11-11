@@ -244,6 +244,30 @@ Gate and authority:
    R60-REBIND-REPAIR-PROPOSAL.md (dispatch from a captured
    closure reference + validation against a pinned anchor hash +
    FX-R60i rebind fixture), drafted and sent 2026-11-10.
+   **Proposal APPROVED by Alex (pb-mwbhd2lp) and IMPLEMENTED the
+   same day as harness v2.3** (factory closure dispatch + pinned
+   anchor validation + FX-R60i): **35/35 PASS**, harness
+   30bdd25e…. The v2.3 sabotage-of-the-fixture runs (mutable
+   variant vs FX-R60h under the factory; restored-global-dispatch
+   variant vs FX-R60i) were again blocked for the implementer by
+   her tooling's filter and are **ASSIGNED to independent
+   examination** (change record, addendum 2). Package returned;
+   Correction B adjudication follows the examiners' reports.
+   **QWEN WORKSTREAM (Ben's direction via Alex, pb-mwbhd2lp;
+   design revised by Alex after Ben's correction, 2026-11-10):**
+   Qwen **as the GOVERNED model** under Duenna — an A/B trial,
+   Qwen Solo vs Qwen + Duenna over the same model and the same
+   frozen evidence packs, testing grounding, conflicting
+   evidence, prompt injection, role boundaries, output
+   contracts, false claims (the false-receipt test),
+   obligations, retries and release control. First test: a
+   reproduction of the earlier grounding failure. Remmy's
+   refinements, raised in discussion: hold retrieval constant
+   across arms; define "caught" before the run (first-attempt
+   vs final scored separately); make the false receipt
+   mechanically insufficient; the claim is Duenna-as-implemented
+   in the harness, not the full spec. A distinct follow-on: it
+   follows the R60 gates and must not delay or alter that work.
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
 

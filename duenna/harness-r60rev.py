@@ -717,76 +717,100 @@ def _implementation_hash(procedure_fn=None):
 # the registry is IMMUTABLE — a MappingProxyType over a dict no
 # other reference exists to, so a recognised identity cannot be
 # remapped to a substitute callable after definition.
-PROCEDURE_REGISTRY = MappingProxyType({"REQ-I-3 preservation check": _preservation_check})
+# v2.3 — REBIND REPAIR (Alex's combined adjudication of the
+# revision, 2026-11-10; mechanism per Remmy's proposal, approved
+# by Alex pb-mwbhd2lp): Claude showed the module-level registry
+# NAME can be rebound before construction, and construction read
+# the module global — so dispatch followed the substitute, and
+# validate_verdict accepted because it only compared the verdict
+# against the same contract. The system is now built by a
+# factory: the true registry and the PINNED anchor hashes live
+# in the factory's closure. Construction dispatches through the
+# closure cell; validation compares the verdict's implementation
+# hash against the PINNED hash captured at definition, never
+# merely against the contract's own callable. The module-level
+# name PROCEDURE_REGISTRY below refers to the same registry
+# object (for inspection), but neither dispatch nor validation
+# reads the module global — rebinding that name changes nothing.
+def _make_checker_system():
+    registry = MappingProxyType({"REQ-I-3 preservation check": _preservation_check})
+    pinned_hashes = {"REQ-I-3 preservation check": _implementation_hash(_preservation_check)}
 
-class CheckerContract:
-    """REQ-I-2 checker contract (v0.10 repair — R60 FAIL at
-    independent examination, confirmed at adjudication: the v0.9
-    contract RECORDED a procedure name without executing it, and
-    its verdict omitted the implementation hash, so the
-    reproducibility trio was never established). The contract
-    DEFINES the input artefact it accepts, EXECUTES its validation
-    procedure (above) on that artefact, and stamps every verdict
-    with the full reproducibility trio: declared version,
-    implementation hash, input artefact identity — bound to the
-    procedure identity. A verdict that diverges from the contract
-    on any element is detectable, and validate_verdict() below
-    rejects it."""
-    def __init__(self, input_id, procedure, version, expected_sha, pinned=True):
-        # Correction B: an unrecognised or fictitious procedure
-        # identity is rejected AT CONSTRUCTION — the identity must
-        # name an executable in the registry, and that executable
-        # is what run() dispatches to.
-        if procedure not in PROCEDURE_REGISTRY:
-            raise ValueError(f"REJECTED: unrecognised procedure identity ({procedure})")
-        self.input_id = input_id
-        self.procedure = procedure
-        self._procedure_fn = PROCEDURE_REGISTRY[procedure]
-        self.version = version
-        self.expected_sha = expected_sha
-        self.pinned = pinned
+    class CheckerContract:
+        """REQ-I-2 checker contract (v0.10 repair — R60 FAIL at
+        independent examination, confirmed at adjudication: the v0.9
+        contract RECORDED a procedure name without executing it, and
+        its verdict omitted the implementation hash, so the
+        reproducibility trio was never established). The contract
+        DEFINES the input artefact it accepts, EXECUTES its validation
+        procedure (above) on that artefact, and stamps every verdict
+        with the full reproducibility trio: declared version,
+        implementation hash, input artefact identity — bound to the
+        procedure identity. A verdict that diverges from the contract
+        on any element is detectable, and validate_verdict() below
+        rejects it."""
+        def __init__(self, input_id, procedure, version, expected_sha, pinned=True):
+            # Correction B: an unrecognised or fictitious procedure
+            # identity is rejected AT CONSTRUCTION — the identity must
+            # name an executable in the registry, and that executable
+            # is what run() dispatches to.
+            if procedure not in registry:
+                raise ValueError(f"REJECTED: unrecognised procedure identity ({procedure})")
+            self.input_id = input_id
+            self.procedure = procedure
+            self._procedure_fn = registry[procedure]
+            self.version = version
+            self.expected_sha = expected_sha
+            self.pinned = pinned
 
-    def run(self, artefact):
-        if not self.pinned:
-            return "REJECTED: unpinned version"
-        if artefact is None:
-            return "FAILURE-PATH: missing input artefact"
-        if artefact.get("id") != self.input_id:
-            return f"REJECTED: artefact is not the defined input ({self.input_id})"
-        if artefact.get("corrupt"):
-            return "FAILURE-PATH: invalid artefact"
-        digest = self._procedure_fn(artefact["payload"], self.expected_sha)
-        if digest is None:
-            return "FAILURE-PATH: invalid artefact"
-        return {"verdict": f"preserved sha={digest[:12]}", "input": self.input_id,
-                "procedure": self.procedure, "version": self.version,
-                "implementation_hash": _implementation_hash(self._procedure_fn)}
+        def run(self, artefact):
+            if not self.pinned:
+                return "REJECTED: unpinned version"
+            if artefact is None:
+                return "FAILURE-PATH: missing input artefact"
+            if artefact.get("id") != self.input_id:
+                return f"REJECTED: artefact is not the defined input ({self.input_id})"
+            if artefact.get("corrupt"):
+                return "FAILURE-PATH: invalid artefact"
+            digest = self._procedure_fn(artefact["payload"], self.expected_sha)
+            if digest is None:
+                return "FAILURE-PATH: invalid artefact"
+            return {"verdict": f"preserved sha={digest[:12]}", "input": self.input_id,
+                    "procedure": self.procedure, "version": self.version,
+                    "implementation_hash": _implementation_hash(self._procedure_fn)}
 
-def validate_verdict(verdict, contract):
-    """REQ-I-2 verdict validation: a verdict counts as this
-    contract's output only if it carries the complete
-    reproducibility trio, each element matching the contract —
-    declared version, implementation hash of the procedure that
-    produced it, input artefact identity — and the procedure
-    identity itself. Missing or mismatched elements are rejected
-    with the specific defect named."""
-    if not isinstance(verdict, dict):
-        return "REJECTED: not a verdict"
-    if verdict.get("procedure") != contract.procedure:
-        return "REJECTED: procedure mismatch"
-    if "version" not in verdict:
-        return "REJECTED: missing version"
-    if verdict["version"] != contract.version:
-        return "REJECTED: version mismatch"
-    if "implementation_hash" not in verdict:
-        return "REJECTED: missing implementation hash"
-    if verdict["implementation_hash"] != _implementation_hash(contract._procedure_fn):
-        return "REJECTED: implementation hash mismatch"
-    if "input" not in verdict:
-        return "REJECTED: missing input identity"
-    if verdict["input"] != contract.input_id:
-        return "REJECTED: input identity mismatch"
-    return "ACCEPTED"
+    def validate_verdict(verdict, contract):
+        """REQ-I-2 verdict validation: a verdict counts as this
+        contract's output only if it carries the complete
+        reproducibility trio — declared version and input artefact
+        identity matching the contract, the procedure identity
+        itself, and an implementation hash matching the PINNED
+        hash for that identity, captured at definition time.
+        Validation never establishes trust merely by comparing
+        the verdict against the contract's own callable. Missing
+        or mismatched elements are rejected with the specific
+        defect named."""
+        if not isinstance(verdict, dict):
+            return "REJECTED: not a verdict"
+        if verdict.get("procedure") != contract.procedure:
+            return "REJECTED: procedure mismatch"
+        if "version" not in verdict:
+            return "REJECTED: missing version"
+        if verdict["version"] != contract.version:
+            return "REJECTED: version mismatch"
+        if "implementation_hash" not in verdict:
+            return "REJECTED: missing implementation hash"
+        if verdict["implementation_hash"] != pinned_hashes.get(verdict.get("procedure")):
+            return "REJECTED: implementation hash mismatch"
+        if "input" not in verdict:
+            return "REJECTED: missing input identity"
+        if verdict["input"] != contract.input_id:
+            return "REJECTED: input identity mismatch"
+        return "ACCEPTED"
+
+    return CheckerContract, validate_verdict, registry
+
+CheckerContract, validate_verdict, PROCEDURE_REGISTRY = _make_checker_system()
 
 def fixture_r60():
     contract = CheckerContract("ART-INPUT-1", "REQ-I-3 preservation check", "checker-v1.3",
@@ -879,6 +903,30 @@ def fixture_r60():
     check("FX-R60h", "R60", "REQ-I-2 registry immutability: remapping a recognised identity to a substitute callable is rejected; the identity still dispatches to its originally bound procedure",
           ("REJECTED: registry immutable", "verdict"),
           (mutation, "verdict" if isinstance(still, dict) else still))
+    # (i) v2.3 rebind resistance (Claude's finding at the revision
+    # re-examination; Alex ruled it inside Correction B's threat
+    # model): rebinding the module-level registry NAME before
+    # construction must not change dispatch — construction reads
+    # the factory's closure, not the module global — and a forged
+    # "preserved" verdict stamped with a substitute's hash must
+    # fail validation against the pinned anchor.
+    def _substitute(payload, sha):
+        return sha
+    saved_registry = globals()["PROCEDURE_REGISTRY"]
+    globals()["PROCEDURE_REGISTRY"] = {"REQ-I-3 preservation check": _substitute}
+    try:
+        rebound = CheckerContract("ART-INPUT-1", "REQ-I-3 preservation check", "checker-v1.3",
+                                  hashlib.sha256(b"payload-1").hexdigest())
+        rebound_run = rebound.run({"id": "ART-INPUT-1", "payload": "tampered"})
+    finally:
+        globals()["PROCEDURE_REGISTRY"] = saved_registry
+    forged = {"verdict": "preserved sha=" + hashlib.sha256(b"payload-1").hexdigest()[:12],
+              "input": "ART-INPUT-1", "procedure": "REQ-I-3 preservation check",
+              "version": "checker-v1.3",
+              "implementation_hash": _implementation_hash(_substitute)}
+    check("FX-R60i", "R60", "REQ-I-2 rebind resistance: module-level registry rebinding does not change dispatch (a tampered artefact still fails), and a substitute's forged verdict fails pinned-anchor validation",
+          ("FAILURE-PATH: invalid artefact", "REJECTED: implementation hash mismatch"),
+          (rebound_run, validate_verdict(forged, contract)))
 
 # ---------------------------------------------------------------- R61 — REQ-I-3 preservation outcomes
 def fixture_r61():
@@ -905,7 +953,7 @@ if __name__ == "__main__":
     fixture_r60(); fixture_r61()
     fails = [r for r in RESULTS if r["verdict"] != "PASS"]
     print(f"\n{len(RESULTS)} fixtures executed, {len(RESULTS) - len(fails)} PASS, {len(fails)} FAIL")
-    json.dump({"harness": "fixtures-r60rev/harness.py v2.2 (R60 revision)",
+    json.dump({"harness": "fixtures-r60rev/harness.py v2.3 (R60 revision, rebind repair)",
                "python_version": sys.version,
                "command": "python3 harness.py",
                "results": RESULTS}, open("results.json", "w"), indent=1)

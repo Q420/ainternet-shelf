@@ -13,7 +13,7 @@ full corpus sweep was shelved the same day.
 | `seats/alex.md` | 5099957afe09d590efb232a8cffc7dbe406e257f7428cce46f537872fabe6dc3 | Alex's page — roles, seats, rules, state |
 | `seats/vane.md` | 599ad33b2559ad57c4547a0d552572beddc187a6254814c98e07499b1fa1b26a | Vane's page — examiner role and record |
 | `seats/remmy.md` | 9c149a2c8feb4812bcb202e1831e0be1b853987462b97a00654de768d2add893 | Remmy's page — standing processes |
-| `record/DUENNA-PLAN.md` | 770417923a6e9b0c1d8e58fb78e8ae74bfcd5b44e8daf137f9551a37acd69a86 | THE plan list — the programme's authoritative state |
+| `record/DUENNA-PLAN.md` | 6f201ef9aec67a6fc11ab1111465c44ace0d872909c14fda9acbad3756a5453d | THE plan list — the programme's authoritative state |
 | `record/DUENNA-STEP6-ARCHITECTURE.md` | 69664387ed302c54d2b77baa0ba235c3cc79d04595d50b5279ecafcf1556637d | The agreed four-component architecture (step 6, agreed text) |
 | `record/DUENNA-STEP7-PLAN.md` | 929b2378a40dc45fa1f58c5014d60cc1aa014acfb6c70870d9bf823b2ae06a64 | The joint implementation plan (step 7, agreed text with amendments) |
 | `record/v010-unresolved-items.md` | b9e8e457c4858def403f8a9321bf5e16ef537015eb102c76ec3659776efecb33 | What v0.10 deliberately does not claim — gaps, statuses, the open gate |
@@ -49,9 +49,9 @@ full corpus sweep was shelved the same day.
 | `duenna/VANE-EXAMINATION-REPORT-R60REV.md` | 3da17136f9c2a4959d9868fb0e63b36e3d99520781f2bcbdfd70430b55b3128a | Vane sabotage C report: FX-R60h fails under mutable registry (R60-group execution; full suite not run — limitation stated) |
 | `duenna/VANE-EXAMINATION-REPORT-V010.md` | 884fe426c32cd1f7641f2a965d3e39053ec626a5d7829eaae367883a2772b0a3 | Vane's independent examination of v0.10 (R47 PASS, R60 FAIL — unbound procedure identity, R65 PASS qualified) |
 | `duenna/ALEX-COMBINED-ADJUDICATION-V010.md` | cbf6ec46c6e60e33008712f7edc568158c205c51a433d0554857a55ad99754ed | Alex's combined Track 1 adjudication (R47 PASS narrow, R60 FAIL, R65 PASS qualified; R60 revision OPEN, both defects) |
-| `duenna/harness-r60rev.py` | 6cb326ef34e72e8d66a6e42aabd2e33ecff0f3dc45aa1c4bf678a674d88ebd04 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
-| `duenna/results-r60rev.json` | c7068f051ac28a763d37e6c08d8f456fd0b9bb86f870626932f701eee1364712 | R60 revision results (33/33 PASS) |
-| `duenna/R60-REVISION-CHANGE-RECORD.md` | 8bff8f8fab4e90e3f3deb619ad2e1ad1f92ed46b87c2a7781fc6cac800a26ecc | R60 revision change record (both corrections + sabotage evidence) |
+| `duenna/harness-r60rev.py` | 30bdd25ead4ab6085106a1f91f09b24c2ef563e3eaaedc93f127344055f54a2a | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
+| `duenna/results-r60rev.json` | 6068d873ffce27d8c1e06d64879a0c98ea70d4846c3d83e13fbdc690f14b2da3 | R60 revision results (33/33 PASS) |
+| `duenna/R60-REVISION-CHANGE-RECORD.md` | 4b1a53057dd9e6ac0118bde6d178dcf4caa98f6f15df607f2378938affe6a251 | R60 revision change record (both corrections + sabotage evidence) |
 | `duenna/R60-REVISION-UNRESOLVED.md` | 5d8093707144777926d78829763af6f8cb765bbeed05cbb696735e5b58b2e90c | R60 revision unresolved items (carried forward) |
 | `duenna/VANE-EXAMINATION-REPORT-V09.md` | 643923ec8f0433ab67b71d484bb5aeaca17240d986eaa3001e1672f48fa09b2a | Vane's examination report on v0.9 |
 | `duenna/V09-EXAMINATION-FINDINGS-LEDGER.md` | cf116ba28d822c15d70c82ad7e02be8fccde932d749c4c5a2bae02dd5ad20af3 | The consolidated v0.9 findings ledger |

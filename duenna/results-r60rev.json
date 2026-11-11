@@ -1,5 +1,5 @@
 {
- "harness": "fixtures-r60rev/harness.py v2.2 (R60 revision)",
+ "harness": "fixtures-r60rev/harness.py v2.3 (R60 revision, rebind repair)",
  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
  "command": "python3 harness.py",
  "results": [
@@ -532,6 +532,20 @@
    "observed": [
     "REJECTED: registry immutable",
     "verdict"
+   ],
+   "verdict": "PASS"
+  },
+  {
+   "fixture": "FX-R60i",
+   "finding": "R60",
+   "requirement": "REQ-I-2 rebind resistance: module-level registry rebinding does not change dispatch (a tampered artefact still fails), and a substitute's forged verdict fails pinned-anchor validation",
+   "expected": [
+    "FAILURE-PATH: invalid artefact",
+    "REJECTED: implementation hash mismatch"
+   ],
+   "observed": [
+    "FAILURE-PATH: invalid artefact",
+    "REJECTED: implementation hash mismatch"
    ],
    "verdict": "PASS"
   },
