@@ -259,7 +259,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - Keep the three evidence states: POSITIVE, NEGATIVE and UNKNOWN.
 - An absent or unreadable button is UNKNOWN, never NEGATIVE.
 - The button is one supporting condition. UNKNOWN cannot independently block a send when serial and message status are both positive.
-- A positively observed Stop-face remains a distinct NEGATIVE under the existing proven-negative veto rule and F-2 never-bypass list. This is the working interpretation of "the fence keeps its states"; if Ben intended the Stop-face negative to be outweighed too, that is a separate explicit ruling.
+- A positively observed Stop-face remains a distinct NEGATIVE evidence state. Whether it remains a unilateral veto, or is outweighed when the other two conditions are positive, is explicitly awaiting Ben's answer to the strict two-of-three question. Do not implement either interpretation as settled until he rules. The F-2 force-send never-bypass rule remains separately governed.
 - A non-veto hold must name the missing evidence and show elapsed/recheck state in Ben's plain view.
 - Fence evidence and physical actuation are separate. A passing quorum is not converted into a fence HOLD because the button read is UNKNOWN. If no safe submit actuator exists, report ACTUATOR-UNAVAILABLE, not a false generation verdict.
 - No page-wide button fallback is permitted as an actuator.
