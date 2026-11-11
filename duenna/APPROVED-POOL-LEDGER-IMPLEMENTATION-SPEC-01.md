@@ -2,15 +2,17 @@
 
 **Status:** PREPARED FOR REVIEW — NOT ADOPTED;
 NOT IMPLEMENTATION AUTHORITY
-**Revision:** Rev 3 — prepared in response to
-Alex's review `pb-mwck7bp9-17-c9qh` (Rev 2
-returned for two specific corrections; the
-five Rev 1 corrections stand resolved). Rev 2:
-commit 5f214261, git blob ee518708…; Rev 1:
-git blob 2a0d9dcd…. Prior revisions are
-preserved in the repository history; this
-revision supersedes them as the review
-candidate only.
+**Revision:** Rev 4 — prepared in response to
+Alex's review `pb-mwcktprn-19-agum` (one narrow
+correction, L-R3-01: the reservation payload
+and retry contract made unambiguous), with
+Alex's traceability appendix incorporated at
+§13. Rev 3: commit f6917b19, git blob
+ec71f891…; Rev 2: commit 5f214261, git blob
+ee518708…; Rev 1: git blob 2a0d9dcd…. Prior
+revisions are preserved in the repository
+history; this revision supersedes them as the
+review candidate only.
 **Prepared by:** Remmy
 **Date:** 2026-11-11
 **Authority:** Approved Pool Implementation Plan
@@ -228,21 +230,28 @@ ledger-recorded. (Phase 2's receipt-durability
 tests C15/C16 apply to recorded mode, entered
 only when that authority exists.)
 
-**ReserveGeneration**(ItemID, candidate_record,
-actor, authority_ref, idempotency_key) →
-{reservation_id, generation, expected_
-predecessor, committed_revision} | CONFLICT |
-REJECTED | UNKNOWN.
-The candidate_record is the complete version
-record of §3/Phase 2 §4.2 (full digest,
-canonicalisation identifier, source artefact
-pin, predecessor, actor and provenance); the
-reservation embeds it immutably (§5).
-Semantics: Phase 2 §5. Same key + same payload
-returns the original reservation; same key +
-different Item ID, predecessor or candidate
-digest = CONFLICT, no mutation (§5.1; matrix
-A02/A03/A09).
+**ReserveGeneration**(ItemID, candidate_
+proposal, actor, authority_ref, idempotency_
+key) → {reservation_id, generation, version_
+id, expected_predecessor, committed_revision}
+| CONFLICT | REJECTED | UNKNOWN.
+The caller supplies a candidate **proposal**
+(the caller-supplied field set defined in §5);
+the allocator derives the remaining fields of
+the candidate record (generation, Version ID,
+expected predecessor, reservation ID) and the
+reservation embeds the completed record
+immutably (§5). The **idempotency payload** is
+exactly: Item ID, content digest, digest
+algorithm, canonicalisation identifier, source
+artefact pin, actor, authority reference —
+bound to the idempotency key. Same key + same
+payload returns the original reservation;
+same key + any difference in the payload =
+CONFLICT, no mutation (§5; matrix A02/A03/
+A09). The expected predecessor is
+allocator-derived per attempt and is never
+part of the payload (§5).
 
 **AdvanceHead**(ItemID, VersionID, generation,
 full_digest, expected_predecessor,
@@ -297,8 +306,9 @@ on the snapshot ref:
    the item, expected predecessor = head at R,
    revision R+1, events appended. The
    reservation record **embeds the complete
-   candidate record** supplied to
-   ReserveGeneration; once committed, that
+   candidate record** — the caller's proposal
+   completed with the allocator-derived fields
+   (field split below); once committed, that
    embedded record is immutable and is the
    candidate's durable identity from this
    moment on, whatever happens later (§6).
@@ -308,11 +318,65 @@ on the snapshot ref:
 5. On conditional failure, classify the outcome
    **only** through §9's decision table. A
    retry is a new attempt of the SAME operation
-   — same idempotency key, same logical payload
-   (Item ID, candidate digest, actor, authority
-   reference) — rebuilt on the newly proven
-   head. Any change to the logical payload is
-   a new operation and a new key.
+   — same idempotency key, same idempotency
+   payload (§4) — rebuilt on the newly proven
+   head. Any change to the payload is a new
+   operation and a new key.
+
+**Field split (exact).**
+
+| Caller supplies (the proposal = the idempotency payload, plus the key) | Allocator derives (per committed reservation) |
+|---|---|
+| Item ID | generation (next unused in the item's sequence) |
+| content digest + digest algorithm | Version ID (constructed per the Phase 1 grammar from Item ID, allocated generation, date, digest tail) |
+| canonicalisation identifier | expected predecessor (the head of the snapshot the reservation commits into) |
+| source artefact reference + immutable pin | reservation ID |
+| actor; authority reference | committed ledger revision |
+
+The caller never supplies a generation, a
+Version ID, or a predecessor; a request that
+carries them as caller-asserted values is
+REJECTED as malformed. This removes the Rev 3
+ambiguity in which the proposal appeared to
+contain allocator outputs.
+
+**Attempts, retries, and rebasing.**
+- A generation is consumed only when a
+  reservation **commits**. A failed attempt
+  consumes nothing; the next attempt of the
+  same operation derives the then-next unused
+  generation from the newly read state, which
+  may be the same number the failed attempt
+  computed. That is not reuse: nothing was
+  ever reserved.
+- If a reservation has committed under a key,
+  that key forever returns that reservation.
+  It never allocates again.
+- The expected predecessor is derived fresh
+  on each attempt from the state the attempt
+  commits into; its movement between attempts
+  is not a payload change and never a
+  conflict.
+- Once a reservation has committed, its
+  candidate is pinned to the recorded
+  predecessor. If the head has since moved,
+  AdvanceHead for that candidate will meet
+  the moved head and CONFLICT. The candidate
+  is never edited or silently rebased: the
+  defined path is **abandon + new operation**
+  — the old reservation is dispositioned
+  (RecordNonOperativeCandidate / abandoned,
+  §6), its generation stays consumed, and the
+  rebased candidate is proposed as a new
+  ReserveGeneration under a **new idempotency
+  key**, preserving the previous reservation
+  in history.
+- Any change to a payload field after
+  re-evaluation (different content digest,
+  source pin, canonicalisation, actor or
+  authority) follows the same new-operation
+  path, with a new key, whether or not a
+  reservation already committed.
 
 This makes allocation and counter advance one
 atomic snapshot transition (Phase 2 §5.2 steps
@@ -433,6 +497,24 @@ authority from RecordNonOperativeCandidate:
    AUTHORITY_UNRESOLVED` disclosure stands
    until recording is both authorised and
    proven by read-back.
+
+**Vocabulary status.** The disposition labels
+used in this specification (reserved,
+candidate, approved, rejected, abandoned,
+superseded, NON_OPERATIVE_CONFLICT) are
+operational labels defined here for the
+ledger's event model. A Crusher retrieval run
+at Alex's request (2026-11-11) returned
+UNKNOWN for any adopted record defining the
+canonical reservation/candidate fields, the
+idempotency payload boundary, or those
+lifecycle values; the nearest records are
+schema inventories and proposals. These labels
+and the §§4–5 field and payload definitions
+are therefore **this build specification's own
+contract**, proposed for adoption with it —
+not pre-existing governed vocabulary, and
+never to be cited as such.
 
 ## 7. Resolution walk construction
 
@@ -571,24 +653,37 @@ publication; or any change to index,
 BridgePress, or bridge machinery. (Phase 2
 §12, carried forward.)
 
-## 13. Traceability appendix (reserved)
+## 13. Traceability appendix (incorporated)
 
-A traceability appendix prepared by Alex —
-mapping the Phase 2 acceptance criteria and
-adversarial matrix to this specification's
-operation and state model, required inputs and
-expected outcomes, durable evidence, authority
-and substrate prerequisites, and fixture and
-independent-examiner requirements — attaches
-to this section when delivered, and the
-adoption decision is made against the complete
-specification including it. The appendix
-distinguishes design coverage from
+Alex's traceability appendix is incorporated
+into this specification by reference and forms
+part of the complete specification against
+which the adoption decision is made:
+
+**duenna/ALEX-LEDGER-REV3-TRACEABILITY-
+APPENDIX-01.md** — commit ce412b74, git blob
+e759ea7f3fee8580121f59e51722d2334ba6f3cc,
+21,581 characters (independently recomputed
+and matched from Remmy's side, 2026-11-11).
+
+It maps the Phase 2 acceptance criteria 1–20
+and the adversarial tests A01–A10, B01–B12,
+C01–C17, D01–D10, E01–E08 to this
+specification's operation and state model,
+required inputs and expected outcomes, durable
+evidence, authority and substrate
+prerequisites, and fixture and
+independent-examiner requirements. The
+appendix distinguishes design coverage from
 implementation proof: a test case described in
 a specification is not a passed test, and
 nothing in this specification or its appendix
-may be cited as one.
+may be cited as one. Where the appendix maps a
+case to a section this revision has amended
+(§§4–6, the payload contract), the amended
+text governs and the mapping is read against
+it.
 
 *End of Ledger Implementation Specification 01
-Rev 3 — prepared for Alex's review and adoption
+Rev 4 — prepared for Alex's review and adoption
 decision under the amended delegation.*
