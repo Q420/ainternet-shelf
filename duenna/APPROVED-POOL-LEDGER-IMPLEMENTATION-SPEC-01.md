@@ -2,6 +2,13 @@
 
 **Status:** PREPARED FOR REVIEW — NOT ADOPTED;
 NOT IMPLEMENTATION AUTHORITY
+**Revision:** Rev 2 — prepared in response to
+Alex's review `pb-mwcjqnw2-15-ip14` (Rev 1
+returned for revision, five required
+corrections). Rev 1: git blob 2a0d9dcd…,
+preserved in the repository history; this
+revision supersedes it as the review candidate
+only.
 **Prepared by:** Remmy
 **Date:** 2026-11-11
 **Authority:** Approved Pool Implementation Plan
@@ -84,7 +91,9 @@ and duplicate-free recovery. The connector's
 generic GraphQL error on stale expected SHA is,
 until reliably classifiable, an **UNKNOWN**
 outcome resolved by read-back — never silently
-labelled CONFLICT (matrix D09).
+labelled CONFLICT (matrix D09), and never by
+itself a retry instruction (§9's decision table
+governs what read-back must prove first).
 
 Any other substrate (a transactional store)
 satisfies this specification if it provides the
@@ -114,8 +123,7 @@ containing, in a single tree:
     idempotency key and expected predecessor);
   - `heads`: Item ID → head Version ID or
     explicit no-head;
-  - `snapshot_digest`: full digest of the
-    canonical serialisation of the above.
+  - `snapshot_digest`: defined below.
 - `events.jsonl` — the append-only event log
   for the full history up to this revision
   (reservation, candidate, CAS attempt with
@@ -123,6 +131,27 @@ containing, in a single tree:
   state and its audit publish atomically in
   the same commit. An event that is not in a
   committed snapshot did not happen.
+
+**Snapshot digest (exact construction).**
+`snapshot_digest` is the SHA-256 of the
+canonical serialisation of the ledger state
+object **with the `snapshot_digest` field
+omitted**. The digest is never an input to
+itself. Canonicalisation **CANON-LEDGER-1**:
+the state object is serialised as JSON in
+UTF-8; object keys are sorted
+lexicographically at every depth; arrays are
+serialised in their record order; no
+insignificant whitespace (separators `,` and
+`:` with no spaces); strings are emitted
+unescaped except where JSON requires escaping;
+the serialisation ends without a trailing
+newline. Verification recomputes the digest
+from the field-omitted object under the same
+canonicalisation identifier; a mismatch is an
+integrity failure. The canonicalisation
+identifier is recorded in every snapshot and
+every walk/CAS receipt that cites a digest.
 
 Version IDs and Item IDs follow the Phase 1
 identity grammar and the design paper §3.5:
@@ -132,13 +161,65 @@ tail is display only, never compared (Phase 2
 invariant 9). Dates inside IDs are metadata,
 never ordering (design paper §3.5 point 4).
 
-## 4. Operations
+## 4. Operations and authority availability
 
 All mutating operations return exactly one
 outcome from {COMMITTED, CONFLICT, REJECTED,
 UNKNOWN} (Phase 2 §6.1) and are not reported
 COMMITTED until read-after-write confirms the
 exact committed snapshot (invariant 14).
+
+**Authority basis.** An `authority_ref` is a
+claim, validated against the governing
+authority assignment; technical ability to
+reach the store (a working connector, a valid
+token) is NOT authority. R2 assigns: workers
+may prepare candidates and attest to their own
+observed actions; Alex admits receipts and
+issues scoped technical readiness decisions;
+corrections and supersessions are append-only
+and adjudicated by Alex. R2 does **not** assign
+the ledger powers (reserve, approve-for-ledger,
+advance head). A Crusher consistency retrieval
+run at Alex's request (2026-11-11) returned
+UNKNOWN for any record establishing those
+specific powers; they are unassigned in the
+record, not merely unlocated. G2 remains open.
+
+Availability therefore is:
+
+| Operation | Mutates | Authority basis today | Availability |
+|---|---|---|---|
+| ReadHead, ReadItem, LookupOperation | no | observation; no power exercised | available |
+| ResolveIdentity | no (see recording note) | observation + computation | available, unrecorded mode |
+| ReserveGeneration | yes | unassigned (G2) | **UNAVAILABLE — fail closed** |
+| AdvanceHead | yes | unassigned (G2) | **UNAVAILABLE — fail closed** |
+| RecordNonOperativeCandidate | yes | unassigned (G2) | **UNAVAILABLE — fail closed** |
+| CreateLedger (genesis) | yes | Phase 6 genesis decision | **UNAVAILABLE — fail closed** |
+
+An unavailable operation, when called, returns
+**REJECTED with reason AUTHORITY_UNRESOLVED**,
+performs no snapshot transition, and is logged
+only in the caller's own operation log — never
+as a ledger event, because an unauthorised
+caller cannot write the ledger's history
+either. When G2 assigns a power, availability
+changes by that assignment record alone; no
+other part of this specification changes.
+
+**ResolveIdentity recording note.** The walk
+computes and returns its receipt to the
+caller. Persisting that receipt into
+`events.jsonl` is a mutation performed by
+RecordNonOperativeCandidate-class machinery
+(a RECORD_ONLY transition, §6) and is
+therefore gated by the same authority. Until
+then, every walk receipt carries
+`recording_status: NOT_RECORDED_AUTHORITY_
+UNRESOLVED`, and no walk may be cited as
+ledger-recorded. (Phase 2's receipt-durability
+tests C15/C16 apply to recorded mode, entered
+only when the authority exists.)
 
 **ReserveGeneration**(ItemID, candidate_digest,
 actor, authority_ref, idempotency_key) →
@@ -171,14 +252,17 @@ integrity check passes (invariant 10).
 **ResolveIdentity**(presented_id, presented_
 digest) → {resolved VersionID, walk_receipt}
 | STOP | UNKNOWN, implementing the Phase 2
-§8.2 algorithm step for step, with the walk
-receipt fields of §8.3 complete (matrix C16:
-an incomplete receipt fails the test).
+§8.2 algorithm (§7 below).
 
 **LookupOperation**(idempotency_key) → the
 recorded outcome of the original operation, for
 recovery under §6.3. No blind retry exists in
 this interface.
+
+**RecordNonOperativeCandidate**(candidate
+record, conflict evidence, actor, authority_
+ref, idempotency_key) → COMMITTED | CONFLICT |
+REJECTED | UNKNOWN. Defined in §6.
 
 ## 5. Allocator construction
 
@@ -198,12 +282,14 @@ on the snapshot ref:
 4. Conditional ref update expected at R's
    commit. On success, read back and verify;
    report COMMITTED with the reservation.
-5. On conditional failure, the outcome is
-   classified per §9; if the state shows
-   another writer committed, re-read and repeat
-   from step 2 **under the same idempotency key
-   and exact payload only**. Any payload change
-   is a new operation and a new key.
+5. On conditional failure, classify the outcome
+   **only** through §9's decision table. A
+   retry is a new attempt of the SAME operation
+   — same idempotency key, same logical payload
+   (Item ID, candidate digest, actor, authority
+   reference) — rebuilt on the newly proven
+   head. Any change to the logical payload is
+   a new operation and a new key.
 
 This makes allocation and counter advance one
 atomic snapshot transition (Phase 2 §5.2 steps
@@ -213,7 +299,7 @@ distinct commits with distinct events
 consumes its generation permanently, whatever
 happens next (invariant 3; matrix A04/A05).
 
-## 6. Head advancement construction
+## 6. Head advancement and losing candidates
 
 AdvanceHead is the same CAS pattern with the
 stricter precondition set of Phase 2 §6.1: the
@@ -223,31 +309,87 @@ revision must both match the committed snapshot
 reserved Version ID with matching full digest
 (B07) and present approval/verification
 references (B06). Exactly one of two writers
-from the same predecessor commits (B01); the
-loser's candidate remains in the snapshot as a
-non-operative record with its conflict event
-(E05). Response loss after commit resolves by
+from the same predecessor commits (B01).
+Response loss after commit resolves by
 LookupOperation and read-back, never by
 repeating the mutation (B09/B10).
 
+**Losing-candidate durability.** The loser
+cannot append to the snapshot it lost — its
+CAS failed, so it holds no write. The
+candidate and its conflict become durable
+through a subsequent, separate operation,
+**RecordNonOperativeCandidate**:
+
+1. Inputs: the full candidate record; the
+   conflict evidence (the winning revision and
+   head the CAS read back, the losing
+   operation's idempotency key and reservation
+   reference); actor and authority reference;
+   its own idempotency key.
+2. The operation builds a successor snapshot
+   whose ONLY deltas are: the candidate record
+   appended with disposition
+   NON_OPERATIVE_CONFLICT, and the conflict
+   event appended. The transition is typed
+   **RECORD_ONLY**; the snapshot validator
+   rejects any RECORD_ONLY commit whose
+   `heads` map differs from its parent's, so a
+   record commit cannot move a head by
+   construction. The candidate is therefore
+   never current at any instant of the process.
+3. Concurrency: the record commit is itself a
+   CAS on the current head. If another writer
+   commits first, the outcome is classified by
+   §9's table and the record is rebuilt on the
+   new head under the same idempotency key and
+   payload; LookupOperation makes a lost
+   response recoverable without duplication.
+4. Until the record commit lands, the
+   candidate's durable trace is its reservation
+   (already committed by allocation), which the
+   walk already treats as a consumed gap, not a
+   version (§7). A candidate whose record never
+   lands remains visible exactly to that
+   extent — reservation present, candidate
+   record absent — and that state is itself
+   reportable, never silently completed.
+
 ## 7. Resolution walk construction
 
-ResolveIdentity implements Phase 2 §8.2 without
-deviation: pass = return the exact presented
-version, no walk (C01); fail = upward-only walk
-inside the exact registered identity chain of
-that Item ID (never a broad type label — §3's
-category/identity-chain definition; C05/C06/C11/
-C12), enumerating extant **minted** Version IDs
-in ascending generation, recording consumed
-reservation-only slots as gaps, never as
-versions (C09/C17); headship is read from the
-ledger's head pointer and cross-checked, never
-inferred from the largest number (C14); a head
-that fails its integrity check is terminal STOP
-(C07); the receipt is written into the
-snapshot's event log in the same operation that
-returns it, or the walk did not happen (C15/C16).
+ResolveIdentity implements the Phase 2 §8.2
+algorithm's structure: pass = return the exact
+presented version, no walk (C01); fail =
+upward-only walk inside the presented item's
+registered identity chain, enumerating extant
+**minted** Version IDs in ascending generation,
+recording consumed reservation-only slots as
+gaps, never as versions (C09/C17); headship is
+read from the ledger's head pointer and
+cross-checked, never inferred from the largest
+number (C14); a head that fails its integrity
+check is terminal STOP (C07); the receipt
+carries the §8.3 field set complete, plus the
+parameter values actually used (§8) and its
+recording_status (§4).
+
+Three points of the algorithm are **governed
+parameters with implementation defaults**, not
+settled policy (Phase 2 §11 — Ben's
+clarifications, still open):
+
+| Parameter | Implementation default | Status |
+|---|---|---|
+| Walk chain scope | exact registered Item ID chain (type bound as a field) | OPEN — default only |
+| Corrupt intermediate handling | STOP; never skip silently | OPEN — default only |
+| Gap semantics | next extant higher minted Version ID; reservation-only slots recorded as gaps | OPEN — default only |
+
+A conforming implementation must expose all
+three as configuration, must record the values
+used in every walk receipt, and must not
+present a default as a governance decision in
+any output. A later ruling changes a parameter
+value, not the design.
 
 ## 8. Carried open inputs (not resolved here)
 
@@ -257,39 +399,43 @@ its acceptance does not require settling:
 - **G1** ledger location — §2's position: the
   substrate is decided on the §7.3/D-series
   evidence, by the authority that owns G1.
-- **G2** the ledger powers (who may reserve,
-  approve, advance) — R2 settles receipt
-  admission and readiness authority; the
-  mapping of ledger powers onto actors is
-  recorded as an open input with the Phase 2
-  §11 separation preserved (the three powers
-  remain distinct and unassigned here beyond
-  what R2 states).
+- **G2** the ledger powers — §4's position:
+  unassigned in the record (Crusher UNKNOWN,
+  2026-11-11); mutating operations fail closed
+  until an assignment record exists. R2's
+  receipt/readiness assignments are unaffected
+  and are not stretched to cover ledger powers.
 - **G3** type vocabulary governance; **G4**
   chunk identity governance.
-- **Walk clarifications (Phase 2 §11):** chain
-  scope = exact Item ID (the specification's
-  recommended reading, unconfirmed); corrupt
-  intermediate = **STOP** (the safe default,
-  implemented as specified; no skip path is
-  built); gaps = next extant minted version
-  (as specified). Each is flagged in code-
-  facing terms as a parameter with its default
-  named, so a later ruling changes one
-  parameter, not the design.
+- The three walk parameters of §7 (defaults
+  recorded there, decisions open).
 
-## 9. Failure classification
+## 9. Failure classification and the retry decision table
 
 Transport or API failure after a possible
 commit = UNKNOWN until authoritative read-back
-(Phase 2 §9; E02). The B-GH connector's generic
-GraphQL error is classified CONFLICT only when
-read-back proves the ref moved to another
-writer's commit and this operation did not
-commit; otherwise it remains UNKNOWN (D09).
-Failure classes conflict / rejection /
-transport / unknown are distinguishable in
-every event record (acceptance criterion 19).
+(Phase 2 §9; E02). Failure classes conflict /
+rejection / transport / unknown are
+distinguishable in every operation record
+(acceptance criterion 19).
+
+After any failed or unanswered conditional
+update, the caller's next step is decided
+**only** by read-back evidence:
+
+| Read-back establishes | Classification | Permitted next step |
+|---|---|---|
+| The ref now points to a competing commit (parent chain read and verified) whose snapshot contains another writer's committed transition, and this operation's idempotency key is absent | Proven stale — CONFLICT for this attempt | Re-read state; rebuild on the proven head; retry as a new attempt of the same operation (same key, same logical payload) |
+| The ref/snapshot contains THIS operation's committed result under its idempotency key | Already committed | Return the recorded result; no further mutation |
+| The ref is unchanged from the attempt's base and the operation's key is absent | Definitely not committed | Retry the identical commit under the same key |
+| Read-back is impossible, the ref or commit cannot be verified, or the error cannot be classified | UNKNOWN | **STOP all mutation for this operation**; surface for resolution; no retry |
+
+A generic connector error (including the
+GraphQL stale-SHA error) satisfies none of the
+first three rows by itself. "Another writer
+appears to have moved the ref" is not proof;
+proof is the read-back chain in row 1. Anything
+less is row 4.
 
 ## 10. Acceptance
 
@@ -305,7 +451,21 @@ acceptance rule), reported in the §F template
 with examiner identity, independence, access
 and execution capability stated. Criteria 1–20
 of Phase 2 §10 map onto the matrix sections
-and are not restated here.
+and are not restated here. Alex's
+requirements-to-implementation traceability
+table and acceptance-test additions, prepared
+in parallel with this revision, append to this
+section when delivered.
+
+**Adoption boundary.** Adoption of this
+specification does not make any operation
+available whose authority (§4) or substrate
+(§2) preconditions are unmet. A specification
+can be adopted while particular operations
+remain blocked by an unresolved governance
+input or an unproven substrate capability;
+adoption must never be read as permission to
+operate through those gaps.
 
 ## 11. Genesis and non-migration
 
@@ -313,7 +473,8 @@ The build provides CreateLedger producing an
 empty revision-0 snapshot (no items, no heads).
 **Generation zero is NOT declared by this
 specification or by any act of building it** —
-that is a Phase 6 decision under the plan.
+that is a Phase 6 decision under the plan, and
+CreateLedger itself is authority-gated (§4).
 No existing identity system is migrated by
 this component: not the index's chunk
 identities (Phase 1 pack, Part A), not
@@ -332,5 +493,5 @@ BridgePress, or bridge machinery. (Phase 2
 §12, carried forward.)
 
 *End of Ledger Implementation Specification 01
-— prepared for Alex's review and adoption
+Rev 2 — prepared for Alex's review and adoption
 decision under the amended delegation.*
