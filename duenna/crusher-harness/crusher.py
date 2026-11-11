@@ -17,7 +17,7 @@ Design: Ben's direction + Alex's CRUSHER-ADDRESSABILITY-PROOF-01.
 Usage: crusher.py "question" [--requester remmy|alex|ben] [--k 4]
        crusher.py --usage [YYYY-MM-DD]   daily token accounting (UTC)
 
-HARNESS v2.1 (2026-11-11) — the reporting fix, cleared by Alex
+HARNESS v2.2 (2026-11-11) — the reporting fix, cleared by Alex
 (pb-mwc4i085-9-bsdn) after CRUSHER-INFORMATION-AUDIT-01:
 - Groq's complete HTTP error body is read and preserved; the
   provider's own wording is printed on failure (v1 never read it).
@@ -33,6 +33,9 @@ HARNESS v2.1 (2026-11-11) — the reporting fix, cleared by Alex
 - NO automatic retry after a rate-limit refusal (HTTP 429):
   record the failure and stop. Bounded retries remain only for
   transient non-429 failures (the 2026-11-09 hardening).
+- v2.2 correction (Alex's review of v2.1): retry maximum is TWO
+  submissions total (initial + ONE retry) on both the 5xx and
+  transport paths — v2/v2.1 permitted three.
 - v2.1 correction (Alex's review of v2): EVERY failed attempt —
   including intermediate 5xx and transport failures on the retry
   path — leaves its own durable record (status, body, attempt
@@ -208,7 +211,7 @@ def ask(question: str, requester: str, k: int = 4, transport=None,
                      "outcome": "attempt-failed", "attempt": attempts,
                      "http_status": None, "error_kind": type(e).__name__,
                      "error_body": str(e)}, log_path)
-            if attempts < 3:
+            if attempts < 2:
                 time.sleep(15 * attempts)
                 continue
             rec = {**base, "outcome": "failed", "attempts": attempts,
@@ -231,7 +234,7 @@ def ask(question: str, requester: str, k: int = 4, transport=None,
                  "http_status": status,
                  "retry_after": headers.get("Retry-After") or headers.get("retry-after"),
                  "error_body": error_body}, log_path)
-        if status == 429 or 400 <= status < 500 or attempts >= 3:
+        if status == 429 or 400 <= status < 500 or attempts >= 2:
             rec = {**base, "outcome": "failed", "attempts": attempts,
                    "http_status": status,
                    "retry_after": headers.get("Retry-After") or headers.get("retry-after"),

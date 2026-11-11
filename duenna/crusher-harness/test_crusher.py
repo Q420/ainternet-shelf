@@ -168,5 +168,54 @@ with tempfile.TemporaryDirectory() as td:
           and "connection reset" in fails[0]["error_body"]
           and fails[0]["call_id"] == rec["call_id"])
 
+
+    # T7 — two consecutive 5xx: max two submissions, both attempts logged
+    log.unlink()
+    calls = []
+    def always_503(body):
+        calls.append(1)
+        return 503, {}, json.dumps({"error": {"message": "overloaded"}})
+    try:
+        crusher.ask(Q, "alex", 3, transport=always_503, log_path=log)
+        raised = ""
+    except RuntimeError as e:
+        raised = str(e)
+    recs = read_log(log)
+    fails = [r for r in recs if r["outcome"] == "attempt-failed"]
+    closing = [r for r in recs if r["outcome"] == "failed"]
+    check("T7a two 5xx submissions maximum", len(calls) == 2,
+          f"submissions={len(calls)}")
+    check("T7b both attempts + closing logged, one call_id",
+          len(fails) == 2 and len(closing) == 1
+          and len({r["call_id"] for r in recs}) == 1
+          and closing[0]["attempts"] == 2
+          and [f["attempt"] for f in fails] == [1, 2])
+    u = crusher.daily_usage(fails[0]["date_utc"], log_path=log)
+    check("T7c unknown usage counts both attempts, closing not recounted",
+          u["unknown_calls"] == 2 and u["known_tokens"] == 0,
+          f"unknown={u['unknown_calls']}")
+
+    # T8 — two consecutive transport failures: same discipline
+    log.unlink()
+    calls = []
+    def always_down(body):
+        calls.append(1)
+        raise ConnectionError("connection reset by peer")
+    try:
+        crusher.ask(Q, "alex", 3, transport=always_down, log_path=log)
+    except RuntimeError:
+        pass
+    recs = read_log(log)
+    fails = [r for r in recs if r["outcome"] == "attempt-failed"]
+    closing = [r for r in recs if r["outcome"] == "failed"]
+    check("T8a two transport submissions maximum", len(calls) == 2)
+    check("T8b both attempts + closing logged, one call_id",
+          len(fails) == 2 and len(closing) == 1
+          and len({r["call_id"] for r in recs}) == 1
+          and all(f["error_kind"] == "ConnectionError" for f in fails))
+    u = crusher.daily_usage(fails[0]["date_utc"], log_path=log)
+    check("T8c unknown usage counts both transport attempts",
+          u["unknown_calls"] == 2, f"unknown={u['unknown_calls']}")
+
 print(f"\n{len(PASS)} passed, {len(FAIL)} failed")
 sys.exit(1 if FAIL else 0)
