@@ -2,17 +2,24 @@
 
 **Status:** PREPARED FOR REVIEW — NOT ADOPTED;
 NOT IMPLEMENTATION AUTHORITY
-**Revision:** Rev 4 — prepared in response to
-Alex's review `pb-mwcktprn-19-agum` (one narrow
-correction, L-R3-01: the reservation payload
-and retry contract made unambiguous), with
-Alex's traceability appendix incorporated at
-§13. Rev 3: commit f6917b19, git blob
-ec71f891…; Rev 2: commit 5f214261, git blob
-ee518708…; Rev 1: git blob 2a0d9dcd…. Prior
-revisions are preserved in the repository
-history; this revision supersedes them as the
-review candidate only.
+**Revision:** Rev 5 — prepared in response to
+Alex's review of Rev 4 (report shelved at
+commit df16d68d, blob ba24e58b…): one blocking
+conflict, L-R4-01. Rev 4 had excluded the
+expected predecessor from the idempotency
+payload as allocator-derived; the adopted
+Phase 2 specification (§5.1, matrix A03) makes
+it a caller-supplied, payload-bound request
+field, and a build specification cannot amend
+its governing design basis. Rev 5 restores
+the Phase 2 rule exactly (§§4–5, 9). Rev 4:
+commit 8eed8d9c, git blob 82716823…; Rev 3:
+commit f6917b19, git blob ec71f891…; Rev 2:
+commit 5f214261, git blob ee518708…; Rev 1:
+git blob 2a0d9dcd…. Prior revisions are
+preserved in the repository history; this
+revision supersedes them as the review
+candidate only.
 **Prepared by:** Remmy
 **Date:** 2026-11-11
 **Authority:** Approved Pool Implementation Plan
@@ -231,27 +238,36 @@ tests C15/C16 apply to recorded mode, entered
 only when that authority exists.)
 
 **ReserveGeneration**(ItemID, candidate_
-proposal, actor, authority_ref, idempotency_
-key) → {reservation_id, generation, version_
-id, expected_predecessor, committed_revision}
-| CONFLICT | REJECTED | UNKNOWN.
+proposal, expected_predecessor, actor,
+authority_ref, idempotency_key) →
+{reservation_id, generation, version_id,
+committed_revision} | CONFLICT | REJECTED |
+UNKNOWN.
 The caller supplies a candidate **proposal**
-(the caller-supplied field set defined in §5);
-the allocator derives the remaining fields of
-the candidate record (generation, Version ID,
-expected predecessor, reservation ID) and the
-reservation embeds the completed record
-immutably (§5). The **idempotency payload** is
-exactly: Item ID, content digest, digest
+plus the **expected predecessor** — a Version
+ID, or the explicit value NO_HEAD where the
+item has no head (the caller-supplied field
+set is defined in §5). The allocator derives
+the remaining fields of the candidate record
+(generation, Version ID, reservation ID) and
+the reservation embeds the completed record
+immutably (§5). The allocator **verifies the
+expected predecessor against the authoritative
+head**: a reservation is built only on a
+snapshot whose head equals it; any other head
+is CONFLICT, and nothing is reserved. The
+**idempotency payload** is exactly: Item ID,
+expected predecessor, content digest, digest
 algorithm, canonicalisation identifier, source
 artefact pin, actor, authority reference —
 bound to the idempotency key. Same key + same
 payload returns the original reservation;
-same key + any difference in the payload =
-CONFLICT, no mutation (§5; matrix A02/A03/
-A09). The expected predecessor is
-allocator-derived per attempt and is never
-part of the payload (§5).
+same key + any difference in the payload —
+the predecessor included — = CONFLICT, no
+mutation (Phase 2 §5.1; matrix A02/A03/A09).
+Allocator-derived values are kept separate
+from caller-supplied request identity in
+every record this operation emits.
 
 **AdvanceHead**(ItemID, VersionID, generation,
 full_digest, expected_predecessor,
@@ -301,10 +317,13 @@ on the snapshot ref:
 2. Check the idempotency key: if a reservation
    with this key exists, return it (or CONFLICT
    on payload mismatch).
-3. Build the successor snapshot: reservation
-   appended with generation = next unused for
-   the item, expected predecessor = head at R,
-   revision R+1, events appended. The
+3. Verify the payload's expected predecessor
+   against the head at R: if they differ, the
+   outcome is CONFLICT and nothing is built.
+   Otherwise build the successor snapshot:
+   reservation appended with generation = next
+   unused for the item, revision R+1, events
+   appended. The
    reservation record **embeds the complete
    candidate record** — the caller's proposal
    completed with the allocator-derived fields
@@ -319,26 +338,37 @@ on the snapshot ref:
    **only** through §9's decision table. A
    retry is a new attempt of the SAME operation
    — same idempotency key, same idempotency
-   payload (§4) — rebuilt on the newly proven
-   head. Any change to the payload is a new
-   operation and a new key.
+   payload (§4), expected predecessor included —
+   re-attempted against the newly read state
+   and committing only if the authoritative
+   head still equals that predecessor; if the
+   head has moved, the outcome is CONFLICT and
+   the path forward is a **new operation under
+   a new key** naming the newly observed head.
+   No retry ever re-bases. Any change to the
+   payload is a new operation and a new key.
 
 **Field split (exact).**
 
 | Caller supplies (the proposal = the idempotency payload, plus the key) | Allocator derives (per committed reservation) |
 |---|---|
 | Item ID | generation (next unused in the item's sequence) |
-| content digest + digest algorithm | Version ID (constructed per the Phase 1 grammar from Item ID, allocated generation, date, digest tail) |
-| canonicalisation identifier | expected predecessor (the head of the snapshot the reservation commits into) |
-| source artefact reference + immutable pin | reservation ID |
-| actor; authority reference | committed ledger revision |
+| expected predecessor (Version ID, or NO_HEAD) | Version ID (constructed per the Phase 1 grammar from Item ID, allocated generation, date, digest tail) |
+| content digest + digest algorithm | reservation ID |
+| canonicalisation identifier | committed ledger revision |
+| source artefact reference + immutable pin | |
+| actor; authority reference | |
 
-The caller never supplies a generation, a
-Version ID, or a predecessor; a request that
-carries them as caller-asserted values is
-REJECTED as malformed. This removes the Rev 3
-ambiguity in which the proposal appeared to
-contain allocator outputs.
+The caller never supplies a generation or a
+Version ID; a request that carries them as
+caller-asserted values is REJECTED as
+malformed. The caller **does** supply the
+expected predecessor: it is a request-identity
+field under the adopted Phase 2 rule (§5.1),
+not an allocator output. (Rev 4's contrary
+treatment — predecessor as derived, outside
+the payload — contradicted the design basis
+and is withdrawn; see L-R4-01.)
 
 **Attempts, retries, and rebasing.**
 - A generation is consumed only when a
@@ -352,11 +382,14 @@ contain allocator outputs.
 - If a reservation has committed under a key,
   that key forever returns that reservation.
   It never allocates again.
-- The expected predecessor is derived fresh
-  on each attempt from the state the attempt
-  commits into; its movement between attempts
-  is not a payload change and never a
-  conflict.
+- The expected predecessor is fixed by the
+  payload for the life of the key. Its change
+  under the same key is a CONFLICT, by the
+  Phase 2 rule, without exception: there is
+  no attempt, retry, or recovery path in
+  which an operation silently continues
+  against a different predecessor than the
+  one its key is bound to.
 - Once a reservation has committed, its
   candidate is pinned to the recorded
   predecessor. If the head has since moved,
@@ -586,7 +619,7 @@ update, the caller's next step is decided
 
 | Read-back establishes | Classification | Permitted next step |
 |---|---|---|
-| The ref now points to a competing commit (parent chain read and verified) whose snapshot contains another writer's committed transition, and this operation's idempotency key is absent | Proven stale — CONFLICT for this attempt | Re-read state; rebuild on the proven head; retry as a new attempt of the same operation (same key, same logical payload) |
+| The ref now points to a competing commit (parent chain read and verified) whose snapshot contains another writer's committed transition, and this operation's idempotency key is absent | Proven stale — CONFLICT for this attempt | Re-read state. Retry as a new attempt of the same operation (same key, same payload) **only if** the item's authoritative head still equals the payload's expected predecessor — a competing commit elsewhere in the snapshot does not by itself move this item's head. If the head has moved, this operation is finished: CONFLICT stands, and proceeding requires a new operation under a new key (§5) |
 | The ref/snapshot contains THIS operation's committed result under its idempotency key | Already committed | Return the recorded result; no further mutation |
 | The ref is unchanged from the attempt's base and the operation's key is absent | Definitely not committed | Retry the identical commit under the same key |
 | Read-back is impossible, the ref or commit cannot be verified, or the error cannot be classified | UNKNOWN | **STOP all mutation for this operation**; surface for resolution; no retry |
@@ -685,5 +718,5 @@ text governs and the mapping is read against
 it.
 
 *End of Ledger Implementation Specification 01
-Rev 4 — prepared for Alex's review and adoption
+Rev 5 — prepared for Alex's review and adoption
 decision under the amended delegation.*
