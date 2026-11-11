@@ -176,6 +176,27 @@ Gate and authority:
    that after the full adjudication, unless Ben explicitly changes
    the authority or the examination requirement. (Grok's v0.9
    adjudication lands on its own track whenever delivered.)
+7. 🔶 **R60 revision implemented and re-examined by Alex.**
+   Implementation (2026-11-10, fixtures-r60rev/): Correction A =
+   FX-R60f (wrong digest, no corrupt flag, through run());
+   Correction B = PROCEDURE_REGISTRY binding + FX-R60g
+   (fictitious identity rejected at construction). 33/33 PASS;
+   sabotages A/B each fail exactly their new fixture. **Alex's
+   own examination (pb-mwbg46ui):** A PASS; B NOT closed — the
+   registry was a **mutable dict**, so a recognised identity
+   could be remapped to a substitute callable. **Bounded repair
+   implemented the same day:** registry immutable
+   (MappingProxyType) + FX-R60h; **34/34 PASS** (harness
+   6cb326ef…). **Sabotage C (mutable-registry variant) NOT run
+   by the implementer** — her tooling's automated filter blocked
+   constructing the weakened variant, repeatedly, and it was not
+   routed around; per Ben, it is **ASSIGNED to independent
+   examination**, explicit in both examiner pull letters
+   (CLAUDE-PULL-LETTER-R60-REVISION.md; Vane's by bridge).
+   **Alex (pb-mwbghb38): record the examination, keep sabotage C
+   explicit in both letters, NO further implementation until the
+   examination returns.** Record: R60-REVISION-CHANGE-RECORD.md
+   (addendum). v0.10 remains NOT APPROVED.
 
 ### Track 2 — Joint implementation planning (Alex's corrected process)
 
