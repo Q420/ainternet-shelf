@@ -1,6 +1,6 @@
 # APPROVED POOL — POOL-FIRST IMPLEMENTATION PLAN 01
 
-**Status:** PHASE 0 COMPLETE — SOURCE CHECK VERIFIED; CURRENT AUDIT HEAD PINNED  
+**Status:** PHASE 5 DESIGN/ADOPTION DECISIONS COMPLETE — IMPLEMENTATION NOT AUTHORISED; DEPENDENCY HOLDS OPEN  
 **Plan adoption:** ADOPTED BY BEN, 2026-11-11  
 **Prepared by:** Alex  
 **Date:** 2026-11-11  
@@ -399,10 +399,32 @@ This subsection updates the operational status recorded at Phase 0 completion; i
 - No Phase 6 issuance follows automatically. The seats convene on Ben's list before any Bridge Fix work begins, as directed in the Phase 5 close-out instruction.
 
 
+### 8.2 Phase 5 design/adoption close-out — 2026-11-11
+
+This subsection supersedes the earlier provisional Phase 5 status in §8.1 while preserving its decision history.
+
+All three Phase 5 build-specification adoption decisions are now recorded:
+
+1. **Ledger Implementation Specification 01 Rev 5 — ADOPTED.** Exact artefact commit `6364f23d`, blob `f6abd8e73880d7cb7495a0d261b461615a66aa20`; decision `duenna/ALEX-LEDGER-IMPLEMENTATION-REV5-ADOPTION-DECISION-01.md`, commit `2c41a2e6f5b32897cfd7e2fbf691518a4651d9b8`.
+2. **Sweep Implementation Specification 01 Rev 4 — ADOPTED.** Decision commit `1c713768ac43c0cc87e09e5cd6ce27d52fdbe68d`.
+3. **Receipt Gate Implementation Specification 01 Rev 4 — ADOPTED WITH EXPLICIT LEDGER-DEPENDENCY HOLD.** Decision commit `93d5b97af4650ba5db867efa4e6926edded2fc2e`.
+
+The Ledger Rev 5 decision closes finding L-R4-01 by restoring the adopted Phase 2 expected-predecessor/idempotency rule. It does not certify the substrate, close G1/G2, settle G3/G4 or the walk parameters, execute tests, or authorise implementation.
+
+**Pre-implementation dependency holds:**
+- Sweep Rev 4 still pins Ledger Rev 4 in its design basis and §3.1. Its exact dependency pin must be reconciled to adopted Ledger Rev 5 through a versioned, reviewed artefact before sweep implementation.
+- Receipt Gate Rev 4 still pins Ledger Rev 4. Its M-ADMIT section applies the ledger's §9 retry classification unchanged. Adoption of Ledger Rev 5 does not automatically clear the existing hold: M-ADMIT requires an operation-specific retry contract based on its own idempotency key, candidate digest, store revision and read-back evidence. It must not import the Item ID predecessor rule where no such operation exists. The pin and contract require focused reconciliation and an independent decision before M-ADMIT implementation claims conformance.
+- These holds preserve the existing Sweep and Receipt Gate adoption decisions but prevent implementation from relying on a rejected or semantically inapplicable ledger revision.
+
+**Phase 5 design/adoption decisions: COMPLETE.** The three specifications have adoption decisions. This is not implementation completion or operational readiness. No Phase 5 implementation, migration, ledger mutation, dependency activation, publication, readiness claim, generation zero, Dictionary 0.4 freeze, replay, validator, pilot, spend or account change is authorised.
+
+No Phase 6 issuance follows. Per Ben's close-out direction, the seats now convene on Ben's list before any Bridge Fix work begins. Bridge Fix work is not started by this close-out.
+
+
 ## 9. Final authority and status
 
 Ben adopted the pool-first plan on 2026-11-11. The earlier proposal's `PROPOSAL — NOT ADOPTED` status is historical and superseded by that adoption; the proposal file itself is preserved unchanged.
 
 The adopted plan does not declare the Approved Pool operational. It does not declare generation zero. It does not freeze Dictionary 0.4. It does not close any infrastructure gap. It does not authorise implementation, publication, spend, replay, validator or pilot.
 
-**Current dispositions:** Pool-first adopted; Phase 0 COMPLETE after corrected plan read-back; Phase 1 NOT STARTED; Dictionary 0.4 freeze DEFERRED; generation zero NOT DECLARED; Gap 2 and Gap 3 OPEN/UNKNOWN pending specification, implementation and independent testing; EXON 0.2 self-flag correction OPEN.
+**Current dispositions:** Pool-first adopted; Phase 0 COMPLETE after corrected plan read-back; Phase 1 NOT STARTED; Dictionary 0.4 freeze DEFERRED; generation zero NOT DECLARED; Gap 2 and Gap 3 OPEN/UNKNOWN pending specification, implementation and independent testing; EXON 0.2 self-flag correction OPEN. Phase 5 design/adoption decisions COMPLETE; implementation NOT AUTHORISED; dependent-specification pin and M-ADMIT retry-contract holds OPEN.
