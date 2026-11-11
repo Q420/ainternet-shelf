@@ -214,7 +214,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - The control applies to one named stuck message only. It does not clear or force the entire queue.
 - It is distinct from Retry. Retry is an ordinary re-attempt under the normal fence and recovery rules.
 - It may override only: a non-veto HOLD caused by UNKNOWN; a defer-ceiling return; or pair state that cannot be verified after restart.
-- It must never bypass Ben's STOP, pause/disconnect, an ID already journalised as sent/delivered, a superseded pair, an incomplete/truncated message, or a positively observed Stop-face/proven-negative veto **[PENDING BEN - F-5, §2.5: this clause presumes the exception reading; under the strict two-of-three reading it does not apply] **.
+- It must never bypass Ben's STOP, pause/disconnect, an ID already journalised as sent/delivered, a superseded pair, an incomplete/truncated message, or a SS2.5 contradiction state (a positively observed Stop-face alongside positive serial and status is a LOGIC FAULT - force-send never bypasses a fault state; the fault is surfaced, not overridden).
 - The action records actor Ben, exact message ID, reason, prior state/verdict, override class and result in the event log.
 - The review journal receives the ID only if a force-send is actually dispatched. A refused or pre-dispatch failed force action creates no journal entry.
 - Once the named item is actually sent, it leaves the actionable queue/pair slot according to the same pair transition rules as an ordinary dispatch.
@@ -260,17 +260,18 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 ### 2.5 F-5 — Button evidence and the two-of-three rule
 
-**Governing ruling:** Ben's latest F-5 wording in the convene letter, PB-ID pb-mwcmqax3-1l-6suy. It supersedes BRIDGE-FIX-SPEC-02 §4 and the older UNKNOWN-HOLD wording in the prior clarification review.
+**Governing ruling:** Ben's F-5 wording in the convene letter, PB-ID pb-mwcmqax3-1l-6suy, as FINALLY DECIDED by Ben on 2026-11-11 (quoted at the contradiction rule below). It supersedes BRIDGE-FIX-SPEC-02 §4 and the older UNKNOWN-HOLD wording in the prior clarification review, and it dissolves the strict-versus-exception question rather than selecting either side.
 
 - Keep the three evidence states: POSITIVE, NEGATIVE and UNKNOWN.
 - An absent or unreadable button is UNKNOWN, never NEGATIVE.
 - The button is one supporting condition. UNKNOWN cannot independently block a send when serial and message status are both positive.
-- A positively observed Stop-face remains a distinct NEGATIVE evidence state. Whether it remains a unilateral veto, or is outweighed when the other two conditions are positive, is explicitly awaiting Ben's answer to the strict two-of-three question. Do not implement either interpretation as settled until he rules. The F-2 force-send never-bypass rule remains separately governed.
+- A positively observed Stop-face is a distinct NEGATIVE evidence state with a settled meaning (Ben, 2026-11-11): "alexes button will ever ever say stop if hes not actively working. if the send is confused, it means theres a logic problem." A Stop face appears only while the seat is actively generating; it never appears otherwise.
+- **The contradiction rule (DECIDED):** NEGATIVE button alongside POSITIVE serial and POSITIVE status cannot be a legitimate state. It is not resolved by vote in either direction - the button neither vetoes nor is outvoted. The triple is a CONTRADICTION indicating a defect in the send logic or its readings: the send does not proceed, and the contradiction is surfaced to the owner as a LOGIC FAULT with all three evidence states recorded. A fault state is investigated as a logic problem, never waited out as an ordinary hold and never overridden by force-send (SS2.2). The F-2 force-send never-bypass rule remains separately governed.
 - A non-veto hold must name the missing evidence and show elapsed/recheck state in Ben's plain view.
 - Fence evidence and physical actuation are separate. A passing quorum is not converted into a fence HOLD because the button read is UNKNOWN. If no safe submit actuator exists, report ACTUATOR-UNAVAILABLE, not a false generation verdict.
 - No page-wide button fallback is permitted as an actuator.
 
-**Acceptance matrix:** button UNKNOWN + serial POSITIVE + status POSITIVE = proceed to the owned actuator; button UNKNOWN with fewer than two positives = hold; the positively observed Stop-face outcome remains blocked on Ben's pending ruling between the strict two-of-three reading and the earlier proven-stop exception; already-delivered status = no send; out-of-order serial = no send. Repeat on all five adapters, including button removal and composer re-render races.
+**Acceptance matrix:** button UNKNOWN + serial POSITIVE + status POSITIVE = proceed to the owned actuator; button UNKNOWN with fewer than two positives = hold; button NEGATIVE + serial POSITIVE + status POSITIVE = contradiction: no send, LOGIC FAULT surfaced to the owner with the three evidence states recorded; button NEGATIVE with either other state non-positive = hold (consistent with the seat actively working); already-delivered status = no send; out-of-order serial = no send. Repeat on all five adapters, including button removal and composer re-render races.
 
 ### 2.6 F-6 — Whole-message completeness
 
@@ -436,7 +437,7 @@ The letterbox handoff must become acknowledged. It may not mark a message perman
 The following are deliberately not decided by this sheet:
 
 1. **DISPATCHED-UNCONFIRMED journal treatment:** CLOSED by Ben's ruling of 2026-11-11 (§2.4): the item is surfaced in OWNER-REVIEW with its uncertainty visible; its ID enters the journal if and only if delivery is CONFIRMED; on PROVEN_NOT_DELIVERED it never enters.
-2. **F-5 strict two-of-three interpretation:** Ben has been asked to decide whether a positively observed NEGATIVE button state is still outweighed when serial and message status are positive, or whether the earlier proven-stop exception remains. The button remains one recorded evidence state; do not mark this interpretation settled until Ben answers.
+2. **F-5 strict two-of-three interpretation:** DECIDED by Ben (2026-11-11, SS2.5). Neither reading is adopted: a Stop face only ever means the seat is actively working, so a NEGATIVE button alongside positive serial and status is a contradiction evidencing a logic problem - the send does not proceed and the contradiction is surfaced as a LOGIC FAULT. No Ben decision remains open in this sheet on F-5.
 3. **Journal insertion versus proven-absence retry:** RESOLVED on the basis of Ben's 2026-11-11 rulings (SS2.4): the retry fires only on PROVEN_NOT_DELIVERED delivery knowledge, which was never journalled, so no conflict stands; on UNKNOWN there is no retry. Alex's cross-check is COMPLETE (pb-mwcp1bzv, pb-mwcpa6jj) subject to the attempt-specific evidence-binding condition, incorporated at SS2.4; the refusal/refutation distinction is separately modelled under Ben's SYSTEM/ADMIN ruling (SS2.4).
 4. **Meaning of "no ID" for unsent work:** this draft interprets it as no review-journal ID. Confirm whether Ben also means no temporary PB-ID may exist while queued.
 5. **Bare-ID schema:** this draft uses an ID-only journal and keeps direction/disposition in the separate event log. Confirm that this matches "just the IDs".
@@ -486,7 +487,7 @@ A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run 
 - [ ] Every other governing ruling is cited at the contract point it controls.
 
 - [x] Ben's 2026-11-11 rulings incorporated with governing words cited inline: DISPATCHED-UNCONFIRMED closed (§2.4); delivery / delivery_confirmation fields separated (§2.4a); refusal model by record type x status (SYSTEM/REFUSED, ADMIN/REFUTED) with PROVEN_NOT_DELIVERED reserved for delivery knowledge (§2.4, §2.4a); NEW-9 buffer and trigger added (§2.13).
-- [ ] F-5 verified as the sole remaining Ben decision; no section presumes its answer (the §2.2 never-bypass clause carries its PENDING marker).
+- [x] F-5 DECIDED by Ben (2026-11-11, SS2.5): the strict/exception binary is dissolved - a contradictory evidence triple is a LOGIC FAULT, not a vote; the SS2.2 never-bypass clause carries the decided contradiction rule with no pending marker.
 
 ### Routing, state and cache checks
 - [ ] Every state has one entry condition, one exit condition, an owner and a durable/ephemeral classification.
