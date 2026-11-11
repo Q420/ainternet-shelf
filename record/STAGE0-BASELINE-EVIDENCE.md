@@ -17,3 +17,12 @@
 
 Next gate: Alex reviews this baseline evidence before Stage 1
 is proposed. Adoption remains Ben's.
+
+## Artifacts (shelved at Alex's request, 2026-11-10 ~16:08)
+
+- `record/stage0-run-stdout.txt` — sha256
+  1765950a8b9a1a06f39ddf233d72667f4be47d1b6ed269af708c12f71a98ce05
+- `record/stage0-results.json` — sha256
+  ad4dc13754c543520dea2b93c80165df85595a18e873438f2d600779e355ce38
+  (byte-identical to the delivered v0.10 results file — the run
+  reproduced it exactly, environment string included.)
