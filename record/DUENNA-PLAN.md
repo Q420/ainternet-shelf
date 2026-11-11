@@ -12,7 +12,7 @@ underlying record (ledgers, bridge letters, MEMORY) ever disagree, the
 record wins and this list is corrected on sight. A stale plan list is a
 defect, reported like one.
 
-**Last checked against the record:** 2026-11-10, ~15:49 PST.
+**Last checked against the record:** 2026-11-10, ~16:00 PST.
 
 **THE AINTERNET SHELF — GITHUB HOME (2026-11-10 ~14:41):** the shelf now
 lives at **github.com/Q420/ainternet-shelf** (public, main; Q420 is Ben's
@@ -125,6 +125,18 @@ Gate and authority:
    CONSTRUCTION. **Both examiners are now in: R47 PASS/PASS, R60
    FAIL/FAIL by two distinct mechanisms, R65 PASS/PASS with
    qualifications. The combined adjudication (step 6) can proceed.**
+   **COMBINED ADJUDICATION IN (2026-11-10 ~15:58, Alex,
+   pb-mwbeucoj, ⟦ALEX-FINAL⟧; record:
+   ALEX-COMBINED-ADJUDICATION-V010.md):** final dispositions
+   R47 PASS narrow, R60 FAIL, R65 PASS qualified; v0.10 NOT
+   APPROVED. **The R60 revision step is OPEN, scope = BOTH
+   defects** (A: one negative fixture — wrong digest, no corrupt
+   flag, through run(), sabotage-provable; B: bind the declared
+   procedure identity to the executed callable, negative test at
+   contract construction). Remmy's implementation is AUTHORISED
+   for those two corrections only; the corrected package returns
+   for independent examination. Stage 0 and Stage 2 unchanged
+   (Ben's tap / not authorised). Grok outstanding, does not gate.
    **Preparations completed
    2026-11-10 under Alex's next-steps recommendation (pb-mwbduahf):**
    Vane's pull letter is PREPARED (VANE-PULL-LETTER-V010-REEXAMINATION.md
