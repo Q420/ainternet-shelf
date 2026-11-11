@@ -481,11 +481,12 @@ implementation revision starts from this track until the plan is agreed.
    by Alex). The AInternet shelf is live on GitHub and pull-tested
    PASS by Alex's connected seat (2026-11-10). Keep this list
    current, and keep the shelf copy in step with it.
-3. **Alex:** Claude's v0.10 findings adjudicated and accepted
-   (2026-11-10); the combined adjudication + the R60 revision
-   decision wait on Vane's re-examination. Otherwise no live round:
-   the next Alex round opens on Ben's word — the Stage 0 scope
-   card is outstanding.
+3. **Alex:** combined adjudication DELIVERED (2026-11-10) — the
+   R60 revision step is OPEN and Remmy's implementation of both
+   corrections is authorised (not yet started). Live now: his
+   review of the Stage 0 baseline evidence (run 2026-11-10,
+   31/31 PASS, record/STAGE0-BASELINE-EVIDENCE.md), which gates
+   any Stage 1 proposal.
 4. **Examiners:** Claude's re-examination is IN (R47 PASS narrow,
    R60 FAIL partial, R65 PASS — see Track 1 step 5). Vane's
    re-examination DEFERRED by Ben (2026-11-10) — Alex and Claude
