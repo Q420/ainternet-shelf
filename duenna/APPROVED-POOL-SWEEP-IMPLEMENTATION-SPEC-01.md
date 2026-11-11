@@ -2,12 +2,18 @@
 
 **Status:** PREPARED FOR REVIEW — NOT ADOPTED;
 NOT IMPLEMENTATION AUTHORITY
-**Revision:** Rev 2 — prepared in response to
-Alex's review `pb-mwcjzhtu-16-g7gl` (Rev 1
-returned for revision, five required
-corrections). Rev 1: commit a702e9ee, git blob
-e299971a…, preserved in the repository history;
-this revision supersedes it as the review
+**Revision:** Rev 3 — prepared in response to
+Alex's review `pb-mwcke1i3-18-7qy0` and his
+shelved traceability review
+(duenna/ALEX-SWEEP-IMPLEMENTATION-REV2-
+TRACEABILITY-REVIEW-01.md, commit e3d9102,
+blob 44c587d7…): four required corrections
+(R2-SW-01…04) plus the review's three
+traceability qualifications. Rev 2: commit
+92c13b2c, git blob 85baf44b…; Rev 1: commit
+a702e9ee, git blob e299971a…. Prior revisions
+are preserved in the repository history; this
+revision supersedes them as the review
 candidate only.
 **Prepared by:** Remmy
 **Date:** 2026-11-11
@@ -98,25 +104,47 @@ ChangeEvent {revision, item/edge identity,
 old/new digest or state, origin};
 DirtyEntry {edge/component, cause event IDs,
 path, state}; CheckRecord {edge, profile
-version, input revision + digest stamp,
-result, evidence refs, examiner fields where
-factual}; SweepRequest (design §5.1);
-CandidateReceipt (design §9 field set);
-ConsumerCursor {last processed revision, last
-processed snapshot digest, processing log}.
+version, **complete typed read-set** — every
+input actually consumed, each entry typed
+(LEDGER_ITEM, DECLARATION, PROFILE, GRAPH,
+INVENTORY, AUTHORITY, EXTERNAL_OBSERVATION,
+SHARED_RESOURCE, DUAL_RESIDENCE, CONSUMPTION,
+EXAMINER_EVIDENCE) with its exact version/
+digest or observation identity, freshness
+boundary and evidence reference — result,
+evidence refs, examiner fields where factual};
+SweepRequest (design §5.1); CandidateReceipt
+(design §9 field set); ConsumerCursor {last
+processed revision, last processed snapshot
+digest, processing log} — owned solely by
+M-EVENT (§5); SweepCheckpoint {sweep ID,
+cursor revision + digest observed at start,
+graph pin, working-overlay reference} — the
+per-sweep record a rollback acts on (§7).
 
 **Migration and rollback (applies to every
 traceability row):** the registry is greenfield
 — seeding per §3 is the only migration, and it
-is itself a governed ledger flow. Sweeps are
-read-only against their sources; the only
-writes are engine state (cursor, dirty sets)
-and candidate receipts. Rollback of a sweep is
-therefore: discard the candidate receipt,
-restore the cursor to its pre-sweep value, and
-re-derive dirty state by replay (§5). No
-source artefact is ever mutated by this
-component, so no source rollback exists.
+is itself a governed ledger flow. Lifecycle
+events exercised in tests (declaration
+revision, component retirement/rename/split,
+index admission — D07, I02–I04, I09) are
+**governed ledger transitions recorded through
+the ledger candidate flow in fixtures**, not
+migrations performed by the sweep engine; the
+sweep engine performs no migration of anything.
+Sweeps are read-only against their sources and
+**never write the ConsumerCursor**; a sweep
+computes against pinned snapshots and its own
+working overlay. Rollback of a sweep is
+therefore: discard the candidate receipt and
+the sweep's overlay, restoring its
+SweepCheckpoint — the event consumer's cursor
+and live DirtySet are untouched, so consumer
+progress made during or after the sweep is
+never rewound (§7). No source artefact is ever
+mutated by this component, so no source
+rollback exists.
 
 ## 3. Registry construction
 
@@ -154,6 +182,60 @@ atomicity (Phase 3 §11.2).
   vocabulary (§14 — proposed, not adopted);
   the engine never infers ABSENT from DOWN or
   currentness from presence.
+
+### 3.1 Ledger interface dependency (explicit)
+
+The registry's residence in the ledger makes
+this component depend on the Ledger
+Implementation Specification in exact terms:
+
+- **Operations required:** ReadHead, ReadItem,
+  LookupOperation (reads — available under the
+  ledger specification's authority table);
+  ReserveGeneration + AdvanceHead (creation
+  and versioning of component, declaration and
+  registry items through the candidate flow);
+  and a record-only transition for disposition
+  bookkeeping.
+- **Reconciliation against the ledger
+  specification (Rev 3):** ReserveGeneration
+  and AdvanceHead are defined and carry the
+  registry's creation/versioning exactly.
+  Record-only transitions are defined there
+  only for two named purposes (candidate
+  disposition; walk receipts). **Interface gap
+  LEDGER-GAP-1:** no general record-only update
+  exists for registry bookkeeping fields — in
+  particular a declaration's `last_checked_
+  receipt` / `last_known_result` pointers
+  (design §3.1). Until a ledger revision
+  defines one, those pointers are updated only
+  by issuing a new declaration version through
+  the candidate flow (heavy, but governed);
+  this specification does not invent the
+  missing operation.
+- **Dependency state:** the ledger
+  specification is itself a review candidate
+  until adopted, and its mutating operations
+  are UNAVAILABLE while G2 is unassigned.
+  This component's registry is therefore
+  **design-only** until (a) the ledger
+  specification is adopted, and (b) its
+  substrate and authority preconditions are
+  actually satisfied. Adoption of THIS
+  specification cures neither.
+- **Fixture boundary:** tests may simulate a
+  synthetic ledger and a synthetic test
+  authority (§12), fully isolated in fixtures.
+  Neither implies a G1 substrate decision, a
+  G2 authority assignment, or production
+  availability of any operation.
+- **Inheritance rule:** the registry inherits
+  only the operations and guarantees actually
+  established by the eventual ledger
+  implementation and its independent test
+  evidence — never capabilities merely
+  described in a design.
 
 ## 4. Graph engine
 
@@ -198,7 +280,15 @@ neither replaces the other (matrix T04/T06):
   durable engine state, stored outside the
   ledger (the engine holds no ledger write
   authority) and cited by digest in every
-  sweep receipt.
+  sweep receipt. **Ownership:** the cursor is
+  written only by M-EVENT's consumption, in
+  revision order. Sweeps never write it: a
+  sweep records the cursor's position in its
+  own SweepCheckpoint (§2) and computes
+  against pinned snapshots, so a sweep
+  rollback (§2, §7) cannot rewind consumer
+  progress — including progress made while
+  the sweep was running.
 - **Gap detection:** before processing, the
   consumer verifies the next snapshot's
   parent_revision equals the cursor revision
@@ -296,38 +386,74 @@ with its actual coverage, never as full.
 
 **Finalisation algorithm (M-SWEEP).**
 1. At start, pin (R0 = ledger revision, D0 =
-   snapshot digest, G0 = graph snapshot).
-   Every CheckRecord is stamped with the
-   (revision, digest) of the inputs it
-   actually ran against.
+   snapshot digest, G0 = graph snapshot) and
+   open a SweepCheckpoint. Every CheckRecord
+   carries its complete typed read-set (§2)
+   and is stamped with the (revision, digest)
+   of the governed inputs it ran against.
 2. At finalisation, re-read the committed
-   head (R1, D1).
-3. If R1 == R0 and D1 == D0: the receipt
-   finalises on the single pin.
-4. If R1 > R0: compute the changed set from
-   the ledger events of revisions R0+1..R1.
-   A check whose inputs (source item, edge,
-   declaration version, profile version) do
-   not intersect the changed set stands,
-   restamped to the final pin with its
-   original input stamp preserved. A check
-   whose inputs DO intersect is either
-   re-run once against (R1, D1) or left
-   DIRTY/UNKNOWN with the invalidation
-   recorded — the receipt names which, per
-   check (matrix T07/S09).
-5. The receipt's final pin is (R1, D1); no
-   CLEAN result may appear in it whose final
-   validation does not trace to that pin.
-   Reaching the final step confers nothing by
-   itself.
-6. **Interruption:** a sweep that never
+   head (R1, D1) and branch exactly:
+   - **R1 == R0 and D1 == D0:** proceed to
+     step 3 on the single pin.
+   - **R1 == R0 and D1 ≠ D0:** a snapshot at
+     one revision has two digests — integrity
+     failure. Finalisation aborts: outcome
+     UNKNOWN with an operational stop, no
+     CLEAN result stands, and no candidate
+     receipt is represented as finalised.
+   - **R1 < R0:** revision regression — the
+     authoritative read is inconsistent or
+     forked. Same disposition: integrity
+     failure, UNKNOWN, operational stop, no
+     finalisation.
+   - **R1 > R0:** proceed to step 3, with the
+     changed set computed under step 3's
+     verification rule.
+   No other branch exists; no inconsistency
+   falls through to a successful finalisation.
+3. **Changed set and read-set rule.** The
+   changed set is computed over EVERY input
+   class, not the ledger alone: (a) ledger
+   events of revisions R0+1..R1 — trusted
+   only when the entire chain is present,
+   ordered, parent-linked and digest-verified;
+   a missing, duplicated, conflicting or
+   unverifiable event makes the changed set
+   itself UNKNOWN for the affected range, and
+   **no check may be declared unaffected
+   because an event cannot be found** — such
+   checks are DIRTY/UNKNOWN or re-run;
+   (b) externally observed input changes and
+   freshness expiries detectable under the
+   declared observation model (external
+   endpoints, quotas and shared resources,
+   factual sources, authority state, inventory
+   membership, dual-residence copies, examiner
+   state). A ledger-head re-read alone cannot
+   prove a mutable external input unchanged.
+   A check **stands** only when its complete
+   read-set is proven disjoint from the
+   verified changed set AND every external
+   observation in it remains within its
+   declared freshness boundary at
+   finalisation. Otherwise the check is
+   re-run once against the final pin or left
+   DIRTY/UNKNOWN, named per check in the
+   receipt (matrix T07/S09; §12.1 cases).
+4. The receipt's final pin is the verified
+   (R1, D1); no CLEAN result may appear in it
+   whose final validation does not trace to
+   that pin through step 3. Reaching the
+   final step confers nothing by itself.
+5. **Interruption:** a sweep that never
    finalises emits no candidate receipt. Its
-   partial CheckRecords are engine-local and
-   discarded; the sweep ID and interruption
-   are recorded in the engine's processing log
-   and cited as an exclusion in the next
-   sweep of the same scope.
+   partial CheckRecords and working overlay
+   are discarded against its SweepCheckpoint;
+   the ConsumerCursor is untouched (§5). The
+   sweep ID and interruption are recorded in
+   the engine's processing log and cited as
+   an exclusion in the next sweep of the same
+   scope.
 
 **Readiness outcomes (Phase 4 R3, exact
 values).** The engine computes a candidate
@@ -495,6 +621,14 @@ migration/rollback per §2's global statement.
 "Policy: OPEN" marks a dependency on a Ben
 decision (§14) — the mechanism specified is
 the fail-closed behaviour, not the policy.
+**Fixture authority:** any case that exercises
+a mutation names a clearly synthetic test
+authority — a TEST-ONLY assignment record that
+lives inside the fixture and is valid nowhere
+else — or else tests the fail-closed result
+where no authority exists. A fixture authority
+is never a production G2 assignment and never
+authorises a real ledger mutation.
 
 ### D — Core graph and declaration tests
 
@@ -504,7 +638,7 @@ the fail-closed behaviour, not the policy.
 | D02 | M-REG | Edge naming unregistered consumer → declaration rejected with reason, or held unresolved; never dropped silently | rejection record in ledger event log | F-GRAPH | G2 (declaration approval) for the held path |
 | D03 | M-REG | Same canonical edge submitted twice → duplicate detected by declaration digest; provenance of both kept; no double-count | both source records + digest | F-GRAPH | none |
 | D04 | M-REG | Same endpoints, different class/policy → distinct only if separately identified and authorised; else conflict record | both declarations, authority refs, disposition | F-GRAPH | Policy: OPEN (classification authority, Ben §11.1) |
-| D05 | M-REG, M-CHECK | Required edge without validation profile → UNKNOWN/STOP for dependent scope | edge/profile lookup + failure receipt | F-GRAPH | none |
+| D05 | M-REG, M-CHECK | Required edge without validation profile → candidate outcome INDETERMINATE_WITHIN_SCOPE for the dependent scope, with an operational stop recorded as a separate field (never a combined UNKNOWN/STOP value) | edge/profile lookup + failure receipt | F-GRAPH | none |
 | D06 | M-REG | Dependent self-labels its edge OPTIONAL → unauthorised classification rejected/ignored | actor, attempted change, governing authority cited | F-GRAPH | Policy: OPEN (requiredness authority) — rejection mechanism is FORM |
 | D07 | M-REG, M-EVENT, M-DIRTY | Declaration version changes → new immutable version; consumers + downstream closure dirtied | old/new declaration hashes, propagation path | F-GRAPH + F-LEDGER | G2 for the approving act |
 | D08 | M-GRAPH | Edge creating a directed cycle → rejected absent an approved cycle-group contract | cycle path + rejection record | F-GRAPH | none (rejection is default) |
@@ -604,11 +738,28 @@ the fail-closed behaviour, not the policy.
 | S15 | M-SWEEP | Full sweep with an external service down → component accounted DOWN/UNKNOWN/excluded per policy; never silently omitted | probe attempt, error class, scope disposition | F-EXT | Policy: OPEN (exclusion policy) |
 | S16 | M-SWEEP | Gate requires independent examination; none appointed → examiner criterion OPEN; no accepted release claimed | appointment registry (empty), gate result | — | criterion-17 pattern; R2 |
 
-Alex's case-by-case traceability review,
-prepared in parallel, reconciles against this
-section on arrival; differences are defects in
+Alex's case-by-case traceability review of
+Rev 2 (shelved, commit e3d9102) reconciled
+against this section: all 78 cases mapped;
+its qualifications are incorporated in Rev 3
+(fixture authority above; lifecycle events as
+governed fixture transitions, §2; extension
+points, §14). Differences are defects in
 whichever document misstates the design or the
 matrix, resolved on the record.
+
+### 12.1 Finalisation and read-set cases (Rev 3 additions, from R2-SW-01/02/03)
+
+| Case | Modules | Input → expected output | Evidence / examiner | Fixture | Authority / policy |
+|---|---|---|---|---|---|
+| X01 | M-SWEEP | Finalisation re-read returns same revision, different digest → integrity failure; UNKNOWN + operational stop; no receipt finalised | both digests, abort record | F-LEDGER | none |
+| X02 | M-SWEEP | Finalisation re-read returns a lower revision than the pin → regression handling as X01 | both revisions, abort record | F-LEDGER | none |
+| X03 | M-SWEEP | Event chain R0+1..R1 has a missing or unverifiable event → changed set UNKNOWN for the range; no check declared unaffected; affected checks DIRTY/UNKNOWN or re-run | chain verification record, per-check dispositions | F-LEDGER | none |
+| X04 | M-SWEEP, M-CHECK | Shared-resource state changes mid-sweep with no ledger revision → checks whose read-set includes the resource are invalidated or re-run | resource read-set entries, changed-set record | F-RES | none |
+| X05 | M-SWEEP, M-CHECK | External factual source, authority state, or examiner state changes mid-sweep → intersecting checks invalidated or re-run; ledger re-read alone never clears them | read-set entries per class, revalidation record | F-EXT | R2 (authority/examiner records) |
+| X06 | M-SWEEP | External observation expires during the sweep with no other change → its checks leave CLEAN candidacy: re-run or DIRTY/UNKNOWN | freshness boundary, expiry time, disposition | F-EXT | Policy: OPEN (freshness windows) |
+| X07 | M-SWEEP, M-EVENT | Sweep interrupted while the event consumer advances → consumer progress intact; sweep emits no receipt; cursor never rewound | cursor before/after, checkpoint discard record | F-LEDGER | none |
+| X08 | M-EVENT | Consumer restarts and replays a revision range → no lost event, no duplicate effect, no scope CLEAN until cursor + DirtySet reconcile to the authoritative head (both values cited) | replay log, reconciliation values | F-LEDGER | none |
 
 ## 13. Acceptance
 
@@ -664,6 +815,27 @@ not close any infrastructure gap (§14).
   must not promote these labels into governing
   meanings ahead of the EXON/schema
   reconciliation.
+- **Extension points and activation contract:**
+  the reserved extension points are dependency
+  classes, state/status values, trigger
+  profiles, validation profiles, version
+  policies, component types, and future record
+  fields. An unregistered extension value is
+  **inert**: where it would affect routing,
+  authority, validation, dependencies or
+  readiness, the affected scope fails closed
+  (UNKNOWN), and it may never alter behaviour
+  by its mere presence in a record. Activation
+  requires a governed new version of the
+  relevant vocabulary or profile, approved by
+  that vocabulary's owner (G3 for classes and
+  values; the profile's governing authority
+  for profiles and policies), recorded with
+  provenance. Extensions are additive-only
+  within a schema major version; a consumer
+  must reject an unknown REQUIRED extension
+  and may ignore an unknown field only where
+  the schema marks that field optional.
 - **Infrastructure gaps:** adopting the ledger
   build specification does **not** close Gap 2
   or Gap 3, and adopting this specification
@@ -696,6 +868,6 @@ operation; or spend, credential or account
 changes. (Design §12, carried forward.)
 
 *End of Dependency and Sweep Implementation
-Specification 01 Rev 2 — prepared for Alex's
+Specification 01 Rev 3 — prepared for Alex's
 review and adoption decision under the amended
 delegation.*
