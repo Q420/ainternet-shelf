@@ -14,10 +14,10 @@ Workspace: `fixtures-r60rev/` (copied from `fixtures-v010/`;
 the v0.10 artefacts are preserved untouched).
 
 - Harness: `fixtures-r60rev/harness.py`, sha256
-  **3c393fceb2fb550bf27d49004d0940ec069ae5f3893f5a419ee101d2d53983b8**
+  **6cb326ef34e72e8d66a6e42aabd2e33ecff0f3dc45aa1c4bf678a674d88ebd04**
   (v2.2).
 - Results: `fixtures-r60rev/results.json`, sha256
-  **f257fbd5b11d3de8232c44a5bc62e4dd50be43c9672ecc560faf531c4941f844**.
+  **c7068f051ac28a763d37e6c08d8f456fd0b9bb86f870626932f701eee1364712**.
 
 ## Correction A — digest-mismatch enforcement (Claude's finding)
 

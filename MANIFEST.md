@@ -42,13 +42,14 @@ full corpus sweep was shelved the same day.
 | `duenna/D3-V010-TRACEABILITY.md` | 931da270f422308faa3ac74f1cc72b515a6dab4affda91b2575e1ee307ef1333 | v0.10 traceability |
 | `duenna/CLAUDE-VERIFICATION-REPORT.md` | 18de602d1101d6e9e03eabf105981c2c3da1ec166a080593f1bd96bb4df20a11 | Claude's verification report on v0.8 |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V09.md` | 1b760ac00efea716dd32a96755eaa6150580f04abc6bbe0388a743fbda00ca45 | Claude's verification report on v0.9 |
+| `duenna/CLAUDE-VERIFICATION-REPORT-R60REV.md` | 14fc4727749a02079aee4ce25eb7b9a7b93ef90bf65110ff0b4a23c605d7ad4a | Claude re-examination of the R60 revision: A PASS; B open (module-level rebind path); record-hash cleanup noted |
 | `duenna/CLAUDE-VERIFICATION-REPORT-V010.md` | 8686624ae4dabbcff71f4886a2077dedc68c8ed20cb38d38ff3181087c23ec08 | Claude's re-examination report on v0.10 (R47 PASS narrow, R60 FAIL partial, R65 PASS) |
 | `duenna/VANE-EXAMINATION-REPORT-R60REV.md` | 3da17136f9c2a4959d9868fb0e63b36e3d99520781f2bcbdfd70430b55b3128a | Vane sabotage C report: FX-R60h fails under mutable registry (R60-group execution; full suite not run — limitation stated) |
 | `duenna/VANE-EXAMINATION-REPORT-V010.md` | 884fe426c32cd1f7641f2a965d3e39053ec626a5d7829eaae367883a2772b0a3 | Vane's independent examination of v0.10 (R47 PASS, R60 FAIL — unbound procedure identity, R65 PASS qualified) |
 | `duenna/ALEX-COMBINED-ADJUDICATION-V010.md` | cbf6ec46c6e60e33008712f7edc568158c205c51a433d0554857a55ad99754ed | Alex's combined Track 1 adjudication (R47 PASS narrow, R60 FAIL, R65 PASS qualified; R60 revision OPEN, both defects) |
 | `duenna/harness-r60rev.py` | 6cb326ef34e72e8d66a6e42aabd2e33ecff0f3dc45aa1c4bf678a674d88ebd04 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |
 | `duenna/results-r60rev.json` | c7068f051ac28a763d37e6c08d8f456fd0b9bb86f870626932f701eee1364712 | R60 revision results (33/33 PASS) |
-| `duenna/R60-REVISION-CHANGE-RECORD.md` | b31f966af25f6279c0451fa0f87e9405a96649c103c92a8a5455aa037b5d8e09 | R60 revision change record (both corrections + sabotage evidence) |
+| `duenna/R60-REVISION-CHANGE-RECORD.md` | 8bff8f8fab4e90e3f3deb619ad2e1ad1f92ed46b87c2a7781fc6cac800a26ecc | R60 revision change record (both corrections + sabotage evidence) |
 | `duenna/R60-REVISION-UNRESOLVED.md` | 5d8093707144777926d78829763af6f8cb765bbeed05cbb696735e5b58b2e90c | R60 revision unresolved items (carried forward) |
 | `duenna/VANE-EXAMINATION-REPORT-V09.md` | 643923ec8f0433ab67b71d484bb5aeaca17240d986eaa3001e1672f48fa09b2a | Vane's examination report on v0.9 |
 | `duenna/V09-EXAMINATION-FINDINGS-LEDGER.md` | cf116ba28d822c15d70c82ad7e02be8fccde932d749c4c5a2bae02dd5ad20af3 | The consolidated v0.9 findings ledger |
