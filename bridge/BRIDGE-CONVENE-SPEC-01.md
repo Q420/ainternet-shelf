@@ -49,6 +49,14 @@ Source references at the pinned commit:
 - Gemini adapter — blob 6b2d39a0fb60f53a6be6a22a6edfc23999fe3ec2
 - Test report — blob 117f5684557fce46184781bb924872947d353d71
 
+**§13.1 provenance note:** Remmy supplied the exact contemporaneous daily-log entry from `~/memory/2026-11-10.md`, logged 2026-11-11 at approximately 12:38 MST. The two quoted sentences below are Ben's verbatim words; the surrounding interpretation is Remmy's contemporaneous log text, not a direct Ben quotation:
+
+> “If a message is skipped there's no sense in keeping the ID of it. If a message is unable to send and I push it through then the ID should be saved.”
+>
+> “if the fix works, there should be no reason a message doesn't go through.”
+
+The log records the resulting interpretation that sent IDs persist through pause/disconnect while queue and unsent IDs purge. This is provenance evidence, but the log has not been admitted as a separate Shelf artefact. The separate DISPATCHED-UNCONFIRMED treatment remains awaiting Ben's explicit ruling.
+
 **Evidence class:** source inspected at the pinned Shelf commit. The v0.18.0 report records 819 fixture checks passed across 34 fixture files, one R9 recovery timing flake under load, and no live proof of the final v0.18.0 send path. Alex did not independently execute those tests or observe live two-seat behaviour. No new tests have been run for this convene.
 
 ### 0.3 System route being specified
@@ -126,17 +134,17 @@ storage.js defines one bufferId. background.js replaces the existing buffer item
 
 ### 1.8 The send button is both evidence and actuator
 
-fence.js already allows a send when button status is UNKNOWN and serial and message status are both positive; it treats a positively observed Stop face as NEGATIVE and any proven negative vetoes. The old consolidated specification §4 instead made UNKNOWN a mandatory HOLD even when the other two conditions were positive.
+fence.js records the button as POSITIVE, NEGATIVE or UNKNOWN, but the governing two-of-three rule does not give the button condition a unilateral veto. A positively observed Stop face remains recorded as NEGATIVE evidence; it cannot alone block a send when the serial and message-status conditions are both positive. The old consolidated specification §4 instead made UNKNOWN a mandatory HOLD even when the other two conditions were positive.
 
 Ben's latest F-5 ruling supersedes that old rule:
 
 > The fence keeps its states, but the button is exactly one supporting state; its read can never single-handedly block a send the bridge's own records support.
 
-For this sheet, the working interpretation is: an absent/unreadable button is UNKNOWN, never NEGATIVE; if serial and message status are both positive, UNKNOWN cannot force a hold. A positively observed Stop face remains a distinct NEGATIVE under the existing fence vocabulary and the F-2 never-bypass boundary. If Ben intended the Stop-face negative itself to be outweighed, that would conflict with the existing proven-negative rule and must be stated explicitly rather than inferred.
+For this sheet, the working interpretation is: an absent/unreadable button is UNKNOWN, never NEGATIVE; if serial and message status are both positive, UNKNOWN cannot force a hold. A positively observed Stop face remains a distinct NEGATIVE state for evidence and display, but it is still only the button's one vote. It cannot single-handedly block a send supported by the other two positive conditions. This applies the two-of-three rule without deleting or relabelling the NEGATIVE state.
 
 The remaining failure path is downstream of the fence. sendcore.js searches for a send button in the composer scope, then falls back to page-wide selectors. If no button is found, the adapter returns stage send-button. That is an actuator-availability failure, not a fence verdict. A missing/unreadable state must not be relabelled as a fence hold; the adapter still needs a verified way to perform the actual send.
 
-**Required design response:** separate evidence quorum from actuation. A passing fence verdict cannot be overturned by re-reading UNKNOWN as a hard veto. The actual submit action must be independently verified and scoped to the owned composer. No unverified Enter-key or global-button fallback is authorised.
+**Required design response:** separate evidence quorum from actuation. The button's POSITIVE, NEGATIVE or UNKNOWN state contributes exactly one of the three evidence conditions; no button state alone may veto when the other two conditions are positive. The actual submit action must be independently verified and scoped to the owned composer. No unverified Enter-key or global-button fallback is authorised.
 
 ### 1.9 Composer ownership is not yet strict enough
 
@@ -418,7 +426,7 @@ The letterbox handoff must become acknowledged. It may not mark a message perman
 The following are deliberately not decided by this sheet:
 
 1. **Journal survival across deliberate pause:** SURVIVES or PURGED remains Ben's decision. The §13.1 content rule does not settle it.
-2. **Exact §13.1 source record:** the convene letter supplies the operative summary; exact Shelf path/section/commit is still requested from Crusher for source pinning.
+2. **Exact §13.1 source record:** exact Ben quotations and Remmy's surrounding contemporaneous interpretation have now been retrieved from `~/memory/2026-11-10.md` (logged 2026-11-11 ~12:38 MST) and distinguished above. This is not yet a separately admitted Shelf artefact; source admission/pinning remains outstanding.
 3. **Journal insertion versus proven-absence retry:** resolve whether a positive absence result means the ID was never journalised as sent, or whether all actual click dispatches are final. Existing v0.18.0 retries after positive absence; the new journal rule may supersede that.
 4. **Meaning of "no ID" for unsent work:** this draft interprets it as no review-journal ID. Confirm whether Ben also means no temporary PB-ID may exist while queued.
 5. **Bare-ID schema:** this draft uses an ID-only journal and keeps direction/disposition in the separate event log. Confirm that this matches "just the IDs".
@@ -428,7 +436,6 @@ The following are deliberately not decided by this sheet:
 9. **Gemini sidebar target:** Gemini-native sidebar versus Chrome side panel.
 10. **Append serialization:** confirm the proposed same-PB-ID, separately attributed Ben segment and whether append applies to both directions.
 11. **Disconnect semantics:** confirm whether the current per-seat Disconnect control should be renamed Unregister this seat while a separate global Disconnect bridge clears both registrations.
-12. **Stop-face interpretation under F-5:** this sheet retains the proven-negative veto. Any change to that rule must be explicit because it affects the F-2 never-bypass boundary.
 13. **Basic-fix code snippet:** Ben has been asked to identify the exact snippet. It has not been inspected and must not be guessed, reconstructed or treated as a source requirement until supplied.
 
 No open decision may be resolved by implementation convenience or silence.
@@ -462,10 +469,10 @@ A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run 
 ### Source and ruling checks
 - [ ] Exact source commit and every changed source blob are pinned.
 - [ ] All five adapters, shared sendcore, fence, background, content, letterbox, storage, protocol, Crusher and manifest have been inspected at the same commit.
-- [ ] The exact §13.1 Shelf record is retrieved from Crusher and cited inline.
+- [x] Exact §13.1 daily-log wording is retrieved, with Ben's verbatim quotations distinguished from Remmy's contemporaneous interpretation; separate Shelf admission remains outstanding.
 - [ ] The exact basic-fix snippet is received, inspected and mapped to a requirement; no reconstruction from memory.
-- [ ] Ben's latest F-5 ruling is quoted inline and the superseded UNKNOWN-HOLD rule is explicitly marked historical.
-- [ ] F-2 never-bypass list is copied without weakening.
+- [x] Ben's latest F-5 ruling is quoted inline; the older UNKNOWN-HOLD rule is explicitly historical and superseded.
+- [ ] F-2 never-bypass list is copied without weakening; the button condition remains one vote under the two-of-three rule, including when its state is NEGATIVE.
 - [ ] Every other governing ruling is cited at the contract point it controls.
 
 ### Routing, state and cache checks
