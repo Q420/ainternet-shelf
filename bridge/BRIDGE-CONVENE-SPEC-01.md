@@ -92,7 +92,7 @@ The letterbox marks a settled message seen and records it as handed off before i
 
 ### 1.3 Two bounded capture stores can silently discard work
 
-letterbox.js caps pending captures at eight and evicts the oldest pending entry without reporting a drop. storage.js caps detections at fifty and removes the oldest unprotected detections when over capacity without a corresponding visible eviction record. The comment that over-cap work remains visible applies only when every entry is protected.
+letterbox.js caps pending captures at eight and evicts the oldest pending entry without reporting a drop. storage.js caps detections at fifty and removes the oldest unprotected detections when over capacity without a corresponding visible eviction record. The same source-side cross-check confirms fileTransfers are sliced to fifty and seenIds are trimmed to PB_MAX_SEEN; those bounded stores also require explicit classification and eviction disposition. The comment that over-cap work remains visible applies only when every detection entry is protected. Remmy's independent local-source cross-check confirms these limits; the letterbox acknowledgement finding remains structurally confirmed, not independently traced end-to-end.
 
 **Required design response:** overflow must be explicit and observable. The bridge may refuse a new capture or park it in a declared overflow state, but it must not silently evict an unaccepted message. Every capacity limit must have a tested disposition.
 
