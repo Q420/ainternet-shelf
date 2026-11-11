@@ -294,3 +294,126 @@ Owner: platform/Ben.
 
 *End of v0.1 inventory. Findings and re-verifications append
 below in later versions; earlier states are preserved.*
+
+---
+
+# v0.2 — INTEGRATED PASS (2026-11-11)
+
+Incorporates Alex's path-by-path evidence report
+(pb-mwc5iobp-f-6quc) and Remmy's local-source pass.
+Entries below SUPERSEDE their v0.1 counterparts by
+reference; the v0.1 text above is preserved unchanged.
+Alex's consolidated Approved Pool readiness review is
+incorporated BY REFERENCE (his letter pb-mwc5iobp-f-6quc,
+§2): design substantially developed, evidence substantial
+with bounded UNKNOWNs, implemented capability NOT
+established — the pool is not operationally ready; freeze
+DEFERRED, pool-first, generation zero NOT DECLARED all
+reaffirmed. It is not duplicated into this checklist.
+
+## Alex's corrections, incorporated
+
+### P-04 (v0.2) — publication route, evidence split
+Shelf publication does NOT pass through
+publish-gate/gate.py; that gate and approvals.jsonl govern
+the Pulse HQ website repository only (P-19). The shelf
+route is the GitHub connector under Q420 plus Remmy's
+caller-side procedure (staging, paths file, invocation,
+read-back blob comparison). Evidence classes: the seven
+tonight commits (2a25df2…667abff) are independently
+retrieved by Alex — the READ-BACK side is corroborated
+from two seats. The local staging and connector invocation
+remain **[RP] Remmy-reported** from Alex's seat; he cannot
+inspect the local workspace or the connector's doc.
+
+### P-05 (v0.2) — observed reads + one corroborated write
+Verification is held at: repeated independent reads by
+Alex, plus the corroborated write result at commit
+59bf61472666bf0c65399bb05568028c893007ca (his field-matrix
+reconciliation draft). No claim is made that the complete
+connector control path (authentication, permission
+enforcement) has been audited.
+
+### P-06 (v0.2) — explicitly incomplete, four-part state
+GitHub connectivity: recorded. Pull letter: shelved and
+retrievable (2c0077a, blob b8044c39…). **Notification:
+UNKNOWN. v2.4 assignment delivery: NOT PERFORMED.** The
+inbound/read route and the branch return route are
+distinct from the missing assignment-notification link.
+Bridge adapters for Claude are dormant in the v0.18.0
+manifest. No seat has found a way to trigger Claude's
+separate session.
+
+### P-07 (v0.2) — verification field, three-way split
+Report delivery: observed through the bridge. Source
+examination: source-inspected by Vane (report blob
+4287850e…). **Execution: UNAVAILABLE in Vane's
+environment** — the 38/38 stands as the content of the
+delivered results record, not an independently executed
+result. v2.3 replay and sabotage executions outstanding;
+the byte-identical-copy fixture omission remains a
+finding.
+
+### MANIFEST objects (v0.2) — three distinct records
+| Object | Function | Does NOT establish |
+|---|---|---|
+| root MANIFEST.md | shelf document catalogue | successful synchronisation |
+| bridge/manifest.json | Pulse Bridge extension manifest | shelf catalogue currency |
+| ainternet-shelf.muse-github-snapshot-sync.json | local snapshot-sync log | a publication receipt or current generation |
+MANIFEST lag is pinned to commit 667abff, MANIFEST blob
+6bcc966136c37d4251db7493d9df3432546f2d26 (describes the
+Nov 10 sweep; omits the Nov 11 inventory and Crusher
+artefacts). The sync log's stale state (head 7b9f785) and
+its generation method remain **[RP] Remmy-reported** until
+independently inspected; a successful push does not
+update it, and it must never be called a receipt.
+
+## Remmy's local-source pass (v0.2)
+
+### P-01/P-02 (v0.2) — bridge code [SI]
+fence.js implements the send fence (positive/negative
+signal voting; completed-serial registry capped at 50 —
+a bounded memory: older serials fall off, which bounds
+duplicate detection to the last 50 completed letters);
+sendcore.js carries the shared send logic with a 45s
+defer ceiling. The known resend/truncation defects are
+consistent with this layer; root cause remains unverified
+and no fix is proposed here.
+
+### P-19 (v0.2) — publish gate [SI]
+gate.py refuses unless a recorded approval matches the
+exact target, file list and hashes (sha256 + manifest
+digest); every allowed or refused run appends to runs.log.
+The raw-git-push bypass stands as labelled in v0.1.
+
+### P-20 (v0.2) — snapshotter [SI]
+The build_*_snapshot.py family renders local snapshot
+directories (snapshotter/snapshots/<id>) from source
+artefacts, addressed against WordPress shelf URLs
+(SHELF_URL = duennashelf.wordpress.com/...). Its
+distribution route therefore died with P-18; the local
+snapshot trees persist. Coverage of the newest programme
+state: not established — builders are per-artefact and
+were last run for their named rounds.
+
+### P-21 (v0.2) — Marni [SI]
+marni.py: default engine order Groq (qwen3.8-27b) falling
+back to Gemini (gemini-3.8-flash) on failure; **every
+draft header names the engine and model that actually
+wrote it** — a reporting discipline the pre-v2 Crusher
+lacked. The shared Groq purse with P-09/P-13 stands.
+
+### P-15 (v0.2) — lane [SI]
+lane.py confirmed: continuity pack from alex-lane/pack/,
+thread persisted at alex-lane/thread.json, model named in
+source with a verify-against-the-list warning. Dormant.
+
+### P-03, P-08–P-14, P-16–P-18, P-22, P-23
+Unchanged from v0.1 in this pass; their verification
+states stand as recorded there. P-08's corpus-lag warning
+and P-22's compaction loss remain the two structural
+staleness/loss points on Remmy's side.
+
+*End of v0.2. Alex's independent review of this integrated
+inventory is the next step (triggered in the delivery
+letter, pb-20261111-path-audit-v02).*
