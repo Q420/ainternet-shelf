@@ -61,7 +61,12 @@
      "S4": "CONTRADICTED"
     },
     "worker_before_raw": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED",
-    "mechanical": null,
+    "mechanical": {
+     "S1": "SUPPORTED",
+     "S2": "UNTRACEABLE",
+     "S3": "UNTRACEABLE",
+     "S4": "CONTRADICTED"
+    },
     "worker_after": {
      "S1": "SUPPORTED",
      "S2": "UNTRACEABLE",
@@ -88,10 +93,10 @@
      }
     },
     "adoption_measurement": {
-     "S1": "unclear",
-     "S2": "unclear",
-     "S3": "unclear",
-     "S4": "unclear"
+     "S1": "already-aligned",
+     "S2": "already-aligned",
+     "S3": "already-aligned",
+     "S4": "already-aligned"
     },
     "adoption_note": "mechanical comparison of the three records; agreement is not scored as understanding \u2014 evidence_identified is recorded alongside"
    },

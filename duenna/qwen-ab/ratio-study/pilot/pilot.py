@@ -199,7 +199,9 @@ def t06_probe(test):
     _before = len(CALLS)
     mech_flow = run_c.c_t06(test)
     flow_calls = list(CALLS[_before:])
-    mech = mech_flow.get("system_classification") or \
+    mech = (mech_flow.get("process") or {}).get(
+               "system_classification") or \
+           mech_flow.get("system_classification") or \
            mech_flow.get("classification")
     revised = call("probe-revision", SYSTEM_PROMPT,
         "An independent mechanical classification was "

@@ -35,32 +35,26 @@
  "F-PROBE": {
   "order": [
    "unaided",
-   "flow-call",
+   "unaided",
    "revision"
   ],
+  "mechanical": {
+   "S1": "SUPPORTED",
+   "S2": "UNTRACEABLE",
+   "S3": "UNTRACEABLE",
+   "S4": "CONTRADICTED"
+  },
   "worker_after": {
    "S1": "SUPPORTED",
    "S2": "UNTRACEABLE",
    "S3": "UNTRACEABLE",
    "S4": "CONTRADICTED"
   },
-  "evidence_identified": {
-   "S1": {
-    "identified": true,
-    "route": "verbatim-quote"
-   },
-   "S2": {
-    "identified": true,
-    "route": "grounded-absence"
-   },
-   "S3": {
-    "identified": true,
-    "route": "grounded-absence"
-   },
-   "S4": {
-    "identified": false,
-    "route": null
-   }
+  "evidence_routes": {
+   "S1": "verbatim-quote",
+   "S2": "grounded-absence",
+   "S3": "grounded-absence",
+   "S4": null
   },
   "adoption": {
    "S1": "already-aligned",
@@ -97,6 +91,8 @@
   "legacy_weakness_adds_support": true,
   "legacy_demonstrated_cannot_reduce": true,
   "missing_metadata_not_bound": true,
+  "conflicting_declarations_legacy": true,
+  "conflict_cannot_reduce_coverage": true,
   "pass": true
  }
 }

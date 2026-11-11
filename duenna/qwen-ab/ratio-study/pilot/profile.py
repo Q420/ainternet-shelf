@@ -104,13 +104,21 @@ def validate_profile(profile):
     return defects
 
 def _binding_status(o):
-    """Binding status may sit at the observation's top
-    level or inside its conditions (the historical
-    extractors use conditions). Missing or inconsistent
-    metadata is NEVER bound by default — fail closed."""
+    """Inspect EVERY supplied binding declaration (top
+    level and conditions). Returns "bound" only when at
+    least one declaration exists and ALL declarations
+    explicitly agree on "bound". Conflicting, missing,
+    or any non-bound declaration resolves to
+    legacy-unbound — fail closed."""
+    decls = []
     if o.get("binding_status"):
-        return o["binding_status"]
-    return (o.get("conditions") or {}).get("binding_status")
+        decls.append(o["binding_status"])
+    c = (o.get("conditions") or {}).get("binding_status")
+    if c:
+        decls.append(c)
+    if decls and all(d == "bound" for d in decls):
+        return "bound"
+    return "legacy-unbound"
 
 def derive_entries(observations):
     """Observations are adjudicated records:

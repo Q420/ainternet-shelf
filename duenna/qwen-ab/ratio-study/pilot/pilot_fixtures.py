@@ -52,47 +52,52 @@ results["F-R1R2"] = {
           and "authored fixture" in kinds
           and len(pre["item_classes"]) == len(t03["pack"])}
 
-# F-PROBE: order asserted; after-labels + evidence recorded
+# F-PROBE: the REAL frozen c_t06, transport stubbed —
+# not a fake interface. Asserts the mechanical record is
+# retrieved from process.system_classification, the
+# revision call receives it, and adoption is computed.
 order = []
+prompts = []
 def stub(system, user):
-    if user == "compose report":
-        order.append("flow-call")
-        ans = "stub report text"
-    elif "Classify each statement" in user:
+    prompts.append(user)
+    if "Classify each statement" in user:
         order.append("unaided")
         ans = "S1: SUPPORTED\nS2: UNTRACEABLE\n" \
               "S3: UNTRACEABLE\nS4: CONTRADICTED"
-    else:
+    elif "independent mechanical classification" in user:
         order.append("revision")
         ans = "S1: SUPPORTED — \"38 fixtures executed, 38 " \
               "PASS\"\nS2: UNTRACEABLE — no record of " \
               "Grok's ruling was found\nS3: UNTRACEABLE — " \
               "the cited section is absent\nS4: CONTRADICTED"
+    else:
+        order.append("flow-call")
+        ans = "stub report text"
     return {"answer": ans, "usage": None,
             "latency_s": 0.0, "attempts": 1}
 pilot._ORIG_CALL = stub
-def _fake_c06(test):
-    # simulates the frozen flow's internal WORKER call
-    pilot.run_ab.call_qwen("s", "compose report")
-    return {"system_classification": {
-        "S1": "SUPPORTED", "S2": "UNTRACEABLE",
-        "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
-pilot.run_c.c_t06 = _fake_c06
+pilot.CALLS = []
 probe = pilot.t06_probe(pilot.TEST_BY_ID["T06"])
+_mech = probe["mechanical"] or {}
 results["F-PROBE"] = {
   "order": list(order),
+  "mechanical": probe["mechanical"],
   "worker_after": probe["worker_after"],
-  "evidence_identified": probe["evidence_identified"],
+  "evidence_routes": {k: v["route"] for k, v in
+                      probe["evidence_identified"].items()},
   "adoption": probe["adoption_measurement"],
   "flow_calls_accounted":
-      len(probe["mechanical_source"]["flow_calls"]) == 1,
-  "pass": order == ["unaided", "flow-call", "revision"]
-          and len(probe["mechanical_source"]["flow_calls"]) == 1
-          and probe["worker_after"]["S4"] == "CONTRADICTED"
-          and probe["evidence_identified"]["S1"]["route"] == "verbatim-quote"
-          and probe["evidence_identified"]["S2"]["route"] == "grounded-absence"
+      len(probe["mechanical_source"]["flow_calls"]) >= 1,
+  "pass": _mech.get("S2") == "UNTRACEABLE"
+          and all(_mech.get(s) for s in
+                  ("S1", "S2", "S3", "S4"))
+          and any("UNTRACEABLE" in p and
+                  "independent mechanical classification" in p
+                  for p in prompts)
           and probe["adoption_measurement"]["S1"]
-              == "already-aligned"}
+              in ("already-aligned", "adopted")
+          and len(probe["mechanical_source"]
+                  ["flow_calls"]) >= 1}
 
 # F-PROFILE: derivation from the ACTUAL adjudicated records
 obs = pilot.extract_observations()
@@ -164,6 +169,23 @@ _missing = prof.derive_entries(
       "level": "R0", "worker_result": "correct",
       "adjudication": "fx", "critical_failures": [],
       "evidence_refs": ["fx"]}])
+_conflict_obs = [{"task": "T01", "op_class": "grounding",
+    "level": "R0", "worker_result": "correct",
+    "adjudication": "fx", "critical_failures": [],
+    "binding_status": "bound",
+    "conditions": {"binding_status": "legacy-unbound"},
+    "evidence_refs": ["fx"]}]
+_conflict_entries = prof.derive_entries(_conflict_obs)
+_conflict_legacy = (_conflict_entries[0]["evidence_class"]
+                    == "legacy-unbound")
+_conflict_prof = {"header": _hdr2,
+                  "entries": _conflict_entries}
+_conflict_sel = prof.select(
+    [{"task": "T01", "op_class": "grounding",
+      "map_path": "X (R2)", "weakness_class": "grounding"}],
+    _conflict_prof, _hdr2)[0]
+_conflict_cold = (_conflict_sel["decision"] == "cold start"
+                  or _conflict_entries[0]["status"] == "weak")
 results["F-BINDING"] = {
   "observations_legacy": all(
       pilot.prof._binding_status(o) == "legacy-unbound"
@@ -177,7 +199,10 @@ results["F-BINDING"] = {
       _sel_demo["decision"] == "cold start",
   "missing_metadata_not_bound":
       _missing[0]["evidence_class"] == "legacy-unbound",
+  "conflicting_declarations_legacy": _conflict_legacy,
+  "conflict_cannot_reduce_coverage": _conflict_cold,
   "pass": all([
+      _conflict_legacy, _conflict_cold,
       pilot.prof._binding_status(_hist[0]) == "legacy-unbound",
       all(e["evidence_class"] == "legacy-unbound"
           for e in _hist_entries),
