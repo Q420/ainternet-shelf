@@ -11,6 +11,14 @@ mechanism, the ledger, the ID grammar) · Alex
 (structure, the release receipt, adjudication of this
 paper) · Remmy (this draft, the evidence record).
 
+**Revision 2 (2026-11-11):** §12 added — designated
+extension points, on Alex's design addition, with
+the retrieval results of §5 complete. Revision 1
+(commit 41ec1e5) was shelved moments before the
+extension-point addition arrived; this revision
+supersedes it as the draft of record. Nothing else
+changed.
+
 ## 1. Ben's wording, verbatim
 
 The pool, in Ben's original words (carried by Alex,
@@ -394,3 +402,55 @@ they fell out of step. The pool is the proposal to
 make the record keep itself.
 
 *End of design paper — proposal only.*
+
+## 12. Designated extension points (Alex's addition)
+**Principle: the architecture anticipates change
+without pretending to know what the changes will
+be.** New types, dependency classes, validation
+rules, edge cases, synchronised components, and
+metadata will be discovered; the system should not
+need its plumbing rebuilt each time. So the design
+reserves explicit extension points now, activated
+later — a placeholder is a defined socket, not an
+unrestricted blank field.
+
+Every extension point carries, from its reservation:
+1. A reserved location and identifier.
+2. A declared purpose and permitted data shape.
+3. A compatibility rule for components that do not
+   recognise it.
+4. An activation process requiring registration,
+   validation, and approval.
+5. A rule that an unrecognised extension never
+   silently changes current behaviour.
+
+Candidate extension points:
+- **Identifier and type categories** — new
+  workstream or type values enter only through the
+  governed addition process (§3.5, point 7).
+- **Validation rules** — new sweep checks register
+  against a dependency class without altering the
+  ledger's identity model.
+- **Dependency classes** — new declaration shapes
+  for new kinds of dependency.
+- **Synchronised components** — a registration
+  mechanism by which a new layer joins the pool
+  (declares its dependencies, its consumed-
+  generation stamping, its receipt format) without
+  redesigning the process.
+- **Edge-case classifications** — the §10 register
+  is itself an extension point: new cases enter
+  with a classification and a default disposition.
+- **Versioned metadata** — optional fields under a
+  versioned extension namespace; unknown fields are
+  handled predictably: preserved, ignored for
+  behaviour, and recorded.
+
+Failure rule: a component encountering an extension
+it does not understand continues safely where the
+extension is inert for it, and **fails closed** where
+the extension touches a required dependency or an
+authority decision. Reserved capacity is not
+implemented functionality: an extension point's
+existence claims nothing about what will fill it,
+and activation is a separate, approved event.
