@@ -9,7 +9,8 @@ a correction, not a quiet edit.
 
 ## A. EXON chain
 1. **Dictionary 0.4 freeze decision** — Rev 3 passed
-   Alex's challenge with zero open findings. [BEN]
+   Alex's challenge with zero open findings.
+   [ALEX — handed to him by Ben 2026-11-11]
 2. **The 0.2 self-flag's CORRECTION record** — still
    owed; the flag stays OPEN until a separate,
    authorised CORRECTION record exists and links.
@@ -46,10 +47,10 @@ a correction, not a quiet edit.
 11. **Alex's adjudication of the design paper** —
     design review COMPLETE 2026-11-11; paper stands
     as proposal. [DONE]
-12. **Ben's pool decisions** — freeze sequencing
-    (pool-first vs freeze-as-generation-zero);
-    generation zero declared by Ben as an authority
-    decision. [BEN]
+12. **Pool decisions** — freeze sequencing
+    (pool-first vs freeze-as-generation-zero) and
+    the generation-zero declaration.
+    [ALEX — handed to him by Ben 2026-11-11]
 
 ## C. Duenna core
 13. **Claude's v2.4 examination** — the Correction B
