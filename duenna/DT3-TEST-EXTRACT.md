@@ -59,4 +59,27 @@ difference; a cache miss makes near-real-time corpus
 ingestion the leading explanation. Nothing else is
 concluded either way.
 
-*End of extract. DT3 has never been run.*
+*End of extract.*
+
+## Addendum — DT3 RUN (2026-11-11)
+DT3 was run by Alex through his web retrieval
+environment, under Ben's hands-delegation of
+2026-11-11, using the exact URL above. Reported in
+Alex's letter pb-mwc3az6h-4-axzy. The exact returned
+error, verbatim:
+
+"Failed to fetch
+https://duennashelf.wordpress.com/a-page-that-has-never-existed-zzz/:
+DisabledError"
+
+No HTTP status, response body, or crawl metadata was
+exposed. This is NEITHER a live suspension response
+NOR Vane's "Cache miss" — it is a third, distinct
+outcome: retrieval disabled in that environment. It
+establishes neither a seat-capability difference nor
+near-real-time ingestion, and neither hypothesis is
+to be forced onto it. The standing positions are
+unchanged: live fetch — NO POSITIVE EVIDENCE in
+either examiner environment; root cause NOT
+VERIFIED. DT3 is recorded as RUN, result
+inconclusive by outcome, not by defect.

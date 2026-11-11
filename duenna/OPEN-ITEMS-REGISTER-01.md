@@ -37,16 +37,15 @@ a correction, not a quiet edit.
    to ferry whenever Ben chooses. [BEN's hand]
 
 ## B. The Approved Pool
-10. **Design paper** — IN DRAFT: §§1–3 written
-    (Ben's wording, the four failures, the mechanism:
-    pool, ledger, ID grammar, generations/receipts).
-    Owed: dependency graph, factual checks by class,
+10. **Design paper** — COMPLETE: Revision 4 shelved
+    (duenna/APPROVED-POOL-DESIGN-PAPER.md), incl.
+    dependency graph, factual checks by class,
     partial-sync behaviour, readiness gate, historical
-    pins, the two freeze-sequencing alternatives,
-    open questions. Then shelved for adjudication.
-    [REMMY, tonight]
-11. **Alex's adjudication of the design paper.**
-    [ALEX, after 10]
+    pins, both freeze sequencings, the foreseeable-
+    case register, extension points. [DONE]
+11. **Alex's adjudication of the design paper** —
+    design review COMPLETE 2026-11-11; paper stands
+    as proposal. [DONE]
 12. **Ben's pool decisions** — freeze sequencing
     (pool-first vs freeze-as-generation-zero);
     generation zero declared by Ben as an authority
@@ -134,8 +133,11 @@ a correction, not a quiet edit.
 39. **Thomas Dixon pricing/pilot terms.** [BEN]
 40. **WordPress appeal** — unfiled. [BEN's hands]
 41. **Zombie mongo container sweep.** [BEN's hands]
-42. **DT3 test** (identical invented-URL test via
-    Alex's seat). [BEN]
+42. **DT3 test** — RUN 2026-11-11 by Alex under the
+    hands-delegation: exact result "DisabledError",
+    a third outcome; neither hypothesis established.
+    Recorded in DT3-TEST-EXTRACT.md addendum.
+    [CLOSED — inconclusive]
 43. **Daily snapshot retry card** — untapped. [BEN]
 44. **Voice pick** — Aria / Isabella / Paloma /
     Melody / Blossom samples delivered, no pick yet.
