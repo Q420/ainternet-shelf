@@ -2,13 +2,15 @@
 
 **Status:** PREPARED FOR REVIEW — NOT ADOPTED;
 NOT IMPLEMENTATION AUTHORITY
-**Revision:** Rev 2 — prepared in response to
-Alex's review `pb-mwcjqnw2-15-ip14` (Rev 1
-returned for revision, five required
-corrections). Rev 1: git blob 2a0d9dcd…,
+**Revision:** Rev 3 — prepared in response to
+Alex's review `pb-mwck7bp9-17-c9qh` (Rev 2
+returned for two specific corrections; the
+five Rev 1 corrections stand resolved). Rev 2:
+commit 5f214261, git blob ee518708…; Rev 1:
+git blob 2a0d9dcd…. Prior revisions are
 preserved in the repository history; this
-revision supersedes it as the review candidate
-only.
+revision supersedes them as the review
+candidate only.
 **Prepared by:** Remmy
 **Date:** 2026-11-11
 **Authority:** Approved Pool Implementation Plan
@@ -120,7 +122,9 @@ containing, in a single tree:
     predecessor, disposition);
   - `reservations`: reservation ID →
     reservation record (§4.3 fields, including
-    idempotency key and expected predecessor);
+    idempotency key and expected predecessor,
+    and the complete embedded candidate record
+    defined in §5);
   - `heads`: Item ID → head Version ID or
     explicit no-head;
   - `snapshot_digest`: defined below.
@@ -195,6 +199,7 @@ Availability therefore is:
 | ReserveGeneration | yes | unassigned (G2) | **UNAVAILABLE — fail closed** |
 | AdvanceHead | yes | unassigned (G2) | **UNAVAILABLE — fail closed** |
 | RecordNonOperativeCandidate | yes | unassigned (G2) | **UNAVAILABLE — fail closed** |
+| RecordWalkReceipt | yes | unassigned (G2) — a distinct authority from candidate recording | **UNAVAILABLE — fail closed** |
 | CreateLedger (genesis) | yes | Phase 6 genesis decision | **UNAVAILABLE — fail closed** |
 
 An unavailable operation, when called, returns
@@ -209,27 +214,35 @@ other part of this specification changes.
 
 **ResolveIdentity recording note.** The walk
 computes and returns its receipt to the
-caller. Persisting that receipt into
-`events.jsonl` is a mutation performed by
-RecordNonOperativeCandidate-class machinery
-(a RECORD_ONLY transition, §6) and is
-therefore gated by the same authority. Until
-then, every walk receipt carries
+caller. Persisting that receipt is the job of
+a distinct operation, **RecordWalkReceipt**
+(§6) — a walk receipt is a different record
+from a losing candidate, with a different
+purpose, lifecycle and authority, and the two
+are never coupled. Until RecordWalkReceipt is
+authorised (G2) and its recording proven,
+every walk receipt carries
 `recording_status: NOT_RECORDED_AUTHORITY_
 UNRESOLVED`, and no walk may be cited as
 ledger-recorded. (Phase 2's receipt-durability
 tests C15/C16 apply to recorded mode, entered
-only when the authority exists.)
+only when that authority exists.)
 
-**ReserveGeneration**(ItemID, candidate_digest,
+**ReserveGeneration**(ItemID, candidate_record,
 actor, authority_ref, idempotency_key) →
 {reservation_id, generation, expected_
 predecessor, committed_revision} | CONFLICT |
 REJECTED | UNKNOWN.
+The candidate_record is the complete version
+record of §3/Phase 2 §4.2 (full digest,
+canonicalisation identifier, source artefact
+pin, predecessor, actor and provenance); the
+reservation embeds it immutably (§5).
 Semantics: Phase 2 §5. Same key + same payload
 returns the original reservation; same key +
-different Item ID, predecessor or digest =
-CONFLICT, no mutation (§5.1; matrix A02/A03/A09).
+different Item ID, predecessor or candidate
+digest = CONFLICT, no mutation (§5.1; matrix
+A02/A03/A09).
 
 **AdvanceHead**(ItemID, VersionID, generation,
 full_digest, expected_predecessor,
@@ -259,10 +272,14 @@ recorded outcome of the original operation, for
 recovery under §6.3. No blind retry exists in
 this interface.
 
-**RecordNonOperativeCandidate**(candidate
-record, conflict evidence, actor, authority_
-ref, idempotency_key) → COMMITTED | CONFLICT |
-REJECTED | UNKNOWN. Defined in §6.
+**RecordNonOperativeCandidate**(reservation
+reference, conflict evidence, actor,
+authority_ref, idempotency_key) → COMMITTED |
+CONFLICT | REJECTED | UNKNOWN. Defined in §6.
+
+**RecordWalkReceipt**(walk receipt, actor,
+authority_ref, idempotency_key) → COMMITTED |
+CONFLICT | REJECTED | UNKNOWN. Defined in §6.
 
 ## 5. Allocator construction
 
@@ -278,7 +295,13 @@ on the snapshot ref:
 3. Build the successor snapshot: reservation
    appended with generation = next unused for
    the item, expected predecessor = head at R,
-   revision R+1, events appended.
+   revision R+1, events appended. The
+   reservation record **embeds the complete
+   candidate record** supplied to
+   ReserveGeneration; once committed, that
+   embedded record is immutable and is the
+   candidate's durable identity from this
+   moment on, whatever happens later (§6).
 4. Conditional ref update expected at R's
    commit. On success, read back and verify;
    report COMMITTED with the reservation.
@@ -306,38 +329,71 @@ stricter precondition set of Phase 2 §6.1: the
 supplied expected predecessor AND expected
 revision must both match the committed snapshot
 (matrix B04/B05); the candidate must be the
-reserved Version ID with matching full digest
-(B07) and present approval/verification
-references (B06). Exactly one of two writers
+reserved Version ID whose record matches the
+reservation's embedded candidate record
+exactly (§6; B07) and present approval/
+verification references (B06). Exactly one of two writers
 from the same predecessor commits (B01).
 Response loss after commit resolves by
 LookupOperation and read-back, never by
 repeating the mutation (B09/B10).
 
-**Losing-candidate durability.** The loser
-cannot append to the snapshot it lost — its
-CAS failed, so it holds no write. The
-candidate and its conflict become durable
-through a subsequent, separate operation,
+**Losing-candidate visibility — by
+construction.** Phase 2 §6.2 and acceptance
+criterion 7 require the losing candidate to
+remain visible but non-operative. This
+specification satisfies that requirement at
+reservation time, not after the race: the
+reservation (§5) embeds the **complete
+candidate record** — Version ID, parent Item
+ID, generation, full canonical digest and
+algorithm, canonicalisation identifier,
+source artefact reference and immutable pin,
+expected predecessor, actor and authority
+reference, and the reservation's idempotency
+key. From the moment the reservation commits,
+the candidate is durably and completely
+visible in the ledger, win or lose; no later
+operation creates its visibility.
+Verification rules: the embedded record is
+immutable (it is part of a committed
+snapshot); its digest field must equal the
+reservation's candidate digest; AdvanceHead
+accepts a candidate only if the supplied
+record matches the reservation's embedded
+record exactly, field for field — a digest
+match with differing provenance is a mismatch
+(REJECTED). The walk treats a reservation
+whose candidate never advanced as a consumed
+slot whose candidate record is inspectable,
+never as a minted version (§7).
+
+**Recording the loss.** The loser cannot
+append to the snapshot it lost — its CAS
+failed, so it holds no write. What remains to
+record after a loss is only the *disposition
+and conflict evidence*, through a subsequent,
+separate operation,
 **RecordNonOperativeCandidate**:
 
-1. Inputs: the full candidate record; the
-   conflict evidence (the winning revision and
-   head the CAS read back, the losing
-   operation's idempotency key and reservation
-   reference); actor and authority reference;
-   its own idempotency key.
+1. Inputs: the reservation reference (which
+   identifies the embedded candidate record);
+   the conflict evidence (the winning revision
+   and head the CAS read back, the losing
+   operation's idempotency key); actor and
+   authority reference; its own idempotency
+   key.
 2. The operation builds a successor snapshot
-   whose ONLY deltas are: the candidate record
-   appended with disposition
-   NON_OPERATIVE_CONFLICT, and the conflict
-   event appended. The transition is typed
-   **RECORD_ONLY**; the snapshot validator
-   rejects any RECORD_ONLY commit whose
-   `heads` map differs from its parent's, so a
-   record commit cannot move a head by
-   construction. The candidate is therefore
-   never current at any instant of the process.
+   whose ONLY deltas are: the candidate's
+   disposition set to NON_OPERATIVE_CONFLICT,
+   and the conflict event appended. The
+   transition is typed **RECORD_ONLY**; the
+   snapshot validator rejects any RECORD_ONLY
+   commit whose `heads` map differs from its
+   parent's, so a record commit cannot move a
+   head by construction. The candidate is
+   therefore never current at any instant of
+   the process.
 3. Concurrency: the record commit is itself a
    CAS on the current head. If another writer
    commits first, the outcome is classified by
@@ -345,15 +401,38 @@ through a subsequent, separate operation,
    new head under the same idempotency key and
    payload; LookupOperation makes a lost
    response recoverable without duplication.
-4. Until the record commit lands, the
-   candidate's durable trace is its reservation
-   (already committed by allocation), which the
-   walk already treats as a consumed gap, not a
-   version (§7). A candidate whose record never
-   lands remains visible exactly to that
-   extent — reservation present, candidate
-   record absent — and that state is itself
-   reportable, never silently completed.
+4. If the disposition record never lands, the
+   candidate remains visible through its
+   reservation with disposition *reserved* —
+   an accurate, reportable state (a reserved
+   candidate whose race outcome is unrecorded),
+   never silently completed and never current.
+
+**RecordWalkReceipt.** A walk receipt is
+recorded by its own operation, distinct in
+record type, idempotency key, lifecycle and
+authority from RecordNonOperativeCandidate:
+
+1. Inputs: the complete walk receipt (§7,
+   Phase 2 §8.3 fields, the parameter values
+   used, and the recording_status being
+   superseded); actor and authority reference;
+   its own idempotency key.
+2. The receipt is stored immutably linked to
+   the exact ledger revision and snapshot
+   digest it was computed against, and to the
+   presented identity and supplied digest that
+   triggered the walk. The transition is
+   RECORD_ONLY under the same validator rule:
+   a walk-receipt commit cannot alter any item
+   head, by construction.
+3. Its authority requirement is stated
+   separately (§4's table): unassigned under
+   G2 today, therefore UNAVAILABLE, and the
+   walk's `recording_status: NOT_RECORDED_
+   AUTHORITY_UNRESOLVED` disclosure stands
+   until recording is both authorised and
+   proven by read-back.
 
 ## 7. Resolution walk construction
 
@@ -492,6 +571,24 @@ publication; or any change to index,
 BridgePress, or bridge machinery. (Phase 2
 §12, carried forward.)
 
+## 13. Traceability appendix (reserved)
+
+A traceability appendix prepared by Alex —
+mapping the Phase 2 acceptance criteria and
+adversarial matrix to this specification's
+operation and state model, required inputs and
+expected outcomes, durable evidence, authority
+and substrate prerequisites, and fixture and
+independent-examiner requirements — attaches
+to this section when delivered, and the
+adoption decision is made against the complete
+specification including it. The appendix
+distinguishes design coverage from
+implementation proof: a test case described in
+a specification is not a passed test, and
+nothing in this specification or its appendix
+may be cited as one.
+
 *End of Ledger Implementation Specification 01
-Rev 2 — prepared for Alex's review and adoption
+Rev 3 — prepared for Alex's review and adoption
 decision under the amended delegation.*
