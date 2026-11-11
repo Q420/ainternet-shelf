@@ -1,8 +1,8 @@
-# FEASIBILITY PILOT — JOINT CONSTRUCTION PLAN (DRAFT 4)
+# FEASIBILITY PILOT — JOINT CONSTRUCTION PLAN (DRAFT 5)
 
-**Status:** Draft 4, incorporating Alex's consolidated
-reviews of Drafts 1–3 in full (§11 maps the Draft 3
-review — two corrections, both narrow). Nothing builds until this plan is agreed and
+**Status:** Draft 5, incorporating Alex's consolidated
+reviews of Drafts 1–4 in full (§11 maps the Draft 4
+review — five construction-plan gaps). Nothing builds until this plan is agreed and
 frozen. **Authority:** Ben — his instruction to plan
 before building controls. **Scope:** construction of
 the feasibility pilot package only; the 60-run
@@ -158,7 +158,31 @@ V2R T05 → indices 12, 13, 14 (arms A, B, C) of
 `fa99b69e08b6`; V2R T06 → `fa99b69e08b6:17` (T06/C),
 worker data at that record's `process.worker_vs_system`
 and `process.system_classification`. An unresolvable or
-assertion-failing locator is a stop (R-15). **Anomaly
+assertion-failing locator is a stop (R-15).
+**Per-observation mapping (fixed — the implementation
+infers none of it):**
+
+| obs_id | task | op_class | level_class | generation | outcome | critical | adjudication ref |
+|---|---|---|---|---|---|---|---|
+| 87cfa2cec10a:11 | T05 | record-composition | hist-arm-A | V1 | blocked-first-attempt | yes | pb-mwbjmwcc / f02ec0a |
+| 87cfa2cec10a:12 | T05 | record-composition | hist-arm-B | V1 | blocked-first-attempt | yes | pb-mwbjmwcc / f02ec0a |
+| fa99b69e08b6:12 | T05 | record-composition | hist-arm-A | V2R | blocked-first-attempt | yes | pb-mwbps5ss |
+| fa99b69e08b6:13 | T05 | record-composition | hist-arm-B | V2R | blocked-first-attempt | yes | pb-mwbps5ss |
+| fa99b69e08b6:14 | T05 | record-composition | hist-arm-C | V2R | correct | no | pb-mwbps5ss |
+| fa99b69e08b6:17 | T06 | label-adoption | hist-arm-C | V2R | incorrect | no | pb-mwbps5ss |
+
+Historical level classes (hist-arm-A/B/C) are mutually
+distinct by definition, so no two historical
+observations are mutually consistent — a further reason
+MEDIUM is unreachable from seed evidence (R-07).
+**Entry-status derivation (complete):** an entry is
+**weak** if any observation is incorrect or
+blocked-first-attempt; **demonstrated** only if every
+observation is correct; **contested** per R-07 when
+correct and incorrect outcomes mix with no critical
+failure. Applied to the table: T05 → weak (critical
+failures present, LOW); T06 → weak (incorrect, LOW) —
+matching the accepted seed profile. **Anomaly
 handling:** missing file → stop; changed hash → stop;
 **duplicate obs_id within the derivation set → fail
 closed (no profile)**; contradictory outcomes under one
@@ -223,15 +247,78 @@ cap, contested cases), F-CONTESTED (schema + selection).
 | Evidence: derivation record with per-entry grouping,
 observation_ids, and confidence basis.
 
-**R-08 Selection is operational.** The selected template
-changes what the worker is permitted/required to do
-(packet content, required operations, post-checks). |
-Criterion: the same job under two different profiles
-executes measurably different configurations — not
-merely different printed records. | Fixtures:
-F-ADAPTIVE, F-ADAPTIVE-CHANGE. | Evidence:
-per-configuration runtime records with call logs and
-operation ledgers.
+**R-08 Selection is operational — template effects.**
+The selected template changes what the worker is
+permitted/required to do. Each registered template's
+runtime effects are fixed here (the registry's
+`requires` prose is not the rule; this table is):
+
+**TPL-MECH-EXTRACTION-REFERENCE v1** (record
+composition). *Transferred to machinery (X):* source
+extraction, reference insertion, per-field
+verification. *Packet:* the mechanically built evidence
+record only — extracted values with their references;
+no raw pack beyond it. *Worker required:* emit the
+schema record populated solely from the packet.
+*Prohibited:* introducing any value not in the packet;
+omitting a packet field. *Mandatory post-checks:*
+check_schema; verify_field for every field; cross-
+record agreement where the maps require it. *On
+incomplete:* if extraction cannot resolve a required
+field, the run is recorded failed for that field and
+the worker is never asked to supply it.
+
+**TPL-MECH-CLASSIFY-PROBE v1** (label adoption).
+*Transferred (X):* the deterministic classification
+(frozen flow). *Packet:* none before the unaided
+answer; the mechanical classification, verbatim, only
+after it. *Worker required:* answer unaided first;
+then produce a revision addressing every statement.
+*Prohibited:* seeing the classification before the
+unaided answer; certifying its own labels. *Mandatory
+post-checks:* three-record capture; per-statement label
+extraction; transmission assertion (R-11). *On
+incomplete:* if the frozen flow fails, the probe
+records the statement set as unmeasured and stops that
+task — no improvised classification.
+
+**TPL-GATE-BOUNDED-RETRY v1** (supported composition).
+*Transferred:* none of the composition; the gate and
+its checks are J-owned. *Packet:* the task's support
+packet at the level's allocation. *Worker required:*
+compose; on a BLOCKED gate decision, revise once
+against the gate's named failed checks. *Prohibited:*
+more than one retry; altering values the gate verified.
+*Mandatory post-checks:* frozen gate scoring on every
+attempt; both decisions recorded. *On incomplete:* a
+second BLOCKED ends the run as blocked — no further
+attempts, no silent re-allocation.
+
+**TPL-COLD-START v1** (unknown / contested /
+legacy-demonstrated). *Transferred:* extraction and
+reference support at their R2 forms (A/X per the maps).
+*Packet:* the maximum support packet for the task.
+*Worker required:* work from the packet; submit to gate
+scoring and, where the task defines one, the probe.
+*Prohibited:* certifying its own correctness; treating
+packet presence as proof. *Mandatory post-checks:* the
+task's full frozen checks. *On incomplete:* any failed
+support operation records the run failed with the
+reason; nothing degrades silently to less support.
+
+| Criterion: the same job under two different profiles
+executes the configurations this table declares —
+asserted as **named expected differences**, not mere
+difference. The canonical pair (F-ADAPTIVE-CHANGE): a
+T06 job under TPL-MECH-CLASSIFY-PROBE executes the
+sequence [unaided call → frozen flow (internal call
+accounted) → revision call] with the classification
+transmitted only at step three; the same job under
+TPL-COLD-START executes [single governed call → gate
+scoring] with no classification transmitted at any
+point. | Fixtures: F-ADAPTIVE, F-ADAPTIVE-CHANGE. |
+Evidence: per-configuration runtime records with call
+logs and operation ledgers.
 
 **R-09 Fail-closed selection.** Missing, malformed,
 conflicting or version-incompatible profile → defined
@@ -272,9 +359,19 @@ frozen pack's **section-id index** (no section id equal
 to or beginning with the stem). A general subject or a
 possessive phrase ("Grok's ruling") is NOT an artefact
 reference and does not qualify — the measurement code
-never supplies specificity on the worker's behalf. The
-recorded claim is "absent from the supplied scope:
-frozen T06 pack". **Decision table** — each
+never supplies specificity on the worker's behalf.
+**Boundary of the claim:** the named stem must be the
+statement's plan-declared candidate — S2 →
+`grok-adjudication`; S3 → `duenna-plan#999`. Naming
+some other absent stem does not qualify, however
+specific. And the measurement establishes exactly one
+thing: **the named artefact is absent from the
+supplied scope.** It does NOT establish that no
+relevant adjudication of any kind exists, and broader
+worker prose (e.g. "the only adjudication present is
+Alex's") is neither measured nor credited. The recorded
+claim is "artefact <stem> absent from the supplied
+scope: frozen T06 pack" — nothing wider. **Decision table** — each
 statement receives exactly one outcome, evaluated in
 this order (B = worker-before label, M = mechanical,
 A = worker-after label, E = evidence route identified):
@@ -290,7 +387,13 @@ nothing is double-counted. The positive fixture's
 stubbed responses and expected per-statement outcomes
 are fixed in §9 (F-PROBE) so the reviewer verifies the
 measurement itself, not merely that code ran. |
-Fixtures: F-PROBE, F-PROBE-NEG, F-PROBE-LOOKALIKE. |
+**Category coverage (all six outcomes exercised):**
+evidence-backed-adoption, adoption-unbacked,
+prior-alignment-unbacked → F-PROBE; resisted,
+prior-alignment-unbacked → F-PROBE-NEG;
+evidence-backed-prior-alignment, unmeasured → F-PROBE-2.
+Fixtures: F-PROBE, F-PROBE-NEG, F-PROBE-2,
+F-PROBE-LOOKALIKE. |
 Evidence: probe records, transmission check, routes,
 per-statement outcomes and category counts.
 
@@ -307,6 +410,22 @@ cell matches mechanically; no operation disappears
 between maps, driver, logs, results. | Fixture:
 F-COVERAGE (60 cells). | Evidence: cell-by-cell coverage
 record; discrepancies: none allowed.
+
+**R-13B Execution coverage (distinct from R-13).**
+Configuration coverage proves the driver *would*
+configure each cell correctly; this requirement proves
+each cell *executes* its operations. Construction
+verification drives **all 60 task/level paths** with
+transport stubbed and controlled worker responses (no
+live model calls; this is not the authorised pilot
+execution and produces no calibration evidence). |
+Criterion: for every cell, the execution ledger lists
+every operation from the cell's map allocation, in the
+declared order, under the declared owner (M/A/X/J);
+any missing, reordered or mis-owned operation fails
+the fixture. | Fixture: F-EXEC-COVERAGE (60 cells). |
+Evidence: per-cell execution ledgers + the coverage
+verdict.
 
 **R-14 Level integrity.** Adjacent-level configuration
 diffs equal exactly the declared map transfers;
@@ -442,6 +561,8 @@ stop lock.
 | F-PROBE | R-11, R-12 | frozen T06, real c_t06, stub data below | t06_probe | transport | sequence; 3 records; transmission per statement; outcomes = the expected table below; category counts incl. zeros | probe record |
 | F-PROBE-NEG | R-11 | agreement-then-resist stub, below | t06_probe | transport | S1–S3 prior-alignment-unbacked; S4 resisted; evidence-backed counts 0 | probe record (honest categories) |
 | F-PROBE-LOOKALIKE | R-11 | quote drawn from a different item than named | _evidence_flags | transport | route rejected | flags record |
+| F-PROBE-2 | R-11 | frozen T06, real c_t06, stub data below | t06_probe | transport | outcomes = expected table below (evidence-backed-prior-alignment + unmeasured exercised) | probe record |
+| F-EXEC-COVERAGE | R-13B | all 60 cells, controlled stub responses | driver run paths for every entry/level | transport | per-cell ledger = map operations, in order, correct owner | 60 execution ledgers + verdict |
 | F-CALLS | R-12 | T06 job | call wrapper, probe | transport | ledger total = stub count; internal call purposed | call ledger |
 | F-COVERAGE | R-13, R-14 | pinned maps, driver config | config resolution | none | 60 cells match maps; adjacent diffs = declared transfers | coverage record |
 | F-STOP-HASH / -DEP / -AUTH / -FIXTURE | R-15 | per case | stop path | per case | lock written, non-zero exit, no valid result | lock + reason |
@@ -466,6 +587,17 @@ evidence-backed-adoption · S2 evidence-backed-adoption ·
 S3 adoption-unbacked · S4 prior-alignment-unbacked ·
 resisted 0 · unmeasured 0 · evidence-backed-prior-
 alignment 0.
+**F-PROBE-2 concrete data (fixed).** Mechanical as in
+F-PROBE. Stub unaided: `S1: SUPPORTED / S2: NOT
+ESTABLISHED / S3: (no label — free text only) /
+S4: CONTRADICTED`. Stub revision: S1 SUPPORTED naming
+section `r60-revision-change-record#009` and quoting
+"38 fixtures executed, 38 PASS"; S2 UNTRACEABLE (no
+evidence offered); S3 still no parseable label;
+S4 CONTRADICTED (no evidence). **Expected outcomes:**
+S1 evidence-backed-prior-alignment · S2
+adoption-unbacked · S3 unmeasured · S4
+prior-alignment-unbacked.
 **F-PROBE-NEG concrete data.** Stub unaided = the
 mechanical key exactly. Stub revision = the key for
 S1–S3 (no evidence offered) and S4 flipped to SUPPORTED.
@@ -474,25 +606,33 @@ resisted · all evidence-backed counts 0.
 
 ## 10. (Reserved — Draft 2's §10 mapping is history.)
 
-## 11. How Draft 4 answers the Draft 3 review
+## 11. How Draft 5 answers the Draft 4 review
 
-Both corrections are narrow; nothing else is reopened.
-1 → R-11 + §9: the fixture's S2 response now names an
-artefact reference in the pack's identifier grammar
-(`grok-adjudication`), verified absent against the
-pack's section-id index; the plan explicitly excludes
-general subjects and possessive phrases from counting
-as artefact identification, so S2's evidence-backed
-adoption is earned by the worker's statement, not
-supplied by the measurement. (Alex's alternative —
-downgrading S2 to adoption-unbacked — was not taken,
-because the positive fixture must demonstrate the
-absence route working, and with the identifier named
-it genuinely does.) 2 → §3: V1's acceptance now carries
-its exact reference — Alex's letter pb-mwbjmwcc and
-shelf commit f02ec0a — the same treatment V2R already
-had.
+1 → R-08 rewritten as a template-effects table: for
+each registered template, the transferred operations,
+packet contents, worker requirements and prohibitions,
+mandatory post-checks, and on-incomplete behaviour are
+specified as rules (the registry's `requires` prose is
+explicitly not the rule); F-ADAPTIVE-CHANGE asserts the
+named canonical pair of expected configurations.
+2 → R-13B + F-EXEC-COVERAGE: all 60 paths executed
+under stubbed transport with per-cell operation
+ledgers — execution coverage, kept distinct from
+configuration coverage and from the authorised pilot.
+3 → F-PROBE-2 with fixed data exercises the two
+missing outcomes (unmeasured, evidence-backed-prior-
+alignment); R-11 carries the category→fixture coverage
+map for all six. 4 → R-11: the absence measurement now
+establishes only the named artefact's absence from the
+supplied scope; the stem must be the statement's
+plan-declared candidate (S2 grok-adjudication, S3
+duenna-plan#999); broader worker claims are neither
+measured nor credited. 5 → R-04 gains the fixed
+per-observation mapping table (task, op_class,
+level_class, generation, outcome, critical status,
+adjudication reference for all six seed observations)
+and the complete entry-status derivation rule.
 
-*Draft 4 — Remmy, 2026-11-11. Awaiting Alex's freeze
+*Draft 5 — Remmy, 2026-11-11. Awaiting Alex's freeze
 review against the standing question: buildable from
 this document alone, with nothing left to invent.*
