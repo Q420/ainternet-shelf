@@ -103,6 +103,15 @@ def validate_profile(profile):
             defects.append(f"bad status: {e.get('status')}")
     return defects
 
+def _binding_status(o):
+    """Binding status may sit at the observation's top
+    level or inside its conditions (the historical
+    extractors use conditions). Missing or inconsistent
+    metadata is NEVER bound by default — fail closed."""
+    if o.get("binding_status"):
+        return o["binding_status"]
+    return (o.get("conditions") or {}).get("binding_status")
+
 def derive_entries(observations):
     """Observations are adjudicated records:
     {task, op_class, level, conditions, worker_result
@@ -143,9 +152,9 @@ def derive_entries(observations):
           "critical_failures":
             [c for o in obs for c in o["critical_failures"]],
           "evidence_class":
-            "legacy-unbound" if any(
-                o.get("binding_status") == "legacy-unbound"
-                for o in obs) else "bound",
+            "bound" if obs and all(
+                _binding_status(o) == "bound"
+                for o in obs) else "legacy-unbound",
           "evidence": [r for o in obs for r in o["evidence_refs"]]})
     return entries
 

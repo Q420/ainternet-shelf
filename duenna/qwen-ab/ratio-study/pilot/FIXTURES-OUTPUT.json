@@ -90,5 +90,13 @@
  "F-ADAPTIVE-NEG": {
   "checks_failed": 1,
   "pass": true
+ },
+ "F-BINDING": {
+  "observations_legacy": true,
+  "entries_legacy": true,
+  "legacy_weakness_adds_support": true,
+  "legacy_demonstrated_cannot_reduce": true,
+  "missing_metadata_not_bound": true,
+  "pass": true
  }
 }

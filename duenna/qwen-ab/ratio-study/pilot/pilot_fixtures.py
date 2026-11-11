@@ -139,6 +139,52 @@ results["F-ADAPTIVE-NEG"] = {
   "checks_failed": sum(1 for c in _bad if not c["pass"]),
   "pass": any(not c["pass"] for c in _bad)}
 
+# F-BINDING: the legacy safeguard, asserted end to end
+_hist = pilot.extract_observations()
+_hist_entries = prof.derive_entries(_hist)
+_hdr2 = prof.make_header("QWEN-RESEARCHER-001",
+                         pilot.SYSTEM_PROMPT)
+_prof2 = {"header": _hdr2, "entries": _hist_entries}
+_sel_weak = prof.select(
+    [{"task": "T06", "op_class": "label-adoption",
+      "map_path": "X (R3)", "weakness_class": "label-adoption"}],
+    _prof2, _hdr2)[0]
+_legacy_demo = {"header": _hdr2, "entries": [
+    {"task": "T01", "op_class": "grounding",
+     "status": "demonstrated", "confidence": "LOW",
+     "confidence_basis": "fx", "sample_count": 1,
+     "provisional": True, "evidence": ["fx"],
+     "evidence_class": "legacy-unbound"}]}
+_sel_demo = prof.select(
+    [{"task": "T01", "op_class": "grounding",
+      "map_path": "X (R2)", "weakness_class": "grounding"}],
+    _legacy_demo, _hdr2)[0]
+_missing = prof.derive_entries(
+    [{"task": "T09", "op_class": "receipt-verification",
+      "level": "R0", "worker_result": "correct",
+      "adjudication": "fx", "critical_failures": [],
+      "evidence_refs": ["fx"]}])
+results["F-BINDING"] = {
+  "observations_legacy": all(
+      pilot.prof._binding_status(o) == "legacy-unbound"
+      for o in _hist),
+  "entries_legacy": all(
+      e["evidence_class"] == "legacy-unbound"
+      for e in _hist_entries),
+  "legacy_weakness_adds_support":
+      _sel_weak["decision"] == "template",
+  "legacy_demonstrated_cannot_reduce":
+      _sel_demo["decision"] == "cold start",
+  "missing_metadata_not_bound":
+      _missing[0]["evidence_class"] == "legacy-unbound",
+  "pass": all([
+      pilot.prof._binding_status(_hist[0]) == "legacy-unbound",
+      all(e["evidence_class"] == "legacy-unbound"
+          for e in _hist_entries),
+      _sel_weak["decision"] == "template",
+      _sel_demo["decision"] == "cold start",
+      _missing[0]["evidence_class"] == "legacy-unbound"])}
+
 print(json.dumps(results, indent=1))
 sys.exit(0 if all(v.get("pass") for v in results.values())
          else 1)

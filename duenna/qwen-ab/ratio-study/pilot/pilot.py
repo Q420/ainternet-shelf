@@ -398,6 +398,29 @@ def _t05_mechanical_record(test):
               for f, w in run_ab.EXPECTED_RECORD.items()]
     return record, ledger, verifs, ok
 
+def _external_dependencies():
+    """The frozen production workflow resolves data
+    sources through workspace paths (Alex V6 finding 2).
+    Record them explicitly, with hashes — the pilot
+    package is not self-contained for these."""
+    deps = []
+    idx = run_ab.INDEX
+    for name in ("sections.jsonl", "manifest.json"):
+        p = idx / name
+        if p.exists():
+            deps.append({"role": f"corpus index ({name})",
+                         "path": str(p), "sha256": _sha(str(p))})
+    mp = tools24.MANIFEST_MD
+    if mp.exists():
+        deps.append({"role": "shelf manifest (tools24 "
+                             "shelf_lookup source)",
+                     "path": str(mp), "sha256": _sha(str(mp))})
+    deps.append({"role": "worker transport (groq CLI) — "
+                         "STUBBED in this demonstration, "
+                         "not exercised",
+                 "path": str(run_ab.GROQ), "sha256": None})
+    return deps
+
 def run_adaptive_demo():
     """ADAPTIVE RUNTIME executed end to end. The worker is
     stubbed at the TRANSPORT level only (labelled): every
@@ -482,6 +505,7 @@ def run_adaptive_demo():
                             "worker stubbed at transport "
                             "level only; all production "
                             "paths real",
+           "external_dependencies": _external_dependencies(),
            "profile_binding_ok": prof.check_binding(profile, hdr),
            "executed": executed}
     json.dump(out, open(os.path.join(

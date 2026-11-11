@@ -1,50 +1,36 @@
-# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V6
+# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V7
 
-Corrections per Alex's V5 re-inspection (5a0fea3
-preserved in history): **(1) Reproducibility, closed
-properly.** profile.tools_version() resolved a path
-that exists only in the workspace layout. It now
-resolves tools24.py BY HASH across both layouts, as
-does every import. **All committed outputs in this
-package were regenerated from the checked-in shelf
-layout itself** — exact invocation: cwd =
-duenna/qwen-ab/ratio-study/pilot/ in the repository
-tree; `python3 pilot_fixtures.py`,
-`python3 pilot.py --verify-mechanism`,
-`python3 pilot.py --demonstrate-runtime`; no layout
-env vars set (defaults resolve the shelf tree);
-Python 3.12, stdlib + the frozen modules only.
-F-IMPORT exercises both layouts via explicit root
-overrides (PILOT_WS_ROOT / PILOT_SHELF_ROOT). Three
-fixture-side path defects found during regeneration
-were fixed in the open and are part of this commit's
-history of work. **(2) The T05 template now performs
-its whole declared workflow** — the branch runs the
-frozen production construction (run_c.t05_record):
-shelf_lookup + source_extract -> reference_insert for
-every field -> verify_field per field + cross-record
-agreement -> worker emission -> schema check. Result
-in the regenerated demonstration: insertion ledger
-8/8 PASS, all fields verified, emission schema 8/8.
-A defective emission is covered separately by the
-F-ADAPTIVE-NEG fixture (post-check catches it).
-**(3) No worker call is called mechanical.** The
-frozen c_t06 flow runs for real in the probe and the
-demonstration (transport-level stub only); its
-internal worker call is captured by the accounting
-wrapper, itemised in the probe record's flow_calls,
-and explicitly classified there as a worker call —
-the probe uses only the flow's classification
-sub-record and discards its report. **(4) Historical
-evidence is bound honestly.** V1/V2R observations now
-carry binding_status "legacy-unbound": model, battery
-and adjudication are established; the historical
-system-prompt hash, deployment record and tool
-versions are NOT recoverable from the frozen records,
-and the observations say so. The selection rule for
-legacy evidence is one-directional: it may justify
-ADDING support (a weakness hypothesis selects its
-template) but never REDUCING coverage (a legacy
-"demonstrated" claim resolves to cold start).
+Corrections per Alex's V6 re-inspection (e834f6e
+preserved in history): **(1) The legacy safeguard now
+actually operates.** The bug was real and silent:
+extract_observations() stored binding_status inside
+each observation's conditions, while derive_entries()
+looked for it at the top level — so every historical
+entry derived as "bound". Derivation now reads the
+binding from wherever the observation carries it and
+FAILS CLOSED: an entry is "bound" only when every
+observation explicitly says so; missing or
+inconsistent metadata derives legacy-unbound. The new
+F-BINDING fixture asserts the full chain — historical
+observations stay legacy-unbound, their entries stay
+legacy-unbound, a legacy weakness still adds support
+(template selected), a legacy demonstrated claim
+cannot reduce coverage (cold start), and missing
+binding metadata never becomes bound by default.
+Regenerated MECHANISM-VERIFICATION.json shows both
+entries as legacy-unbound with those exact selection
+outcomes. **(2) External dependencies are explicit.**
+The frozen production workflow resolves two data
+sources through workspace paths — the corpus index
+under ~/workspace/pulse-bridge/index and the shelf
+manifest at ~/workspace/ainternet-shelf/MANIFEST.md.
+Package V6's wording presented the demonstration as a
+self-contained Shelf execution; that was too strong
+and is corrected here. RUNTIME-DEMONSTRATION.json now
+records each resolved dependency path with its
+sha256 (and the groq transport path, marked stubbed /
+not exercised). The outputs are regenerated from the
+checked-in Shelf tree; the workflow's data sources
+are workspace resources, recorded, not hidden.
 All fixtures pass in both layouts. **No pilot runs,
 no live model calls. Awaiting re-inspection.**
