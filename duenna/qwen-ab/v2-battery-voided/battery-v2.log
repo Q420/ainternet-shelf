@@ -1,0 +1,3 @@
+done ('T01', 'A'): ELIGIBLE (first-attempt)
+done ('T01', 'B'): ELIGIBLE (first-attempt)
+TECHNICAL FAILURE ('T01', 'C'): 'embed_text' — battery stopped
