@@ -58,7 +58,7 @@
 | C06 | Presented identity fails; higher generation exists in another category/workstream | Never cross category boundary | Category key and exclusion trace |
 | C07 | Upward walk finds a higher candidate whose full digest fails, and it is the head | STOP; never fall back to older valid generation | Head mismatch evidence and terminal stop |
 | C08 | Upward walk encounters a corrupt intermediate generation before a higher head | STOP under safe default pending Ben's clarification; do not silently skip | Full walk trace and stop disposition |
-| C09 | Generation sequence has gaps due consumed abandoned reservations | Walk next extant higher generation in same chain; do not reuse missing number | Reservation history and ordered candidate list |
+| C09 | Generation sequence has gaps due consumed abandoned reservations | Walk next extant higher minted Version ID in same chain; record reservation-only gaps and do not treat them as version candidates | Reservation history, minted-version registry and ordered candidate list |
 | C10 | Candidate has matching short hash tail but mismatching full digest | Fail integrity; short tail cannot pass | Full digest comparison |
 | C11 | Candidate has correct digest but mismatched Item ID/category binding | Reject; no sideways resolution | Identity binding evidence |
 | C12 | Candidate has same content hash but belongs to another version/item | Do not infer identity continuity | Distinct IDs and rejected mapping |
@@ -66,6 +66,7 @@
 | C14 | Upward walk reaches highest registered generation but ledger head pointer names another candidate | STOP/UNKNOWN; do not choose by sequence alone | Ledger head and registry comparison |
 | C15 | Walk is interrupted by timeout midway | UNKNOWN; resume/reconstruct from durable walk record; no partial result called resolved | Partial receipt and recovery evidence |
 | C16 | Walk receipt omits a candidate examined by the resolver | Test fails; path must be complete | Resolver trace vs persisted receipt |
+| C17 | Highest allocated generation is an abandoned reservation with no minted Version ID | Do not resolve to the reservation; resolve the authoritative latest eligible minted Version ID and record the consumed gap | Reservation ledger, version registry and head pointer |
 
 ## D. GitHub conditional-ref substrate tests
 
