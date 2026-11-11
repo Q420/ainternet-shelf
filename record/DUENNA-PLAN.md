@@ -483,10 +483,10 @@ implementation revision starts from this track until the plan is agreed.
    current, and keep the shelf copy in step with it.
 3. **Alex:** combined adjudication DELIVERED (2026-11-10) — the
    R60 revision step is OPEN and Remmy's implementation of both
-   corrections is authorised (not yet started). Live now: his
-   review of the Stage 0 baseline evidence (run 2026-11-10,
-   31/31 PASS, record/STAGE0-BASELINE-EVIDENCE.md), which gates
-   any Stage 1 proposal.
+   corrections is authorised (not yet started). His Stage 0
+   review is COMPLETE (2026-11-10, pb-mwbftehl): baseline
+   accepted, **Stage 0 CLOSED**; Stage 1 may be PROPOSED, not
+   authorised for implementation.
 4. **Examiners:** Claude's re-examination is IN (R47 PASS narrow,
    R60 FAIL partial, R65 PASS — see Track 1 step 5). Vane's
    re-examination DEFERRED by Ben (2026-11-10) — Alex and Claude
