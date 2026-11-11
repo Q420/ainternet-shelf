@@ -45,6 +45,15 @@ Derivation (mechanical, from shelved sources):
   3216dfb (blob 1db6d942…), preserved in git history.
   No finding is declared closed by this revision; the
   revision returns for challenge.
+- REVISION 3 (2026-11-11): integrated revision
+  answering Alex's Independent Challenge 02 (shelf
+  commit 6be75b7e, blob 9e07bc9f…; findings D04-10…
+  D04-12). The UNKNOWN/non-existence wording is
+  corrected; gate_decision's provenance is pinned to
+  the two frozen battery result artefacts by direct
+  inspection (the corpus retrieval route remains
+  UNKNOWN); Part VI's ordering summary now carries
+  the same-chain / cross-chain condition.
 
 ## Rules of the dictionary
 
@@ -251,7 +260,7 @@ will produce.
 | EVIDENCE_FOUND | the search act found material within its stated scope | RESULT outcome | §E pins present; search record preserved | finding material ≠ establishing a claim (≠ SUPPORTED) |
 | EVIDENCE_NOT_FOUND | the search act found no material within its stated scope | RESULT outcome | §E pins present; search record preserved | ≠ ABSENT: absence is the dictionary's scoped finding about the target itself |
 | NOT_DETERMINED | the act ran; the matter it addressed was not established | RESULT outcome | — | ≠ NOT_ESTABLISHED (classification); ≠ INDETERMINATE (completeness) |
-| attempt_events | ordered list of attempt records {attempt_n, gate_decision} for gated runs [FM-11] | RESULT | Req when a gate acted in the run; attempt numbers sequential; NEVER overwritten by outcome | attempt_events may record BLOCKED at attempt 1 while outcome = COMPLETED — corrected-on-retry; outcome always remains the run's terminal result. A RESULT is a terminal run report, not an interim progress message. gate_decision takes values from the closed gate vocabulary {ELIGIBLE, BLOCKED}: the release gate's verdict at that attempt (ELIGIBLE — the attempt passed the gate; BLOCKED — release was prevented at that attempt). The vocabulary is the one recorded by the frozen battery harnesses; no canonical schema for it was retrieved (Crusher: UNKNOWN), so this is a stated domain definition. gate_decision is attempt-scope only; it is never the run's outcome. |
+| attempt_events | ordered list of attempt records {attempt_n, gate_decision} for gated runs [FM-11] | RESULT | Req when a gate acted in the run; attempt numbers sequential; NEVER overwritten by outcome | attempt_events may record BLOCKED at attempt 1 while outcome = COMPLETED — corrected-on-retry; outcome always remains the run's terminal result. A RESULT is a terminal run report, not an interim progress message. gate_decision takes values from the closed gate vocabulary {ELIGIBLE, BLOCKED}: the release gate's verdict at that attempt (ELIGIBLE — the attempt passed the gate; BLOCKED — release was prevented at that attempt). Provenance, pinned by direct inspection of the artefacts (2026-11-11): these are exactly the values the gate_decision field takes in the two frozen battery result records — QWEN-AB-RESULTS.json, sha256 87cfa2cec10a663bf3f14c1768141009bde87bbeb9e600592dfbb59c33f9cf97 (ELIGIBLE ×23, BLOCKED ×2, no other values), and QWEN-AB-V2R-RESULTS.json, sha256 fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9 (ELIGIBLE ×32, BLOCKED ×5, no other values). No canonical schema or fixture defining the domain was retrieved (Crusher: UNKNOWN); the domain is the recorded vocabulary, adopted here as a definition. gate_decision is attempt-scope only; it is never the run's outcome. |
 | completeness_assessment | COMPLETE / DEFICIENT / INDETERMINATE [FM-07: RESULT only; ACCEPT does not carry it] | RESULT | Req on any RESULT reporting method-dependent work; absent only where no completeness claim is made. Where any of the declared method, application evidence, or evaluation is missing, this field is REQUIRED and its value is INDETERMINATE — omission may not bypass that result | — |
 | COMPLETE | → Dictionary COMPLETE | (value) | set enumerated; per-element status present | — |
 | DEFICIENT | every element assessed; at least one unsatisfied — SCHEMA-ONLY value, not a dictionary term | (value) | as COMPLETE | ≠ PARTIAL |
@@ -888,8 +897,9 @@ verbatim, so the layers agree by construction.
   dictionary. The flag's disposition nevertheless
   remains OPEN: it closes only through a separate,
   valid, authorised CORRECTION record, and this
-  dictionary is not that record. No such record exists
-  yet (Crusher retrieval, 2026-11-11: UNKNOWN).
+  dictionary is not that record. No separate
+  CORRECTION record has been located in the requested
+  retrieval; whether one exists remains UNKNOWN.
 
 
 ## Part VI — FORM / MEANING audit table (key checks)
@@ -903,7 +913,7 @@ verbatim, so the layers agree by construction.
 | AUTHORITY | authority record resolves; scope stated | a disputed act falls inside the scope |
 | ACCEPT | scope ⊆ MET criteria; results complete; none UNASSESSED under ACCEPTED | the MET attestations are truly supported |
 | COMPLETE | set enumerated; per-element status present | the statuses are justified |
-| ADOPTION / ALIGNMENT | before/exposure/after records resolve; chain positions verified | the answers genuinely adopt / pre-agree |
+| ADOPTION / ALIGNMENT | before/exposure/after records resolve; order verified within ONE valid chain, or established by an independently established cross-chain causal-order mechanism; where neither exists, the instance is UNKNOWN | the answers genuinely adopt / pre-agree |
 | SUPERSEDE | predecessor named; authority ref present | live-head effect on dispute (Gap 2) |
 | ⚑ flag | marker in schema position; target resolves; raiser recorded; the declared key's shape validates and the intended invariant is one open obligation per key — actual uniqueness is NOT mechanically established until a versioned registry and concurrency-safe enforcement exist and are independently tested (Gaps 2–3) | the concern is material |
 | CORRECTION | fields present; XOR holds; basis present; original intact | corrected value is right; reliance adequate |
