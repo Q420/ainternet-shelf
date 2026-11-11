@@ -194,7 +194,9 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 **Governing ruling:** Ben's bridge list item 2, PB-ID pb-mwcmqax3-1l-6suy; prior BRIDGE-FIX-SPEC-02 §§1–2.
 
-- Display one central transfer animation in each registered seat viewport for the current transport event.
+- Display one central transfer animation in each registered seat viewport for the current transport event. The animation element is MOVEABLE: Ben can drag it to a position of his choosing, and it holds that position.
+- The animation is the held-message station (Ben, 2026-11-11): while a message is in transit or held, this surface carries the actual message and offers Ben two actions on it - APPEND and PUSH-THROUGH (SS2.2's force-send, surfaced here). The append window of SS2.11 is this same surface's window, not a separate element.
+- APPEND is append-only, without exception: Ben may add his own text at the END of a held message, as a distinct attributable addition. The seat's existing words are never editable, by anyone, in any state - in Ben's words: "By edit, I mean append something to the end. I would never edit one of his messages."
 - Remmy → Alex travels left-to-right. Alex → Remmy travels right-to-left.
 - Trigger TRANSIT only after the adapter confirms that the send action was actually dispatched. Queue insertion, append-window opening, composer engagement and typing do not start transit.
 - The animation ends on a terminal transport result: DELIVERED, FAILED-BEFORE-SEND, or SENT-UNCONFIRMED. It must not silently disappear.
@@ -245,14 +247,14 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 **§2.4a Fact and knowledge (Ben's pairing, 2026-11-11, governing).** Ben's words: "Did it deliver? can only have two states, yes or no." and "Unknown is the right middle ground." The record therefore carries two separate fields: **delivery** — a binary fact, DELIVERED or NOT_DELIVERED, asserted only on evidence; and **delivery_confirmation** — a ternary knowledge state, CONFIRMED, REFUTED or UNKNOWN, with its evidence. DISPATCHED-UNCONFIRMED names a knowledge state about a delivery, never a delivery state; UNKNOWN is never converted into a guessed fact. (Incorporated by Remmy at Alex's assignment, pb-mwcoarq7.)
 - Ring order is oldest-first. On insertion of the 21st ID, evict the oldest and log the eviction. The protection claim is always "last 20 IDs", never lifetime deduplication.
-- The journal is the sole authoritative message-ID duplicate guard. completedSerials remains pair-order bookkeeping only. Legacy seenIds, deliveredIds and deliveryFailedIds must not remain competing duplicate authorities. Transient fingerprints may be used during one detector run only if they are cleared on purge and are not advertised as a second durable journal.
-- A stable source identity is a prerequisite: re-fetching the same source bubble after purge must derive the same PB-ID, or the ID-only journal cannot recognise it. The current random PB-ID plus 32-bit fingerprint arrangement does not meet that requirement.
+- The journal is the sole authoritative message-ID duplicate guard. completedSerials remains pair-order bookkeeping only. Legacy seenIds, deliveredIds and deliveryFailedIds must not remain competing duplicate authorities. Transient fingerprints may be used during one detector run only if they are cleared on epoch reset and are not advertised as a second durable journal.
+- A stable source identity is a prerequisite: re-fetching the same source bubble after an epoch reset must derive the same PB-ID, or the ID-only journal cannot recognise it. The current random PB-ID plus 32-bit fingerprint arrangement does not meet that requirement.
 - Unsent messages may have a temporary internal queue key while pending; this draft interprets "keep no ID" as no review-journal entry. If Ben means no PB-ID may be minted at all before actual dispatch, that is a schema change and must be decided before implementation.
 - The journal is distinct from the held-item review and remains governed by the journal-content rule. The former SURVIVES/PURGED branch is withdrawn: Ben's later ruling replaces automatic purge with owner review, so there is no journal-survival-across-purge decision to make. DISPATCHED-UNCONFIRMED's journal treatment is settled by Ben's 2026-11-11 ruling (above): journal on confirmed delivery only.
 
-**Blocking reconciliation:** the existing proven-absence retry can re-attempt after a send click when the destination positively reports absence. That may conflict with the new rule that a sent ID is not sent again. The revised contract must decide whether a proven-absence result removes/never admits the ID to the journal, or whether any actual click is final and the old retry is retired. Do not implement both interpretations.
+**Reconciliation (resolved on the basis of Ben's 2026-11-11 rulings; Alex's cross-check pending):** the proven-absence retry fires only when delivery is REFUTED - the destination positively reports absence - which under SS2.4a means the message was NOT_DELIVERED and was never journalled. A retry of a refuted send therefore cannot duplicate a delivery and does not conflict with the journal rule. On UNKNOWN the retry never fires: the item goes to OWNER-REVIEW. The alternative reading (any click is final, retry retired) is rejected on that basis. Do not implement both interpretations.
 
-**Acceptance:** 20 IDs retained; 21st evicts exactly the oldest; journal contains no bodies; skipped/discarded-unsent items add no ID; source history re-fetch after purge produces the same ID; duplicate ID is refused; all legacy duplicate stores are demonstrably non-authoritative.
+**Acceptance:** 20 IDs retained; 21st evicts exactly the oldest; journal contains no bodies; skipped/discarded-unsent items add no ID; source history re-fetch after epoch reset produces the same ID; duplicate ID is refused; all legacy duplicate stores are demonstrably non-authoritative.
 
 ### 2.5 F-5 — Button evidence and the two-of-three rule
 
@@ -325,9 +327,9 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 
 ### 2.10 NEW-1 — Gemini sidebar hook
 
-**Governing source:** Ben's convene list item 1, PB-ID pb-mwcmqax3-1l-6suy. This explicitly lifts the earlier deferral recorded in BRIDGE-FIX-TRACEABILITY-01.
+**Governing source:** Ben's convene list item 1, PB-ID pb-mwcmqax3-1l-6suy, as corrected by Ben the same day (ignore for now; work around it). The earlier deferral recorded in BRIDGE-FIX-TRACEABILITY-01 therefore stands.
 
-- Treat the sidebar hook as active scope.
+- PARKED by Ben (2026-11-11, superseding the convene letter's framing): "We can ignore the Gemini hook for now" and "we can work around the Gemini hook." The hook is NOT active build scope; the Gemini conversation adapter remains part of the audited routing surface, and this section is retained as design record only until Ben revives it.
 - Before choosing an implementation, probe and identify the intended target: Gemini's native navigation sidebar or the browser's Chrome side panel. Do not conflate them.
 - If Gemini-native: attach a stable, evidence-backed hook to the native sidebar without changing conversation message capture or send routing.
 - If Chrome side panel: specify the extension sidePanel entry point and manifest permissions separately; this is not a DOM hook in Gemini.
@@ -433,7 +435,7 @@ The following are deliberately not decided by this sheet:
 
 1. **DISPATCHED-UNCONFIRMED journal treatment:** CLOSED by Ben's ruling of 2026-11-11 (§2.4): the item is surfaced in OWNER-REVIEW with its uncertainty visible; its ID enters the journal if and only if delivery is CONFIRMED; on REFUTED it never enters.
 2. **F-5 strict two-of-three interpretation:** Ben has been asked to decide whether a positively observed NEGATIVE button state is still outweighed when serial and message status are positive, or whether the earlier proven-stop exception remains. The button remains one recorded evidence state; do not mark this interpretation settled until Ben answers.
-3. **Journal insertion versus proven-absence retry:** resolve whether a positive absence result means the ID was never journalised as sent, or whether all actual click dispatches are final. Existing v0.18.0 retries after positive absence; the new journal rule may supersede that.
+3. **Journal insertion versus proven-absence retry:** RESOLVED on the basis of Ben's 2026-11-11 rulings (SS2.4): the retry fires only on REFUTED delivery, which was never journalled, so no conflict stands; on UNKNOWN there is no retry. Alex's cross-check of this resolution is pending.
 4. **Meaning of "no ID" for unsent work:** this draft interprets it as no review-journal ID. Confirm whether Ben also means no temporary PB-ID may exist while queued.
 5. **Bare-ID schema:** this draft uses an ID-only journal and keeps direction/disposition in the separate event log. Confirm that this matches "just the IDs".
 6. **Stable PB-ID:** choose a verified stable platform source ID or collision-resistant deterministic source hash. Current random IDs cannot survive a full cache purge as stable re-fetch identities.
