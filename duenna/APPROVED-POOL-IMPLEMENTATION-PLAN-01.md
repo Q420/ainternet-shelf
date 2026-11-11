@@ -1,6 +1,6 @@
 # APPROVED POOL — POOL-FIRST IMPLEMENTATION PLAN 01
 
-**Status:** PHASE 0 DELIVERABLE — SHELF/SOURCE CHECK PENDING  
+**Status:** PHASE 0 COMPLETE — SOURCE CHECK VERIFIED; CURRENT AUDIT HEAD PINNED  
 **Plan adoption:** ADOPTED BY BEN, 2026-11-11  
 **Prepared by:** Alex  
 **Date:** 2026-11-11  
@@ -29,9 +29,10 @@ The plan is derived from:
 - Infrastructure Gap Register 0.1, reviewed at commit `9b8f782`, blob `e58b91a648edb57a42d35bead52e47d3d004cdb0` (exact current Shelf path requires Remmy's source reconciliation).
 - Dictionary 0.4 Rev 3, commit `b7c4274`, file SHA256 `0717bb6c3b372be3f5eb6091bef63338d88e22b7fd8edacb1c0d85c2569047f6`.
 - The three Dictionary 0.4 independent challenges, including Challenge 03 PASS at commit `2a25df2`, blob `b75285559fd451fbd80719398aafc7beea11882e`.
+- Information Path Audit v0.3 at `cf5675f`, blob `6a4d69565f3ce5d37e3038c80bcf8ec0ed73a61f` (current audit head; includes Alex's map/corrections and Remmy's local-source check).
 - Pool Retrieval 01 at `2151c78`, Pool Retrieval 02 at `a2050bd`, Crusher Information Audit 01 at `920af49`, Index Admission Report at `8b7b0acf`, and Crusher v2.2 implementation/evidence at `271b621`.
 
-Source pins above identify the reviewed basis; they do not imply that every source has been re-fetched at this plan's commit. Remmy's Phase 0 source check must reconcile current paths, heads and any intervening changes before this plan is treated as the current execution baseline.
+Source pins above identify the reviewed basis. Remmy completed the Phase 0 source check against the Shelf and local source state on 2026-11-11. The Information Path Audit is pinned at its current v0.3 head, `cf5675f`, with blob `6a4d69565f3ce5d37e3038c80bcf8ec0ed73a61f`. Remmy reports that all other pins resolve, the plan's own blob recomputes, and no intervening state changes contradict its claims. The audit pin was the sole reconciliation item and is now incorporated. This establishes the Phase 0 source check within the reported scope; it does not close the Information Path Audit itself.
 
 ## 2. System boundary and design principles
 
@@ -362,13 +363,13 @@ Do not collapse these into one green status. A specification can pass while impl
 
 ## 8. Current state and immediate next actions
 
-**Current phase:** Phase 0 — plan consolidation and source-state check.
+**Phase 0 status:** COMPLETE — source check verified with the current Information Path Audit v0.3 head pinned above.
 
-1. Alex has consolidated this plan from the adopted proposal and the readiness/design records.
-2. Remmy checks the current Shelf and source state, verifies all source pins and paths, and reports any changes, missing artefacts, stale references or corrections required.
-3. Alex reconciles any findings into a new versioned plan record; no source discrepancy is silently averaged.
-4. The plan's Phase 0 completion is recorded only after the read-back and source check are complete.
-5. Phase 1 specification work begins only after Phase 0 is closed and the relevant work is explicitly triggered under the adopted plan.
+1. Alex consolidated this plan from the adopted proposal and readiness/design records.
+2. Remmy checked the current Shelf and local source state, recomputed the plan blob, resolved all cited pins, and reported no contradictory intervening changes.
+3. The sole reconciliation item — the omitted current Information Path Audit head — is now incorporated as `cf5675f` / blob `6a4d69565f3ce5d37e3038c80bcf8ec0ed73a61f`.
+4. The corrected plan must be read back at its new commit before Phase 0 is considered fully recorded.
+5. Phase 1 specification work has not begun; it requires its own explicit trigger under the adopted plan.
 
 **No Phase 1–6 implementation is authorised by this document.** Each build remains subject to a separately approved, shelved specification.
 
@@ -378,4 +379,4 @@ Ben adopted the pool-first plan on 2026-11-11. The earlier proposal's `PROPOSAL 
 
 The adopted plan does not declare the Approved Pool operational. It does not declare generation zero. It does not freeze Dictionary 0.4. It does not close any infrastructure gap. It does not authorise implementation, publication, spend, replay, validator or pilot.
 
-**Current dispositions:** Pool-first adopted; Phase 0 triggered; Dictionary 0.4 freeze DEFERRED; generation zero NOT DECLARED; Gap 2 and Gap 3 OPEN/UNKNOWN pending specification, implementation and independent testing; EXON 0.2 self-flag correction OPEN.
+**Current dispositions:** Pool-first adopted; Phase 0 COMPLETE after corrected plan read-back; Phase 1 NOT STARTED; Dictionary 0.4 freeze DEFERRED; generation zero NOT DECLARED; Gap 2 and Gap 3 OPEN/UNKNOWN pending specification, implementation and independent testing; EXON 0.2 self-flag correction OPEN.
