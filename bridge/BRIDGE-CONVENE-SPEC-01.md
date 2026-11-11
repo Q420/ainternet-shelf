@@ -112,13 +112,19 @@ If deliberate purge clears those fingerprint caches, the same source bubble can 
 
 **Required design response:** the ID-only journal requires a stable source identity that survives re-fetch. Preferred design for evaluation: derive a stable PB-ID from a collision-resistant digest of the source seat and normalised source payload, or use a verified stable platform message identifier where one exists. The current 32-bit fingerprint is not adequate as a durable identity. This preserves the current documented rule that the same sender/body re-sighting is the same message. If identical repeated text is intended to represent a new message, a stable platform occurrence identifier is required instead.
 
-### 1.6 The current buffer is one slot, newest wins
+### 1.6 Force-send is not implemented
+
+The current seat panel exposes ordinary Retry and Let go controls; it does not expose a Force-send action. Retry is not equivalent to force-send because it re-enters the ordinary recovery path. The F-2 feature therefore requires a distinct, message-scoped command and UI state.
+
+**Required design response:** add a distinct eligible-only Force send control; preserve the F-2 override boundary; do not relabel Retry or reuse it as force-send.
+
+### 1.7 The current buffer is one slot, newest wins
 
 storage.js defines one bufferId. background.js replaces the existing buffer item with a newer item and visibly retires the evicted item. The pair also has one pendingReplyId. This is not the ordered multi-message aggregate required by F-8.
 
 **Required design response:** replace bufferId with a persistent ordered constituent list. Preserve each constituent PB-ID, author, order, body and completeness data. The aggregate transport ID must never replace constituent identity.
 
-### 1.7 The send button is both evidence and actuator
+### 1.8 The send button is both evidence and actuator
 
 fence.js already allows a send when button status is UNKNOWN and serial and message status are both positive; it treats a positively observed Stop face as NEGATIVE and any proven negative vetoes. The old consolidated specification §4 instead made UNKNOWN a mandatory HOLD even when the other two conditions were positive.
 
@@ -132,7 +138,7 @@ The remaining failure path is downstream of the fence. sendcore.js searches for 
 
 **Required design response:** separate evidence quorum from actuation. A passing fence verdict cannot be overturned by re-reading UNKNOWN as a hard veto. The actual submit action must be independently verified and scoped to the owned composer. No unverified Enter-key or global-button fallback is authorised.
 
-### 1.8 Composer ownership is not yet strict enough
+### 1.9 Composer ownership is not yet strict enough
 
 Four adapters prefer a named composer but fall back to the first structural composer candidate if the name cannot be found. Gemini's named composer is "Enter a prompt for Gemini", but the fallback can select the structural Quill editor/clipboard candidate. Meta AI has a stricter visible contenteditable test-id rule and rejects its hidden textarea, but all five adapters delegate send-button lookup to shared sendcore.js.
 
@@ -140,31 +146,33 @@ sendcore.js climbs up to a parent containing a button and then permits page-wide
 
 **Required design response:** unique, visible, platform-proven composer identity; ownership lease tied to the current message/attempt; button must be inside that exact composer scope; no page-wide fallback; missing or ambiguous composer means no typing and no click. Ben's manual composer is read-only to bridge automation.
 
-### 1.9 The animation and event notifications do not exist
+### 1.10 The animation and event notifications do not exist
 
 The current panel is a fixed bottom-right overlay. The current background state DELIVERING begins before the adapter has engaged, typed or clicked; it can include a 45-second wait. There is no click-time transit event and no centre-screen directional animation. The alert.js chime is an emergency alert, not a send/receive notification.
 
 **Required design response:** start TRANSIT only on the actual send-dispatch event, not on queueing or the beginning of DELIVERING. End it on verified delivery, pre-send failure, or sent-but-unconfirmed. A completed animation must never imply delivery by itself.
 
-### 1.10 Gemini has a conversation adapter, not a sidebar hook
+### 1.11 Gemini has a conversation adapter, not a sidebar hook
 
 manifest.json already loads adapters/gemini.js on gemini.google.com. The adapter is grounded in the conversation view and composer. The injected Pulse Bridge panel is a floating panel; there is no Gemini-native sidebar hook and no Chrome sidePanel integration in the v0.18.0 manifest.
 
 **Required design response:** include the sidebar hook as active convene scope, but do not invent its target. The probe must first establish whether Ben means Gemini's native navigation sidebar or the browser's Chrome side panel. These are different surfaces and require different implementations. The hook must not alter message capture or send routing.
 
-### 1.11 The 45-second defer is not visible as elapsed time
+### 1.12 The 45-second defer is not visible as elapsed time
+
+The manifest description and some older Crusher comments still describe an oldest-actionable-first general queue and bounded self-requeue. The actual v0.18.0 background pump selects only the current letter in the one active pair; the pending buffer is a separate single slot. This stale descriptive text can mislead later reviewers about what the runtime actually does.
 
 sendcore.js waits up to 45 seconds while the composer positively reports generating. background.js records the attempt and later moves a generating failure onto the recovery ladder. The panel can show ATTEMPTING and then WAITING-RETRY, but it does not show the live 45-second elapsed/remaining defer. The machine is a one-active-pair machine, not a general FIFO queue.
 
 **Required design response:** explicit DEFER-WAIT display and state, same PB-ID and same active pair preserved, elapsed/remaining visible, and a precise mapping of "head of queue" to the current pair's exclusive priority. Do not describe a general queue that does not exist.
 
-### 1.12 The 7.5-second append window does not exist
+### 1.13 The 7.5-second append window does not exist
 
 No pre-delivery append window or Ben-append operation exists in v0.18.0.
 
 **Required design response:** add a distinct APPEND-WINDOW stage per fetched message, 7,500 milliseconds, with an explicit append control and a no-append timeout path. The original source content must remain intact and Ben's contribution must be separately attributed.
 
-### 1.13 Existing completeness and file-transfer mechanisms are different
+### 1.14 Existing completeness and file-transfer mechanisms are different
 
 protocol.js supports an optional PB-FILE block with file hash/byte verification. It does not provide the whole-message PB-COMPLETE trailer required by F-6. Current receipt confirmation checks the carried header and PB-ID; it does not verify the full message body against a completeness digest.
 
@@ -349,7 +357,7 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 **Governing source:** Ben's convene list item 8 and Remmy's explicit flag in PB-ID pb-mwcmqax3-1l-6suy.
 
 - The GitHub confirmation card is the platform's enforced human approval check for shelf pushes.
-- The bridge may prepare a candidate, validate file bytes/hash, verify target repository/path, stage the intended operation and present the confirmation step to Ben.
+- The bridge may prepare a candidate, validate file bytes/hash, verify target repository/path, stage the intended operation and present the confirmation step to Ben. The v0.18.0 manifest has no GitHub host permission or GitHub content script; there is no current bridge-side GitHub approval route.
 - The bridge must stop at the platform confirmation card. It must not automate the click, simulate a keypress, hide the card, or otherwise bypass the human approval gate.
 - After Ben confirms manually, the bridge may verify the resulting commit/file and record the receipt.
 - The requested automation of the confirmation itself is NOT ACCEPTED into the build scope. The probe may identify and document the human gate; it may not automate it.
@@ -495,7 +503,7 @@ A revision may not be labelled READY FOR CLAUDE REVIEW until the author has run 
 - [ ] Claude's findings and dispositions are recorded against this exact revision.
 - [ ] Only after Claude review may Ben make the separate build decision.
 
-**Current checklist status:** NOT READY. The source audit is complete for the pinned v0.18.0 files, but the exact §13.1 source record, basic-fix snippet, and the open design decisions above are not yet closed. No implementation authority is created by this sheet.
+**Current checklist status:** NOT READY. The source inspection covered the pinned v0.18.0 routing, trigger, queue, cache and five-adapter send/ownership paths. It was not a line-by-line review of unrelated UI or alert internals, and no runtime probe was performed. The exact §13.1 source record, basic-fix snippet and open design decisions above are not yet closed. No implementation authority is created by this sheet.
 
 ---
 
