@@ -35,7 +35,7 @@
  "F-PROBE": {
   "order": [
    "unaided",
-   "unaided",
+   "flow-call",
    "revision"
   ],
   "mechanical": {
@@ -62,6 +62,11 @@
    "S3": "already-aligned",
    "S4": "already-aligned"
   },
+  "evidence_backed_adoption": [
+   "S1",
+   "S2",
+   "S3"
+  ],
   "flow_calls_accounted": true,
   "pass": true
  },

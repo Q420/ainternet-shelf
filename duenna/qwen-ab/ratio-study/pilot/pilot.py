@@ -239,10 +239,17 @@ def t06_probe(test):
             "worker_after_raw": revised["answer"],
             "evidence_identified": flags,
             "adoption_measurement": adoption,
+            "evidence_backed_adoption": [
+                s for s in ("S1", "S2", "S3", "S4")
+                if adoption[s] in ("adopted", "already-aligned")
+                and flags[s]["identified"]],
             "adoption_note": "mechanical comparison of the "
-                "three records; agreement is not scored as "
-                "understanding — evidence_identified is "
-                "recorded alongside"}
+                "three records. Agreement alone is NOT "
+                "adoption evidence: evidence_backed_adoption "
+                "lists only statements where the label "
+                "agrees AND the worker identified the "
+                "supporting evidence. An empty list is an "
+                "honest negative, not a broken measurement"}
 
 def run_level(test, level, profile_doc=None, expected_header=None):
     global CALLS

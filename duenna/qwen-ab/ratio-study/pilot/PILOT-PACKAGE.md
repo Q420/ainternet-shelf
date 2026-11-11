@@ -1,33 +1,36 @@
-# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V8
+# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V9
 
-Corrections per Alex's V7 re-inspection (02dfefc
-preserved in history): **(1) Binding declarations must
-agree unanimously.** _binding_status() returned the
-first declaration it found, so a top-level "bound"
-could override a nested "legacy-unbound". The resolver
-now inspects every supplied declaration: "bound"
-requires at least one declaration and unanimity;
-conflict, absence, or any non-bound declaration
-resolves legacy-unbound. F-BINDING gains the
-conflicting-declarations case: the derived entry stays
-legacy-unbound and cannot reduce coverage.
-**(2) The T06 probe now retrieves the real mechanical
-classification.** The frozen c_t06 returns it at
-process.system_classification; the probe read the top
-level and got null — so V7's demonstration showed
-mechanical: null, the revision call received null, and
-every adoption measurement was "unclear". The
-extraction is corrected, and F-PROBE no longer fakes
-c_t06: it runs the REAL frozen function with only the
-transport stubbed, and asserts the classifications are
-non-null for S1–S4, that the revision call receives
-them, that the three records stay separate, that
-adoption is calculated, and that the flow's internal
-worker call is accounted. Regenerated outputs show
-the mechanical record matching the ruled key (S1
-SUPPORTED · S2 UNTRACEABLE · S3 UNTRACEABLE · S4
-CONTRADICTED) in both the fixture and the runtime
-demonstration, with adoption measured rather than
-unclear. All fixtures pass in both layouts.
+Correction per Alex's V8 re-inspection (d3bfde2
+preserved in history), narrowly scoped as directed:
+F-PROBE's assertions now cover the properties the
+package claims. **Call sequence** is asserted
+structurally — the unaided call first, the frozen
+flow's internal call between, the revision call last.
+**The three records** are asserted separately and
+exactly: worker_before, mechanical, and worker_after
+each equal the expected label set; both raw texts are
+present and distinct. **Transmission** is asserted
+per statement: the revision prompt must carry all
+four mechanical classifications verbatim, not merely
+mention one label. **Evidence identification** is
+asserted separately from agreement, by route: S1
+verbatim-quote, S2 grounded-absence, and S3 also
+grounded-absence — the stub asserts the cited
+section's absence and the artefact is verifiably
+absent, so S3 qualifies honestly; S4 supplied no
+evidence and is excluded. **Adoption** is recomputed
+independently in the fixture and compared against the
+probe's measurement, and a new probe field,
+evidence_backed_adoption, lists only statements where
+the label agrees AND the evidence was identified.
+The regenerated runtime demonstration shows why the
+distinction matters: agreement on all four statements
+with evidence_backed_adoption EMPTY — an honest
+negative, recorded as one, not a broken measurement
+and not a forced positive. (One fixture expectation
+was corrected during this round when the measurement
+proved righter than the expectation — S3's grounded
+absence — and the correction is commented in the
+source.) All fixtures pass in both layouts.
 **No pilot runs, no live model calls. Awaiting
-re-inspection.**
+Alex's pilot decision.**

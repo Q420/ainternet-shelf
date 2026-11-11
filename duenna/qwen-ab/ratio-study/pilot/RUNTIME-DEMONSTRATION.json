@@ -98,7 +98,8 @@
      "S3": "already-aligned",
      "S4": "already-aligned"
     },
-    "adoption_note": "mechanical comparison of the three records; agreement is not scored as understanding \u2014 evidence_identified is recorded alongside"
+    "evidence_backed_adoption": [],
+    "adoption_note": "mechanical comparison of the three records. Agreement alone is NOT adoption evidence: evidence_backed_adoption lists only statements where the label agrees AND the worker identified the supporting evidence. An empty list is an honest negative, not a broken measurement"
    },
    "configured": [
     "mechanical classification",

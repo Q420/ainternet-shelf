@@ -52,15 +52,18 @@ results["F-R1R2"] = {
           and "authored fixture" in kinds
           and len(pre["item_classes"]) == len(t03["pack"])}
 
-# F-PROBE: the REAL frozen c_t06, transport stubbed —
-# not a fake interface. Asserts the mechanical record is
-# retrieved from process.system_classification, the
-# revision call receives it, and adoption is computed.
+# F-PROBE: the REAL frozen c_t06, transport stubbed.
+# Assertions cover the claimed properties: call sequence,
+# three records separately + correctly populated, exact
+# mechanical transmission in the revision prompt,
+# evidence-identification measured separately from
+# agreement, adoption recomputed independently.
 order = []
 prompts = []
 def stub(system, user):
     prompts.append(user)
-    if "Classify each statement" in user:
+    if user.startswith("Classify each statement S1-S4 "
+                       "using exactly these labels"):
         order.append("unaided")
         ans = "S1: SUPPORTED\nS2: UNTRACEABLE\n" \
               "S3: UNTRACEABLE\nS4: CONTRADICTED"
@@ -79,6 +82,20 @@ pilot._ORIG_CALL = stub
 pilot.CALLS = []
 probe = pilot.t06_probe(pilot.TEST_BY_ID["T06"])
 _mech = probe["mechanical"] or {}
+KEY = {"S1": "SUPPORTED", "S2": "UNTRACEABLE",
+       "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}
+_rev_prompt = next((p for p in prompts
+                    if "independent mechanical classification"
+                    in p), "")
+_transmitted = all(f'"{s}": "{KEY[s]}"' in _rev_prompt
+                   for s in KEY)
+_recomputed = {}
+for s in KEY:
+    b, a, m = (probe["worker_before"].get(s),
+               probe["worker_after"].get(s), _mech.get(s))
+    _recomputed[s] = ("already-aligned" if b == m else
+                      "adopted" if a == m else
+                      "resisted" if a is not None else "unclear")
 results["F-PROBE"] = {
   "order": list(order),
   "mechanical": probe["mechanical"],
@@ -86,16 +103,32 @@ results["F-PROBE"] = {
   "evidence_routes": {k: v["route"] for k, v in
                       probe["evidence_identified"].items()},
   "adoption": probe["adoption_measurement"],
+  "evidence_backed_adoption":
+      probe["evidence_backed_adoption"],
   "flow_calls_accounted":
       len(probe["mechanical_source"]["flow_calls"]) >= 1,
-  "pass": _mech.get("S2") == "UNTRACEABLE"
-          and all(_mech.get(s) for s in
-                  ("S1", "S2", "S3", "S4"))
-          and any("UNTRACEABLE" in p and
-                  "independent mechanical classification" in p
-                  for p in prompts)
-          and probe["adoption_measurement"]["S1"]
-              in ("already-aligned", "adopted")
+  "pass": order[0] == "unaided"
+          and order[-1] == "revision"
+          and "flow-call" in order[1:-1]
+          and _mech == KEY
+          and probe["worker_before"] == KEY
+          and probe["worker_after"] == KEY
+          and probe["worker_before_raw"]
+          and probe["worker_after_raw"]
+          and probe["worker_before_raw"]
+              != probe["worker_after_raw"]
+          and _transmitted
+          and probe["evidence_identified"]["S1"]["route"]
+              == "verbatim-quote"
+          and probe["evidence_identified"]["S2"]["route"]
+              == "grounded-absence"
+          and probe["adoption_measurement"] == _recomputed
+          and set(probe["evidence_backed_adoption"])
+              == {"S1", "S2", "S3"}
+          # S3 qualifies honestly: the stub asserts the
+          # cited section's absence and duenna-plan#999 is
+          # verifiably absent — a grounded absence. S4
+          # supplied no evidence and is excluded.
           and len(probe["mechanical_source"]
                   ["flow_calls"]) >= 1}
 
