@@ -1,82 +1,111 @@
-"""Construction fixtures for the pilot package — no live
-model calls. Run: python3 pilot_fixtures.py"""
-import json, sys
-import pilot, profile as prof
-
+"""Construction fixtures v2 — each fixture tests the
+property its name claims. No live model calls."""
+import json, os, subprocess, sys
+HERE = os.path.dirname(os.path.abspath(__file__))
+SHELF_ROOT = os.path.abspath(os.path.join(
+    HERE, "..", "..", "..", "ainternet-shelf", "duenna", "qwen-ab"))
 results = {}
 
-# F-IMPORT: resolution paths actually used
-results["F-IMPORT"] = {"resolved": pilot.RESOLVED,
-  "pass": all(pilot.os.path.exists(p)
-              for p in pilot.RESOLVED.values())}
+# F-IMPORT: BOTH layouts, hash-verified, in subprocesses
+for layout, extra in [("workspace", {}),
+                      ("shelf", {"PILOT_SHELF_ROOT": SHELF_ROOT})]:
+    env = {**os.environ, "PILOT_LAYOUT": layout, **extra}
+    code = ("import pilot, json; "
+            "print(json.dumps(pilot.RESOLVED))")
+    r = subprocess.run([sys.executable, "-c", code],
+                       capture_output=True, text=True, env=env,
+                       cwd=HERE)
+    ok = r.returncode == 0
+    results[f"F-IMPORT-{layout}"] = {
+        "resolved": json.loads(r.stdout) if ok else r.stderr[-200:],
+        "pass": ok}
+results["F-IMPORT"] = {"pass": all(
+    results[k]["pass"] for k in
+    ("F-IMPORT-workspace", "F-IMPORT-shelf"))}
 
-# F-R1R2: mechanical packets over the REAL frozen tuple pack
-t01 = pilot.TEST_BY_ID["T01"]
-pre = pilot.prestep_packet(t01)
-ext = pilot.extraction_packet(t01)
+import pilot, profile as prof
+
+# F-R1R2: multi-item MIXED pack (T03)
+t03 = pilot.TEST_BY_ID["T03"]
+pre = pilot.prestep_packet(t03)
+ext = pilot.extraction_packet(t03)
+kinds = [c["kind"] for c in pre["item_classes"]]
 results["F-R1R2"] = {
-  "pack_items": len(t01["pack"]),
-  "item_shape": str(type(t01["pack"][0])),
-  "located": pre["located"],
-  "classes": [c["kind"] for c in pre["item_classes"]],
+  "pack_items": len(t03["pack"]), "kinds": kinds,
   "extraction_vias": [e["via"] for e in ext],
-  "pass": len(pre["item_classes"]) == len(t01["pack"])}
+  "pass": len(t03["pack"]) >= 3
+          and "record section" in kinds
+          and "authored fixture" in kinds
+          and len(pre["item_classes"]) == len(t03["pack"])}
 
-# F-PROBE: stubbed worker + stubbed mechanical flow
+# F-PROBE: order asserted; after-labels + evidence recorded
 order = []
-def stub_call(system, user):
-    order.append("probe" if "Classify each statement" in user
-                 or "revised label" in user else "other")
-    return {"answer": "S1: SUPPORTED\nS2: UNTRACEABLE\n"
-                      "S3: UNTRACEABLE\nS4: CONTRADICTED",
-            "usage": None, "latency_s": 0.0, "attempts": 1}
-pilot.run_ab.call_qwen = stub_call
-pilot.run_c.c_t06 = lambda test: {
-    "system_classification": {"S1": "SUPPORTED",
-        "S2": "UNTRACEABLE", "S3": "UNTRACEABLE",
-        "S4": "CONTRADICTED"}}
+def stub(system, user):
+    if "Classify each statement" in user:
+        order.append("unaided")
+        ans = "S1: SUPPORTED\nS2: UNTRACEABLE\n" \
+              "S3: UNTRACEABLE\nS4: CONTRADICTED"
+    else:
+        order.append("revision")
+        ans = "S1: SUPPORTED — the section states \"38 " \
+              "fixtures, 38 PASS\"\nS2: UNTRACEABLE — no " \
+              "record of Grok's ruling was found\n" \
+              "S3: UNTRACEABLE — the cited section is absent\n" \
+              "S4: CONTRADICTED — the section states the " \
+              "sabotage was not run"
+    return {"answer": ans, "usage": None,
+            "latency_s": 0.0, "attempts": 1}
+pilot._ORIG_CALL = stub
+pilot.run_c.c_t06 = lambda test: {"system_classification": {
+    "S1": "SUPPORTED", "S2": "UNTRACEABLE",
+    "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}}
 probe = pilot.t06_probe(pilot.TEST_BY_ID["T06"])
 results["F-PROBE"] = {
-  "worker_before": probe["worker_before"],
-  "mechanical": probe["mechanical"],
-  "record_type": probe["record_type"],
-  "pass": probe["worker_before"]["S2"] == "UNTRACEABLE"
-          and probe["record_type"].startswith("adoption-probe")}
+  "order": order,
+  "worker_after": probe["worker_after"],
+  "evidence_identified": probe["evidence_identified"],
+  "adoption": probe["adoption_measurement"],
+  "pass": order == ["unaided", "revision"]
+          and probe["worker_after"]["S4"] == "CONTRADICTED"
+          and probe["evidence_identified"]["S1"] is True
+          and probe["adoption_measurement"]["S1"]
+              == "already-aligned"}
 
-# F-PROFILE: derivation incl. consistency condition + selection
-def obs(task, op, res, n):
-    return [{"task": task, "op_class": op, "level": "R0",
-             "worker_result": res, "adjudication": "fixture",
-             "critical_failures": [], "evidence_refs": ["fx"]}
-            for _ in range(n)]
-ents = prof.derive_entries(
-    obs("T01", "grounding", "correct", 3)
-    + obs("T02", "comparison", "incorrect", 3)
-    + obs("T05", "record-composition", "incorrect", 1))
+# F-PROFILE: derivation from the ACTUAL adjudicated records
+obs = pilot.extract_observations()
+ents = prof.derive_entries(obs)
 by = {(e["task"], e["op_class"]): e for e in ents}
-hdr = prof.make_header("QWEN-RESEARCHER-001", pilot.SYSTEM_PROMPT)
-prof_doc = {"header": hdr, "entries": ents}
-sels = prof.select(
-    [{"task": "T05", "op_class": "record-composition",
-      "map_path": "X (R4)", "weakness_class": "record-composition"},
-     {"task": "T01", "op_class": "grounding",
-      "map_path": "X (R2)", "weakness_class": "grounding"}],
-    prof_doc, hdr)
-bad = prof.select(
-    [{"task": "T01", "op_class": "grounding",
-      "map_path": "X (R2)", "weakness_class": "grounding"}],
-    {"header": {}, "entries": []}, hdr)
+def obs3(task, op, res):
+    return [{"task": task, "op_class": op, "level": "R0",
+             "worker_result": res, "adjudication": "fx",
+             "critical_failures": [], "conditions": {},
+             "evidence_refs": ["fx"]} for _ in range(3)]
+e2 = {(e["task"]): e for e in prof.derive_entries(
+    obs3("T01", "g", "correct") + obs3("T02", "c", "incorrect"))}
 results["F-PROFILE"] = {
-  "consistent_n3": by[("T01", "grounding")]["confidence"],
-  "failed_n3": by[("T02", "comparison")]["confidence"],
-  "template_for_weak": sels[0].get("template"),
-  "demonstrated_path": sels[1]["decision"],
-  "malformed_fails_closed": bad[0]["decision"] == "cold start",
-  "pass": by[("T01", "grounding")]["confidence"] == "MEDIUM"
-          and by[("T02", "comparison")]["confidence"] == "LOW"
-          and sels[0].get("template") ==
-              "TPL-MECH-EXTRACTION-REFERENCE"
-          and bad[0]["decision"] == "cold start"}
+  "observations_from_records": len(obs),
+  "all_have_conditions_and_refs": all(
+      o.get("conditions") and o["evidence_refs"][0].get("sha256")
+      for o in obs),
+  "t05_n": by[("T05", "record-composition")]["sample_count"],
+  "consistent_n3_confidence": e2["T01"]["confidence"],
+  "failed_n3_confidence": e2["T02"]["confidence"],
+  "pass": len(obs) >= 3
+          and by[("T05", "record-composition")]["sample_count"] == 2
+          and e2["T01"]["confidence"] == "MEDIUM"
+          and e2["T02"]["confidence"] == "LOW"}
+
+# F-CALLS: internal (Arm C style) calls are accounted
+pilot.CALLS = []
+pilot.CURRENT["purpose"] = "arm-c-internal"
+pilot.run_ab.call_qwen("s", "u1")
+pilot.run_ab.call_qwen("s", "u2")
+results["F-CALLS"] = {
+  "captured": len(pilot.CALLS),
+  "purposes": [c["purpose"] for c in pilot.CALLS],
+  "pass": len(pilot.CALLS) == 2 and all(
+      c["purpose"] == "arm-c-internal" for c in pilot.CALLS)}
 
 print(json.dumps(results, indent=1))
-sys.exit(0 if all(v.get("pass") for v in results.values()) else 1)
+sys.exit(0 if all(v.get("pass") for v in results.values())
+         else 1)

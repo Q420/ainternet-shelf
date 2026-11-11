@@ -302,10 +302,32 @@ def model_decision(output):
     m = re.search(r"DECISION:\s*(CLOSE|REJECT)", output)
     return m.group(1) if m else None
 
+T06_KEY = {"S1": "SUPPORTED", "S2": "UNTRACEABLE",
+           "S3": "UNTRACEABLE", "S4": "CONTRADICTED"}
+
+def check_t06_labels(output):
+    """Deterministic T06 scorer (all arms, V2.4.2): for each
+    statement, the LAST label stated within 60 characters
+    after the statement id is compared to the ruled key
+    (S2 = UNTRACEABLE per Alex's ruling, 2026-11-10)."""
+    checks = []
+    for s, want in T06_KEY.items():
+        stated = None
+        for m in re.finditer(
+                s + r"\b[^\n]{0,60}?(SUPPORTED|CONTRADICTED|"
+                    r"NOT ESTABLISHED|UNTRACEABLE)", output, re.I):
+            stated = m.group(1).upper()
+        checks.append({"check": f"{s} label == key ({want})",
+                       "pass": stated == want,
+                       "detail": f"stated={stated}"})
+    return checks
+
 def gate_for(test, output, pack):
     tid = test["id"]
     if tid in ("T05", "T08"):
         return check_schema(output, pack)
+    if tid == "T06":
+        return check_t06_labels(output)
     if tid == "T07":
         return check_obligations(output, pack)
     if tid.startswith("T09"):
@@ -314,7 +336,7 @@ def gate_for(test, output, pack):
         return [{"check": "model decision matches mechanical gate",
                  "pass": got == want,
                  "detail": f"model={got} gate={want} gate_reasons={reasons}"}]
-    if tid in ("T01", "T06"):
+    if tid == "T01":
         return [check_hashes_grounded(output, pack)]
     if tid == "T03":
         bad = bool(re.search(r"v0\.10 (is |was )?APPROVED", output)) and \

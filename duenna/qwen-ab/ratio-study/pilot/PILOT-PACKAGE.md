@@ -1,31 +1,44 @@
-# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V3
+# FEASIBILITY PILOT — CONSTRUCTION PACKAGE V4
 
-Corrections per Alex's inspection of 5f07030 (preserved
-in history): **(1)** Imports resolve in both the
-workspace layout and the shelf layout; resolved paths
-are recorded in every run record (F-IMPORT fixture).
-**(2)** Pack items handled as the frozen (id, text)
-tuples; R1/R2 packets built by the tools' native tuple
-interfaces (F-R1R2 fixture over the real T01 pack).
-**(3)** The T06 probe no longer calls the absent
-check_t06_labels — a pilot-local label extractor scores
-probe records; the frozen gate scorers still score the
-task response (F-PROBE fixture, stubbed, verifies the
-three-record structure + capture order). **(4)** The
-profile mechanism is exercised in the driver itself:
---verify-mechanism derives entries from the adjudicated
-V1/V2R observation records, validates, binds, selects,
-and writes MECHANISM-VERIFICATION.json (run this round:
-binding OK, no defects, T05/T06 weak at LOW).
-**(5)** Confidence consistency enforced in code: any
-failure caps at LOW at any n; MEDIUM requires n>=3
-consistent + adjudicated (F-PROFILE fixture).
-**(6)** Measurement accounting explicit: every model
-call is logged per run with its purpose (scored-task-
-response / probe-unaided / probe-revision); probe
-records are typed "adoption-probe (not scored)" and
-kept separate from the scored response at every level
-including R4.
-All four fixtures pass (FIXTURES-OUTPUT.json). Driver
-compile- and refusal-verified. **No pilot runs executed.
-Awaiting re-inspection.**
+Corrections per Alex's V3 re-inspection (d016d94
+preserved in history): **(1)** Imports are HASH-VERIFIED
+before use — resolved run_ab/run_c/tools24 must match
+the pinned frozen hashes in either layout; F-IMPORT now
+exercises BOTH layouts in subprocesses. (The shelf's
+duenna/qwen-ab/run_ab.py was the V1-era copy; it is
+updated in this round to the current frozen scorer
+source — the V1 copy remains in git history — so both
+layouts resolve to the identical frozen file. tools24
+and run_c shelf copies already matched.) **(2)**
+Derivation reads the ACTUAL adjudicated records:
+extract_observations() parses QWEN-AB-RESULTS.json and
+QWEN-AB-V2R-RESULTS.json, locates the T05 first-attempt
+blocks and the T06 worker_vs_system record, and emits
+observations carrying conditions + resolvable references
+(file, sha256, record locator). **(3)** Selection is
+wired to execution two ways: per-run, when a profile is
+present, run_level records the profile selection
+alongside the calibration level (the distinction stated
+in the record); and --demonstrate-runtime runs the full
+loop — profile → selection → template-resolved execution
+configuration → demonstration record
+(RUNTIME-DEMONSTRATION.json, stubbed worker, labelled).
+**(4)** Fixtures test what they claim: F-R1R2 over the
+multi-item mixed T03 pack (sections + fixture, both
+extraction routes); F-PROBE asserts the capture ORDER
+and the revised labels + evidence flags; F-PROFILE
+covers derivation-from-records and the consistency
+branches. (One fixture assertion was itself corrected
+this round: it demanded >3 pack items where the frozen
+T03 pack has 3 — the property is multi-item mixed
+handling, and the assertion now says so.) **(5)** The
+probe records worker_after labels, per-statement
+evidence identification, and a mechanical adoption
+measurement (adopted / already-aligned / resisted /
+unclear) beside the three preserved records. **(6)**
+Call accounting is total: pilot wraps run_ab.call_qwen —
+which run_c invokes by attribute — so Arm C internal
+calls land in the same per-run manifest with purpose,
+usage, latency (F-CALLS fixture).
+All fixtures pass. **No pilot runs executed. Awaiting
+re-inspection.**

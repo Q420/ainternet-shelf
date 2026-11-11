@@ -3,34 +3,61 @@
   {
    "task": "T05",
    "op_class": "record-composition",
-   "level": "R0",
+   "level": "R0-equivalent (Arm A)",
    "worker_result": "incorrect",
    "adjudication": "Alex adjudication of V1",
    "critical_failures": [],
+   "conditions": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0,
+    "battery": "V1"
+   },
    "evidence_refs": [
-    "QWEN-AB-RESULTS.json T05 scores"
+    {
+     "file": "QWEN-AB-RESULTS.json",
+     "sha256": "87cfa2cec10a663bf3f14c1768141009bde87bbeb9e600592dfbb59c33f9cf97",
+     "locator": "runs[T05/A].attempts[0] + final_gate_decision"
+    }
    ]
   },
   {
    "task": "T05",
    "op_class": "record-composition",
-   "level": "R0",
+   "level": "R0-equivalent (Arm A)",
    "worker_result": "incorrect",
-   "adjudication": "Alex review pb-mwbps5ss (V2R)",
+   "adjudication": "Alex adjudication of V2R",
    "critical_failures": [],
+   "conditions": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0,
+    "battery": "V2R"
+   },
    "evidence_refs": [
-    "QWEN-AB-V2R-RESULTS.json T05 first-attempt BLOCKED"
+    {
+     "file": "QWEN-AB-V2R-RESULTS.json",
+     "sha256": "fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9",
+     "locator": "runs[T05/A].attempts[0] + final_gate_decision"
+    }
    ]
   },
   {
    "task": "T06",
    "op_class": "label-adoption",
-   "level": "R3",
+   "level": "R3-equivalent (Arm C)",
    "worker_result": "incorrect",
    "adjudication": "Alex review pb-mwbps5ss (V2R)",
    "critical_failures": [],
+   "conditions": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0,
+    "battery": "V2R"
+   },
    "evidence_refs": [
-    "QWEN-AB-V2R-RESULTS.json worker_vs_system"
+    {
+     "file": "QWEN-AB-V2R-RESULTS.json",
+     "sha256": "fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9",
+     "locator": "runs[T06/C].process.worker_vs_system"
+    }
    ]
   }
  ],
@@ -44,16 +71,24 @@
    "sample_count": 2,
    "provisional": true,
    "levels_observed": [
-    "R0"
+    "R0-equivalent (Arm A)"
    ],
    "adjudication": [
     "Alex adjudication of V1",
-    "Alex review pb-mwbps5ss (V2R)"
+    "Alex adjudication of V2R"
    ],
    "critical_failures": [],
    "evidence": [
-    "QWEN-AB-RESULTS.json T05 scores",
-    "QWEN-AB-V2R-RESULTS.json T05 first-attempt BLOCKED"
+    {
+     "file": "QWEN-AB-RESULTS.json",
+     "sha256": "87cfa2cec10a663bf3f14c1768141009bde87bbeb9e600592dfbb59c33f9cf97",
+     "locator": "runs[T05/A].attempts[0] + final_gate_decision"
+    },
+    {
+     "file": "QWEN-AB-V2R-RESULTS.json",
+     "sha256": "fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9",
+     "locator": "runs[T05/A].attempts[0] + final_gate_decision"
+    }
    ]
   },
   {
@@ -65,14 +100,18 @@
    "sample_count": 1,
    "provisional": true,
    "levels_observed": [
-    "R3"
+    "R3-equivalent (Arm C)"
    ],
    "adjudication": [
     "Alex review pb-mwbps5ss (V2R)"
    ],
    "critical_failures": [],
    "evidence": [
-    "QWEN-AB-V2R-RESULTS.json worker_vs_system"
+    {
+     "file": "QWEN-AB-V2R-RESULTS.json",
+     "sha256": "fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9",
+     "locator": "runs[T06/C].process.worker_vs_system"
+    }
    ]
   }
  ],
@@ -92,7 +131,7 @@
     "adoption probe with hard capture order",
     "three records kept separate"
    ],
-   "basis": "profile weak: T06/label-adoption; evidence ['QWEN-AB-V2R-RESULTS.json worker_vs_system']"
+   "basis": "profile weak: T06/label-adoption; evidence [{'file': 'QWEN-AB-V2R-RESULTS.json', 'sha256': 'fa99b69e08b624a1974ecec7a6f6412f003deca68e5e9ff1c640ec0edd0943a9', 'locator': 'runs[T06/C].process.worker_vs_system'}]"
   },
   {
    "task": "T01",

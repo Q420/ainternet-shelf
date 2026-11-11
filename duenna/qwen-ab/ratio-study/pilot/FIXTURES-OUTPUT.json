@@ -1,48 +1,78 @@
 {
- "F-IMPORT": {
+ "F-IMPORT-workspace": {
   "resolved": {
    "run_ab.py": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_ab.py",
-   "tools24.py": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/tools24.py",
-   "run_c.py": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_c.py"
+   "run_c.py": "/home/hatch/workspace/agent-factory/qwen-ab-test/run_c.py",
+   "tools24.py": "/home/hatch/workspace/agent-factory/qwen-ab-test/v24/tools24.py"
   },
   "pass": true
  },
+ "F-IMPORT-shelf": {
+  "resolved": {
+   "run_ab.py": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/run_ab.py",
+   "run_c.py": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v248-foundation/run_c.py",
+   "tools24.py": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v24/tools24.py"
+  },
+  "pass": true
+ },
+ "F-IMPORT": {
+  "pass": true
+ },
  "F-R1R2": {
-  "pack_items": 1,
-  "item_shape": "<class 'tuple'>",
-  "located": [
-   "r60-revision-change-record#009"
-  ],
-  "classes": [
-   "record section"
+  "pack_items": 3,
+  "kinds": [
+   "record section",
+   "record section",
+   "authored fixture"
   ],
   "extraction_vias": [
-   "source_extract"
+   "source_extract",
+   "source_extract",
+   "fixture-item"
   ],
   "pass": true
  },
  "F-PROBE": {
-  "worker_before": {
+  "order": [
+   "unaided",
+   "revision",
+   "revision",
+   "revision"
+  ],
+  "worker_after": {
    "S1": "SUPPORTED",
    "S2": "UNTRACEABLE",
    "S3": "UNTRACEABLE",
    "S4": "CONTRADICTED"
   },
-  "mechanical": {
-   "S1": "SUPPORTED",
-   "S2": "UNTRACEABLE",
-   "S3": "UNTRACEABLE",
-   "S4": "CONTRADICTED"
+  "evidence_identified": {
+   "S1": true,
+   "S2": true,
+   "S3": true,
+   "S4": true
   },
-  "record_type": "adoption-probe (not scored)",
+  "adoption": {
+   "S1": "already-aligned",
+   "S2": "already-aligned",
+   "S3": "already-aligned",
+   "S4": "already-aligned"
+  },
   "pass": true
  },
  "F-PROFILE": {
-  "consistent_n3": "MEDIUM",
-  "failed_n3": "LOW",
-  "template_for_weak": "TPL-MECH-EXTRACTION-REFERENCE",
-  "demonstrated_path": "X (R2)",
-  "malformed_fails_closed": true,
+  "observations_from_records": 3,
+  "all_have_conditions_and_refs": true,
+  "t05_n": 2,
+  "consistent_n3_confidence": "MEDIUM",
+  "failed_n3_confidence": "LOW",
+  "pass": true
+ },
+ "F-CALLS": {
+  "captured": 2,
+  "purposes": [
+   "arm-c-internal",
+   "arm-c-internal"
+  ],
   "pass": true
  }
 }
