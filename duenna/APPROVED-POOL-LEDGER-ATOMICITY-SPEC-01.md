@@ -290,11 +290,11 @@ The algorithm:
 2. Verify the presented identity against its exact immutable record, including full digest and canonicalisation rules.
 3. **If the presented identity passes:** return that exact identity. Do not walk, even if a higher generation exists. This preserves deliberate historical pins.
 4. **If it fails:** record the failed check and start an upward-only walk within the same identity chain.
-5. Enumerate existing higher generations in ascending order. Never enumerate a lower generation or another Item ID/category.
-6. Record each candidate and the exact check performed.
-7. Continue upward through the sequence until no higher registered generation exists.
-8. The highest registered generation is the candidate head.
-9. Verify the candidate head's full digest and required identity binding. If the head fails its hash/integrity check, STOP. Do not fall back to an older generation.
+5. Enumerate higher **minted Version IDs** in ascending generation order within that chain. Do not treat a reservation by itself as a Version ID or candidate head. Never enumerate a lower generation or another Item ID/category.
+6. Record each minted candidate and the exact check performed. Also record consumed generation slots with no minted Version ID (for example, abandoned or rejected reservations) as gaps; do not reuse them or treat them as versions.
+7. Continue upward through all higher minted Version IDs in the same chain until no higher minted Version ID exists.
+8. Resolve the authoritative head from the ledger's head pointer, and verify that it is the terminal/latest eligible minted Version ID in that chain under the adopted lifecycle rules. Do not infer headship from the largest allocated reservation number.
+9. Verify the head's full digest and required identity binding. If the head fails its hash/integrity check, STOP. Do not fall back to an older generation.
 10. If the head passes and the ledger confirms it is the authoritative head, return that head with the complete walk receipt.
 11. If category/chain membership, sequence, head status or any required evidence is ambiguous, return UNKNOWN/STOP as appropriate; do not guess.
 
@@ -308,7 +308,7 @@ Every walk must retain:
 - reason the initial check failed;
 - identity-chain key and category;
 - starting generation;
-- ordered list of candidate generations examined;
+- ordered list of minted Version IDs examined and consumed reservation gaps observed;
 - each candidate's registered ID, full digest, computed digest, canonicalisation identifier and check result;
 - any missing generation or sequence gap;
 - final head ID and authoritative ledger revision;
@@ -393,7 +393,7 @@ The following remain Ben's decisions or require his explicit clarification; this
 - **G4 chunk identity governance:** carried forward from Phase 1.
 - **Upward-walk scope:** confirm that “same category” means the exact registered Item ID identity chain (with type/category as a bound field), not all items sharing a broad type label.
 - **Intermediate integrity failure:** confirm whether STOP on any corrupt traversed intermediate is required, or whether a bounded skip rule is intended. No skip is implemented or authorised by this draft.
-- **Sequence gaps:** confirm that the walk means next extant higher generation in the registered chain, rather than requiring every integer to exist. Reservations are never reused, so gaps are expected after abandoned/rejected candidates.
+- **Sequence gaps:** confirm that the walk means next extant higher minted Version ID in the registered chain, while recording reservation-only gaps rather than treating them as version candidates. Reservations are never reused, so gaps are expected after abandoned/rejected candidates.
 
 ## 12. Explicit non-authorisations
 
