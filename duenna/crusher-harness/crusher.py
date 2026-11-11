@@ -17,7 +17,7 @@ Design: Ben's direction + Alex's CRUSHER-ADDRESSABILITY-PROOF-01.
 Usage: crusher.py "question" [--requester remmy|alex|ben] [--k 4]
        crusher.py --usage [YYYY-MM-DD]   daily token accounting (UTC)
 
-HARNESS v2 (2026-11-11) — the reporting fix, cleared by Alex
+HARNESS v2.1 (2026-11-11) — the reporting fix, cleared by Alex
 (pb-mwc4i085-9-bsdn) after CRUSHER-INFORMATION-AUDIT-01:
 - Groq's complete HTTP error body is read and preserved; the
   provider's own wording is printed on failure (v1 never read it).
@@ -33,6 +33,11 @@ HARNESS v2 (2026-11-11) — the reporting fix, cleared by Alex
 - NO automatic retry after a rate-limit refusal (HTTP 429):
   record the failure and stop. Bounded retries remain only for
   transient non-429 failures (the 2026-11-09 hardening).
+- v2.1 correction (Alex's review of v2): EVERY failed attempt —
+  including intermediate 5xx and transport failures on the retry
+  path — leaves its own durable record (status, body, attempt
+  number, timestamp), linked to the call's outcome by call_id,
+  and counts separately as unknown usage in daily accounting.
 The FENCE text below is byte-identical to v1. The v1 harness is
 preserved at crusher_v1_archived.py.
 """
@@ -152,13 +157,18 @@ def daily_usage(date_utc: str = None, log_path=LOG_PATH) -> dict:
         if rdate != date_utc:
             continue
         usage = r.get("usage")
-        if r.get("outcome", "answered") == "answered" and isinstance(usage, dict):
+        outcome = r.get("outcome", "answered")
+        if outcome == "answered" and isinstance(usage, dict):
             total = usage.get("total_tokens")
             if total is None:
                 total = (usage.get("prompt_tokens", 0) +
                          usage.get("completion_tokens", 0))
             known_tokens += total
             known_calls += 1
+        elif outcome == "attempt-failed":
+            unknown_calls += 1  # each failed attempt: usage unknown
+        elif outcome in ("failed", "not-sent") and r.get("call_id"):
+            pass  # closing summary; its attempts are counted above
         else:
             unknown_calls += 1
     return {"date_utc": date_utc, "known_tokens": known_tokens,
@@ -168,7 +178,9 @@ def daily_usage(date_utc: str = None, log_path=LOG_PATH) -> dict:
 # ---------------------------------------------------------------- ask
 def ask(question: str, requester: str, k: int = 4, transport=None,
         log_path=LOG_PATH, secs=None) -> dict:
+    import uuid
     transport = transport or call_groq
+    call_id = uuid.uuid4().hex[:12]
     if secs is None:
         secs, _man = load()
     hits = bm25_search(secs, question, k)
@@ -176,6 +188,7 @@ def ask(question: str, requester: str, k: int = 4, transport=None,
     scores = [round(sc, 4) for sc, _s in hits]
     body, package_chars, budget = build_package(question, requester, hits)
     base = {"ts": _now().isoformat(), "date_utc": _now().date().isoformat(),
+            "call_id": call_id,
             "requester": requester, "question": question,
             "sections": section_ids, "scores": scores,
             "package_chars": package_chars, "section_budget_chars": budget}
@@ -191,6 +204,10 @@ def ask(question: str, requester: str, k: int = 4, transport=None,
         try:
             status, headers, payload = transport(body)
         except Exception as e:  # transport-level failure (no HTTP status)
+            _append({**base, "ts": _now().isoformat(),
+                     "outcome": "attempt-failed", "attempt": attempts,
+                     "http_status": None, "error_kind": type(e).__name__,
+                     "error_body": str(e)}, log_path)
             if attempts < 3:
                 time.sleep(15 * attempts)
                 continue
@@ -209,6 +226,11 @@ def ask(question: str, requester: str, k: int = 4, transport=None,
         # record and stop. Other 4xx are deterministic — no retry either.
         # 5xx keeps the bounded transient retry from the 2026-11-09 proof.
         error_body = payload if isinstance(payload, str) else json.dumps(payload)
+        _append({**base, "ts": _now().isoformat(),
+                 "outcome": "attempt-failed", "attempt": attempts,
+                 "http_status": status,
+                 "retry_after": headers.get("Retry-After") or headers.get("retry-after"),
+                 "error_body": error_body}, log_path)
         if status == 429 or 400 <= status < 500 or attempts >= 3:
             rec = {**base, "outcome": "failed", "attempts": attempts,
                    "http_status": status,
