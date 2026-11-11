@@ -133,7 +133,7 @@ Mere DOM observation, a transient detector result, a message that fails before a
 - **REGISTERED:** the mapping and registration event are durably committed and read-back verified.
 - **NOT_REGISTERED:** authoritative evidence establishes that acceptance/commit did not occur.
 - **REGISTRATION_UNKNOWN:** the Bridge cannot establish whether commit occurred. It must resolve the original idempotency request before any retry or new registration.
-- A system refusal before registration creates no registration record at the time of refusal. It is preserved in a separate intake record. If the same message later registers and correlation by PB-ID is established, that refusal is promoted into the new registration as its first lifecycle disposition event under §7.2A; the original intake record remains unchanged and linked. Registration is not blocked by the active intake refusal: the item receives its Index ID and sequence, while the promoted refusal governs what may happen next.
+- A system refusal before registration creates no registration record at the time of refusal. It is preserved in a separate intake record. If the same message later registers and correlation by PB-ID is established, that refusal is promoted into the new registration as its first lifecycle event (the first disposition-bearing event attached to the registration) under §7.2A; the original intake record remains unchanged and linked. Registration is not blocked by the active intake refusal: the item receives its Index ID and sequence, while the promoted refusal governs what may happen next.
 - If correlation by PB-ID cannot be established, the relationship is UNKNOWN. UNKNOWN must never be interpreted as proof that no earlier refusal exists; affected processing/send-admission is held from proceeding until identity can be resolved. This rule depends on stable PB-ID construction (§13.1).
 
 ### 4.4 Once registered
@@ -197,7 +197,7 @@ The following is the proposed closed core event set for this contract. New event
 | Event | Meaning |
 |---|---|
 | REGISTERED | The message crossed the managed-workflow boundary and received its Index ID |
-| PRE_REGISTRATION_REFUSAL_PROMOTED | A preserved pre-registration intake refusal, correlated by PB-ID, is promoted as the new registration's first lifecycle disposition event; the original intake record remains intact and linked |
+| PRE_REGISTRATION_REFUSAL_PROMOTED | A preserved pre-registration intake refusal, correlated by PB-ID, is promoted as the new registration's first lifecycle event (the first disposition-bearing event attached to the registration); the original intake record remains intact and linked |
 | DUPLICATE_OBSERVED | The same PB-ID was observed again; count/provenance recorded without creating another registration |
 | ATTEMPT_CREATED | A distinct authorised processing attempt was created |
 | ATTEMPT_VALIDATED | The attempt passed its specified validation stage |
@@ -249,7 +249,7 @@ A refusal recorded in a separate intake record before registration is not merely
 
 1. The message receives its Index ID and its place in the monotonic registration sequence.
 2. The original intake refusal record is preserved unchanged; promotion never rewrites, moves or erases it.
-3. The refusal is promoted into the new registration as its first lifecycle disposition event, linked to the original intake record and the PB-ID.
+3. The refusal is promoted into the new registration as its first lifecycle event (the first disposition-bearing event attached to the registration), linked to the original intake record and the PB-ID.
 4. The promoted refusal becomes the active disposition and blocks subsequent processing/send-admission under the ordinary active-refusal rule until superseded by an authorised ADMIN act.
 5. Registration itself is not blocked by that active intake refusal. The refusal governs what may happen after registration.
 6. Correlation is by PB-ID. If it cannot be established, the relationship is UNKNOWN, not “no refusal exists”; do not proceed as though the refusal were absent.
@@ -394,7 +394,7 @@ A projection is a cache/materialised view of event history, not a second authori
 | Information Index lookup by Index ID | Not supported; route via PB-ID to Message Index, with separate admission controls for information |
 | Registered PB-ID with any attempt confirmed delivered, then re-observed outside the 20-ID view | Permanently block send-admission under that PB-ID; retain retrieval by PB-ID and by Index ID through the ledger route |
 | Same registered PB-ID has PROVEN_NOT_DELIVERED on one attempt but CONFIRMED delivery on another | CONFIRMED history controls lifetime send block; do not retry; conflicting evidence is adjudicated, not resolved by latest event |
-| Pre-registration refusal later correlates to registration by same PB-ID | Register and allocate Index ID; promote refusal as first lifecycle disposition event; preserve intake record; refusal becomes active |
+| Pre-registration refusal later correlates to registration by same PB-ID | Register and allocate Index ID; promote refusal as first lifecycle event (the first disposition-bearing event attached to the registration); preserve intake record; refusal becomes active |
 | Pre-registration refusal cannot be correlated by PB-ID | UNKNOWN; never infer absence of refusal; hold affected processing until resolved |
 | Ledger merge/federation | Out of scope until namespace and collision-resolution contract is adopted |
 
@@ -442,7 +442,7 @@ This is Contract Revision 02, prepared after Ben's 2026-11-11 adoption of the co
 - Ben's UTC ruling is incorporated: the date segment is the UTC date of the authoritative registration timestamp, metadata only.
 - Ben's lifetime delivered-message ruling is incorporated: any CONFIRMED delivery in the history of a registered PB-ID permanently blocks further send-admission under that PB-ID, including when outside the last-20 view; retrieval remains available by both specified routes.
 - The §8 edge rule is explicit: a PROVEN_NOT_DELIVERED retry never overrides CONFIRMED delivery elsewhere in the same PB-ID's history.
-- Ben's R-2 PROMOTE ruling is incorporated in §§4.3, 6.1, 7.2A, 8, 11 and 13: same-PB-ID pre-registration refusal is promoted as the registration's first lifecycle disposition event; intake record preserved; registration not blocked; refusal becomes active; unestablished correlation is UNKNOWN.
+- Ben's R-2 PROMOTE ruling is incorporated in §§4.3, 6.1, 7.2A, 8, 11 and 13: same-PB-ID pre-registration refusal is promoted as the registration's first lifecycle event (the first disposition-bearing event attached to the registration); intake record preserved; registration not blocked; refusal becomes active; unestablished correlation is UNKNOWN.
 - Remmy R-4 correction is incorporated: references to the outside-window decision concern former contract §13 item 6 / the proposed new sheet item, not Convene Sheet §4 item 6. Convene Sheet §4 item 6 remains stable PB-ID construction and remains OPEN / BLOCKING. No text in this contract closes or re-labels that sheet item.
 - The adopted Convene Sheet delta map is to be incorporated by Remmy as one coordinated revision after this contract is shelved at a fixed pin. The sheet remains NOT READY FOR BUILD until the required review and Ben's governing-sheet confirmation.
 - This contract does not itself amend bridge/BRIDGE-CONVENE-SPEC-01.md.
