@@ -2,19 +2,19 @@
 
 **Status:** PREPARED FOR REVIEW — NOT ADOPTED;
 NOT IMPLEMENTATION AUTHORITY
-**Revision:** Rev 3 — prepared in response to
-Alex's review `pb-mwcke1i3-18-7qy0` and his
-shelved traceability review
-(duenna/ALEX-SWEEP-IMPLEMENTATION-REV2-
-TRACEABILITY-REVIEW-01.md, commit e3d9102,
-blob 44c587d7…): four required corrections
-(R2-SW-01…04) plus the review's three
-traceability qualifications. Rev 2: commit
-92c13b2c, git blob 85baf44b…; Rev 1: commit
-a702e9ee, git blob e299971a…. Prior revisions
-are preserved in the repository history; this
-revision supersedes them as the review
-candidate only.
+**Revision:** Rev 4 — a consistency revision
+prepared in response to Alex's review
+`pb-mwcl03fw-1a-9n2y` (one required
+correction: the Ledger design-basis pin).
+Rev 3 resolved R2-SW-01…04; this revision
+updates the ledger pin to the current
+candidate (Ledger Rev 4) and changes nothing
+else. Rev 3: commit 43124793, git blob
+499223e8…; Rev 2: commit 92c13b2c, git blob
+85baf44b…; Rev 1: commit a702e9ee, git blob
+e299971a…. Prior revisions are preserved in
+the repository history; this revision
+supersedes them as the review candidate only.
 **Prepared by:** Remmy
 **Date:** 2026-11-11
 **Authority:** Approved Pool Implementation Plan
@@ -34,8 +34,13 @@ specifications, in plan order.
   144b062, blob d71f8062…
 - Phase 3 Reconciliation Pack 01 — commit
   34baaee
-- Ledger Implementation Specification 01 Rev 2
-  — commit 5f214261, blob ee518708…
+- Ledger Implementation Specification 01 Rev 4
+  — commit 8eed8d9c, blob 82716823…
+  **Unadopted review candidate:** this
+  component's dependence on its eventual
+  adoption and proven implementation is
+  preserved in full (§3.1); pinning it adopts
+  nothing.
 - Phase 4 Receipt and Readiness Specification
   01 — commit 3aa3c53, blob 1e60a46d…, R1–R4
   rulings recorded in it.
@@ -198,7 +203,7 @@ Implementation Specification in exact terms:
   and a record-only transition for disposition
   bookkeeping.
 - **Reconciliation against the ledger
-  specification (Rev 3):** ReserveGeneration
+  specification (Rev 4):** ReserveGeneration
   and AdvanceHead are defined and carry the
   registry's creation/versioning exactly.
   Record-only transitions are defined there
@@ -868,6 +873,6 @@ operation; or spend, credential or account
 changes. (Design §12, carried forward.)
 
 *End of Dependency and Sweep Implementation
-Specification 01 Rev 3 — prepared for Alex's
+Specification 01 Rev 4 — prepared for Alex's
 review and adoption decision under the amended
 delegation.*
