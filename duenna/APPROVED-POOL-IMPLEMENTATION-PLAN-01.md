@@ -29,7 +29,7 @@ The plan is derived from:
 - Infrastructure Gap Register 0.1, reviewed at commit `9b8f782`, blob `e58b91a648edb57a42d35bead52e47d3d004cdb0` (exact current Shelf path requires Remmy's source reconciliation).
 - Dictionary 0.4 Rev 3, commit `b7c4274`, file SHA256 `0717bb6c3b372be3f5eb6091bef63338d88e22b7fd8edacb1c0d85c2569047f6`.
 - The three Dictionary 0.4 independent challenges, including Challenge 03 PASS at commit `2a25df2`, blob `b75285559fd451fbd80719398aafc7beea11882e`.
-- Pool Retrieval 01 at `2151c78`, Pool Retrieval 02 at `a2050bd), Crusher Information Audit 01 at `920af49`, Index Admission Report at `8b7b0acf`, and Crusher v2.2 implementation/evidence at `271b621`.
+- Pool Retrieval 01 at `2151c78`, Pool Retrieval 02 at `a2050bd`, Crusher Information Audit 01 at `920af49`, Index Admission Report at `8b7b0acf`, and Crusher v2.2 implementation/evidence at `271b621`.
 
 Source pins above identify the reviewed basis; they do not imply that every source has been re-fetched at this plan's commit. Remmy's Phase 0 source check must reconcile current paths, heads and any intervening changes before this plan is treated as the current execution baseline.
 
