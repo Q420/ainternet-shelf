@@ -61,7 +61,7 @@ must resolve in the cited version when present).
 | criterion_result | per-criterion result, values below | ACCEPT | Req, one per criterion | value in {MET, UNMET, UNASSESSED} | — |
 | MET | verification performed; expected evidence present | (value of criterion_result) | — | the criterion's verification record exists in the acceptance's evidence and shows the evidence present | the attestation is genuinely supported |
 | UNMET | verification performed; evidence absent or failing | (value) | — | verification record exists; evidence absent or failing | as MET |
-| UNASSESSED | verification not yet performed [FM-12] | (value) | — | NO verification record exists for the criterion in the acceptance's evidence set. UNASSESSED encodes non-performance only; whether the assessment was due is process state, not encoded [DECISION] | — |
+| UNASSESSED | verification not yet performed [FM-12] | (value) | — | No verification record exists for the criterion in the acceptance's evidence set. Optional assessment_note may record why/not-yet-due; it does not change the meaning of UNASSESSED. | — |
 | accepted_scope | criteria accepted | ACCEPT | Req | only MET criteria; combination rules in §C-1 | — |
 | excluded_scope | criteria expressly not accepted | ACCEPT | Req on PARTIAL and REJECTED; empty on ACCEPTED | disjoint from accepted_scope; accepted ∪ excluded = the full criteria set | — |
 | release_effect | RELEASE_ARTEFACT / RELEASE_ARTEFACT_WITH_EXCLUSIONS / NO_RELEASE | ACCEPT | Req | combination rules in §C-1 | — |
@@ -116,7 +116,7 @@ will produce.
 | Field | Meaning | Legal types | Req | FORM rule | MEANING |
 |---|---|---|---|---|---|
 | owner | seat accountable for the obligation or task [FM-01: required and carried into §L] | REQUIREMENT; DELEGATION (the delegate); REGISTER_TASK | Req | resolves to a registered seat | — |
-| task_ref | reference object {task_id, task_registry_ref} naming the delegated task [FM-02: own row] | DELEGATION | Req | object has exactly the two members; task_id resolves against the pinned version | — |
+| task_ref | reference object {task_id, task_registry_ref} naming the delegated task [FM-02: own row] | DELEGATION | Req | object has exactly the two members; task_id resolves against the pinned version; if envelope task_id is also present, it MUST identify the same task under the same registry pin | — |
 | condition | bounded, observable satisfying state | REQUIREMENT | Req | stated as an observable condition | — |
 | verification | named, versioned deciding check | REQUIREMENT | Req | named and versioned | — |
 | expected_evidence | evidence type the verification produces | REQUIREMENT | Req | typed (class and/or artefact kind) | — |
