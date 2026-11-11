@@ -356,9 +356,9 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - Late append after expiry is refused and visibly explained.
 - Pause during the window places the unsent message into OWNER-REVIEW without sending or discarding it. It adds no journal ID unless and until an actual send occurs.
 - The append right must work for either direction unless the live clarification says it is restricted to one direction.
-- Multiple pending messages each retain their own timer; a superseded/discarded item cancels its timer. The UI must not imply that one append window applies to every buffered constituent.
+- **Window lock (Ben's final ruling, 2026-11-11):** exactly one held message owns the append window at a time. A message arriving while a window is active queues behind it in serial order, and its window opens only when it becomes the held message; windows never overlap, and a later arrival never resets, extends or shares an active window. A superseded/discarded item cancels its own window. (This supersedes the earlier per-message independent-timers treatment.)
 
-**Acceptance:** no-append timeout; committed append; late append refusal; pause during window; overlapping windows; same ID retained; original text unchanged; appended text visibly attributed; completeness digest verifies.
+**Acceptance:** no-append timeout; committed append; late append refusal; pause during window; window lock under back-to-back arrivals (the second message's window opens only after the first closes - no overlap, no reset, no sharing); same ID retained; original text unchanged; appended text visibly attributed; completeness digest verifies.
 
 ### 2.12 NEW-8 — GitHub approval-card boundary
 
@@ -371,6 +371,8 @@ protocol.js supports an optional PB-FILE block with file hash/byte verification.
 - The requested automation of the confirmation itself is NOT ACCEPTED into the build scope. The probe may identify and document the human gate; it may not automate it.
 
 **Acceptance:** preflight can complete; the flow stops visibly at the confirmation card; no automated confirmation occurs; post-human-confirmation verification records the actual result.
+
+**Ben's constraint on the future standalone item (banked 2026-11-11):** the separate approval extension Ben has scheduled after this build is bound, whenever it is designed, by this rule: no confirmation may ever be actuated unless the exact repository (Q420/ainternet-shelf) and the exact payload hash have first been verified. Recorded here for the record; it creates no bridge scope and no present work.
 
 ---
 
