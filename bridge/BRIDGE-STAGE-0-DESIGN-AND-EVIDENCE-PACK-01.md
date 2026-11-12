@@ -1,6 +1,6 @@
 # Pulse Bridge — Stage 0 Design and Evidence Pack 01
 
-**Status:** STAGE 0 DESIGN OUTPUT — FOR BEN'S DECISIONS; NOT BUILD AUTHORISATION  
+**Status:** STAGE 0 DESIGN OUTPUT — GATE 5 BEHAVIOUR DECIDED; GATE 1 AWAITING BEN; NOT BUILD AUTHORISATION  
 **Commission:** Ben's Stage 0 go, 2026-11-11, relayed by Remmy under PB-ID `pb-mwcwh334-2f-e025`.  
 **Authority:** Stage 0 of adopted Build Plan 01. Design/evidence only. No code, probes, tests, browser actions, migration, reload, deployment or activation were performed.  
 **Working-set discipline:** All conclusions below are drawn from the exact source pins listed here. Any dependency outside this set is named as an open dependency; none has been silently fetched or assumed.
@@ -174,7 +174,7 @@ Required later fixture classes, once implementation is authorised: identical re-
 # Gate 5 — Disconnect semantics decision paper
 
 **Governing:** Convene Sheet §2.3 and §4 item 11; Contract Rev 02; v0.18.0 `content.js` and `background.js`.  
-**Disposition:** OPTIONS PREPARED; BEN'S DECISION REQUIRED. This is a Stage 1 blocker and must not be deferred behind Stage 2/3 work.
+**Disposition:** CORE DISCONNECT BEHAVIOUR DECIDED BY BEN ON 2026-11-11. CONTROL-SCOPE PACKAGING REMAINS A SEPARATE, NARROW OPEN ITEM (GATE 5A); THIS RULING IS NOT OPEN FOR RECONSIDERATION.
 
 ## 5.1 Current source behaviour
 
@@ -185,12 +185,24 @@ Required later fixture classes, once implementation is authorised: identical re-
 - The current handler does not itself create the governing owner-review inventory, persist a bridge epoch before dispatch eligibility changes, or distinguish a per-seat unregister from a global disconnect.
 - There is no separate global Disconnect Bridge command in the inspected v0.18.0 panel path.
 
-The sheet already governs that disconnect enters owner review for the affected bridge scope and that held registered items remain registered. The open decision is the control meaning and exact scope, not whether held work may be purged. It may not.
+The governing rule is now explicit by Ben's ruling, verbatim: **“disconnect should force whatever is held or in transit into the center to be pushed, deleted or appended.”**
+
+**DECIDED BEHAVIOUR — applies to every disconnect action, whatever scope packaging is ultimately selected:**
+- When a disconnect fires, every held or in-transit item within the scope of that disconnect is forced into the centre station / owner-review surface.
+- Each item remains there for Ben's explicit disposition: **PUSH**, **DELETE**, or **APPEND**.
+- Disconnect never silently drops, purges, sends, replays, copies, or destroys held/in-transit work. No item moves, sends or is destroyed until Ben decides.
+- The existing permanent registration/lifecycle record and message identity remain intact. Moving an item to the centre is an owner-review presentation, not a new registration or a delivery claim.
+- PUSH is an owner decision to proceed through the governed push-through/dispatch path; it is not permission for disconnect itself to send. DELETE requires Ben's explicit decision. APPEND preserves the held item and adds Ben's separately attributable contribution under the append rules; it does not silently dispatch.
+- The rule applies to the full affected work inventory, not merely the currently visible pair slot: held items, in-transit items, buffered/aggregate constituents, append-window owner and waiters, retries/defers, and handoffs awaiting acknowledgement where they fall within the chosen disconnect scope.
+- The station must not imply that a previously completed or already confirmed delivery can be recalled. Where an attempt's delivery state is unresolved, preserve that uncertainty and present the item for owner review without inventing a delivery outcome.
+
+This closes the substantive no-purge / owner-review behaviour for Gate 5. The remaining question is only how the disconnect control(s) package the affected scope and recovery path; it is tracked separately as Gate 5A below.
 
 ## 5.2 Option A — two explicit controls: “Unregister this seat” and “Disconnect bridge”
 
 **Per-seat action — Unregister this seat**
 - Removes only the selected seat's active tab registration after the bridge has entered the required safe hold/epoch boundary.
+- Must first force every held or in-transit item within this per-seat action's affected scope into the centre station for Ben's PUSH / DELETE / APPEND decision, under the decided behaviour above.
 - Affects every non-terminal item whose sender or recipient is that seat, including the active pair, pending reply, buffered/aggregate constituents, append-window owner and waiters, retries/defers, in-flight attempt and any local handoff awaiting registration acknowledgement.
 - Because the current bridge is a two-seat exchange, loss of either seat prevents normal cross-seat dispatch. Proposed safe behaviour: suspend dispatch bridge-wide until the seat is re-registered; keep the other seat registered but do not pretend the remaining half can deliver.
 - All affected registered work enters OWNER-REVIEW; no item moves, retries, sends, copies or disappears before Ben's disposition.
@@ -198,6 +210,7 @@ The sheet already governs that disconnect enters owner review for the affected b
 
 **Global action — Disconnect bridge**
 - Suspends the bridge, persists the new epoch, then removes both seat registrations.
+- Must first force every held or in-transit item in the bridge-wide scope into the centre station for Ben's PUSH / DELETE / APPEND decision, under the decided behaviour above.
 - Every non-terminal registered item in the bridge enters OWNER-REVIEW, not just work currently visible in the pair slot.
 - Both seats must be deliberately re-registered; the bridge does not infer that reconnecting one tab means the bridge is ready.
 - No held item is destroyed or automatically replayed.
@@ -208,7 +221,7 @@ The sheet already governs that disconnect enters owner review for the affected b
 ## 5.3 Option B — one global “Disconnect bridge” action
 
 - The existing per-seat button is removed or renamed to a non-disconnecting seat-management action.
-- A Disconnect bridge command pauses the bridge, persists the epoch, removes both seat registrations and places all non-terminal registered work into OWNER-REVIEW.
+- A Disconnect bridge command pauses the bridge, persists the epoch, removes both seat registrations and forces every held or in-transit item in the bridge-wide scope into the centre station for Ben's PUSH / DELETE / APPEND decision.
 - A seat can be replaced/re-registered only through the separate seat assignment flow.
 - Every disconnect is global; there is no one-seat unregister control.
 
@@ -219,22 +232,24 @@ The sheet already governs that disconnect enters owner review for the affected b
 
 - Keep current control scope (delete only the calling seat's registration), but rename it **Unregister this seat** to remove the ambiguity.
 - Do not add a global Disconnect bridge action in this build.
-- Apply owner-review and epoch rules to all work affected by loss of that seat.
+- Apply owner-review and epoch rules to all work affected by loss of that seat; every held or in-transit item in that scope must be forced into the centre for Ben's PUSH / DELETE / APPEND decision.
 
 **Advantages:** smallest change to existing control surface.  
 **Costs:** there remains no single action to deliberately disconnect both seats; global shutdown requires two separate actions and could create an awkward intermediate state.
 
-## 5.5 Decision questions for Ben
+## 5.5 Gate 5A — residual control-scope and recovery packaging decision
 
-1. Which option: A, B or C?
-2. If A, should global disconnect be available from either seat panel, and should it require a second explicit confirmation?
-3. On per-seat unregister, should the other seat remain registered but the bridge globally suspended (recommended safe default), or should only the affected seat's work be suspended?
-4. After re-registering, should OWNER-REVIEW remain until Ben explicitly resumes/decides each item? The governing no-auto-move rule suggests yes.
-5. Does a global disconnect need a distinct owner-review label from Pause, or is the same OWNER-REVIEW state with a recorded cause sufficient?
+Ben's ruling closes the behaviour above. It does **not** select the user-interface packaging option. The following narrow questions remain separate from Gate 5 and must not be used to reopen its decided no-purge behaviour:
 
-**Non-negotiable under every option:** epoch is persisted before dispatch eligibility changes; no stale event may initiate a send; every affected registered item remains in the permanent ledger; owner review is complete; no automatic purge, retry, replay or reclassification.
+1. Which control packaging is selected: A (per-seat Unregister plus global Disconnect), B (global Disconnect only), or C (per-seat Unregister only)?
+2. If A, should global Disconnect be available from either seat panel, and should it require a second explicit confirmation?
+3. On per-seat Unregister, should the other seat remain registered while the bridge is globally suspended, or should only the affected seat's work be suspended? The decided centre-station disposition applies to every held/in-transit item within whichever scope is selected.
+4. After re-registration, does OWNER-REVIEW remain until Ben explicitly decides each item or resumes it through the governed path? No automatic movement is permitted by the ruling.
+5. Is a distinct owner-review cause label needed for Disconnect versus Pause, or is the same OWNER-REVIEW state with a recorded cause sufficient?
 
-**Gate status:** OPEN / BLOCKING for Stage 1 and Stage 3 pending Ben's decision.
+**Gate 5 status:** DECIDED — disconnect forces all held/in-transit work in its affected scope into the centre for Ben's PUSH / DELETE / APPEND disposition; no silent drop, movement, send or destruction.
+
+**Gate 5A status:** OPEN — control-scope and recovery packaging only. This is the residual Stage 1 / Stage 3 dependency; it does not reopen Gate 5 behaviour.
 
 ---
 
@@ -546,7 +561,8 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 | Gate | Output in this pack | Status | Stage blocked |
 |---|---|---|---|
 | Stable PB-ID canonicalisation/collision | Exact source-occurrence rule proposal, platform matrix, UNKNOWN/collision policy, canonical vectors | **OPEN — Ben adoption required** | Stage 1 |
-| Disconnect semantics | Three options, exact owner-review scopes and questions | **OPEN — Ben decision required** | Stages 1 and 3 |
+| Disconnect behaviour | Ben's centre-station PUSH / DELETE / APPEND ruling; applies to every disconnect scope | **DECIDED — 2026-11-11** | Behaviour fixed; packaging tracked below |
+| Gate 5A control-scope packaging | A/B/C control options and residual recovery questions | **OPEN — narrow scope decision** | Stages 1 and 3 |
 | F-6 completeness | Character/block/hash/trailer/repair proposal | **OPEN — Ben adoption required** | Stage 2 |
 | F-7 composer ownership | Five-platform source evidence and bounded read-only probe request | **OPEN — Ben probe authorisation required for live evidence** | Stage 2 |
 | Append serialization | Same-ID segment model and three wire options | **OPEN — Ben decision required** | Stage 3 |
@@ -569,7 +585,7 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [x] No Crusher call or proxy.
 - [x] No code changes, probes, tests, browser actions, reload, migration, deployment or activation.
 - [ ] Ben adopts the exact PB-ID source-occurrence and UNKNOWN/collision rule.
-- [ ] Ben decides disconnect semantics.
+- [x] Ben's Gate 5 disconnect behaviour ruling is incorporated; control-scope packaging remains open as Gate 5A.
 - [ ] Ben adopts F-6 definitions.
 - [ ] Ben separately authorises or declines the bounded F-7 read-only probe.
 - [ ] Ben decides append wire format, direction coverage and commit/send semantics.
@@ -577,6 +593,6 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [ ] Ben says whether to shelf the direction erratum.
 - [ ] NEW-9 external route and receipt authority are resolved before Stage 5.
 
-**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gates 1 and 5 are presented first in this pack because they block Stage 1. No decision is inferred from silence. No stage implementation is authorised by this document. Stage 1 remains blocked until Ben adopts the PB-ID rule and disconnect semantics, and separately authorises Stage 1 implementation.
+**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 5's substantive disconnect behaviour is decided and incorporated. Gate 1 remains before Ben. Gate 5A records only the residual control-scope/recovery packaging questions; it does not reopen Gate 5. No decision is inferred from silence. No stage implementation is authorised by this document. Stage 1 remains blocked pending Ben's Gate 1 ruling, resolution of the separately named Gate 5A dependency, and separate Stage 1 implementation authorisation.
 
 **End of Stage 0 Design and Evidence Pack 01.**
