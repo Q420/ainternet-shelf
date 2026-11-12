@@ -29,10 +29,17 @@ function makeLedger(opts = {}) {
   const clock = { t: T0 };
   const ledger = ledgerMod.createLedger({
     now: () => clock.t,
-    sha256Hex,
+    sha256Hex: opts.sha256Hex || sha256Hex,
     duplicateEventPolicy: opts.duplicateEventPolicy || 'event',
     initialSequence: opts.initialSequence || 0,
     failReadBackOnce: !!opts.failReadBackOnce,
+    // Standard test authority: Ben's acts, carrying a reference,
+    // verify. Anything else does not. opts.authorityVerifier
+    // replaces it; opts.noAuthority removes the mechanism.
+    authorityVerifier: opts.noAuthority
+      ? undefined
+      : (opts.authorityVerifier || ((act) =>
+          act.actor === 'ben' && typeof act.authorityRef === 'string' && act.authorityRef.length > 0)),
   });
   return { ledger, clock };
 }
@@ -41,6 +48,14 @@ let pbCounter = 0;
 function pbid() {
   pbCounter += 1;
   return 'pb1-' + sha256Hex('fixture-message-' + pbCounter);
+}
+
+function regInput(pb, key) {
+  return { pbId: pb, idempotencyKey: key, messageIndexRef: 'msg/' + key, admitted: true };
+}
+
+function clone(x) {
+  return JSON.parse(JSON.stringify(x));
 }
 
 const tests = [];
@@ -105,7 +120,7 @@ test('counter rollback on import is an INTEGRITY_FAULT and registration stops', 
   const state = ledger.exportState();
   state.counter = 0; // rolled back below the committed sequence
   const { ledger: restored } = makeLedger();
-  const imp = restored.importState(state);
+  const imp = await restored.importState(state);
   assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
   const r = await restored.register({ pbId: pbid(), idempotencyKey: 'b', messageIndexRef: 'm/b', admitted: true });
   assert.strictEqual(r.status, 'INTEGRITY_FAULT');
@@ -184,7 +199,7 @@ test('a registered record is permanent: skip, discard and close never erase the 
   const r = await ledger.register({ pbId: pbid(), idempotencyKey: 'k', messageIndexRef: 'm/1', admitted: true });
   const idx = r.record.indexId;
   await ledger.appendEvent(idx, { type: 'SKIPPED', actor: 'owner' });
-  await ledger.appendEvent(idx, { type: 'DISCARDED', actor: 'owner' });
+  await ledger.appendEvent(idx, { type: 'DISCARDED', actor: 'ben', authorityRef: 'owner-act' });
   await ledger.appendEvent(idx, { type: 'CLOSED', actor: 'owner', data: { reason: 'done' } });
   const byIndex = ledger.lookupByIndex(idx);
   assert.strictEqual(byIndex.pbId, r.record.pbId);
@@ -317,7 +332,7 @@ test('supersession changes the active disposition and leaves the original refusa
 
 test('a passive duplicate after supersession is count only — no attempt is created', async () => {
   const { ledger, idx, p, refusal } = await refusedRegistration();
-  await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', supersedesEventId: refusal.event.eventId });
+  await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', authorityRef: 'owner-act', supersedesEventId: refusal.event.eventId });
   const before = ledger.events(idx).length;
   await ledger.observeDuplicate(p);
   const evs = ledger.events(idx);
@@ -328,7 +343,7 @@ test('a passive duplicate after supersession is count only — no attempt is cre
 
 test('B path: supersession + Ben direction yields exactly one fresh attempt; eligibility is one-shot', async () => {
   const { ledger, idx, refusal } = await refusedRegistration();
-  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', supersedesEventId: refusal.event.eventId });
+  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', authorityRef: 'owner-act', supersedesEventId: refusal.event.eventId });
   const dir = await ledger.appendEvent(idx, {
     type: 'RE_PRESENTATION_DIRECTED', actor: 'ben', authorityRef: 'owner-direction',
     causationEventId: sup.event.eventId,
@@ -360,8 +375,8 @@ test('re-presentation without a supersession is refused — direction alone crea
 
 test('a fresh attempt that is refused makes the new refusal active; the old supersession cannot reopen it', async () => {
   const { ledger, idx, refusal } = await refusedRegistration();
-  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', supersedesEventId: refusal.event.eventId });
-  const dir = await ledger.appendEvent(idx, { type: 'RE_PRESENTATION_DIRECTED', actor: 'ben', causationEventId: sup.event.eventId });
+  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', authorityRef: 'owner-act', supersedesEventId: refusal.event.eventId });
+  const dir = await ledger.appendEvent(idx, { type: 'RE_PRESENTATION_DIRECTED', actor: 'ben', authorityRef: 'owner-direction', causationEventId: sup.event.eventId });
   const a1 = await ledger.createAttempt(idx, { via: 're-presentation', actor: 'system', supersedesEventId: sup.event.eventId, directionEventId: dir.event.eventId });
   assert.strictEqual(a1.status, 'CREATED');
   await ledger.appendEvent(idx, { type: 'REFUSED', actor: 'system', attemptId: a1.attemptId, data: { check: 'again' } });
@@ -498,6 +513,234 @@ test('register rejects non-string and missing identity fields without coercion',
 });
 
 /* ---- Runner ---- */
+
+// ---------- rev2: authority boundary (finding 1) ----------
+
+test('rev2: with no authority mechanism configured, authority-bearing transitions are unavailable', async () => {
+  const { ledger } = makeLedger({ noAuthority: true });
+  const p = pbid('noauth');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  const idx = reg.record.indexId;
+  const refusal = await ledger.appendEvent(idx, { type: 'REFUSED', actor: 'system', data: { failedCheck: 'format' } });
+  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', authorityRef: 'owner-act', supersedesEventId: refusal.event.eventId });
+  assert.strictEqual(sup.status, 'REJECTED');
+  assert.strictEqual(sup.reason, 'authority-mechanism-absent');
+  assert.strictEqual(ledger.currentState(idx).activeDisposition, 'REFUSED');
+});
+
+test('rev2: an unverified caller cannot supersede, and B eligibility never opens', async () => {
+  const { ledger, idx, refusal } = await refusedRegistration();
+  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'mallory', authorityRef: 'forged', supersedesEventId: refusal.event.eventId });
+  assert.strictEqual(sup.status, 'REJECTED');
+  assert.strictEqual(sup.reason, 'authority-not-verified');
+  assert.strictEqual(ledger.currentState(idx).activeDisposition, 'REFUSED');
+  const att = await ledger.createAttempt(idx, { via: 're-presentation' });
+  assert.strictEqual(att.status, 'HELD');
+});
+
+test('rev2: an unverified caller cannot direct re-presentation after a verified supersession', async () => {
+  const { ledger, idx, refusal } = await refusedRegistration();
+  const sup = await ledger.appendEvent(idx, { type: 'SUPERSEDED', actor: 'ben', authorityRef: 'owner-act', supersedesEventId: refusal.event.eventId });
+  const dir = await ledger.appendEvent(idx, { type: 'RE_PRESENTATION_DIRECTED', actor: 'mallory', authorityRef: 'forged', causationEventId: sup.event.eventId });
+  assert.strictEqual(dir.status, 'REJECTED');
+  assert.strictEqual(dir.reason, 'authority-not-verified');
+  const att = await ledger.createAttempt(idx, { via: 're-presentation', supersedesEventId: sup.event.eventId, directionEventId: 'EVT-999999' });
+  assert.strictEqual(att.status, 'HELD');
+});
+
+test('rev2: REFUTED and DISCARDED require verified authority; FORCE_SENT too', async () => {
+  const { ledger } = makeLedger();
+  const p = pbid('auth-acts');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  const idx = reg.record.indexId;
+  const badRefute = await ledger.appendEvent(idx, { type: 'REFUTED', actor: 'mallory', authorityRef: 'forged' });
+  assert.strictEqual(badRefute.status, 'REJECTED');
+  const goodRefute = await ledger.appendEvent(idx, { type: 'REFUTED', actor: 'ben', authorityRef: 'owner-act' });
+  assert.strictEqual(goodRefute.status, 'APPLIED');
+  const badDiscard = await ledger.appendEvent(idx, { type: 'DISCARDED', actor: 'mallory', authorityRef: 'forged' });
+  assert.strictEqual(badDiscard.status, 'REJECTED');
+
+  const p2 = pbid('auth-force');
+  const reg2 = await ledger.register(regInput(p2, 'k2'));
+  const att = await ledger.createAttempt(reg2.record.indexId, {});
+  const badForce = await ledger.appendEvent(reg2.record.indexId, { type: 'FORCE_SENT', actor: 'mallory', authorityRef: 'forged', attemptId: att.attemptId });
+  assert.strictEqual(badForce.status, 'REJECTED');
+  const goodForce = await ledger.appendEvent(reg2.record.indexId, { type: 'FORCE_SENT', actor: 'ben', authorityRef: 'owner-act', attemptId: att.attemptId });
+  assert.strictEqual(goodForce.status, 'APPLIED');
+});
+
+// ---------- rev2: UNKNOWN correlation is never promoted (finding 2) ----------
+
+test('rev2: an UNKNOWN-correlation intake record carrying the PB-ID is never promoted as an exact refusal', async () => {
+  const { ledger } = makeLedger();
+  const p = pbid('unknown-promo');
+  await ledger.recordIntakeRefusal({ pbId: p, correlation: 'UNKNOWN', type: 'REFUSED', actor: 'system', failedCheck: 'format' });
+  const reg = await ledger.register(regInput(p, 'k1'));
+  assert.strictEqual(reg.status, 'REGISTERED');
+  const types = ledger.events(reg.record.indexId).map((e) => e.type);
+  assert.ok(!types.includes('PRE_REGISTRATION_REFUSAL_PROMOTED'));
+  assert.strictEqual(ledger.currentState(reg.record.indexId).activeDisposition, 'REGISTERED');
+  const admission = await ledger.sendAdmission(p);
+  assert.strictEqual(admission.allowed, false);
+  assert.ok(admission.reasons.includes('intake-correlation-unknown'));
+});
+
+// ---------- rev2: intake serialisation (finding 3) ----------
+
+test('rev2: an intake refusal recorded after registration is marked already-registered and never retro-promoted', async () => {
+  const { ledger } = makeLedger();
+  const p = pbid('intake-after');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  const entry = await ledger.recordIntakeRefusal({ pbId: p, correlation: 'EXACT', type: 'REFUSED', actor: 'system' });
+  assert.strictEqual(entry.registrationState, 'already-registered');
+  const types = ledger.events(reg.record.indexId).map((e) => e.type);
+  assert.ok(!types.includes('PRE_REGISTRATION_REFUSAL_PROMOTED'));
+  // The refusal still lands — as a lifecycle event, the caller's route.
+  const refused = await ledger.appendEvent(reg.record.indexId, { type: 'REFUSED', actor: 'system', data: { failedCheck: 'format' } });
+  assert.strictEqual(refused.status, 'APPLIED');
+  assert.strictEqual(ledger.currentState(reg.record.indexId).activeDisposition, 'REFUSED');
+});
+
+test('rev2: concurrent intake + registration resolve deterministically inside the chain', async () => {
+  const { ledger } = makeLedger();
+  const p = pbid('intake-race');
+  // Intake submitted first in the same tick: the chain orders
+  // it before the registration, so promotion is the outcome —
+  // by construction, not by timing.
+  const [entry, reg] = await Promise.all([
+    ledger.recordIntakeRefusal({ pbId: p, correlation: 'EXACT', type: 'REFUSED', actor: 'system' }),
+    ledger.register(regInput(p, 'k1')),
+  ]);
+  assert.strictEqual(entry.registrationState, 'pre-registration');
+  assert.strictEqual(reg.status, 'REGISTERED');
+  const types = ledger.events(reg.record.indexId).map((e) => e.type);
+  assert.ok(types.includes('PRE_REGISTRATION_REFUSAL_PROMOTED'));
+});
+
+// ---------- rev2: import integrity boundary (finding 4) ----------
+
+async function exportOfPopulated() {
+  const { ledger } = makeLedger();
+  const p = pbid('import-base');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  const idx = reg.record.indexId;
+  const att = await ledger.createAttempt(idx, {});
+  await ledger.appendEvent(idx, { type: 'DISPATCHED', attemptId: att.attemptId });
+  return { state: ledger.exportState(), idx, p };
+}
+
+test('rev2: a valid export imports cleanly and allocation continues without reuse', async () => {
+  const { state, idx } = await exportOfPopulated();
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(clone(state));
+  assert.strictEqual(imp.status, 'OK');
+  const reg2 = await restored.register(regInput(pbid('import-next'), 'k2'));
+  assert.strictEqual(reg2.status, 'REGISTERED');
+  assert.strictEqual(reg2.record.sequence, 2);
+  assert.notStrictEqual(reg2.record.indexId, idx);
+});
+
+test('rev2: import rejects a duplicate Index ID', async () => {
+  const { state } = await exportOfPopulated();
+  state.records.push(clone(state.records[0]));
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+});
+
+test('rev2: import rejects an event linked to an unknown registration', async () => {
+  const { state, idx } = await exportOfPopulated();
+  state.eventsByIndex[idx].push({ ...state.eventsByIndex[idx][0], eventId: 'EVT-999999', indexId: 'IDX-19990101-000099' });
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+});
+
+test('rev2: import rejects an idempotency mapping that disagrees with the record', async () => {
+  const { state } = await exportOfPopulated();
+  state.idempotency[0][1].pbId = pbid('someone-else');
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+});
+
+test('rev2: import rejects a corrupted record digest', async () => {
+  const { state } = await exportOfPopulated();
+  state.records[0].recordIntegrity = 'sha256:' + '0'.repeat(64);
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+  assert.strictEqual(imp.reason, 'record-integrity-mismatch');
+});
+
+test('rev2: import rejects an event counter rolled back below its history', async () => {
+  const { state } = await exportOfPopulated();
+  state.eventSeq = 0;
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+  assert.strictEqual(imp.reason, 'event-counter-rollback');
+});
+
+test('rev2: import rejects a projection that does not fold from its events', async () => {
+  const { state, idx } = await exportOfPopulated();
+  // Drop the DISPATCHED event from the history: the record
+  // digest still verifies (the record itself is untouched),
+  // but the stored latestEventId no longer folds from the
+  // remaining events.
+  state.eventsByIndex[idx] = state.eventsByIndex[idx].filter((e) => e.type !== 'DISPATCHED');
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+  assert.strictEqual(imp.reason, 'projection-unverifiable');
+});
+
+test('rev2: import rejects an attempt with no creation event', async () => {
+  const { state } = await exportOfPopulated();
+  state.attempts.push({ attemptId: 'ATT-000777', indexId: state.records[0].indexId, pbId: state.records[0].pbId, status: 'created', via: 'initial', deliveryKnowledge: 'UNKNOWN', forceSent: false });
+  state.attemptSeq = 777;
+  const { ledger: restored } = makeLedger();
+  const imp = await restored.importState(state);
+  assert.strictEqual(imp.status, 'INTEGRITY_FAULT');
+});
+
+// ---------- rev2: commit boundary under fault injection (finding 5) ----------
+
+function bombAfter(n) {
+  let calls = 0;
+  return async (s) => {
+    calls += 1;
+    if (calls > n) throw new Error('hash service down');
+    return sha256Hex(s);
+  };
+}
+
+test('rev2: a failed integrity calculation during registration commits nothing and faults the ledger', async () => {
+  const { ledger } = makeLedger({ sha256Hex: bombAfter(0) });
+  const p = pbid('bomb-register');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  assert.strictEqual(reg.status, 'INTEGRITY_FAULT');
+  assert.strictEqual(ledger.listByRegistrationOrder().length, 0);
+  assert.strictEqual(ledger.messageLookup(p).status, 'NOT_FOUND');
+  const again = await ledger.register(regInput(pbid('bomb-register-2'), 'k2'));
+  assert.strictEqual(again.status, 'INTEGRITY_FAULT');
+});
+
+test('rev2: a failed integrity calculation during event append rolls the event back and faults the ledger', async () => {
+  // register uses two hash calls (stage + read-back); the bomb
+  // is armed for everything after.
+  const { ledger } = makeLedger({ sha256Hex: bombAfter(2) });
+  const p = pbid('bomb-append');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  const idx = reg.record.indexId;
+  const before = ledger.events(idx).length;
+  const res = await ledger.appendEvent(idx, { type: 'HELD_FOR_REVIEW', actor: 'system' });
+  assert.strictEqual(res.status, 'INTEGRITY_FAULT');
+  assert.strictEqual(ledger.events(idx).length, before);
+  assert.strictEqual(ledger.currentState(idx).activeDisposition, 'REGISTERED');
+  const after = await ledger.appendEvent(idx, { type: 'HELD_FOR_REVIEW', actor: 'system' });
+  assert.strictEqual(after.status, 'INTEGRITY_FAULT');
+});
 
 (async () => {
   let pass = 0;
