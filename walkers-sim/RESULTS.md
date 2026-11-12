@@ -191,3 +191,36 @@ Harness: verify-stage-b.mjs (Node, same sim code) + verify-stage-b-render.mjs (b
   this creates for ground truth: centre-height geometry alone mislabels
   genuine skin-band contact, as my first test showed — the ground-truth
   definition itself needs care, manifold separation being the honest one.)
+
+## Flicker three-state test · 2026-11-12 · verify-stage-c-flicker.mjs
+- METHOD (Vane rounds 4-5 design): per step, per foot — (A) manifold record
+  (touching flag + WorldManifold separation), (B) sensed ContactState the
+  HOPPER accounting consumes, (C) ground truth = touching manifold with
+  separation <= 0. Scenarios of 600 steps: standard drop (2.6 m), hard drop
+  (4.2 m), drop + upward impulse at step 260.
+- FIRST DRAFT SELF-CAUGHT BUG: it read ManifoldPoint.separation, a field
+  this Planck build does not carry (points carry localPoint/normalImpulse/
+  tangentImpulse/id), producing 2,216 phantom disagreements whose own rows
+  contradicted themselves (touching: true, separation: null). Separation
+  lives on the WorldManifold in this build; fixed and re-run. The phantom
+  numbers were never reported as findings.
+- RESULT: per-foot disagreements 9 (standard), 10 (hard), 9 (impulse) in
+  2,400 foot-steps each. EVERY disagreement is sensed=true WITH a touching
+  manifold, separation +0.0001 to +0.0114 m — the solver slop band at
+  impact/rebound transients. Zero sensed=true with no manifold (no invented
+  support). Zero false negatives (no genuine-overlap step ever missed).
+- ANY-FOOT: exactly 1 disagreement step per scenario (37 standard/impulse,
+  53 hard) — the bounce-off step, immediately after 4+ steps of genuine
+  negative-separation support (seps -5.2 to -8.5 mm at impact).
+- TIMER: sensed support breaking a >=2-step ground-truth unsupported run:
+  ZERO in all scenarios. The unsupported timer is not reset mid-flight by
+  the sensed state anywhere in these records; the single divergent step
+  extends a support interval by one step at rebound instead.
+- DEFINITION NOTE: under truth := "a touching manifold exists" (Planck's
+  own isTouching), disagreements are zero everywhere; the 9-10 steps above
+  appear only under the stricter separation <= 0 definition, all inside
+  the slop band with impulses flowing.
+- IMPULSE CAVEAT: the step-260 impulse (vy = 3.2) raised the torso 0.312 m
+  but produced 0 unsupported steps — no flight occurred; flight coverage
+  comes from the drops' natural bounces, which the sensed state tracked
+  step-exactly.
