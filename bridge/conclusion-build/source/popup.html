@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pulse Bridge</title>
+<style>
+  body { width: 400px; margin: 0; padding: 14px; font: 13px/1.45 system-ui, sans-serif;
+         background: #0a0e1a; color: #dfe6ff; }
+  h1 { font-size: 14px; letter-spacing: 2px; margin: 0 0 10px; text-align: center;
+       background: linear-gradient(90deg, #22d3ee, #a78bfa); -webkit-background-clip: text;
+       background-clip: text; color: transparent; }
+  .seat { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+          border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+  .seat b { letter-spacing: 1px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+         background: #64748b; margin-right: 6px; vertical-align: middle; }
+  .dot.on { background: #34d399; box-shadow: 0 0 6px #34d399; }
+  .meta { color: #93a4c8; font-size: 11px; word-break: break-all; }
+  button { width: 100%; margin-top: 6px; padding: 7px; border-radius: 7px; border: 0;
+           background: linear-gradient(90deg, #0891b2, #7c3aed); color: #fff;
+           font-weight: 600; cursor: pointer; }
+  button.ghost { background: rgba(255,255,255,.08); color: #dfe6ff; }
+  button:disabled { opacity: .45; cursor: default; }
+  h2 { font-size: 11px; letter-spacing: 1.5px; color: #93a4c8; margin: 12px 0 4px; }
+  .det, .log { font-size: 11.5px; color: #c4cff5; }
+  .det { border-left: 2px solid #22d3ee; padding: 3px 8px; margin-bottom: 5px;
+         background: rgba(34,211,238,.06); }
+  .log div { padding: 1px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .mono { white-space: pre-wrap; word-break: break-all; font: 10px/1.5 ui-monospace, monospace; }
+  .empty { color: #64748b; font-size: 11.5px; }
+</style>
+</head>
+<body>
+  <h1>PULSE BRIDGE</h1>
+
+  <div class="seat" id="seat-remmy">
+    <b>REMMY</b> <span class="status"><span class="dot"></span>NOT REGISTERED</span>
+    <div class="meta"></div>
+    <button data-register="remmy">Register current tab as REMMY</button>
+  </div>
+
+  <div class="seat" id="seat-alex">
+    <b>ALEX</b> <span class="status"><span class="dot"></span>NOT REGISTERED</span>
+    <div class="meta"></div>
+    <button data-register="alex">Register current tab as ALEX</button>
+  </div>
+
+  <button id="pauseBtn" class="ghost">Pause bridge (stops detection + delivery)</button>
+  <button id="resetBtn" class="ghost">Reset connections</button>
+  <div id="stage1box" style="display:none; margin-top:8px; padding:7px 9px; border:1px solid rgba(251,191,36,.45); border-radius:8px; background:rgba(251,191,36,.08); color:#fde68a; font-size:12px;"></div>
+
+  <h2>THIS TAB — LIVE STATE</h2>
+  <div id="livestate"><div class="empty">Checking the active tab…</div></div>
+
+  <h2>THE PAIR — ONE EXCHANGE, ONE STEP</h2>
+  <div id="pairbox"><div class="empty">No active pair — watching for the newest message.</div></div>
+  <button id="pairRetryBtn" class="ghost">Retry the pair's current letter</button>
+  <button id="pairRetireBtn" class="ghost">Retire this pair</button>
+
+  <h2 style="display:none" id="growthhead">GREW AFTER COMPLETION — YOUR DECISION</h2>
+  <div id="growthbox"></div>
+
+  <h2>HISTORY — THE SAME RECORD FROM EITHER SEAT</h2>
+  <div id="historybox"><div class="empty">Nothing has crossed yet.</div></div>
+
+  <h2>DETECTED — LETTERS (DELIVERY ON: BRIDGE UNPAUSED)</h2>
+  <div id="detections"><div class="empty">Nothing detected yet.</div></div>
+
+  <h2>ADAPTER SELF-CHECK</h2>
+  <div id="diag"><div class="empty">Open a Muse or ChatGPT tab, then reopen this popup.</div></div>
+
+  <h2>LOG</h2>
+  <div class="log" id="log"><div class="empty">—</div></div>
+
+  <script src="protocol.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
