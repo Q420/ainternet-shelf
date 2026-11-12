@@ -10,7 +10,7 @@ export const CFG = {
   footR: 0.06, footFriction: 0.9,
   groundFriction: 1.0,
   hipY: -0.12,
-  maxMotorTorque: 60, motorSpeedCap: 6,
+  maxMotorTorque: 8, motorSpeedCap: 6,
 };
 // All creature fixtures share this NEGATIVE collision group: creature parts
 // never collide with each other (co-located leg pairs pass through), while
