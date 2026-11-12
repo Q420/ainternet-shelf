@@ -43,14 +43,22 @@ function chatgptSource(msgId) {
   return { form: 'native', platform: 'chatgpt', scope: 'conversation', conversation: 'c-1', messageId: msgId };
 }
 
+// In a live-epoch bridge every detection carries the current
+// epoch. This helper stamps it openly so the ack-path fixtures
+// exercise the ack with the gate satisfied — and the raw
+// unstamped path stays visibly tested in the epoch fixtures.
+function submit(session, epochStore, det) {
+  return session.submitDetection({ ...det, epoch: epochStore.current() });
+}
+
 const tests = [];
 function test(name, fn) { tests.push({ name, fn }); }
 
 /* ---- item 7: capture acknowledgement ---- */
 
 test('a verified registration acknowledges REGISTERED and the handoff may retire', async () => {
-  const { session } = makeSession();
-  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  const { session, epochStore } = makeSession();
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
   assert.strictEqual(ack.outcome, 'REGISTERED');
   assert.ok(ack.indexId);
   assert.ok(ack.pbId.startsWith('pb1-'));
@@ -60,9 +68,9 @@ test('a verified registration acknowledges REGISTERED and the handoff may retire
 });
 
 test('a second detection of the same source acknowledges DUPLICATE against the same record', async () => {
-  const { session, ledger } = makeSession();
-  const a1 = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
-  const a2 = await session.submitDetection({ handoffId: 'h2', source: chatgptSource('m-1'), admitted: true });
+  const { session, epochStore, ledger } = makeSession();
+  const a1 = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  const a2 = await submit(session, epochStore, { handoffId: 'h2', source: chatgptSource('m-1'), admitted: true });
   assert.strictEqual(a2.outcome, 'DUPLICATE');
   assert.strictEqual(a2.indexId, a1.indexId);
   assert.strictEqual(ledger.listByRegistrationOrder().length, 1);
@@ -70,8 +78,8 @@ test('a second detection of the same source acknowledges DUPLICATE against the s
 });
 
 test('a non-admitted candidate acknowledges NOT_REGISTERED and cannot retire without a recorded disposition', async () => {
-  const { session } = makeSession();
-  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: false });
+  const { session, epochStore } = makeSession();
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: false });
   assert.strictEqual(ack.outcome, 'NOT_REGISTERED');
   assert.strictEqual(session.retireHandoff('h1').retired, false);
   session.recordDisposition('h1', { kind: 'system-refused', actor: 'system', note: 'not admitted at the boundary' });
@@ -79,8 +87,8 @@ test('a non-admitted candidate acknowledges NOT_REGISTERED and cannot retire wit
 });
 
 test('read-back loss acknowledges REGISTRATION_UNKNOWN; the handoff stays pending and resolves by idempotency identity', async () => {
-  const { session, ledger } = makeSession({ failReadBackOnce: true });
-  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  const { session, epochStore, ledger } = makeSession({ failReadBackOnce: true });
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
   assert.strictEqual(ack.outcome, 'REGISTRATION_UNKNOWN');
   assert.strictEqual(session.retireHandoff('h1').retired, false);
   const resolved = await session.resolveUnknown('h1');
@@ -90,15 +98,15 @@ test('read-back loss acknowledges REGISTRATION_UNKNOWN; the handoff stays pendin
 });
 
 test('an unidentifiable source acknowledges NOT_REGISTERED with the identity reason — no identity is invented', async () => {
-  const { session } = makeSession();
-  const ack = await session.submitDetection({ handoffId: 'h1', source: { scope: 'platform', platform: 'chatgpt' }, admitted: true });
+  const { session, epochStore } = makeSession();
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: { scope: 'platform', platform: 'chatgpt' }, admitted: true });
   assert.strictEqual(ack.outcome, 'NOT_REGISTERED');
   assert.ok(ack.reason && ack.reason.includes('identity'));
   assert.strictEqual(ack.indexId, null);
 });
 
 test('an identity collision is a visible hold: NOT_REGISTERED, pending, flagged, retirable only by recorded disposition', async () => {
-  const { session } = makeSession();
+  const { session, epochStore } = makeSession();
   // Force a collision by pre-claiming m-1's PB-ID under
   // divergent material (the claim store's contract).
   const idn = identityMod.createIdentity({ sha256Hex });
@@ -106,7 +114,7 @@ test('an identity collision is a visible hold: NOT_REGISTERED, pending, flagged,
   assert.strictEqual(derived.status, 'OK');
   const store = session.claimStore();
   store.claim(derived.pbid, 'divergent-material');
-  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
   assert.strictEqual(ack.outcome, 'NOT_REGISTERED');
   assert.strictEqual(ack.reason, 'identity-collision');
   assert.strictEqual(session.retireHandoff('h1').retired, false);
@@ -143,6 +151,15 @@ test('events carry the epoch; stale events are rejected and create nothing', asy
   assert.strictEqual(fresh.outcome, 'REGISTERED');
 });
 
+test('a detection with no epoch never reaches registration when an epoch store is configured', async () => {
+  const { session, ledger } = makeSession();
+  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  assert.strictEqual(ack.outcome, 'STALE');
+  assert.strictEqual(ack.reason, 'epoch-missing');
+  assert.strictEqual(ledger.listByRegistrationOrder().length, 0);
+  assert.strictEqual(session.pendingCount(), 0);
+});
+
 test('an event with no epoch is rejected fail-closed', async () => {
   const store = captureMod.createEpochStore({});
   assert.strictEqual(store.admit({ kind: 'detection' }).accepted, false);
@@ -152,9 +169,9 @@ test('an event with no epoch is rejected fail-closed', async () => {
 /* ---- item 9: owner-review backend ---- */
 
 test('held work keeps identity and record; Ben decision is a lifecycle event; nothing is purged', async () => {
-  const { session, ledger } = makeSession();
+  const { session, epochStore, ledger } = makeSession();
   const review = captureMod.createOwnerReview({ ledger });
-  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
   const idx = ack.indexId;
   assert.strictEqual(review.listReviewItems().length, 0);
   const held = await review.hold(idx, { actor: 'ben', authorityRef: 'owner-act' });
@@ -173,9 +190,9 @@ test('held work keeps identity and record; Ben decision is a lifecycle event; no
 });
 
 test('an unverified discard is refused at the authority boundary and the item stays queued', async () => {
-  const { session, ledger } = makeSession();
+  const { session, epochStore, ledger } = makeSession();
   const review = captureMod.createOwnerReview({ ledger });
-  const ack = await session.submitDetection({ handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
+  const ack = await submit(session, epochStore, { handoffId: 'h1', source: chatgptSource('m-1'), admitted: true });
   await review.hold(ack.indexId, { actor: 'ben', authorityRef: 'owner-act' });
   const decided = await review.decide(ack.indexId, { decision: 'discard', actor: 'mallory', authorityRef: 'forged' });
   assert.strictEqual(decided.status, 'REJECTED');

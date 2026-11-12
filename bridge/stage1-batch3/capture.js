@@ -109,16 +109,20 @@ function createCaptureSession(config) {
     }
     const handoffId = detection.handoffId;
 
-    // Epoch gate first: a stale detection creates nothing —
-    // not even a pending entry.
-    if (detection.epoch != null) {
-      if (!epochStore) {
-        return { handoffId, outcome: 'STALE', reason: 'epoch-unverifiable', pbId: null, indexId: null };
-      }
+    // Epoch gate first, fail-closed: when an epoch store is
+    // configured, EVERY detection passes through admit() — an
+    // epoch-less detection is rejected 'epoch-missing' by the
+    // same rule admit() applies everywhere else, never waved
+    // past the gate for lacking the field the gate checks.
+    // A stale or unverifiable detection creates nothing — not
+    // even a pending entry.
+    if (epochStore) {
       const verdict = epochStore.admit({ epoch: detection.epoch });
       if (!verdict.accepted) {
         return { handoffId, outcome: 'STALE', reason: verdict.reason, pbId: null, indexId: null };
       }
+    } else if (detection.epoch != null) {
+      return { handoffId, outcome: 'STALE', reason: 'epoch-unverifiable', pbId: null, indexId: null };
     }
 
     let entry = pending.get(handoffId);
