@@ -1,0 +1,364 @@
+<style>
+  * { box-sizing: border-box; }
+  .bs-wrap { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--hatch-widget-text); }
+  .bs-demo-tag { display: inline-block; font-size: 11px; letter-spacing: .12em; font-weight: 700;
+    color: var(--hatch-widget-on-accent); background: var(--hatch-widget-accent);
+    padding: 3px 8px; border-radius: 999px; margin-bottom: 8px; }
+  .bs-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+  .bs-btn { appearance: none; border: 1px solid var(--hatch-widget-border); background: var(--hatch-widget-surface);
+    color: var(--hatch-widget-text); border-radius: 8px; padding: 7px 10px; font-size: 13px; cursor: pointer; }
+  .bs-btn:hover { border-color: var(--hatch-widget-accent); }
+  .bs-select { border: 1px solid var(--hatch-widget-border); background: var(--hatch-widget-surface);
+    color: var(--hatch-widget-text); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+  .bs-label { font-size: 12px; color: var(--hatch-widget-muted); }
+  /* The stage pictures Ben's screen: two tabs side by side, the station floating over both. */
+  .bs-stage { position: relative; height: 340px; border-radius: 14px; overflow: hidden;
+    background: radial-gradient(120% 140% at 20% 0%, #1b2350 0%, #0a0f2e 55%, #060818 100%);
+    border: 1px solid rgba(140,150,255,.25); }
+  .bs-tab { position: absolute; top: 18px; bottom: 18px; width: calc(50% - 24px); border-radius: 10px;
+    background: rgba(255,255,255,.045); border: 1px solid rgba(148,163,255,.22); overflow: hidden; }
+  .bs-tab.left { left: 14px; } .bs-tab.right { right: 14px; }
+  .bs-tab-bar { height: 26px; display: flex; align-items: center; gap: 6px; padding: 0 10px;
+    background: rgba(148,163,255,.1); color: #aab4ff; font-size: 11.5px; letter-spacing: .04em; }
+  .bs-tab-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(148,163,255,.5); }
+  .bs-tab-lines { padding: 12px; }
+  .bs-tab-lines div { height: 8px; border-radius: 4px; background: rgba(148,163,255,.13); margin-bottom: 9px; }
+  .bs-tab.dest { border-color: #67e8f9; box-shadow: 0 0 0 1px #67e8f9, 0 0 26px rgba(103,232,249,.45); }
+  .bs-tab.dest .bs-tab-bar { background: rgba(103,232,249,.18); color: #a5f3fc; }
+  .bs-dest { display: none; margin-top: 7px; font-size: 16px; font-weight: 800; letter-spacing: .03em; color: #67e8f9; }
+  .bs-fly-to { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; color: #67e8f9; margin-bottom: 3px; }
+  .bs-station { position: absolute; width: 282px; max-width: calc(100% - 40px); z-index: 5;
+    background: rgba(16,22,54,.88); border: 1px solid rgba(148,163,255,.45); border-radius: 12px;
+    backdrop-filter: blur(6px); box-shadow: 0 10px 34px rgba(0,0,0,.5), 0 0 22px rgba(124,108,255,.25);
+    color: #e6eaff; padding: 10px 12px; }
+  .bs-station-head { display: flex; justify-content: space-between; align-items: center; cursor: grab;
+    font-size: 11px; letter-spacing: .1em; font-weight: 700; color: #aab4ff; user-select: none; touch-action: none; }
+  .bs-station-head:active { cursor: grabbing; }
+  .bs-state { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px;
+    background: rgba(148,163,255,.18); color: #cfd6ff; white-space: nowrap; }
+  .bs-state.held { background: rgba(250,204,21,.2); color: #fde68a; }
+  .bs-state.delivered { background: rgba(52,211,153,.2); color: #6ee7b7; }
+  .bs-state.unconfirmed { background: rgba(251,146,60,.22); color: #fdba74; }
+  .bs-state.failed { background: rgba(248,113,113,.22); color: #fca5a5; }
+  .bs-msg { margin-top: 8px; font-size: 13px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .bs-appended { margin-top: 6px; padding: 6px 8px; border-left: 3px solid #67e8f9; background: rgba(103,232,249,.08);
+    font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+  .bs-appended .bs-by { display: block; font-size: 10px; letter-spacing: .1em; font-weight: 700; color: #67e8f9; margin-bottom: 2px; }
+  .bs-count { height: 5px; border-radius: 999px; background: rgba(148,163,255,.18); margin-top: 10px; overflow: hidden; }
+  .bs-count > div { height: 100%; width: 100%; background: linear-gradient(90deg, #67e8f9, #a78bfa); transform-origin: left; }
+  .bs-count-num { font-size: 11px; color: #aab4ff; margin-top: 4px; min-height: 14px; }
+  .bs-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .bs-abtn { flex: 1; appearance: none; border-radius: 8px; padding: 7px 6px; font-size: 12.5px; cursor: pointer;
+    border: 1px solid rgba(148,163,255,.5); background: rgba(148,163,255,.12); color: #e6eaff; font-weight: 600; }
+  .bs-abtn.push { background: linear-gradient(90deg, #67e8f9, #a78bfa); color: #0a0f2e; border-color: transparent; }
+  .bs-abtn:disabled { opacity: .4; cursor: default; }
+  .bs-appendbox { margin-top: 8px; display: none; }
+  .bs-appendbox textarea { width: 100%; min-height: 54px; border-radius: 8px; border: 1px solid rgba(148,163,255,.5);
+    background: rgba(6,8,24,.7); color: #e6eaff; padding: 7px; font-size: 13px; font-family: inherit; resize: vertical; }
+  .bs-queue { position: absolute; z-index: 3; width: 210px; padding: 7px 10px; border-radius: 10px; font-size: 12px;
+    background: rgba(16,22,54,.7); border: 1px dashed rgba(148,163,255,.5); color: #aab4ff; display: none; }
+  .bs-fly { position: absolute; z-index: 4; width: 230px; padding: 8px 11px; border-radius: 10px; font-size: 12.5px;
+    background: rgba(16,22,54,.92); border: 1px solid rgba(148,163,255,.55); color: #e6eaff;
+    box-shadow: 0 8px 26px rgba(0,0,0,.5); display: none; white-space: pre-wrap; word-break: break-word; }
+  .bs-legend { margin-top: 10px; font-size: 12.5px; line-height: 1.55; color: var(--hatch-widget-muted); }
+  .bs-legend b { color: var(--hatch-widget-text); }
+  .bs-statusline { margin-top: 6px; font-size: 12.5px; min-height: 18px; color: var(--hatch-widget-text); }
+</style>
+
+<div class="bs-wrap">
+  <span class="bs-demo-tag">FAKE — DEMO ONLY · V3</span>
+  <div class="bs-controls">
+    <button class="bs-btn" id="bsSendAR" type="button">Alex &rarr; Remmy</button>
+    <button class="bs-btn" id="bsSendRA" type="button">Remmy &rarr; Alex</button>
+    <button class="bs-btn" id="bsQueue" type="button">Queue a second one</button>
+    <span class="bs-label">Ends as:</span>
+    <select class="bs-select" id="bsOutcome">
+      <option value="delivered">Delivered</option>
+      <option value="unconfirmed">Sent — unconfirmed</option>
+      <option value="failed">Failed before send</option>
+    </select>
+    <button class="bs-btn" id="bsReset" type="button">Reset</button>
+  </div>
+
+  <div class="bs-stage" id="bsStage">
+    <div class="bs-tab left" id="bsTabAlex">
+      <div class="bs-tab-bar"><span class="bs-tab-dot"></span>Alex — ChatGPT</div>
+      <div class="bs-tab-lines"><div style="width:70%"></div><div style="width:84%"></div><div style="width:58%"></div><div style="width:79%"></div></div>
+    </div>
+    <div class="bs-tab right" id="bsTabRemmy">
+      <div class="bs-tab-bar"><span class="bs-tab-dot"></span>Remmy — Muse</div>
+      <div class="bs-tab-lines"><div style="width:88%"></div><div style="width:64%"></div><div style="width:76%"></div><div style="width:52%"></div></div>
+    </div>
+
+    <div class="bs-queue" id="bsQueueChip">QUEUED — its window has not started</div>
+    <div class="bs-fly" id="bsFly"><div class="bs-fly-to" id="bsFlyTo"></div><div id="bsFlyText"></div></div>
+
+    <div class="bs-station" id="bsStation">
+      <div class="bs-station-head" id="bsDrag"><span>HELD MESSAGE — drag me</span><span class="bs-state" id="bsState">IDLE</span></div>
+      <div class="bs-dest" id="bsDest"></div>
+      <div id="bsBody">
+        <div class="bs-msg" id="bsMsg">No message held. Send one with the buttons above and it lands here first — centre screen, over both tabs — before it goes anywhere.</div>
+        <div id="bsAppendedSlot"></div>
+        <div class="bs-count" id="bsCountWrap" style="visibility:hidden"><div id="bsCountBar"></div></div>
+        <div class="bs-count-num" id="bsCountNum"></div>
+        <div class="bs-actions" id="bsActions">
+          <button class="bs-abtn" id="bsAppendBtn" type="button" disabled>Append</button>
+          <button class="bs-abtn push" id="bsPushBtn" type="button" disabled>Push through</button>
+        </div>
+        <div class="bs-appendbox" id="bsAppendBox">
+          <textarea id="bsAppendText" placeholder="Your words, added at the end. His words above never change."></textarea>
+          <div class="bs-actions">
+            <button class="bs-abtn push" id="bsCommitBtn" type="button">Commit append &amp; send</button>
+            <button class="bs-abtn" id="bsCancelAppendBtn" type="button">Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bs-statusline" id="bsStatus">Idle. The station floats centre screen until a message is on its way.</div>
+  <div class="bs-legend">
+    <b>What you are looking at:</b> your real layout — <b>Alex on the left, Remmy on the right</b> — and the station
+    lives <b>centre screen, over the top of both tabs</b>; it belongs to neither tab. While a message is held, the station
+    says <b>TO:</b> its destination in big letters and that tab <b>glows</b>, so there is no guessing where it is going.
+    Every message stops here first: <b>7.5 seconds</b> to act, then it goes on its own.
+    <b>Append</b> stops the clock dead while you write; your words land at the end, visibly yours.
+    <b>Push through</b> sends it now — and the message and its buttons <b>leave the station</b>; it has been sent.
+    It ends <b>DELIVERED</b>, <b>SENT-UNCONFIRMED</b> (no receipt — not proof of failure), or
+    <b>FAILED-BEFORE-SEND</b> (nothing left, so the message stays where you can see it).
+    A second message queues behind the first; its clock starts only when it owns the station.
+    Drag the station by its top bar — where you put it, it stays.
+  </div>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('bsStage');
+  var station = document.getElementById('bsStation');
+  var body = document.getElementById('bsBody');
+  var stateEl = document.getElementById('bsState');
+  var msgEl = document.getElementById('bsMsg');
+  var appendedSlot = document.getElementById('bsAppendedSlot');
+  var countWrap = document.getElementById('bsCountWrap');
+  var countBar = document.getElementById('bsCountBar');
+  var countNum = document.getElementById('bsCountNum');
+  var appendBtn = document.getElementById('bsAppendBtn');
+  var pushBtn = document.getElementById('bsPushBtn');
+  var appendBox = document.getElementById('bsAppendBox');
+  var appendText = document.getElementById('bsAppendText');
+  var statusEl = document.getElementById('bsStatus');
+  var queueChip = document.getElementById('bsQueueChip');
+  var fly = document.getElementById('bsFly');
+  var outcomeSel = document.getElementById('bsOutcome');
+  var destEl = document.getElementById('bsDest');
+  var flyTo = document.getElementById('bsFlyTo');
+  var flyText = document.getElementById('bsFlyText');
+  var tabAlex = document.getElementById('bsTabAlex');
+  var tabRemmy = document.getElementById('bsTabRemmy');
+  function markDest(dir) {
+    tabAlex.className = 'bs-tab left' + (dir === 'RA' ? ' dest' : '');
+    tabRemmy.className = 'bs-tab right' + (dir === 'AR' ? ' dest' : '');
+    destEl.style.display = 'block';
+    destEl.textContent = dir === 'RA' ? '\u2190 TO: ALEX' : 'TO: REMMY \u2192';
+  }
+  function clearDest() {
+    tabAlex.className = 'bs-tab left'; tabRemmy.className = 'bs-tab right';
+    destEl.style.display = 'none'; destEl.textContent = '';
+  }
+
+  var ALEX_MSG = "Alex: Cross-check complete. Two points pass, one needs a wording fix in section 2.2 — details in my letter. Nothing else moved.";
+  var REMMY_MSG = "Remmy: The revised sheet is pushed and read back clean. Pin is in my letter — your focused check whenever you are ready.";
+  var IDLE_MSG = 'No message held. Send one with the buttons above and it lands here first — centre screen, over both tabs — before it goes anywhere.';
+
+  var busy = false, timer = null, current = null, queued = null, appendedTextValue = "";
+  var remaining = 7500, tickStart = 0, appendOpen = false;
+
+  function setState(text, cls) {
+    stateEl.textContent = text;
+    stateEl.className = 'bs-state' + (cls ? ' ' + cls : '');
+  }
+  function setStatus(t) { statusEl.textContent = t; }
+
+  function placeStationDefault() {
+    var sw = stage.clientWidth, stw = station.offsetWidth || 282;
+    station.style.left = Math.max(10, (sw - stw) / 2) + 'px';
+    station.style.top = '64px';
+  }
+  try {
+    if (window.hatchWidget && window.hatchWidget.getState) {
+      window.hatchWidget.getState({}).then(function (s) {
+        if (s && typeof s.bsLeft === 'number') {
+          station.style.left = s.bsLeft + 'px';
+          station.style.top = s.bsTop + 'px';
+        } else { placeStationDefault(); }
+      }).catch(function () { placeStationDefault(); });
+    } else { placeStationDefault(); }
+  } catch (e) { placeStationDefault(); }
+
+  (function () {
+    var head = document.getElementById('bsDrag'), drag = null;
+    function pt(e) { return e.touches ? e.touches[0] : e; }
+    head.addEventListener('pointerdown', function (e) {
+      var r = station.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      drag = { dx: pt(e).clientX - r.left, dy: pt(e).clientY - r.top, sr: sr };
+      e.preventDefault();
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var x = pt(e).clientX - drag.sr.left - drag.dx;
+      var y = pt(e).clientY - drag.sr.top - drag.dy;
+      x = Math.max(0, Math.min(x, drag.sr.width - station.offsetWidth));
+      y = Math.max(0, Math.min(y, drag.sr.height - station.offsetHeight));
+      station.style.left = x + 'px'; station.style.top = y + 'px';
+    });
+    window.addEventListener('pointerup', function () {
+      if (!drag) return; drag = null;
+      try {
+        if (window.hatchWidget && window.hatchWidget.setState) {
+          window.hatchWidget.setState({ bsLeft: parseInt(station.style.left, 10), bsTop: parseInt(station.style.top, 10) });
+        }
+      } catch (e) {}
+    });
+  })();
+
+  function runTimer() {
+    tickStart = Date.now();
+    clearInterval(timer);
+    timer = setInterval(function () {
+      var left = remaining - (Date.now() - tickStart);
+      if (left <= 0) { clearInterval(timer); remaining = 0; dispatch(); return; }
+      countBar.style.transform = 'scaleX(' + (left / 7500) + ')';
+      countNum.textContent = (left / 1000).toFixed(1) + 's left in the append window';
+    }, 50);
+  }
+  function stopTimer() {
+    if (timer) { remaining = Math.max(0, remaining - (Date.now() - tickStart)); clearInterval(timer); timer = null; }
+    countBar.style.transform = 'scaleX(' + (remaining / 7500) + ')';
+  }
+
+  function startHold(dir, text) {
+    busy = true; current = { dir: dir, text: text }; appendedTextValue = "";
+    appendOpen = false; remaining = 7500;
+    body.style.display = 'block';
+    appendedSlot.innerHTML = "";
+    appendBox.style.display = 'none'; appendText.value = "";
+    msgEl.textContent = text;
+    markDest(dir);
+    setState('HELD', 'held');
+    appendBtn.disabled = false; pushBtn.disabled = false;
+    countWrap.style.visibility = 'visible';
+    countBar.style.transform = 'scaleX(1)';
+    countNum.textContent = '7.5s left in the append window';
+    var from = dir === 'RA' ? 'Remmy' : 'Alex', to = dir === 'RA' ? 'Alex' : 'Remmy';
+    setStatus('Held at the station: ' + from + ' \u2192 ' + to + '. Your 7.5 seconds — append, push through, or let it go.');
+    runTimer();
+  }
+
+  function dispatch() {
+    if (!current) return;
+    stopTimer(); clearInterval(timer); timer = null;
+    appendOpen = false;
+    var dir = current.dir, outcome = outcomeSel.value;
+    var full = current.text + (appendedTextValue ? "\n[Ben appended] " + appendedTextValue : "");
+    setState('IN TRANSIT', '');
+    setStatus('Dispatched. Travelling ' + (dir === 'RA' ? 'right to left, to Alex' : 'left to right, to Remmy') + '\u2026');
+    if (outcome !== 'failed') {
+      // Ben's ruling: once it is pushed through, the message and its buttons leave the station.
+      body.style.display = 'none';
+    }
+    var sr = stage.getBoundingClientRect();
+    flyTo.textContent = dir === 'RA' ? 'TO: ALEX' : 'TO: REMMY';
+    flyText.textContent = full;
+    fly.style.display = 'block';
+    fly.style.top = '130px';
+    var fromX = dir === 'AR' ? 30 : sr.width - 30 - 230;
+    var toX = dir === 'AR' ? sr.width - 30 - 230 : 30;
+    fly.style.left = fromX + 'px';
+    fly.style.transition = 'none';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fly.style.transition = 'left 1.15s ease-in-out';
+        fly.style.left = toX + 'px';
+      });
+    });
+    setTimeout(function () {
+      fly.style.display = 'none';
+      if (outcome === 'delivered') { setState('DELIVERED', 'delivered'); setStatus('Delivered — and the receipt says so. The station is empty again; the state stays on its face.'); }
+      else if (outcome === 'unconfirmed') { setState('SENT-UNCONFIRMED', 'unconfirmed'); setStatus('Sent, but no receipt came back. Labelled unconfirmed — not delivered, not failed. A missing receipt is not proof of failure.'); }
+      else {
+        setState('FAILED-BEFORE-SEND', 'failed');
+        body.style.display = 'block';
+        countWrap.style.visibility = 'hidden'; countNum.textContent = '';
+        appendBtn.disabled = true; pushBtn.disabled = true;
+        setStatus('Failed before send. Nothing left the station, so the message is still here where you can see it.');
+      }
+      busy = false; current = null; appendedTextValue = "";
+      if (queued) { var q = queued; queued = null; queueChip.style.display = 'none'; setTimeout(function () { startHold(q.dir, q.text); }, 450); }
+    }, 1250);
+  }
+
+  appendBtn.addEventListener('click', function () {
+    if (!current || appendOpen) return;
+    appendOpen = true;
+    stopTimer();
+    countNum.textContent = 'Timer stopped — the window is yours while you write.';
+    appendBox.style.display = 'block';
+    appendText.focus();
+    setStatus('Append open. The clock is stopped; take as long as you need. His words above do not change.');
+  });
+  document.getElementById('bsCancelAppendBtn').addEventListener('click', function () {
+    appendOpen = false;
+    appendBox.style.display = 'none';
+    if (current) { runTimer(); setStatus('Append closed. The clock is running again with ' + (remaining / 1000).toFixed(1) + 's left.'); }
+  });
+  document.getElementById('bsCommitBtn').addEventListener('click', function () {
+    var v = appendText.value.replace(/^\s+|\s+$/g, '');
+    if (v) {
+      appendedTextValue = v;
+      appendedSlot.innerHTML = '';
+      var d = document.createElement('div'); d.className = 'bs-appended';
+      var by = document.createElement('span'); by.className = 'bs-by'; by.textContent = 'BEN APPENDED';
+      d.appendChild(by); d.appendChild(document.createTextNode(v));
+      appendedSlot.appendChild(d);
+    }
+    appendBox.style.display = 'none';
+    dispatch();
+  });
+  pushBtn.addEventListener('click', function () { if (current) dispatch(); });
+
+  function trySend(dir, text) {
+    if (busy) {
+      if (!queued) {
+        queued = { dir: dir, text: text };
+        queueChip.style.display = 'block';
+        queueChip.style.top = '14px';
+        queueChip.style.left = '50%';
+        queueChip.style.transform = 'translateX(-50%)';
+        setStatus('Second message queued behind the held one. Its 7.5 seconds have NOT started — they begin when it owns the station.');
+      } else { setStatus('Already one queued — this fake holds one behind. The real one queues in serial order, as many as come.'); }
+      return;
+    }
+    startHold(dir, text);
+  }
+
+  document.getElementById('bsSendAR').addEventListener('click', function () { trySend('AR', ALEX_MSG); });
+  document.getElementById('bsSendRA').addEventListener('click', function () { trySend('RA', REMMY_MSG); });
+  document.getElementById('bsQueue').addEventListener('click', function () {
+    if (!busy) { setStatus('Nothing is held right now — send a message first, then queue a second while it is held.'); return; }
+    trySend(current.dir === 'RA' ? 'AR' : 'RA', current.dir === 'RA' ? ALEX_MSG : REMMY_MSG);
+  });
+  document.getElementById('bsReset').addEventListener('click', function () {
+    stopTimer(); clearInterval(timer); timer = null;
+    busy = false; current = null; queued = null; appendedTextValue = ""; appendOpen = false;
+    queueChip.style.display = 'none'; fly.style.display = 'none';
+    clearDest();
+    body.style.display = 'block';
+    appendedSlot.innerHTML = ""; appendBox.style.display = 'none';
+    countWrap.style.visibility = 'hidden'; countNum.textContent = '';
+    appendBtn.disabled = true; pushBtn.disabled = true;
+    setState('IDLE', '');
+    msgEl.textContent = IDLE_MSG;
+    setStatus('Idle. The station floats centre screen until a message is on its way.');
+  });
+})();
+</script>
