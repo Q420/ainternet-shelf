@@ -119,7 +119,7 @@ Identity and payload integrity are separate:
 | Same candidate PB-ID maps to different canonical source keys | IDENTITY-COLLISION; hold; never merge or overwrite |
 | Hash service unavailable or canonical bytes cannot be produced exactly | IDENTITY-UNKNOWN; no registration/send |
 
-Collision handling requires a separate identity-claim evidence record keyed by PB-ID that stores the canonical source-key material (not the message body or file payload) so a later claim can be compared with the original. The routing ledger remains thin as required by Contract Rev 02. If the storage/retention authority for this identity-claim record is not accepted, the collision rule is not implementable and Stage 1 remains blocked. A digest alone cannot prove two different source tuples were not collapsed by a hash collision.
+Collision handling requires a separate identity-claim evidence record keyed by PB-ID that stores the canonical source-key material (not the message body or file payload) so a later claim can be compared with the original. The routing ledger remains thin as required by Contract Rev 02. The adopted identity rule requires this separate identity-claim record; its implementation must preserve the canonical source-key material needed for comparison. A digest alone cannot prove two different source tuples were not collapsed by a hash collision.
 
 ## 1.6 Platform-specific disposition against the current matrix
 
@@ -227,7 +227,7 @@ The governing rule is now explicit by Ben's ruling, verbatim: **“disconnect sh
 - The rule applies to the full affected work inventory, not merely the currently visible pair slot: held items, in-transit items, buffered/aggregate constituents, append-window owner and waiters, retries/defers, and handoffs awaiting acknowledgement where they fall within the chosen disconnect scope.
 - The station must not imply that a previously completed or already confirmed delivery can be recalled. Where an attempt's delivery state is unresolved, preserve that uncertainty and present the item for owner review without inventing a delivery outcome.
 
-This closes the substantive no-purge / owner-review behaviour for Gate 5. The remaining question is only how the disconnect control(s) package the affected scope and recovery path; it is tracked separately as Gate 5A below.
+This closes the substantive no-purge / owner-review behaviour for Gate 5. Gate 5A's control packaging has since been decided by Ben as Option C; the adopted per-seat-only control and its one remaining Stage 3 presentation question are recorded in §5.5.
 
 ## 5.2 Option A — two explicit controls: “Unregister this seat” and “Disconnect bridge”
 
