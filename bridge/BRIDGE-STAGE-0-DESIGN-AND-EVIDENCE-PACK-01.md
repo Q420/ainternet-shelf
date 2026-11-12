@@ -1,6 +1,6 @@
-# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 02
+# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 03
 
-**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 02; GATE 5 BEHAVIOUR DECIDED; GATE 1 AWAITING BEN; NOT BUILD AUTHORISATION  
+**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 03; GATE 5 BEHAVIOUR DECIDED; GATE 1 PLATFORM SCOPE DECIDED / EXACT RULE AWAITING BEN; NOT BUILD AUTHORISATION  
 **Commission:** Ben's Stage 0 go, 2026-11-11, relayed by Remmy under PB-ID `pb-mwcwh334-2f-e025`.  
 **Authority:** Stage 0 of adopted Build Plan 01. Design/evidence only. No code, probes, tests, browser actions, migration, reload, deployment or activation were performed.  
 **Working-set discipline:** All conclusions below are drawn from the exact source pins listed here. Any dependency outside this set is named as an open dependency; none has been silently fetched or assumed.
@@ -35,7 +35,7 @@ No conclusion below should be read as a fresh platform observation.
 # Gate 1 — Stable PB-ID canonicalisation and collision policy
 
 **Governing:** Convene Sheet §2.4 and §4 item 6; Contract Rev 02; matrix §§1–6.  
-**Disposition:** DECISION PAPER PREPARED; ITEM 6 REMAINS OPEN / BLOCKING UNTIL BEN ADOPTS AN EXACT RULE AND ITS EVIDENCE BASIS.
+**Disposition:** PLATFORM SCOPE DECIDED BY BEN ON 2026-11-11: CHATGPT AND MUSE ONLY FOR STAGE 1. EXACT IDENTITY RULE AND EVIDENCE BASIS REMAIN OPEN / BLOCKING PENDING BEN'S ADOPTION.
 
 ## 1.1 What the current code actually does
 
@@ -128,7 +128,9 @@ Collision handling requires a separate identity-claim evidence record keyed by P
 - **Gemini:** custom turn tags and history container are structural. No stable conversation/message key is extracted. No Stage 1 authoritative identity on current evidence.
 - **Meta AI:** `/prompt/<id>` may provide a conversation namespace if its semantics are verified, but it is not a per-message key and the adapter does not extract it. No Stage 1 authoritative identity on current evidence.
 
-**Consequence:** none of the five current adapter paths satisfies the proposed source-occurrence requirement today. This does not mean the platforms cannot expose the required fields; it means the current supplied evidence does not establish them. Stage 1 cannot safely enable managed registration for a platform until the required source key is demonstrated or Ben explicitly adopts a narrower policy.
+**Consequence under Ben's platform-scope ruling:** Stage 1 identity scope is restricted to **ChatGPT and Muse**. Claude.ai, Gemini and Meta AI are outside Stage 1 identity scope; they receive no adopted Stage 1 identity claim and may enter a later scope only when their platform-specific evidence meets the same source-occurrence threshold and Ben adopts that widening.
+
+The source-inspected matrix does not currently establish a qualifying occurrence key for either ChatGPT or Muse. This is not proof that the platforms expose no such fields elsewhere; it means the pinned adapter paths do not extract them. The scope decision therefore does not itself establish identity readiness or authorise registration. ChatGPT and Muse must each demonstrate an acceptable native ID or stable occurrence tuple under the rule below before managed registration can be enabled.
 
 ## 1.7 Deterministic canonicalisation vectors (algorithm examples only)
 
@@ -159,15 +161,28 @@ message_id:7:turn-04
 
 Required later fixture classes, once implementation is authorised: identical re-fetch; different occurrence IDs with identical text; same occurrence with edited payload; missing conversation namespace; missing occurrence discriminator; attachment-only and text-plus-attachment messages; Unicode combining forms; supplementary-plane characters; embedded newlines/delimiter-looking content; source-key collision; digest collision simulation; and restart/cache-purge re-fetch. No such fixtures were run in Stage 0.
 
-## 1.8 Ben's decision requested
+## 1.8 Ben's decision requested — exact rule adoption, scoped to ChatGPT and Muse
 
-1. Adopt or reject the source-occurrence identity rule in §1.3.
-2. Adopt or amend the fail-closed IDENTITY-UNKNOWN rule where no stable occurrence discriminator is available.
-3. Adopt or amend the separate identity-claim evidence record needed for collision comparison while keeping the routing ledger thin.
-4. Decide whether Stage 1 may launch with only platforms that meet the adopted rule, leaving other platforms visibly unavailable/held, or whether all five must meet it before Stage 1.
-5. No human-readable PB-ID format or sender/kind code table is proposed for adoption here.
+Ben has decided the platform scope in these words: **“gpt and muse first, they are already established and will prove the plumbing.”** The resulting scope is:
 
-**Gate status:** OPEN / BLOCKING pending Ben's exact decision and any separately authorised evidence gathering.
+- **Stage 1 identity scope:** ChatGPT and Muse only.
+- **Outside Stage 1:** Claude.ai, Gemini and Meta AI. They carry no adopted identity claim in Stage 1. They may be considered for later widening only after their own platform evidence meets the same threshold and that widening is adopted.
+- This is a scope ruling, not adoption of the technical construction below and not proof that the current ChatGPT/Muse adapters already satisfy it.
+
+**Exact technical rule returned for Ben's adoption:**
+
+1. A PB-ID is derived only from a verified stable source-occurrence key: either a platform-native per-message ID with established scope/persistence, or a deterministic platform-specific tuple containing a stable conversation namespace where required and a stable per-message occurrence discriminator that survives re-render, cache purge and source-history re-fetch.
+2. Canonicalise the source key using the versioned, fixed-field-order, length-prefixed UTF-8 representation in §1.3 (`PBID-SRC1` for native IDs; `PBID-OCC1` for verified occurrence tuples). Lengths count UTF-8 bytes; null is `-1:`; empty is `0:`; no implicit coercion or locale-sensitive sorting.
+3. Derive the machine PB-ID by SHA-256 over the exact canonical UTF-8 bytes. The proposed `pb1-<64 lowercase hex>` representation remains a proposal; no human-readable sender/kind/date/serial format is adopted by this paper.
+4. Source occurrence identity is separate from payload integrity. Sender and payload are validation attributes, not identity inputs. A changed payload under the same source occurrence remains the same PB-ID and is handled under F-6; it is not silently treated as a new message.
+5. If the required source occurrence, conversation namespace, or exact canonical bytes cannot be established, classify `IDENTITY-UNKNOWN`. Do not merge, register or send on a guessed identity. A larger hash applied to sender/body text alone is not an acceptable substitute.
+6. If one candidate PB-ID is claimed for different canonical source keys, classify `IDENTITY-COLLISION`, hold, and never merge or overwrite. Use a separate identity-claim evidence record keyed by PB-ID, retaining canonical source-key material (not message body/file payload) for comparison; the routing ledger remains thin.
+7. Distinct native occurrence IDs remain distinct PB-IDs even when sender and visible body are identical. Re-fetch of the same verified source occurrence derives the same PB-ID.
+8. Apply this rule initially to ChatGPT and Muse only. No Stage 1 identity claim is made for Claude.ai, Gemini or Meta AI.
+
+**Ben's adoption requested:** adopt, amend or reject this exact technical rule, including the fail-closed UNKNOWN/COLLISION outcomes and the separate identity-claim evidence record. The scope restriction to ChatGPT and Muse is already decided and is not being re-asked.
+
+**Gate 1 status:** PLATFORM SCOPE DECIDED; EXACT RULE ADOPTION OPEN / BLOCKING. Even after rule adoption, Stage 1 remains blocked for any of the two platforms whose source evidence has not demonstrated the required occurrence key. No Stage 1 go is inferred.
 
 ---
 
@@ -560,7 +575,8 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 
 | Gate | Output in this pack | Status | Stage blocked |
 |---|---|---|---|
-| Stable PB-ID canonicalisation/collision | Exact source-occurrence rule proposal, platform matrix, UNKNOWN/collision policy, canonical vectors | **OPEN — Ben adoption required** | Stage 1 |
+| Gate 1 platform scope | ChatGPT and Muse first; Claude.ai, Gemini and Meta AI outside Stage 1 pending later evidence and adoption | **DECIDED — 2026-11-11** | Scope fixed |
+| Gate 1 exact identity rule | Scoped source-occurrence rule, canonicalisation, SHA-256, payload separation, UNKNOWN/COLLISION and identity-claim evidence record | **OPEN — Ben adoption required; source evidence still required** | Stage 1 |
 | Disconnect behaviour | Ben's centre-station PUSH / DELETE / APPEND ruling; applies to every disconnect scope | **DECIDED — 2026-11-11** | Behaviour fixed; packaging tracked below |
 | Gate 5A control-scope packaging | A/B/C control options and residual recovery questions | **OPEN — narrow scope decision** | Stages 1 and 3 |
 | F-6 completeness | Character/block/hash/trailer/repair proposal | **OPEN — Ben adoption required** | Stage 2 |
@@ -584,15 +600,35 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [x] Named every missing external dependency rather than silently retrieving it.
 - [x] No Crusher call or proxy.
 - [x] No code changes, probes, tests, browser actions, reload, migration, deployment or activation.
-- [ ] Ben adopts the exact PB-ID source-occurrence and UNKNOWN/collision rule.
+- [x] Ben's Gate 1 platform scope ruling is incorporated: ChatGPT and Muse first; Claude.ai, Gemini and Meta AI excluded from Stage 1 identity scope.
+- [ ] Ben adopts, amends or rejects the exact Gate 1 identity rule scoped to ChatGPT and Muse; source evidence must demonstrate the required occurrence keys before registration.
 - [x] Ben's Gate 5 disconnect behaviour ruling is incorporated; control-scope packaging remains open as Gate 5A.
-- [ ] Ben adopts F-6 definitions.
+- [ ] Ben resolves Gate 5A control-scope and recovery packaging.
+- [ ] Ben adopts F-6 whole-message completeness definitions.
 - [ ] Ben separately authorises or declines the bounded F-7 read-only probe.
 - [ ] Ben decides append wire format, direction coverage and commit/send semantics.
-- [ ] Ben supplies or explicitly declines the basic-fix snippet.
-- [ ] Ben says whether to shelf the direction erratum.
+- [ ] Ben supplies or explicitly declines the basic-fix snippet; this blocks Stage 2 only if applicable.
+- [ ] Ben says whether to shelf the direction erratum; Stage 3 conformance remains pending.
 - [ ] NEW-9 external route and receipt authority are resolved before Stage 5.
 
-**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 5's substantive disconnect behaviour is decided and incorporated. Gate 1 remains before Ben. Gate 5A records only the residual control-scope/recovery packaging questions; it does not reopen Gate 5. No decision is inferred from silence. No stage implementation is authorised by this document. Stage 1 remains blocked pending Ben's Gate 1 ruling, resolution of the separately named Gate 5A dependency, and separate Stage 1 implementation authorisation.
+**Stage 0 exit accounting — Controlled Revision 03:**
+
+| Item | Current disposition | What remains / who decides | Stage dependency |
+|---|---|---|---|
+| Gate 1 platform scope | **CLOSED — ChatGPT and Muse first** | No further scope decision pending; later platforms require their own evidence and adopted widening | Scope fixed; does not itself permit Stage 1 |
+| Gate 1 exact identity rule | **OPEN — Ben adoption** | Ben adopts/amends/rejects the exact rule in §1.8; ChatGPT and Muse source occurrence keys must then be demonstrated | Stage 1 |
+| Gate 5 disconnect behaviour | **CLOSED — Ben's centre-station ruling** | No further behaviour decision; applies to every disconnect scope | Behaviour fixed |
+| Gate 5A control/recovery packaging | **OPEN — Ben decision** | Select A/B/C and resolve the residual control/recovery questions in §5.5 | Stages 1 and 3 |
+| F-6 whole-message completeness | **OPEN — Ben adoption** | Adopt/amend character, block, byte-hash, trailer, repair and conflict definitions | Stage 2 |
+| F-7 composer ownership | **DESIGN PREPARED; live evidence not authorised** | Ben separately authorises or declines the bounded read-only probe and specifies tabs; no probe is implied | Stage 2 |
+| Append serialization | **OPEN — Ben decision** | Select wire option and decide append count, commit/push-through, whitespace, same IDs, directions and trailer placement | Stage 3 |
+| Basic-fix snippet | **AWAITING BEN'S SOURCE / DECISION** | Ben supplies the exact snippet or explicitly declines it; applicability then assessed without reconstruction | Stage 2 if applicable |
+| Direction erratum | **TEXT PREPARED; SHELVING AWAITS BEN** | Ben says whether the prepared correction is to be shelved into the governing sheet | Stage 3 conformance |
+| NEW-9 route | **DESIGN PREPARED; external dependencies open** | Resolve event source, Remmy wake route, Shelf write/read-back receipt and validation authority | Stage 5 |
+| Station supplement cross-check | **COMPLETE** | Findings already recorded; carry into relevant design/build stages | Relevant Stage 0/3 requirements |
+
+**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 1 platform scope and Gate 5 disconnect behaviour are decided. Gate 1's exact identity rule, Gate 5A packaging, F-6, F-7 authorisation, append decision, basic-fix source/decision and direction-erratum shelving remain as itemised above. NEW-9 is a later Stage 5 dependency. No decision is inferred from silence. No implementation authority is created by either ruling or this revision. Stage 1 remains blocked pending Ben's adoption of the exact Gate 1 rule, demonstrated qualifying source identity for ChatGPT and Muse, resolution of Gate 5A, and separate Stage 1 implementation authorisation.
+
+**End of Stage 0 Design and Evidence Pack 01 — Controlled Revision 03.**
 
 **End of Stage 0 Design and Evidence Pack 01.**
