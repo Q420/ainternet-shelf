@@ -1,6 +1,6 @@
-# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 03
+# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 04
 
-**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 03; GATE 5 BEHAVIOUR DECIDED; GATE 1 PLATFORM SCOPE DECIDED / EXACT RULE AWAITING BEN; NOT BUILD AUTHORISATION  
+**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 04; GATE 1 SCOPE AND EXACT IDENTITY RULE DECIDED; GATE 5 BEHAVIOUR DECIDED; GATE 5A PACKAGING AWAITS BEN; NOT BUILD AUTHORISATION  
 **Commission:** Ben's Stage 0 go, 2026-11-11, relayed by Remmy under PB-ID `pb-mwcwh334-2f-e025`.  
 **Authority:** Stage 0 of adopted Build Plan 01. Design/evidence only. No code, probes, tests, browser actions, migration, reload, deployment or activation were performed.  
 **Working-set discipline:** All conclusions below are drawn from the exact source pins listed here. Any dependency outside this set is named as an open dependency; none has been silently fetched or assumed.
@@ -35,7 +35,7 @@ No conclusion below should be read as a fresh platform observation.
 # Gate 1 — Stable PB-ID canonicalisation and collision policy
 
 **Governing:** Convene Sheet §2.4 and §4 item 6; Contract Rev 02; matrix §§1–6.  
-**Disposition:** PLATFORM SCOPE DECIDED BY BEN ON 2026-11-11: CHATGPT AND MUSE ONLY FOR STAGE 1. EXACT IDENTITY RULE AND EVIDENCE BASIS REMAIN OPEN / BLOCKING PENDING BEN'S ADOPTION.
+**Disposition:** CLOSED BY BEN ON 2026-11-11. PLATFORM SCOPE: CHATGPT AND MUSE ONLY FOR STAGE 1. EXACT SOURCE-OCCURRENCE IDENTITY RULE ADOPTED FROM CONTROLLED REVISION 03 §1.8 AT 17:24 PST. SOURCE-FIELD DEMONSTRATION FOR BOTH PLATFORMS REMAINS A STAGE 1 READINESS REQUIREMENT, NOT AN OPEN ADOPTION DECISION.
 
 ## 1.1 What the current code actually does
 
@@ -60,9 +60,9 @@ This arrangement cannot guarantee the same PB-ID after cache purge/re-fetch, can
 
 The matrix's “not extracted” means not extracted by this pinned adapter path. It does not prove that the platform never exposes such a field elsewhere. The Muse source specifically says its selectors were inferred; the other platforms' historical probes do not establish a stable occurrence ID.
 
-## 1.3 Proposed identity rule for Ben's adoption
+## 1.3 Adopted identity rule
 
-**Recommended rule: a PB-ID is derived only from a stable source-occurrence key, never from rendered text alone.**
+**Ben adopted this rule on 2026-11-11 at 17:24 PST, as presented in Controlled Revision 03:** a PB-ID is derived only from a verified stable source-occurrence key, never from rendered text alone.
 
 A source-occurrence key is acceptable only when it is either:
 
@@ -161,15 +161,16 @@ message_id:7:turn-04
 
 Required later fixture classes, once implementation is authorised: identical re-fetch; different occurrence IDs with identical text; same occurrence with edited payload; missing conversation namespace; missing occurrence discriminator; attachment-only and text-plus-attachment messages; Unicode combining forms; supplementary-plane characters; embedded newlines/delimiter-looking content; source-key collision; digest collision simulation; and restart/cache-purge re-fetch. No such fixtures were run in Stage 0.
 
-## 1.8 Ben's decision requested — exact rule adoption, scoped to ChatGPT and Muse
+## 1.8 Ben's adoption record — exact rule and scope
 
-Ben has decided the platform scope in these words: **“gpt and muse first, they are already established and will prove the plumbing.”** The resulting scope is:
+**Adoption source:** Ben's adoption-card tap and ruling relayed by Remmy under PB-ID `pb-mwcxd7wy-2i-kper`, 2026-11-11 at 17:24 PST. Ben adopted the exact construction presented in Controlled Revision 03, §§1.3–1.5 and 1.8, scoped to ChatGPT and Muse.
+
+Ben's platform-scope words, retained verbatim: **“gpt and muse first, they are already established and will prove the plumbing.”**
 
 - **Stage 1 identity scope:** ChatGPT and Muse only.
-- **Outside Stage 1:** Claude.ai, Gemini and Meta AI. They carry no adopted identity claim in Stage 1. They may be considered for later widening only after their own platform evidence meets the same threshold and that widening is adopted.
-- This is a scope ruling, not adoption of the technical construction below and not proof that the current ChatGPT/Muse adapters already satisfy it.
+- **Outside Stage 1:** Claude.ai, Gemini and Meta AI. They carry no adopted Stage 1 identity claim. Later widening requires their own platform evidence to meet the same threshold and a separate adoption.
 
-**Exact technical rule returned for Ben's adoption:**
+**Adopted technical rule:**
 
 1. A PB-ID is derived only from a verified stable source-occurrence key: either a platform-native per-message ID with established scope/persistence, or a deterministic platform-specific tuple containing a stable conversation namespace where required and a stable per-message occurrence discriminator that survives re-render, cache purge and source-history re-fetch.
 2. Canonicalise the source key using the versioned, fixed-field-order, length-prefixed UTF-8 representation in §1.3 (`PBID-SRC1` for native IDs; `PBID-OCC1` for verified occurrence tuples). Lengths count UTF-8 bytes; null is `-1:`; empty is `0:`; no implicit coercion or locale-sensitive sorting.
@@ -180,9 +181,7 @@ Ben has decided the platform scope in these words: **“gpt and muse first, they
 7. Distinct native occurrence IDs remain distinct PB-IDs even when sender and visible body are identical. Re-fetch of the same verified source occurrence derives the same PB-ID.
 8. Apply this rule initially to ChatGPT and Muse only. No Stage 1 identity claim is made for Claude.ai, Gemini or Meta AI.
 
-**Ben's adoption requested:** adopt, amend or reject this exact technical rule, including the fail-closed UNKNOWN/COLLISION outcomes and the separate identity-claim evidence record. The scope restriction to ChatGPT and Muse is already decided and is not being re-asked.
-
-**Gate 1 status:** PLATFORM SCOPE DECIDED; EXACT RULE ADOPTION OPEN / BLOCKING. Even after rule adoption, Stage 1 remains blocked for any of the two platforms whose source evidence has not demonstrated the required occurrence key. No Stage 1 go is inferred.
+**Gate 1 status:** CLOSED — platform scope and exact identity rule both adopted. The adopted rule applies to ChatGPT and Muse only. The source-inspected matrix still does not establish a qualifying occurrence key in either current adapter path; source-field demonstration for each platform is therefore a technical Stage 1 readiness condition. This is not an open rule-adoption question and does not authorise Stage 1. No Stage 1 go is inferred.
 
 ---
 
@@ -252,19 +251,32 @@ This closes the substantive no-purge / owner-review behaviour for Gate 5. The re
 **Advantages:** smallest change to existing control surface.  
 **Costs:** there remains no single action to deliberately disconnect both seats; global shutdown requires two separate actions and could create an awkward intermediate state.
 
-## 5.5 Gate 5A — residual control-scope and recovery packaging decision
+## 5.5 Gate 5A — control-packaging decision for Ben
 
-Ben's ruling closes the behaviour above. It does **not** select the user-interface packaging option. The following narrow questions remain separate from Gate 5 and must not be used to reopen its decided no-purge behaviour:
+Ben's Gate 5 behaviour ruling is fixed and applies identically to every option below: **every held or in-transit item in the selected disconnect scope is forced into the centre station for Ben's explicit PUSH, DELETE or APPEND disposition.** No option may silently drop, send, replay, copy, destroy or otherwise move an item before Ben decides. Permanent registration identity and lifecycle history remain intact.
 
-1. Which control packaging is selected: A (per-seat Unregister plus global Disconnect), B (global Disconnect only), or C (per-seat Unregister only)?
-2. If A, should global Disconnect be available from either seat panel, and should it require a second explicit confirmation?
-3. On per-seat Unregister, should the other seat remain registered while the bridge is globally suspended, or should only the affected seat's work be suspended? The decided centre-station disposition applies to every held/in-transit item within whichever scope is selected.
-4. After re-registration, does OWNER-REVIEW remain until Ben explicitly decides each item or resumes it through the governed path? No automatic movement is permitted by the ruling.
-5. Is a distinct owner-review cause label needed for Disconnect versus Pause, or is the same OWNER-REVIEW state with a recorded cause sufficient?
+| Option | Control surface and disconnect scope | What happens to held / in-transit work | Recovery and scope consequence | Stage dependency |
+|---|---|---|---|---|
+| **A — Both controls** | Per-seat **Unregister this seat**, plus global **Disconnect bridge**. Unregister affects every non-terminal item whose sender or recipient is the selected seat. Global Disconnect affects all non-terminal registered work across the bridge. | For either action, every affected held/in-transit item—including active pair, pending reply, buffered/aggregate constituents, append-window owner/waiters, retries/defers, in-flight attempt and handoffs awaiting acknowledgement—is forced into the centre station for Ben's PUSH / DELETE / APPEND decision. | Per-seat unregister removes only that seat's registration after the safe hold/epoch boundary. The proposed safe behaviour keeps the other seat registered but suspends dispatch bridge-wide until re-registration; global Disconnect persists the new epoch and removes both registrations. Both seats must be deliberately re-registered after global Disconnect. | Stages 1 and 3 |
+| **B — Global control only** | One **Disconnect bridge** action; no per-seat unregister control. Any seat replacement/re-registration uses the separate seat-assignment flow. | Every held/in-transit item across the bridge-wide scope is forced into the centre station for Ben's PUSH / DELETE / APPEND decision; all non-terminal registered work enters OWNER-REVIEW. | Disconnect pauses the bridge, persists the epoch and removes both seat registrations. Both seats must be deliberately re-registered. A single seat cannot be removed/replaced without disconnecting the whole bridge. | Stages 1 and 3 |
+| **C — Per-seat control only** | Retain a per-seat action, named **Unregister this seat**; no global Disconnect action in this build. | Every held/in-transit item within the affected seat's scope is forced into the centre station for Ben's PUSH / DELETE / APPEND decision. | Removes only the calling seat's registration after the safe hold/epoch boundary. A global shutdown requires two separate per-seat actions and creates an intermediate state; no single global control exists. | Stages 1 and 3 |
 
-**Gate 5 status:** DECIDED — disconnect forces all held/in-transit work in its affected scope into the centre for Ben's PUSH / DELETE / APPEND disposition; no silent drop, movement, send or destruction.
+**Common recovery rules for A, B and C:**
+- Persist the required epoch/safe-hold boundary before changing dispatch eligibility; stale events must not initiate a send.
+- Items in OWNER-REVIEW remain there after re-registration until Ben explicitly decides each item or resumes it through the governed path. Re-registration alone does not move, retry or replay work.
+- The existing permanent routing record and message identity remain; centre-station presentation is not a new registration or delivery claim.
+- Where delivery is unresolved, preserve UNKNOWN; do not infer that an item was or was not delivered.
 
-**Gate 5A status:** OPEN — control-scope and recovery packaging only. This is the residual Stage 1 / Stage 3 dependency; it does not reopen Gate 5 behaviour.
+**Ben's remaining packaging decisions:**
+1. Select A, B or C.
+2. If A, decide whether global Disconnect is available from either seat panel and whether it requires a second explicit confirmation.
+3. For per-seat Unregister, decide whether the other seat remains registered while dispatch is suspended bridge-wide, or whether only affected-seat work is suspended.
+4. Confirm that OWNER-REVIEW persists through re-registration until explicit item disposition/resumption, or state an alternative consistent with the no-automatic-movement ruling.
+5. Decide whether Disconnect needs a distinct owner-review cause label or the common OWNER-REVIEW state with recorded cause is sufficient.
+
+**Gate 5 status:** DECIDED — centre-station PUSH / DELETE / APPEND behaviour is fixed.
+
+**Gate 5A status:** OPEN — Ben selects control packaging and recovery scope. This is the remaining Stage 1 / Stage 3 dependency; it does not reopen Gate 5 behaviour.
 
 ---
 
@@ -576,7 +588,7 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 | Gate | Output in this pack | Status | Stage blocked |
 |---|---|---|---|
 | Gate 1 platform scope | ChatGPT and Muse first; Claude.ai, Gemini and Meta AI outside Stage 1 pending later evidence and adoption | **DECIDED — 2026-11-11** | Scope fixed |
-| Gate 1 exact identity rule | Scoped source-occurrence rule, canonicalisation, SHA-256, payload separation, UNKNOWN/COLLISION and identity-claim evidence record | **OPEN — Ben adoption required; source evidence still required** | Stage 1 |
+| Gate 1 exact identity rule | Exact construction in Controlled Revision 03 §§1.3–1.5 and 1.8; adoption recorded under PB-ID `pb-mwcxd7wy-2i-kper` at 17:24 PST | **DECIDED — 2026-11-11** | Stage 1 source-field demonstration/readiness only |
 | Disconnect behaviour | Ben's centre-station PUSH / DELETE / APPEND ruling; applies to every disconnect scope | **DECIDED — 2026-11-11** | Behaviour fixed; packaging tracked below |
 | Gate 5A control-scope packaging | A/B/C control options and residual recovery questions | **OPEN — narrow scope decision** | Stages 1 and 3 |
 | F-6 completeness | Character/block/hash/trailer/repair proposal | **OPEN — Ben adoption required** | Stage 2 |
@@ -601,7 +613,7 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [x] No Crusher call or proxy.
 - [x] No code changes, probes, tests, browser actions, reload, migration, deployment or activation.
 - [x] Ben's Gate 1 platform scope ruling is incorporated: ChatGPT and Muse first; Claude.ai, Gemini and Meta AI excluded from Stage 1 identity scope.
-- [ ] Ben adopts, amends or rejects the exact Gate 1 identity rule scoped to ChatGPT and Muse; source evidence must demonstrate the required occurrence keys before registration.
+- [x] Ben adopted the exact Gate 1 identity rule for ChatGPT and Muse under PB-ID `pb-mwcxd7wy-2i-kper`; source-field demonstration for both remains required before Stage 1 registration.
 - [x] Ben's Gate 5 disconnect behaviour ruling is incorporated; control-scope packaging remains open as Gate 5A.
 - [ ] Ben resolves Gate 5A control-scope and recovery packaging.
 - [ ] Ben adopts F-6 whole-message completeness definitions.
@@ -611,14 +623,14 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [ ] Ben says whether to shelf the direction erratum; Stage 3 conformance remains pending.
 - [ ] NEW-9 external route and receipt authority are resolved before Stage 5.
 
-**Stage 0 exit accounting — Controlled Revision 03:**
+**Stage 0 exit accounting — Controlled Revision 04:**
 
 | Item | Current disposition | What remains / who decides | Stage dependency |
 |---|---|---|---|
 | Gate 1 platform scope | **CLOSED — ChatGPT and Muse first** | No further scope decision pending; later platforms require their own evidence and adopted widening | Scope fixed; does not itself permit Stage 1 |
-| Gate 1 exact identity rule | **OPEN — Ben adoption** | Ben adopts/amends/rejects the exact rule in §1.8; ChatGPT and Muse source occurrence keys must then be demonstrated | Stage 1 |
+| Gate 1 exact identity rule | **CLOSED — adopted for ChatGPT and Muse** | No further rule adoption pending; demonstrate qualifying source occurrence keys for both platforms before registration | Stage 1 readiness |
 | Gate 5 disconnect behaviour | **CLOSED — Ben's centre-station ruling** | No further behaviour decision; applies to every disconnect scope | Behaviour fixed |
-| Gate 5A control/recovery packaging | **OPEN — Ben decision** | Select A/B/C and resolve the residual control/recovery questions in §5.5 | Stages 1 and 3 |
+| Gate 5A control/recovery packaging | **OPEN — Ben decision** | Select A/B/C and resolve the five packaging/recovery decisions in §5.5 | Stages 1 and 3 |
 | F-6 whole-message completeness | **OPEN — Ben adoption** | Adopt/amend character, block, byte-hash, trailer, repair and conflict definitions | Stage 2 |
 | F-7 composer ownership | **DESIGN PREPARED; live evidence not authorised** | Ben separately authorises or declines the bounded read-only probe and specifies tabs; no probe is implied | Stage 2 |
 | Append serialization | **OPEN — Ben decision** | Select wire option and decide append count, commit/push-through, whitespace, same IDs, directions and trailer placement | Stage 3 |
@@ -627,6 +639,6 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 | NEW-9 route | **DESIGN PREPARED; external dependencies open** | Resolve event source, Remmy wake route, Shelf write/read-back receipt and validation authority | Stage 5 |
 | Station supplement cross-check | **COMPLETE** | Findings already recorded; carry into relevant design/build stages | Relevant Stage 0/3 requirements |
 
-**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 1 platform scope and Gate 5 disconnect behaviour are decided. Gate 1's exact identity rule, Gate 5A packaging, F-6, F-7 authorisation, append decision, basic-fix source/decision and direction-erratum shelving remain as itemised above. NEW-9 is a later Stage 5 dependency. No decision is inferred from silence. No implementation authority is created by either ruling or this revision. Stage 1 remains blocked pending Ben's adoption of the exact Gate 1 rule, demonstrated qualifying source identity for ChatGPT and Muse, resolution of Gate 5A, and separate Stage 1 implementation authorisation.
+**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 1 is closed on both decisions: ChatGPT and Muse are the adopted initial scope, and the exact source-occurrence identity rule is adopted. Qualifying source identity must still be demonstrated for both platforms before Stage 1 registration. Gate 5 behaviour is decided; Gate 5A packaging remains open. F-6 adoption, F-7 probe authorisation, append serialization, the basic-fix snippet and direction-erratum shelving remain in their recorded states and block only their own stages as itemised above. NEW-9 is a later Stage 5 dependency. No decision is inferred from silence. No implementation authority is created by either ruling or this revision. Stage 1 remains blocked pending qualifying ChatGPT/Muse source identity evidence, Ben's Gate 5A packaging decision, and separate Stage 1 implementation authorisation.
 
-**End of Stage 0 Design and Evidence Pack 01 — Controlled Revision 03.**
+**End of Stage 0 Design and Evidence Pack 01 — Controlled Revision 04.**
