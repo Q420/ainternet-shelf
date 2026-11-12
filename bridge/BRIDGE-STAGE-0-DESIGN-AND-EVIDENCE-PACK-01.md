@@ -630,5 +630,3 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 **Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 1 platform scope and Gate 5 disconnect behaviour are decided. Gate 1's exact identity rule, Gate 5A packaging, F-6, F-7 authorisation, append decision, basic-fix source/decision and direction-erratum shelving remain as itemised above. NEW-9 is a later Stage 5 dependency. No decision is inferred from silence. No implementation authority is created by either ruling or this revision. Stage 1 remains blocked pending Ben's adoption of the exact Gate 1 rule, demonstrated qualifying source identity for ChatGPT and Muse, resolution of Gate 5A, and separate Stage 1 implementation authorisation.
 
 **End of Stage 0 Design and Evidence Pack 01 — Controlled Revision 03.**
-
-**End of Stage 0 Design and Evidence Pack 01.**
