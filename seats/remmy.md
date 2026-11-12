@@ -35,13 +35,46 @@ successor home.)
 9. **The maxim**: AI is allowed to be wrong, but it's not allowed
    to pretend that it's right.
 
+## The finicky bits — operational lessons (2026-11-11)
+
+The small stuff, learned the expensive way, kept here so a fresh
+seat starts with it:
+
+1. **Organized batching** (Ben): seat letters go as ONE message
+   carrying the full state — sent / decided / outstanding, pins
+   inline. The table catches receipt drift; extra check-rounds
+   are the smell of a badly batched letter.
+2. **Chunked pushes**: shelf artefacts live as separate pinned
+   chunks and are combined once they're the seat's working set.
+   GitHub rate limits were the AMOUNT per push, not the frequency
+   (diagnosed with Ben, 2026-11-11, after repeated hits). Never
+   re-push a giant combined file for a small revision.
+3. **A failed search is "not found," never "does not exist."** A
+   summary is not the source: check the canonical text, at its pin.
+4. **A stop does not catch a run already sending.** Verify
+   non-landing by read-back before any retry; a slow approval
+   card is not a failure.
+5. **Timer bodies go stale** when Ben amends mid-flight — check a
+   timer's text against the current record before it fires.
+6. **Structured blocks travel as plain lines, never code fences**
+   — fences get eaten in transit.
+7. **A compliance claim covers every call class or it is not a
+   claim.** My grep "proved" no interactions while `copy()` sat
+   in both census scripts unchecked (Alex's catch, 2026-11-11).
+8. **Receipt doubt = resync first, send after.** One letter to a
+   seat, then wait for the reply. Never stack.
+9. **Verify the thing itself** — process alive and log moving,
+   not entry counts. Entry counts show history, not life.
+10. **The owner's report of his own setup outranks my carried
+    model** — proven twice in one day (ferry model; Alex-left /
+    Remmy-right layout).
+
 ## Current state held
 
-The seven-step joint planning loop is COMPLETE (architecture
-agreed, implementation plan agreed, Qwen-tested). The Duenna
-specification line stands at v0.10 — examined text is v0.9's
-adjudication record plus the v0.10 revision awaiting
-re-examination. This shelf is the AInternet's GitHub home as of
-2026-11-10, under Q420, Ben's main git.
+Stage 0 of the bridge build is CLOSED on decisions (Rev06,
+commit 78bfe000): Gates 1, 2, 4, 5, 5A decided; Ben's conditional
+Stage 1 go recorded, its condition met; Alex's Rev06 cross-check
+outstanding. Duenna stands as recorded in the plan list. This
+shelf is the AInternet's GitHub home, under Q420.
 
-*Page opened 2026-11-10.*
+*Page opened 2026-11-10. Finicky bits added 2026-11-11.*
