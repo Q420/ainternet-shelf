@@ -606,6 +606,7 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 | Gate 1 exact identity rule | Exact construction in Controlled Revision 03 §§1.3–1.5 and 1.8; adoption recorded under PB-ID `pb-mwcxd7wy-2i-kper` at 17:24 PST | **DECIDED — 2026-11-11** | Stage 1 source-field demonstration/readiness only |
 | Disconnect behaviour | Ben's centre-station PUSH / DELETE / APPEND ruling; applies to every disconnect scope | **DECIDED — 2026-11-11** | Behaviour fixed; packaging tracked below |
 | Gate 5A control-scope packaging | Option C adopted; no global Disconnect; one Stage 3 cause-label presentation question remains | **DECIDED for Stage 1; one Stage 3 item open** | Stage 3 presentation only |
+| Gate 1 source-identity demonstration | Bounded read-only live-page identity census for ChatGPT and Muse, separately authorised | **OPEN — Ben's separate probe authorisation required** | Stage 1 readiness |
 | F-6 completeness | Character/block/hash/trailer/repair proposal | **OPEN — Ben adoption required** | Stage 2 |
 | F-7 composer ownership | Five-platform source evidence and bounded read-only probe request | **OPEN — Ben probe authorisation required for live evidence** | Stage 2 |
 | Append serialization | Same-ID segment model and three wire options | **OPEN — Ben decision required** | Stage 3 |
@@ -622,15 +623,16 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [x] Inspected identity extraction and shared fingerprint source in v0.18.0.
 - [x] Inspected current seat-disconnect command and background behaviour.
 - [x] Inspected current composer selection and shared sendcore fallback.
-- [x] Prepared identity and disconnect decision papers first, because both block Stage 1.
+- [x] Prepared identity and disconnect decision papers first; Gate 1 identity rule and Gate 5/5A packaging decisions are now closed.
 - [x] Prepared F-6, F-7, append, direction and NEW-9 design outputs.
 - [x] Named every missing external dependency rather than silently retrieving it.
 - [x] No Crusher call or proxy.
 - [x] No code changes, probes, tests, browser actions, reload, migration, deployment or activation.
 - [x] Ben's Gate 1 platform scope ruling is incorporated: ChatGPT and Muse first; Claude.ai, Gemini and Meta AI excluded from Stage 1 identity scope.
 - [x] Ben adopted the exact Gate 1 identity rule for ChatGPT and Muse under PB-ID `pb-mwcxd7wy-2i-kper`; source-field demonstration for both remains required before Stage 1 registration.
-- [x] Ben's Gate 5 disconnect behaviour ruling is incorporated; control-scope packaging remains open as Gate 5A.
+- [x] Ben's Gate 5 disconnect behaviour ruling and Gate 5A Option C packaging ruling are incorporated; only the named cause-label presentation question remains for Stage 3.
 - [x] Ben adopted Gate 5A Option C: per-seat Unregister only; no global Disconnect. The remaining cause-label question is Stage 3 presentation only.
+- [ ] Ben separately authorises or declines the bounded ChatGPT/Muse source-identity census in §1.9; no probe is authorised yet.
 - [ ] Ben adopts F-6 whole-message completeness definitions.
 - [ ] Ben separately authorises or declines the bounded F-7 read-only probe.
 - [ ] Ben decides append wire format, direction coverage and commit/send semantics.
@@ -638,12 +640,13 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [ ] Ben says whether to shelf the direction erratum; Stage 3 conformance remains pending.
 - [ ] NEW-9 external route and receipt authority are resolved before Stage 5.
 
-**Stage 0 exit accounting — Controlled Revision 04:**
+**Stage 0 exit accounting — Controlled Revision 05:**
 
 | Item | Current disposition | What remains / who decides | Stage dependency |
 |---|---|---|---|
 | Gate 1 platform scope | **CLOSED — ChatGPT and Muse first** | No further scope decision pending; later platforms require their own evidence and adopted widening | Scope fixed; does not itself permit Stage 1 |
-| Gate 1 exact identity rule | **CLOSED — adopted for ChatGPT and Muse** | No further rule adoption pending; demonstrate qualifying source occurrence keys for both platforms before registration | Stage 1 readiness |
+| Gate 1 exact identity rule | **CLOSED — adopted for ChatGPT and Muse** | No further rule adoption pending | Decision closed |
+| Gate 1 source-identity demonstration | **OPEN — live census request prepared; not authorised** | Ben separately authorises or declines the bounded read-only census in §1.9; persistence still requires authoritative semantics or separately authorised repeat evidence | Stage 1 readiness |
 | Gate 5 disconnect behaviour | **CLOSED — Ben's centre-station ruling** | No further behaviour decision; applies to every disconnect scope | Behaviour fixed |
 | Gate 5A control/recovery packaging | **DECIDED — Option C adopted** | No global Disconnect; remaining cause-label question is named in §5.5 and blocks Stage 3 presentation only | Stage 3 only |
 | F-6 whole-message completeness | **OPEN — Ben adoption** | Adopt/amend character, block, byte-hash, trailer, repair and conflict definitions | Stage 2 |
