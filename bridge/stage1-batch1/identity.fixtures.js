@@ -390,6 +390,19 @@ test('canonical builder refuses a missing (undefined) field but accepts explicit
   assert.ok(ok.includes('\nconversation:-1:\n'));
 });
 
+test('claim store refuses a non-string canonical, never coerces it into the record', async () => {
+  const store = identity.createClaimStore();
+  assert.throws(() => store.claim('pb1-x', 42), TypeError);
+  assert.strictEqual(store.get('pb1-x'), undefined);
+});
+
+test('claim store refuses a missing canonical and a non-string PB-ID', async () => {
+  const store = identity.createClaimStore();
+  assert.throws(() => store.claim('pb1-x', undefined), TypeError);
+  assert.throws(() => store.claim(42, 'PBID-SRC1\n'), TypeError);
+  assert.strictEqual(store.size(), 0);
+});
+
 /* ---- Runner ---- */
 
 (async () => {

@@ -196,6 +196,16 @@ function createClaimStore() {
   const claims = new Map();
   return {
     claim(pbid, canonical) {
+      // Same input discipline as the rest of the layer (Ben's
+      // ruling: fix the family, not the instances): the record
+      // stores exactly what it is handed, so what it is handed
+      // must be strings — never coerced, never absent.
+      if (typeof pbid !== 'string' || pbid.length === 0) {
+        throw new TypeError('claim pbid must be a non-empty string');
+      }
+      if (typeof canonical !== 'string' || canonical.length === 0) {
+        throw new TypeError('claim canonical must be a non-empty string');
+      }
       if (!claims.has(pbid)) {
         claims.set(pbid, { pbid, canonical });
         return 'CLAIMED';

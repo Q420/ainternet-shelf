@@ -1,30 +1,27 @@
-# Pulse Bridge — Stage 1 Batch 1 — Evidence (Revision 2)
+# Pulse Bridge — Stage 1 Batch 1 — Evidence (Revision 3)
 
-This revision supersedes the batch 1 evidence shelved at commit
-40fb2be3b7e4def9b09c1c2953b3e999fe98ef27 for the same three
-paths. The Revision 1 files and their 25/25 run remain in git
-history at that commit; nothing is rewritten.
+Supersedes Revision 2 (commit f6fede75761e0caa8296c5dd77d89169a69ca366)
+for the same three paths; Revisions 1 and 2 remain in git history.
 
-**Correction applied** (Alex's batch 1 review, pb-mwd0g04w —
-identity contract HOLD): the input contract no longer coerces
-or defaults. Undefined (missing) field values are distinguished
-from explicit null and rejected where a value is required;
-non-string field values are rejected, never coerced, both in
-deriveFromSourceKey and in the canonical builders themselves
-(TypeError at the pure layer); native scope is required and
-must be exactly 'global' or 'conversation' — missing or invalid
-scope is IDENTITY-UNKNOWN, never silently defaulted. Scope
-check at that review: PASS. Evidence note: the 25/25 was
-Remmy-reported; Alex did not independently execute the suite.
+**Change in this revision** (Ben's ruling, 2026-11-11, on
+hearing the correction described as "narrow": fix the family,
+not the instances): the one neighbouring input surface with
+the same fault shape — the identity-claim store — is hardened
+to the same discipline. `claim()` now refuses a non-string or
+empty PB-ID and a non-string or empty canonical (TypeError),
+instead of storing whatever it was handed. It previously did
+not coerce, but it did not refuse either. Two focused fixtures
+added. Nothing else changed; Alex's three correction points
+stand as corrected in Revision 2.
 
-## Files and content hashes (SHA-256), Revision 2
+## Files and content hashes (SHA-256), Revision 3
 
-- `identity.js` — 150ba2b93d1e6ee5db2cbf37a15395422de88af3422183cb6cf7f4a9617263be
-- `identity.fixtures.js` — 74c6f8ea41da40e066c431abe8ec5275159cfbbf6fa172e172432fc75774ad35
+- `identity.js` — fa46babc90b2e7cc37d675a2da41bfac63dbf184d6f81d9ed5372ab47f1e0b4f
+- `identity.fixtures.js` — ca8b0ddfabc02b3b263666afeef0684fd35ab0d55a6b13946e07e3144bc5b0d2
 
 ## Basis pins
 
-Unchanged from Revision 1: Build Plan 01 blob
+Unchanged: Build Plan 01 blob
 8196d44ea60541855b4c069ea8e46a811adad13c; Stage 0 Pack Rev06
 commit 78bfe0008a536ca62ce7c16b7243729f0a50b738, blob
 7685099a42e7a7ab566be7ea790fadae7c6a3c8a; Rev07 chunk commit
@@ -35,20 +32,15 @@ commit e4c855c06beaba449a47281292496bad81d3b468, blob
 
 ## Working-tree integrity
 
-Recursive diff against baseline-v0.18.0 after the correction:
-no baseline file differing; additions remain exactly
-`identity.js` and `tests-stage1/identity.fixtures.js`. No
-wiring into background or adapters; manifest unchanged.
+Additions remain exactly `identity.js` and
+`tests-stage1/identity.fixtures.js`; no baseline file differs;
+no wiring; manifest unchanged.
 
 ## Test evidence (tied to this exact revision)
 
 Command: `node tests-stage1/identity.fixtures.js`
-Runtime: Node v24.22.1. Exit code: 0. 36 fixtures: the 25 of
-Revision 1 plus 11 focused input-contract fixtures (missing
-field vs explicit null under both scopes; missing and invalid
-scope; numeric message ID, platform and object conversation
-rejected uncoerced; explicitly undefined message ID; canonical
-builder refusing coercion directly).
+Runtime: Node v24.22.1. Exit code: 0. 38 fixtures: 36 of
+Revision 2 plus 2 claim-store input fixtures.
 
 ```text
 PASS  vector 1 (published): chatgpt native digest matches SS1.7
@@ -87,15 +79,16 @@ PASS  explicitly undefined message ID is IDENTITY-UNKNOWN
 PASS  occurrence form: missing conversation field is IDENTITY-UNKNOWN, distinct from a stated value
 PASS  canonical builder itself refuses coercion: numeric field value throws TypeError
 PASS  canonical builder refuses a missing (undefined) field but accepts explicit null
+PASS  claim store refuses a non-string canonical, never coerces it into the record
+PASS  claim store refuses a missing canonical and a non-string PB-ID
 
-identity.fixtures: 36/36 passed, 0 failed
+identity.fixtures: 38/38 passed, 0 failed
 ```
 
-## Scope of this batch
+## Scope
 
-Stage 1 scope item 1 only: the PB-ID source-identity layer, as
-corrected. Batch 2 waits for Alex's review of this revision.
-No live proof is claimed; Ben's live two-way walk is the stage
-acceptance, still ahead.
+Stage 1 scope item 1 (identity layer), corrected. Batch 2
+waits for Alex's review. No live proof claimed; Ben's live
+two-way walk remains the stage acceptance.
 
 — Remmy, 2026-11-11.
