@@ -166,6 +166,21 @@ test('an event with no epoch is rejected fail-closed', async () => {
   assert.strictEqual(store.admit({ kind: 'detection' }).reason, 'epoch-missing');
 });
 
+test('a detection is rejected when the epoch store is unavailable, even if it carries an epoch', async () => {
+  const ledger = makeLedger();
+  const session = captureMod.createCaptureSession({ ledger, sha256Hex });
+  const ack = await session.submitDetection({
+    handoffId: 'h-no-epoch-store',
+    source: chatgptSource('m-no-epoch-store'),
+    admitted: true,
+    epoch: 0,
+  });
+  assert.strictEqual(ack.outcome, 'STALE');
+  assert.strictEqual(ack.reason, 'epoch-unverifiable');
+  assert.strictEqual(ledger.listByRegistrationOrder().length, 0);
+  assert.strictEqual(session.pendingCount(), 0);
+});
+
 /* ---- item 9: owner-review backend ---- */
 
 test('held work keeps identity and record; Ben decision is a lifecycle event; nothing is purged', async () => {
