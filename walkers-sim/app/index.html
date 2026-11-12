@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Walkers Sim — Stage A</title>
+<style>
+  body { margin:0; background:#0b0e1a; color:#e8e9f1; font-family:system-ui,sans-serif; overflow:hidden; }
+  #stage { position:fixed; inset:0; }
+  .part { position:absolute; left:0; top:0; border-radius:6px; will-change:transform; }
+  .torso { background:linear-gradient(135deg,#22d3ee,#a78bfa); }
+  .thigh { background:#7d8aa8; }
+  .shin  { background:#a7b3cc; }
+  .shin::after { content:""; position:absolute; left:50%; bottom:-6px; width:12px; height:12px;
+                 margin-left:-6px; border-radius:50%; background:#e8e9f1; }
+  #ground { position:absolute; left:0; right:0; height:3px; background:#3ddc84; opacity:0.7; }
+  #hud { position:fixed; left:12px; top:10px; font-size:13px; color:#a7abc0; white-space:pre; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="ground"></div>
+<div id="hud"></div>
+<script type="module">
+import { CFG, buildWorld, buildQuadruped } from "./walkers.js";
+
+const SCALE = 60; // px per metre
+const stage = document.getElementById("stage");
+const groundEl = document.getElementById("ground");
+const hud = document.getElementById("hud");
+
+const { world } = buildWorld();
+const SPAWN_Y = 2.6; // torso centre: drop test height (feet start ~1.5 m up)
+const quad = buildQuadruped(world, SPAWN_Y);
+
+// One div per body (9 bodies). Sizes from CFG.
+const sizes = {
+  torso: [CFG.torso.w, CFG.torso.h],
+};
+function sizeFor(name) {
+  if (name === "torso") return [CFG.torso.w, CFG.torso.h];
+  if (name.endsWith("-thigh")) return [CFG.leg.thick, CFG.leg.thigh];
+  return [CFG.leg.thick, CFG.leg.shin];
+}
+const divs = {};
+for (const part of quad.parts) {
+  const el = document.createElement("div");
+  const [w, h] = sizeFor(part.name);
+  el.className = "part " + (part.name === "torso" ? "torso" : part.name.endsWith("-thigh") ? "thigh" : "shin");
+  el.id = "part-" + part.name;
+  el.style.width = (w * SCALE) + "px";
+  el.style.height = (h * SCALE) + "px";
+  stage.appendChild(el);
+  divs[part.name] = el;
+}
+
+let camX = 0;
+function project(x, y) {
+  // world (m) -> screen (px): origin at screen centre-x, ground line at 78% height.
+  const gx = window.innerWidth / 2 + (x - camX) * SCALE;
+  const gy = window.innerHeight * 0.78 - y * SCALE;
+  return [gx, gy];
+}
+function render() {
+  camX = quad.torso.getPosition().x;
+  for (const part of quad.parts) {
+    const p = part.body.getPosition();
+    const a = part.body.getAngle();
+    const [w, h] = sizeFor(part.name);
+    const [cx, cy] = project(p.x, p.y);
+    const el = divs[part.name];
+    el.style.transform = `translate(${cx - (w * SCALE) / 2}px, ${cy - (h * SCALE) / 2}px) rotate(${-a}rad)`;
+  }
+  const [, gy] = project(0, 0);
+  groundEl.style.top = gy + "px";
+}
+
+let acc = 0, last = performance.now(), frames = 0;
+function loop(now) {
+  acc += Math.min(0.1, (now - last) / 1000); last = now;
+  while (acc >= CFG.step) { world.step(CFG.step, CFG.velIters, CFG.posIters); acc -= CFG.step; frames++; }
+  render();
+  const tp = quad.torso.getPosition();
+  hud.textContent = `stage A — doll · frame ${frames} · torso (${tp.x.toFixed(2)}, ${tp.y.toFixed(2)})`;
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Test hook (BUILD-SHEET A4): physics state + live DOM rects + independent projection.
+window.__WT = {
+  cfg: CFG, scale: SCALE,
+  frames: () => frames,
+  bodies: () => quad.parts.map(part => {
+    const p = part.body.getPosition();
+    return { name: part.name, x: p.x, y: p.y, angle: part.body.getAngle() };
+  }),
+  velocity: () => { const v = quad.torso.getLinearVelocity(); return { x: v.x, y: v.y }; },
+  rects: () => quad.parts.map(part => {
+    const r = divs[part.name].getBoundingClientRect();
+    return { name: part.name, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+  }),
+  project: (x, y) => project(x, y),
+};
+</script>
+</body>
+</html>
