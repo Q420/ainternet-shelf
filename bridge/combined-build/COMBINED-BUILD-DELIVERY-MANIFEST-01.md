@@ -46,3 +46,7 @@ cd2e781a71b7d490f8f796ff6d0c75907da13017ad1d92e78b447070bc9a92a4   tests-stage1/
 8d294d34cc0637b95e05bacb12f5a074ec901a01822b040d4d19f8f136585f0f   tests-stage1/station.fixtures.js
 da1537fa0914f8c0c299577d5520e5974882a1e82f29855e430b645559ef0959   witness.js
 ```
+
+## Source addendum (2026-11-11, after Tansys match attempt)
+
+The exact v0.21.0 build tree (all 37 pinned files, incl. adapters/ and tests-stage1/) is shelved at bridge/combined-build/source/ so the pins above can be matched file-for-file. It was NOT on the shelf when the manifest was first published — Tansys review caught that; the gap is recorded, not smoothed over.
