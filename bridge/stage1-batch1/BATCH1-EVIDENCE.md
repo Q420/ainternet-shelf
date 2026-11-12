@@ -1,23 +1,40 @@
-# Pulse Bridge — Stage 1 Batch 1 — Evidence (Revision 3)
+# Pulse Bridge — Stage 1 Batch 1 — Evidence (Revision 4)
 
-Supersedes Revision 2 (commit f6fede75761e0caa8296c5dd77d89169a69ca366)
-for the same three paths; Revisions 1 and 2 remain in git history.
+Supersedes Revision 3 (commit 965ae6bb616df94d774d6b2bea7f07220b7751a4);
+all earlier revisions remain in git history at their commits.
 
-**Change in this revision** (Ben's ruling, 2026-11-11, on
-hearing the correction described as "narrow": fix the family,
-not the instances): the one neighbouring input surface with
-the same fault shape — the identity-claim store — is hardened
-to the same discipline. `claim()` now refuses a non-string or
-empty PB-ID and a non-string or empty canonical (TypeError),
-instead of storing whatever it was handed. It previously did
-not coerce, but it did not refuse either. Two focused fixtures
-added. Nothing else changed; Alex's three correction points
-stand as corrected in Revision 2.
+**Revision crossing, stated plainly:** Alex's review
+(pb-mwd0k57e) was of Revision 2 (commit f6fede75). Revision 3
+(the claim-store hardening, Ben's fix-the-family ruling) was
+already shelved when that review arrived and is NOT part of
+what he reviewed. This Revision 4 is Revision 3 PLUS the
+classification correction he requested from Revision 2.
 
-## Files and content hashes (SHA-256), Revision 3
+**The correction:** required-string fields now classify
+honestly. Genuinely absent (undefined) is *-missing; explicit
+null, a non-string value, or an empty string is *-invalid.
+Revision 2's branches collapsed explicit null into *-missing
+for platform, messageId and occurrence (and conversation where
+required), contradicting the fieldState distinction the same
+revision introduced. A single helper (requiredStringReason)
+now classifies all required-string fields uniformly. The
+global-scope conversation: null allowance is preserved exactly:
+explicit null there remains valid and encodes -1:; absent
+remains conversation-missing; non-string remains
+conversation-invalid. Six new fixtures assert the REASON
+values, not only the status, as requested.
 
-- `identity.js` — fa46babc90b2e7cc37d675a2da41bfac63dbf184d6f81d9ed5372ab47f1e0b4f
-- `identity.fixtures.js` — ca8b0ddfabc02b3b263666afeef0684fd35ab0d55a6b13946e07e3144bc5b0d2
+Alex's Rev2 review record: the three requested corrections
+substantially in place; builders reject coercion; scope exact;
+commit contained only the three batch paths. His evidence
+note stands: the run output is Remmy-reported; he reviewed
+source and fixtures against it and did not independently
+execute the suite.
+
+## Files and content hashes (SHA-256), Revision 4
+
+- `identity.js` — 02ea08c0e97e918168a3eacfec6baf140d71ca5befa9dd2dbb018aefd68ee467
+- `identity.fixtures.js` — 252a64b6f191b152b465fe4b3ccb7d0a3fd5de10e0eaae4b5a3e83ccc832039a
 
 ## Basis pins
 
@@ -39,8 +56,8 @@ no wiring; manifest unchanged.
 ## Test evidence (tied to this exact revision)
 
 Command: `node tests-stage1/identity.fixtures.js`
-Runtime: Node v24.22.1. Exit code: 0. 38 fixtures: 36 of
-Revision 2 plus 2 claim-store input fixtures.
+Runtime: Node v24.22.1. Exit code: 0. 44 fixtures: 38 of
+Revision 3 plus 6 reason-classification fixtures.
 
 ```text
 PASS  vector 1 (published): chatgpt native digest matches SS1.7
@@ -81,14 +98,20 @@ PASS  canonical builder itself refuses coercion: numeric field value throws Type
 PASS  canonical builder refuses a missing (undefined) field but accepts explicit null
 PASS  claim store refuses a non-string canonical, never coerces it into the record
 PASS  claim store refuses a missing canonical and a non-string PB-ID
+PASS  reason: explicit null platform is platform-invalid; absent platform is platform-missing
+PASS  reason: explicit null message ID is message-id-invalid; empty message ID is message-id-invalid
+PASS  reason: explicit null occurrence is occurrence-invalid; absent occurrence is occurrence-missing
+PASS  reason: explicit null conversation under conversation scope is conversation-invalid
+PASS  reason: empty conversation under conversation scope is conversation-invalid
+PASS  reason: explicit null conversation in occurrence form is conversation-invalid
 
-identity.fixtures: 38/38 passed, 0 failed
+identity.fixtures: 44/44 passed, 0 failed
 ```
 
 ## Scope
 
 Stage 1 scope item 1 (identity layer), corrected. Batch 2
-waits for Alex's review. No live proof claimed; Ben's live
-two-way walk remains the stage acceptance.
+waits for Alex's review of this revision. No live proof
+claimed; Ben's live two-way walk remains the stage acceptance.
 
 — Remmy, 2026-11-11.

@@ -117,19 +117,26 @@ function createIdentity(deps) {
     return 'invalid';
   }
 
+  // A required string field classifies honestly (Rev2 review
+  // correction): genuinely absent (undefined) is *-missing;
+  // explicit null, a non-string value, or an empty string is
+  // *-invalid. The states are never collapsed into one another.
+  function requiredStringReason(value, prefix) {
+    const state = fieldState(value);
+    if (state === 'missing') return prefix + '-missing';
+    if (state !== 'string' || value.length === 0) return prefix + '-invalid';
+    return null;
+  }
+
   async function deriveFromSourceKey(input) {
     if (!input || typeof input !== 'object') return unknown('no-input');
-    if (fieldState(input.platform) !== 'string' || input.platform.length === 0) {
-      return unknown(fieldState(input.platform) === 'invalid' ? 'platform-invalid' : 'platform-missing');
-    }
+    const platformReason = requiredStringReason(input.platform, 'platform');
+    if (platformReason) return unknown(platformReason);
 
     let canonical;
     if (input.form === 'native') {
-      const midState = fieldState(input.messageId);
-      if (midState === 'invalid') return unknown('message-id-invalid');
-      if (midState !== 'string' || input.messageId.length === 0) {
-        return unknown('message-id-missing');
-      }
+      const midReason = requiredStringReason(input.messageId, 'message-id');
+      if (midReason) return unknown(midReason);
       // Scope is required and must be exact — never defaulted.
       if (input.scope !== 'global' && input.scope !== 'conversation') {
         return unknown('scope-invalid');
@@ -137,9 +144,11 @@ function createIdentity(deps) {
       const convState = fieldState(input.conversation);
       if (convState === 'invalid') return unknown('conversation-invalid');
       if (convState === 'missing') return unknown('conversation-missing');
-      if (input.scope === 'conversation' &&
-          (convState !== 'string' || input.conversation.length === 0)) {
-        return unknown('conversation-missing-for-conversation-scoped-id');
+      if (input.scope === 'conversation') {
+        // Required here: explicit null is invalid, not missing;
+        // only the global scope may state conversation: null.
+        const convReason = requiredStringReason(input.conversation, 'conversation');
+        if (convReason) return unknown(convReason);
       }
       canonical = canonicalSourceKey({
         platform: input.platform,
@@ -147,16 +156,10 @@ function createIdentity(deps) {
         messageId: input.messageId,
       });
     } else if (input.form === 'occurrence') {
-      const convState = fieldState(input.conversation);
-      if (convState === 'invalid') return unknown('conversation-invalid');
-      if (convState !== 'string' || input.conversation.length === 0) {
-        return unknown('conversation-missing');
-      }
-      const occState = fieldState(input.occurrence);
-      if (occState === 'invalid') return unknown('occurrence-invalid');
-      if (occState !== 'string' || input.occurrence.length === 0) {
-        return unknown('occurrence-missing');
-      }
+      const convReason = requiredStringReason(input.conversation, 'conversation');
+      if (convReason) return unknown(convReason);
+      const occReason = requiredStringReason(input.occurrence, 'occurrence');
+      if (occReason) return unknown(occReason);
       canonical = canonicalOccurrenceKey({
         platform: input.platform,
         conversation: input.conversation,

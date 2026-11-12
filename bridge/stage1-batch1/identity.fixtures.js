@@ -403,6 +403,68 @@ test('claim store refuses a missing canonical and a non-string PB-ID', async () 
   assert.strictEqual(store.size(), 0);
 });
 
+/* ---- Reason classification: null is invalid, absent is missing (Rev2 review correction) ---- */
+
+test('reason: explicit null platform is platform-invalid; absent platform is platform-missing', async () => {
+  const a = await idn.deriveFromSourceKey({
+    form: 'native', platform: null, scope: 'global',
+    conversation: null, messageId: 'g-1',
+  });
+  const b = await idn.deriveFromSourceKey({
+    form: 'native', scope: 'global', conversation: null, messageId: 'g-1',
+  });
+  assert.strictEqual(a.reason, 'platform-invalid');
+  assert.strictEqual(b.reason, 'platform-missing');
+});
+
+test('reason: explicit null message ID is message-id-invalid; empty message ID is message-id-invalid', async () => {
+  const a = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'conversation',
+    conversation: 'c-001', messageId: null,
+  });
+  const b = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'conversation',
+    conversation: 'c-001', messageId: '',
+  });
+  assert.strictEqual(a.reason, 'message-id-invalid');
+  assert.strictEqual(b.reason, 'message-id-invalid');
+});
+
+test('reason: explicit null occurrence is occurrence-invalid; absent occurrence is occurrence-missing', async () => {
+  const a = await idn.deriveFromSourceKey({
+    form: 'occurrence', platform: 'muse', conversation: 'cv-1', occurrence: null,
+  });
+  const b = await idn.deriveFromSourceKey({
+    form: 'occurrence', platform: 'muse', conversation: 'cv-1',
+  });
+  assert.strictEqual(a.reason, 'occurrence-invalid');
+  assert.strictEqual(b.reason, 'occurrence-missing');
+});
+
+test('reason: explicit null conversation under conversation scope is conversation-invalid', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'conversation',
+    conversation: null, messageId: 'm-009',
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(r.reason, 'conversation-invalid');
+});
+
+test('reason: empty conversation under conversation scope is conversation-invalid', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'conversation',
+    conversation: '', messageId: 'm-009',
+  });
+  assert.strictEqual(r.reason, 'conversation-invalid');
+});
+
+test('reason: explicit null conversation in occurrence form is conversation-invalid', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'occurrence', platform: 'muse', conversation: null, occurrence: 'o-1',
+  });
+  assert.strictEqual(r.reason, 'conversation-invalid');
+});
+
 /* ---- Runner ---- */
 
 (async () => {
