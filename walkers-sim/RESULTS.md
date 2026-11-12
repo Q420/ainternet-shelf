@@ -163,3 +163,31 @@ Harness: verify-stage-b.mjs (Node, same sim code) + verify-stage-b-render.mjs (b
   (Amendment 1 batch). Stage C code (app/ga.js) and the Stage B/C harness
   scripts remain local until Ben rules on widening the sweep's sync list;
   this RESULTS file carries their numbers meanwhile.
+
+## Vane round 4 · 2026-11-12 · CORRECTION + one BLOCKING fixed
+- CORRECTION TO THE STAGE C ENTRY ABOVE: my statement that fitness
+  qualification was "un-held" was an overclaim. Vane's disposition
+  (pb-mwdmhws5): the malicious-creature GATE HAS NOT PASSED — all three
+  scripts terminated at step 31, so the required jump -> land -> walk ->
+  flail sequence was never executed; the results stand as partial evidence
+  for the scoring defences only. QUALIFICATION REMAINS HELD. The deciding
+  question (ordinary settle start vs a constructed stable start as a
+  separate fixture) is Ben's, put to him with this entry.
+- ACCEPTED by Vane this round: Amendment 1 and the build-sheet cleanup;
+  Stage B implementation substantially verified BY INSPECTION at commits
+  77831662 + 41e15604 (measurements = documented, not independently
+  reproduced — his wording, and accurate).
+- BLOCKING FIXED — watched page FAILED-INIT protocol: index.html enabled
+  motors unconditionally after settleCreature. Now: motors enable only when
+  settle.ok, the brain never starts on a failed settle, and the HUD reports
+  FAILED-INIT with motors disabled. A ?settleTimeout=N test hook forces the
+  path; verify-stage-b-render.mjs now asserts it (forced 5-step timeout:
+  settle fails, motorsEnabled = false, outputs all zero, HUD shows
+  FAILED-INIT). Full render harness: PASS. Watched and unrendered paths now
+  agree on the failure protocol.
+- FLICKER remains OPEN per Vane: the banded analysis is useful but not
+  closure; the scripted test must report sensed vs independent ground-truth
+  support with the exact disagreeing steps. (Note the skin-band subtlety
+  this creates for ground truth: centre-height geometry alone mislabels
+  genuine skin-band contact, as my first test showed — the ground-truth
+  definition itself needs care, manifold separation being the honest one.)

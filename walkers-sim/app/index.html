@@ -35,8 +35,12 @@ const cs = attachContacts(world);
 // Stage B: settle with motors OFF (SPEC §3), then the brain drives.
 // Settle timeout is the amended 5 s (SPEC-SHEET-04 Amendment 1, Vane
 // pb-mwdl4r7q): the original 2 s could not be met (measured 3.10 s).
-const settle = settleCreature(world, quad, cs, 300);
-for (const j of quad.joints) j.enableMotor(true);
+// Test hook: ?settleTimeout=N forces a short settle (FAILED-INIT path).
+const settleTimeoutSteps = Number(new URLSearchParams(location.search).get("settleTimeout")) || 300;
+const settle = settleCreature(world, quad, cs, settleTimeoutSteps);
+// Protocol (SPEC §3): a failed settle stays failed — motors are enabled ONLY
+// on a successful settle, and no brain-driven evaluation starts otherwise.
+if (settle.ok) for (const j of quad.joints) j.enableMotor(true);
 const genome = randomGenome(mulberry32(1));
 let lastOutputs = [0,0,0,0,0,0,0,0], scoredSteps = 0;
 
@@ -86,15 +90,20 @@ let acc = 0, last = performance.now(), frames = 0;
 function loop(now) {
   acc += Math.min(0.1, (now - last) / 1000); last = now;
   while (acc >= CFG.step) {
-    const inputs = readSensors(quad, cs, scoredSteps * CFG.step);
-    lastOutputs = forwardPass(genome, inputs);
-    for (let j = 0; j < 8; j++) quad.joints[j].setMotorSpeed(lastOutputs[j]);
+    if (settle.ok) {
+      const inputs = readSensors(quad, cs, scoredSteps * CFG.step);
+      lastOutputs = forwardPass(genome, inputs);
+      for (let j = 0; j < 8; j++) quad.joints[j].setMotorSpeed(lastOutputs[j]);
+      scoredSteps++;
+    }
     world.step(CFG.step, CFG.velIters, CFG.posIters);
-    acc -= CFG.step; frames++; scoredSteps++;
+    acc -= CFG.step; frames++;
   }
   render();
   const tp = quad.torso.getPosition();
-  hud.textContent = `stage B — brain seed 1 · settle ${settle.ok ? "ok @" + settle.steps : "FAILED-INIT"} · frame ${frames} · torso (${tp.x.toFixed(2)}, ${tp.y.toFixed(2)}) · contacts ${cs.contacts.map(c => c ? 1 : 0).join("")}`;
+  hud.textContent = settle.ok
+    ? `stage B — brain seed 1 · settle ok @${settle.steps} · frame ${frames} · torso (${tp.x.toFixed(2)}, ${tp.y.toFixed(2)}) · contacts ${cs.contacts.map(c => c ? 1 : 0).join("")}`
+    : `stage B — FAILED-INIT · motors disabled · doll only · frame ${frames} · torso (${tp.x.toFixed(2)}, ${tp.y.toFixed(2)})`;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -118,6 +127,7 @@ window.__WT = {
   footPoints: () => quad.legs.map(leg => { const p = footWorldPoint(leg); return { x: p.x, y: p.y }; }),
   outputs: () => lastOutputs.slice(),
   settle: () => settle,
+  motorsEnabled: () => quad.joints.every(j => j.isMotorEnabled()),
 };
 </script>
 </body>
