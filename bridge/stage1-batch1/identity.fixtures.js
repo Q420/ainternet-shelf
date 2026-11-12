@@ -294,6 +294,102 @@ test('claim record retains canonical source-key material only — no body, no pa
   assert.deepStrictEqual(Object.keys(record).sort(), ['canonical', 'pbid']);
 });
 
+/* ---- Input contract: no coercion, no defaulting (Batch 1 review correction) ---- */
+
+test('missing conversation FIELD (absent, not null) under global scope is IDENTITY-UNKNOWN', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'global', messageId: 'g-1',
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(r.reason, 'conversation-missing');
+});
+
+test('explicit null conversation under global scope still derives OK (null is stated, not absent)', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'global',
+    conversation: null, messageId: 'g-1',
+  });
+  assert.strictEqual(r.status, 'OK');
+});
+
+test('missing scope is IDENTITY-UNKNOWN — never silently defaulted', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt',
+    conversation: 'c-001', messageId: 'm-009',
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(r.reason, 'scope-invalid');
+});
+
+test('invalid scope values are IDENTITY-UNKNOWN (wrong case, non-string)', async () => {
+  const a = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'GLOBAL',
+    conversation: null, messageId: 'g-1',
+  });
+  const b = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 42,
+    conversation: null, messageId: 'g-1',
+  });
+  assert.strictEqual(a.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(b.status, 'IDENTITY-UNKNOWN');
+});
+
+test('numeric message ID is rejected, never coerced to a string', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'conversation',
+    conversation: 'c-001', messageId: 9009,
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(r.reason, 'message-id-invalid');
+});
+
+test('numeric platform is rejected, never coerced', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 7, scope: 'global',
+    conversation: null, messageId: 'g-1',
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+});
+
+test('object conversation value is rejected, never coerced', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'global',
+    conversation: { id: 'c-001' }, messageId: 'g-1',
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(r.reason, 'conversation-invalid');
+});
+
+test('explicitly undefined message ID is IDENTITY-UNKNOWN', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'native', platform: 'chatgpt', scope: 'conversation',
+    conversation: 'c-001', messageId: undefined,
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+});
+
+test('occurrence form: missing conversation field is IDENTITY-UNKNOWN, distinct from a stated value', async () => {
+  const r = await idn.deriveFromSourceKey({
+    form: 'occurrence', platform: 'muse', occurrence: 'o-1',
+  });
+  assert.strictEqual(r.status, 'IDENTITY-UNKNOWN');
+  assert.strictEqual(r.reason, 'conversation-missing');
+});
+
+test('canonical builder itself refuses coercion: numeric field value throws TypeError', async () => {
+  assert.throws(
+    () => identity.canonicalSourceKey({ platform: 'muse', conversation: 'cv', messageId: 5 }),
+    TypeError);
+});
+
+test('canonical builder refuses a missing (undefined) field but accepts explicit null', async () => {
+  assert.throws(
+    () => identity.canonicalSourceKey({ platform: 'muse', messageId: 'm-1' }),
+    TypeError);
+  const ok = identity.canonicalSourceKey({ platform: 'muse', conversation: null, messageId: 'm-1' });
+  assert.ok(ok.includes('\nconversation:-1:\n'));
+});
+
 /* ---- Runner ---- */
 
 (async () => {

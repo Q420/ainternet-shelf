@@ -45,7 +45,14 @@ function utf8ByteLength(value) {
 }
 
 function encodeField(name, value) {
-  if (value === null || value === undefined) return name + ':-1:';
+  // Explicit null is the only absence the canonical form encodes
+  // (-1:). Undefined means the field was never supplied — a
+  // contract error, never silently encoded. Non-string values are
+  // never coerced (Batch 1 review correction, 2026-11-11).
+  if (value === null) return name + ':-1:';
+  if (typeof value !== 'string') {
+    throw new TypeError('field "' + name + '" must be a string or explicit null');
+  }
   return name + ':' + utf8ByteLength(value) + ':' + value;
 }
 
@@ -67,10 +74,6 @@ function canonicalOccurrenceKey(fields) {
   );
 }
 
-function isNonEmptyString(v) {
-  return typeof v === 'string' && v.length > 0;
-}
-
 function unknown(reason) {
   return { status: 'IDENTITY-UNKNOWN', reason };
 }
@@ -86,9 +89,13 @@ function unknown(reason) {
  * input, native form:
  *   { form: 'native', platform, scope: 'global'|'conversation',
  *     conversation, messageId }
- *   scope defaults to 'conversation' (fail-closed). A
- *   conversation-scoped ID without a conversation is UNKNOWN.
- *   A globally scoped ID may carry conversation: null (-1:).
+ *   scope is REQUIRED and must be exact; missing or invalid scope
+ *   is UNKNOWN, never defaulted. A conversation-scoped ID without
+ *   a conversation is UNKNOWN. A globally scoped ID may carry
+ *   conversation: null (explicit null encodes -1:); a MISSING
+ *   conversation field is UNKNOWN in both scopes — absence is
+ *   never conflated with explicit null, and non-string field
+ *   values are never coerced.
  * input, occurrence form:
  *   { form: 'occurrence', platform, conversation, occurrence }
  * Extra fields (body, sender, ...) are ignored by design: they are
@@ -100,29 +107,56 @@ function createIdentity(deps) {
     throw new Error('createIdentity requires a sha256Hex function');
   }
 
+  // Field-state discipline (Batch 1 review correction): a missing
+  // field (undefined) is never treated as an explicit null, and a
+  // non-string value is never coerced. Both fail closed.
+  function fieldState(v) {
+    if (v === undefined) return 'missing';
+    if (v === null) return 'null';
+    if (typeof v === 'string') return 'string';
+    return 'invalid';
+  }
+
   async function deriveFromSourceKey(input) {
     if (!input || typeof input !== 'object') return unknown('no-input');
-    if (!isNonEmptyString(input.platform)) return unknown('platform-missing');
+    if (fieldState(input.platform) !== 'string' || input.platform.length === 0) {
+      return unknown(fieldState(input.platform) === 'invalid' ? 'platform-invalid' : 'platform-missing');
+    }
 
     let canonical;
     if (input.form === 'native') {
-      if (!isNonEmptyString(input.messageId)) return unknown('message-id-missing');
-      const scope = input.scope === 'global' ? 'global' : 'conversation';
-      if (scope === 'conversation' && !isNonEmptyString(input.conversation)) {
-        return unknown('conversation-missing-for-conversation-scoped-id');
+      const midState = fieldState(input.messageId);
+      if (midState === 'invalid') return unknown('message-id-invalid');
+      if (midState !== 'string' || input.messageId.length === 0) {
+        return unknown('message-id-missing');
       }
-      if (input.conversation !== null && input.conversation !== undefined &&
-          typeof input.conversation !== 'string') {
-        return unknown('conversation-not-a-string');
+      // Scope is required and must be exact — never defaulted.
+      if (input.scope !== 'global' && input.scope !== 'conversation') {
+        return unknown('scope-invalid');
+      }
+      const convState = fieldState(input.conversation);
+      if (convState === 'invalid') return unknown('conversation-invalid');
+      if (convState === 'missing') return unknown('conversation-missing');
+      if (input.scope === 'conversation' &&
+          (convState !== 'string' || input.conversation.length === 0)) {
+        return unknown('conversation-missing-for-conversation-scoped-id');
       }
       canonical = canonicalSourceKey({
         platform: input.platform,
-        conversation: input.conversation == null ? null : input.conversation,
+        conversation: input.conversation,
         messageId: input.messageId,
       });
     } else if (input.form === 'occurrence') {
-      if (!isNonEmptyString(input.conversation)) return unknown('conversation-missing');
-      if (!isNonEmptyString(input.occurrence)) return unknown('occurrence-missing');
+      const convState = fieldState(input.conversation);
+      if (convState === 'invalid') return unknown('conversation-invalid');
+      if (convState !== 'string' || input.conversation.length === 0) {
+        return unknown('conversation-missing');
+      }
+      const occState = fieldState(input.occurrence);
+      if (occState === 'invalid') return unknown('occurrence-invalid');
+      if (occState !== 'string' || input.occurrence.length === 0) {
+        return unknown('occurrence-missing');
+      }
       canonical = canonicalOccurrenceKey({
         platform: input.platform,
         conversation: input.conversation,
