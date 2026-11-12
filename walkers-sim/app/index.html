@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Walkers Sim — Stage A</title>
+<title>Walkers Sim — Stage B</title>
 <style>
   body { margin:0; background:#0b0e1a; color:#e8e9f1; font-family:system-ui,sans-serif; overflow:hidden; }
   #stage { position:fixed; inset:0; }
@@ -21,7 +21,7 @@
 <div id="ground"></div>
 <div id="hud"></div>
 <script type="module">
-import { CFG, buildWorld, buildQuadruped } from "./walkers.js";
+import { CFG, buildWorld, buildQuadruped, attachContacts, settleCreature, readSensors, forwardPass, randomGenome, mulberry32, footWorldPoint } from "./walkers.js";
 
 const SCALE = 60; // px per metre
 const stage = document.getElementById("stage");
@@ -31,6 +31,14 @@ const hud = document.getElementById("hud");
 const { world } = buildWorld();
 const SPAWN_Y = 2.6; // torso centre: drop test height (feet start ~1.5 m up)
 const quad = buildQuadruped(world, SPAWN_Y);
+const cs = attachContacts(world);
+// Stage B: settle with motors OFF (SPEC §3), then the brain drives.
+// NOTE: page uses the proposed 5 s settle timeout (300 steps) — SPEC v4 says
+// 2 s, which the drop pose cannot meet (measured 3.10 s); amendment proposed.
+const settle = settleCreature(world, quad, cs, 300);
+for (const j of quad.joints) j.enableMotor(true);
+const genome = randomGenome(mulberry32(1));
+let lastOutputs = [0,0,0,0,0,0,0,0], scoredSteps = 0;
 
 // One div per body (9 bodies). Sizes from CFG.
 const sizes = {
@@ -77,10 +85,16 @@ function render() {
 let acc = 0, last = performance.now(), frames = 0;
 function loop(now) {
   acc += Math.min(0.1, (now - last) / 1000); last = now;
-  while (acc >= CFG.step) { world.step(CFG.step, CFG.velIters, CFG.posIters); acc -= CFG.step; frames++; }
+  while (acc >= CFG.step) {
+    const inputs = readSensors(quad, cs, scoredSteps * CFG.step);
+    lastOutputs = forwardPass(genome, inputs);
+    for (let j = 0; j < 8; j++) quad.joints[j].setMotorSpeed(lastOutputs[j]);
+    world.step(CFG.step, CFG.velIters, CFG.posIters);
+    acc -= CFG.step; frames++; scoredSteps++;
+  }
   render();
   const tp = quad.torso.getPosition();
-  hud.textContent = `stage A — doll · frame ${frames} · torso (${tp.x.toFixed(2)}, ${tp.y.toFixed(2)})`;
+  hud.textContent = `stage B — brain seed 1 · settle ${settle.ok ? "ok @" + settle.steps : "FAILED-INIT"} · frame ${frames} · torso (${tp.x.toFixed(2)}, ${tp.y.toFixed(2)}) · contacts ${cs.contacts.map(c => c ? 1 : 0).join("")}`;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -99,6 +113,11 @@ window.__WT = {
     return { name: part.name, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
   }),
   project: (x, y) => project(x, y),
+  contacts: () => cs.contacts.slice(),
+  contactEvents: () => ({ begin: cs.beginEvents, end: cs.endEvents }),
+  footPoints: () => quad.legs.map(leg => { const p = footWorldPoint(leg); return { x: p.x, y: p.y }; }),
+  outputs: () => lastOutputs.slice(),
+  settle: () => settle,
 };
 </script>
 </body>

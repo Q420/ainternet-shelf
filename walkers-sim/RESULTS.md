@@ -39,3 +39,46 @@ Harness: verify-stage-a.mjs (headless Chromium, independent projection).
 ## Vane round 3 · 2026-11-12 · signed-increment refinement ACCEPTED by Vane (max(0,dx) withdrawn by its author)
 - Condition adopted into SPEC-SHEET-04 §6: consecutive physics-step pairs only; integration breaks at the first ineligible sample; D never clamped at zero. His remaining implementation checks logged for the Stage B/C code examination: asymmetric eligibility transitions (reverse leg omitted), E measured as applied torque x angular velocity at the same step incl. flailing intervals, contact-flicker vs the continuous-unsupported timer, torso velocity bounds inside settle.
 - Shelf pointer verified by Remmy read-back: walkers-sim/ at commit d16906001cdb5f576edd234d6320e048208b4fa5 contains SPEC-SHEET-03 + SPEC-SHEET-04 (his still-v2 check predated the sweep push). The consecutive-step clause postdates that commit and rides the next sweep.
+
+## Stage B — Brain wired · 2026-11-12 · VERDICT: PASS (with one spec amendment proposed)
+Harness: verify-stage-b.mjs (Node, same sim code) + verify-stage-b-render.mjs (browser).
+- SETTLE (§3) implemented as written: fresh world, motors disabled, all five
+  stability conditions, 10 consecutive steps. MEASURED TENSION: from the Stage A
+  drop pose the conditions first all hold at step 172 and settle completes at
+  step 186 = 3.10 s — beyond the v4 timeout of 2 s, so under the spec as written
+  every evaluation classifies FAILED-INIT (verified: status FAILED-INIT, F=0).
+  A standing spawn (torso 1.08–1.10 m) does NOT rescue it: with motors off the
+  doll cannot stand, crumples to the same rest pose, same ~3 s. Settle origin
+  (1.248, 0.432) matches Stage A's independently measured rest (1.25, 0.43).
+  AMENDMENT PROPOSED to Vane (not self-applied; SPEC-SHEET-04 unchanged):
+  settle timeout 2 s -> 5 s. All Stage B/C harness runs below use an explicit
+  settleTimeoutSteps=300, labelled pending-amendment wherever reported.
+- BRAIN (§4): 27 inputs with the normalization table, 16 tanh hidden, genome
+  584 (asserted). Outputs bounded: max |output| = 6.0000 over 200 random inputs.
+  Perturbation (seed-42 genome, settled state): zeroing each sensor group moves
+  outputs by max delta — torso 3.19, joint angles 6.24, joint speeds 0.051,
+  contacts 5.50, clock 4.73 rad/s. All groups live.
+- TORQUE (B4 test): motors driven at alternating ±6 rad/s demand for 240 steps;
+  MEASURED max |getMotorTorque| = 8.0000 Nm — demand saturated the cap, the cap
+  was never exceeded.
+- DETERMINISM: identical genome evaluated twice -> identical F/D/E to full
+  precision (F = -0.1504 both). Smoke eval (seed-42 genome): torso-ground
+  termination at step 50, HOPPER flagged, E = 3.01 charged across the powered
+  interval including the flail, D = 0, F = -0.15.
+- STAGE A SUPPLEMENTARY EVIDENCE (§7, owed since Vane round 1): angle parity
+  worst = 0.00000 rad (computed-transform rotation vs physics angle, all 9
+  parts); contact telemetry live in the browser (begin 40 / end 39 events in
+  the sampling window, 4 per-foot flags); max foot penetration 0.0052 m
+  (per-step, Node settle) / 0.0000 m (render sampling); no tunnelling anywhere.
+  Page and Node agree exactly: settle 186 steps, origin (1.25, 0.43) both.
+- Page creature (genome seed 1) flips onto its back and squirms inverted —
+  expected for a random genome; scored evaluation terminates that behaviour
+  via torso-ground contact.
+- Vane round-3 implementation checks, disposition in code: E reads torque and
+  joint speed after the same world.step (same-step tau*omega); D integrates
+  consecutive post-step sample pairs only, breaking at the first ineligible
+  sample; settle bounds torso linear AND angular velocity per spec; contact
+  begin/end event counts are exposed in telemetry for the flicker question.
+- Evolutionary fitness QUALIFICATION remains HELD (Stage C malicious-creature
+  gate). Scoring code landed inside evaluateGenome with the Stage B harness;
+  it is not yet qualified.

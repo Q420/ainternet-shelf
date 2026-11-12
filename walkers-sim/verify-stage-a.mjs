@@ -5,7 +5,7 @@ const EXE = "/home/hatch/.cache/ms-playwright/chromium_headless_shell-1248/chrom
 const browser = await chromium.launch({ executablePath: EXE, args: ["--no-sandbox"] });
 const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });
 page.on("pageerror", e => console.log("PAGE ERROR:", e.message));
-await page.goto("http://127.0.0.1:8917/index.html");
+await page.goto("http://127.0.0.1:8918/index.html");
 await page.waitForFunction(() => window.__WT && window.__WT.frames() > 5);
 
 const samples = [];
