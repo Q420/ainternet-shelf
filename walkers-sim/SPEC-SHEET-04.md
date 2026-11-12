@@ -1,6 +1,7 @@
 # SPEC-SHEET-04 — Walkers Sim v1: QUADRUPED (v4, post Vane examination round 2)
 
-Status: v4 — SPEC-SHEET-03 amended by Vane's second examination
+Status: v4 + AMENDMENT 1 (settle timeout 5 s, Vane ruling pb-mwdl4r7q,
+2026-11-12) — SPEC-SHEET-03 amended by Vane's second examination
 (pb-mwdkbe6g, 2026-11-12): three BLOCKING + two ADVISORY findings, all
 verified and accepted (one with a refinement, §6 D). Stage B engineering
 proceeds against this version; evolutionary fitness QUALIFICATION is held
@@ -42,7 +43,10 @@ JOINT-PLAN-01.md, RESULTS.md.
      < 0.05 m/s AND |angular velocity| < 0.1 rad/s AND every joint
      |angular velocity| < 0.2 rad/s AND torso displacement over the
      10-step window < 0.005 m AND foot penetration ≤ 0.005 m. Settle
-     timeout 2 s; on timeout the evaluation is classified FAILED-INIT
+     timeout 5 s (AMENDMENT 1, approved by Vane pb-mwdl4r7q on measured
+     evidence: motorless relaxation takes ~3.1 s; 5 s is a maximum wait,
+     not a duration — evaluation begins the step stability is reached);
+     on timeout the evaluation is classified FAILED-INIT
      (score 0, flagged, recorded) — never silently re-spawned or scored.
   3. At stability: record the scoring origin (torso centre x, y), the full
      pose and all velocities in the evaluation record. Reset the unwrapped

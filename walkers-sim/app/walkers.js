@@ -171,7 +171,7 @@ export function readSensors(quad, contactState, tSec) {
 }
 // §3 settle: motors disabled, fresh world, stability held 10 consecutive steps.
 export function settleCreature(world, quad, contactState, timeoutSteps) {
-  const maxSteps = timeoutSteps || Math.round(2 / CFG.step); // 2 s
+  const maxSteps = timeoutSteps || Math.round(5 / CFG.step); // 5 s (SPEC-04 Amendment 1)
   let stableRun = 0, maxPen = 0;
   const history = [];
   for (let s = 1; s <= maxSteps; s++) {

@@ -82,3 +82,38 @@ Harness: verify-stage-b.mjs (Node, same sim code) + verify-stage-b-render.mjs (b
 - Evolutionary fitness QUALIFICATION remains HELD (Stage C malicious-creature
   gate). Scoring code landed inside evaluateGenome with the Stage B harness;
   it is not yet qualified.
+
+## Amendment 1 incorporated + settle trace · 2026-11-12 · Vane ruling pb-mwdl4r7q
+- AMENDMENT APPROVED AND INCORPORATED: SPEC-SHEET-04 §3 settle timeout is now
+  5 s (maximum wait, not a duration; evaluation begins the step stability is
+  reached). FAILED-INIT on timeout, fresh-world isolation, motors disabled
+  throughout settle, and no respawn/rescue are all preserved. walkers.js
+  default settle timeout now 300 steps; Stage B harness re-run: PASS
+  (FAILED-INIT now exercised via a forced 30-step timeout).
+- SETTLE TRACE (settle-trace.mjs, Stage A drop pose, per-condition record —
+  supplied against Vane's 172-vs-186 question): first step each condition
+  holds — torso angular velocity 1, joint speeds 1, penetration 1, torso
+  linear velocity 42, window displacement 157. All five hold together first
+  at step 172. The consecutive run then BREAKS: steps 174 (joint speeds,
+  window displacement), 175 and 176 (those two plus torso angular velocity)
+  fail as the crumple makes one final shift. Clean run 177-186 = 10
+  consecutive; settle completes at 186 (3.100 s). The 14-step difference is
+  2 good steps + 3 relapse steps + the restarted count — no off-by-one and
+  no unexplained delay; the trace script is the standing evidence artifact.
+- PENETRATION RECONCILED (Vane's question): the reported 0.0052 m is the
+  transient peak during impact, at step 48 of the settle. The 0.005 m limit
+  binds at qualification: at steps 177-186 penetration satisfies the limit
+  (it is one of the five gated conditions). Both measurements preserved.
+- BUILD-SHEET-01 operative text cleaned per Vane's BLOCKING note: governing
+  spec stated as SPEC-SHEET-04 incl. Amendment 1; Stage B/C clauses now read
+  27 inputs / 584 genome; the v3-era amendment block is marked superseded
+  history rather than operative instruction.
+- CONTACT FLICKER (Vane's point stands): begin/end counts do not by
+  themselves prove a 1-step spurious contact cannot reset the unsupported
+  timer. The timer reads per-step contact state; whether solver jitter can
+  manufacture a false support step is UNRESOLVED and is carried into Stage C
+  as a scripted bounce/flicker stress test next to the malicious-creature
+  gate, with ground-truth airtime compared against the recorded metrics.
+- SHELF STATE NOTE: Vane's examination fetched HEAD 1b1e8be, which predates
+  the Stage B sweep; that run is still in flight (its push awaits Ben's
+  Allow). His snapshot findings were accurate for that commit.

@@ -2,7 +2,7 @@
 
 Authority: Ben's preapproval, 2026-11-12 ~04:17 MST ("preapproved for the full
 build, stages, batches, build, rewords… and implementation").
-Governing sheets: PROCESS-TREE-01, SPEC-SHEET-01 (EXP-CONFIG v1).
+Governing sheets: PROCESS-TREE-01, SPEC-SHEET-04 (operative spec, incl. Amendment 1). Earlier spec sheets are history.
 Vane's spec review runs as a parallel gate; findings amend sheets en route.
 Results append to RESULTS.md per stage. Nothing is "done" until its acceptance
 test passes on recorded numbers.
@@ -21,13 +21,14 @@ test passes on recorded numbers.
   sampled frames, computed independently in the harness.
 
 ## Stage B — Brain wired (no learning)
-- B1. 26-input sensor read per SPEC §4 (incl. 4 foot contacts via contact
-  listener, clock sin/cos). B2. 26→16→8 forward pass; outputs → motor speeds.
+- B1. 27-input sensor read per SPEC §4 (incl. torso height and 4 foot contacts
+  via contact listener, clock sin/cos). B2. 27→16→8 forward pass (genome 584);
+  outputs → motor speeds.
 - ACCEPTANCE: input-perturbation test — zeroing/clamping sensor groups changes
   motor outputs measurably; outputs bounded to the 6 rad/s cap.
 
 ## Stage C — GA loop
-- C1. Population 64, genome = 568 floats; evaluation harness (12 s, early
+- C1. Population 64, genome = 584 floats; evaluation harness (12 s, early
   termination, height gate); fitness per SPEC §6 with components recorded.
 - C2. Selection/breeding per SPEC §5. Per-generation stats to RESULTS.md.
 - ACCEPTANCE: 10 generations unattended, zero NaN genomes, stats recorded,
@@ -58,6 +59,9 @@ Results reported to Ben per stage, not as momentum.
 
 ## Amendments — post Vane examination (2026-11-12)
 - SPEC is now v3 (SPEC-SHEET-03). Stage B builds against v3 only.
+  SUPERSEDED (Vane round 3, 2026-11-12): the operative spec is SPEC-SHEET-04
+  incl. Amendment 1 (settle timeout 5 s); operative numbers everywhere in this
+  sheet are 27 inputs / 584 genome. The v3-era amendment text above is history.
 - Stage B gains: (i) the §3 settle procedure (motors disabled until stability, origin recorded, motors+scoring start together); (ii) B4 torque test — under maximum motor demand, MEASURED applied joint torque (Planck getMotorTorque) must respect the 8 Nm cap, recorded numerically; (iii) 27-input brain with the §4 normalization table; genome 584.
 - Stage A supplementary evidence owed (angle parity, contact telemetry, max penetration) — schedule with Stage B harness work; Stage A PASS stands narrowed.
 - Stage F gains the §10 solver-sensitivity test (champion re-evaluated at 1/120 s).
