@@ -196,7 +196,7 @@ export function settleCreature(world, quad, contactState, timeoutSteps) {
 }
 // Full single evaluation (§3 protocol, §6 scoring, §8b flags).
 // Scoring landed with the Stage B harness; qualification stays gated (Stage C).
-export function evaluateGenome(genome, opts) {
+export function evaluateController(controlFn, opts) {
   const o = opts || {};
   const built = buildWorld();
   const world = built.world;
@@ -216,7 +216,7 @@ export function evaluateGenome(genome, opts) {
   for (let s = 1; s <= totalSteps; s++) {
     const t = (s - 1) * CFG.step;
     const inputs = readSensors(quad, cs, t);
-    const outputs = forwardPass(genome, inputs);
+    const outputs = controlFn(inputs, t);
     for (let j = 0; j < 8; j++) quad.joints[j].setMotorSpeed(outputs[j]);
     world.step(CFG.step, CFG.velIters, CFG.posIters);
     stepsScored = s;
@@ -263,4 +263,9 @@ export function evaluateGenome(genome, opts) {
     maxTorque, maxPenetration: maxPen, unwrappedAngle: unwrapped, maxExcursion, totalAngularVariation: totalVar,
     unsupportedFraction: unsupFrac, longestUnsupportedSec: longestSec, supportTransitions: transitions, mass,
   };
+}
+
+// Genome evaluation = the brain as controller (§4 forward pass).
+export function evaluateGenome(genome, opts) {
+  return evaluateController((inputs) => forwardPass(genome, inputs), opts);
 }

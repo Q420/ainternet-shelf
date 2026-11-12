@@ -117,3 +117,49 @@ Harness: verify-stage-b.mjs (Node, same sim code) + verify-stage-b-render.mjs (b
 - SHELF STATE NOTE: Vane's examination fetched HEAD 1b1e8be, which predates
   the Stage B sweep; that run is still in flight (its push awaits Ben's
   Allow). His snapshot findings were accurate for that commit.
+
+## Stage C — GA loop + adversarial gates · 2026-11-12 · VERDICT: PASS (acceptance); fitness QUALIFICATION gate: PASS
+- MALICIOUS-CREATURE GATE (Vane's condition for qualification): scripted
+  jump -> scramble -> trot -> flail creature, full record: F = -0.09, D = 0,
+  T = 0, A = 0, E = 1.80, flags [HOPPER], torso-ground termination at scored
+  step 31. Two tougher variants (trot-then-flail; stand-trot-flail) scored
+  F = -0.087 / -0.075, D = 0, T = 0, E = 1.75 / 1.50 — no illegitimate credit
+  in any variant: ineligible motion earned exactly zero D and zero T, and the
+  energy burned WAS charged (E over every powered step, eligible or not).
+  HONEST LIMITATION: all three scripts terminated at step 31 (the first step
+  past the 0.5 s grace) — from the settle crumple, an open-loop script pitches
+  the torso into the ground before its later phases can run, so the "walk
+  briefly, then flail" sequence was never fully performed in scored time.
+  The accounting defences were exercised for every powered step that occurred;
+  a creature that first learns to stand is evolution's problem (Stage C+
+  training), and the gate will be re-run against any future champion claim.
+- FLICKER STRESS TEST — RESOLVED, with a correction to my own first test.
+  First design compared contact state against foot-centre geometry with a
+  5 mm threshold and reported 43 "false support" steps. Chasing the mechanism
+  showed the test's ground truth was wrong, not the sensing: Planck shapes
+  carry a collision skin, and manifold separations at the flagged steps were
+  genuinely negative (real overlap, -2.6 to -4.7 mm). Banded re-test:
+  support is claimed at foot-centre heights up to 0.0724 m (rest 0.060 m — a
+  ~12 mm skin band in which the solver IS exchanging contact impulses), and
+  in 300 drop steps support was claimed ZERO times with all feet above
+  0.10 m. The unsupported timer cannot be reset mid-flight; grazing claims
+  are confined to the skin band and are disclosed as such.
+- GA LOOP (§5 as written): pop 64, elitism 4, tournament-3 from the top 50%
+  with HOPPER/ROTATOR/FAILED-INIT/UNRELIABLE/NAN excluded from parent
+  selection, 70% uniform crossover, 10% Gaussian (sigma 0.3) + 2% re-roll
+  mutation, mulberry32 seed recorded. Acceptance run (seed 1, 10 gens,
+  640 evaluations, 11.5 s wall): zero NaN; best series -0.0690 -> -0.0339;
+  median -0.1635 -> -0.0765. Best-ever genome: F = -0.0339, D = 0, T = 0,
+  E = 0.68 — early selection is minimising wasted energy (learning to lie
+  still efficiently), not yet standing. Loop correctness is the Stage C
+  claim; standing and walking are the training phase's problem.
+- evaluateGenome was refactored into evaluateController (scripted creatures)
+  with evaluateGenome as the brain wrapper — one evaluation path for genomes,
+  scripts, and (later) champions.
+- FITNESS QUALIFICATION: the malicious-creature gate has passed per the
+  build sheet's condition, so evolutionary fitness qualification is un-held
+  as of this entry — subject to Vane's examination of the shelved evidence,
+  which now includes commits 77831662 (Stage B implementation) and 41e15604
+  (Amendment 1 batch). Stage C code (app/ga.js) and the Stage B/C harness
+  scripts remain local until Ben rules on widening the sweep's sync list;
+  this RESULTS file carries their numbers meanwhile.
