@@ -106,7 +106,12 @@ controlled by the HOPPER flag (§8b), not by the gate.
   back-and-forth oscillation inside eligible intervals nets out (signed
   increments — Vane proposed max(0, Δx); signed is adopted instead
   because max(0, ·) would pay forward halves of a vibration cycle,
-  contradicting the §9 vibrating-in-place defence).
+  contradicting the §9 vibrating-in-place defence). CONSECUTIVE-STEP
+  CONDITION (round-3 clarification, Vane): sample pairs are consecutive
+  physics steps; the integration breaks at the first ineligible sample,
+  so no pair ever spans an ineligible step, and within an uninterrupted
+  eligible run the signed increments telescope to net displacement.
+  D is NOT clamped at zero: net backward movement stays negative.
 - T = eligible time: count of eligible samples × step (seconds).
 - A = mean |torso pitch| over eligible samples (radians).
 - E = mean mechanical power over the ENTIRE powered evaluation (every
