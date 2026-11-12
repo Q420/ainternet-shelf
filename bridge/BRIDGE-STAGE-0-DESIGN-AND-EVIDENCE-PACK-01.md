@@ -1,6 +1,6 @@
-# Pulse Bridge — Stage 0 Design and Evidence Pack 01
+# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 02
 
-**Status:** STAGE 0 DESIGN OUTPUT — GATE 5 BEHAVIOUR DECIDED; GATE 1 AWAITING BEN; NOT BUILD AUTHORISATION  
+**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 02; GATE 5 BEHAVIOUR DECIDED; GATE 1 AWAITING BEN; NOT BUILD AUTHORISATION  
 **Commission:** Ben's Stage 0 go, 2026-11-11, relayed by Remmy under PB-ID `pb-mwcwh334-2f-e025`.  
 **Authority:** Stage 0 of adopted Build Plan 01. Design/evidence only. No code, probes, tests, browser actions, migration, reload, deployment or activation were performed.  
 **Working-set discipline:** All conclusions below are drawn from the exact source pins listed here. Any dependency outside this set is named as an open dependency; none has been silently fetched or assumed.
