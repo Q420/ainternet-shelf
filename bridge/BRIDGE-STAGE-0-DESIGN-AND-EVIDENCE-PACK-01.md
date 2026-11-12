@@ -12,6 +12,7 @@
 | Artefact | Exact pin | Use |
 |---|---|---|
 | Adopted Build Plan 01 | commit `b09476d5885c4a54fdf1984cc6407eba7e61eac3`; blob `8196d44ea60541855b4c069ea8e46a811adad13c` | Stage order, scope and gates |
+| Gate 1 adoption basis — Controlled Revision 03 | commit `6360994d7273510659f1885ce77b88f46898a410`; blob `b41a28081cbda1882065974c8a6444d67bfa1dc0` | Exact identity rule Ben adopted at 17:24 PST |
 | Governing Convene Sheet | commit `fa667822135c6954ac9e056b162674e05ceb6c7b`; blob `73e7fda8de448c38cee7bf3e6963e12201d2ba81` | Governing behaviour and open decisions |
 | Registration Contract Rev 02 | commit `61d5693bffb214fd86ffecc6aba0ba8679003559`; blob `b9cffdbd551b808af3e6e37d7af5b77747ab99e8` | PB-ID / Index ID and lifecycle boundary |
 | Five-platform identity matrix | commit `9e23c47abab656f5c4ebfdf60d6d8ee3db164460`; blob `f16ebbcc326bf89651b836f05876812b539facd8` | Source-inspected identity evidence |
@@ -69,7 +70,7 @@ A source-occurrence key is acceptable only when it is either:
 1. A platform-native per-message ID whose scope and persistence are established; or
 2. A deterministic platform-specific tuple that includes a stable conversation namespace (where the platform's key is conversation-scoped) and a stable per-message occurrence discriminator that survives re-render, cache purge and source-history re-fetch.
 
-The candidate canonical input is versioned and length-prefixed, avoiding delimiter ambiguity:
+The adopted canonical input is versioned and length-prefixed, avoiding delimiter ambiguity:
 
 **Native-ID form**
 ```text
@@ -163,7 +164,7 @@ Required later fixture classes, once implementation is authorised: identical re-
 
 ## 1.8 Ben's adoption record — exact rule and scope
 
-**Adoption source:** Ben's adoption-card tap and ruling relayed by Remmy under PB-ID `pb-mwcxd7wy-2i-kper`, 2026-11-11 at 17:24 PST. Ben adopted the exact construction presented in Controlled Revision 03, §§1.3–1.5 and 1.8, scoped to ChatGPT and Muse.
+**Adoption source:** Ben's adoption-card tap and ruling relayed by Remmy under PB-ID `pb-mwcxd7wy-2i-kper`, 2026-11-11 at 17:24 PST. Ben adopted the exact construction presented in Controlled Revision 03, §§1.3–1.5 and 1.8, scoped to ChatGPT and Muse. The adopted source pin is commit `6360994d7273510659f1885ce77b88f46898a410`, blob `b41a28081cbda1882065974c8a6444d67bfa1dc0`.
 
 Ben's platform-scope words, retained verbatim: **“gpt and muse first, they are already established and will prove the plumbing.”**
 
