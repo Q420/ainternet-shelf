@@ -184,6 +184,22 @@ Ben's platform-scope words, retained verbatim: **“gpt and muse first, they are
 
 **Gate 1 status:** CLOSED — platform scope and exact identity rule both adopted. The adopted rule applies to ChatGPT and Muse only. The source-inspected matrix still does not establish a qualifying occurrence key in either current adapter path; source-field demonstration for each platform is therefore a technical Stage 1 readiness condition. This is not an open rule-adoption question and does not authorise Stage 1. No Stage 1 go is inferred.
 
+## 1.9 ChatGPT/Muse source-identity demonstration — separate authorisation request
+
+**Current evidence answer:** The shelved source and five-platform matrix establish the present limitation, but are **not sufficient to complete the required demonstration**. They show what the pinned adapters currently extract; neither adapter extracts a qualifying native message ID or verified occurrence tuple. They do not establish whether the live ChatGPT and Muse message DOM exposes stable source-occurrence attributes outside the current extraction path. Live-page access is therefore required to discover candidate source fields. A read-only census can identify candidates, but cannot by itself prove persistence across re-render, cache purge and source-history re-fetch. That persistence must be established from authoritative platform/source semantics or separately authorised repeat observations; it must not be inferred from one DOM snapshot.
+
+**Proposed bounded live-page identity census — Ben's separate authorisation required:**
+- **Targets:** one already-open ChatGPT seat tab and one already-open Muse seat tab, both supplied/designated by Ben. No other platforms are in scope.
+- **Read-only observations:** inspect visible message/turn container elements and their bounded ancestor structure; record only tag names, roles, stable-looking IDs, data attributes, accessibility attributes, conversation/history container identifiers, and structural relationships sufficient to determine whether a native per-message key and its required conversation namespace exist. Record repeated-message occurrence distinctions only where exposed by explicit source attributes. Inspect the corresponding rendered structure without copying message text, attachment contents or conversation bodies.
+- **No mutation:** no click, focus, typing, paste, key event, submit, send, stop, scroll, navigation, refresh, tab switch, storage write, network request, account action or induced re-render. No cache purge and no forced history re-fetch. No automated loop or repeated polling. One bounded census per supplied tab, then stop.
+- **Privacy boundary:** do not read or retain message bodies, prompts, file contents, credentials, cookies, tokens or unrelated page data. Report only redacted structural evidence and exact attribute names/values necessary to identify the candidate key; redact opaque values if they could expose conversation content.
+- **Output:** a separate ChatGPT and Muse evidence record listing candidate conversation namespace, candidate per-message occurrence key, source element/ancestor location, uniqueness observed, and any ambiguity. Mark every live observation PROBE-OBSERVED, not verified-stable. If no qualifying key is found, report IDENTITY-UNKNOWN; do not fall back to sender/body hashing.
+- **Proof limit:** this census does not prove that a candidate survives re-render, cache purge or source-history re-fetch. For any candidate, the report must state what authoritative platform documentation/source semantics establishes persistence and scope. If that evidence is unavailable, a further, separately scoped and authorised repeat-observation procedure will be required before the candidate can satisfy the adopted rule.
+
+**Decision requested from Ben:** explicitly authorise or decline this exact read-only census on the two designated tabs. No probe is authorised by this revision. This request is separate from the existing F-7 composer-ownership probe: F-7 concerns composer uniqueness/lease and send-target ownership, not message source-occurrence identity. The existing five-platform F-7 request and its Stage 2 dependency remain unchanged.
+
+**Gate 1 technical readiness:** OPEN — adopted rule and scope are closed; source-occurrence identity must still be demonstrated for ChatGPT and Muse. This is the only remaining technical readiness item identified between the Stage 0 paper and a Stage 1 go. A separate Stage 1 implementation authorisation remains mandatory.
+
 ---
 
 # Gate 5 — Disconnect semantics decision paper
@@ -266,16 +282,16 @@ Ben's Gate 5 behaviour ruling is fixed: **every held or in-transit item in the a
 - The existing permanent routing record and message identity remain; centre-station presentation is not a new registration or delivery claim.
 - Where delivery is unresolved, preserve UNKNOWN; do not infer that an item was or was not delivered.
 
-**Ben's remaining packaging decisions:**
-1. Select A, B or C.
-2. If A, decide whether global Disconnect is available from either seat panel and whether it requires a second explicit confirmation.
-3. For per-seat Unregister, decide whether the other seat remains registered while dispatch is suspended bridge-wide, or whether only affected-seat work is suspended.
-4. Confirm that OWNER-REVIEW persists through re-registration until explicit item disposition/resumption, or state an alternative consistent with the no-automatic-movement ruling.
-5. Decide whether Disconnect needs a distinct owner-review cause label or the common OWNER-REVIEW state with recorded cause is sufficient.
+**Reconciliation of the five former packaging questions:**
+1. **Select A/B/C — CLOSED.** Ben adopted Option C.
+2. **Global Disconnect availability / second confirmation — FALLEN AWAY.** Option C builds no global Disconnect control.
+3. **Disposition of the other seat — CLOSED BY OPTION C.** Only the calling seat is unregistered; the other seat remains registered. Dispatch is suspended bridge-wide while the two-seat pair is incomplete.
+4. **OWNER-REVIEW persistence through re-registration — CLOSED BY THE ADOPTED COMMON RECOVERY RULE.** Items remain in OWNER-REVIEW after re-registration until Ben explicitly disposes of or resumes each item through the governed path. Re-registration alone does not move, retry or replay work.
+5. **Owner-review cause presentation — REMAINS OPEN FOR STAGE 3 ONLY.** Exact question for Ben: **Should the centre station display a distinct cause label such as SEAT-UNREGISTERED, or display the common OWNER-REVIEW state while retaining the unregister cause as recorded metadata?** This is a presentation decision and does not block Stage 1.
 
 **Gate 5 status:** DECIDED — centre-station PUSH / DELETE / APPEND behaviour is fixed.
 
-**Gate 5A status:** OPEN — Ben selects control packaging and recovery scope. This is the remaining Stage 1 / Stage 3 dependency; it does not reopen Gate 5 behaviour.
+**Gate 5A status:** DECIDED FOR STAGE 1 — Option C adopted; no global Disconnect control. One narrowly named Stage 3 presentation question remains.
 
 ---
 
