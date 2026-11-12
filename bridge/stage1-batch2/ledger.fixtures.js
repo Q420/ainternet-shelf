@@ -250,7 +250,7 @@ test('R-2: a pre-registration refusal promotes as the first disposition event; i
   const { ledger } = makeLedger();
   const p = pbid();
   const intakeBefore = await ledger.recordIntakeRefusal({
-    pbId: p, type: 'REFUSED', actor: 'system', failedCheck: 'fence-demo',
+    pbId: p, correlation: 'EXACT', type: 'REFUSED', actor: 'system', failedCheck: 'fence-demo',
     evidenceRef: 'ev/1', occurredAt: T0 - 1000,
   });
   const r = await ledger.register({ pbId: p, idempotencyKey: 'k', messageIndexRef: 'm/1', admitted: true });
@@ -268,7 +268,7 @@ test('R-2: a pre-registration refusal promotes as the first disposition event; i
 test('a promoted refusal blocks attempt creation until superseded', async () => {
   const { ledger } = makeLedger();
   const p = pbid();
-  await ledger.recordIntakeRefusal({ pbId: p, type: 'REFUSED', actor: 'system', failedCheck: 'x', occurredAt: T0 - 5 });
+  await ledger.recordIntakeRefusal({ pbId: p, correlation: 'EXACT', type: 'REFUSED', actor: 'system', failedCheck: 'x', occurredAt: T0 - 5 });
   const r = await ledger.register({ pbId: p, idempotencyKey: 'k', messageIndexRef: 'm/1', admitted: true });
   const att = await ledger.createAttempt(r.record.indexId, { via: 'initial', actor: 'system' });
   assert.strictEqual(att.status, 'HELD');
@@ -740,6 +740,31 @@ test('rev2: a failed integrity calculation during event append rolls the event b
   assert.strictEqual(ledger.currentState(idx).activeDisposition, 'REGISTERED');
   const after = await ledger.appendEvent(idx, { type: 'HELD_FOR_REVIEW', actor: 'system' });
   assert.strictEqual(after.status, 'INTEGRITY_FAULT');
+});
+
+test('rev3: an omitted correlation value stays UNKNOWN and is never promoted', async () => {
+  const { ledger } = makeLedger();
+  const p = pbid();
+  const entry = await ledger.recordIntakeRefusal({ pbId: p, type: 'REFUSED', actor: 'system', failedCheck: 'format' });
+  assert.strictEqual(entry.correlation, 'UNKNOWN');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  assert.strictEqual(reg.status, 'REGISTERED');
+  const types = ledger.events(reg.record.indexId).map((e) => e.type);
+  assert.ok(!types.includes('PRE_REGISTRATION_REFUSAL_PROMOTED'));
+  const admission = await ledger.sendAdmission(p);
+  assert.strictEqual(admission.allowed, false);
+  assert.ok(admission.reasons.includes('intake-correlation-unknown'));
+});
+
+test('rev3: an unrecognised correlation value stays UNKNOWN and is never promoted', async () => {
+  const { ledger } = makeLedger();
+  const p = pbid();
+  const entry = await ledger.recordIntakeRefusal({ pbId: p, correlation: 'PARTIAL', type: 'REFUSED', actor: 'system' });
+  assert.strictEqual(entry.correlation, 'UNKNOWN');
+  const reg = await ledger.register(regInput(p, 'k1'));
+  const types = ledger.events(reg.record.indexId).map((e) => e.type);
+  assert.ok(!types.includes('PRE_REGISTRATION_REFUSAL_PROMOTED'));
+  assert.strictEqual(ledger.currentState(reg.record.indexId).activeDisposition, 'REGISTERED');
 });
 
 (async () => {

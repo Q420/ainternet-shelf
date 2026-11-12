@@ -686,7 +686,10 @@ function createLedger(config) {
         intakeId: 'INT-' + pad((intakeSeq += 1), 6),
         pbId: pb,
         candidatePbId: isNonEmptyString(input && input.candidatePbId) ? input.candidatePbId : null,
-        correlation: input && input.correlation === 'UNKNOWN' ? 'UNKNOWN' : 'EXACT',
+        // Fail-closed (SS4.3, SS7.2A): only an explicitly valid
+        // EXACT value is exact. Missing or unrecognised values
+        // stay UNKNOWN — uncertainty is never upgraded.
+        correlation: input && input.correlation === 'EXACT' ? 'EXACT' : 'UNKNOWN',
         type: input && input.type === 'REFUTED' ? 'REFUTED' : 'REFUSED',
         actor: input && input.actor != null ? input.actor : null,
         authorityRef: input && input.authorityRef != null ? input.authorityRef : null,
