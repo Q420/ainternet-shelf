@@ -174,7 +174,7 @@ Human acceptance adds:
 
 ## 6. Retained later-stage work and unresolved findings
 
-The following review findings are not silently folded into the correction:
+The following review findings are not silently folded into the current correction:
 
 - shared movable centre-screen station and its direction/interaction behaviour;
 - plain-language adapter self-check verdict and demotion of raw diagnostics;
@@ -184,7 +184,14 @@ The following review findings are not silently folded into the correction:
 - broader log filtering and information architecture;
 - reset consequence/confirmation and complete data-preservation design beyond the token-generation requirements above.
 
-These remain explicit items for Stage 3 or the appropriate later recovery scope. Their deferral is not a claim that the present human experience is satisfactory.
+These remain explicit later-stage items. Their deferral is not a claim that the present human experience is satisfactory.
+
+**Two human-acceptance checks are retained for the Stage 3 entry/acceptance list, not silently dropped:**
+
+1. **First-run registration:** from a fresh extension folder with empty state, Ben can understand from the panel's own words that this is a new install, which seat the tab should represent, and the next registration action; he can complete registration without needing an external explanation.
+2. **Held-work visibility:** before the full Stage 3 station interaction is relied on, the panel provides an accurate count of items waiting for Ben's review. The count must be derived from the actual held-work state and must not imply that the full owner-review station already exists.
+
+The full station, broader status presentation and information architecture remain Stage 3 scope. These two checks are acceptance requirements for that later work; they are not additions to the present Stage 1 correction or exceptions to D2.
 
 ## 7. Authority, evidence and requested ruling
 
