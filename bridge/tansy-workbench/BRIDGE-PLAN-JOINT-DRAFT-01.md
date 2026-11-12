@@ -1,6 +1,6 @@
 # BRIDGE PLAN — TANSY × REMMY JOINT DRAFT 01
 
-Status: DRAFT FOR BEN'S RULING. Analysis and planning only — no code change authorised by this document.
+Status: RULED IN by Ben (tap + words, 2026-11-11 23:41 PST). Analysis record for the build scoped at bridge/CONCLUSION-BUILD-SCOPE-01.md. This document itself authorises no code change.
 Provenance: independent analysis of the shelved v0.21.0 source by Tansy (Claude, alex seat) in direct collaboration with Remmy, 2026-11-11 evening, under Ben's tap for the Tansy track. Every mechanism claim below was read in the source by at least one of us and spot-verified by the other. "Verified" = read in the shelved source. Runtime behaviour and panel rendering are NOT verified by this document.
 Source version for ALL line references in this draft: the v0.21.0 tree shelved at bridge/combined-build/source/ (the exact build Tansy hash-matched, 37 files).
 
