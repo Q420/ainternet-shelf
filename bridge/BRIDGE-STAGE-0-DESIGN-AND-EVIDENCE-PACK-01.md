@@ -1,9 +1,23 @@
-# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 05
+# Pulse Bridge — Stage 0 Design and Evidence Pack 01 — Controlled Revision 06
 
-**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 05; GATE 1 SCOPE AND EXACT IDENTITY RULE DECIDED; GATE 5/5A DECIDED; CHATGPT/MUSE SOURCE-IDENTITY DEMONSTRATION AWAITS BEN'S SEPARATE PROBE AUTHORISATION; NOT BUILD AUTHORISATION  
+**Status:** STAGE 0 DESIGN OUTPUT — CONTROLLED REVISION 06; GATE 1 CLOSED ON SCOPE AND RULE, CENSUS PERFORMED AND CORRECTED (NEITHER PLATFORM QUALIFIED); GATES 2 AND 4 DECIDED UNDER BEN'S DELEGATION; GATE 5/5A DECIDED INCLUDING THE DELEGATED CAUSE LABEL; BEN'S CONDITIONAL STAGE 1 GO RECORDED — THIS REVISION IS ITS CONDITION PRECEDENT; NO ACTIVATION AUTHORISED  
 **Commission:** Ben's Stage 0 go, 2026-11-11, relayed by Remmy under PB-ID `pb-mwcwh334-2f-e025`.  
 **Authority:** Stage 0 of adopted Build Plan 01. Design/evidence only. No code, probes, tests, browser actions, migration, reload, deployment or activation were performed.  
 **Working-set discipline:** All conclusions below are drawn from the exact source pins listed here. Any dependency outside this set is named as an open dependency; none has been silently fetched or assumed.
+
+---
+
+## Controlled Revision 06 — amendment record and provenance pins
+
+Rev05 remains the historical base. This revision integrates Alex's controlling amendment set (PB-ID `pb-mwcz3dnp-2l-fv8s`, issued after the resync at commit da714c17) and supersedes every conflicting Rev05 status statement. Where this record and a Rev05 status line disagree, this record governs.
+
+**Provenance pins (all read-back verified):**
+- Delegated-answers letter (Gate 2, Gate 4, cause label, referred readiness question): `bridge/letters-2026-11-11/pb-20261111-census-evidence-and-delegated-answers.md`, commit `da714c17bf614b36d8ae9088783233bd5a54097a`, blob `db247ac35d6c31a384182965e6fa3c262d5ca58b`.
+- Census evidence report (original, preserved unedited): `bridge/BRIDGE-STAGE-0-IDENTITY-CENSUS-EVIDENCE-01.md`, commit `16bc53367b6e91bf01f50c711ce93ffdb3c713f5`, blob `5a691732afa4fe6cfde6f9ba5382bde931abc946`.
+- Controlled evidence correction 01: `bridge/BRIDGE-STAGE-0-IDENTITY-CENSUS-EVIDENCE-01-CORRECTION-01.md`, commit `da714c17bf614b36d8ae9088783233bd5a54097a`, blob `e9966c80baaac787a484d2f9bf75a27f6a69da53`.
+- Alex's census cross-check: `bridge/letters-2026-11-11/pb-mwcyu4j1-alex-census-crosscheck.md`, commit `da714c17bf614b36d8ae9088783233bd5a54097a`, blob `475b0277324d31a76da86273c645521601db7500`.
+- Census scripts (the executed instruments): `bridge/PROBE-identity-census-2026-11-11.js`, commit `a4b6fcd30becfc750bbe7b9b5fbb7b2204afbd80`, blob `7b5a2dd0b3cfb7df61d7b67df38b7c4135fde945`, sha256 `0ae581d3d28094f48ac610318a71b929f0cf75010f576bd0ab13b8fff52a02fd`; `bridge/PROBE-identity-census-v2-2026-11-11.js`, same commit, blob `cbac1d10f08d2fbd5cbf2efb603586388de956cb`, sha256 `7459b0f563af59f9f5f80429438edd07c0a73cebc081cb371b1aeb4000933452`.
+- **Pin discrepancy flagged, not propagated:** Alex's amendment letter §1 listed the census scripts at commit da714c17 with blobs `1372162a…` and `82364495…`. Those blobs are the census-scripts LETTER and the Rev06 NUDGE letter at da714c17 — not the scripts. The scripts stand at the a4b6fcd3 pins above. Rev06 records the scripts at their true pins and flags the discrepancy for Alex's Rev06 cross-check. Script identity is not conflated with letter or evidence-report identity.
 
 ---
 
@@ -182,7 +196,7 @@ Ben's platform-scope words, retained verbatim: **“gpt and muse first, they are
 7. Distinct native occurrence IDs remain distinct PB-IDs even when sender and visible body are identical. Re-fetch of the same verified source occurrence derives the same PB-ID.
 8. Apply this rule initially to ChatGPT and Muse only. No Stage 1 identity claim is made for Claude.ai, Gemini or Meta AI.
 
-**Gate 1 status:** CLOSED — platform scope and exact identity rule both adopted. The adopted rule applies to ChatGPT and Muse only. The source-inspected matrix still does not establish a qualifying occurrence key in either current adapter path; source-field demonstration for each platform is therefore a technical Stage 1 readiness condition. This is not an open rule-adoption question and does not authorise Stage 1. No Stage 1 go is inferred.
+**Gate 1 status:** CLOSED — platform scope and exact identity rule both adopted. The §1.9 census was authorised by Ben (17:35 PST, 2026-11-11) and performed; its corrected outcome (§1.9 outcome record below; evidence correction 01) is: Muse — a candidate attribute observed, NOT a qualifying demonstration; ChatGPT — UNKNOWN. Neither platform currently qualifies for managed registration. Ben's conditional Stage 1 go is recorded in the Stage 0 status at the end of this pack; it is a build GO for the generic fail-closed infrastructure, not an identity-readiness pass, and no activation is implied.
 
 ## 1.9 ChatGPT/Muse source-identity demonstration — separate authorisation request
 
@@ -199,6 +213,17 @@ Ben's platform-scope words, retained verbatim: **“gpt and muse first, they are
 **Decision requested from Ben:** explicitly authorise or decline this exact read-only census on the two designated tabs. No probe is authorised by this revision. This request is separate from the existing F-7 composer-ownership probe: F-7 concerns composer uniqueness/lease and send-target ownership, not message source-occurrence identity. The existing five-platform F-7 request and its Stage 2 dependency remain unchanged.
 
 **Gate 1 technical readiness:** OPEN — adopted rule and scope are closed; source-occurrence identity must still be demonstrated for ChatGPT and Muse. This is the only remaining technical readiness item identified between the Stage 0 paper and a Stage 1 go. A separate Stage 1 implementation authorisation remains mandatory.
+
+## 1.9.1 Census outcome and readiness decision (Controlled Revision 06)
+
+Ben authorised the §1.9 census at 17:35 PST on 2026-11-11 and ran both scripts in his open tabs. Outcome, as corrected by evidence correction 01 (pin in the amendment record above) after Alex's independent cross-check:
+
+- **Muse:** `data-message-id` was observed on 66 rendered message elements with 66 distinct values (alongside `data-message-turn-id` 66/55, `data-message-group-id` 66/56, `data-message-side` 66/2). It remains a **candidate observation, not a qualifying identity demonstration**. Native semantics, exact message-wrapper relationship and persistence remain UNKNOWN. The v2 document-wide census exceeded the authorised boundary; its global results cannot establish wrapper ownership. The per-turn structural output was truncated in transit and is recorded as truncated.
+- **ChatGPT:** UNKNOWN. The first attempt found no rendered conversation (zero turns — no evidence); the second attempt was not run (the manual console route failed at the operator step). This is not evidence that ChatGPT lacks a qualifying key.
+- **Compliance defects, preserved explicitly:** both scripts invoked `copy(text)`, an unauthorised clipboard side effect; the v2 document-wide scan also exceeded §1.9's bounded inspection scope. No message-body or prompt extraction occurred in either script (Alex verified).
+- **Neither platform currently qualifies for managed registration.** No sender/body hash or other fallback is permitted.
+
+**Readiness decision (Alex):** ChatGPT discovery may be the first Stage 1 activity, provided it uses a corrected, strictly in-bound instrument under the already-authorised read-only census conditions; it must not expand into a new platform, a document-wide scan, a clipboard operation, or any other side effect. Muse must not be re-censused under the existing one-census permission; any repeat observation requires separate authorisation. Registration remains disabled for each platform until that platform independently satisfies the adopted rule; a candidate attribute alone is insufficient; UNKNOWN remains fail-closed.
 
 ---
 
@@ -291,14 +316,14 @@ Ben's Gate 5 behaviour ruling is fixed: **every held or in-transit item in the a
 
 **Gate 5 status:** DECIDED — centre-station PUSH / DELETE / APPEND behaviour is fixed.
 
-**Gate 5A status:** DECIDED FOR STAGE 1 — Option C adopted; no global Disconnect control. One narrowly named Stage 3 presentation question remains.
+**Gate 5A status:** DECIDED — Option C adopted; no global Disconnect control. The residual Stage 3 presentation question is also decided, under Ben's delegation (Rev06): the centre station displays the distinct **SEAT-UNREGISTERED** cause label rather than the common OWNER-REVIEW face with the cause only in metadata. Labelled a delegated answer; Ben's overrule reserved.
 
 ---
 
 # Gate 2 — F-6 whole-message completeness protocol decision paper
 
 **Governing:** Convene Sheet §2.6 and §4 item 7; current `protocol.js` PB-FILE framing and SHA-256 helpers.  
-**Disposition:** PROTOCOL PROPOSAL PREPARED; NOT ADOPTED.
+**Disposition:** DECIDED UNDER BEN'S DELEGATION (2026-11-11; answers recorded in §2.4 as delegated answers with Ben's overrule reserved — not Ben's personal rulings). F-6 freezing remains dependent on append/aggregate framing being defined and versioned.
 
 ## 2.1 Requirements that are already fixed
 
@@ -356,7 +381,7 @@ The exact F-6 payload hash cannot be frozen until the append and aggregate seria
 4. Confirm that append and aggregate framing remain dependent on their separate decisions and are versioned before F-6 is frozen.
 5. Confirm that same-PB-ID divergent complete payload is always a conflict requiring owner review.
 
-**Gate status:** OPEN for Stage 2. Exact F-6 protocol cannot be frozen until Ben adopts the definitions and the append/aggregate dependencies are resolved.
+**Gate status:** DECIDED UNDER DELEGATION for Stage 2 — the §2.2 definitions are adopted as delegated answers (character count: Unicode scalar values; block count: one TEXT block when text exists plus one FILE block per valid PB-FILE block, no empty TEXT block; hash: SHA-256 over the exact payload UTF-8 bytes excluding the PB-COMPLETE trailer and its framing LF; trailer: exactly one, final line; divergent complete payload under the same PB-ID is always CONFLICT / OWNER-REVIEW, never overwritten, never latest-wins). Exact F-6 protocol cannot be frozen until the append/aggregate framing dependencies are defined and versioned.
 
 ---
 
@@ -422,7 +447,7 @@ Current adapters type by different platform-specific paths. The evidence require
 # Gate 4 — Append serialization decision paper
 
 **Governing:** Convene Sheet §2.1, §2.11 and §4 item 10; Ben's approved demo V3 and page-side draft are supplemental only.  
-**Disposition:** OPTIONS PREPARED; NO SERIALIZATION DECISION MADE.
+**Disposition:** DECIDED UNDER BEN'S DELEGATION (2026-11-11) — wire format Option A and the six choices are recorded in §4.4 as delegated answers with Ben's overrule reserved.
 
 ## 4.1 Invariants that must not change
 
@@ -469,6 +494,18 @@ A versioned envelope contains an ordered array of segments, each with actor, rol
 **Decision requested:** Ben selects the wire option and answers the six choices. No option is adopted by this paper.
 
 ---
+
+## 4.4 Delegated decisions (Controlled Revision 06)
+
+Recorded under Ben's express delegation ("answer any remaining questions on my behalf based on end goal and ease of implementation"), from the pinned delegated-answers letter (amendment record above). Labelled delegated answers, subject to Ben's reserved overrule — not Ben's personal rulings:
+
+- **Wire format: Option A** — length-framed `PB-APPEND/1` segment; the original payload digest is retained as provenance.
+- (1) One Ben append segment per message per window.
+- (2) Committing the append sends — the demo's "Commit append & send" behaviour.
+- (3) The segment is preserved byte-for-byte as entered; an all-whitespace segment is rejected as empty, never rewritten.
+- (4) Same PB-ID and same Index ID; append is a lifecycle event with distinct attribution.
+- (5) Both directions.
+- (6) The segment serialises after the complete original payload and before the F-6 trailer.
 
 # Gate 6 — Basic-fix snippet
 
@@ -605,11 +642,11 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 | Gate 1 platform scope | ChatGPT and Muse first; Claude.ai, Gemini and Meta AI outside Stage 1 pending later evidence and adoption | **DECIDED — 2026-11-11** | Scope fixed |
 | Gate 1 exact identity rule | Exact construction in Controlled Revision 03 §§1.3–1.5 and 1.8; adoption recorded under PB-ID `pb-mwcxd7wy-2i-kper` at 17:24 PST | **DECIDED — 2026-11-11** | Stage 1 source-field demonstration/readiness only |
 | Disconnect behaviour | Ben's centre-station PUSH / DELETE / APPEND ruling; applies to every disconnect scope | **DECIDED — 2026-11-11** | Behaviour fixed; packaging tracked below |
-| Gate 5A control-scope packaging | Option C adopted; no global Disconnect; one Stage 3 cause-label presentation question remains | **DECIDED for Stage 1; one Stage 3 item open** | Stage 3 presentation only |
-| Gate 1 source-identity demonstration | Bounded read-only live-page identity census for ChatGPT and Muse, separately authorised | **OPEN — Ben's separate probe authorisation required** | Stage 1 readiness |
-| F-6 completeness | Character/block/hash/trailer/repair proposal | **OPEN — Ben adoption required** | Stage 2 |
+| Gate 5A control-scope packaging | Option C adopted; no global Disconnect; cause label decided under delegation: distinct SEAT-UNREGISTERED label | **DECIDED — 2026-11-11 (label under delegation)** | Closed |
+| Gate 1 source-identity demonstration | §1.9 census authorised by Ben 17:35 PST and performed; corrected outcome: Muse candidate observed, not qualified; ChatGPT UNKNOWN; neither platform qualified | **PERFORMED — readiness per Alex's decision (§1.9.1)** | Registration readiness only; not a Stage 1 build block |
+| F-6 completeness | Definitions adopted under Ben's delegation (§2.4/§2.2); freeze depends on append/aggregate framing versioning | **DECIDED UNDER DELEGATION — 2026-11-11** | Stage 2 |
 | F-7 composer ownership | Five-platform source evidence and bounded read-only probe request | **OPEN — Ben probe authorisation required for live evidence** | Stage 2 |
-| Append serialization | Same-ID segment model and three wire options | **OPEN — Ben decision required** | Stage 3 |
+| Append serialization | Option A + six choices decided under Ben's delegation (§4.4) | **DECIDED UNDER DELEGATION — 2026-11-11** | Stage 3 |
 | Basic-fix snippet | Explicitly awaiting exact source from Ben | **OPEN — Ben input** | Stage 2 if applicable |
 | Direction erratum | Exact text prepared; no governing sheet edit | **AWAITING BEN'S WORD TO SHELVE** | Stage 3 conformance |
 | NEW-9 route | Trigger/receipt/failure design and external dependencies named | **OPEN — Stage 5 only** | Stage 5 |
@@ -631,32 +668,32 @@ The demo is accepted as a visual/interaction reference only. The page-side draft
 - [x] Ben's Gate 1 platform scope ruling is incorporated: ChatGPT and Muse first; Claude.ai, Gemini and Meta AI excluded from Stage 1 identity scope.
 - [x] Ben adopted the exact Gate 1 identity rule for ChatGPT and Muse under PB-ID `pb-mwcxd7wy-2i-kper`; source-field demonstration for both remains required before Stage 1 registration.
 - [x] Ben's Gate 5 disconnect behaviour ruling and Gate 5A Option C packaging ruling are incorporated; only the named cause-label presentation question remains for Stage 3.
-- [x] Ben adopted Gate 5A Option C: per-seat Unregister only; no global Disconnect. The remaining cause-label question is Stage 3 presentation only.
-- [ ] Ben separately authorises or declines the bounded ChatGPT/Muse source-identity census in §1.9; no probe is authorised yet.
-- [ ] Ben adopts F-6 whole-message completeness definitions.
+- [x] Ben adopted Gate 5A Option C: per-seat Unregister only; no global Disconnect. The cause-label presentation is decided under delegation: distinct SEAT-UNREGISTERED label.
+- [x] Ben authorised the bounded ChatGPT/Muse source-identity census in §1.9 (17:35 PST, 2026-11-11); it was performed and its corrected outcome is recorded in §1.9.1 and evidence correction 01.
+- [x] F-6 whole-message completeness definitions adopted under Ben's delegation (§2.2/§2.4); freeze awaits append/aggregate framing versioning.
 - [ ] Ben separately authorises or declines the bounded F-7 read-only probe.
-- [ ] Ben decides append wire format, direction coverage and commit/send semantics.
+- [x] Append wire format (Option A), direction coverage (both) and commit/send semantics decided under Ben's delegation (§4.4).
 - [ ] Ben supplies or explicitly declines the basic-fix snippet; this blocks Stage 2 only if applicable.
 - [ ] Ben says whether to shelf the direction erratum; Stage 3 conformance remains pending.
 - [ ] NEW-9 external route and receipt authority are resolved before Stage 5.
 
-**Stage 0 exit accounting — Controlled Revision 05:**
+**Stage 0 exit accounting — Controlled Revision 06:**
 
 | Item | Current disposition | What remains / who decides | Stage dependency |
 |---|---|---|---|
 | Gate 1 platform scope | **CLOSED — ChatGPT and Muse first** | No further scope decision pending; later platforms require their own evidence and adopted widening | Scope fixed; does not itself permit Stage 1 |
 | Gate 1 exact identity rule | **CLOSED — adopted for ChatGPT and Muse** | No further rule adoption pending | Decision closed |
-| Gate 1 source-identity demonstration | **OPEN — live census request prepared; not authorised** | Ben separately authorises or declines the bounded read-only census in §1.9; persistence still requires authoritative semantics or separately authorised repeat evidence | Stage 1 readiness |
+| Gate 1 source-identity demonstration | **PERFORMED — corrected outcome recorded (§1.9.1)** | Neither platform qualified; ChatGPT discovery may run as Stage 1's first activity under Alex's readiness conditions; Muse repeat observation needs separate authorisation; persistence requires authoritative semantics or separately authorised repeat evidence | Registration readiness |
 | Gate 5 disconnect behaviour | **CLOSED — Ben's centre-station ruling** | No further behaviour decision; applies to every disconnect scope | Behaviour fixed |
-| Gate 5A control/recovery packaging | **DECIDED — Option C adopted** | No global Disconnect; remaining cause-label question is named in §5.5 and blocks Stage 3 presentation only | Stage 3 only |
-| F-6 whole-message completeness | **OPEN — Ben adoption** | Adopt/amend character, block, byte-hash, trailer, repair and conflict definitions | Stage 2 |
+| Gate 5A control/recovery packaging | **DECIDED — Option C adopted; cause label decided under delegation** | No global Disconnect; centre station displays the distinct SEAT-UNREGISTERED label | Closed |
+| F-6 whole-message completeness | **DECIDED UNDER DELEGATION** | Definitions adopted as delegated answers; freeze awaits append/aggregate framing being defined and versioned | Stage 2 |
 | F-7 composer ownership | **DESIGN PREPARED; live evidence not authorised** | Ben separately authorises or declines the bounded read-only probe and specifies tabs; no probe is implied | Stage 2 |
-| Append serialization | **OPEN — Ben decision** | Select wire option and decide append count, commit/push-through, whitespace, same IDs, directions and trailer placement | Stage 3 |
+| Append serialization | **DECIDED UNDER DELEGATION** | Option A + six choices recorded in §4.4; framing to be versioned with F-6 | Stage 3 |
 | Basic-fix snippet | **AWAITING BEN'S SOURCE / DECISION** | Ben supplies the exact snippet or explicitly declines it; applicability then assessed without reconstruction | Stage 2 if applicable |
 | Direction erratum | **TEXT PREPARED; SHELVING AWAITS BEN** | Ben says whether the prepared correction is to be shelved into the governing sheet | Stage 3 conformance |
 | NEW-9 route | **DESIGN PREPARED; external dependencies open** | Resolve event source, Remmy wake route, Shelf write/read-back receipt and validation authority | Stage 5 |
 | Station supplement cross-check | **COMPLETE** | Findings already recorded; carry into relevant design/build stages | Relevant Stage 0/3 requirements |
 
-**Stage 0 status:** DESIGN PAPERS PREPARED; NOT CLOSED. Gate 1 scope and exact rule are adopted. Gate 5 behaviour and Gate 5A Option C packaging are decided; therefore both Stage 1-blocking decisions are made. The sole technical readiness item now between the paper and a Stage 1 go is demonstration that qualifying source-occurrence keys can be established for both ChatGPT and Muse, followed by Ben's separate Stage 1 implementation authorisation. The current shelved source/matrix alone cannot complete that demonstration: the pinned adapters do not extract a qualifying occurrence key, and source inspection does not establish whether the live rendered message structures expose stable native IDs or a stable occurrence tuple. A bounded live-page, read-only identity census is therefore requested separately below. It is not authorised by this revision. F-6 adoption, F-7 probe authorisation, append serialization, the basic-fix snippet and direction-erratum shelving remain in their recorded states and block only their own stages as itemised above. NEW-9 is a later Stage 5 dependency. No decision is inferred from silence. No implementation authority is created by either ruling or this revision. Stage 1 remains blocked pending the ChatGPT/Muse identity demonstration and separate Stage 1 implementation authorisation.
+**Stage 0 status:** DESIGN CLOSURE COMPLETE ON DECISIONS — CONTROLLED REVISION 06. Gate 1 scope and exact rule are adopted; the §1.9 census was authorised, performed and corrected (Muse candidate observed, not qualified; ChatGPT UNKNOWN; neither platform qualified for managed registration). Gate 5 behaviour and Gate 5A Option C packaging are decided, including the cause label under delegation. Gates 2 and 4 are decided under Ben's delegation, labelled as such with his overrule reserved. **Ben's Stage 1 go (tap and words, 17:53 PST, 2026-11-11) is recorded: implement v0.19.0 under Build Plan 01 Stage 1, from the shelf, conditioned on this revision landing — this revision is the condition precedent.** Alex's readiness decision governs its scope: a conditional build GO for the generic canonicalisation, permanent registration ledger, lifecycle and acknowledgement infrastructure, fail-closed; no ChatGPT or Muse managed registration until that platform independently satisfies the adopted rule; no activation or live acceptance implied. The Rev05 statement that Stage 1 remains blocked pending both platform demonstrations and a separate implementation authorisation is SUPERSEDED by that later authority and readiness decision; the platform demonstrations remain registration-readiness conditions. Remaining open, blocking only their own stages: Gate 6 basic-fix snippet (Ben's source), Gate 7 direction-erratum shelving (Ben's word), F-7 live probe (separately unauthorised), NEW-9 (Stage 5). The Crusher stop order remains in force. No decision is inferred from silence.
 
-**End of Stage 0 Design and Evidence Pack 01 — Controlled Revision 05.**
+**End of Stage 0 Design and Evidence Pack 01 — Controlled Revision 06.**
