@@ -121,7 +121,10 @@ function createCaptureSession(config) {
       if (!verdict.accepted) {
         return { handoffId, outcome: 'STALE', reason: verdict.reason, pbId: null, indexId: null };
       }
-    } else if (detection.epoch != null) {
+    } else {
+      // Without the persistent epoch store, the supplied epoch
+      // cannot be verified. Never allow capture to bypass the
+      // gate merely because the verifier is unavailable.
       return { handoffId, outcome: 'STALE', reason: 'epoch-unverifiable', pbId: null, indexId: null };
     }
 
