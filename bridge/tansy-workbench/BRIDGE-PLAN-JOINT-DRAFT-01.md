@@ -2,6 +2,7 @@
 
 Status: DRAFT FOR BEN'S RULING. Analysis and planning only — no code change authorised by this document.
 Provenance: independent analysis of the shelved v0.21.0 source by Tansy (Claude, alex seat) in direct collaboration with Remmy, 2026-11-11 evening, under Ben's tap for the Tansy track. Every mechanism claim below was read in the source by at least one of us and spot-verified by the other. "Verified" = read in the shelved source. Runtime behaviour and panel rendering are NOT verified by this document.
+Source version for ALL line references in this draft: the v0.21.0 tree shelved at bridge/combined-build/source/ (the exact build Tansy hash-matched, 37 files).
 
 ## The spine
 
@@ -26,13 +27,13 @@ Evidence: every letter from that seat tonight arrived exactly twice (13 of 13, d
 Loss points on the return path, in order:
 1. Baseline judgement on reload: a letter first seen inside the baseline window counts as history if it is in the delivered seed OR buried under later turns — dropped BY POSITION (letterbox.js 423–455). The drop is reported to the popup log only when the letter is unrecorded (line 448).
 2. **The detection send is fire-and-forget** (content.js 109): the letter is marked seen + handed off BEFORE the send (letterbox.js 629–632); the send's response is ignored and errors are swallowed (`.catch(() => {})`). If the background rejects or is unavailable, nothing is logged on the content side and the letter is never retried. **The one true silent exit found in the extension.** The capture-drop reports ride the same channel (content.js 116).
-3. Intake rejects detections from unregistered tabs, logged in the background (background.js 404–411) — after a reload or re-registration, a reply can die here, visible only in the background log.
+3. Intake rejects detections from unregistered tabs, logged in the background (background.js 413–415) — after a reload or re-registration, a reply can die here, visible only in the background log.
 
 All three are reload-shaped; Ben reloaded and re-registered repeatedly that evening. Discriminating evidence still owed: the popup log around the reload times and the background log for the ChatGPT tab (Ben's screen).
 
 ### F3 — "Sent, unconfirmed" read as backwards (CONFIRMED mechanism)
 
-The receipt verdict is set from a bounded observation window (24 counted polls, 120-second cap; polls pause while the page generates — claude adapter 570–611). UNVERIFIED is terminal: the pump skips it (background.js 1261), no control revisits it, no late confirmation path exists for the letter's own record. A letter that becomes observable after the window closes keeps a verdict its evidence has outlived. Tansy's sentence stands: the label is accurate about the click, but it reads like a delivery state.
+The receipt verdict is set from a bounded observation window (24 counted polls, 120-second cap; polls pause while the page generates — claude adapter 570–611). UNVERIFIED is terminal: the pump skips it (background.js 1263), no control revisits it, no late confirmation path exists for the letter's own record. A letter that becomes observable after the window closes keeps a verdict its evidence has outlived. Tansy's sentence stands: the label is accurate about the click, but it reads like a delivery state.
 
 Note: DELIVERED-LATE already exists as a station face (storage.js 235–247; pbStationHandshake). What is missing is the re-observation that feeds it after a pair closes unconfirmed.
 
@@ -57,7 +58,7 @@ GAP
 ## Plan items for Ben's ruling
 
 - **P1 — Completed-letter tombstone.** A delivered letter leaves a persistent tombstone keyed on its own fingerprint (the ABANDONED treatment, extended to delivered letters). A supersede arriving against a tombstone does NOT route as new: it surfaces visibly as "this letter grew after completion," showing the added text, and whether the addition is carried is BEN's decision — never automatic. Kills F1 without touching capture, comparison, or the in-flight growth rule. (Tombstone conditions: keyed on the prior fingerprint via supersedesFingerprint; must survive restart.)
-- **P2 — No silent exit.** The detection send is acknowledged: on failure it retries (bounded) or logs where Ben can see it. The handed-off marking follows confirmation, not the reverse. The capture-drop report gets the same treatment. Kills the F2 silent point; the remaining F2 points already log somewhere — P2's acceptance includes those logs reaching a surface Ben actually reads.
+- **P2 — No silent exit.** The detection send is acknowledged: on failure it retries (bounded) or logs where Ben can see it. The handed-off marking follows confirmation, not the reverse. The capture-drop report gets the same treatment. Kills the F2 silent point. Acceptance, named per Tansy's addition: the existing F2 log lines are (a) the baseline buried-drop report — popup log only; (b) the intake unregistered-tab rejection — background log only; (c) the detection-send failure — no line anywhere (the gap P2 closes). P2 is not accepted until each of (a) and (b) is shown to reach a surface Ben actually reads, which is verified in P6, not assumed here.
 - **P3 — Receipt rename.** "Sent, unconfirmed" becomes words that state only what is known — candidate: "clicked; receipt not yet observed." Cheap, no behaviour change. Do first.
 - **P4 — Late re-observation, upgrade only.** A bounded second look, keyed on the same PB-ID, that can move UNVERIFIED to DELIVERED-LATE and never re-sends. Feeds the station face that already exists.
 - **P5 — Log the overlay refusal.** A host-election refusal of Ben's push-through/append writes a log line and a panel-visible note.
