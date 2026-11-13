@@ -1,0 +1,121 @@
+
+=== ACCEPTANCE PROBE — laptop Ubuntu room ===
+date: 2026-11-13T00:58:50-07:00
+hostname: MuseGadget0C94
+kernel: Linux MuseGadget0C94 6.18.58.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Tue Oct 27 00:24:11 UTC 2026 x86_64 GNU/Linux
+PRETTY_NAME="Ubuntu 26.04.1 LTS"
+
+=== 0.1 virtualisation type (plan: kvm/none PASS; container types FAIL) ===
+systemd-detect-virt: wsl
+note: recorded verbatim; classification against Alex's intent is his adjudication.
+
+=== 0.2 uid_map (plan: identity map PASS; offset map FAIL) ===
+as root:          0          0 4294967295 
+as ben:           0          0 4294967295 
+
+=== 0.3 NoNewPrivs ancestry (plan: 0 everywhere in the chain) ===
+PID 1 (systemd): NoNewPrivs:	0
+pid 188 (bash): NoNewPrivs:	0
+pid 187 (Relay(188)): NoNewPrivs:	0
+pid 186 (SessionLeader): NoNewPrivs:	0
+pid 2 (init-systemd(Ub): NoNewPrivs:	0
+
+=== 0.4 launcher filesystem flags (plan: no nosuid/noexec on the launcher fs) ===
+/ rw,relatime,discard,errors=remount-ro,data=ordered
+( /usr/local/lib is on the / mount )
+
+=== 1.1 create the two identities (plan: distinct uid/gid, separate groups, harness NOT in supervisor group) ===
+read-back: uid=999(pilot-supervisor) gid=986(pilot-supervisor) groups=986(pilot-supervisor)
+read-back: uid=997(pilot-harness) gid=985(pilot-harness) groups=985(pilot-harness)
+pilot-supervisor:x:999:986::/home/pilot-supervisor:/usr/sbin/nologin
+pilot-harness:x:997:985::/home/pilot-harness:/usr/sbin/nologin
+pilot-supervisor:x:986:
+pilot-harness:x:985:
+
+=== 1.2 custody tree — chown must stick and read back (incumbent FAILED here) ===
+root:root 755 /srv/nemotron-pilot-probe
+pilot-supervisor:pilot-supervisor 700 /srv/nemotron-pilot-probe/commitments
+pilot-harness:pilot-harness 755 /srv/nemotron-pilot-probe/runs
+drwxr-xr-x 19 root root 4096 Nov 13 00:58 /
+drwxr-xr-x  3 root root 4096 Nov 13 00:58 /srv
+drwxr-xr-x  4 root root 4096 Nov 13 00:58 /srv/nemotron-pilot-probe
+
+=== 1.3 custody separation — harness must be DENIED the supervisor's tree ===
+supervisor wrote held.txt
+[PASS] pilot-harness cannot read supervisor custody (denied)
+[PASS] pilot-harness cannot write supervisor custody (denied)
+[PASS] supervisor reads its own custody
+[PASS] harness writes its own runs tree
+
+=== PROBE — setuid elevation, Batch 0's exact shape (the F-1 test) ===
+probe source sha256: 64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53
+expected (frozen):  64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53
+no compiler present — installing gcc (disclosed environment change, logged):
+Processing triggers for man-db (2.13.1-1build1) ...
+Processing triggers for libc-bin (2.43-2ubuntu2.3) ...
+/mnt/c/Users/ben/setuid_probe.c:15:10: fatal error: stdio.h: No such file or directory
+   15 | #include <stdio.h>
+      |          ^~~~~~~~~
+compilation terminated.
+sha256sum: /usr/local/lib/nemotron-pilot/setuid-probe: No such file or directory
+probe binary sha256: 
+chown: cannot dereference '/usr/local/lib/nemotron-pilot/setuid-probe': No such file or directory
+chmod: cannot access '/usr/local/lib/nemotron-pilot/setuid-probe': No such file or directory
+stat: cannot stat '/usr/local/lib/nemotron-pilot/setuid-probe': No such file or directory (os error 2)
+-- invocation A: as pilot-supervisor (PASS iff euid 0 observed) --
+runuser: failed to execute /usr/local/lib/nemotron-pilot/setuid-probe: No such file or directory
+exit status: 1
+-- invocation B: as pilot-harness (must be refused: mode 4710, not in group) --
+runuser: failed to execute /usr/local/lib/nemotron-pilot/setuid-probe: No such file or directory
+exit status: 1
+
+=== CAPS — capability state observable and empty (Alex's table) ===
+as root context:
+CapInh:	0000000000000000
+CapPrm:	000001ffffffffff
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000
+as pilot-harness:
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000
+ambient (as pilot-harness): ambient caps set: NONE
+ambient (as ben): ambient caps set: NONE
+
+=== NET — isolation constructible; indirect paths on the record (Alex's table, G1 widened) ===
+proxy env in distro: none
+default namespace routes:
+default via 172.29.48.1 dev eth0 proto kernel onlink 
+172.29.48.0/20 dev eth0 proto kernel scope link src 172.29.63.19 
+-- inside a fresh loopback-only namespace (unshare -Urn, as ben) --
+namespace routes: (empty)
+non-provider egress: OSError: [Errno 101] Network is unreachable
+loopback stack: ConnectionRefusedError: [Errno 111] Connection refused
+
+=== PROBE COMPLETE ===
+finished: 2026-11-13T01:01:04-07:00
+exhibits left in place: accounts pilot-supervisor/pilot-harness; /srv/nemotron-pilot-probe; /usr/local/lib/nemotron-pilot/setuid-probe; this log.
+
+=== PROBE CENTREPIECE — completion pass (first pass lacked libc headers) ===
+date: 2026-11-13T01:01:53-07:00
+Processing triggers for man-db (2.13.1-1build1) ...
+Processing triggers for systemd (259.5-0ubuntu3.4) ...
+probe source sha256: 64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53
+expected (frozen):  64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53
+compiled OK
+probe binary sha256: 7324b677deca67cdce1506850f16b5038a79898b059a895a3f4af17d5a9948df
+root:pilot-supervisor 4710 /usr/local/lib/nemotron-pilot/setuid-probe
+-- invocation A: as pilot-supervisor (PASS iff euid 0 observed) --
+probe: ruid=999 euid=0 rgid=986 egid=986
+probe: Uid:	999	0	0	0
+probe: NoNewPrivs:	0
+probe: PRIVILEGED WINDOW OBSERVED (euid 0)
+exit status: 0
+-- invocation B: as pilot-harness (must be refused: mode 4710, not in group) --
+runuser: failed to execute /usr/local/lib/nemotron-pilot/setuid-probe: Permission denied
+exit status: 1
+=== CENTREPIECE COMPLETE ===
+finished: 2026-11-13T01:03:33-07:00
