@@ -224,3 +224,6 @@ Harness: verify-stage-b.mjs (Node, same sim code) + verify-stage-b-render.mjs (b
   but produced 0 unsupported steps — no flight occurred; flight coverage
   comes from the drops' natural bounces, which the sensed state tracked
   step-exactly.
+
+## Flicker — examiner disposition · 2026-11-12 · pb-mwe755gs
+Examiner (Vane, via the alex seat) inspected the published flicker section at commit 78964f3b — an inspection of the recorded method, results and reasoning, not independent execution of the local-only harness. Verdict: FLICKER TEST PROVISIONALLY ACCEPTED WITH SCOPE LIMITS. The timer-reset concern is PROVISIONALLY RESOLVED for the tested scenarios; the examiner would not keep the original flicker objection blocking the tested scoring path. Retained: harness implementation REPORTED (local only); general contact-state correctness OPEN beyond tested scope; the flicker test stands as a regression requirement and the collision-skin (touching-manifold vs separation ≤ 0) distinction is to be preserved in the documentation. Impulse scenario noted as adding no independent flight coverage. Gate HELD; qualification HELD; GA unchanged.
