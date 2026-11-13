@@ -1,0 +1,45 @@
+SKIP HERE: unsupported AST node: Attribute(value=Call(func=Attribute(value=Name(id='pathlib', ctx=Load()), attr='Path', ctx=Load()), args=[Name(id='__fil
+SKIP INDEX: unsupported AST node: BinOp(left=Call(func=Attribute(value=Attribute(value=Name(id='pathlib', ctx=Load()), attr='Path', ctx=Load()), attr='hom
+SKIP GROQ: unsupported AST node: BinOp(left=Call(func=Attribute(value=Attribute(value=Name(id='pathlib', ctx=Load()), attr='Path', ctx=Load()), attr='hom
+SKIP BY_ID: 'SECS'
+WROTE PILOT-DATA-PACKS-01.json 6486 bytes
+WROTE PILOT-DATA-EXPECTED-01.json 748 bytes
+WROTE PILOT-DATA-T09-01.json 1952 bytes
+WROTE PILOT-DATA-FIXTURES-01.json 5763 bytes
+trees: T01, T02, T03, T04, T05, T06, T07, T08, T09-FR-A, T09-FR-B, T09-FR-C, T09-FR-VALID
+{
+ "pack_hashes": {
+  "T01": "99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7",
+  "T02": "c03a4efc68d303255c17c70a34f3daa40474c411e4b3098187664494215962b8",
+  "T03": "bbf7f602f24b5843f23a63c92d2f65006b42ca0539ae9b8e5d958b7e2d57bb07",
+  "T04": "b2b977a748e6a19a4321370e585eb26e88e129def8683df7b3613dd05f626eee",
+  "T05": "99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7",
+  "T06": "ad8e14a55b1e1ddf4f407ed3e3dd0ceae5582d9f3f0083d088a84a5095958640",
+  "T07": "18939819541f225eaa65ac54c75a89de0e6fb3fae6fcfc96df980488650ba231",
+  "T08": "f804e949863b16f3971726092ff920c301a783329456c9ee70e1b8ba1a96fd9c",
+  "T09-FR-A": "b80ef9338eff379c4a716c3fa233907893302400c5483bd982a9340e06e33a4f",
+  "T09-FR-B": "82dbf32dd74b0d1688981051fb210d2f8907b502fa127f3efd8b98a2238288e6",
+  "T09-FR-C": "12338a1061be5783ebdbda312a2ebc87104bbfa4a7cff794496ac5b19d588538",
+  "T09-FR-VALID": "716824eeffa510e6f0d87567cbe7455e05233825a4f0c964291d9eb6715def3f"
+ }
+}
+PASS EXPECTED_RECORD value-by-value (literal_eval path)
+PASS OB_TRUTH value-by-value
+PASS T06_KEY value-by-value
+PASS OBLIGATION_T09 value-by-value
+PASS V24 shas
+PASS FR-VALID carries every required field
+PASS FR-A differs from FR-VALID only by the corrupted sha
+PASS FR-B is FR-VALID minus result
+PASS FR-C differs from FR-VALID only by evidence_status [reported]
+PASS T09 gate decisions from the data files — FR-A->REJECT, FR-B->REJECT, FR-C->REJECT, FR-VALID->CLOSE
+PASS obligation_spec_text carries the sha + all required fields
+PASS fixture injection-note present with its content
+PASS fixture obligation-register present with its content
+PASS fixture shelf-record-181a30d present with its content
+PASS fixture invalid-draft present with its content
+PASS invalid-draft carries the substituted harness sha
+PASS arm_b_system == arm_a_system + governance
+PASS every pack item resolves (sections in snapshot, refs in data files) — 12 packs rendered
+PASS tree set is T01..T08 + T09 x4
+SUMMARY 19/19 checks pass

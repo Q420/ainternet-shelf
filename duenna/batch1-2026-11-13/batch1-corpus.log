@@ -1,0 +1,11 @@
+PASS section resolution: known section found with its recorded hash
+PASS section resolution: every pack section ref resolves — 13 refs
+PASS pilot-manifest: resolution: every pack fixture/receipt ref resolves — all refs
+PASS pilot-manifest: FR-VALID receipt content is the verbatim receipt
+PASS pilot-manifest: T01 pack manifest reference resolves with its pin
+PASS NOT FOUND: unknown section id returns NOT FOUND, no exception
+PASS NOT FOUND: unknown fixture key returns NOT FOUND
+PASS NOT FOUND: pilot-manifest: ref sent to get_section is refused by namespace
+PASS manifest row: a bare doc id resolves to its corpus manifest row
+PASS runtime path: module never references the live index or the trial runner
+SUMMARY 10/10 checks pass
