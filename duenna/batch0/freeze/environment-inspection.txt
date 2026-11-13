@@ -1,0 +1,57 @@
+ENVIRONMENT INSPECTION — Nemotron pilot, Batch 0 (the Batch 0 part of gate G1's zero-egress evidence, Spec §5 G1 / §3.7)
+date: 2026-11-13T05:30:11Z UTC
+host: htch-runtime
+kernel: Linux 7.0.0-44-generic x86_64
+operator: uid=0(root) gid=0(root) groups=0(root)
+
+== interfaces ==
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+host0@if3        UP             198.19.0.2/30 fd8b:4f84:7d32:99::2/64 fe80::70dc:7cff:fe34:2ffd/64 
+
+== routes (IPv4) ==
+default via 198.19.0.1 dev host0 
+198.19.0.0/30 dev host0 proto kernel scope link src 198.19.0.2 
+== routes (IPv6) ==
+fd8b:4f84:7d32:99::/64 dev host0 proto kernel metric 256 pref medium
+fe80::/64 dev host0 proto kernel metric 256 pref medium
+default via fd8b:4f84:7d32:99::1 dev host0 metric 1024 pref medium
+
+== mounts relevant to the build ==
+/home/hatch overlay[/home/hatch]        overlay rw,relatime,lowerdir=/sysroot,upperdir=/run/hatch/overlay/upper,workdir=/run/hatch/overlay/work,redirect_dir=on,uuid=on,xino=on,metacopy=on,fsync=volatile,nouserxattr
+/home/hatch /dev/mapper/rv[/home/hatch] btrfs   rw,nosuid,nodev,noatime,compress-force=zstd:3,ssd,discard=async,space_cache=v2,subvolid=257,subvol=/home/hatch
+/home/hatch /dev/mapper/rv[/home/hatch] btrfs   rw,nosuid,nodev,noatime,compress-force=zstd:3,ssd,discard=async,space_cache=v2,subvolid=257,subvol=/home/hatch
+/      overlay[/var/lib/hatch-runtime/rootfs-base] overlay rw,relatime,lowerdir=/sysroot,upperdir=/run/hatch/overlay/upper,workdir=/run/hatch/overlay/work,redirect_dir=on,uuid=on,xino=on,metacopy=on,fsync=volatile,nouserxattr
+
+== proxy configuration in the operator shell environment ==
+ALL_PROXY: set — scheme=http host=hatch-egress-proxy port=3128 (credential-bearing userinfo present in the value; redacted from this artefact)
+HTTPS_PROXY: set — scheme=http host=hatch-egress-proxy port=3128 (credential-bearing userinfo present in the value; redacted from this artefact)
+HTTP_PROXY: set — scheme=http host=hatch-egress-proxy port=3128 (credential-bearing userinfo present in the value; redacted from this artefact)
+JARVIS_INFERENCE_PROXY_SOCK: set — /run/hatch/proxy/inference.sock
+JARVIS_STEFI_PROXY_SOCK: set — /run/hatch/proxy/stefi.sock
+JARVIS_TELEMETRY_PROXY_SOCK: set — /run/hatch/telemetry/telemetry.sock
+NODE_USE_ENV_PROXY: set — 1
+NO_PROXY: set — localhost,127.0.0.1,::1,[::1],198.19.0.1,198.19.0.2,fd8b:4f84:7d32:99::1,[fd8b:4f84:7d32:99::1],fd8b:4f84:7d32:99::2,[fd
+all_proxy: set — scheme=http host=hatch-egress-proxy port=3128 (credential-bearing userinfo present in the value; redacted from this artefact)
+http_proxy: set — scheme=http host=hatch-egress-proxy port=3128 (credential-bearing userinfo present in the value; redacted from this artefact)
+https_proxy: set — scheme=http host=hatch-egress-proxy port=3128 (credential-bearing userinfo present in the value; redacted from this artefact)
+no_proxy: set — localhost,127.0.0.1,::1,[::1],198.19.0.1,198.19.0.2,fd8b:4f84:7d32:99::1,[fd8b:4f84:7d32:99::1],fd8b:4f84:7d32:99::2,[fd
+(These variables live in the operator session's environment. They are process state, not system configuration: a pilot process environment constructed without them has no proxy path — but on this host the shell that would launch pilot work carries them, and the adapter's Stage 5 refusal of proxy configuration (Spec §3.7) plus a constructed process environment are both required. Nothing in this inspection modified them.)
+
+== loopback-only network namespace: constructibility on this host ==
+$ unshare -n bash -c 'ip link set lo up; ip -brief addr; ip route'
+RTNETLINK answers: Operation not permitted
+lo               DOWN           
+(route table above; empty = no external route)
+unshare exit: 0
+
+== Batch 0 reading of this evidence ==
+1. The build HOST, as it stands, is NOT a zero-egress environment: it has a non-loopback interface (host0, 198.19.0.2/30) with a default route, and the operator shell carries proxy configuration. No claim otherwise is made.
+2. A loopback-only network namespace IS constructible on this host (demonstrated above): inside it there are no non-loopback interfaces and no routes. This is the mechanism gate G1's evidence names (Spec §5: 'for example, a network namespace with no external route').
+3. G1's zero-egress evidence proper is taken at Batch 6, inside the constructed gate environment, per §5. Batch 0 records the host's actual posture and the demonstrated constructibility — it does not pre-pass G1.
+
+== addendum (same sitting): loopback inside the namespace ==
+In the plain 'unshare -n' run above, raising loopback was denied (RTNETLINK: Operation not permitted) and lo stayed DOWN: that namespace had no routes and no usable interface at all. With a combined user+network namespace the operator can raise loopback:
+$ unshare -Urn bash -c 'ip link set lo up; ip -brief addr; ip route'
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+exit: 0
+Reading, corrected: a loopback-only gate environment (loopback up, no non-loopback interface, no routes) IS constructible on this host via unshare -Urn. This corrects reading 2 above, which glossed the loopback failure in the -n-only form.

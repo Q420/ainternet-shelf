@@ -1,0 +1,27 @@
+{
+  "artefact": "Design-time catalogue snapshot — the catalogue evidence Adapter Design §1.4 requires at the Stage 5 freeze, carried into the freeze in its design-time recorded form per Build Spec §6.3 item 5 (Rev 12).",
+  "capture_date": "2026-11-12",
+  "capture_method": "GET /v1/models on Ben's key via the sanctioned NVIDIA connector helper (custom.nvidia), taken at design time (Stage 2, 2026-11-12). No catalogue request of any kind was made at Stage 5 (zero provider contact).",
+  "catalogue_size_models": 83,
+  "pinned_model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+  "pinned_model_present_in_listing": true,
+  "nemotron_family_ids_recorded": [
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+    "nvidia/nemotron-nano-3-30b-a3b",
+    "nvidia/nemotron-3.5-lightning-30b-a3b"
+  ],
+  "other_ids_noted_in_connector_record": [
+    "deepseek-ai/deepseek-v4.1-flash",
+    "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+    "moonshotai/kimi-k2.6",
+    "z-ai/glm-5.3-flash",
+    "openai/gpt-oss-20b"
+  ],
+  "sources": [
+    "NEMOTRON-ADAPTER-DESIGN-03 §1.1 — 'Candidates on the live catalogue (2026-11-12 listing)' (the family listing above)",
+    "NEMOTRON-ADAPTER-DESIGN-03 §1.3 S3 — 'the live catalogue on Ben's key (2026-11-12, via the connector)'",
+    "NEMOTRON-ADAPTER-DESIGN-03 §1.4 — 'connector doc, verified 2026-11-12: 83 models that day'",
+    "custom.nvidia CONNECTOR.md — verified note, 2026-11-12 (83 models; the other ids noted above; 'No Qwen model was on this key's list that day')"
+  ],
+  "preservation_note": "The full raw GET /v1/models response body was NOT preserved as a file at design time: the connector helper prints responses to stdout and writes no file, and a Batch 0 search (2026-11-12) found no preserved response artefact on disk. This snapshot therefore carries the design-time catalogue evidence in the form the design stage actually recorded it — the listing as recorded in the design documents — and not the full raw response body that Adapter §1.4(2)'s wording describes. Recorded as Batch 0 finding F-2 for Ben/Alex. The full live response is captured at Stage 6 pre-flight under §1.4, where §1.4(2)(b) requires it."
+}
