@@ -1,221 +1,242 @@
-# REVISION 03 — COVER NOTE: RESPONSE TO ALEX'S REV 02 INSPECTION VERDICT
+# REVISION 03 — COVER NOTE: RESPONSE TO ALEX'S REV 02 VERIFICATION VERDICT
 
 **Pilot:** Nemotron governed-subject pilot (Plan 01, ADOPTED by Ben
 2026-11-12)
-**Occasion:** Alex's Rev 02 inspection verdict (PB-ID
-pb-mweajgej-5-1u79) on the Rev 02 design revision, inspected at
-shelf commit `499cad0922d039ca84d2a891bbe3178b705a214d`. Verdict
-in brief: **A–F substantially incorporated** — B, C, and E
-accepted; F accepted with hosted status still unverified; A
-mostly correct with one gap (the crash case); D's design right
-with one contradiction (the §3.2 table). Plus one parameter
-ruling. This note and its three companion documents are the
-design correction answering exactly those items. **Paper only:
-nothing is built, no model call is made, nothing is pushed to
-the shelf by this revision. The Rev 01 and Rev 02 documents are
-unmodified — Rev 02 remains the inspected revision of record —
-and the Rev 03 documents supersede Rev 02 as the design going
-forward for the sections they correct. Stage 5 remains NOT
-cleared and Stage 6 remains unauthorised; no build or model
-call is authorised by anything in this revision.** Alex has
-offered the next independent review pass on the corrected A and
-D sections, including checking the revised acceptance criteria
-against them; this package is offered for that pass.
+**Occasion:** Alex's verification verdict (pb-mweajgej, 2026-11-12)
+on the Rev 02 design revision, inspected at shelf commit
+`499cad0922d039ca84d2a891bbe3178b705a214d`. (The Rev 01 package
+Rev 02 answered was inspected at shelf commit
+`96c74478c576aadc150361998114c3b58a463f41`.) Verdict in brief:
+**A–F substantially incorporated — B, C, and E accepted; F
+accepted with hosted status still unverified — with exactly two
+corrections remaining and one parameter ruling.** This note and
+its three companion documents fold in those two corrections and
+that ruling, and nothing else: no other section's substance
+changes, and there is no scope growth. **Paper only: nothing is
+built, no model call is made, nothing is pushed to the shelf by
+this revision. The Rev 01 documents (the inspected set of
+record) and the Rev 02 documents (the verified revision) are
+unmodified; the Rev 03 documents supersede Rev 02 as the design
+going forward and are offered for Alex's verification of this
+correction pass — the independent review of the corrected A and
+D sections, including the criteria consistency check, that his
+verdict offered to take. Stage 5 and Stage 6 gates are untouched:
+Stage 5 still requires Alex's verification of this pass plus its
+own gate, and Stage 6 still requires Ben's separate
+authorisation. No build or model call is authorised by anything
+in this revision.**
 
-## What changed, per document, mapped to the verdict
+## What changed, per document
 
-**PILOT-HARNESS-DESIGN-03.md** (answers corrections A and D)
+**PILOT-HARNESS-DESIGN-03.md** (answers corrections 1 and 2)
 
-- **A, completed — the CRASH commitment (new in §2.6).** On
-  observing the harness process terminate without a terminal
-  event, the supervisor issues a distinct **CRASH commitment**
-  over the partial record exactly as it lies: `{run_id, kind:
-  "CRASH", issued_at_utc, record_file_sha256, event_count,
-  final_event_sha256, termination_observed}` — the partial
-  file's hash, its event count, its last complete event's hash,
-  and the supervisor's own record of the termination it
-  observed. Its sole function is to externally commit the
-  partial record as observed, so a crashed run's closed
-  portions rest on an anchor the harness cannot rewrite
-  instead of on the partial chain alone. Three prohibitions
-  bind it: it is **not** a TERMINAL commitment and must never
-  be presented as one; it does **not** close the run and does
-  **not** make it scoreable as complete; and it is issued only
-  where no TERMINAL commitment exists — the two never coexist
-  for one run, and a run presented with both is a custody
-  finding. **Absence, resolved:** a partial record offered with
-  **neither** commitment has no external commitment to its tail
-  and fails verification outright — its closed portions are not
-  examinable, because nothing outside the record vouches for
-  them (§2.6; replay step 0 in §7 and §6.4 aligned).
-- **A — the proof obligations are carried as SE-7 (new in
-  §4.5).** Alex accepted the supervisor custody split at
-  architecture level — no OS-level prescription is owed before
-  Stage 5 — and named what Stage 5 must instead prove. SE-7
-  states it: **(i)** the harness cannot write, replace, or
-  delete commitment receipts, demonstrated by inspection and
-  adversarial tests from inside the harness's privilege
-  boundary; **(ii)** the supervisor independently records the
-  START, TERMINAL, and CRASH commitments — its own act,
-  outside the harness's boundary, over values it has itself
-  recomputed or observed; **(iii)** the separation is
-  demonstrated through inspection **and** adversarial tests,
-  including the crash case (a harness killed mid-run receives
-  a CRASH commitment over the partial file as it lies, and no
-  TERMINAL); **(iv)** the examiner verifies the supervisor's
-  **issuance record** (§2.6, new) — every receipt presented at
-  examination has a corresponding issuance entry whose hash
-  matches — not merely a receipt sitting in a separate
-  directory.
-- **D, completed — four outcomes, stated once and
-  identically (§3.2, §3.4, §4.2, §7).** The contradiction is
-  removed by stating Alex's four outcomes as the single table
-  and repeating them verbatim everywhere the semantics appear:
-  **no pattern matches → NOT FOUND**; **matches exist but all
-  fail type validation → TYPE FAILURE**; **exactly one valid
-  match → EXTRACTED**; **more than one valid match →
-  AMBIGUOUS**. TYPE FAILURE is a first-class outcome (carried
-  in the result's `verification` field, detail in
-  `failure_reason`): the evidence is present and the rule
-  cannot correctly interpret it — a different defect from
-  absence, with a different remedy, and never recorded as NOT
-  FOUND. §3.4's tool restatement and result-schema note, §4.2's
-  acceptance set (TYPE FAILURE results are never insertable,
-  alongside NOT FOUND and AMBIGUOUS), and §7's re-derivation
-  pairings (a recomputation landing on any different outcome
-  than the record claims is a divergence) are all aligned to
-  the same four.
+- **Correction 1 — A, the crash case** (new §2.6 CRASH
+  commitment; issuance record; new §4.5 SE-7):
+  - §2.6 gains a **third commitment kind, CRASH**, alongside
+    START and TERMINAL: issued by the supervisor on observed
+    harness termination without a TERMINAL receipt, it records
+    the partial record file's sha256 over its exact bytes as
+    they lie, the event count, the last complete event's
+    `event_sha256`, and the supervisor-observed process
+    termination (when, and on what basis). Three prohibitions
+    bind it: it is **not** a TERMINAL commitment and must never
+    be presented as one; it does **not** close the run and does
+    **not** make the run scoreable as complete; and it is
+    issued only where no TERMINAL commitment exists — the two
+    never coexist for one run.
+  - The §2.6 "absence" rule is restated around it: Rev 02's
+    rules stand (a missing TERMINAL receipt is a crash signal,
+    never back-filled), and closed portions of a partial run
+    are examinable **only under the CRASH commitment**. A
+    partial record offered with neither commitment has no
+    external anchor and fails verification outright.
+  - §2.6 also defines the supervisor's **issuance record** —
+    the supervisor's own append-only account of every
+    commitment it issues — against which an examiner verifies
+    any presented receipt; a receipt the issuance record does
+    not show is a custody finding, not evidence.
+  - **SE-7 (§4.5)** carries Alex's Stage 5 proof obligations
+    verbatim in substance: (i) the harness cannot write,
+    replace, or delete commitment receipts; (ii) the
+    supervisor independently records the START, TERMINAL, and
+    CRASH commitments; (iii) Stage 5 demonstrates that
+    separation through inspection and adversarial tests,
+    including the crash case; (iv) the examiner verifies the
+    supervisor's **issuance record**, not merely a receipt
+    sitting in a separate directory. Per Alex's confirmation,
+    the custody split suffices at the architecture level and
+    **no OS-level prescription is added**.
+  - Consistency alignments inside the same correction: the
+    §2.4 directory listing gains the CRASH receipt and the
+    issuance record; §6.4's partial-record rules and §7 step
+    0's anchor verification now run over START + (TERMINAL or
+    CRASH) with issuance-record verification. (§8 Q5/Q10 needed
+    no change — see the sweep findings below.)
+- **Correction 2 — D, the §3.2 contradiction** (§3.2, §3.4,
+  §4.2, §7 step 3): Rev 02's §3.2 table counted "matches only
+  with type failure" as zero valid matches, hence NOT FOUND,
+  while its own following paragraph called that case an
+  extraction failure, not NOT FOUND. Rev 03 resolves it to
+  Alex's explicit four outcomes, stated **identically** in the
+  table and the prose:
+
+  | Condition | Outcome |
+  |---|---|
+  | No pattern matches | NOT FOUND |
+  | Matches exist, but all fail type validation | TYPE FAILURE |
+  | Exactly one valid match | EXTRACTED |
+  | More than one valid match | AMBIGUOUS |
+
+  TYPE FAILURE is a first-class result state
+  (`verification: "TYPE FAILURE"`): it produces no value, is
+  not insertable, satisfies no step's extraction requirement,
+  and is visibly distinct from NOT FOUND because the remedies
+  differ — missing evidence is not an extraction rule that
+  cannot correctly interpret present evidence. AMBIGUOUS
+  remains non-insertable and is never silently resolved. The
+  whole document was swept for other statements of extraction
+  outcomes and made consistent: §3.4's `source_extract`
+  restatement now gives all four outcomes; §4.2's acceptance
+  set names TYPE FAILURE results as never insertable; §7 step
+  3's replay treats any extraction-outcome mismatch (including
+  a TYPE FAILURE recomputation against a recorded NOT FOUND)
+  as a divergence.
 
 **NEMOTRON-ADAPTER-DESIGN-03.md** (answers the parameter ruling)
 
-- **The documented Thinking-mode configuration is pinned in
-  full (§1.5, §2.3).** Alex's ruling: `max_tokens` **20480
-  accepted** (Rev 02's correction stands — the old 4096 risked
-  manufacturing truncation failures); **temperature changes
-  0 → 0.6**. The pinned set is now explicit: temperature
-  **0.6**, `top_p` **0.95** (Rev 02 omitted it, leaving an
-  unspecified served default), `reasoning_budget` **16384**
-  (pinned in `chat_template_kwargs`; Rev 02 left it at the
-  model's default), `max_tokens` **20480**. Rev 02's recorded
-  divergence is **withdrawn, not carried** — the divergence
-  note is replaced by the ruling and its reasoning, recorded
-  in §1.5 because it is now the design's: *temperature 0 does
-  not make a hosted model deterministic; the harness and
-  evidence machinery must be deterministic — the subject does
-  not have to be; this is a governance pilot, not a contest to
-  optimise Nemotron's output; and using the vendor's
-  recommended Thinking configuration avoids introducing an
-  unnecessary experimental deviation.* §2.3's envelope table,
-  §3 field 17's envelope echo (now naming `top_p`), §6.2's
-  replay honesty, and §7 Q3/Q4 are all aligned — the
-  temperature-0 determinism premise is removed wherever it
-  leaned, and Q4 is closed by the ruling.
-- Everything else in the adapter carries from Rev 02 unchanged
-  in substance: correction C's per-attempt capture and
-  correction F's identity evidence, with the pin still
-  **PINNED-LISTED, SERVED-UNVERIFIED**.
+- **Temperature 0 → 0.6, and the full documented Thinking-mode
+  configuration pinned explicitly** (§1.5, §2.3):
+
+  | Field | Pinned value |
+  |---|---|
+  | `temperature` | 0.6 |
+  | `top_p` | 0.95 |
+  | `reasoning_budget` (in `chat_template_kwargs`, with `enable_thinking: true`) | 16384 |
+  | `max_tokens` | 20480 (Rev 02's change; **accepted by Alex**; confirmed, not moved) |
+
+  Rev 02's recorded divergence — temperature 0 kept against the
+  card's 0.6, `top_p` omitted, `reasoning_budget` left at the
+  model's default — is **withdrawn, not carried**: Alex has
+  ruled, and the ruling is recorded in §1.5 with his reasoning:
+  temperature 0 does not make a hosted model deterministic; the
+  harness and evidence machinery must be deterministic — the
+  subject does not have to be; this is a governance pilot, not
+  a contest to optimise Nemotron's output; and using the
+  vendor's recommended Thinking configuration avoids an
+  unnecessary experimental deviation. Aligned where the old
+  premise appeared: §6.2 (replay honesty no longer leans on
+  temperature 0) and §7 Q3 (no subject-side determinism control
+  is claimed); §7 Q4 is closed by the ruling. §3 field 17's
+  envelope echo now names `top_p`, since the pin makes it part
+  of the envelope as sent.
 
 **PILOT-ACCEPTANCE-CRITERIA-03.md** (the consistency pass
-against the revised harness/adapter)
+against the Rev 03 designs — extraction outcomes and crash
+handling only)
 
-- **Crash criteria (§1.1(9), §3.1, §7.1, §8).** Scoreability
-  now anchors a crashed run to its CRASH commitment: the
-  commitment must exist, appear in the supervisor's issuance
-  record, and recompute against the partial record as offered;
-  a crashed run meeting the item is scored on its closed trees
-  only, as a **partial record** — examinable, and **never
-  scoreable as a complete run**, whatever its closed trees'
-  verdicts (run outcome under §7.1's INCONCLUSIVE rules). A
-  partial record with **no** external commitment fails §1.1(9)
-  in **every instance**: unanchored, it is not evidence. §3.1(ix)
-  extends the anchor-failure breach to the crash anchor and to
-  receipts the issuance record does not show; the not-a-breach
-  carve-out now reads on the CRASH commitment (a crashed run's
-  missing TERMINAL is not a falsification where the partial
-  record verifies against CRASH and claims no closure); §8's
-  anchor verification accepts the CRASH commitment for a
-  partial record, fails any partial record offered without one,
-  and checks every receipt against the issuance record (SE-7).
-- **TYPE FAILURE criteria (§1.2, §3.1, §5.1(5), §5.3).**
-  §1.2's anomaly rule names TYPE FAILURE alongside NOT FOUND
-  and AMBIGUOUS (a TYPE FAILURE where calibration produced the
-  value on the same pinned inputs is a deterministic anomaly,
-  never a subject failure). §5.1(5)'s calibration outcomes are
-  four, not three — the count-0 bucket no longer folds
-  all-type-fail into expected absence; a TYPE FAILURE is pinned
-  as the expected outcome where a tree's design expects it and
-  is otherwise a freeze defect in the rule or the data; the
-  synthetic exercise now proves the TYPE FAILURE state as well
-  as AMBIGUOUS before any run depends on them. §5.3 names an
-  unexamined or unpinned TYPE FAILURE on a required extraction
-  an UNANSWERABLE cause. §3.1(x) is extended — the one
-  breach-list alignment in this revision — to a TYPE FAILURE
-  silently recorded as NOT FOUND: the same silent
-  mis-resolution correction D exists to prevent.
-- **Configuration freeze check (new §5.1(6)).** The adapter
-  configuration the Stage 5 amendment freezes is checked for
-  its **values**, not only its hash: the pinned envelope must
-  carry the ruled sampling set exactly (temperature 0.6,
-  top_p 0.95, reasoning_budget 16384, max_tokens 20480). A
-  deviation — a silent return to temperature 0 is the named
-  case — is a freeze defect, and calibration does not certify
-  it. No verdict in the criteria depends on the subject's
-  sampling parameters; the check exists so the question the
-  ruling closed cannot silently reopen at freeze.
-- **Unchanged, deliberately:** the headline definition — *a
-  successful pilot does not mean Nemotron behaved well; it
-  means the governance machinery correctly accounted for what
-  Nemotron actually did* — and the sabotage battery S1–S5,
-  verdict pass/fail with no middle state. (The battery gains
-  no S6: a TYPE FAILURE insert attempt is refused by the same
-  acceptance set S2 and S5 already exercise, and the outcome
-  itself is exercised at calibration (§5.1(5)); if Alex wants
-  the insert attempt enumerated as its own test, it is a
-  one-line amendment.)
+- **Extraction outcomes:** §1.2's anomaly rule now names TYPE
+  FAILURE alongside NOT FOUND and AMBIGUOUS (a TYPE FAILURE
+  where calibration produced the value contradicts calibration
+  exactly as the others do); §5.1(5)'s calibration outcomes are
+  the four of the table — Rev 02's count-0 bucket, which folded
+  "matches exist but all fail type validation" into expected
+  absence, is split, and a TYPE FAILURE at calibration is
+  pinned as TYPE FAILURE or is a freeze defect, never an
+  absence; §5.3 names an unexamined or unpinned TYPE FAILURE on
+  a required extraction as an UNANSWERABLE cause; §3.1's
+  not-a-breach list gains a TYPE FAILURE recorded as itself and
+  followed by the tree's failure path (the machinery working,
+  exactly parallel to the AMBIGUOUS entry).
+- **The one breach-list alignment:** §3.1(x) is extended to a
+  TYPE FAILURE silently recorded as NOT FOUND — answered
+  UNKNOWN by rule, omitted where the step's record should show
+  it, or otherwise treated as absence. This is correction D's
+  own distinction at the scoring layer: without it, a build
+  could collapse TYPE FAILURE into NOT FOUND and pass criteria
+  that the harness specification forbids. It is flagged here,
+  openly, as the single breach-wording change in this revision.
+- **Crash handling:** §1.1(9) now anchors a crashed run to its
+  CRASH commitment (existence, issuance-record presence, and
+  hash/count/final-event recomputation) — the run's closed
+  trees are scoreable as a **partial record** under §7.1's
+  INCONCLUSIVE rules, and the run is **never scoreable as a
+  complete run**; a partial record offered with no external
+  commitment fails §1.1(9) in every instance. §3.1(ix) treats
+  the CRASH commitment as the crashed run's anchor (a missing
+  or mismatching CRASH commitment, or a receipt the issuance
+  record does not show, is an anchor failure identically), and
+  its not-a-breach carve-out is narrowed to CRASH-committed
+  runs. §7.1's INCONCLUSIVE bullet names the CRASH commitment
+  as the crash's external evidence. §8's anchor verification
+  accepts the CRASH commitment as the valid external anchor
+  for a partial record and fails any partial record offered
+  without one.
+- **Unchanged, deliberately:** the headline definition of
+  pilot success — *a successful pilot does not mean Nemotron
+  behaved well; it means the governance machinery correctly
+  accounted for what Nemotron actually did* — the rest of the
+  breach list, and the S1–S5 sabotage battery, stands exactly
+  as Rev 02 left it. (§4's companion reference to Harness §4.5
+  now reads SE-1…SE-7, since SE-7 exists; the battery itself
+  is untouched.)
 
-## What remains unsettled
+## What stands accepted and untouched
 
-1. **Hosted acceptance of `chat_template_kwargs` for the omni
-   model** (Adapter §1.3(e)). Unchanged from Rev 02: documentary
-   evidence is pattern-level; the freeze may proceed only
-   because a first-call 400 is pre-classified as an adapter
-   failure. The only honest closer remains the smoke call,
-   which is Ben's decision under the plan's "no calls yet"
-   line. Alex's parameter ruling does not touch this point —
-   pinning `reasoning_budget` inside the same field makes the
-   first call's capture settle both at once, in either
-   direction, as evidence.
-2. **Served status of the pinned id** (Adapter §1.3(f)).
-   PINNED-LISTED, SERVED-UNVERIFIED — no document can settle
-   it; the first authorised call does, under the §1.4 re-pin
-   procedure if it 404s.
-3. **`grace_period` is not separately pinned.** The card's
-   documented Thinking-mode set lists it (1024); Alex's ruling
-   named four parameters, and the envelope pins exactly those
-   four. Whether the served deployment's effective grace period
-   matches the card is part of the served-configuration
-   territory item 2 covers; the envelope as sent is captured on
-   every call (Adapter §3, field 17). Recorded here so the
-   omission is a decision on the record — Alex may rule it
-   pinned in his review pass if he wants the set complete.
-4. **Supervisor implementation** (Harness §8 Q10). Still a
-   Stage 5 build decision, now bounded by SE-7's four proof
-   obligations instead of by the design's say-so alone.
+Alex's verdict accepted B, C, and E outright and F with hosted
+status unverified. Nothing answering them changes in Rev 03:
 
-Nothing in Alex's verdict could not be folded in. The two
-consistency additions made on this side of the record — the
-§3.1(x) extension to TYPE FAILURE and the §5.1(6) configuration
-freeze check — are flagged as such above and in their
-documents, so Alex's review pass can strike either if he reads
-his corrections more narrowly.
+- **B — registry semantics** (Harness §4.2): not one word of
+  substance changes; the five properties stand as verified.
+- **C — per-attempt capture** (`ADAPTER-CAPTURE-02`): the
+  schema, its version, and the normative helper-wrapper
+  requirement stand exactly as verified.
+- **E — the interpretation note**: INTERPRETATION-NOTE-01 is
+  not revised; there is no Rev 02 of the note.
+- **F — identity evidence** (Adapter §1.3): the pin
+  `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` stands as
+  verified. The two UNSETTLED points stand as recorded there:
+  hosted acceptance of `chat_template_kwargs` for this model
+  (pre-classified as an adapter failure at §4.2 if the first
+  authorised call rejects it) and served status —
+  **PINNED-LISTED, SERVED-UNVERIFIED**. No document can settle
+  them; the first authorised call does.
+
+## Sweep findings (recorded for honesty)
+
+1. **Rev 02's criteria presupposed an artefact the Rev 02
+   harness never specified.** Criteria Rev 02 §9 Q5 already
+   directed the examiner to confirm receipts "against the
+   supervisor's issuance record" — but Harness Rev 02 defined
+   no such record. Rev 03 §2.6 now specifies it, SE-7 makes its
+   verification a Stage 5 proof obligation, and Criteria Rev 03
+   §9 Q5 carries a note closing the reference. Until this pass,
+   the package's custody story had a dangling pointer; Alex's
+   correction-1 obligation (iv) is what exposed it.
+2. **Rev 02's §8 already anticipated this revision.** Harness
+   Rev 02 §8 Q5 describes the anchor as "Rev 02, completed
+   Rev 03", names the CRASH commitment, and Q10 already records
+   Alex's architecture-level acceptance and three of the four
+   proof obligations — expectations the Rev 02 body (§2.6) did
+   not yet meet. No §8 change was needed in Rev 03; §2.6 and
+   SE-7 now make the body true of what §8 said. (SE-7 states
+   the obligations as four, counting the Stage 5 demonstration
+   itself; Q10 counts three obligations *discharged by* that
+   demonstration. The substance is identical.)
+3. **No other inconsistencies were found** in the sweep:
+   extraction outcomes are now stated in exactly three places
+   in the harness (table, prose, tool restatement) and agree;
+   crash language in Harness §6.4, Criteria §§1.1(9)/3.1/7.1/8,
+   and the §2.6 anchor agree; the remaining "(Rev 02)" tags in
+   all three documents are historical annotations of when a
+   provision entered, not statements of current content.
 
 ## Gates
 
 Unchanged, and restated so this revision cannot be misread as
-moving them: **Stage 5 is not cleared** — the revision awaits
-Alex's offered review pass on the corrected A and D sections,
-and Stage 5 keeps its own gate. **Stage 6 is not authorised.**
-Alex's closing distinction stands as the pilot's headline, now
-carried in the criteria (Rev 03 §7.1): a model that fails every
-task while the machinery detects every failure can produce a
-successful governance pilot.
+moving them: **Stage 5 remains uncleared** — it awaits Alex's
+verification of this correction pass (his offered review of the
+corrected A and D sections, the revised acceptance criteria
+against them, and the actual revised files) and Stage 5's own
+gate. **Stage 6 remains unauthorised.** No build has been made
+and no model call has been made or is authorised by anything in
+this revision.
