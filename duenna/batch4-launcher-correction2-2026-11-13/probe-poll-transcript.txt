@@ -1,0 +1,12 @@
+T1 empty record queued: poll
+  T1 poll -> [(4, 'POLLIN')]
+T2 shutdown: poll
+  T2 poll -> [(4, 'POLLIN|POLLRDHUP')]
+T3 empty then shutdown: poll
+  T3 poll -> [(4, 'POLLIN|POLLRDHUP')]
+T4 nothing: poll
+  T4 poll -> timeout/none
+T5 shutdown then poll again after recv
+  T5 poll -> [(4, 'POLLIN|POLLRDHUP')]
+  T5 recv -> n=0
+  T5 poll -> [(4, 'POLLIN|POLLRDHUP')]
