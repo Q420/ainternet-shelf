@@ -22,6 +22,7 @@ Review/test-oracle aid only. It does not amend the protocol catalogue, freeze, R
 |---|---|---|
 | One correctly framed LAUNCH_REQUEST with matching run ID, supervisor PID, child uid/gid | CLEAN | Validate request; only then proceed to pipe/fork. |
 | Peer closure before any request; no pending zero | CLOSURE-EQUIVALENT | Pre-fork refusal, exit 15 route; no fork, child, STATUS or issuance. |
+| One or more pending zero-length receives, then peer closure (RDHUP/HUP plus zero return) | CLOSURE-EQUIVALENT (Q7 limitation) | Pre-fork refusal, exit 15 route; no fork, child, STATUS or issuance. Do not claim the pending zero records were proven absent. |
 | Receive error before any request | RECEIVE ERROR | Same pre-fork refusal route, exit 15; no child exists to clean up. |
 | One or more zero-length receives, then a valid LAUNCH_REQUEST | POISONED | Refuse on exit 15 route; request not acted on; no fork. |
 | Zero-length receive(s), then malformed/wrong-type/unexpected packet | VIOLATION | Refuse pre-fork; no fork. |
