@@ -588,5 +588,92 @@ else:
     chk("NQ2-ACK handoff received", False)
 p.close()
 
+# NQ3: empty A consumed; B = zero-length record CARRYING a descriptor,
+# queued; shutdown. The peek must detect B's ancillary data via
+# MSG_CTRUNC (its only load-bearing case: B has no data bytes).
+# The queued descriptor is never delivered; the kernel discards it
+# when the channel socket is destroyed — verified by pipe EOF.
+rid = "PEERNQ3-20261113-001"
+p, ok = to_gate_ready(rid)
+if ok:
+    pr, pw = os.pipe()
+    p.send(b"")
+    p.send(b"", fds=(pw,))
+    os.close(pw)
+    p.sup.shutdown(socket.SHUT_WR)
+    pkts = p.drain_until_eof()
+    st = p.wait_exit()
+    chk("NQ3 queued descriptor-bearing empty record + shutdown: exit 8, no STATUS/ACTUATED",
+        exited(st) and exit_code(st) == 8 and all(q[0] not in (0x06, 0x07) for q in pkts),
+        f"status {st:#x} pkts {[q[0] for q in pkts]}")
+    chk("NQ3 harness never executed", not os.path.exists(result_path(rid)))
+    time.sleep(0.3)
+    os.set_blocking(pr, False)
+    try:
+        got = os.read(pr, 1)
+        leaked = False  # EOF: the queued descriptor copy was destroyed
+    except BlockingIOError:
+        got = None
+        leaked = True   # a write end still exists somewhere
+    chk("NQ3 queued descriptor not leaked (kernel discarded it; pipe at EOF)",
+        not leaked, f"read returned {got!r}")
+    os.close(pr)
+else:
+    chk("NQ3 reached gate", False)
+p.close()
+
+# W1-W4: bounded-watch timing (plan Rev 5). Peer synchronises on
+# protocol state; delays measured against the 250 ms deadline.
+def stage6_delayed_shutdown(rid, delay):
+    p, ok = to_gate_ready(rid)
+    if not ok:
+        return None, None, None
+    p.send(b"")
+    time.sleep(delay)
+    p.sup.shutdown(socket.SHUT_WR)
+    pkts = p.drain_until_eof()
+    st = p.wait_exit()
+    return p, pkts, st
+
+p, pkts, st = stage6_delayed_shutdown("PEERW1-20261113-001", 0.1)
+if pkts is None:
+    chk("W1 setup", False)
+else:
+    w = next((q for q in pkts if q[0] == 0x07), None)
+    chk("W1 Stage 6 shutdown at 100 ms (inside window): EOF outcome",
+        w is not None and exited(u32(w, 6)) and exit_code(u32(w, 6)) == 71
+        and exited(st) and exit_code(st) == 0,
+        f"status {st:#x}")
+    p.close()
+
+p, pkts, st = stage6_delayed_shutdown("PEERW3-20261113-001", 0.4)
+if pkts is None:
+    chk("W3 setup", False)
+else:
+    chk("W3 Stage 6 shutdown at 400 ms (past deadline): violation, exit 8",
+        exited(st) and exit_code(st) == 8
+        and all(q[0] != 0x07 for q in pkts),
+        f"status {st:#x} pkts {[q[0] for q in pkts]}")
+    p.close()
+
+for tag, delay, want in (("W2", 0.1, 6), ("W4", 0.4, 8)):
+    rid = f"PEER{tag}-20261113-001"
+    p = Peer(rid)
+    p.request()
+    ho = p.handoff()
+    if ho is None:
+        chk(f"{tag} setup", False)
+    else:
+        p.send(b"")
+        time.sleep(delay)
+        p.sup.shutdown(socket.SHUT_WR)
+        pkts = p.drain_until_eof()
+        st = p.wait_exit()
+        chk(f"{tag} ACK wait shutdown at {int(delay*1000)} ms: exit {want}, no STATUS",
+            exited(st) and exit_code(st) == want
+            and all(q[0] != 0x07 for q in pkts),
+            f"status {st:#x}")
+    p.close()
+
 print(f"peer: {total - fails}/{total} PASS")
 sys.exit(1 if fails else 0)

@@ -44,12 +44,14 @@
  * (7) no ancillary data is accepted on any received
  * message and every delivered descriptor is closed.
  *
- * CORRECTION ROUND 2 (plan Rev 2, approved by Alex at
- * dce8f7b5): the two findings reopened at pin 6430b9f...
- * — a zero-length RECORD is classified by MSG_EOR after
- * the ancillary walk (record -2 / shutdown -1 / ancillary
- * -4), never as EOF by default; and the ACK-wait ABORT
- * is validated by abort_packet_valid() before dispatch.
+ * CORRECTION ROUND 2 (plan Revision 4; Treatment A
+ * ruled by Alex at pb-mwg2c6a8): the two findings
+ * reopened at pin 6430b9f... — a zero-length receive is
+ * classified AFTER the ancillary walk (ancillary -4)
+ * by the poll + peek sequence in zero_classify()
+ * (record -2 / shutdown -1), never as EOF by default;
+ * and the ACK-wait ABORT is validated by
+ * abort_packet_valid() before dispatch.
  */
 
 #define _GNU_SOURCE
@@ -219,18 +221,36 @@ static int hook_fail_recvmsg(void) {
  * shutdown and take the -1 outcome.
  */
 static int zero_classify(void) {
-    struct pollfd pfd;
-    pfd.fd = CHANNEL_FD;
-    pfd.events = POLLIN | POLLRDHUP; /* RDHUP is reported only when requested */
-    pfd.revents = 0;
-    int pr;
-    do { pr = poll(&pfd, 1, 0); } while (pr < 0 && errno == EINTR);
-    if (pr < 0) return -3;
-    if (pr == 0) return -2;
-    short rev = pfd.revents;
-    if (!(rev & (POLLRDHUP | POLLHUP))) {
-        if (rev & (POLLERR | POLLNVAL)) return -3;
-        return -2;
+    /* Bounded RDHUP watch (plan Revision 5, approved by
+     * Alex at pb-mwg8cva7): one absolute CLOCK_MONOTONIC
+     * deadline, 250 ms from entry. POLLIN alone never
+     * ends the watch; the loop exits only on RDHUP/HUP
+     * (peek classification follows), a fail-closed
+     * error (-3), or deadline expiry (-2). EINTR
+     * recomputes the remaining time from the SAME
+     * deadline; interruptions never extend it. */
+    struct timespec dl, now;
+    clock_gettime(CLOCK_MONOTONIC, &dl);
+    dl.tv_nsec += 250L * 1000000L;
+    if (dl.tv_nsec >= 1000000000L) { dl.tv_sec += 1; dl.tv_nsec -= 1000000000L; }
+    for (;;) {
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        long rem = (dl.tv_sec - now.tv_sec) * 1000L
+                 + (dl.tv_nsec - now.tv_nsec) / 1000000L;
+        if (rem <= 0) return -2;
+        struct pollfd pfd;
+        pfd.fd = CHANNEL_FD;
+        pfd.events = POLLIN | POLLRDHUP; /* RDHUP is reported only when requested */
+        pfd.revents = 0;
+        int pr = poll(&pfd, 1, rem > 10 ? 10 : (int)rem);
+        if (pr < 0 && errno == EINTR) continue;
+        if (pr < 0) return -3;
+        if (pr == 0) continue;
+        short rev = pfd.revents;
+        if ((rev & (POLLERR | POLLNVAL)) && !(rev & (POLLRDHUP | POLLHUP)))
+            return -3;
+        if (rev & (POLLRDHUP | POLLHUP)) break;
+        /* POLLIN only: a record is queued; keep watching. */
     }
     unsigned char scratch[256];
     struct iovec iov = { scratch, sizeof scratch };
