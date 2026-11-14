@@ -1,0 +1,168 @@
+{
+ "modules": {
+  "pilot_jcs": {
+   "path": "freeze/jcs/pilot_jcs.py",
+   "sha256": "8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c"
+  },
+  "pilot_record": {
+   "path": "batch3/work/pilot_record.py",
+   "sha256": "ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216"
+  },
+  "corpus_source": {
+   "path": "batch1/work/corpus_source.py",
+   "sha256": "520f36fde41dfb76d5f92fe4da92b6c2f93ae8512051962f76d4942fb5c05a5a"
+  },
+  "rules_engine": {
+   "path": "batch1/work/rules_engine.py",
+   "sha256": "7a2329154081b6e9c0417c07b1cc7184b167d02c1e820081b68a18dbabafacf3"
+  },
+  "pilot_tools": {
+   "path": "batch3/correction/pilot_tools.py",
+   "sha256": "df1045f7923b458cf0ad63b16a7245b1e4516306ff2b60c1f355dbb8431127d8"
+  },
+  "stub_subject": {
+   "path": "batch3/work/stub_subject.py",
+   "sha256": "465d325a53f7ef57eb5da9074e59cc6e5413978834cd86820fb88291a6b6cae9"
+  }
+ },
+ "identity": {
+  "RunRecord": true,
+  "canonical": true,
+  "sha256_hex": true,
+  "materialise_ledger": true,
+  "CorpusSource": true,
+  "PilotTools": true,
+  "StubSubject": true,
+  "tools.extract": true,
+  "record.jcs": true,
+  "subject_class": true
+ },
+ "registry": {
+  "ops": {
+   "op-2": {
+    "operation_id": "op-2",
+    "tool": "source_extract",
+    "field": "harness_sha256",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "evidence_line": "",
+    "rule_id": "EXT02-HS-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 10,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-02",
+    "consumed": false
+   },
+   "op-3": {
+    "operation_id": "op-3",
+    "tool": "source_extract",
+    "field": "version",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": "v2.4",
+    "evidence_line": "integers. Implemented as harness **v2.4**:",
+    "rule_id": "EXT02-VE-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 13,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-02",
+    "consumed": false
+   },
+   "op-4": {
+    "operation_id": "op-4",
+    "tool": "source_extract",
+    "field": "fixtures_executed",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": 38,
+    "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31",
+    "rule_id": "EXT02-FE-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 19,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-03",
+    "consumed": true
+   },
+   "op-5": {
+    "operation_id": "op-5",
+    "tool": "source_extract",
+    "field": "fixtures_passed",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": 38,
+    "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31",
+    "rule_id": "EXT02-FP-2",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 21,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-03",
+    "consumed": true
+   },
+   "op-6": {
+    "operation_id": "op-6",
+    "tool": "source_extract",
+    "field": "harness_sha256",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "evidence_line": "",
+    "rule_id": "EXT02-HS-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 23,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-03",
+    "consumed": true
+   },
+   "op-7": {
+    "operation_id": "op-7",
+    "tool": "source_extract",
+    "field": "results_sha256",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+    "evidence_line": "",
+    "rule_id": "EXT02-RS-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 25,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-03",
+    "consumed": true
+   },
+   "op-8": {
+    "operation_id": "op-8",
+    "tool": "source_extract",
+    "field": "version",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "value": "v2.4",
+    "evidence_line": "integers. Implemented as harness **v2.4**:",
+    "rule_id": "EXT02-VE-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 27,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-03",
+    "consumed": true
+   },
+   "op-9": {
+    "operation_id": "op-9",
+    "tool": "source_extract",
+    "field": "correction_b",
+    "source_ref": "alex-combined-adjudication-r60rev#001",
+    "source_hash": "393cba4c8adae5b153580a1a42dede4543701712f8e99592b2694e0aa2aa366b",
+    "value": "OPEN",
+    "evidence_line": "- **Correction B \u2014 OPEN; a failing case stands.** Three cases",
+    "rule_id": "EXT02-CB-1",
+    "verification": "EXTRACTED",
+    "issued_at_seq": 29,
+    "tree_id": "T05",
+    "step_id": "T05-STEP-03",
+    "consumed": true
+   }
+  },
+  "cits": [
+   "B3CORR2-20261114-003:11",
+   "B3CORR2-20261114-003:30"
+  ]
+ }
+}
