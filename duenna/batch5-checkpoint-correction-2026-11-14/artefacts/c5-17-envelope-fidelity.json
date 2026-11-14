@@ -1,0 +1,1537 @@
+{
+ "artefact": "c5-17-envelope-fidelity",
+ "double_id": "transport-double/1.0-stage5",
+ "frozen_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+ "canonicalisation": {
+  "name": "PILOT-JCS",
+  "version": "1.0.0",
+  "source_sha256": "8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c"
+ },
+ "scenarios": [
+  {
+   "scenario": "ok",
+   "capture_id": "d9f361cc-8949-4c96-9091-cc4e7159876f",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 1,
+   "transport_requests_received": 1,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 1,
+    "transport_requests_received": 1,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "retry-429",
+   "capture_id": "7c454e8b-b716-4c6d-ad90-6923f5a7cafe",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 2,
+   "transport_requests_received": 2,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 2,
+    "transport_requests_received": 2,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     },
+     {
+      "attempt": 2,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "retry-500",
+   "capture_id": "fa0e56ab-c8ca-44b7-ba1c-9dd289293c83",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 2,
+   "transport_requests_received": 2,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 2,
+    "transport_requests_received": 2,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     },
+     {
+      "attempt": 2,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "fail-429",
+   "capture_id": "e1fc8ff5-1082-44cd-acc0-dc779c1d190b",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 2,
+   "transport_requests_received": 2,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 2,
+    "transport_requests_received": 2,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     },
+     {
+      "attempt": 2,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "kwargs-400",
+   "capture_id": "75ba1e75-dde2-48ef-a092-2fa54d873386",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 1,
+   "transport_requests_received": 1,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 1,
+    "transport_requests_received": 1,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "notfound-404",
+   "capture_id": "d333d0b9-5338-41c3-b122-47057cf664a4",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 1,
+   "transport_requests_received": 1,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 1,
+    "transport_requests_received": 1,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "mismatch",
+   "capture_id": "3ad7ceae-dda5-4d68-801c-019fa2d74213",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 1,
+   "transport_requests_received": 1,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 1,
+    "transport_requests_received": 1,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "unparseable",
+   "capture_id": "f74a0227-9ad6-4f55-a89f-5fbb9c3d026a",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 1,
+   "transport_requests_received": 1,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 1,
+    "transport_requests_received": 1,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "redact-500",
+   "capture_id": "8f200341-79a0-44ac-9c55-fac2f7036633",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 2,
+   "transport_requests_received": 2,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 2,
+    "transport_requests_received": 2,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     },
+     {
+      "attempt": 2,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  },
+  {
+   "scenario": "timeout",
+   "capture_id": "be7e7463-ef18-4add-a881-507ef0023fda",
+   "adapter_config_sha256": "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb",
+   "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+   "attempts_recorded": 2,
+   "transport_requests_received": 2,
+   "envelope": {
+    "passed": true,
+    "members": [
+     {
+      "member": "chat_template_kwargs",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 22,
+       "actual_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "expected_bytes": 22,
+       "expected_sha256": "900c7d0e662bb90be52d8c38964c9a5a6b1ede346331c137fe6200f92de27e1d",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 49,
+       "actual_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "expected_bytes": 49,
+       "expected_sha256": "201d3e592fe4c0869a82c2c364360cd4f80f8e241195a30bd1bb88fb2e767bc5",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "max_tokens",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 12,
+       "actual_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "expected_bytes": 12,
+       "expected_sha256": "495cfb85b6ad85ade58cf923329d00b54419a17574b1d84396c4abeae8b78712",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "expected_bytes": 5,
+       "expected_sha256": "baa21ee8c93f1d626d0286c968bc0bcc684d0db0f15ee3d3c04a6745e4b1beca",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "model",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "expected_bytes": 7,
+       "expected_sha256": "18fb9fa0b971b807a1312d3702d18747a3b1b39a129df8c5d1a8f68d512bd1fd",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 47,
+       "actual_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "expected_bytes": 47,
+       "expected_sha256": "e1395eb16e41689a3b982504d78e1a026e3b13c7e456f0a0cbd0ebd3472199e9",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "stream",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 8,
+       "actual_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "expected_bytes": 8,
+       "expected_sha256": "8c84653fcbdf66d732a9c8fcb96c8f6f8223b4270db78d835b0c43375bf750ea",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 5,
+       "actual_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "expected_bytes": 5,
+       "expected_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "temperature",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 13,
+       "actual_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "expected_bytes": 13,
+       "expected_sha256": "f83cfdf0cdeb13022e25831484145a72227f88407d3b64cfbf67bdca6c9c047c",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 3,
+       "actual_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "expected_bytes": 3,
+       "expected_sha256": "b4af4e0d40391d3a00179d935c63b7e15ba8cd3dfa29f218dedc270bd3eb3e79",
+       "match": true
+      },
+      "match": true
+     },
+     {
+      "member": "top_p",
+      "present": true,
+      "key_token": {
+       "actual_bytes": 7,
+       "actual_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "expected_bytes": 7,
+       "expected_sha256": "eda08c7fc7e04315be70f73978fcd6212f0761b6a7867b9663c261404d8c476a",
+       "match": true
+      },
+      "value_token": {
+       "actual_bytes": 4,
+       "actual_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "expected_bytes": 4,
+       "expected_sha256": "22fa3ce4995af8d96fcd771f0e1f5d74d8a98f36c3eec8e95bdf7524926b0141",
+       "match": true
+      },
+      "match": true
+     }
+    ],
+    "failures": []
+   },
+   "transport": {
+    "passed": true,
+    "captured_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "record_request_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+    "attempts_recorded": 2,
+    "transport_requests_received": 2,
+    "attempts": [
+     {
+      "attempt": 1,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     },
+     {
+      "attempt": 2,
+      "received_bytes": 294,
+      "received_sha256": "3986a4e35688fb2ef1c10a5ea34522e97d73cd4a06f6adf5950ecea2731f1843",
+      "matches_captured": true
+     }
+    ],
+    "failures": []
+   },
+   "passed": true
+  }
+ ],
+ "negative_controls": [
+  {
+   "control": "changed_envelope_value",
+   "expected": "rejected",
+   "rejected": true,
+   "passed": true,
+   "detail": "value token bytes differ: temperature"
+  },
+  {
+   "control": "missing_envelope_member",
+   "expected": "rejected",
+   "rejected": true,
+   "passed": true,
+   "detail": "missing envelope member: top_p"
+  },
+  {
+   "control": "duplicate_envelope_member",
+   "expected": "rejected",
+   "rejected": true,
+   "passed": true,
+   "detail": "scan failed: duplicate top-level key: 'stream'"
+  },
+  {
+   "control": "noncanonical_lexical_value",
+   "expected": "rejected",
+   "rejected": true,
+   "passed": true,
+   "detail": "value token bytes differ: model"
+  },
+  {
+   "control": "changed_nested_kwargs_value",
+   "expected": "rejected",
+   "rejected": true,
+   "passed": true,
+   "detail": "value token bytes differ: chat_template_kwargs"
+  },
+  {
+   "control": "transport_received_body_differs",
+   "expected": "rejected",
+   "rejected": true,
+   "passed": true,
+   "detail": "transport-received body for attempt 1 differs from the captured request body"
+  }
+ ],
+ "passed": true
+}
