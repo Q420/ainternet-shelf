@@ -524,5 +524,69 @@ for tag, packet, want in [
     chk(f"ACK-ABORT {tag}: harness never executed", not os.path.exists(result_path(rid)))
     p.close()
 
+# ---------------- Round 2: NQ1 / NQ2 (Revision 4) ----------------
+# NQ1: empty record, then a valid RELEASE, then shutdown (Stage 6 wait).
+# The peek must expose the queued packet: violation, not clean EOF.
+rid = "PEERNQ1-20261113-001"
+p, ok = to_gate_ready(rid)
+if ok:
+    p.send(b"")
+    p.send(b"\x05\x00")
+    p.sup.shutdown(socket.SHUT_WR)
+    pkts = p.drain_until_eof()
+    st = p.wait_exit()
+    chk("NQ1 queued RELEASE behind empty record + shutdown: exit 8, no STATUS/ACTUATED",
+        exited(st) and exit_code(st) == 8 and all(q[0] not in (0x06, 0x07) for q in pkts),
+        f"status {st:#x} pkts {[q[0] for q in pkts]}")
+    chk("NQ1 harness never executed", not os.path.exists(result_path(rid)))
+else:
+    chk("NQ1 reached gate", False)
+p.close()
+
+# NQ2 (ACCEPTED LIMITATION, Treatment A — demonstrates the limit;
+# it is NOT a pass of the original violation expectation):
+# empty A, empty B, shutdown at the Stage 6 wait -> orderly EOF outcome.
+rid = "PEERNQ2-20261113-001"
+p, ok = to_gate_ready(rid)
+if ok:
+    p.send(b"")
+    p.send(b"")
+    p.sup.shutdown(socket.SHUT_WR)
+    pkts = p.drain_until_eof()
+    st = p.wait_exit()
+    stat = [q for q in pkts if q[0] == 0x07]
+    word_ok = False
+    if stat:
+        word = u32(stat[0], 6)
+        word_ok = exited(word) and exit_code(word) == 71
+    chk("NQ2 LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation",
+        exited(st) and exit_code(st) == 0 and len(stat) == 1 and word_ok
+        and all(q[0] != 0x06 for q in pkts),
+        f"status {st:#x} pkts {[q[0] for q in pkts]}")
+    chk("NQ2 harness never executed", not os.path.exists(result_path(rid)))
+else:
+    chk("NQ2 reached gate", False)
+p.close()
+
+# NQ2 at the ACK wait: handoff, then A, B, shutdown -> EOF outcome there
+# is cleanup + exit 6, no STATUS.
+rid = "PEERNQ2B-20261113-001"
+p = Peer(rid)
+p.request()
+h = p.handoff()
+if h is not None:
+    p.send(b"")
+    p.send(b"")
+    p.sup.shutdown(socket.SHUT_WR)
+    pkts = p.drain_until_eof()
+    st = p.wait_exit()
+    chk("NQ2 LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS",
+        exited(st) and exit_code(st) == 6 and all(q[0] != 0x07 for q in pkts),
+        f"status {st:#x} pkts {[q[0] for q in pkts]}")
+    chk("NQ2-ACK harness never executed", not os.path.exists(result_path(rid)))
+else:
+    chk("NQ2-ACK handoff received", False)
+p.close()
+
 print(f"peer: {total - fails}/{total} PASS")
 sys.exit(1 if fails else 0)

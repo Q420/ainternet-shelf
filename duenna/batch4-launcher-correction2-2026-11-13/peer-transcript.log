@@ -58,9 +58,9 @@
 [PASS] Z2 empty record + fd at ACK wait: exit 8, no STATUS
 [PASS] Z2 harness never executed
 [PASS] Z2 delivered descriptor was closed
-[FAIL] Z3 bare empty record at Stage 6: exit 8, no STATUS (not EOF) -- status 0x0 pkts [7]
+[PASS] Z3 bare empty record at Stage 6: exit 8, no STATUS (not EOF)
 [PASS] Z3 harness never executed
-[FAIL] Z4 bare empty record at ACK wait: exit 8, no STATUS -- status 0x600
+[PASS] Z4 bare empty record at ACK wait: exit 8, no STATUS
 [PASS] Z4 harness never executed
 [PASS] ACK-ABORT nonzero flags: exit 8, no STATUS, child collected
 [PASS] ACK-ABORT nonzero flags: harness never executed
@@ -72,4 +72,10 @@
 [PASS] ACK-ABORT truncated: harness never executed
 [PASS] ACK-ABORT well-formed (regression): exit 6, no STATUS, child collected
 [PASS] ACK-ABORT well-formed (regression): harness never executed
-peer: 72/74 PASS
+[PASS] NQ1 queued RELEASE behind empty record + shutdown: exit 8, no STATUS/ACTUATED
+[PASS] NQ1 harness never executed
+[PASS] NQ2 LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation
+[PASS] NQ2 harness never executed
+[PASS] NQ2 LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS
+[PASS] NQ2-ACK harness never executed
+peer: 80/80 PASS

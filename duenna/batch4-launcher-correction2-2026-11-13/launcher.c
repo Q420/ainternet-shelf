@@ -67,6 +67,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/prctl.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -200,6 +201,57 @@ static int hook_fail_recvmsg(void) {
  * any level or type makes the receive a violation, and
  * every descriptor the kernel delivered is closed
  * unexamined, on every path (Rev 3, findings 6 and 7). */
+/*
+ * zero_classify: a zero-length receive has been delivered
+ * (and its ancillary data, if any, already accounted by
+ * the caller). Distinguish a consumed zero-length RECORD
+ * (-2, protocol violation) from the peer's orderly
+ * shutdown (-1), per the ruled classification
+ * (pb-mwg2c6a8, Treatment A): poll once (timeout 0,
+ * EINTR retried; any other poll failure is -3, never
+ * EOF). RDHUP/HUP clear -> a record was consumed on a
+ * live channel -> -2. RDHUP/HUP set -> a non-consuming
+ * peek decides: a queued record (length > 0 or any
+ * control data) -> -2; nothing but the shutdown -> -1.
+ * A failed peek is -3. Named limitation: descriptor-
+ * free zero-length records immediately preceding a
+ * shutdown are observationally equivalent to the
+ * shutdown and take the -1 outcome.
+ */
+static int zero_classify(void) {
+    struct pollfd pfd;
+    pfd.fd = CHANNEL_FD;
+    pfd.events = POLLIN | POLLRDHUP; /* RDHUP is reported only when requested */
+    pfd.revents = 0;
+    int pr;
+    do { pr = poll(&pfd, 1, 0); } while (pr < 0 && errno == EINTR);
+    if (pr < 0) return -3;
+    if (pr == 0) return -2;
+    short rev = pfd.revents;
+    if (!(rev & (POLLRDHUP | POLLHUP))) {
+        if (rev & (POLLERR | POLLNVAL)) return -3;
+        return -2;
+    }
+    unsigned char scratch[256];
+    struct iovec iov = { scratch, sizeof scratch };
+    struct msghdr pmh;
+    memset(&pmh, 0, sizeof pmh);
+    pmh.msg_iov = &iov;
+    pmh.msg_iovlen = 1;
+    /* No control buffer on the peek: at EOF the kernel
+     * writes no msghdr ancillary state at all, so a
+     * returned controllen would be stale. Ancillary
+     * presence on the queued record is instead read
+     * from MSG_CTRUNC, which the kernel sets when a
+     * real record's control data had nowhere to go. */
+    ssize_t pn;
+    do { pn = recvmsg(CHANNEL_FD, &pmh, MSG_PEEK | MSG_DONTWAIT); } while (pn < 0 && errno == EINTR);
+    if (pn < 0) return -3;
+    if (pn > 0) return -2;
+    if (pmh.msg_flags & MSG_CTRUNC) return -2;
+    return -1;
+}
+
 static ssize_t chan_recv(uint8_t *buf, size_t cap) {
 #ifdef PILOT_TEST_HOOKS
     g_recv_calls++;
@@ -235,12 +287,9 @@ static ssize_t chan_recv(uint8_t *buf, size_t cap) {
     if (mh.msg_flags & MSG_CTRUNC) violation = 1;
     if (violation) return -4;
     if (n == 0) {
-        /* On SOCK_SEQPACKET a zero-length RECORD is not a
-         * shutdown: the record's boundary (MSG_EOR) marks a
-         * received record — malformed as a protocol packet.
-         * Only a zero return with no record is the peer's
-         * orderly shutdown (EOF). */
-        return (mh.msg_flags & MSG_EOR) ? -2 : -1;
+        /* Classify AFTER the ancillary walk, by the ruled
+         * poll + peek sequence (plan Revision 4). */
+        return zero_classify();
     }
     if (mh.msg_flags & MSG_TRUNC) return -2;
     return n;
