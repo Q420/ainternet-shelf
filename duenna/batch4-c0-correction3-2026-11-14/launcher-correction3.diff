@@ -1,0 +1,90 @@
+--- launcher-c2.c	2026-11-14 06:31:23.008005241 -0700
++++ launcher-c3.c	2026-11-14 07:16:37.607948690 -0700
+@@ -600,12 +600,28 @@
+ /* The STATUS transmission, on the dedicated pipe (the
+  * S3.5 STATUS Pipe Contract section 4). The record is the
+  * pin's 10-byte body, byte-identical; only the transport
+- * changed. Returns 0 on a complete write, -1 on any
+- * non-complete outcome (EPIPE, other error, short write).
+- * The descriptor is closed after the attempt, complete
+- * or not. The shared-flag contract is unchanged: g_sent
+- * is set by the caller immediately before this one
+- * transmission, never retried. */
++ * changed. The return is the contract's classification
++ * (Correction 3): SW_COMPLETE (0), an uninterrupted
++ * complete write; SW_COMPLETE_EINTR (1), a complete
++ * write that needed at least one EINTR retry;
++ * SW_REFUSED (-1), the SIGPIPE disposition is not
++ * SIG_IGN — no attempt is made and the descriptor is
++ * left open; SW_EPIPE (-2); SW_ERROR (-3), any other
++ * errno; SW_SHORT (-4), a count other than 10. The
++ * descriptor is closed after an attempt, complete or
++ * not. Callers treat the two complete classes as
++ * success and every other class as STATUS transport
++ * failure. The shared-flag contract is unchanged:
++ * g_sent is set by the caller immediately before this
++ * one transmission, never retried. */
++enum status_write_class {
++    SW_COMPLETE = 0,
++    SW_COMPLETE_EINTR = 1,
++    SW_REFUSED = -1,
++    SW_EPIPE = -2,
++    SW_ERROR = -3,
++    SW_SHORT = -4
++};
+ static int send_status(void) {
+     uint8_t b[10];
+     memset(b, 0, sizeof b);
+@@ -617,13 +633,21 @@
+     struct sigaction cur;
+     memset(&cur, 0, sizeof cur);
+     if (sigaction(SIGPIPE, NULL, &cur) != 0 || cur.sa_handler != SIG_IGN) {
+-        return -1;
++        return SW_REFUSED;
+     }
++    int retried = 0;
+     ssize_t n;
+-    do { n = write(STATUS_FD, b, 10); } while (n < 0 && errno == EINTR);
+-    int ok = (n == 10);
++    for (;;) {
++        n = write(STATUS_FD, b, 10);
++        if (n >= 0) break;
++        if (errno == EINTR) { retried = 1; continue; }
++        int e = errno;
++        close(STATUS_FD);
++        return e == EPIPE ? SW_EPIPE : SW_ERROR;
++    }
+     close(STATUS_FD);
+-    return ok ? 0 : -1;
++    if (n != 10) return SW_SHORT;
++    return retried ? SW_COMPLETE_EINTR : SW_COMPLETE;
+ }
+ 
+ /* Reap the child exactly once under the flag contract.
+@@ -651,7 +675,7 @@
+         /* no valid word: no STATUS */
+     }
+     g_sent = true;
+-    if (send_status() != 0) { teardown_drain(); _exit(EXIT_STATUS_TRANSPORT_FAILED); }
++    if (send_status() < 0) { teardown_drain(); _exit(EXIT_STATUS_TRANSPORT_FAILED); }
+     teardown_drain();
+     _exit(0);
+ }
+@@ -1216,7 +1240,7 @@
+                 (void)chan_send(b, 5, -1);
+                 /* report under the flag contract (site R-7) */
+                 if (ensure_reaped() != 0) return 4;
+-                if (!g_sent) { g_sent = true; if (send_status() != 0) return EXIT_STATUS_TRANSPORT_FAILED; }
++                if (!g_sent) { g_sent = true; if (send_status() < 0) return EXIT_STATUS_TRANSPORT_FAILED; }
+                 return 0;
+             }
+             break; /* actuated: proceed to Stage 8 */
+@@ -1228,7 +1252,7 @@
+ 
+     /* Stage 8 — termination and closure (site R-8). */
+     if (ensure_reaped() != 0) return 4;
+-    if (!g_sent) { g_sent = true; if (send_status() != 0) return EXIT_STATUS_TRANSPORT_FAILED; }
++    if (!g_sent) { g_sent = true; if (send_status() < 0) return EXIT_STATUS_TRANSPORT_FAILED; }
+     return 0;
+ }
+ 
