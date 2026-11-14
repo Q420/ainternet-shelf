@@ -19,3 +19,13 @@ shows a queued 2-byte record: a record WAS consumed.
 Q5 — queued data is always received before EOF. Q6
 (second empty record queued) — POLLIN only, RDHUP
 clear.
+
+Addendum (same probe, same session conditions) — Q7,
+Alex's exact sequence (pb-mwg28r3c): empty A, empty B,
+shutdown; consume A; poll; peek; then consume B and
+probe again:
+
+Q7 recv n=0 poll0=POLLIN|POLLRDHUP peek=n=0 controllen=0
+Q7 recv2 n=0 poll0=POLLIN|POLLRDHUP peek=n=0 controllen=0
+
+Identical to Q2 (pure shutdown) at every step.

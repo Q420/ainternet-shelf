@@ -53,3 +53,10 @@ a.close(); b.close()
 a, b, p = newpair(); a.send(b""); a.send(b"")
 print(f"Q6 recv n={recv0(b)} poll0={poll0(p)} peek={peek(b)}")
 a.close(); b.close()
+
+# Q7 (Alex's exact sequence): empty A, empty B, shutdown -> consume A -> poll -> peek
+a, b, p = newpair(); a.send(b""); a.send(b""); a.shutdown(socket.SHUT_WR)
+print(f"Q7 recv n={recv0(b)} poll0={poll0(p)} peek={peek(b)}")
+# and consume B for completeness: next recv, poll, peek
+print(f"Q7 recv2 n={recv0(b)} poll0={poll0(p)} peek={peek(b)}")
+a.close(); b.close()
