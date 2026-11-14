@@ -1,0 +1,25 @@
+{
+ "scenario": "unparseable",
+ "double_id": "transport-double/1.0-stage5",
+ "adapter_id": "pilot-adapter-stage5/1.0",
+ "capture_id": "090ba6f9-a709-49d0-8223-e9a5832de978",
+ "capture_file": "captures/unparseable/090ba6f9-a709-49d0-8223-e9a5832de978.json",
+ "checks": {
+  "field_count_30": true,
+  "record_sha256_recomputes": true,
+  "request_sha256_recomputes": true,
+  "response_sha256_recomputes": true,
+  "attempt_body_hashes_recompute": true,
+  "config_digest_pinned": true,
+  "envelope_matches_config": true,
+  "wire_envelope_matches_config": true,
+  "wire_messages_unmodified": true,
+  "exactly_one_attempt": true,
+  "no_failure_class": true,
+  "body_preserved": true,
+  "raw_output_null": true,
+  "c5_17_envelope_byte_fidelity": true,
+  "c5_17_transport_receipt": true
+ },
+ "passed": true
+}
