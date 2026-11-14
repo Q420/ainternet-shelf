@@ -1,0 +1,112 @@
+PASS CC2 record vocabulary: EVENT_TYPES is exactly the frozen sixteen (Rev 26 §4(n)) — 16 types
+PASS (a) substitution: caller pins recomputed over a substituted data file still refuse (the authority is the anchor) — caller pin diverges from authority: PILOT-DATA-PACKS-01
+PASS (c) missing-entry divergence: caller pins omitting one authority entry refuse — caller pins missing entries: ['stub_script_main.json']
+PASS (d) extra-entry divergence: caller pins adding an entry refuse — caller pins carry extra entries: ['bogus-extra']
+PASS N1 alternate data_dir: a caller-supplied data directory that differs from the authority-resolved path refuses PATH_NOT_AUTHORITY, no run directory created — PATH_NOT_AUTHORITY: caller data_dir differs from the authority-resolved path
+PASS N2 alternate trees_path: a caller-supplied trees file that differs from the authority-resolved path refuses PATH_NOT_AUTHORITY, no run directory created — PATH_NOT_AUTHORITY: caller trees_path differs from the authority-resolved path
+PASS N3 alternate pilot_root: a caller-supplied root that differs from the root derived from the driver artefact refuses PILOT_ROOT_MISMATCH, no run directory created — PILOT_ROOT_MISMATCH: caller root differs from the root derived from the driver artefact
+PASS N4 replaced pair: an authority file replaced in place (with its companion record rewritten to match) refuses AUTHORITY_ANCHOR_MISMATCH — the anchor is the constant embedded in the intact driver, not the pair — AUTHORITY_ANCHOR_MISMATCH: expected e245cabc504e4b8f6fdefda030fea46476700887ac02172f042a33648fef247d, found 20bea68718678453eb7cde4646dd6b2fe965f5672acf1656cc5ede3888b367f0
+PASS C3-A1 record: one append-only JSONL, seq 1..N no gaps — 348 events
+PASS C3-A8 chain verifies under the pinned JCS implementation — 348 events, chain intact
+PASS (b) RUN_STARTED inventory: the complete consumed set by name, incl. the five Batch 1 data files — 15 pins
+PASS MAIN retained: all 8 declared instances COMPLETED — {'T02': 'COMPLETED', 'T05': 'COMPLETED', 'T06': 'COMPLETED', 'T08': 'COMPLETED', 'T09/FR-A': 'COMPLETED', 'T09/FR-B': 'COMPLETED', 'T09/FR-C': 'COMPLETED', 'T09/FR-VALID': 'COMPLETED'}
+PASS (e) eight LEDGER_ENTRYs per T05 and T08 record; every entry carries the §2.3 fields with exactly one provenance form; source_ref null only on CARRIED — T05=8 T08=8 
+PASS MAIN retained: T05 record equals EXPECTED_RECORD on the seven ground-truth fields; evidence is the ordered extraction sequence [CR x5, adjudication] — evidence=['r60-revision-change-record#009', 'r60-revision-change-record#009', 'r60-revision-change-record#009', 'r60-revision-change-record#009', 'r60-revision-change-record#009', 'alex-combined-adjudication-r60rev#001']
+PASS MAIN retained: T02 return-once (FAIL then PASS, RECOVERY_TAKEN present)
+PASS MAIN retained: decision-stands fires once (FR-VALID)
+PASS C3-A5 at completed schema: ledger.json is exactly the record's LEDGER_ENTRY payloads (carried entries included), re-extraction identical
+PASS §3.7 replay: registry (operations AND citations) reconstructs from the MAIN record alone and equals the live registry the run's own process reported
+PASS C3-A6 (MAIN part): snapshot untouched by the run
+PASS LANE retained: three INVALIDATED-INFRASTRUCTURE closures, then RUN_STOPPED LANE_FAILURE is the last event; no RUN_CLOSED — {'T02': 'INVALIDATED-INFRASTRUCTURE', 'T06': 'INVALIDATED-INFRASTRUCTURE', 'T09/FR-A': 'INVALIDATED-INFRASTRUCTURE'}
+PASS TREE-BUDGET retained: T05 STOPPED with reason TREE_TIMEOUT; T09/FR-VALID completes; run closes — {'T05': {'closure': 'STOPPED', 'reason': 'TREE_TIMEOUT', 'tree_id': 'T05'}, 'T09/FR-VALID': {'closure': 'COMPLETED', 'tree_id': 'T09/FR-VALID'}}
+PASS Q1 terminality: RUN_STOPPED is the last event of the partial record and its seq is the event count
+PASS Q2 exact reason and position: the reason is exactly RUN_BUDGET_EXCEEDED and the stop lands on the open tree T05, whose INCOMPLETE closure immediately precedes it — {'at_tree': 'T05', 'reason': 'RUN_BUDGET_EXCEEDED'}
+PASS Q3 no RUN_CLOSED anywhere in the stopped record
+PASS Q4 closure completeness: every triggered tree has exactly one TREE_CLOSED, and the open tree T05 is closed INCOMPLETE
+PASS Q5 strict prefix: T05's completed steps in record order form a proper prefix of its declared step sequence — completed ['T05-STEP-01']
+PASS Q6 no events for unrun steps: no event carries a T05 step_id beyond the completed prefix, and no event carries a tree_id that was never triggered
+PASS Q7 chain condition: the hash chain verifies from genesis to the terminal event over the partial record exactly as it lies — 41 events, chain intact
+PASS Q8 partial materialisation: ledger.json materialises exactly the partial record's LEDGER_ENTRY payloads
+PASS (q) closed-run element: RUN_CLOSED carries record_sha256 of the pre-close head and the full event_count
+PASS INTEGRITY round-2 (INTEGRITY-FIXTURE-01): canonical verified first, fixture bound by variant name (recorded in RUN_STARTED test_configuration); the tree-boundary canonical check writes the run-scoped GOVERNANCE_EVENT and RUN_STOPPED SNAPSHOT_HASH_MISMATCH is the last event; no tree executes; no RUN_CLOSED
+PASS (k) TOOL over-budget: T05-STEP-02 (declared advance 120s > 60s) yields exactly the budget CHECK_RESULT (FAIL) and a STEP_TIMEOUT STEP_FAILED; no STEP_SATISFIED for the step; the tree takes its failure branch (STOPPED)
+PASS (l) MODEL over-budget: T02-STEP-03 attempt 1 (scripted 400s > 300s) yields the budget CHECK_RESULT and an ADAPTER_TIMEOUT STEP_FAILED — never a satisfied attempt — then the declared recovery runs and attempt 2 passes; T02 COMPLETED
+PASS (§3.1) the implementer span boundary selects exactly once on its pinned section
+PASS (§3.1) the examiner span is the declared sentence, from 'R60 fails as a whole' through the sentence's end
+PASS (§3.1/§3.2) the adjudication span measures the declared 602 characters and the §3.2 derivation over it yields FAIL exactly once — span 602 chars
+PASS (n) schema over every event (MAIN): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (MAIN): seq 1..N no gaps, every seq an int — 348 events
+PASS (m) coherence invariant (MAIN)
+PASS chain verifies (MAIN) — 348 events, chain intact
+PASS (p) manifest recompute + coverage (MAIN): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 7/7 MODEL steps
+PASS P1 provenance paths (MAIN): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (MAIN): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS (n) schema over every event (LANE): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (LANE): seq 1..N no gaps, every seq an int — 80 events
+PASS (m) coherence invariant (LANE)
+PASS chain verifies (LANE) — 80 events, chain intact
+PASS (p) manifest recompute + coverage (LANE): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 3/3 MODEL steps
+PASS P1 provenance paths (LANE): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (LANE): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS (n) schema over every event (TREE-BUDGET): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (TREE-BUDGET): seq 1..N no gaps, every seq an int — 85 events
+PASS (m) coherence invariant (TREE-BUDGET)
+PASS chain verifies (TREE-BUDGET) — 85 events, chain intact
+PASS (p) manifest recompute + coverage (TREE-BUDGET): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 1/1 MODEL steps
+PASS P1 provenance paths (TREE-BUDGET): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (TREE-BUDGET): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS (n) schema over every event (RUN-STOP): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (RUN-STOP): seq 1..N no gaps, every seq an int — 41 events
+PASS (m) coherence invariant (RUN-STOP)
+PASS chain verifies (RUN-STOP) — 41 events, chain intact
+PASS (p) manifest recompute + coverage (RUN-STOP): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 2/2 MODEL steps
+PASS P1 provenance paths (RUN-STOP): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (RUN-STOP): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS (n) schema over every event (INTEGRITY): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (INTEGRITY): seq 1..N no gaps, every seq an int — 3 events
+PASS (m) coherence invariant (INTEGRITY)
+PASS chain verifies (INTEGRITY) — 3 events, chain intact
+PASS (p) manifest recompute + coverage (INTEGRITY): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 0/0 MODEL steps
+PASS P1 provenance paths (INTEGRITY): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (INTEGRITY): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS (n) schema over every event (TOOL-BUDGET): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (TOOL-BUDGET): seq 1..N no gaps, every seq an int — 18 events
+PASS (m) coherence invariant (TOOL-BUDGET)
+PASS chain verifies (TOOL-BUDGET) — 18 events, chain intact
+PASS (p) manifest recompute + coverage (TOOL-BUDGET): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 0/0 MODEL steps
+PASS P1 provenance paths (TOOL-BUDGET): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (TOOL-BUDGET): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS (n) schema over every event (MODEL-BUDGET): full field set, sixteen-type vocabulary, run_id string, recorded_at_utc ISO-8601 UTC, per-type nullability incl. the GOVERNANCE_EVENT mapping
+PASS C3-A1 sequence (MODEL-BUDGET): seq 1..N no gaps, every seq an int — 36 events
+PASS (m) coherence invariant (MODEL-BUDGET)
+PASS chain verifies (MODEL-BUDGET) — 36 events, chain intact
+PASS (p) manifest recompute + coverage (MODEL-BUDGET): every MODEL step recomputed from cited producing outputs and deep-compared to declared inputs derived from pinned data, T06-E included, no silent skip — 2/2 MODEL steps
+PASS P1 provenance paths (MODEL-BUDGET): every loaded pinned module's path and hash equal its authority entry
+PASS P2 provenance identity (MODEL-BUDGET): the objects the driver actually used are the freshly verified module objects (bindings, tools' extract, record's JCS, subject class) — {}
+PASS P3 preloaded refusal: a pinned module already present in the interpreter makes the bootstrap refuse PROCESS_MODULE_PRELOADED, no run directory created — {"refused": "PROCESS_MODULE_PRELOADED: corpus_source", "no_run_dir": true}
+PASS P4 poisoned copy: a corpus_source.py that raises on import, staged ahead on sys.path, leaves the run unaffected — the executed module is the verified file — None
+PASS CC2-5 invariants: the driver file contains no import statement naming a locally pinned module, and no dynamic or name-based module resolution (__import__, importlib.import_module) anywhere — the only loading is the bootstrap's verified-path file-location loading — []
+PASS (NC1) negative control — pack order perturbed (entries swapped): the §3.1 derivation changes, proving it reads the pinned pack
+PASS (NC2) negative control — a pack section replaced: the §3.1 derivation changes, proving it reads the pinned pack
+PASS (NC3) negative control — the declared tree-role order perturbed in the loaded trees text: the derivation rejects, proving the class sequence is read from the pinned tree text
+PASS (trace) the divergence set is EMPTY under the corrected driver (Correction 6): the §3.1 finding is closed in the records this suite recomputes — asserted against the recomputation, not assumed — 0 divergences
+DIVERGENCES RECORDED: 0
+PASS carried path: a valid citation inserts; (i) presenting the same citation again refuses CITATION_CONSUMED
+PASS (f) tampered citation: a payload_sha256 that does not recompute from the record refuses CITATION_HASH_MISMATCH; the citation stays unconsumed
+PASS (g) failed producing check: citing an artefact whose step's CHECK_RESULT is FAIL refuses CITATION_CHECK_FAILED
+PASS (h) evidence recomputation: a dropped duplicate refuses EVIDENCE_SET_MISMATCH; swapped positions refuse; the exact ordered sequence (duplicates preserved) inserts
+PASS (r1) {form: carried, operation_id} refuses PRESENTATION_FORM
+PASS (r2) {form: extracted, citation} refuses PRESENTATION_FORM
+PASS (r3) a citation accompanied by a caller-supplied value at the presentation level refuses PRESENTATION_FORM
+PASS (r4) a missing form tag refuses PRESENTATION_FORM
+PASS (r5) an unknown form tag refuses PRESENTATION_FORM
+PASS (r6) a presentation with an unexpected extra field refuses PRESENTATION_FORM
+PASS (r7) a presentation carrying both handles refuses PRESENTATION_FORM
+PASS (r-extras) the round-2 additional malformed forms are retained unnumbered: a bare value, carried form with both handles, a value nested inside the citation object, and a citation naming an extraction event (CITATION_FIELD_MISMATCH) — each refuses with state byte-identical
+PASS (r) after every refusal the genuine operation remains insertable
+PASS §3.2 logging (Rev 25): every reference_insert invocation in the tools tests carries its form tag (or 'malformed') in the invocation arguments — 12 invocations
+PASS (s) cross-class independence: consuming an extraction leaves citations untouched and consuming a citation leaves operations untouched, in both orders
+PASS (j) Batch 2 regression battery passes against the corrected PILOT-TOOLS-01 (declared T1/T2 translation — not a literally unchanged invocation; see the report) — 39 checks, exit 0
+PASS (o) C3-A6 at wording (§4(o)): the pilot root's content-hash listing is identical apart from the correction's own scratch, the parent listing is unchanged, and the real commitments/ directory is byte-unchanged across the suite — 188 files content-compared; commitments files: 0
+
+TOTAL 109/109 PASS
