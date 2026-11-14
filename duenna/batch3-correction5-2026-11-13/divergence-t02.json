@@ -1,0 +1,720 @@
+{
+ "contract": "Amendment Draft 02 §3.1 (frozen contract text, Batch 1 freeze disposition 260796c8)",
+ "divergences": [
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 1,
+   "run_id": "B3CORR2-20261114-001",
+   "event_id": "B3CORR2-20261114-001:22",
+   "seq": 22,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "record_path": "runs/001-run-record.jsonl"
+  },
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ],
+    "adjudication_row": {
+     "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+     "class": "adjudicator",
+     "source": "alex-combined-adjudication-v010#002",
+     "verbatim": true
+    }
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 2,
+   "run_id": "B3CORR2-20261114-001",
+   "event_id": "B3CORR2-20261114-001:29",
+   "seq": 29,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ],
+    "adjudication_row": {
+     "source": "alex-combined-adjudication-v010#002",
+     "class": "adjudicator",
+     "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+     "verbatim": true
+    }
+   },
+   "record_path": "runs/001-run-record.jsonl"
+  },
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 1,
+   "run_id": "B3CORR2-20261114-002",
+   "event_id": "B3CORR2-20261114-002:22",
+   "seq": 22,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "record_path": "runs/002-run-record.jsonl"
+  },
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 1,
+   "run_id": "B3CORR2-20261114-004",
+   "event_id": "B3CORR2-20261114-004:22",
+   "seq": 22,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "record_path": "runs/004-run-record.jsonl"
+  },
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ],
+    "adjudication_row": {
+     "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+     "class": "adjudicator",
+     "source": "alex-combined-adjudication-v010#002",
+     "verbatim": true
+    }
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 2,
+   "run_id": "B3CORR2-20261114-004",
+   "event_id": "B3CORR2-20261114-004:29",
+   "seq": 29,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ],
+    "adjudication_row": {
+     "source": "alex-combined-adjudication-v010#002",
+     "class": "adjudicator",
+     "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+     "verbatim": true
+    }
+   },
+   "record_path": "runs/004-run-record.jsonl"
+  },
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 1,
+   "run_id": "B3CORR2-20261114-007",
+   "event_id": "B3CORR2-20261114-007:22",
+   "seq": 22,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ]
+   },
+   "record_path": "runs/007-run-record.jsonl"
+  },
+  {
+   "record": {
+    "worksheet": [
+     {
+      "claim": "- Sabotage runs (implementer-run on scratch copies, discarded after): disabling the fold's trigger-content examination fails exactly FX-R47b; disabling verdict hash validation fails exactly FX-R60b; disabling the missing-reference check fails exactly FX-R65 (reproducing the original defect under the repaired test). Each variant: 30 PASS / 1 FAIL. Detail in FIXTURE-RESULTS-V010.md.",
+      "class": "implementer",
+      "source": "d3-v010-change-record#007",
+      "verbatim": true
+     },
+     {
+      "claim": "The re-run matches the delivered results, and all 31 fixture IDs are the same as in v0.9. Next I'll read the R47, R60, and R65 mechanisms in the v0.10 harness.",
+      "class": "examiner",
+      "source": "claude-verification-report-v010#001a",
+      "verbatim": true
+     },
+     {
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+      "class": "adjudicator",
+      "source": "alex-combined-adjudication-v010#002",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     },
+     {
+      "pair": [
+       "examiner",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ],
+    "adjudication_row": {
+     "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they",
+     "class": "adjudicator",
+     "source": "alex-combined-adjudication-v010#002",
+     "verbatim": true
+    }
+   },
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 2,
+   "run_id": "B3CORR2-20261114-007",
+   "event_id": "B3CORR2-20261114-007:29",
+   "seq": 29,
+   "derived": {
+    "worksheet": [
+     {
+      "source": "d3-v010-change-record#007",
+      "class": "implementer",
+      "claim": "- Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.",
+      "verbatim": true
+     },
+     {
+      "source": "claude-verification-report-v010#001a",
+      "class": "examiner",
+      "claim": "R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.",
+      "verbatim": true
+     },
+     {
+      "source": "alex-combined-adjudication-v010#002",
+      "class": "adjudicator",
+      "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+      "verbatim": true
+     }
+    ],
+    "conflicts": [
+     {
+      "pair": [
+       "implementer",
+       "examiner"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     },
+     {
+      "pair": [
+       "implementer",
+       "adjudicator"
+      ],
+      "values": [
+       "CLOSED",
+       "OPEN"
+      ]
+     }
+    ],
+    "adjudication_row": {
+     "source": "alex-combined-adjudication-v010#002",
+     "class": "adjudicator",
+     "claim": "- **R60 — FAIL.** Both examiners found genuine defects, and they\n  are TWO DIFFERENT failures, not two descriptions of one:\n  Claude's — the digest-mismatch rejection path is not exercised\n  (FX-R60d exits via the corrupt flag; removing the comparison\n  leaves all fixtures green). Vane's — the contract accepts an\n  arbitrary procedure identifier while executing\n  _preservation_check regardless; a fictitious identity can be\n  stamped onto a verdict and accepted. Alex accepts both findings\n  (both corroborated by Remmy's execution checks). The trio and\n  the 31/31 do not establish R60 as repaired.",
+     "verbatim": true
+    }
+   },
+   "record_path": "runs/007-run-record.jsonl"
+  }
+ ]
+}

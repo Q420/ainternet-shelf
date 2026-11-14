@@ -1,0 +1,44 @@
+{
+ "modules": {
+  "pilot_jcs": {
+   "path": "freeze/jcs/pilot_jcs.py",
+   "sha256": "8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c"
+  },
+  "pilot_record": {
+   "path": "batch3/work/pilot_record.py",
+   "sha256": "ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216"
+  },
+  "corpus_source": {
+   "path": "batch1/work/corpus_source.py",
+   "sha256": "520f36fde41dfb76d5f92fe4da92b6c2f93ae8512051962f76d4942fb5c05a5a"
+  },
+  "rules_engine": {
+   "path": "batch1/work/rules_engine.py",
+   "sha256": "7a2329154081b6e9c0417c07b1cc7184b167d02c1e820081b68a18dbabafacf3"
+  },
+  "pilot_tools": {
+   "path": "batch3/correction/pilot_tools.py",
+   "sha256": "df1045f7923b458cf0ad63b16a7245b1e4516306ff2b60c1f355dbb8431127d8"
+  },
+  "stub_subject": {
+   "path": "batch3/work/stub_subject.py",
+   "sha256": "465d325a53f7ef57eb5da9074e59cc6e5413978834cd86820fb88291a6b6cae9"
+  }
+ },
+ "identity": {
+  "RunRecord": true,
+  "canonical": true,
+  "sha256_hex": true,
+  "materialise_ledger": true,
+  "CorpusSource": true,
+  "PilotTools": true,
+  "StubSubject": true,
+  "tools.extract": true,
+  "record.jcs": true,
+  "subject_class": true
+ },
+ "registry": {
+  "ops": {},
+  "cits": []
+ }
+}
