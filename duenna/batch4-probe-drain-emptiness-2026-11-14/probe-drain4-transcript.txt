@@ -1,0 +1,14 @@
+Q-A zeros3 / plain: 20 lost /20
+  [zeros1500: 1500 records queued]
+Q-A zeros1500 / plain: 10 lost /10
+Q-B anc1 / plain: 0 lost /20
+Q-C data1 / plain: 20 lost /20
+Q-D mixed / plain: 20 lost /20
+Q-D mixed / drain: 0 lost /20
+Q-D mixed / purge: 20 lost /20
+Q-D mixed / purge+drain: 0 lost /20
+Q-E zeros1 / plain: 0 lost /20
+Q-E zeros2 / plain: 20 lost /20
+Q-F tailzeros / drain: 20 lost /20
+Q-F tailzeros / plain: 20 lost /20
+PROBE DONE
