@@ -1,0 +1,23 @@
+{
+ "scenario": "mismatch",
+ "double_id": "transport-double/1.0-stage5",
+ "adapter_id": "pilot-adapter-stage5/1.0",
+ "capture_id": "debd0563-665d-44c9-a931-4f7dbb34a82b",
+ "capture_file": "captures/mismatch/debd0563-665d-44c9-a931-4f7dbb34a82b.json",
+ "checks": {
+  "field_count_30": true,
+  "record_sha256_recomputes": true,
+  "request_sha256_recomputes": true,
+  "response_sha256_recomputes": true,
+  "attempt_body_hashes_recompute": true,
+  "config_digest_pinned": true,
+  "envelope_matches_config": true,
+  "wire_envelope_matches_config": true,
+  "wire_messages_unmodified": true,
+  "exactly_one_attempt": true,
+  "adapter_failure": true,
+  "served_recorded": true,
+  "raw_output_null": true
+ },
+ "passed": true
+}
