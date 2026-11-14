@@ -62,3 +62,14 @@ was built: the probe is a probe — a minimal setuid
 executable testing the environment assumption — and the
 launcher itself is written under C4-0a/C4-0b in this
 batch's pre-gate.
+
+## Addendum (2026-11-13, on Alex's Rev 2 approval, pb-mwg0ng2d)
+
+C4-0c gains a distinct operator evidence item, carried
+into the build record: when the launcher binary is
+installed during Batch 4, its chown (root:pilot-
+supervisor), chmod (4710) and the operating-system
+read-back of the installed state are recorded as a
+dated Batch 4 operator evidence artefact. Nothing in
+the Batch 0 evidence is read as evidencing the
+launcher, which did not exist then.
