@@ -1,0 +1,54 @@
+[PASS] P1 handoff received with one pidfd
+[PASS] P1 fdinfo target == handoff child pid
+[PASS] P1 handoff start time == /proc start time
+[PASS] P1 GATE_READY
+[PASS] P1 GATE_ACTUATED
+[PASS] P1 STATUS received
+[PASS] P1 STATUS pid == child pid
+[PASS] P1 STATUS word == exited 42
+[PASS] P1 launcher exit 0
+[PASS] P1 result file: harness uid
+[PASS] P1 result file: fds exactly 0 1 2
+[PASS] P2 kill window (20x): harness never executed
+[PASS] P2 kill window (20x): no harness process left behind
+[PASS] P3a reached gate with extra fds in launcher
+[PASS] P3a harness fds exactly 0 1 2 despite inherited extras
+[PASS] P3b handoff received
+[PASS] P3b child terminated during establishment (pidfd readable)
+[PASS] P3b ABORT received (R-3)
+[PASS] P3b ABORT reason CHILD_TERMINATED_AT_HANDOFF (3)
+[PASS] P3b ABORT word == child exit 73 (setup failed)
+[PASS] P3b launcher exit 3
+[PASS] P3b harness never executed
+[PASS] P5 reached gate
+[PASS] P5 pidfd_send_signal delivered
+[PASS] P5 class-T: the one STATUS sent
+[PASS] P5 STATUS word == signalled SIGKILL
+[PASS] P5 launcher exit 0 after class-T receipt
+[PASS] P5 harness never executed
+[PASS] P5 malformed ABORT (word-carrying): exit 8, no STATUS
+[PASS] P5 malformed ABORT (word-carrying): harness never executed
+[PASS] P5 malformed ABORT (nonzero flags): exit 8, no STATUS
+[PASS] P5 malformed ABORT (nonzero flags): harness never executed
+[PASS] P5 malformed ABORT (unknown reason): exit 8, no STATUS
+[PASS] P5 malformed ABORT (unknown reason): harness never executed
+[PASS] P6 reached gate
+[PASS] P6 EOF: STATUS still sent (orderly route)
+[PASS] P6 STATUS word == child gate-refused exit 71
+[PASS] P6 launcher exit 0
+[PASS] P6 harness never executed
+[PASS] P6b truncated packet: exit 8, no STATUS
+[PASS] P6b harness never executed
+[PASS] P6c reached gate
+[PASS] P6c receive error: exit 9, no STATUS, not EOF-classified
+[PASS] P6c harness never executed
+[PASS] P6c child terminated (pidfd readable)
+[PASS] P7 RELEASE with ancillary fd: exit 8, no GATE_ACTUATED/STATUS
+[PASS] P7 harness never executed
+[PASS] P7 delivered descriptor was closed by the launcher
+[PASS] P7b truncated packet with fd: exit 8, no STATUS
+[PASS] P7b descriptor on truncated packet was closed
+[PASS] P8 ancillary on LAUNCH_REQUEST: exit 8 before any fork
+[PASS] P8 harness never executed
+[PASS] P9 unknown message: exit 8, no STATUS
+peer: 53/53 PASS
