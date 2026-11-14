@@ -1,0 +1,150 @@
+{
+ "artefact": "PILOT-PIN-AUTHORITY-01",
+ "generated_from": "PILOT-MANIFEST-01 and the re-freeze continuations F2, BATCH1, BATCH2, BATCH2-CORRECTION, BATCH3; anchored by the hash recorded in the BATCH3-CORRECTION continuation",
+ "entries": [
+  {
+   "name": "corpus-snapshot-sections",
+   "path": "freeze/PILOT-CORPUS-SNAPSHOT-01/sections.jsonl",
+   "sha256": "b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e",
+   "source": "PILOT-MANIFEST-01 (Batch 0 freeze)",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "corpus-snapshot-manifest",
+   "path": "freeze/PILOT-CORPUS-SNAPSHOT-01/manifest.json",
+   "sha256": "c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452",
+   "source": "PILOT-MANIFEST-01 (Batch 0 freeze)",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "PILOT-DATA-PACKS-01",
+   "path": "batch1/work/PILOT-DATA-PACKS-01.json",
+   "sha256": "c7eaec18db203651af894e7fbdb53c6df9b36a3da185c4b7ab703d73085b886c",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "PILOT-DATA-EXPECTED-01",
+   "path": "batch1/work/PILOT-DATA-EXPECTED-01.json",
+   "sha256": "79db5c87d4c9ccc52cb53c68fec5c2477cf546c9b80babbc489a472d37e57863",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "PILOT-DATA-FIXTURES-01",
+   "path": "batch1/work/PILOT-DATA-FIXTURES-01.json",
+   "sha256": "b02e0dd005e884c62d493c1f524da983d77b2468645cf342e2a7fc9d9d08d9e8",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "PILOT-DATA-T09-01",
+   "path": "batch1/work/PILOT-DATA-T09-01.json",
+   "sha256": "55a6c979163a9ce0cb30fca4eb951aff0d02685979290df8bd18dfa28b355c4a",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "EXTRACTOR-RULES-02",
+   "path": "batch1/work/EXTRACTOR-RULES-02.json",
+   "sha256": "61095f219e1d481ed74c65f3a95806a2cba2e7dc847bcb692373ade3974c5ee5",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "corpus_source.py",
+   "path": "batch1/work/corpus_source.py",
+   "sha256": "520f36fde41dfb76d5f92fe4da92b6c2f93ae8512051962f76d4942fb5c05a5a",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "rules_engine.py",
+   "path": "batch1/work/rules_engine.py",
+   "sha256": "7a2329154081b6e9c0417c07b1cc7184b167d02c1e820081b68a18dbabafacf3",
+   "source": "Re-freeze continuation BATCH1",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "pilot_jcs.py",
+   "path": "freeze/jcs/pilot_jcs.py",
+   "sha256": "8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c",
+   "source": "Batch 0 freeze (RFC 8785 implementation)",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "pilot_tools.py",
+   "path": "batch3/correction/pilot_tools.py",
+   "sha256": "df1045f7923b458cf0ad63b16a7245b1e4516306ff2b60c1f355dbb8431127d8",
+   "source": "Re-freeze continuation BATCH3-CORRECTION (minted)",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "pilot_record.py",
+   "path": "batch3/correction/pilot_record.py",
+   "sha256": "ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216",
+   "source": "Re-freeze continuation BATCH3 (unchanged by the correction)",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "pilot_driver.py",
+   "path": "batch3/correction/pilot_driver.py",
+   "sha256": "916eab807e6c0c9ed467df27b1a1b5ecbeba9a6fc58a4b21e48e62bd3806970f",
+   "source": "Re-freeze continuation BATCH3-CORRECTION (minted)",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "pilot_trees.json",
+   "path": "batch3/work/pilot_trees.json",
+   "sha256": "d23f35f660ee4967039c56726b8f4d3d416adf265d109e67190a0dc0603e29ec",
+   "source": "Re-freeze continuation BATCH3",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "stub_subject.py",
+   "path": "batch3/work/stub_subject.py",
+   "sha256": "465d325a53f7ef57eb5da9074e59cc6e5413978834cd86820fb88291a6b6cae9",
+   "source": "Re-freeze continuation BATCH3",
+   "run": true,
+   "variant": null
+  },
+  {
+   "name": "stub_script_main.json",
+   "path": "batch3/work/stub_script_main.json",
+   "sha256": "dde24b6a5ad98f6890add04beaf59c723df932d66f01441c613da1c2f8eacf5d",
+   "source": "Re-freeze continuation BATCH3",
+   "run": true,
+   "variant": "stub_script_main"
+  },
+  {
+   "name": "stub_script_lane.json",
+   "path": "batch3/work/stub_script_lane.json",
+   "sha256": "ed590514b23bfef6267364a0f856d04a139fc3f97652e3df9f4c2832f4d056d3",
+   "source": "Re-freeze continuation BATCH3",
+   "run": true,
+   "variant": "stub_script_lane"
+  },
+  {
+   "name": "stub_script_budget.json",
+   "path": "batch3/correction/stub_script_budget.json",
+   "sha256": "793d7b58dee76b881d4a22e4f59058812baec8334712d32c0d2c102e68f0956c",
+   "source": "Re-freeze continuation BATCH3-CORRECTION (minted)",
+   "run": true,
+   "variant": "stub_script_budget"
+  }
+ ]
+}
