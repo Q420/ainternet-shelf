@@ -1,0 +1,452 @@
+--- bundle2f/launcher.c	2026-11-14 02:06:12.271471404 -0700
++++ launcher.c	2026-11-14 03:45:04.635718113 -0700
+@@ -48,10 +48,32 @@
+  * ruled by Alex at pb-mwg2c6a8): the two findings
+  * reopened at pin 6430b9f... — a zero-length receive is
+  * classified AFTER the ancillary walk (ancillary -4)
+- * by the poll + peek sequence in zero_classify()
++ * by the poll + peek sequence
+  * (record -2 / shutdown -1), never as EOF by default;
+  * and the ACK-wait ABORT is validated by
+  * abort_packet_valid() before dispatch.
++ *
++ * C0 REWORK (Batch 4 whole plan Revision 8, CLEARED
++ * 2026-11-14; C0 chunk sheet 0710bb9d...): the receive
++ * path is COLLECT-THEN-CLASSIFY. chan_recv() is a
++ * receipt layer only — it reports what arrived (packet,
++ * pending zero, ancillary/truncated violation, malformed,
++ * error) and never classifies. Each receive site collects
++ * entries into a per-site collection; a zero-length
++ * receive becomes a pending-zero entry and is classified
++ * only when the collection closes, from the collected
++ * ordering — no clock participates. Closure-equivalence
++ * requires the full observation triple of plan section
++ * A.2: FIONREAD == 0, RDHUP/HUP observed, and a head
++ * peek WITH a control buffer showing no ancillary data;
++ * any failed observation closes the collection with the
++ * site's receive-error outcome. The residue Ben ruled
++ * acceptable (2026-11-14, fcc9c452) stands as disclosed
++ * in plan section A.2: an ancillary record queued behind
++ * a further plain zero takes the closure outcome; the
++ * ancillary rules stand in full wherever a record is
++ * observable. The former classifier function and its
++ * bounded watch are deleted.
+  */
+ 
+ #define _GNU_SOURCE
+@@ -69,6 +91,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/prctl.h>
++#include <sys/ioctl.h>
+ #include <poll.h>
+ #include <sys/socket.h>
+ #include <sys/stat.h>
+@@ -191,91 +214,61 @@
+     if (!e) return 0;
+     return g_recv_calls == atoi(e);
+ }
++/* C0 fault injection at the closure check (NQ6' cases):
++ * force the FIONREAD observation or the head-ancillary
++ * peek to fail, so the fail-closed error route is
++ * exercised per site. */
++static int hook_fail_fionread(void) {
++    const char *e = getenv("PILOT_HOOK_FAIL_FIONREAD");
++    return e && atoi(e);
++}
++static int hook_fail_peek(void) {
++    const char *e = getenv("PILOT_HOOK_FAIL_PEEK");
++    return e && atoi(e);
++}
++/* C0 D-series stalls: bounded delays at named points in
++ * the collection path (delays stay within the existing
++ * site/lifecycle bounds; outcomes must be identical to
++ * the unstalled forms — classification has no clock). */
++static void hook_stall_ms(const char *name) {
++    const char *e = getenv(name);
++    if (!e) return;
++    long ms = atol(e);
++    if (ms <= 0) return;
++    struct timespec ts = { ms / 1000, (ms % 1000) * 1000000L };
++    nanosleep(&ts, NULL);
++}
++#define hook_stall_recv()  hook_stall_ms("PILOT_HOOK_STALL_RECV_MS")
++#define hook_stall_check() hook_stall_ms("PILOT_HOOK_STALL_CHECK_MS")
+ #else
+ #define hook_note_closed(count) ((void)0)
++#define hook_fail_fionread() 0
++#define hook_fail_peek() 0
++#define hook_stall_recv()  ((void)0)
++#define hook_stall_check() ((void)0)
+ #endif
+ 
+-/* Receive one protocol packet.
+- * Returns: length >= 0; -1 EOF (orderly close); -2
+- * malformed (truncated packet); -3 receive error; -4
+- * ancillary violation. The launcher accepts NO ancillary
+- * data on any received message: any control message of
+- * any level or type makes the receive a violation, and
+- * every descriptor the kernel delivered is closed
+- * unexamined, on every path (Rev 3, findings 6 and 7). */
+-/*
+- * zero_classify: a zero-length receive has been delivered
+- * (and its ancillary data, if any, already accounted by
+- * the caller). Distinguish a consumed zero-length RECORD
+- * (-2, protocol violation) from the peer's orderly
+- * shutdown (-1), per the ruled classification
+- * (pb-mwg2c6a8, Treatment A): poll once (timeout 0,
+- * EINTR retried; any other poll failure is -3, never
+- * EOF). RDHUP/HUP clear -> a record was consumed on a
+- * live channel -> -2. RDHUP/HUP set -> a non-consuming
+- * peek decides: a queued record (length > 0 or any
+- * control data) -> -2; nothing but the shutdown -> -1.
+- * A failed peek is -3. Named limitation: descriptor-
+- * free zero-length records immediately preceding a
+- * shutdown are observationally equivalent to the
+- * shutdown and take the -1 outcome.
+- */
+-static int zero_classify(void) {
+-    /* Bounded RDHUP watch (plan Revision 5, approved by
+-     * Alex at pb-mwg8cva7): one absolute CLOCK_MONOTONIC
+-     * deadline, 250 ms from entry. POLLIN alone never
+-     * ends the watch; the loop exits only on RDHUP/HUP
+-     * (peek classification follows), a fail-closed
+-     * error (-3), or deadline expiry (-2). EINTR
+-     * recomputes the remaining time from the SAME
+-     * deadline; interruptions never extend it. */
+-    struct timespec dl, now;
+-    clock_gettime(CLOCK_MONOTONIC, &dl);
+-    dl.tv_nsec += 250L * 1000000L;
+-    if (dl.tv_nsec >= 1000000000L) { dl.tv_sec += 1; dl.tv_nsec -= 1000000000L; }
+-    for (;;) {
+-        clock_gettime(CLOCK_MONOTONIC, &now);
+-        long rem = (dl.tv_sec - now.tv_sec) * 1000L
+-                 + (dl.tv_nsec - now.tv_nsec) / 1000000L;
+-        if (rem <= 0) return -2;
+-        struct pollfd pfd;
+-        pfd.fd = CHANNEL_FD;
+-        pfd.events = POLLIN | POLLRDHUP; /* RDHUP is reported only when requested */
+-        pfd.revents = 0;
+-        int pr = poll(&pfd, 1, rem > 10 ? 10 : (int)rem);
+-        if (pr < 0 && errno == EINTR) continue;
+-        if (pr < 0) return -3;
+-        if (pr == 0) continue;
+-        short rev = pfd.revents;
+-        if ((rev & (POLLERR | POLLNVAL)) && !(rev & (POLLRDHUP | POLLHUP)))
+-            return -3;
+-        if (rev & (POLLRDHUP | POLLHUP)) break;
+-        /* POLLIN only: a record is queued; keep watching. */
+-    }
+-    unsigned char scratch[256];
+-    struct iovec iov = { scratch, sizeof scratch };
+-    struct msghdr pmh;
+-    memset(&pmh, 0, sizeof pmh);
+-    pmh.msg_iov = &iov;
+-    pmh.msg_iovlen = 1;
+-    /* No control buffer on the peek: at EOF the kernel
+-     * writes no msghdr ancillary state at all, so a
+-     * returned controllen would be stale. Ancillary
+-     * presence on the queued record is instead read
+-     * from MSG_CTRUNC, which the kernel sets when a
+-     * real record's control data had nowhere to go. */
+-    ssize_t pn;
+-    do { pn = recvmsg(CHANNEL_FD, &pmh, MSG_PEEK | MSG_DONTWAIT); } while (pn < 0 && errno == EINTR);
+-    if (pn < 0) return -3;
+-    if (pn > 0) return -2;
+-    if (pmh.msg_flags & MSG_CTRUNC) return -2;
+-    return -1;
+-}
++/* ---- the receipt layer, the collection, classification ----
++ * (C0 rework; whole plan Rev 8 Part A.) chan_recv() reports
++ * RECEIPT FACTS only and never classifies: what arrived is a
++ * packet, a pending zero, an ancillary/truncated violation,
++ * a malformed (truncated) packet, or a receive error. The
++ * launcher accepts NO ancillary data on any received
++ * message: any control message of any level or type makes
++ * the receipt a violation, and every descriptor the kernel
++ * delivered is closed unexamined, on every path (Rev 3,
++ * findings 6 and 7). */
++#define RCV_PACKET     1  /* packet; *out_len bytes in buf */
++#define RCV_ZERO       2  /* zero-length receive, no ancillary */
++#define RCV_ANCILLARY  3  /* violation entry: ancillary at receipt */
++#define RCV_TRUNCATED  4  /* violation entry: control truncated */
++#define RCV_MALFORMED  5  /* packet bytes truncated (MSG_TRUNC) */
++#define RCV_ERROR      6  /* receive failure */
+ 
+-static ssize_t chan_recv(uint8_t *buf, size_t cap) {
++static int chan_recv(uint8_t *buf, size_t cap, ssize_t *out_len) {
+ #ifdef PILOT_TEST_HOOKS
+     g_recv_calls++;
+-    if (hook_fail_recvmsg()) return -3;
++    if (hook_fail_recvmsg()) return RCV_ERROR;
+ #endif
+     char cbuf[CMSG_SPACE(sizeof(int) * 4)];
+     struct iovec iov = { buf, cap };
+@@ -287,7 +280,7 @@
+     mh.msg_controllen = sizeof cbuf;
+     ssize_t n;
+     do { n = recvmsg(CHANNEL_FD, &mh, MSG_CMSG_CLOEXEC); } while (n < 0 && errno == EINTR);
+-    if (n < 0) return -3;
++    if (n < 0) return RCV_ERROR;
+     /* Ancillary accounting comes FIRST, for every receive
+      * that delivered anything — a zero-length record
+      * included (correction round 2, Fix A). */
+@@ -304,15 +297,145 @@
+         }
+     }
+     hook_note_closed(closed);
+-    if (mh.msg_flags & MSG_CTRUNC) violation = 1;
+-    if (violation) return -4;
+-    if (n == 0) {
+-        /* Classify AFTER the ancillary walk, by the ruled
+-         * poll + peek sequence (plan Revision 4). */
+-        return zero_classify();
++    if (mh.msg_flags & MSG_CTRUNC) return RCV_TRUNCATED;
++    if (violation) return RCV_ANCILLARY;
++    if (mh.msg_flags & MSG_TRUNC) return RCV_MALFORMED;
++    if (n == 0) return RCV_ZERO;  /* a pending zero — never a classification */
++    *out_len = n;
++    return RCV_PACKET;
++}
++
++/* The closure observation (plan A.2): taken after a pending
++ * zero, it decides whether the collection may close as
++ * closure-equivalent. ALL THREE must hold: (i) FIONREAD
++ * (the whole-queue byte count, the one byte primitive)
++ * reports 0; (ii) RDHUP/HUP is observed (a zero-timeout
++ * poll, an observation only — it classifies nothing);
++ * (iii) ONE head peek WITH a control buffer shows no
++ * ancillary data at the head of the queue. Any failed
++ * observation is OBS_FAIL — fail-closed, never read as a
++ * passing condition. Bytes queued (OBS_CONTINUE) or an
++ * ancillary head record (OBS_ANC_HEAD) both mean the
++ * collection CONTINUES: the queued record is collected by
++ * a real receive and takes its own branch. */
++#define OBS_CLOSURE  1
++#define OBS_CONTINUE 2
++#define OBS_ANC_HEAD 3
++#define OBS_FAIL     4
++
++static int closure_check(void) {
++    int avail = 0;
++    if (hook_fail_fionread()) return OBS_FAIL;
++    if (ioctl(CHANNEL_FD, FIONREAD, &avail) != 0) return OBS_FAIL;
++    if (avail > 0) return OBS_CONTINUE;
++    struct pollfd pfd;
++    pfd.fd = CHANNEL_FD;
++    pfd.events = POLLIN | POLLRDHUP; /* RDHUP is reported only when requested */
++    pfd.revents = 0;
++    int pr;
++    do { pr = poll(&pfd, 1, 0); } while (pr < 0 && errno == EINTR);
++    if (pr < 0) return OBS_FAIL;
++    short rev = pfd.revents;
++    if (!(rev & (POLLRDHUP | POLLHUP))) {
++        if (rev & (POLLERR | POLLNVAL)) return OBS_FAIL;
++        return OBS_CONTINUE;  /* peer still open: nothing classifiable yet */
++    }
++    /* The head-ancillary check: ONE peek WITH a control
++     * buffer. A peek installs real descriptors for the
++     * head record's ancillary data; they are closed on
++     * sight — the peek is an observation, never a receipt. */
++    if (hook_fail_peek()) return OBS_FAIL;
++    unsigned char scratch[64];
++    char pcbuf[CMSG_SPACE(sizeof(int) * 4)];
++    struct iovec piov = { scratch, sizeof scratch };
++    struct msghdr pmh;
++    memset(&pmh, 0, sizeof pmh);
++    pmh.msg_iov = &piov;
++    pmh.msg_iovlen = 1;
++    pmh.msg_control = pcbuf;
++    pmh.msg_controllen = sizeof pcbuf;
++    ssize_t pn;
++    do { pn = recvmsg(CHANNEL_FD, &pmh, MSG_PEEK | MSG_DONTWAIT); } while (pn < 0 && errno == EINTR);
++    if (pn < 0) return OBS_FAIL;
++    int closed = 0;
++    for (struct cmsghdr *c = CMSG_FIRSTHDR(&pmh); c; c = CMSG_NXTHDR(&pmh, c)) {
++        if (c->cmsg_level == SOL_SOCKET && c->cmsg_type == SCM_RIGHTS) {
++            int cnt = (int)((c->cmsg_len - CMSG_LEN(0)) / sizeof(int));
++            int *fds = (int *)CMSG_DATA(c);
++            for (int i = 0; i < cnt; i++) { close(fds[i]); closed++; }
++        }
++    }
++    hook_note_closed(closed);
++    if (pmh.msg_controllen > 0 || (pmh.msg_flags & MSG_CTRUNC)) return OBS_ANC_HEAD;
++    return OBS_CLOSURE;
++}
++
++/* One site's collection (plan A.1). Entries: the packet
++ * (at most one — the first packet closes the collection),
++ * the pending-zero count, a violation entry (1 ancillary,
++ * 2 truncated), a malformed entry, a closure-equivalent
++ * entry, or a receive/observation error. The collection
++ * closes on the first of: a packet, any violation or
++ * malformed entry, a closure-equivalent entry, or an
++ * error. It introduces no timeout of its own. Teardown is
++ * not a collection close and produces no classification
++ * (plan A.6): nothing here runs at teardown. */
++struct collection {
++    int     pending_zeros;
++    int     has_packet;
++    uint8_t pkt[MAX_PACKET];
++    ssize_t pkt_len;
++    int     violation;   /* 0 none, 1 ancillary, 2 truncated */
++    int     malformed;
++    int     closure;
++    int     error;
++};
++
++static void collect(struct collection *c) {
++    memset(c, 0, sizeof *c);
++    uint8_t buf[MAX_PACKET];
++    for (;;) {
++        hook_stall_recv();
++        ssize_t len = 0;
++        int k = chan_recv(buf, sizeof buf, &len);
++        if (k == RCV_PACKET) {
++            memcpy(c->pkt, buf, (size_t)len);
++            c->pkt_len = len;
++            c->has_packet = 1;
++            return;
++        }
++        if (k == RCV_ANCILLARY) { c->violation = 1; return; }
++        if (k == RCV_TRUNCATED) { c->violation = 2; return; }
++        if (k == RCV_MALFORMED) { c->malformed = 1; return; }
++        if (k == RCV_ERROR)     { c->error = 1; return; }
++        /* RCV_ZERO: enters the collection as a pending zero.
++         * The closure observation decides whether the
++         * collection may close here as closure-equivalent;
++         * every other observation result keeps collecting. */
++        c->pending_zeros++;
++        hook_stall_check();
++        int obs = closure_check();
++        if (obs == OBS_FAIL)    { c->error = 1; return; }
++        if (obs == OBS_CLOSURE) { c->closure = 1; return; }
++        /* OBS_CONTINUE / OBS_ANC_HEAD: keep collecting. */
+     }
+-    if (mh.msg_flags & MSG_TRUNC) return -2;
+-    return n;
++}
++
++/* Classification (plan A.3): a pure function of the
++ * collected sequence. The site maps the class onto its own
++ * exit routes and packet contracts. */
++#define CLS_PROCEED   0  /* exactly the expected sequence: a clean packet */
++#define CLS_POISONED  1  /* pending zeros before an otherwise valid packet */
++#define CLS_VIOLATION 2  /* violation or malformed entry in the collection */
++#define CLS_CLOSURE   3  /* closure-equivalent, only pending zeros before it */
++#define CLS_ERROR     4  /* receive or observation error */
++
++static int classify(const struct collection *c) {
++    if (c->error) return CLS_ERROR;
++    if (c->violation || c->malformed) return CLS_VIOLATION;
++    if (c->closure) return CLS_CLOSURE;
++    if (c->has_packet) return c->pending_zeros > 0 ? CLS_POISONED : CLS_PROCEED;
++    return CLS_ERROR;  /* unreachable: collect() closes only on an entry */
+ }
+ 
+ /* Validate framing shared by all packets: code + zero flags,
+@@ -714,11 +837,20 @@
+     if (account_ids(CHILD_ACCOUNT, &h_uid, &h_gid) != 0) return 14;
+     if (account_ids(SUPERVISOR_ACCOUNT, &s_uid, &s_gid) != 0) return 14;
+ 
+-    /* Stage 2 — the launch request. */
++    /* Stage 2 — the launch request (collect-then-classify).
++     * The collection completes before any fork: a violation
++     * entry keeps the receipt-level route (exit 8, as
++     * today); closure-equivalent, a poisoned request, and a
++     * receive error all take the pre-fork refusal route
++     * (exit 15) — no child, no STATUS, no issuance. */
+     uint8_t pkt[MAX_PACKET];
+-    ssize_t n = chan_recv(pkt, sizeof pkt);
+-    if (n == -2 || n == -4) return 8;  /* malformed / ancillary violation */
+-    if (n < 0) return 15;              /* EOF or receive error: nothing forked */
++    struct collection col;
++    collect(&col);
++    int cls = classify(&col);
++    if (cls == CLS_VIOLATION) return 8;
++    if (cls != CLS_PROCEED) return 15;
++    memcpy(pkt, col.pkt, (size_t)col.pkt_len);
++    ssize_t n = col.pkt_len;
+     if (n < 15 || pkt[0] != MSG_LAUNCH_REQUEST || pkt[1] != 0) return 15;
+     {
+         uint32_t exp_pid = get_u32(pkt + 2);
+@@ -801,18 +933,35 @@
+     }
+     close(pidfd);
+ 
+-    /* The handoff acknowledgement. */
+-    n = chan_recv(pkt, sizeof pkt);
+-    if (n == -2 || n == -4) { cleanup_child(); return 8; }
+-    if (n == -3) { cleanup_child(); return 9; }
+-    if (n >= 0 && pkt[0] == MSG_ABORT) {
++    /* The handoff acknowledgement (collect-then-classify).
++     * Closure-equivalent keeps the EOF outcome (cleanup,
++     * exit 6); a poisoned or violating collection takes the
++     * violation route and the packet is not acted on; a
++     * receive error takes cleanup + exit 9. A clean ABORT is
++     * dispatched per abort_packet_valid(); any other clean
++     * packet that is not a well-framed HANDOFF_ACK is a
++     * wrong-type violation under plan A.3. (The base source
++     * routed non-ABORT framing failures at this site to
++     * exit 6; the A.3 reading is recorded in the C0
++     * discharge report for Alex's matrix check.) */
++    {
++        struct collection col2;
++        collect(&col2);
++        int cls2 = classify(&col2);
++        if (cls2 == CLS_VIOLATION || cls2 == CLS_POISONED) { cleanup_child(); return 8; }
++        if (cls2 == CLS_ERROR) { cleanup_child(); return 9; }
++        if (cls2 == CLS_CLOSURE) { cleanup_child(); return 6; }
++        memcpy(pkt, col2.pkt, (size_t)col2.pkt_len);
++        n = col2.pkt_len;
++    }
++    if (pkt[0] == MSG_ABORT) {
+         if (abort_packet_valid(pkt, n) != 0) { cleanup_child(); return 8; }
+         cleanup_child();
+         return 6;
+     }
+-    if (n < 0 || frame_ok(pkt, n, MSG_HANDOFF_ACK, 3, 3) != 0) {
+-        cleanup_child(); /* EOF/malformed: Window 1 cleanup */
+-        return 6;
++    if (frame_ok(pkt, n, MSG_HANDOFF_ACK, 3, 3) != 0) {
++        cleanup_child(); /* wrong type / bad framing: violation route */
++        return 8;
+     }
+     uint8_t ack = pkt[2];
+     if (ack == 1 || ack == 2) {          /* site R-2 */
+@@ -860,18 +1009,27 @@
+         return 7;
+     }
+ 
+-    /* Stage 6 — await RELEASE (or an ABORT, or EOF). */
++    /* Stage 6 — await RELEASE (or an ABORT, or EOF),
++     * collect-then-classify. Closure-equivalent keeps the
++     * EOF outcome (gate handling, STATUS, exit 0); a
++     * poisoned collection takes the violation route and
++     * the packet is not acted on — a poisoned RELEASE does
++     * not actuate and a poisoned ABORT is not dispatched. */
+     for (;;) {
+-        n = chan_recv(pkt, sizeof pkt);
+-        if (n == -2 || n == -4) { cleanup_child(); return 8; }
+-        if (n == -3) { cleanup_child(); return 9; }
+-        if (n < 0) {
+-            /* EOF: release the gated child by the gate's own
+-             * rule before collecting, or the reap would wait
+-             * on a child that waits on us */
++        struct collection col3;
++        collect(&col3);
++        int cls3 = classify(&col3);
++        if (cls3 == CLS_VIOLATION || cls3 == CLS_POISONED) { cleanup_child(); return 8; }
++        if (cls3 == CLS_ERROR) { cleanup_child(); return 9; }
++        if (cls3 == CLS_CLOSURE) {
++            /* EOF outcome: release the gated child by the
++             * gate's own rule before collecting, or the reap
++             * would wait on a child that waits on us */
+             if (g_gate_w >= 0) { close(g_gate_w); g_gate_w = -1; }
+             break;
+         }
++        memcpy(pkt, col3.pkt, (size_t)col3.pkt_len);
++        n = col3.pkt_len;
+         if (pkt[0] == MSG_ABORT) {
+             if (abort_packet_valid(pkt, n) != 0) { cleanup_child(); return 8; }
+             if (pkt[2] == RSN_CHILD_TERMINATED_PRE_RELEASE)

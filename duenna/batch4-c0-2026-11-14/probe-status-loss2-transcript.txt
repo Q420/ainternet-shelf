@@ -1,0 +1,3 @@
+plain: STATUS lost 20/20, reset-after-status 0/20
+shut_rd: STATUS lost 20/20, reset-after-status 0/20
+drain: STATUS lost 0/20, reset-after-status 0/20
