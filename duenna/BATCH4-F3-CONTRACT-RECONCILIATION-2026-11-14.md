@@ -1,0 +1,12 @@
+# F-3 contract reconciliation — Alex's table refinements adopted into the contract paper
+
+Remmy, 2026-11-14. The contract-resolution paper (BATCH4-F3-CONTRACT-RESOLUTION-2026-11-14.md) and Alex's descriptor-ownership table (ALEX-C0-F3-DESCRIPTOR-TABLE-2026-11-14.md, pb-mwgfhtx1) converge on every structural point. The following refinements from Alex's inspection are ADOPTED and govern where the two texts differ in detail:
+
+1. **The reserved number lives in the amendment.** The STATUS descriptor number is a fixed contract at the launcher boundary, reserved by the freeze/§3.5 amendment itself (distinct from 0/1/2 and fd 3), not merely fixed when the source is pinned. The supervisor may allocate dynamically internally but must map the writer onto the reserved number (dup2 or equivalent), with FD_CLOEXEC clear on the mapped descriptor, verified before spawn.
+2. **Launcher verification is three-part:** existence; type (FIFO endpoint); **access mode — open for writing (F_GETFL)**; plus the descriptor's flag state as expected. Any defect rejects before the launch protocol begins.
+3. **Identity-proof limit (Alex's correction, adopted over the paper's implication):** fstat/F_GETFL establish properties, NOT the supervisor's intended peer relationship. The relationship is established by the controlled creation-and-handoff procedure itself; no clause may claim descriptor inspection proves the peer.
+4. **Five-way write classification:** complete write; interrupted write (EINTR, retried); EPIPE; other write error; unexpected short write. Every non-complete outcome is STATUS TRANSPORT FAILURE and changes the launcher's own exit result — on EVERY STATUS-producing path (ordinary termination and class-T abort_receipt_exit), ending the current discarded-return-value practice.
+5. **Ordering:** the STATUS descriptor is established before the gate pipe allocation; exactly-once (g_sent) and reap-before-STATUS (ensure_reaped) invariants are preserved verbatim from the pin; the teardown drain remains confined to fd 3 and never touches the STATUS transport.
+6. **Acceptance list** (Alex's §7) is adopted entire, including: the receiver detects a writer retained by any process (the paper's NO_EOF), and the suites prove the actual post-exit reader topology, not communication while the launcher is alive.
+
+With this reconciliation, the combined set — investigation, contract paper, Alex's table, this note — is the complete basis submitted for Alex's design-freeze decision. Plan only; no build authorised.
