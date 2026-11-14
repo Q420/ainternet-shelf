@@ -1,0 +1,21 @@
+Probe: probe_seq.py (AF_UNIX SOCK_SEQPACKET socketpair; recvmsg then
+poll(timeout 0) then MSG_PEEK|MSG_DONTWAIT — the launcher's actual
+classification order), pilot room, kernel
+6.18.58.1-microsoft-standard-WSL2, 2026-11-13. Verbatim output:
+
+Q1 recv n=0 poll0=none
+Q2 recv n=0 poll0=POLLIN|POLLRDHUP peek=n=0 controllen=0
+Q3 recv n=0 poll0=POLLIN|POLLRDHUP peek=n=0 controllen=0
+Q4 recv n=0 poll0=POLLIN|POLLRDHUP peek=n=2 controllen=0
+Q5 recv n=2 poll0=POLLIN|POLLRDHUP
+Q6 recv n=0 poll0=POLLIN peek=n=0 controllen=0
+
+Reading: Q1 (bare empty record) — no events after the
+consume: RDHUP clear. Q2 (shutdown) — RDHUP set, peek
+empty. Q3 (record then shutdown) — identical to Q2: the
+named limit, directly evidenced in sequence. Q4 (empty
+record, data record, shutdown) — RDHUP set but the peek
+shows a queued 2-byte record: a record WAS consumed.
+Q5 — queued data is always received before EOF. Q6
+(second empty record queued) — POLLIN only, RDHUP
+clear.
