@@ -1,0 +1,37 @@
+===== BATCH 3 CHECKPOINT SUITE =====
+PASS C3-A1 record: one append-only JSONL, seq 1..N no gaps — 324 events
+PASS C3-A2 schema: every event carries the full field set; types from the closed list
+PASS C3-A8 chain verifies under the pinned JCS implementation — 324 events, chain intact
+PASS C3-A8 genesis: first event's prev is the pinned-input block hash
+PASS C3-A8 rejection: NaN is refused, never coerced
+PASS C3-A4 payloads: MODEL_CALL_LINKED carries capture link + verbatim raw_output — 7 model calls
+PASS C3-A4 payloads: CHECK_RESULT quotes the declared verify condition
+PASS C3-A4 payloads: LEDGER_ENTRY carries the provenance additions (operation_id) — 12 ledger entries
+PASS C3-A5 ledger: re-extraction identical; ledger.json is that extraction
+PASS C3-A6 confinement: snapshot untouched; the run wrote only inside its run directory
+PASS MAIN: all 8 declared instances COMPLETED — {'T02': 'COMPLETED', 'T05': 'COMPLETED', 'T06': 'COMPLETED', 'T08': 'COMPLETED', 'T09/FR-A': 'COMPLETED', 'T09/FR-B': 'COMPLETED', 'T09/FR-C': 'COMPLETED', 'T09/FR-VALID': 'COMPLETED'}
+PASS C3-B1 order: steps execute in declared order, conditional steps absent when untriggered
+PASS C3-B2 exactly one complete() per attempt — 7 calls
+PASS C3-B3 manifest written to the record before every [MODEL] call
+PASS C3-B4 return-once: T02-STEP-03 fails once, recovers, passes; the failure stands
+PASS C3-B4 decision-stands: FR-VALID's stated REJECT is overruled by the worksheet; mismatch recorded
+PASS C3-B5 no verdicts: no event payload carries a score or verdict
+PASS C3-C2 subset exercises [TOOL], [RULE], [MODEL], a genuine insert, and CHECK failure branches
+PASS C3-C3 RUN_STARTED names the stub configuration and labels the run scratch
+PASS T05 record artefact equals EXPECTED_RECORD on every ground-truth field — {'artifact': 'harness-r60rev.py', 'version': 'v2.4', 'fixtures_total': 38, 'fixtures_passed': 38, 'harness_sha256': '854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5', 'results_sha256': '902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66', 'correction_b': 'OPEN'}
+PASS T06 classification equals the pinned key (T06_KEY) — {'S1': 'SUPPORTED', 'S2': 'UNTRACEABLE', 'S3': 'UNTRACEABLE', 'S4': 'CONTRADICTED'}
+PASS T08 diagnosis: the seeded draft's defects found mechanically (missing fields + correction_b mismatch) — {('evidence', 'missing'), ('fixtures_passed', 'missing'), ('results_sha256', 'missing'), ('correction_b', 'value mismatch')}
+PASS C3-C1 transcription: subset step ids and types match the pinned tree text exactly
+PASS C3-B7 lane rule: 3rd INVALIDATED-INFRASTRUCTURE stops the run (LANE_FAILURE); later trees never trigger — {'T02': 'INVALIDATED-INFRASTRUCTURE', 'T06': 'INVALIDATED-INFRASTRUCTURE', 'T09/FR-A': 'INVALIDATED-INFRASTRUCTURE'}
+PASS C3-B10 partial record (lane): chain verifies to the terminal event; nothing after RUN_STOPPED — 76 events, chain intact
+PASS C3-B6 tree budget: T05 closes STOPPED (TREE_TIMEOUT); the run continues and T09 completes — {'T05': 'STOPPED', 'T09/FR-VALID': 'COMPLETED'}
+PASS C3-B9/B10 run stop: open tree INCOMPLETE, RUN_STOPPED terminal and final, chain verifies, unrun steps absent — {'T05': 'INCOMPLETE'}
+PASS C3-B8 integrity: snapshot mismatch at the next TREE_TRIGGERED stops the run; the completed tree stands
+PASS C3-A7 pre-flight: a mismatched pin refuses the run; no record is opened
+
+29/29 PASS
+BATCH3 EXIT: 0
+ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216  /srv/nemotron-pilot/batch3/work/pilot_record.py
+97bbbcd6a48fa1eaa3e7c2b575f347adfac8fa9e3018930a41c1c47b7c3c0b0f  /srv/nemotron-pilot/batch3/work/pilot_driver.py
+d23f35f660ee4967039c56726b8f4d3d416adf265d109e67190a0dc0603e29ec  /srv/nemotron-pilot/batch3/work/pilot_trees.json
+465d325a53f7ef57eb5da9074e59cc6e5413978834cd86820fb88291a6b6cae9  /srv/nemotron-pilot/batch3/work/stub_subject.py

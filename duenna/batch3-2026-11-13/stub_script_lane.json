@@ -1,0 +1,1 @@
+{"calls":{"T02|T02-STEP-03|1":{"detail":"scripted lane failure 1 of 3","kind":"adapter_failure"},"T06|T06-STEP-E|1":{"detail":"scripted lane failure 2 of 3","kind":"adapter_failure"},"T09/FR-A|T09-STEP-03|1":{"detail":"scripted lane failure 3 of 3","kind":"adapter_failure"}},"default":{"kind":"output","raw_output":""},"stub_script":"STUB-SCRIPT-LANE-01"}
