@@ -1,0 +1,11 @@
+C4-0c OPERATOR INSTALL EVIDENCE — Batch 4 production launcher
+date_utc: 2026-11-14T21:57:21Z
+source: launcher-c3.c sha256=001543f39b4d557f1bd157209a316c38104d4f7f37a42b6fab8ad664894de0de
+binary_built_sha256: 9ea9b615a22bc7ea035d375fd3dd17c8fb5c7e8cdc9861a152882e382a637722
+operation: install -m 0755 launcher-prod /srv/nemotron-pilot/launcher
+operation: chown root:pilot-supervisor /srv/nemotron-pilot/launcher
+operation: chmod 4710 /srv/nemotron-pilot/launcher
+os_readback: /srv/nemotron-pilot/launcher owner=root group=pilot-supervisor mode=4710
+installed_binary_sha256: 9ea9b615a22bc7ea035d375fd3dd17c8fb5c7e8cdc9861a152882e382a637722
+harness_entry: /srv/nemotron-pilot/harness/pilot-harness (root:root 755)
+supervisor_programme: /srv/nemotron-pilot/supervisor/pilot_supervisor.py (d8b4316a8aff51b5b682937cd16f313642abd554de98b8e352200dfbe0e462f0)

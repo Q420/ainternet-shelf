@@ -1,0 +1,21 @@
+{"at_utc":"2026-11-14T22:05:39Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31642,"mode":493,"path":"/srv/nemotron-pilot/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"B4FDS-20261114-004","seq":1}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"LAUNCHER_SPAWNED","launcher_pid":62781,"run_id":"B4FDS-20261114-004","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"STATE","run_id":"B4FDS-20261114-004","seq":3,"state":"S0"}
+{"at_utc":"2026-11-14T22:05:39Z","expected_supervisor_pid":62777,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"B4FDS-20261114-004","seq":4}
+{"ack_code":0,"at_utc":"2026-11-14T22:05:39Z","child_pid":62782,"claimed_start_time":13203104,"fdinfo_target":62782,"kind":"HANDOFF_VALIDATION","observed_ppid":62781,"observed_start_time":13203104,"readiness":"NOT_OBSERVED","run_id":"B4FDS-20261114-004","seq":5}
+{"ack_code":0,"at_utc":"2026-11-14T22:05:39Z","kind":"HANDOFF_ACK_SENT","run_id":"B4FDS-20261114-004","seq":6}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"GATE_READY","run_id":"B4FDS-20261114-004","seq":7}
+{"at_utc":"2026-11-14T22:05:39Z","comparison":"PASS","failure":null,"kind":"LAUNCH_EVIDENCE","path":"/srv/nemotron-pilot/supervisor/launch-evidence/B4FDS-20261114-004.launch-evidence.json","run_id":"B4FDS-20261114-004","seq":8}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"PRE_RELEASE_GUARD","outcome":"NOT_OBSERVED","run_id":"B4FDS-20261114-004","seq":9}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"RELEASE_SENT","run_id":"B4FDS-20261114-004","seq":10}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"GATE_ACTUATED","run_id":"B4FDS-20261114-004","seq":11}
+{"at_utc":"2026-11-14T22:05:39Z","event_sha_match":true,"genesis_in_file":"9da31b730ce13aa184ec051e852c1bc4f8aaf570520982a940d05af40450a3ea","genesis_match":true,"genesis_recomputed":"9da31b730ce13aa184ec051e852c1bc4f8aaf570520982a940d05af40450a3ea","kind":"START_SELF_COMPUTATION","run_id":"B4FDS-20261114-004","seq":12}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"ISSUANCE","receipt_kind":"START","receipt_path":"/srv/nemotron-pilot/commitments/B4FDS-20261114-004.start.json","receipt_sha256":"11272a99dca064376cb676ad2b76e301ad02edecb956545f973824a0635513b4","run_id":"B4FDS-20261114-004","seq":13}
+{"at_utc":"2026-11-14T22:05:39Z","exit_code":0,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":0,"run_id":"B4FDS-20261114-004","seq":14,"signal":null,"signalled":false}
+{"at":"2026-11-14T22:05:39Z","at_utc":"2026-11-14T22:05:39Z","child_pid":62782,"kind":"TERMINATION_OBSERVED","run_id":"B4FDS-20261114-004","seq":15,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"B4FDS-20261114-004","seq":16,"source":"channel EOF (drained)","state_at_observation":"S7"}
+{"accepted":true,"at_utc":"2026-11-14T22:05:39Z","bytes":10,"child_pid":62782,"classification":"ACCEPT","decode":{"exit_code":0,"kind":"exited"},"kind":"STATUS_RECORD","raw_word":0,"run_id":"B4FDS-20261114-004","seq":17,"word_valid":true}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"STATE","run_id":"B4FDS-20261114-004","seq":18,"state":"S9","terminal_facts":{"pidfd_termination_observed":true,"status_child_pid":62782,"status_word":0}}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"STATUS_ACK_OUTCOME","outcome":"STATUS_ACK_UNDELIVERABLE","run_id":"B4FDS-20261114-004","seq":19}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"ISSUANCE","receipt_kind":"TERMINAL","receipt_path":"/srv/nemotron-pilot/commitments/B4FDS-20261114-004.terminal.json","receipt_sha256":"df67ec32ef886715d5e02302498350c99f89e6794c820ed06ac95cd568150dee","run_id":"B4FDS-20261114-004","seq":20}
+{"at_utc":"2026-11-14T22:05:39Z","kind":"ATTEMPT_CLOSED","outcome":"S9_CLOSED","run_id":"B4FDS-20261114-004","seq":21,"state":"S9"}

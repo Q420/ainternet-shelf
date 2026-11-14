@@ -1,0 +1,165 @@
+{
+ "records": [
+  {
+   "record": "B4CRASH-20261114-101.launch-evidence.json",
+   "run_id": "B4CRASH-20261114-101",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4FALSE-20261114-101.launch-evidence.json",
+   "run_id": "B4FALSE-20261114-101",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4FDS-20261114-001.launch-evidence.json",
+   "run_id": "B4FDS-20261114-001",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4FDS-20261114-002.launch-evidence.json",
+   "run_id": "B4FDS-20261114-002",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4FDS-20261114-003.launch-evidence.json",
+   "run_id": "B4FDS-20261114-003",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4FDS-20261114-004.launch-evidence.json",
+   "run_id": "B4FDS-20261114-004",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4INVOKE-20261114-001.launch-evidence.json",
+   "run_id": "B4INVOKE-20261114-001",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4SMOKE-20261114-001.launch-evidence.json",
+   "run_id": "B4SMOKE-20261114-001",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4VAULT-20261114-001.launch-evidence.json",
+   "run_id": "B4VAULT-20261114-001",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  },
+  {
+   "record": "B4VAULT-20261114-002.launch-evidence.json",
+   "run_id": "B4VAULT-20261114-002",
+   "recorded_comparison": "PASS",
+   "rederived_comparison": "PASS",
+   "checks": {
+    "both_processes": true,
+    "reader_is_supervisor": true,
+    "binding_fields": true,
+    "proc_paths_exact": true,
+    "raw_masks_all_zero": true,
+    "expected_all_zero": true,
+    "comparison_agrees": true
+   },
+   "ok": true
+  }
+ ],
+ "all_ok": true
+}

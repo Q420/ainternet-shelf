@@ -1,0 +1,16 @@
+{
+ "harness": {
+  "path": "/srv/nemotron-pilot/batch4/ix-test/link/pilot-harness",
+  "resolved": "/srv/nemotron-pilot/batch4/ix-test/genuine/pilot-harness",
+  "dev": 2096,
+  "ino": 31863,
+  "mode": 493
+ },
+ "interpreter": {
+  "path": "/usr/bin/python3",
+  "resolved": "/usr/bin/python3.14",
+  "dev": 2096,
+  "ino": 11194,
+  "mode": 493
+ }
+}

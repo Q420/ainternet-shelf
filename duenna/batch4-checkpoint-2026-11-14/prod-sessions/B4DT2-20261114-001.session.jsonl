@@ -1,0 +1,15 @@
+{"at_utc":"2026-11-14T22:02:36Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31642,"mode":493,"path":"/srv/nemotron-pilot/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"B4DT2-20261114-001","seq":1}
+{"at_utc":"2026-11-14T22:02:36Z","kind":"LAUNCHER_SPAWNED","launcher_pid":62510,"run_id":"B4DT2-20261114-001","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-14T22:02:36Z","kind":"STATE","run_id":"B4DT2-20261114-001","seq":3,"state":"S0"}
+{"at_utc":"2026-11-14T22:02:36Z","expected_supervisor_pid":62499,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"B4DT2-20261114-001","seq":4}
+{"ack_code":0,"at_utc":"2026-11-14T22:02:36Z","child_pid":62513,"claimed_start_time":13184894,"fdinfo_target":62513,"kind":"HANDOFF_VALIDATION","observed_ppid":62510,"observed_start_time":13184894,"readiness":"NOT_OBSERVED","run_id":"B4DT2-20261114-001","seq":5}
+{"ack_code":0,"at_utc":"2026-11-14T22:02:36Z","kind":"HANDOFF_ACK_SENT","run_id":"B4DT2-20261114-001","seq":6}
+{"at_utc":"2026-11-14T22:02:36Z","kind":"DEMO_DELAY","point":"settle","run_id":"B4DT2-20261114-001","seconds":5,"seq":7}
+{"at":"2026-11-14T22:02:37Z","at_utc":"2026-11-14T22:02:37Z","child_pid":62513,"kind":"TERMINATION_OBSERVED","run_id":"B4DT2-20261114-001","seq":8,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-14T22:02:42Z","kind":"GATE_READY_INERT","note":"termination already observed","run_id":"B4DT2-20261114-001","seq":9}
+{"at_utc":"2026-11-14T22:02:42Z","class":"T","delivered":true,"kind":"ABORT_SENT","reason":2,"reason_name":"CHILD_TERMINATED_PRE_RELEASE","run_id":"B4DT2-20261114-001","seq":10}
+{"at_utc":"2026-11-14T22:02:42Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"B4DT2-20261114-001","seq":11,"source":"channel EOF (drained)","state_at_observation":"S4"}
+{"at_utc":"2026-11-14T22:02:42Z","exit_code":0,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":0,"run_id":"B4DT2-20261114-001","seq":12,"signal":null,"signalled":false}
+{"accepted":true,"at_utc":"2026-11-14T22:02:42Z","bytes":10,"child_pid":62513,"classification":"ACCEPT","decode":{"core_dump":false,"kind":"signalled","signal":9},"kind":"STATUS_RECORD","raw_word":9,"run_id":"B4DT2-20261114-001","seq":13,"word_valid":true}
+{"at_utc":"2026-11-14T22:02:42Z","kind":"CLASS_T_OUTCOME","outcome":"PRE_RELEASE_TERMINATED","run_id":"B4DT2-20261114-001","seq":14}
+{"at_utc":"2026-11-14T22:02:42Z","kind":"ATTEMPT_CLOSED","outcome":"PRE_RELEASE_TERMINATED","run_id":"B4DT2-20261114-001","seq":15,"state":"S4"}

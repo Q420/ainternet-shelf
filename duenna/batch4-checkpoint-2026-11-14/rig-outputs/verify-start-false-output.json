@@ -1,0 +1,25 @@
+{
+ "record": "checkpoint-evidence/artefacts/B4FALSE-20261114-101.run-record.jsonl",
+ "receipt": "checkpoint-evidence/receipts/B4FALSE-20261114-101.start.json",
+ "checks": {
+  "genesis_is_prev_of_first_event": true,
+  "genesis_recomputed_from_pin_block": true,
+  "pinned_input_block_sha256_recomputed": true,
+  "run_started_event_sha256_recomputed": true,
+  "run_started_event_sha256_is_in_file": true
+ },
+ "pin_block_payload": {
+  "pins": [
+   {
+    "path": "stub/subject.json",
+    "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+   },
+   {
+    "path": "stub/trees.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000002"
+   }
+  ],
+  "stub": true,
+  "subject": "STUB (no subject call, C4-D2)"
+ }
+}

@@ -1,0 +1,8 @@
+{
+ "mode": "negative",
+ "run_id": "B4NEG-20261114-001",
+ "hazard_path": "/srv/nemotron-pilot/batch4/checkpoint-work/hazard-file.txt",
+ "hazard_sha256_before": "21818782f440bf91975a65fabf3d1d5c4e46f522332fe491a609fd7fb073f959",
+ "protected_path": "/srv/nemotron-pilot/batch4/checkpoint-work/hazard-file.txt",
+ "protected_sha256_before": "21818782f440bf91975a65fabf3d1d5c4e46f522332fe491a609fd7fb073f959"
+}

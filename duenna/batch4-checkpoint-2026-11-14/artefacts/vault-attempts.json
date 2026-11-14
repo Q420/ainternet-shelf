@@ -1,0 +1,22 @@
+[
+ {
+  "op": "create",
+  "target": "/srv/nemotron-pilot/commitments/probe-vault.tmp",
+  "result": "EACCES"
+ },
+ {
+  "op": "overwrite",
+  "target": "/srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json",
+  "result": "EACCES"
+ },
+ {
+  "op": "append_issuance",
+  "target": "/srv/nemotron-pilot/commitments/issuance-record.jsonl",
+  "result": "EACCES"
+ },
+ {
+  "op": "delete",
+  "target": "/srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json",
+  "result": "EACCES"
+ }
+]

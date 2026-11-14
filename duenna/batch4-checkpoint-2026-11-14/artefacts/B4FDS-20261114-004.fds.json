@@ -1,0 +1,38 @@
+{
+ "retained": {
+  "0": {
+   "target": "/dev/null",
+   "accmode": 0,
+   "append": false
+  },
+  "1": {
+   "target": "/srv/nemotron-pilot/supervisor/logs/B4FDS-20261114-004.stdio.log",
+   "accmode": 1,
+   "append": true
+  },
+  "2": {
+   "target": "/srv/nemotron-pilot/supervisor/logs/B4FDS-20261114-004.stdio.log",
+   "accmode": 1,
+   "append": true
+  },
+  "3": {
+   "error": "ENOENT"
+  }
+ },
+ "write_probes": {
+  "3": "EBADF",
+  "4": "EBADF",
+  "5": "EBADF",
+  "6": "EBADF",
+  "7": "EBADF",
+  "8": "EBADF",
+  "9": "EBADF",
+  "10": "EBADF",
+  "11": "EBADF",
+  "12": "EBADF",
+  "13": "EBADF",
+  "14": "EBADF",
+  "15": "EBADF",
+  "16": "EBADF"
+ }
+}
