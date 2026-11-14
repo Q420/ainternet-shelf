@@ -1,0 +1,48 @@
+===== BATCH 2 CORRECTION — ORIGINAL SUITE (35) =====
+PASS shelf_lookup: production section served with its recorded hash
+PASS shelf_lookup: pilot-manifest doc served
+PASS shelf_lookup: unknown section is NOT FOUND, not an exception
+PASS source_extract: EXTRACTED on a production section, value == ground truth — got 38
+PASS registry: entry exists, bound to run context, unconsumed
+PASS G1 S3 (first presentation): genuine EXTRACTED inserts
+PASS registry: consumption marked exactly once
+PASS G1 S3 (second presentation): refused ALREADY_CONSUMED, no value
+PASS G1 S1: guessable next-sequence id refused NO_ISSUANCE, no value — presented op-7
+PASS G1 S1 (far-forged id): refused NO_ISSUANCE
+PASS source_extract: undeclared field is NOT FOUND by declared design
+PASS G1 S2: genuine NOT FOUND result refused NOT_EXTRACTED, no value
+PASS source_extract: harness_sha256 EXTRACTED == ground truth
+PASS context: presentation from the wrong step refused CONTEXT_MISMATCH
+PASS SE-2: a caller-built dict is refused MALFORMED_PRESENTATION, never accepted
+PASS verify_field: value verified against EXPECTED-01
+PASS verify_field: wrong value does not verify
+PASS verify_field: value verified against the ledgered extraction
+PASS receipt_worksheet: FR-A -> REJECT from the data alone
+PASS receipt_worksheet: FR-B -> REJECT from the data alone
+PASS receipt_worksheet: FR-C -> REJECT from the data alone
+PASS receipt_worksheet: FR-VALID -> CLOSE from the data alone
+PASS G1 S5: two valid matches recorded AMBIGUOUS, every candidate, no value
+PASS G1 S5: AMBIGUOUS insert refused NOT_EXTRACTED, no value
+PASS four outcomes at the tools layer: TYPE FAILURE, no value
+PASS G1 S4 setup: genuine EXTRACTED before perturbation
+PASS G1 S4: insert against a perturbed snapshot refused SNAPSHOT_MISMATCH, no value
+PASS logging contract (record 1): every invocation has its pair — 20 invocations
+PASS logging contract (record 1): LEDGER_ENTRY count == genuine inserts — 1
+PASS logging contract (record 1): every refusal carries its INSERT_REFUSED event — 6
+PASS logging contract (record 2): every invocation has its pair — 5 invocations
+PASS logging contract (record 2): LEDGER_ENTRY count == genuine inserts — 0
+PASS logging contract (record 2): every refusal carries its INSERT_REFUSED event — 2
+PASS registry property 5 (record 1): state reconstructable from the record alone
+PASS registry property 5 (record 2): state reconstructable from the record alone
+
+35/35 PASS
+ORIGINAL SUITE EXIT: 0
+===== BATCH 2 CORRECTION — NEW CHECKS (4) =====
+PASS correction HIGH: otherwise-valid receipt with a wrong artifact is REJECTED — decision=REJECT
+PASS correction HIGH: the artifact is the ONLY failing check — reasons=['artifact mismatch']
+PASS correction HIGH (control): unmutated FR-VALID staged identically still CLOSEs — decision=CLOSE
+PASS correction MEDIUM: recomputation under a different rule_id refused RULE_MISMATCH, ledger count unmoved — reason=RULE_MISMATCH, ledger=0
+
+4/4 PASS
+CORRECTION EXIT: 0
+de9218316ba789155c74786112e5fea2635952841ffe293385ee823b72f13a8c  /srv/nemotron-pilot/batch2/correction/pilot_tools.py
