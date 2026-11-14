@@ -1,0 +1,13 @@
+== Batch 0 probe evidence verification 2026-11-14T06:23:48Z ==
+-- frozen probe artefacts, hash-checked against the Batch 0 pins --
+64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53  /srv/nemotron-pilot/freeze/probe/setuid_probe.c
+30dae56e32ab4d671f92e1306c76fc526d94aecea76f84a0219d91410db9fe56  /srv/nemotron-pilot/freeze/probe/probe-output.txt
+NOTE: freeze/probe/probe-output.txt is the ORIGINAL Batch 0 record,
+taken on the first VM: it records the FAILED probe (F-1, NoNewPrivs).
+It is preserved as history and is NOT the environment-of-record result.
+-- environment-of-record probe evidence (this room) --
+acceptance probe transcript: shelf 844439bc (setuid elevation incl.)
+Batch 0 re-run transcript: shelf bundle 894bde0b (in-room execution:
+pilot-supervisor ruid 999 euid 0 PRIVILEGED WINDOW OBSERVED;
+pilot-harness invocation refused). Alex C4-0d acceptance relies on
+the re-run transcript for the successful execution.
