@@ -1,0 +1,176 @@
+--- bundle-c0/launcher.c	2026-11-14 03:47:33.278592925 -0700
++++ launcher.c	2026-11-14 04:04:47.755713440 -0700
+@@ -74,7 +74,25 @@
+  * ancillary rules stand in full wherever a record is
+  * observable. The former classifier function and its
+  * bounded watch are deleted.
+- */
++ *
++ * C0 Correction 1 (F-3; Ben's ruling BEN-RULING-C0-DRAIN-
++ * 2026-11-14, answering Alex's C0 adjudication): the exit
++ * path drains the channel. The STATUS-loss probe showed a
++ * process exiting with unread channel records can lose its
++ * final STATUS to the resulting reset (20/20 for a
++ * non-concurrent reader), so before exit — on every path,
++ * after the protocol is complete — the launcher receives
++ * and discards whatever records remain queued until the
++ * queue is empty of records (the section A.2 closure
++ * triple is the emptiness test). Drained records are never
++ * examined, classified or acted on; a descriptor arriving
++ * with one is closed on sight, never installed. The drain
++ * is teardown only (plan A.6): it produces no
++ * classification and changes no exit route; it exists so
++ * the exit cannot reset away the STATUS the contract
++ * requires (Rev 8 section A.2, Stage 6 closure outcome).
++ * NQ5' asserts the strong form again: STATUS arrives.
++ * ============================================================ */
+ 
+ #define _GNU_SOURCE
+ #include <arpa/inet.h>
+@@ -209,6 +227,16 @@
+     if (m > 0) { ssize_t w = write(fd, line, (size_t)m); (void)w; }
+     close(fd);
+ }
++static void hook_note_drained(int records, int fds) {
++    if (records <= 0) return;
++    int fd = open("/srv/nemotron-pilot/batch4/test-hooks/closed-fds.log",
++                  O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0600);
++    if (fd < 0) return;
++    char line[48];
++    int m = snprintf(line, sizeof line, "drained %d %d\n", records, fds);
++    if (m > 0) { ssize_t w = write(fd, line, (size_t)m); (void)w; }
++    close(fd);
++}
+ static int hook_fail_recvmsg(void) {
+     const char *e = getenv("PILOT_HOOK_FAIL_RECVMSG_AT");
+     if (!e) return 0;
+@@ -242,6 +270,7 @@
+ #define hook_stall_check() hook_stall_ms("PILOT_HOOK_STALL_CHECK_MS")
+ #else
+ #define hook_note_closed(count) ((void)0)
++#define hook_note_drained(records, fds) ((void)0)
+ #define hook_fail_fionread() 0
+ #define hook_fail_peek() 0
+ #define hook_stall_recv()  ((void)0)
+@@ -438,6 +467,84 @@
+     return CLS_ERROR;  /* unreachable: collect() closes only on an entry */
+ }
+ 
++/* Teardown drain (C0 Correction 1, F-3; Ben's ruling).
++ * Runs after the protocol is complete, before exit, on
++ * every exit path: receive-and-discard whatever records
++ * remain queued until the queue is empty of records, so
++ * the exit leaves nothing unread for the kernel to reset
++ * against the final STATUS. Emptiness is the section A.2
++ * closure triple, reused as an observation only. Drained
++ * records are never examined, classified or acted on; a
++ * descriptor arriving with one is closed on sight through
++ * the receipt ancillary accounting and is never installed.
++ * Best effort by design: any observation or receive
++ * failure simply ends the drain; teardown never hangs,
++ * never retries the protocol and never changes an exit
++ * code. No-ops when fd 3 is not the SEQPACKET channel. */
++static void teardown_drain(void) {
++    int stype = 0;
++    socklen_t sl = sizeof stype;
++    if (getsockopt(CHANNEL_FD, SOL_SOCKET, SO_TYPE, &stype, &sl) != 0) return;
++    if (stype != SOCK_SEQPACKET) return;
++    int records = 0, fds_closed = 0;
++    uint8_t buf[MAX_PACKET];
++    char cbuf[CMSG_SPACE(sizeof(int) * 8)];
++    for (int i = 0; i < 1024; i++) {
++        struct iovec iov = { buf, sizeof buf };
++        struct msghdr mh;
++        memset(&mh, 0, sizeof mh);
++        mh.msg_iov = &iov;
++        mh.msg_iovlen = 1;
++        mh.msg_control = cbuf;
++        mh.msg_controllen = sizeof cbuf;
++        ssize_t n;
++        do { n = recvmsg(CHANNEL_FD, &mh, MSG_DONTWAIT); }
++        while (n < 0 && errno == EINTR);
++        if (n < 0) {
++            if (errno != EAGAIN) break;
++            /* EAGAIN says no record is receivable this instant;
++             * keep draining only on a demonstrable race — bytes
++             * queued between the receive and this check. */
++            int avail = -1;
++            if (ioctl(CHANNEL_FD, FIONREAD, &avail) == 0 && avail > 0)
++                continue;
++            break;
++        }
++        int closed = 0;
++        for (struct cmsghdr *c = CMSG_FIRSTHDR(&mh); c;
++             c = CMSG_NXTHDR(&mh, c)) {
++            if (c->cmsg_level == SOL_SOCKET &&
++                c->cmsg_type == SCM_RIGHTS) {
++                int cnt = (int)((c->cmsg_len - CMSG_LEN(0)) /
++                                sizeof(int));
++                int *fds = (int *)CMSG_DATA(c);
++                for (int j = 0; j < cnt; j++) {
++                    close(fds[j]);
++                    closed++;
++                }
++            }
++        }
++        if (closed > 0) {
++            hook_note_closed(closed);
++            fds_closed += closed;
++        }
++        if (n == 0 && closed == 0) {
++            /* A zero with nothing behind it is indistinguishable
++             * from the empty-queue phantom (probe sequence E):
++             * when the closure triple says the queue is empty of
++             * records, the drain is done and the zero is not
++             * counted — the drained count is a floor, never an
++             * over-claim. */
++            int obs = closure_check();
++            if (obs == OBS_CLOSURE || obs == OBS_FAIL) break;
++            /* OBS_CONTINUE / OBS_ANC_HEAD: a real zero, with
++             * more records queued behind it. */
++        }
++        records++;
++    }
++    hook_note_drained(records, fds_closed);
++}
++
+ /* Validate framing shared by all packets: code + zero flags,
+  * exact length, unused bytes zero. */
+ static int frame_ok(const uint8_t *b, ssize_t n, uint8_t code,
+@@ -492,12 +599,14 @@
+  * dispatch on the flags; transmit at most the one STATUS;
+  * the launcher's work for the attempt then ends. */
+ static _Noreturn void abort_receipt_exit(void) {
+-    if (g_sent) _exit(0);
++    if (g_sent) { teardown_drain(); _exit(0); }
+     if (!g_reaped) {
+-        if (ensure_reaped() != 0) _exit(4); /* no valid word: no STATUS */
++        if (ensure_reaped() != 0) { teardown_drain(); _exit(4); }
++        /* no valid word: no STATUS */
+     }
+     g_sent = true;
+     (void)send_status();
++    teardown_drain();
+     _exit(0);
+ }
+ 
+@@ -790,7 +899,7 @@
+ /* ---- main ---------------------------------------------------- */
+ 
+ #ifndef PILOT_UNIT_TESTS
+-int main(int argc, char **argv) {
++static int launcher_run(int argc, char **argv) {
+     /* Point 2, signal establishment — before anything else. */
+     struct sigaction sa;
+     memset(&sa, 0, sizeof sa);
+@@ -1072,4 +1181,10 @@
+     if (!g_sent) { g_sent = true; (void)send_status(); }
+     return 0;
+ }
++
++int main(int argc, char **argv) {
++    int rc = launcher_run(argc, argv);
++    teardown_drain();
++    return rc;
++}
+ #endif /* PILOT_UNIT_TESTS */
