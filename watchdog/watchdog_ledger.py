@@ -61,8 +61,16 @@ JOB_STATES = {"active", "resolved", "retired"}
 
 
 def _job_hash(job):
+    """Hash of a job record EXCLUDING assigned_turn_index
+    (owner ruling on verdict M3, 2026-11-15, for contract
+    v1.2): the index is a set-once field — §2 fills it after
+    activation, so it is pinned separately (see
+    _pin_active_jobs) and the rest of the record is pinned
+    whole."""
     import hashlib
-    canon = json.dumps(job, sort_keys=True).encode()
+    body = {k: v for k, v in job.items()
+            if k != "assigned_turn_index"}
+    canon = json.dumps(body, sort_keys=True).encode()
     return hashlib.sha256(canon).hexdigest()
 
 
@@ -171,13 +179,27 @@ def _pin_active_jobs(jobs, state_dir):
         if job["state"] != "active":
             continue
         h = _job_hash(job)
-        if jid in pins and pins[jid] != h:
-            raise RegistryError(
-                f"active job {jid!r} record changed since it "
-                f"was pinned — active records are immutable "
-                f"(§2); a change is a new job_id")
-        if jid not in pins:
-            pins[jid] = h
+        ati = job.get("assigned_turn_index")
+        pin = pins.get(jid)
+        if isinstance(pin, str):  # pre-v1.2 pin format
+            pin = {"record": pin, "ati": None}
+        if pin is not None:
+            if pin["record"] != h:
+                raise RegistryError(
+                    f"active job {jid!r} record changed since "
+                    f"it was pinned — active records are "
+                    f"immutable (§2); a change is a new job_id")
+            if pin.get("ati") is not None and ati != pin["ati"]:
+                raise RegistryError(
+                    f"active job {jid!r}: assigned_turn_index "
+                    f"is set-once — pinned at {pin['ati']}, "
+                    f"registry now says {ati}")
+            if pin.get("ati") is None and ati is not None:
+                pin = {"record": h, "ati": ati}
+                pins[jid] = pin
+                changed = True
+        else:
+            pins[jid] = {"record": h, "ati": ati}
             changed = True
     if changed:
         _atomic_write_json(pin_path, pins)
@@ -263,6 +285,14 @@ def validate_packet(packet):
 
 class Ledger:
     def __init__(self, state_dir, config=None, registry=None):
+        # The registry is REQUIRED (verdict M4): the M2 packet
+        # check must never be skippable on a production path,
+        # so a ledger cannot be constructed without the loaded
+        # registry it checks against.
+        if registry is None:
+            raise ValueError(
+                "Ledger requires the loaded registry — the "
+                "packet-vs-registry check (M2) is not optional")
         self.dir = state_dir
         os.makedirs(self.dir, exist_ok=True)
         self.path = os.path.join(self.dir, "ledger.json")
@@ -270,8 +300,6 @@ class Ledger:
         self.config = dict(DEFAULT_CONFIG)
         if config:
             self.config.update(config)
-        # The loaded registry (§2), when supplied, is checked
-        # against every packet at record time (verdict M2).
         self.registry = registry
         self.state = self._load()
 
@@ -338,22 +366,22 @@ class Ledger:
         validate_packet(packet)
         # M2 (verdict): the packet must match the registry —
         # the job exists, is active, and seat/window are as
-        # registered (§5: "as registry").
-        if self.registry is not None:
-            job = self.registry.get(packet["job_id"])
-            if job is None:
-                raise PacketError(
-                    f"unknown job_id: {packet['job_id']!r}")
-            if job["state"] != "active":
-                raise PacketError(
-                    f"job {packet['job_id']!r} is not active")
-            if packet["seat_id"] != job["seat_id"]:
-                raise PacketError(
-                    "packet seat_id does not match the registry")
-            if packet["window_id"] != job["conversation_id"]:
-                raise PacketError(
-                    "packet window_id does not match the "
-                    "registry")
+        # registered (§5: "as registry"). The registry is a
+        # required constructor argument (M4), so this check
+        # always runs.
+        job = self.registry.get(packet["job_id"])
+        if job is None:
+            raise PacketError(
+                f"unknown job_id: {packet['job_id']!r}")
+        if job["state"] != "active":
+            raise PacketError(
+                f"job {packet['job_id']!r} is not active")
+        if packet["seat_id"] != job["seat_id"]:
+            raise PacketError(
+                "packet seat_id does not match the registry")
+        if packet["window_id"] != job["conversation_id"]:
+            raise PacketError(
+                "packet window_id does not match the registry")
         # M1 (verdict): the ledger_key is never taken on
         # faith — it is derived from the packet's own fields
         # (§5 formula, turn_key = first candidate's id) and

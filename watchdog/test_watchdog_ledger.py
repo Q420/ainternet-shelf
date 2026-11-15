@@ -84,9 +84,14 @@ def packet(job_id="job-a", turn="turn-1", detected=None):
     }
 
 
+def default_registry():
+    return wl.load_registry(registry_file(
+        [job("job-a"), job("job-b")]))
+
+
 def fresh_ledger(config=None):
     d = tempfile.mkdtemp()
-    return wl.Ledger(d, config), d
+    return wl.Ledger(d, config, registry=default_registry()), d
 
 
 # ---------------- registry (§2) ----------------
@@ -131,7 +136,7 @@ outcome3, _ = led.record_event(packet(turn="turn-9"))
 check("ledger, ack lock blocks second event (§13)",
       outcome3, "locked")
 
-led2 = wl.Ledger(d)  # restart on the same state dir
+led2 = wl.Ledger(d, registry=default_registry())  # restart
 check("ledger, restart re-offers unacknowledged",
       [e["ledger_key"] for e in led2.unacknowledged()],
       [p1["ledger_key"]])
@@ -220,7 +225,7 @@ check("streak, ERROR holds (§13 judge-error row)",
       led8.apply_judgement("job-a", "t2", "ERROR")["count"], 1)
 check("streak, second YES reaches two",
       led8.apply_judgement("job-a", "t2", "YES")["count"], 2)
-led8b = wl.Ledger(d8)
+led8b = wl.Ledger(d8, registry=default_registry())
 check("streak, persisted across restart",
       led8b.streak("job-a")["count"], 2)
 check("streak, NO resets",
@@ -312,6 +317,33 @@ led11.raise_alerts(now=t0 + 3601)
 ops11 = open(os.path.join(d11, "ops-log.jsonl")).read()
 check("S4, alert repeats after the interval",
       ops11.count("alert_due"), 2)
+
+# M4: the registry is required — the M2 check is never
+# skippable.
+check_raises("M4, ledger without registry refused",
+             ValueError,
+             lambda: wl.Ledger(tempfile.mkdtemp()))
+
+# M3: assigned_turn_index is set-once — filling it after
+# activation is legitimate; changing it afterwards is not.
+sd3 = tempfile.mkdtemp()
+mj = job("job-a")
+del mj["assigned_turn_index"]
+rp3 = registry_file([mj])
+wl.load_registry(rp3, state_dir=sd3)  # pin created, no index
+with open(rp3) as f:
+    mdoc = json.load(f)
+mdoc["jobs"][0]["assigned_turn_index"] = 7
+with open(rp3, "w") as f:
+    json.dump(mdoc, f)
+check("M3, filling the index after activation loads",
+      sorted(wl.load_registry(rp3, state_dir=sd3)), ["job-a"])
+mdoc["jobs"][0]["assigned_turn_index"] = 9
+with open(rp3, "w") as f:
+    json.dump(mdoc, f)
+check_raises("M3, changing a set index fails load",
+             wl.RegistryError,
+             lambda: wl.load_registry(rp3, state_dir=sd3))
 
 # S5: assigned_turn_index is filled on confirmation, so a
 # job may be registered without it.
