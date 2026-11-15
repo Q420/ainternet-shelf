@@ -18,9 +18,12 @@ Verified in code:
   stale_window_hold ops entry.
 - S-S3-5: a gapped or partly-sequenced event_seq file is refused.
 
-Suites as stated: detector 59 fixtures, 0 failed (the note's 91 counts the
-ledger suite run through it; ledger suite run here, 59 pass as reported
-for the detector module). Guard and waker per the note.
+Suites, as run here: the detector suite produced 84 PASS lines and 0 FAIL
+before stopping at the corpus replay, which reads watchdog/events/alex.jsonl.
+That file is not on the shelf, so the replay could not run here. The note's
+91 is therefore not verified by this review. The ledger suite ran here: 59
+fixtures, 0 failed. Guard and waker are as stated in the note.
+Ask: file events/alex.jsonl on the shelf, or state where the replay is run.
 
 ## Should fix (before live): what "stale" measures.
 
