@@ -29,13 +29,13 @@ alec-batch6-package.md
 
 Per house rule 3, every unprovided pin or cross-referenced sub-clause is referenced by its governing document/section or flagged in the Gap & Ambiguity Register below rather than invented.
 
-BATCH 6 — CHUNK SHEET (2026-11-14) — DRAFT FOR REVIEW
+BATCH 6 — CHUNK SHEET (2026-11-14) — APPROVED WITH AMENDMENTS A–B
 
 Drafted in preparation under the Stage 5 Completion Plan (Rule 4 & Rule 5) from the shelf authorities: STAGE5-BUILD-SPEC-22 (pin afae29fb) as amended by Revs 23–26 (STAGE5-BUILD-SPEC-26.md, shelved at 52a73273, CLEARED a3a66137 — specifically §2.4, §3.1, §3.4, §3.5, §3.7, §4 Batch 6, §5 G1–G5, and §7), PILOT-ACCEPTANCE-CRITERIA-04 (sha256 7608d74eef511b59ae59c33d18b299ac050c943ebebc10aeed816e101a822e2e, §§4, 5, 8), PILOT-HARNESS-DESIGN-03 (sha256 b0fca1259c0f6432437535ad92224ad8cd824f71a078d91b7f455182c8df0d04, §§2.6, 4.5, 7), and the Stage 5 Completion Plan (accepted by Alex, 2026-11-14, Block 3 & Rules 1–8). Each chunk is discharged by the Batch 6 checkpoint report line by line.   
 alec-batch6-package.md
 + 2
 
-Status and how this sheet travels. This draft is prepared for Remmy's review and Alex's adjudication under Stage 5 Completion Plan Rule 4 ("Blocks 2 and 3 get their chunk sheets drafted from the spec pin and shelved BEFORE their builds begin; each sheet rides for Alex's approval INSIDE the previous block's checkpoint submission, so sheet approval never costs its own round") and Rule 5 (parallel lanes). Note: per Remmy's status update, Alex cleared Batch 5 on 2026-11-14 (correction 4, C5-17 closed); because Batch 5's checkpoint has already been adjudicated, this sheet requires explicit recorded approval by Alex in the disposition slot below before Batch 6 execution begins.   
+Status and how this sheet travels. This approved sheet records Alex's adjudication under Stage 5 Completion Plan Rule 4 ("Blocks 2 and 3 get their chunk sheets drafted from the spec pin and shelved BEFORE their builds begin; each sheet rides for Alex's approval INSIDE the previous block's checkpoint submission, so sheet approval never costs its own round") and Rule 5 (parallel lanes). Note: per Remmy's status update, Alex cleared Batch 5 on 2026-11-14 (correction 4, C5-17 closed); because Batch 5's checkpoint has already been adjudicated, this sheet requires explicit recorded approval by Alex in the disposition slot below before Batch 6 execution begins.   
 alec-batch6-package.md
 
 DRAFTING AND INCLUSION DO NOT AUTHORISE BATCH 6 TO BEGIN. Batch 6 opens only when BOTH of these hold: (a) Alex approves this sheet, the approval recorded in the disposition slot at the foot of this sheet; and (b) the Batch 5 checkpoint clearance is recorded by PB-ID / pin in C6-0b below (Rev 26 §4 preamble; Completion Plan block order, no interleaving). Batch 6 then runs under Ben's 2026-11-13 build go (Batches 2–6 in order) as Block 3 of the Stage 5 Completion Plan, closing the Stage 5 build before Block 4 (Stage 6 pre-flight) is assembled for Ben.
@@ -377,4 +377,4 @@ alec-batch6-package.md
 Disposition: C6-5 and C6-11 require the pinned stub script(s) to cover all 13 instances end-to-end and exercise the declared fault/retry shapes (well-formed, malformed, refusal-shaped, truncation-shaped, and retry-then-success), leaving the exact per-instance assignment to the pinned stub script inspected at Batch 6 checkpoint.   
 alec-batch6-package.md
 
-— END OF DOCUMENT — 37249 Unicode code points
+— END OF DOCUMENT — 37231 Unicode code points
