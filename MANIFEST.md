@@ -21,6 +21,7 @@ full corpus sweep was shelved the same day.
 | `record/stage0-run-stdout.txt` | 1765950a8b9a1a06f39ddf233d72667f4be47d1b6ed269af708c12f71a98ce05 | Stage 0 raw run output (31 PASS lines + summary) |
 | `record/stage0-results.json` | ad4dc13754c543520dea2b93c80165df85595a18e873438f2d600779e355ce38 | Stage 0 results JSON — byte-identical to the delivered v0.10 results |
 | `record/GATE-REGISTER.md` | c090e221cda2f23eb2188e8a0c6591aee64afdd8ea66b00b6ed1ffe02597195d | The gate & dependency register — what is ready, what is waiting, and what opens each gate |
+| `record/WATCHDOG-STAGE1-CONTRACT-v1.1.md` | 5a83821c229ab52085414d4177fda2c8a318f0e738730264473e5aa44b2c4ec1 | Watchdog Stage 1 contract, FROZEN v1.1 (2026-11-15): structural turn identity, registry rules, event packet, streak, strict judge output, ledger and acknowledgement lock, stale window, dependencies, hosted-NVIDIA judge transport settled, stage order, acceptance table |
 
 ## duenna/ — the specification corpus
 
