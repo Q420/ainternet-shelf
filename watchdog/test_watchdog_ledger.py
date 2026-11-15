@@ -231,5 +231,95 @@ led8b.record_event(packet())
 check("streak, firing consumes the pair",
       led8b.streak("job-a")["count"], 0)
 
+# ---------------- verdict fix round (2026-11-15) ----------------
+
+# M1: the key is derived, never taken on faith; one pair of
+# turns can never produce two events.
+led9, _ = fresh_ledger()
+badkey = packet()
+badkey["ledger_key"] = "job-a|chatgpt|conv-1| forged"
+check_raises("M1, forged ledger_key rejected", wl.PacketError,
+             lambda: led9.record_event(badkey))
+first = packet()
+led9.record_event(first)
+led9.acknowledge(first["ledger_key"])
+replay = packet()
+replay["candidate_turn_ids"] = list(
+    reversed(first["candidate_turn_ids"]))
+replay["ledger_key"] = wl.ledger_key_for(
+    "job-a", "chatgpt", "conv-1",
+    replay["candidate_turn_ids"][0])
+replay["event_id"] = "ev-replay"
+outcome_r, _ = led9.record_event(replay)
+check("M1, same pair new key after ack -> duplicate",
+      outcome_r, "duplicate")
+check("M1, still exactly one event",
+      len(led9.state["events"]), 1)
+
+# M2: packets are checked against the registry.
+reg = wl.load_registry(registry_file(
+    [job("job-a"), job("job-b")]))
+reg["job-b"]["state"] = "retired"
+led10, d10 = fresh_ledger()
+led10 = wl.Ledger(d10, registry=reg)
+check_raises("M2, unknown job refused", wl.PacketError,
+             lambda: led10.record_event(packet(job_id="ghost")))
+wrong_seat = packet()
+wrong_seat["seat_id"] = "this-seat"
+wrong_seat["ledger_key"] = wl.ledger_key_for(
+    "job-a", "this-seat", "conv-1",
+    wrong_seat["candidate_turn_ids"][0])
+check_raises("M2, mismatched seat refused", wl.PacketError,
+             lambda: led10.record_event(wrong_seat))
+check_raises("M2, retired job refused", wl.PacketError,
+             lambda: led10.record_event(packet(job_id="job-b")))
+check("M2, nothing written by refused packets",
+      len(led10.state["events"]), 0)
+ok_outcome, _ = led10.record_event(packet())
+check("M2, matching packet records", ok_outcome, "recorded")
+
+# S2: an active record's hash is pinned across loads.
+sd = tempfile.mkdtemp()
+rp = registry_file([job("job-a"), job("job-b")])
+wl.load_registry(rp, state_dir=sd)
+with open(rp) as f:
+    reg_doc = json.load(f)
+reg_doc["jobs"][0]["declared_precondition"] = "Edited!"
+with open(rp, "w") as f:
+    json.dump(reg_doc, f)
+check_raises("S2, edited active record fails load",
+             wl.RegistryError,
+             lambda: wl.load_registry(rp, state_dir=sd))
+reg_doc["jobs"][0]["declared_precondition"] = "Is it done?"
+reg_doc["jobs"][1]["task"] = "edited retired-side field"
+reg_doc["jobs"][1]["state"] = "retired"
+with open(rp, "w") as f:
+    json.dump(reg_doc, f)
+check("S2, non-active edit does not block load",
+      sorted(wl.load_registry(rp, state_dir=sd)),
+      ["job-a", "job-b"])
+
+# S4: one alert per key per interval.
+led11, d11 = fresh_ledger({"alert_age_s": 3600})
+t0 = time.time()
+led11.record_event(packet(detected=t0 - 7200))
+led11.raise_alerts(now=t0)
+led11.raise_alerts(now=t0 + 10)
+ops11 = open(os.path.join(d11, "ops-log.jsonl")).read()
+check("S4, repeat alert suppressed within interval",
+      ops11.count("alert_due"), 1)
+led11.raise_alerts(now=t0 + 3601)
+ops11 = open(os.path.join(d11, "ops-log.jsonl")).read()
+check("S4, alert repeats after the interval",
+      ops11.count("alert_due"), 2)
+
+# S5: assigned_turn_index is filled on confirmation, so a
+# job may be registered without it.
+noati = job("job-a")
+del noati["assigned_turn_index"]
+check("S5, job without assigned_turn_index loads",
+      sorted(wl.load_registry(registry_file([noati]))),
+      ["job-a"])
+
 print("\n%d fixtures, %d failed" % (len(total), len(fails)))
 raise SystemExit(1 if fails else 0)

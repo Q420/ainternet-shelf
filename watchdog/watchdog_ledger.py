@@ -55,17 +55,63 @@ JOB_FIELDS = {
     "declared_precondition": str,
     "depends_on": list,
     "priority": int,
-    "assigned_turn_index": int,
     "state": str,
 }
 JOB_STATES = {"active", "resolved", "retired"}
 
 
-def load_registry(path):
+def _job_hash(job):
+    import hashlib
+    canon = json.dumps(job, sort_keys=True).encode()
+    return hashlib.sha256(canon).hexdigest()
+
+
+def _atomic_write_json(path, obj):
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path),
+                               prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(obj, f, indent=1, sort_keys=True)
+            f.flush()
+            os.fsync(f.fileno())
+        os.rename(tmp, path)
+        _fsync_dir(os.path.dirname(path))
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def _fsync_dir(dirpath):
+    """Fsync a directory so a rename inside it is durable
+    (verdict S3)."""
+    try:
+        dfd = os.open(dirpath or ".", os.O_RDONLY)
+        try:
+            os.fsync(dfd)
+        finally:
+            os.close(dfd)
+    except OSError:
+        pass
+
+
+def load_registry(path, state_dir=None):
     """Load and validate the registry. Any §2 failure raises
     RegistryError and nothing starts: unknown depends_on target,
     dependency cycle, duplicate job_id, seat outside the v1 set.
-    Returns {job_id: job record}."""
+    Returns {job_id: job record}.
+
+    assigned_turn_index is NOT required at load (verdict S5):
+    §2 fills it on assignment confirmation, so a job may be
+    registered before that; when present it must be an int.
+
+    When state_dir is given, immutability is enforced across
+    loads (verdict S2): each active job's record hash is pinned
+    on first sight, and a later load whose active record hashes
+    differently fails — an active record is never edited (§2);
+    a change is a new job_id."""
     with open(path) as f:
         raw = json.load(f)
     jobs = raw.get("jobs") if isinstance(raw, dict) else raw
@@ -85,6 +131,12 @@ def load_registry(path):
                 raise RegistryError(
                     f"job {job.get('job_id')!r}: field {field!r} "
                     f"must be {typ.__name__}")
+        ati = job.get("assigned_turn_index")
+        if ati is not None and (not isinstance(ati, int)
+                                or isinstance(ati, bool)):
+            raise RegistryError(
+                f"job {job.get('job_id')!r}: field "
+                f"'assigned_turn_index' must be int")
         jid = job["job_id"]
         if jid in out:
             raise RegistryError(f"duplicate job_id: {jid!r}")
@@ -102,7 +154,33 @@ def load_registry(path):
                 raise RegistryError(
                     f"job {jid!r} depends on unknown job {dep!r}")
     _reject_cycles(out)
+    if state_dir is not None:
+        _pin_active_jobs(out, state_dir)
     return out
+
+
+def _pin_active_jobs(jobs, state_dir):
+    os.makedirs(state_dir, exist_ok=True)
+    pin_path = os.path.join(state_dir, "registry-pins.json")
+    pins = {}
+    if os.path.exists(pin_path):
+        with open(pin_path) as f:
+            pins = json.load(f)
+    changed = False
+    for jid, job in jobs.items():
+        if job["state"] != "active":
+            continue
+        h = _job_hash(job)
+        if jid in pins and pins[jid] != h:
+            raise RegistryError(
+                f"active job {jid!r} record changed since it "
+                f"was pinned — active records are immutable "
+                f"(§2); a change is a new job_id")
+        if jid not in pins:
+            pins[jid] = h
+            changed = True
+    if changed:
+        _atomic_write_json(pin_path, pins)
 
 
 def _reject_cycles(jobs):
@@ -184,7 +262,7 @@ def validate_packet(packet):
 # ----------------------------------------------------------------
 
 class Ledger:
-    def __init__(self, state_dir, config=None):
+    def __init__(self, state_dir, config=None, registry=None):
         self.dir = state_dir
         os.makedirs(self.dir, exist_ok=True)
         self.path = os.path.join(self.dir, "ledger.json")
@@ -192,6 +270,9 @@ class Ledger:
         self.config = dict(DEFAULT_CONFIG)
         if config:
             self.config.update(config)
+        # The loaded registry (§2), when supplied, is checked
+        # against every packet at record time (verdict M2).
+        self.registry = registry
         self.state = self._load()
 
     # -- persistence: one document, atomic writes (§8) ---------
@@ -203,8 +284,10 @@ class Ledger:
             state.setdefault("events", {})
             state.setdefault("streaks", {})
             state.setdefault("cooldown_until", {})
+            state.setdefault("alerts_raised", {})
             return state
-        return {"events": {}, "streaks": {}, "cooldown_until": {}}
+        return {"events": {}, "streaks": {},
+                "cooldown_until": {}, "alerts_raised": {}}
 
     def _save(self):
         fd, tmp = tempfile.mkstemp(dir=self.dir,
@@ -216,6 +299,7 @@ class Ledger:
                 f.flush()
                 os.fsync(f.fileno())
             os.rename(tmp, self.path)
+            _fsync_dir(self.dir)  # the rename itself durable (S3)
         except BaseException:
             try:
                 os.unlink(tmp)
@@ -252,12 +336,54 @@ class Ledger:
         the qualifying pair is spent into the event, so the
         next fire needs a fresh pair."""
         validate_packet(packet)
+        # M2 (verdict): the packet must match the registry —
+        # the job exists, is active, and seat/window are as
+        # registered (§5: "as registry").
+        if self.registry is not None:
+            job = self.registry.get(packet["job_id"])
+            if job is None:
+                raise PacketError(
+                    f"unknown job_id: {packet['job_id']!r}")
+            if job["state"] != "active":
+                raise PacketError(
+                    f"job {packet['job_id']!r} is not active")
+            if packet["seat_id"] != job["seat_id"]:
+                raise PacketError(
+                    "packet seat_id does not match the registry")
+            if packet["window_id"] != job["conversation_id"]:
+                raise PacketError(
+                    "packet window_id does not match the "
+                    "registry")
+        # M1 (verdict): the ledger_key is never taken on
+        # faith — it is derived from the packet's own fields
+        # (§5 formula, turn_key = first candidate's id) and
+        # any mismatch is rejected.
+        expected = ledger_key_for(
+            packet["job_id"], packet["seat_id"],
+            packet["window_id"], packet["candidate_turn_ids"][0])
+        if packet["ledger_key"] != expected:
+            raise PacketError(
+                f"ledger_key mismatch: packet carries "
+                f"{packet['ledger_key']!r}, derived {expected!r}")
         key = packet["ledger_key"]
         if key in self.state["events"]:
             self._ops("duplicate_suppressed", ledger_key=key,
                       job_id=packet["job_id"])
             return "duplicate", copy.deepcopy(
                 self.state["events"][key])
+        # M1, second half: the same candidate pair under any
+        # key is the same detection — suppressed, so one pair
+        # of turns can never produce two events.
+        for e in self.state["events"].values():
+            if (e["job_id"] == packet["job_id"]
+                    and sorted(e["candidate_turn_ids"])
+                    == sorted(packet["candidate_turn_ids"])):
+                self._ops("duplicate_suppressed",
+                          ledger_key=key,
+                          job_id=packet["job_id"],
+                          reason="candidate_pair",
+                          existing_key=e["ledger_key"])
+                return "duplicate", copy.deepcopy(e)
         for e in self.state["events"].values():
             if (e["job_id"] == packet["job_id"]
                     and e["state"] == "unacknowledged"):
@@ -324,13 +450,25 @@ class Ledger:
 
     def raise_alerts(self, now=None):
         """Raise the due alerts (§8): each is written to the
-        ops log as an operational alert. The events themselves
-        stay unacknowledged — an alert never drops one."""
+        ops log as an operational alert, at most once per
+        ledger_key per alert interval (verdict S4 — the
+        interval is alert_age). The events themselves stay
+        unacknowledged — an alert never drops one."""
+        now = time.time() if now is None else now
         due = self.due_alerts(now)
+        raised = []
         for e in due:
-            self._ops("alert_due", ledger_key=e["ledger_key"],
+            key = e["ledger_key"]
+            last = self.state["alerts_raised"].get(key, 0)
+            if now - last < self.config["alert_age_s"]:
+                continue
+            self.state["alerts_raised"][key] = now
+            self._ops("alert_due", ledger_key=key,
                       job_id=e["job_id"])
-        return due
+            raised.append(e)
+        if raised:
+            self._save()
+        return raised
 
     # -- streak (§6): persisted, survives restart ----------------
 
@@ -340,11 +478,15 @@ class Ledger:
             else dict(s)
 
     def apply_judgement(self, job_id, turn_key, result):
-        """One judged, completed pool turn (§6). YES counts,
-        NO resets, ERROR holds (and is logged, §7 — an error is
-        never recorded as a NO). The same turn judged twice
-        does not count twice: turn identity is structural.
-        Returns the streak after the judgement."""
+        """One judged turn (§6). CALLER'S RESPONSIBILITY
+        (reviewer note, verdict 2026-11-15): only completed
+        turns that reached the pool may be passed here — this
+        function does not and cannot check pool membership.
+        YES counts, NO resets, ERROR holds (and is logged,
+        §7 — an error is never recorded as a NO). The same
+        turn judged twice does not count twice: turn identity
+        is structural. Returns the streak after the
+        judgement."""
         if result not in ("YES", "NO", "ERROR"):
             raise ValueError(f"unknown judgement: {result!r}")
         s = self.streak(job_id)
