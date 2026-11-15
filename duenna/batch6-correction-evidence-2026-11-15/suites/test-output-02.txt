@@ -1,0 +1,11 @@
+[PASS] stack: the record's pin block equals the correction-stack manifest
+[PASS] step 0: TERMINAL anchor verifies over the complete record
+[PASS] step 1: hash chain unbroken over all 486 events
+[PASS] step 2: pins verify against authority-02 + manifests; snapshot verifies
+[PASS] step 3: replay reproduces every invocation, zero divergences
+[PASS] step 4: registry audit clean over the complete record
+[PASS] step 5: adapter captures verify; 13 model calls link 1:1
+[PASS] step 6: reconstruction derives all 13 COMPLETED; terminal RUN_CLOSED
+[PASS] ledger: materialised ledger matches the record's entries
+[PASS] correction evidence: no refusals; T08 construct satisfied; all 13 reached
+== test_g4corr: 10/10 PASS
