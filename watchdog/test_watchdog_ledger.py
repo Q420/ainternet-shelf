@@ -144,7 +144,8 @@ outcome3, _ = led.record_event(packet(turn="turn-9"))
 check("ledger, ack lock blocks second event (§13)",
       outcome3, "locked")
 
-led2 = wl.Ledger(d, registry=default_registry())  # restart
+led2 = wl.Ledger(d, {"cooldown_default_s": 0},
+                 registry=default_registry())  # restart
 check("ledger, restart re-offers unacknowledged",
       [e["ledger_key"] for e in led2.unacknowledged()],
       [p1["ledger_key"]])

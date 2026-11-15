@@ -347,7 +347,8 @@ check("index, unassigned job not detected",
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
 det, led = make_detector(pool.path,
-                         [job("job-a", gate=["done"])], stub)
+                         [job("job-a", gate=["done"])], stub,
+                         config={"cooldown_default_s": 0})
 s1 = det.process_job("job-a")
 pool.add(seat("done gamma", "m3"))
 pool.add(seat("done delta", "m4"))
@@ -368,7 +369,8 @@ check("lock, second pair is the new turns",
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
 det, led = make_detector(pool.path,
-                         [job("job-a", gate=["done"])], stub)
+                         [job("job-a", gate=["done"])], stub,
+                         config={"cooldown_default_s": 0})
 s1 = det.process_job("job-a")
 led.acknowledge(s1["event"]["ledger_key"])
 led_dir = led.dir
@@ -376,7 +378,8 @@ led_dir = led.dir
 stub2 = wd.StubJudge(lambda p, c: "YES")
 det2, led2 = make_detector(pool.path,
                            [job("job-a", gate=["done"])], stub2,
-                           ledger_dir=led_dir)
+                           ledger_dir=led_dir,
+                           config={"cooldown_default_s": 0})
 s2 = det2.process_job("job-a")
 check("replay, same turns never re-judged after restart",
       len(stub2.calls), 0)
@@ -415,7 +418,8 @@ stub = wd.StubJudge(lambda p, c: "YES")
 jobs = [job("job-a", conv="conv-1", gate=["done"]),
         job("job-b", deps=["job-a"], conv="conv-2",
             gate=["done"])]
-det, led = make_detector(pool.path, jobs, stub)
+det, led = make_detector(pool.path, jobs, stub,
+                         config={"cooldown_default_s": 0})
 sb = det.process_job("job-b")
 check("deps, upstream unacknowledged reads pending",
       sb["event"]["dependency_state"], {"job-a": "pending"})
@@ -643,7 +647,8 @@ stub = wd.StubJudge(
     lambda p, c: "YES" if "pass" in c.lower() else "NO")
 det, led = make_detector(
     corpus, jobs, stub,
-    config={"stale_interval_s": 10 ** 9})
+    config={"stale_interval_s": 10 ** 9,
+            "cooldown_default_s": 0})
 summaries = det.process_all()
 check("corpus, every conversation processed",
       len(summaries), len(convs))
