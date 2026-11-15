@@ -350,8 +350,9 @@ class Detector:
     detection here — §10 gating is the scheduler's (Stage 4),
     as the ledger's may_detect docstring already states.
     The detector also enforces the §9 stale-window hold
-    (M-S3-4): it is the only judge caller, so a stale capture
-    watermark holds the streak here, before any judging."""
+    (M-S3-4): it is the only judge caller, so an outstanding
+    send past the stale interval holds the streak here,
+    before any judging."""
 
     def __init__(self, registry, ledger, reader, judge,
                  config=None, clock=None):
@@ -441,26 +442,35 @@ class Detector:
 
     # -- stale window (§9, M-S3-4) ------------------------------
 
-    def _watermark(self, turns):
-        """The seat's pool capture watermark for this
-        conversation: the latest capture time among its
-        completed seat replies (REPLY_CAPTURED), as epoch
-        seconds; None when nothing was captured."""
-        latest = None
+    def _outstanding_send_epoch(self, turns):
+        """§9 stale window, with the meaning fixed by the
+        Stage 3 resubmission-1 should-fix: a window is stale
+        only while a send to the seat is OUTSTANDING. Returns
+        the capture epoch of the conversation's last outbound
+        turn (SEND_OBSERVED) when no completed seat turn
+        (REPLY_CAPTURED) has been captured after it in the
+        pool record; None otherwise. A window with no
+        outstanding send is never stale, however quiet it
+        is — quiet is the normal state while the
+        orchestrator waits for the next reply. A send whose
+        capture time cannot be read cannot establish
+        staleness, so it also yields None."""
+        last_send = None
         for t in turns:
-            if t["role"] != "seat":
-                continue
-            ts = t.get("captured_at")
-            if not ts:
-                continue
-            try:
-                epoch = datetime.fromisoformat(
-                    ts.replace("Z", "+00:00")).timestamp()
-            except Exception:  # noqa: BLE001
-                continue
-            if latest is None or epoch > latest:
-                latest = epoch
-        return latest
+            if t["role"] == "user":
+                last_send = t
+            elif t["role"] == "seat" and last_send is not None:
+                last_send = None
+        if last_send is None:
+            return None
+        ts = last_send.get("captured_at")
+        if not ts:
+            return None
+        try:
+            return datetime.fromisoformat(
+                ts.replace("Z", "+00:00")).timestamp()
+        except Exception:  # noqa: BLE001
+            return None
 
     # -- internals -------------------------------------------
 
@@ -546,22 +556,24 @@ class Detector:
         turns = self.reader.turns(
             job["seat_id"], job["conversation_id"])
 
-        # §9 stale window (M-S3-4): if the seat's capture
-        # watermark for this conversation is older than the
-        # stale interval, the window is stale — judge
-        # nothing this pass, HOLD the streak (no judgement,
-        # no reset), and raise an operational alert in the
-        # ledger's ops log.
-        watermark = self._watermark(turns)
-        if watermark is not None:
-            age = self.clock() - watermark
+        # §9 stale window (M-S3-4): if a send to this seat
+        # is outstanding — the orchestrator's last send is
+        # older than the stale interval and no completed
+        # turn has been captured since it — the window is
+        # stale: judge nothing this pass, HOLD the streak
+        # (no judgement, no reset), and raise an operational
+        # alert in the ledger's ops log. No outstanding
+        # send, no staleness, however quiet the window.
+        outstanding = self._outstanding_send_epoch(turns)
+        if outstanding is not None:
+            age = self.clock() - outstanding
             if age > self.stale_interval_s:
                 self.ledger._ops(
                     "stale_window_hold", job_id=job_id,
                     seat_id=job["seat_id"],
                     window_id=job["conversation_id"],
-                    watermark=datetime.fromtimestamp(
-                        watermark).astimezone().isoformat(),
+                    last_send_at=datetime.fromtimestamp(
+                        outstanding).astimezone().isoformat(),
                     age_s=round(age, 1),
                     stale_interval_s=self.stale_interval_s)
                 summary["status"] = "stale_hold"

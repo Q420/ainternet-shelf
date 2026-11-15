@@ -499,6 +499,26 @@ finally:
     del os.environ["NVIDIA_API_KEY"]
 
 # ---------------- stale window (§9, M-S3-4) -------------------
+# Meaning per the resubmission-1 should-fix: stale is an
+# OUTSTANDING send — the orchestrator's last send to the
+# window is older than the stale interval and no completed
+# turn has been captured since it. A window with no
+# outstanding send is never stale, however quiet it is.
+# (The fixtures that followed the fresh-window check here
+# previously encoded the old meaning — the age of the
+# newest captured turn — and have been replaced.)
+
+def at(event, ts):
+    event["timestamp_utc"] = ts
+    return event
+
+def ops_of(led):
+    # A ledger that has recorded no ops has no ops file yet.
+    return open(led.ops_path).read() \
+        if os.path.exists(led.ops_path) else ""
+
+T_REPLY = "2026-11-14T23:40:00.000Z"   # POOL_EPOCH - 1200 s
+T_SEND = "2026-11-14T23:49:00.000Z"    # POOL_EPOCH - 660 s
 
 now = [POOL_EPOCH + 30]
 pool = Pool([seat("done alpha", "m1")])
@@ -510,17 +530,76 @@ s = det.process_job("job-a")
 check("stale, fresh window judges normally",
       (s["status"], led.streak("job-a")["count"]),
       ("idle", 1))
+
+# (1) idle window, no outstanding send, last activity far
+# past the interval: no alert, no hold, judging proceeds.
 pool.add(seat("done beta", "m2"))
-now[0] = POOL_EPOCH + 30 + 601  # watermark now 631 s old
+now[0] = POOL_EPOCH + 30 + 601  # last activity 631 s old
 s = det.process_job("job-a")
-check("stale, status is stale_hold", s["status"], "stale_hold")
-check("stale, nothing is judged while stale",
-      len(stub.calls), 1)
-check("stale, streak held — not reset, not advanced",
-      led.streak("job-a")["count"], 1)
+check("stale, idle window with no outstanding send "
+      "is never stale", s["status"], "fired")
+check("stale, idle window judges the new turn",
+      len(stub.calls), 2)
+ops = ops_of(led)
+check("stale, idle window raises no alert",
+      "stale_window_hold" in ops, False)
+
+# (2) outstanding send older than the interval, no reply
+# captured since: alert + hold + zero judge calls.
+pool = Pool([at(seat("done alpha", "m1"), T_REPLY),
+             at(user("please report"), T_SEND)])
+stub = wd.StubJudge(lambda p, c: "YES")
+det, led = make_detector(pool.path, [job("job-a")], stub,
+                         keywords={"job-a": ["done"]},
+                         clock=lambda: POOL_EPOCH + 30)
+s = det.process_job("job-a")
+check("stale, outstanding send past the interval holds",
+      s["status"], "stale_hold")
+check("stale, zero judge calls while held",
+      len(stub.calls), 0)
+check("stale, streak untouched while held",
+      led.streak("job-a")["count"], 0)
 ops = open(led.ops_path).read()
 check("stale, operational alert recorded in the ops log",
       "stale_window_hold" in ops, True)
+
+# (2b) the hold preserves a standing streak: while the
+# send is fresh the window judges; once it ages past the
+# interval the streak is held — not reset, not advanced.
+now = [POOL_EPOCH - 600]  # the send is 60 s old: fresh
+pool = Pool([at(seat("done alpha", "m1"), T_REPLY),
+             at(user("please report"), T_SEND)])
+stub = wd.StubJudge(lambda p, c: "YES")
+det, led = make_detector(pool.path, [job("job-a")], stub,
+                         keywords={"job-a": ["done"]},
+                         clock=lambda: now[0])
+s = det.process_job("job-a")
+check("stale, fresh outstanding send still judges",
+      (s["status"], led.streak("job-a")["count"]),
+      ("idle", 1))
+now[0] = POOL_EPOCH + 30  # the send is now 690 s old
+s = det.process_job("job-a")
+check("stale, aged outstanding send holds the pass",
+      s["status"], "stale_hold")
+check("stale, streak held — not reset, not advanced",
+      led.streak("job-a")["count"], 1)
+check("stale, the held pass adds no judge calls",
+      len(stub.calls), 1)
+
+# (3) a send followed by a captured reply is no longer
+# outstanding: not stale, however old the send is.
+pool = Pool([at(user("please report"), T_SEND),
+             seat("done alpha", "m1"), seat("done beta", "m2")])
+stub = wd.StubJudge(lambda p, c: "YES")
+det, led = make_detector(pool.path, [job("job-a")], stub,
+                         keywords={"job-a": ["done"]},
+                         clock=lambda: POOL_EPOCH + 3600)
+s = det.process_job("job-a")
+check("stale, answered send is not stale",
+      s["status"], "fired")
+ops = ops_of(led)
+check("stale, answered send raises no alert",
+      "stale_window_hold" in ops, False)
 
 # ---------------- pool contiguity (S-S3-5) --------------------
 
