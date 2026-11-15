@@ -1,0 +1,370 @@
+"""Watchdog Stage 2 — the ledger.
+
+Built from the shelved Stage 1 contract v1.1 (Q420/ainternet-shelf,
+branch pin 63d05299, sha256 5a83821c...; copy on main at
+claude/WATCHDOG-STAGE1-CONTRACT-v1.1.md). Implements contract §2
+(registry validation), §5 (packet shape, as stored), §6 (persisted
+streak), §8 (ledger + acknowledgement). The detector, judge,
+scheduler and wake are later stages and are NOT here: this module
+never reads a page, never calls a model, never sends anything.
+
+State lives in one JSON document written atomically (temp file,
+fsync, rename) on every mutation (§8). Operational notes that are
+not events — duplicate suppressions, judge errors, alerts raised —
+go to an append-only ops log; stale-window alerts in particular
+never enter the ledger (§9).
+"""
+
+import copy
+import json
+import os
+import tempfile
+import time
+
+SCHEMA_VERSION = "1"
+V1_SEATS = {"chatgpt", "this-seat"}
+
+# Owner-tunable configuration (§11). These defaults are
+# placeholders until the owner sets real values; every consumer
+# takes them from config, never from a literal in logic.
+DEFAULT_CONFIG = {
+    "alert_age_s": 3600,        # unacked event older than this alerts
+    "cooldown_default_s": 0,    # per-job cooldown after ack
+    "cooldown_by_job": {},      # job_id -> seconds
+    "stale_interval_s": 600,    # §9, consumed by the monitor stage
+}
+
+
+class RegistryError(Exception):
+    """Registry load failure (§2): no job starts."""
+
+
+class PacketError(Exception):
+    """An event packet that does not meet §5 may not be recorded."""
+
+
+# ----------------------------------------------------------------
+# Registry (§2, §3)
+# ----------------------------------------------------------------
+
+JOB_FIELDS = {
+    "job_id": str,
+    "seat_id": str,
+    "conversation_id": str,
+    "task": str,
+    "declared_precondition": str,
+    "depends_on": list,
+    "priority": int,
+    "assigned_turn_index": int,
+    "state": str,
+}
+JOB_STATES = {"active", "resolved", "retired"}
+
+
+def load_registry(path):
+    """Load and validate the registry. Any §2 failure raises
+    RegistryError and nothing starts: unknown depends_on target,
+    dependency cycle, duplicate job_id, seat outside the v1 set.
+    Returns {job_id: job record}."""
+    with open(path) as f:
+        raw = json.load(f)
+    jobs = raw.get("jobs") if isinstance(raw, dict) else raw
+    if not isinstance(jobs, list):
+        raise RegistryError("registry must be a list of jobs "
+                            "(or an object with a 'jobs' list)")
+    out = {}
+    for job in jobs:
+        if not isinstance(job, dict):
+            raise RegistryError("job record is not an object")
+        for field, typ in JOB_FIELDS.items():
+            if field not in job:
+                raise RegistryError(
+                    f"job missing field {field!r}: {job!r}")
+            if not isinstance(job[field], typ) or (
+                    typ is int and isinstance(job[field], bool)):
+                raise RegistryError(
+                    f"job {job.get('job_id')!r}: field {field!r} "
+                    f"must be {typ.__name__}")
+        jid = job["job_id"]
+        if jid in out:
+            raise RegistryError(f"duplicate job_id: {jid!r}")
+        if job["seat_id"] not in V1_SEATS:
+            raise RegistryError(
+                f"job {jid!r}: seat {job['seat_id']!r} not in "
+                f"the v1 seat set")
+        if job["state"] not in JOB_STATES:
+            raise RegistryError(
+                f"job {jid!r}: unknown state {job['state']!r}")
+        out[jid] = job
+    for jid, job in out.items():
+        for dep in job["depends_on"]:
+            if dep not in out:
+                raise RegistryError(
+                    f"job {jid!r} depends on unknown job {dep!r}")
+    _reject_cycles(out)
+    return out
+
+
+def _reject_cycles(jobs):
+    """Depth-first cycle check over depends_on (§2b: rejected,
+    not warned)."""
+    WHITE, GREY, BLACK = 0, 1, 2
+    colour = {jid: WHITE for jid in jobs}
+
+    def visit(jid, trail):
+        colour[jid] = GREY
+        for dep in jobs[jid]["depends_on"]:
+            if colour[dep] == GREY:
+                raise RegistryError(
+                    "dependency cycle: "
+                    + " -> ".join(trail + [jid, dep]))
+            if colour[dep] == WHITE:
+                visit(dep, trail + [jid])
+        colour[jid] = BLACK
+
+    for jid in jobs:
+        if colour[jid] == WHITE:
+            visit(jid, [])
+
+
+# ----------------------------------------------------------------
+# Event packet (§5) — validation on write
+# ----------------------------------------------------------------
+
+PACKET_FIELDS = (
+    "schema_version", "event_id", "ledger_key", "job_id",
+    "seat_id", "window_id", "declared_precondition",
+    "trigger_reason", "candidate_turn_ids", "turn_index_range",
+    "judge_results", "judge_model", "judge_prompt_hash",
+    "buffer_window_bounds", "relevant_buffer_slice",
+    "dependency_state", "detected_at", "priority",
+)
+
+
+def ledger_key_for(job_id, seat_id, conversation_id, turn_key):
+    """§5: job_id + '|' + seat_id + '|' + conversation_id + '|'
+    + turn_key, where turn_key is the structural identity of the
+    FIRST qualifying turn."""
+    return "|".join([job_id, seat_id, conversation_id, turn_key])
+
+
+def validate_packet(packet):
+    if not isinstance(packet, dict):
+        raise PacketError("packet is not an object")
+    for field in PACKET_FIELDS:
+        if field not in packet:
+            raise PacketError(f"packet missing field {field!r}")
+    if packet["schema_version"] != SCHEMA_VERSION:
+        raise PacketError(
+            f"schema_version must be {SCHEMA_VERSION!r}")
+    if packet["trigger_reason"] != "two_consecutive_yes":
+        raise PacketError("trigger_reason must be "
+                          "'two_consecutive_yes'")
+    results = packet["judge_results"]
+    if not isinstance(results, list) or len(results) != 2:
+        raise PacketError("judge_results must hold exactly the "
+                          "two qualifying turns")
+    for r in results:
+        # §7: errors never appear here as a result.
+        if r not in ("YES", "NO"):
+            raise PacketError(
+                f"judge_results entry is not YES/NO: {r!r}")
+    if results != ["YES", "YES"]:
+        raise PacketError("a recorded event requires two "
+                          "consecutive YES results")
+    cands = packet["candidate_turn_ids"]
+    if not isinstance(cands, list) or len(cands) != 2:
+        raise PacketError("candidate_turn_ids must hold the two "
+                          "qualifying turns")
+    return True
+
+
+# ----------------------------------------------------------------
+# The ledger (§8) + persisted streak (§6)
+# ----------------------------------------------------------------
+
+class Ledger:
+    def __init__(self, state_dir, config=None):
+        self.dir = state_dir
+        os.makedirs(self.dir, exist_ok=True)
+        self.path = os.path.join(self.dir, "ledger.json")
+        self.ops_path = os.path.join(self.dir, "ops-log.jsonl")
+        self.config = dict(DEFAULT_CONFIG)
+        if config:
+            self.config.update(config)
+        self.state = self._load()
+
+    # -- persistence: one document, atomic writes (§8) ---------
+
+    def _load(self):
+        if os.path.exists(self.path):
+            with open(self.path) as f:
+                state = json.load(f)
+            state.setdefault("events", {})
+            state.setdefault("streaks", {})
+            state.setdefault("cooldown_until", {})
+            return state
+        return {"events": {}, "streaks": {}, "cooldown_until": {}}
+
+    def _save(self):
+        fd, tmp = tempfile.mkstemp(dir=self.dir,
+                                   prefix="ledger-", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(self.state, f, indent=1,
+                          sort_keys=True)
+                f.flush()
+                os.fsync(f.fileno())
+            os.rename(tmp, self.path)
+        except BaseException:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+
+    def _ops(self, kind, **fields):
+        rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+               "kind": kind}
+        rec.update(fields)
+        with open(self.ops_path, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+
+    # -- restart (§8): re-offer, never re-create ----------------
+
+    def unacknowledged(self):
+        """Events in state 'unacknowledged', oldest first. On
+        restart these are re-offered to the orchestrator; no
+        event is ever re-created."""
+        evs = [copy.deepcopy(e)
+               for e in self.state["events"].values()
+               if e["state"] == "unacknowledged"]
+        return sorted(evs, key=lambda e: e["detected_at"])
+
+    # -- events (§8) ---------------------------------------------
+
+    def record_event(self, packet):
+        """Record a detection. Returns (outcome, event) where
+        outcome is 'recorded', 'duplicate' (same ledger_key —
+        suppressed and logged, §8) or 'locked' (the job already
+        has an unacknowledged event — no new event may be
+        created). A recorded event consumes the job's streak:
+        the qualifying pair is spent into the event, so the
+        next fire needs a fresh pair."""
+        validate_packet(packet)
+        key = packet["ledger_key"]
+        if key in self.state["events"]:
+            self._ops("duplicate_suppressed", ledger_key=key,
+                      job_id=packet["job_id"])
+            return "duplicate", copy.deepcopy(
+                self.state["events"][key])
+        for e in self.state["events"].values():
+            if (e["job_id"] == packet["job_id"]
+                    and e["state"] == "unacknowledged"):
+                self._ops("event_locked", ledger_key=key,
+                          job_id=packet["job_id"],
+                          blocking_key=e["ledger_key"])
+                return "locked", copy.deepcopy(e)
+        event = copy.deepcopy(packet)
+        event["state"] = "unacknowledged"
+        self.state["events"][key] = event
+        self._reset_streak(packet["job_id"])
+        self._save()
+        return "recorded", copy.deepcopy(event)
+
+    def acknowledge(self, ledger_key, at=None):
+        """Mark an event acknowledged. Cooldown starts HERE,
+        at acknowledgement, not at detection (§8). Idempotent:
+        acknowledging an already-acknowledged event returns it
+        unchanged."""
+        event = self.state["events"].get(ledger_key)
+        if event is None:
+            raise KeyError(f"unknown ledger_key: {ledger_key}")
+        if event["state"] == "acknowledged":
+            return copy.deepcopy(event)
+        at = time.time() if at is None else at
+        event["state"] = "acknowledged"
+        event["acknowledged_at"] = at
+        cooldown = self.config["cooldown_by_job"].get(
+            event["job_id"], self.config["cooldown_default_s"])
+        self.state["cooldown_until"][event["job_id"]] = (
+            at + cooldown)
+        self._save()
+        return copy.deepcopy(event)
+
+    def may_detect(self, job_id, now=None):
+        """Detection gate (§8): closed while the job has an
+        unacknowledged event, and during the post-acknowledgement
+        cooldown. Dependencies (§10) are the scheduler's gate,
+        not this one."""
+        now = time.time() if now is None else now
+        for e in self.state["events"].values():
+            if (e["job_id"] == job_id
+                    and e["state"] == "unacknowledged"):
+                return False
+        return now >= self.state["cooldown_until"].get(job_id, 0)
+
+    def due_alerts(self, now=None):
+        """Unacknowledged events older than alert_age (§8),
+        by their packet's detected_at. Pure read."""
+        from datetime import datetime
+        now = time.time() if now is None else now
+        age = self.config["alert_age_s"]
+        out = []
+        for e in self.unacknowledged():
+            try:
+                det = datetime.fromisoformat(
+                    e["detected_at"].replace(
+                        "Z", "+00:00")).timestamp()
+            except Exception:
+                continue
+            if now - det > age:
+                out.append(e)
+        return out
+
+    def raise_alerts(self, now=None):
+        """Raise the due alerts (§8): each is written to the
+        ops log as an operational alert. The events themselves
+        stay unacknowledged — an alert never drops one."""
+        due = self.due_alerts(now)
+        for e in due:
+            self._ops("alert_due", ledger_key=e["ledger_key"],
+                      job_id=e["job_id"])
+        return due
+
+    # -- streak (§6): persisted, survives restart ----------------
+
+    def streak(self, job_id):
+        s = self.state["streaks"].get(job_id)
+        return {"count": 0, "last_turn_key": None} if s is None \
+            else dict(s)
+
+    def apply_judgement(self, job_id, turn_key, result):
+        """One judged, completed pool turn (§6). YES counts,
+        NO resets, ERROR holds (and is logged, §7 — an error is
+        never recorded as a NO). The same turn judged twice
+        does not count twice: turn identity is structural.
+        Returns the streak after the judgement."""
+        if result not in ("YES", "NO", "ERROR"):
+            raise ValueError(f"unknown judgement: {result!r}")
+        s = self.streak(job_id)
+        if result == "ERROR":
+            self._ops("judge_error", job_id=job_id,
+                      turn_key=turn_key)
+            return s
+        if s["last_turn_key"] == turn_key:
+            return s
+        if result == "YES":
+            s = {"count": s["count"] + 1,
+                 "last_turn_key": turn_key}
+        else:
+            s = {"count": 0, "last_turn_key": turn_key}
+        self.state["streaks"][job_id] = s
+        self._save()
+        return dict(s)
+
+    def _reset_streak(self, job_id):
+        self.state["streaks"][job_id] = {
+            "count": 0,
+            "last_turn_key":
+                self.streak(job_id)["last_turn_key"]}
