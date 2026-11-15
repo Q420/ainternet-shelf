@@ -367,15 +367,15 @@ class Detector:
         # fixtures can pin it. Epoch seconds.
         self.clock = clock or time.time
         # §9 stale interval: detector config wins, then the
-        # ledger's config (§11 home), then the provisional
-        # default — 600 s, the ledger's standing default,
-        # until the owner sets a value.
+        # ledger's config (§11 home), then the standing
+        # default — 300 s, the ledger's default, owner-set
+        # 2026-11-15.
         self.stale_interval_s = self.config.get(
             "stale_interval_s")
         if self.stale_interval_s is None:
             self.stale_interval_s = getattr(
                 ledger, "config", {}).get(
-                    "stale_interval_s", 600)
+                    "stale_interval_s", 300)
 
     # -- the keyword gate (§3 as amended by v1.3) ------------
 

@@ -28,10 +28,10 @@ V1_SEATS = {"chatgpt", "this-seat"}
 # placeholders until the owner sets real values; every consumer
 # takes them from config, never from a literal in logic.
 DEFAULT_CONFIG = {
-    "alert_age_s": 3600,        # unacked event older than this alerts
-    "cooldown_default_s": 0,    # per-job cooldown after ack
+    "alert_age_s": 3600,        # unacked event older than this alerts (§11, owner-set 2026-11-15)
+    "cooldown_default_s": 600,  # per-job cooldown after ack (§11, owner-set 2026-11-15)
     "cooldown_by_job": {},      # job_id -> seconds
-    "stale_interval_s": 600,    # §9, consumed by the monitor stage
+    "stale_interval_s": 300,    # §9, consumed by the monitor stage (§11, owner-set 2026-11-15)
 }
 
 
