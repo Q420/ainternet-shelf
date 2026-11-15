@@ -394,5 +394,75 @@ led12b.apply_judgement("job-a", "t4", "NO")
 check("streak, a judged NO records its own cause",
       led12b.streak("job-a")["reset_cause"], "judged_no")
 
+# ---------------- gate_terms (§3 as amended by v1.3) ---------
+
+# The keyword gate's terms live in the job record, pinned
+# with it under §2 — not a set-once side field.
+gj = job("job-a")
+gj["gate_terms"] = ["done", "shipped"]
+reg_g = wl.load_registry(registry_file([gj]),
+                         state_dir=tempfile.mkdtemp())
+check("gate_terms, record with terms loads",
+      sorted(reg_g), ["job-a"])
+check("gate_terms, loaded record carries the terms",
+      reg_g["job-a"]["gate_terms"], ["done", "shipped"])
+
+# Absent = no gate: pre-v1.3 records still load, normalized.
+reg_g2 = wl.load_registry(registry_file([job("job-a")]),
+                          state_dir=tempfile.mkdtemp())
+check("gate_terms, absent field loads as no gate",
+      reg_g2["job-a"]["gate_terms"], [])
+gj2 = job("job-a")
+gj2["gate_terms"] = []
+reg_g3 = wl.load_registry(registry_file([gj2]),
+                          state_dir=tempfile.mkdtemp())
+check("gate_terms, empty list is no gate",
+      reg_g3["job-a"]["gate_terms"], [])
+
+# Validation: when present it must be a list of strings.
+gj3 = job("job-a")
+gj3["gate_terms"] = "done"
+check_raises("gate_terms, a bare string is refused",
+             wl.RegistryError,
+             lambda: wl.load_registry(registry_file([gj3]),
+                                      state_dir=
+                                      tempfile.mkdtemp()))
+gj4 = job("job-a")
+gj4["gate_terms"] = ["done", 7]
+check_raises("gate_terms, a non-string term is refused",
+             wl.RegistryError,
+             lambda: wl.load_registry(registry_file([gj4]),
+                                      state_dir=
+                                      tempfile.mkdtemp()))
+
+# Reviewer fixture (a): changing gate_terms on an active
+# job is refused by the registry pin — the terms are part
+# of the record hash, so a tampered record fails load.
+sdg = tempfile.mkdtemp()
+gj5 = job("job-a")
+gj5["gate_terms"] = ["done"]
+rpg = registry_file([gj5])
+wl.load_registry(rpg, state_dir=sdg)  # pin created
+with open(rpg) as f:
+    gdoc = json.load(f)
+gdoc["jobs"][0]["gate_terms"] = ["shipped"]
+with open(rpg, "w") as f:
+    json.dump(gdoc, f)
+check_raises("gate_terms, changed terms on an active job "
+             "fail the pin", wl.RegistryError,
+             lambda: wl.load_registry(rpg, state_dir=sdg))
+gdoc["jobs"][0]["gate_terms"] = ["done"]
+with open(rpg, "w") as f:
+    json.dump(gdoc, f)
+check("gate_terms, unchanged record still loads",
+      wl.load_registry(rpg, state_dir=sdg)["job-a"]
+      ["gate_terms"], ["done"])
+del gdoc["jobs"][0]["gate_terms"]
+with open(rpg, "w") as f:
+    json.dump(gdoc, f)
+check_raises("gate_terms, dropping the terms is also a "
+             "record change", wl.RegistryError,
+             lambda: wl.load_registry(rpg, state_dir=sdg))
+
 print("\n%d fixtures, %d failed" % (len(total), len(fails)))
 raise SystemExit(1 if fails else 0)

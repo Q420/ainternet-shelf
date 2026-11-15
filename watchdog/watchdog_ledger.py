@@ -115,6 +115,11 @@ def load_registry(path, state_dir):
     §2 fills it on assignment confirmation, so a job may be
     registered before that; when present it must be an int.
 
+    gate_terms (§3 as amended by v1.3) is likewise optional
+    at load: absent means no keyword gate. When present it
+    must be a list of strings; it is normalized into the
+    loaded record and pinned with it (see below).
+
     state_dir is required (resubmission-2 verdict M5 — the
     pin must never be skippable, the same class of gap as M4):
     immutability is enforced across
@@ -147,6 +152,27 @@ def load_registry(path, state_dir):
             raise RegistryError(
                 f"job {job.get('job_id')!r}: field "
                 f"'assigned_turn_index' must be int")
+        # gate_terms (§3 as amended by v1.3): the keyword
+        # gate's terms, an OPTIONAL field — a record without
+        # it predates v1.3 and still loads, treated as no
+        # gate. When present it must be a list of strings.
+        # It is normalized here (absent/null -> []) BEFORE
+        # the §2 pin is computed in _pin_active_jobs, and
+        # _job_hash covers the whole record, so the terms
+        # are pinned with the record exactly like every
+        # other field — NOT a set-once side field: changing
+        # them on an active job fails the pin, and the
+        # change is a new job_id.
+        gt = job.get("gate_terms")
+        if gt is None:
+            job["gate_terms"] = []
+        elif not isinstance(gt, list) or not all(
+                isinstance(t, str) for t in gt):
+            raise RegistryError(
+                f"job {job.get('job_id')!r}: field "
+                f"'gate_terms' must be a list of strings")
+        else:
+            job["gate_terms"] = list(gt)
         jid = job["job_id"]
         if jid in out:
             raise RegistryError(f"duplicate job_id: {jid!r}")

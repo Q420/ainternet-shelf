@@ -1,12 +1,15 @@
 """Watchdog Stage 3 — the detector and the judge.
 
 Built from the shelved Stage 1 contract v1.1 as amended by v1.2
-(Q420/ainternet-shelf, claude/WATCHDOG-STAGE1-CONTRACT-v1.2-
+and v1.3 (Q420/ainternet-shelf, claude/WATCHDOG-STAGE1-
+CONTRACT-v1.2-AMENDMENT.md and WATCHDOG-STAGE1-CONTRACT-v1.3-
 AMENDMENT.md, frozen 2026-11-15). Implements contract §4
 (assignment matching comes from the registry, never from a seat
 echoing the marker), §5 (event packet assembly), §6 (streak —
 via the Stage 2 ledger, which owns streak persistence), §7
-(strict judge output) and the detector half of §13.
+(strict judge output) and the detector half of §13. The keyword
+gate's terms come from the job record itself (§3 gate_terms,
+added by v1.3 and pinned with the record under §2).
 
 This module reads the pool (the only source, §14), judges marked
 jobs' seat turns, and records events through the Stage 2 ledger
@@ -22,7 +25,6 @@ owner ruling). No test calls the live client.
 
 import hashlib
 import json
-import os
 import time
 import urllib.request
 import uuid
@@ -36,20 +38,14 @@ SCHEMA_VERSION = "1"
 # range; 25 until the owner sets a value.
 DEFAULT_CONFIG = {
     "buffer_size": 25,
-    "keywords_by_job": {},
 }
 
-# DETECTOR-LOCAL CONFIG — interim home for the keyword gate
-# (Stage 3 review ruling D1): the gate belongs in the job
-# record as gate_terms, which is contract amendment v1.3.
-# Until v1.3 lands, the word lists live here, keyed by
-# job_id — and the detector PINS a hash of each job's terms
-# on its first pass and refuses a changed gate while the
-# job is active (M-S3-2; see Detector._gate_pin_ok). A job
-# with no entry here has no gate: every seat turn is judged,
-# and that fact is logged. Detector config
-# ("keywords_by_job") overrides and extends this table.
-KEYWORDS_BY_JOB = {}
+# The keyword gate has NO detector-local config: its terms
+# are the job record's gate_terms (§3 as amended by v1.3),
+# read from the loaded registry on every pass and pinned
+# with the record under §2. (The Stage 3 interim detector-
+# local table and its detector-state hash pin are retired —
+# the registry pin does that job now.)
 
 # §7: the judge's prompt is a fixed template. Seat content is
 # quoted data inside it, never instructions. The hash of this
@@ -363,11 +359,10 @@ class Detector:
         self.config = dict(DEFAULT_CONFIG)
         if config:
             self.config.update(config)
-        keywords = dict(KEYWORDS_BY_JOB)
-        keywords.update(self.config.get("keywords_by_job") or {})
-        self.keywords_by_job = {
-            jid: [w.lower() for w in words]
-            for jid, words in keywords.items()}
+        # Jobs whose gate_absent fact this detector run has
+        # already logged (§3, v1.3): the note is written
+        # once per run, not once per pass.
+        self._gate_absent_logged = set()
         # Clock for the §9 stale-window check; injectable so
         # fixtures can pin it. Epoch seconds.
         self.clock = clock or time.time
@@ -381,64 +376,29 @@ class Detector:
             self.stale_interval_s = getattr(
                 ledger, "config", {}).get(
                     "stale_interval_s", 600)
-        # Detector-persisted state: the interim gate pins
-        # (M-S3-2). Lives alongside the ledger state unless
-        # config says otherwise.
-        self._state_dir = self.config.get(
-            "detector_state_dir") or getattr(
-                ledger, "dir", ".")
-        os.makedirs(self._state_dir, exist_ok=True)
-        self._state_path = os.path.join(
-            self._state_dir, "detector-state.json")
-        self._det_state = {"gate_pins": {}}
-        if os.path.exists(self._state_path):
-            with open(self._state_path) as f:
-                self._det_state = json.load(f)
-            self._det_state.setdefault("gate_pins", {})
 
-    # -- interim gate pinning (M-S3-2, ruling D1) -------------
+    # -- the keyword gate (§3 as amended by v1.3) ------------
 
-    def _gate_terms(self, job_id):
-        """The job's effective gate terms, or None when the
-        job has no gate entry (then every seat turn is
-        judged — interim rule D1, logged at pin time)."""
-        return self.keywords_by_job.get(job_id)
-
-    def _gate_pin_ok(self, job_id):
-        """Pin the job's gate terms on its first detector
-        pass; on later passes refuse a changed gate for the
-        (active) job. Until contract v1.3 puts gate_terms in
-        the pinned job record itself, the gate must not be
-        editable while a job is active — a silent edit would
-        change which turns can ever be judged (§2). Returns
-        True when the pass may proceed."""
-        terms = self._gate_terms(job_id)
-        canon = json.dumps(
-            {"job_id": job_id, "gate_terms": terms},
-            sort_keys=True)
-        digest = hashlib.sha256(canon.encode()).hexdigest()
-        pins = self._det_state["gate_pins"]
-        pin = pins.get(job_id)
-        if pin is None:
-            pins[job_id] = {"sha256": digest,
-                            "gate_terms": terms}
-            wl._atomic_write_json(self._state_path,
-                                  self._det_state)
-            if terms is None:
-                self.ledger._ops(
-                    "gate_absent", job_id=job_id,
-                    note="no gate entry — every seat turn "
-                         "is judged (interim rule D1)")
-            return True
-        if pin["sha256"] != digest:
+    def _gate_terms(self, job):
+        """The job's gate terms, read from the loaded
+        registry record (§3 gate_terms — part of the §2
+        record pin, so a changed gate on an active job
+        already failed at registry load; there is nothing
+        detector-local left to pin). Returns the terms
+        lowercased for matching. An empty list means the
+        job has no gate: every completed seat turn is
+        judged, and that fact is logged (gate_absent) once
+        per detector run."""
+        terms = [t.lower()
+                 for t in (job.get("gate_terms") or [])]
+        if not terms and job["job_id"] not in \
+                self._gate_absent_logged:
+            self._gate_absent_logged.add(job["job_id"])
             self.ledger._ops(
-                "gate_pin_mismatch", job_id=job_id,
-                pinned_sha256=pin["sha256"],
-                seen_sha256=digest,
-                note="gate terms changed while the job is "
-                     "active — refused (interim rule D1)")
-            return False
-        return True
+                "gate_absent", job_id=job["job_id"],
+                note="job record carries no gate_terms — "
+                     "every seat turn is judged (§3, v1.3)")
+        return terms
 
     # -- stale window (§9, M-S3-4) ------------------------------
 
@@ -546,9 +506,10 @@ class Detector:
         if ati is None:
             summary["status"] = "not_assigned"
             return summary
-        if not self._gate_pin_ok(job_id):
-            summary["status"] = "gate_pin_mismatch"
-            return summary
+        # The gate for this pass is the record's own
+        # gate_terms (§3, v1.3); an empty gate also logs
+        # gate_absent (see _gate_terms).
+        gate_terms = self._gate_terms(job)
         if not self.ledger.may_detect(job_id):
             summary["status"] = "locked"
             return summary
@@ -599,17 +560,17 @@ class Detector:
             if streak["count"] >= 1 and last_key in by_key:
                 first_yes = by_key[last_key]
 
-        keywords = self.keywords_by_job.get(job_id)
         for turn in seat_turns[start:]:
-            # Keyword first gate: a turn with no keyword match
-            # is never judged (§13: no match, judge never
-            # called) — but it is still a completed seat turn,
-            # so under ruling D2 (M-S3-1) it RESETS the streak
-            # via the ledger's gate_reset, recorded distinctly
-            # and never as a judged NO.
-            if keywords and not any(
+            # Keyword first gate: a turn matching none of the
+            # record's gate_terms is never judged (§13: no
+            # match, judge never called) — but it is still a
+            # completed seat turn, so under §6 as amended by
+            # v1.3 (b) it RESETS the streak via the ledger's
+            # gate_reset, recorded distinctly and never as a
+            # judged NO.
+            if gate_terms and not any(
                     w in turn["content"].lower()
-                    for w in keywords):
+                    for w in gate_terms):
                 summary["gated_out"] += 1
                 summary["gate_resets"] += 1
                 self.ledger.reset_streak_gate(

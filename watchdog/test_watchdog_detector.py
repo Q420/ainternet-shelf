@@ -1,8 +1,9 @@
 """Fixtures for watchdog_detector (Stage 3), mapped to the
-Stage 1 contract v1.1 + v1.2 amendment: pool/turn identity
-§1, marker-from-registry §4, packet §5, streak §6, judge
-strictness §7, ack lock §8, and the §13 acceptance rows this
-stage owns. The live NVIDIA judge is never called here.
+Stage 1 contract v1.1 + v1.2 + v1.3 amendments: pool/turn
+identity §1, marker-from-registry §4, packet §5, streak §6,
+judge strictness §7, ack lock §8, gate_terms §3 (v1.3), and
+the §13 acceptance rows this stage owns. The live NVIDIA
+judge is never called here.
 Run: ./venv/bin/python test_watchdog_detector.py
 """
 import inspect
@@ -53,7 +54,7 @@ def check_raises(name, exc, fn):
 
 
 def job(jid, ati=0, deps=(), prio=1, conv="conv-1",
-        pre="Is it done?"):
+        pre="Is it done?", gate=None):
     j = {"job_id": jid, "seat_id": "chatgpt",
          "conversation_id": conv, "task": "t",
          "declared_precondition": pre,
@@ -61,6 +62,8 @@ def job(jid, ati=0, deps=(), prio=1, conv="conv-1",
          "state": "active"}
     if ati is not None:
         j["assigned_turn_index"] = ati
+    if gate is not None:
+        j["gate_terms"] = list(gate)
     return j
 
 
@@ -109,13 +112,13 @@ def registry_file(jobs):
     return p
 
 
-def make_detector(pool_path, jobs, judge, keywords=None,
+def make_detector(pool_path, jobs, judge,
                   ledger_dir=None, config=None, clock=None):
     reg = wl.load_registry(registry_file(jobs),
                            state_dir=tempfile.mkdtemp())
     led = wl.Ledger(ledger_dir or tempfile.mkdtemp(),
                     config, registry=reg)
-    cfg = {"keywords_by_job": keywords or {}}
+    cfg = {}
     if config:
         cfg.update(config)
     det = wd.Detector(reg, led, wd.PoolReader(pool_path),
@@ -146,13 +149,13 @@ check("judge, non-string is an error",
 check("judge, prose is an error",
       wd.parse_judge_output("Yes, it is done"), "ERROR")
 
-# ---------------- keyword gate (§13: no match) ----------------
+# ---------------- keyword gate (§3 gate_terms; §13) ---------
 
 pool = Pool([seat("all quiet", "m1"), seat("still quiet", "m2"),
              seat("nothing here", "m3")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["deploy"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["deploy"])], stub)
 s = det.process_job("job-a")
 check("gate, judge never called on no match",
       len(stub.calls), 0)
@@ -163,16 +166,16 @@ check("gate, streak count stays zero",
 check("gate, resets recorded distinctly as gate_reset",
       led.streak("job-a")["reset_cause"], "gate_reset")
 
-# M-S3-1 (ruling D2): a gated-out completed seat turn RESETS
-# the streak — YES, gated-out, YES does not fire; the reset
-# is a gate_reset, never a judged NO, and costs no judge
-# call (§13 still honoured).
+# M-S3-1 (ruling D2; §6 as amended by v1.3 (b)): a gated-out
+# completed seat turn RESETS the streak — YES, gated-out,
+# YES does not fire; the reset is a gate_reset, never a
+# judged NO, and costs no judge call (§13 still honoured).
 pool = Pool([seat("done alpha", "m1"),
              seat("unrelated note", "mx"),
              seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("gate-reset, YES gated-out YES does not fire",
       len(led.state["events"]), 0)
@@ -198,8 +201,8 @@ check("gate-reset, pair is the post-reset turns",
 
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("fire, status", s["status"], "fired")
 check("fire, outcome recorded", s["outcome"], "recorded")
@@ -232,8 +235,8 @@ check("fire, streak consumed (A1)",
 pool = Pool([seat("done alpha", "m1"), seat("still working",
              "m2")])
 stub = wd.StubJudge(yes_on("alpha"))
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("one YES, no event", len(led.state["events"]), 0)
 check("one YES, following gated-out turn resets it (D2)",
@@ -246,8 +249,8 @@ check("one YES, the reset cause is gate_reset",
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2"),
              seat("done gamma", "m3")])
 stub = wd.StubJudge(yes_on("alpha", "gamma", "delta"))
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("reset, YES NO YES does not fire",
       len(led.state["events"]), 0)
@@ -267,8 +270,8 @@ answers = {"done alpha": "YES", "done beta": "MAYBE",
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2"),
              seat("done gamma", "m3")])
 stub = wd.StubJudge(lambda p, c: answers[c])
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("error, non-YES/NO output holds then pair completes",
       s["status"], "fired")
@@ -290,8 +293,8 @@ def flaky(p, c):
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2"),
              seat("done gamma", "m3")])
 stub = wd.StubJudge(flaky)
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("unavailable, error holds and pair completes",
       (s["errors"], s["status"]), (1, "fired"))
@@ -304,8 +307,8 @@ pool = Pool([seat("done alpha", "m1"),
              user("done — the user turn says done too"),
              seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("user turns, judge called only on seat turns",
       len(stub.calls), 2)
@@ -322,8 +325,8 @@ check("user turns, turn_index counts them (§1 ordinal)",
 pool = Pool([seat("done t0", "m0"), seat("done t1", "m1"),
              seat("done t2", "m2"), seat("done t3", "m3")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a", ati=2)], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(
+    pool.path, [job("job-a", ati=2, gate=["done"])], stub)
 s = det.process_job("job-a")
 check("index, turns before the assignment never judged",
       len(stub.calls), 2)
@@ -333,8 +336,8 @@ check("index, pair starts at the assignment index",
 # a job with no index yet is not detected (not yet active)
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a", ati=None)],
-                         stub, keywords={"job-a": ["done"]})
+det, led = make_detector(
+    pool.path, [job("job-a", ati=None, gate=["done"])], stub)
 s = det.process_job("job-a")
 check("index, unassigned job not detected",
       (s["status"], len(stub.calls)), ("not_assigned", 0))
@@ -343,8 +346,8 @@ check("index, unassigned job not detected",
 
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s1 = det.process_job("job-a")
 pool.add(seat("done gamma", "m3"))
 pool.add(seat("done delta", "m4"))
@@ -364,15 +367,15 @@ check("lock, second pair is the new turns",
 
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s1 = det.process_job("job-a")
 led.acknowledge(s1["event"]["ledger_key"])
 led_dir = led.dir
 # restart: fresh ledger on the same state dir, fresh detector
 stub2 = wd.StubJudge(lambda p, c: "YES")
-det2, led2 = make_detector(pool.path, [job("job-a")], stub2,
-                           keywords={"job-a": ["done"]},
+det2, led2 = make_detector(pool.path,
+                           [job("job-a", gate=["done"])], stub2,
                            ledger_dir=led_dir)
 s2 = det2.process_job("job-a")
 check("replay, same turns never re-judged after restart",
@@ -386,8 +389,8 @@ check("replay, pass is idle", s2["status"], "idle")
 pool = Pool([seat("done — identical text", "id-1"),
              seat("done — identical text", "id-2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 check("identical text, distinct ids fire as two turns",
       s["event"]["candidate_turn_ids"], ["id-1", "id-2"])
@@ -395,8 +398,8 @@ check("identical text, distinct ids fire as two turns",
 pool = Pool([seat("done — identical text"),
              seat("done — identical text")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub)
 s = det.process_job("job-a")
 cands = s["event"]["candidate_turn_ids"]
 check("identical ID-less text, occurrence keys are distinct",
@@ -409,11 +412,10 @@ pool = Pool([seat("done a1", "a1", conv="conv-1"),
              seat("done b1", "b1", conv="conv-2"),
              seat("done b2", "b2", conv="conv-2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-jobs = [job("job-a", conv="conv-1"),
-        job("job-b", deps=["job-a"], conv="conv-2")]
-det, led = make_detector(pool.path, jobs, stub,
-                         keywords={"job-a": ["done"],
-                                   "job-b": ["done"]})
+jobs = [job("job-a", conv="conv-1", gate=["done"]),
+        job("job-b", deps=["job-a"], conv="conv-2",
+            gate=["done"])]
+det, led = make_detector(pool.path, jobs, stub)
 sb = det.process_job("job-b")
 check("deps, upstream unacknowledged reads pending",
       sb["event"]["dependency_state"], {"job-a": "pending"})
@@ -426,41 +428,42 @@ sb2 = det.process_job("job-b")
 check("deps, acknowledged upstream reads resolved",
       sb2["event"]["dependency_state"], {"job-a": "resolved"})
 
-# ---------------- gate pinning (M-S3-2, ruling D1) ------------
+# ---------------- the gate lives in the record (§3, v1.3) -----
 
-pool = Pool([seat("done alpha", "m1")])
+# Reviewer fixture (c): the gate the detector applies is
+# the pinned record's own gate_terms — a turn matching the
+# record's terms is judged; a turn matching none of them
+# gate-resets. (Reviewer fixture (a) — changing gate_terms
+# on an active job is refused by the registry pin — lives
+# in test_watchdog_ledger.py with the other §2 pin
+# fixtures; fixture (b) is the gate-absent section below.)
+pool = Pool([seat("deploy one", "m1"),
+             seat("unrelated note", "mx"),
+             seat("deploy two", "m2"),
+             seat("deploy three", "m3")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]})
-pin_dir = led.dir
+det, led = make_detector(
+    pool.path, [job("job-a", gate=["deploy"])], stub)
 s = det.process_job("job-a")
-check("gate-pin, first pass proceeds and judges",
-      s["judged"], 1)
-check("gate-pin, pin persisted in the detector state",
-      os.path.exists(os.path.join(pin_dir,
-                                  "detector-state.json")), True)
-stub2 = wd.StubJudge(lambda p, c: "YES")
-det2, led2 = make_detector(pool.path, [job("job-a")], stub2,
-                           keywords={"job-a": ["shipped"]},
-                           ledger_dir=pin_dir)
-s2 = det2.process_job("job-a")
-check("gate-pin, changed gate on an active job is refused",
-      s2["status"], "gate_pin_mismatch")
-check("gate-pin, the refusal judges nothing",
-      len(stub2.calls), 0)
-ops = open(led2.ops_path).read()
-check("gate-pin, the refusal is logged",
-      "gate_pin_mismatch" in ops, True)
-stub3 = wd.StubJudge(lambda p, c: "YES")
-det3, led3 = make_detector(pool.path, [job("job-a")], stub3,
-                           keywords={"job-a": ["done"]},
-                           ledger_dir=pin_dir)
-s3 = det3.process_job("job-a")
-check("gate-pin, unchanged gate still passes",
-      s3["status"], "idle")
+check("record-gate, only the record's matching turns "
+      "are judged", len(stub.calls), 3)
+check("record-gate, the non-matching turn gated out",
+      s["gated_out"], 1)
+check("record-gate, the gated turn reset the streak",
+      s["gate_resets"], 1)
+ops = open(led.ops_path).read()
+check("record-gate, the reset is a gate_reset in the ops "
+      "log", "gate_reset" in ops, True)
+check("record-gate, the pair is the post-reset matching "
+      "turns", s["event"]["candidate_turn_ids"],
+      ["m2", "m3"])
+check("record-gate, no detector-local gate state remains",
+      os.path.exists(os.path.join(
+          led.dir, "detector-state.json")), False)
 
-# interim rule D1: a job with NO gate entry is judged on
-# every seat turn, and that fact is logged.
+# Reviewer fixture (b): a job whose record carries no
+# gate_terms has no gate (§3 as amended by v1.3) — every
+# seat turn is judged, and that fact is logged.
 pool = Pool([seat("alpha anything", "m1"),
              seat("beta anything", "m2")])
 stub = wd.StubJudge(lambda p, c: "NO")
@@ -468,6 +471,8 @@ det, led = make_detector(pool.path, [job("job-a")], stub)
 s = det.process_job("job-a")
 check("gate-absent, every seat turn is judged",
       len(stub.calls), 2)
+check("gate-absent, the loaded record carries no terms",
+      det.registry["job-a"]["gate_terms"], [])
 ops = open(led.ops_path).read()
 check("gate-absent, the fact is logged",
       "gate_absent" in ops, True)
@@ -523,8 +528,8 @@ T_SEND = "2026-11-14T23:49:00.000Z"    # POOL_EPOCH - 660 s
 now = [POOL_EPOCH + 30]
 pool = Pool([seat("done alpha", "m1")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]},
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub,
                          clock=lambda: now[0])
 s = det.process_job("job-a")
 check("stale, fresh window judges normally",
@@ -549,8 +554,8 @@ check("stale, idle window raises no alert",
 pool = Pool([at(seat("done alpha", "m1"), T_REPLY),
              at(user("please report"), T_SEND)])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]},
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub,
                          clock=lambda: POOL_EPOCH + 30)
 s = det.process_job("job-a")
 check("stale, outstanding send past the interval holds",
@@ -570,8 +575,8 @@ now = [POOL_EPOCH - 600]  # the send is 60 s old: fresh
 pool = Pool([at(seat("done alpha", "m1"), T_REPLY),
              at(user("please report"), T_SEND)])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]},
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub,
                          clock=lambda: now[0])
 s = det.process_job("job-a")
 check("stale, fresh outstanding send still judges",
@@ -591,8 +596,8 @@ check("stale, the held pass adds no judge calls",
 pool = Pool([at(user("please report"), T_SEND),
              seat("done alpha", "m1"), seat("done beta", "m2")])
 stub = wd.StubJudge(lambda p, c: "YES")
-det, led = make_detector(pool.path, [job("job-a")], stub,
-                         keywords={"job-a": ["done"]},
+det, led = make_detector(pool.path,
+                         [job("job-a", gate=["done"])], stub,
                          clock=lambda: POOL_EPOCH + 3600)
 s = det.process_job("job-a")
 check("stale, answered send is not stale",
@@ -632,13 +637,12 @@ check("corpus, reader yields all 284 captured replies",
 gated_expected = sum(
     1 for c in convs for t in reader.seat_turns("chatgpt", c)
     if "the" in t["content"].lower())
-jobs = [job(f"replay-{i:02d}", conv=c, prio=i)
+jobs = [job(f"replay-{i:02d}", conv=c, prio=i, gate=["the"])
         for i, c in enumerate(convs)]
 stub = wd.StubJudge(
     lambda p, c: "YES" if "pass" in c.lower() else "NO")
 det, led = make_detector(
     corpus, jobs, stub,
-    keywords={j["job_id"]: ["the"] for j in jobs},
     config={"stale_interval_s": 10 ** 9})
 summaries = det.process_all()
 check("corpus, every conversation processed",
