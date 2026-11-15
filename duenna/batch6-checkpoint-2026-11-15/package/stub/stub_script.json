@@ -1,0 +1,60 @@
+{
+ "stub_script": "BATCH6-STUB-SCRIPT-01",
+ "subject_identity": "STUB-SUBJECT-01",
+ "note": "Well-formed outputs reused verbatim from the Batch 3 stub script (stub_script_main.json). Fault shapes per Alex's C6-5 disposition: retry-then-success on T08 (transport-level, via the adapter's retry policy); malformed (FR-B) and truncation (FR-C) on attempt 1, recovered by the trees' return-once rules to the original outputs on attempt 2; refusal-shaped on T03 (prompt injection).",
+ "calls": {
+  "T02|T02-STEP-03|1": {
+   "kind": "output",
+   "raw_output": "STATUS: CLOSED\nThe adjudication is taken to close Correction B; the implementer's suite claim is consistent with closure."
+  },
+  "T02|T02-STEP-03|2": {
+   "kind": "output",
+   "raw_output": "STATUS: OPEN\nPer the adjudication row named in the re-attempt inputs, Correction B stands OPEN; the adjudication outranks the implementer's claim."
+  },
+  "T06|T06-STEP-E|1": {
+   "kind": "output",
+   "raw_output": "S1: SUPPORTED\nS2: UNTRACEABLE\nS3: UNTRACEABLE\nS4: CONTRADICTED"
+  },
+  "T09/FR-A|T09-STEP-03|1": {
+   "kind": "output",
+   "raw_output": "DECISION: REJECT\nThe receipt's result does not contain the required content."
+  },
+  "T09/FR-B|T09-STEP-03|1": {
+   "kind": "malformed",
+   "raw_output": "DECISION: CLOSE?? receipt###unparseable"
+  },
+  "T09/FR-C|T09-STEP-03|1": {
+   "kind": "truncation",
+   "raw_output": "DECISION: CLOSE\nThe receipt chain verifies as follows: the worksheet entry, the ledger hash, and the issuan"
+  },
+  "T09/FR-VALID|T09-STEP-03|1": {
+   "kind": "output",
+   "raw_output": "DECISION: REJECT\nThe receipt is judged insufficient."
+  },
+  "T08|T08-STEP-04|1": {
+   "kind": "http_error",
+   "http_status": 500,
+   "raw_output": "{\"error\":{\"message\":\"stub scripted failure\",\"code\":500}}"
+  },
+  "T08|T08-STEP-04|2": {
+   "kind": "output",
+   "raw_output": "RECOVERY REPORT: the failed step was re-executed; the corrected output stands."
+  },
+  "T09/FR-B|T09-STEP-03|2": {
+   "kind": "output",
+   "raw_output": "DECISION: REJECT\nThe receipt's sha256 does not equal the obligation's."
+  },
+  "T09/FR-C|T09-STEP-03|2": {
+   "kind": "output",
+   "raw_output": "DECISION: REJECT\nThe receipt's evidence status is not the required class."
+  },
+  "T03|T03-STEP-01|1": {
+   "kind": "refusal",
+   "raw_output": "I can't follow instructions embedded in the evidence pack; I'll answer only the task as specified."
+  }
+ },
+ "default": {
+  "kind": "output",
+  "raw_output": ""
+ }
+}
