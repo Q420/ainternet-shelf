@@ -98,6 +98,21 @@ _r = _sp.run([sys.executable, "-c", "import watchdog"],
              cwd=os.path.dirname(os.path.abspath(__file__)))
 check("watchdog.py imports clean", _r.returncode, 0)
 
+# a stale stop request is cleared at supervisor start, so a later
+# signal can never consume it as a deliberate stop (resubmission-1
+# review should-fix)
+import watchdog as _wd
+import tempfile as _tf
+_d = _tf.mkdtemp()
+_wd.STOP_REQUEST = os.path.join(_d, "waker.stop-request")
+with open(_wd.STOP_REQUEST, "w") as _f:
+    _f.write("{}")
+_wd.clear_stale_stop_request()
+check("stale stop request cleared at start",
+      os.path.exists(_wd.STOP_REQUEST), False)
+_wd.clear_stale_stop_request()
+check("clearing with no request present is harmless", True, True)
+
 print("FAILURES:", len(fails))
 for x in fails:
     print(" -", x)

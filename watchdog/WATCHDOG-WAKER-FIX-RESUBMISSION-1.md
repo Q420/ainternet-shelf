@@ -38,3 +38,13 @@ decide() fixtures, which never import the supervisor. Fixed
 (import moved above the constants) and now covered by a new
 fixture: "watchdog.py imports clean". Guard 45/45, ledger 52/52
 unchanged.
+
+## Should-fix closed (resubmission-1 review, same day)
+`watchdog.py stop` now writes its stop request only when a live
+supervisor is about to be signalled, and a starting supervisor
+clears any stale stop request before its launch transition — a
+lingering request can never be consumed by a later teardown.
+Fixtured (stale request cleared at start; clearing with none
+present is harmless). Verified live: stop with no supervisor
+alive records no request and leaves no file. Waker suite still
+0 failures.

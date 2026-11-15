@@ -109,6 +109,17 @@ def pid_is_watcher(pid):
         return False
 
 
+def clear_stale_stop_request():
+    """A stop request never survives into a new supervisor: one
+    written while no supervisor was alive (or left over from an
+    earlier stop) must not be there for a future signal to
+    consume (resubmission-1 review should-fix)."""
+    try:
+        os.remove(STOP_REQUEST)
+    except OSError:
+        pass
+
+
 def consume_stop_request():
     """A deliberate stop is an explicit act: a stop-request file
     written by `watchdog.py stop` moments before it signals us.
@@ -206,17 +217,17 @@ def main():
     if args.cmd == "stop":
         st = ws.read_state()
         pid = st.get("waker_pid") if st else None
-        with open(STOP_REQUEST, "w") as f:
-            json.dump({"at_epoch": time.time(),
-                       "reason": args.reason,
-                       "target": st.get("target") if st else None}, f)
         if pid and pid_alive(pid):
+            with open(STOP_REQUEST, "w") as f:
+                json.dump({"at_epoch": time.time(),
+                           "reason": args.reason,
+                           "target": st.get("target")}, f)
             os.kill(pid, signal.SIGTERM)
             print(json.dumps({"watchdog_stop": "requested",
                               "pid": pid}), flush=True)
             return 0
         print(json.dumps({"watchdog_stop": "no_live_supervisor",
-                          "request_recorded": True}), flush=True)
+                          "request_recorded": False}), flush=True)
         return 0
 
     os.makedirs(SPOOL, exist_ok=True)
@@ -253,6 +264,7 @@ def main():
     signal.signal(signal.SIGHUP, _on_signal)
 
     orphan = reap_orphan()
+    clear_stale_stop_request()
     ws.write_transition(
         "launch",
         "supervisor start (serve=%s, force=%s)%s" % (
