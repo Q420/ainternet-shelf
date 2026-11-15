@@ -22,6 +22,9 @@ SPOOL = os.path.join(HERE, "spool")
 STATE_PATH = os.path.join(SPOOL, "waker.json")
 LOCK_PATH = os.path.join(SPOOL, "waker.lock")
 INSTANCE_MARKER = "/tmp/remmy-waker-instance"
+# Shared heartbeat staleness threshold (seconds), used by both the
+# supervisor and the checker (moved here per review note, 2026-11-15).
+STALE_S = 45
 
 
 def boot_id():

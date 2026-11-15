@@ -43,16 +43,21 @@ def decide(f):
     if lt == "gave_up":
         return "noop", ("gave_up stands (attempts %s) — a human tap "
                         "is required" % f.get("attempts"))
-    if lt == "signal" and f.get("same_instance"):
-        return "noop", ("supervisor was stopped by a signal on this "
-                        "instance — deliberate stop stands")
+    if lt == "stop":
+        return "noop", ("explicit stop stands — a human launch is "
+                        "required")
+    if lt == "completed":
+        return "noop", ("watch completed by delivery — a new watch "
+                        "is a new launch, not a resurrection")
     bits = ["lock free", "last transition %r" % lt]
+    if lt == "signal":
+        bits.append("unplanned exit: %s" % f.get("last_reason"))
     if not f.get("same_instance"):
         bits.append("instance changed (VM replacement)")
     age = f.get("heartbeat_age_s")
     if age is None:
         bits.append("no heartbeat")
-    elif age > 45:
+    elif age > ws.STALE_S:
         bits.append("heartbeat stale by %ds" % int(age))
     else:
         bits.append("heartbeat fresh — possible orphan child; the "
@@ -79,6 +84,7 @@ def gather():
     return {
         "lock_held": lock_held,
         "last_transition": state.get("transition") if state else None,
+        "last_reason": state.get("reason") if state else None,
         "same_instance": ws.same_instance(state),
         "target": state.get("target") if state else None,
         "attempts": state.get("attempts") if state else None,

@@ -34,6 +34,9 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import waker_state as ws
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPOOL = os.path.join(HERE, "spool")
 PY = os.path.join(HERE, "venv", "bin", "python")
@@ -41,14 +44,12 @@ WATCHER = os.path.join(HERE, "listener_watch.py")
 HEARTBEAT = os.path.join(SPOOL, "heartbeat.json")
 WAKER_LOG = os.path.join(SPOOL, "waker.log")
 CHILD_OUT = os.path.join(SPOOL, "child-out.log")
+STOP_REQUEST = os.path.join(SPOOL, "waker.stop-request")
 CHILD_OUT_MAX = 1_000_000
 ARM_GRACE_S = 30        # a fresh child gets this long to arm
-STALE_S = 45            # then a heartbeat older than this = hung
+STALE_S = ws.STALE_S    # heartbeat older than this = hung
 MAX_RELAUNCH = 5        # child relaunches per burst before gave_up
 RELAUNCH_WINDOW_S = 600
-
-sys.path.insert(0, HERE)
-import waker_state as ws
 
 _stop = {"sig": None}
 
@@ -106,6 +107,24 @@ def pid_is_watcher(pid):
             return b"listener_watch" in f.read()
     except Exception:
         return False
+
+
+def consume_stop_request():
+    """A deliberate stop is an explicit act: a stop-request file
+    written by `watchdog.py stop` moments before it signals us.
+    Returns its reason when a fresh request is present (consuming
+    it); otherwise None — a bare signal is an unplanned exit
+    (review M-A: a process-group teardown sends SIGTERM/SIGHUP,
+    and must not be recorded as deliberate)."""
+    try:
+        with open(STOP_REQUEST) as f:
+            req = json.load(f)
+        os.remove(STOP_REQUEST)
+        if time.time() - float(req.get("at_epoch") or 0) <= 60:
+            return req.get("reason") or "operator stop"
+    except Exception:
+        pass
+    return None
 
 
 def reap_orphan():
@@ -180,7 +199,25 @@ def main():
     run.add_argument("--force", action="store_true",
                      help="human override: start despite a standing "
                           "gave_up record")
+    stop = sub.add_parser("stop")
+    stop.add_argument("--reason", default="operator stop")
     args = ap.parse_args()
+
+    if args.cmd == "stop":
+        st = ws.read_state()
+        pid = st.get("waker_pid") if st else None
+        with open(STOP_REQUEST, "w") as f:
+            json.dump({"at_epoch": time.time(),
+                       "reason": args.reason,
+                       "target": st.get("target") if st else None}, f)
+        if pid and pid_alive(pid):
+            os.kill(pid, signal.SIGTERM)
+            print(json.dumps({"watchdog_stop": "requested",
+                              "pid": pid}), flush=True)
+            return 0
+        print(json.dumps({"watchdog_stop": "no_live_supervisor",
+                          "request_recorded": True}), flush=True)
+        return 0
 
     os.makedirs(SPOOL, exist_ok=True)
 
@@ -205,7 +242,7 @@ def main():
             log("refused start: gave_up stands for target %s "
                 "(seq %s)" % (args.target, prev.get("seq")))
             return 5
-        if prev.get("transition") != "delivered":
+        if prev.get("transition") not in ("delivered", "completed"):
             attempts = int(prev.get("attempts") or 0)
             burst_since = prev.get("burst_since")
             if burst_since and \
@@ -254,12 +291,23 @@ def main():
             name = signal.Signals(_stop["sig"]).name
             if child and child.poll() is None:
                 child.terminate()
-            ws.write_transition(
-                "signal", "received %s; supervisor stopping" % name,
-                target=args.target, waker_pid=os.getpid(),
-                attempts=attempts, burst_since=burst_since,
-                child_pid=child.pid if child else None)
-            log("signal %s — stopping" % name)
+            deliberate = consume_stop_request()
+            if deliberate:
+                ws.write_transition(
+                    "stop", "explicit stop request (%s); signal %s"
+                    % (deliberate, name),
+                    target=args.target, waker_pid=os.getpid(),
+                    attempts=attempts, burst_since=burst_since,
+                    child_pid=child.pid if child else None)
+                log("stop requested (%s) — stopping" % deliberate)
+            else:
+                ws.write_transition(
+                    "signal", "received %s with no stop request; "
+                    "unplanned exit" % name,
+                    target=args.target, waker_pid=os.getpid(),
+                    attempts=attempts, burst_since=burst_since,
+                    child_pid=child.pid if child else None)
+                log("signal %s — stopping (unplanned)" % name)
             return 0
         rc = child.poll()
         if rc is None:
@@ -288,7 +336,8 @@ def main():
                 print(json.dumps({"watcher_status": "exited",
                                   "rc": 0}), flush=True)
             ws.write_transition(
-                "delivered", "child exited 0 (delivery surfaced)",
+                "completed", "child exited 0 (delivery surfaced); "
+                "watch ended by success",
                 target=args.target, waker_pid=os.getpid(),
                 attempts=0, burst_since=None,
                 child_pid=child.pid)

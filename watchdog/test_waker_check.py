@@ -39,14 +39,23 @@ f = dict(base, last_transition="gave_up", same_instance=False)
 check("gave_up survives instance change",
       waker_check.decide(f)[0], "noop")
 
-f = dict(base, last_transition="signal", same_instance=True)
-check("signal stop, same instance -> noop",
-      waker_check.decide(f)[0], "noop")
+f = dict(base, last_transition="signal", same_instance=True,
+         last_reason="received SIGTERM with no stop request")
+a, r = waker_check.decide(f)
+check("SIGTERM, no stop request, same instance -> resurrect",
+      a, "resurrect")
+check("reason names the unplanned exit", "unplanned exit" in r, True)
 
 f = dict(base, last_transition="signal", same_instance=False)
 a, r = waker_check.decide(f)
-check("signal stop, new instance -> resurrect", a, "resurrect")
+check("signal, new instance -> resurrect", a, "resurrect")
 check("reason names the replacement", "VM replacement" in r, True)
+
+f = dict(base, last_transition="stop", same_instance=True)
+check("explicit stop -> noop", waker_check.decide(f)[0], "noop")
+
+f = dict(base, last_transition="completed", same_instance=True)
+check("completed delivery -> noop", waker_check.decide(f)[0], "noop")
 
 f = dict(base, last_transition="launch", heartbeat_age_s=None)
 a, r = waker_check.decide(f)
@@ -78,6 +87,16 @@ with tempfile.TemporaryDirectory() as d:
         json.dump({"state": "watching", "updated_at": "x"}, fh)
     check("legacy record reads as no state",
           ws.read_state(legacy), None)
+
+# the supervisor module itself must import clean — a module-level
+# error there is invisible to the decide() fixtures (found live,
+# 2026-11-15: a NameError in the constants block crashed every
+# checker-launched supervisor before it could write a transition)
+import subprocess as _sp
+_r = _sp.run([sys.executable, "-c", "import watchdog"],
+             capture_output=True, text=True,
+             cwd=os.path.dirname(os.path.abspath(__file__)))
+check("watchdog.py imports clean", _r.returncode, 0)
 
 print("FAILURES:", len(fails))
 for x in fails:
