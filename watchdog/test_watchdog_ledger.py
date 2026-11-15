@@ -435,6 +435,23 @@ check_raises("gate_terms, a non-string term is refused",
                                       state_dir=
                                       tempfile.mkdtemp()))
 
+# Gate-rebuild review should-fix: an empty or whitespace-only
+# term matches every turn, so it is refused at load.
+gj6 = job("job-a")
+gj6["gate_terms"] = ["done", ""]
+check_raises("gate_terms, an empty term is refused",
+             wl.RegistryError,
+             lambda: wl.load_registry(registry_file([gj6]),
+                                      state_dir=
+                                      tempfile.mkdtemp()))
+gj7 = job("job-a")
+gj7["gate_terms"] = ["   "]
+check_raises("gate_terms, a whitespace-only term is refused",
+             wl.RegistryError,
+             lambda: wl.load_registry(registry_file([gj7]),
+                                      state_dir=
+                                      tempfile.mkdtemp()))
+
 # Reviewer fixture (a): changing gate_terms on an active
 # job is refused by the registry pin — the terms are part
 # of the record hash, so a tampered record fails load.

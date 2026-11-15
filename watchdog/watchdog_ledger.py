@@ -171,6 +171,15 @@ def load_registry(path, state_dir):
             raise RegistryError(
                 f"job {job.get('job_id')!r}: field "
                 f"'gate_terms' must be a list of strings")
+        elif any(not t.strip() for t in gt):
+            # an empty or whitespace-only term matches every
+            # turn, so the gate would silently pass everything
+            # while looking like a gate (Stage 3 gate-rebuild
+            # review should-fix)
+            raise RegistryError(
+                f"job {job.get('job_id')!r}: field "
+                f"'gate_terms' must not contain empty or "
+                f"whitespace-only terms")
         else:
             job["gate_terms"] = list(gt)
         jid = job["job_id"]
