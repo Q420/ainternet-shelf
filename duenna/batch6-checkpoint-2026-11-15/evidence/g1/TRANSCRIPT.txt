@@ -1,0 +1,24 @@
+== environment inspection (inside the namespace) ==
+  [PASS] namespace has no default route 
+  [PASS] external TCP egress blocked 
+  [PASS] DNS resolution blocked 
+  [PASS] no provider credentials in environment 
+== snapshot copies ==
+  [PASS] scratch snapshot copy is byte-identical to the freeze 
+  [PASS] perturbed copy: CR text altered, stated sha256 left genuine 
+== the battery ==
+  [PASS] S3 extract EXTRACTED (value 38) 
+  [PASS] S3 first insert succeeds 
+  [PASS] S3 replay insert refused ALREADY_CONSUMED 
+  [PASS] S1 forged op-4 refused NO_ISSUANCE 
+  [PASS] S2 extract genuinely TYPE FAILURE (matched, no value) 
+  [PASS] S2 insert refused NOT_EXTRACTED 
+  [PASS] S5 extract AMBIGUOUS with all candidates, no value 
+  [PASS] S5 insert refused NOT_EXTRACTED 
+  [PASS] S4 extract EXTRACTED against the genuine copy 
+  [PASS] S4 insert refused SNAPSHOT_MISMATCH 
+  [PASS] S4 refusal detail recomputes to the perturbed text hash 
+== adapter checks (§3.7) ==
+  [PASS] adapter refuses a non-loopback base URL at start-up 
+  [PASS] adapter completes the loopback exchange with proxy env poisoned (proxy structurally ignored) 
+== G1 battery: ALL PASS (19/19 checks) ==

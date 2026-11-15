@@ -1,0 +1,137 @@
+{
+ "run_id": "G1SCRATCH-20261115-001",
+ "results": {
+  "S3": {
+   "extract_op": "op-1",
+   "insert_op": "op-2",
+   "replay_op": "op-3",
+   "replay_reason": "ALREADY_CONSUMED"
+  },
+  "S1": {
+   "insert_op": "op-4",
+   "reason": "NO_ISSUANCE"
+  },
+  "S2": {
+   "extract_op": "op-5",
+   "insert_op": "op-6",
+   "reason": "NOT_EXTRACTED",
+   "matched": [
+    "\\\"31"
+   ]
+  },
+  "S5": {
+   "extract_op": "op-7",
+   "insert_op": "op-8",
+   "reason": "NOT_EXTRACTED",
+   "candidates": [
+    38,
+    38
+   ]
+  },
+  "S4": {
+   "extract_op": "op-9",
+   "insert_op": "op-10",
+   "reason": "SNAPSHOT_MISMATCH",
+   "claimed_source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "recomputed_source_hash": "9ad359e1ca71c4d132b133d3068881157f7f1d633f99e68bbb170646b6112261"
+  }
+ },
+ "checks": [
+  {
+   "name": "namespace has no default route",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "external TCP egress blocked",
+   "pass": true,
+   "detail": "blocked: OSError: [Errno 101] Network is unreachable"
+  },
+  {
+   "name": "DNS resolution blocked",
+   "pass": true,
+   "detail": "blocked: gaierror: [Errno -3] Temporary failure in name resolution"
+  },
+  {
+   "name": "no provider credentials in environment",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "name": "scratch snapshot copy is byte-identical to the freeze",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "perturbed copy: CR text altered, stated sha256 left genuine",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "S3 extract EXTRACTED (value 38)",
+   "pass": true,
+   "detail": "{\"verification\": \"EXTRACTED\", \"value\": 38, \"evidence_line\": \"- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31\", \"rejected_candidates\": [], \"rule_id\":"
+  },
+  {
+   "name": "S3 first insert succeeds",
+   "pass": true,
+   "detail": "{\"inserted\": true, \"operation_id\": \"op-1\", \"field\": \"fixtures_executed\"}"
+  },
+  {
+   "name": "S3 replay insert refused ALREADY_CONSUMED",
+   "pass": true,
+   "detail": "{\"refused\": true, \"reason\": \"ALREADY_CONSUMED\", \"claimed\": {\"field\": \"fixtures_executed\", \"process_step\": \"G1-S3-STEP-01\", \"presentation\": {\"form\": \"extracted\","
+  },
+  {
+   "name": "S1 forged op-4 refused NO_ISSUANCE",
+   "pass": true,
+   "detail": "{\"refused\": true, \"reason\": \"NO_ISSUANCE\", \"claimed\": {\"field\": \"fixtures_executed\", \"process_step\": \"G1-S1-STEP-01\", \"presentation\": {\"form\": \"extracted\", \"ope"
+  },
+  {
+   "name": "S2 extract genuinely TYPE FAILURE (matched, no value)",
+   "pass": true,
+   "detail": "{\"verification\": \"TYPE FAILURE\", \"matched\": [\"\\\\\\\"31\"], \"expected_type\": \"integer\", \"rejected_candidates\": [{\"matched\": \"\\\\\\\"31\", \"expected_type\": \"integer\", \"evidence_line\": \"\\\"output\\\": \\\"**Status o"
+  },
+  {
+   "name": "S2 insert refused NOT_EXTRACTED",
+   "pass": true,
+   "detail": "{\"refused\": true, \"reason\": \"NOT_EXTRACTED\", \"claimed\": {\"field\": \"fixtures_executed\", \"process_step\": \"G1-S2-STEP-01\", \"presentation\": {\"form\": \"extracted\", \"o"
+  },
+  {
+   "name": "S5 extract AMBIGUOUS with all candidates, no value",
+   "pass": true,
+   "detail": "{\"verification\": \"AMBIGUOUS\", \"candidates\": [{\"value\": 38, \"matched\": \"38\", \"evidence_line\": \"\\\"value\\\": \\\"## Addendum 3 \\u2014 Verdict provenance implemented (2026-11-10)\\\\n\\\\nAlex authorised impleme"
+  },
+  {
+   "name": "S5 insert refused NOT_EXTRACTED",
+   "pass": true,
+   "detail": "{\"refused\": true, \"reason\": \"NOT_EXTRACTED\", \"claimed\": {\"field\": \"fixtures_executed\", \"process_step\": \"G1-S5-STEP-01\", \"presentation\": {\"form\": \"extracted\", \"o"
+  },
+  {
+   "name": "S4 extract EXTRACTED against the genuine copy",
+   "pass": true,
+   "detail": "{\"verification\": \"EXTRACTED\", \"value\": 38, \"evidence_line\": \"- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31\", \"rejected_candidates\": [], \"rule_id\":"
+  },
+  {
+   "name": "S4 insert refused SNAPSHOT_MISMATCH",
+   "pass": true,
+   "detail": "{\"refused\": true, \"reason\": \"SNAPSHOT_MISMATCH\", \"claimed\": {\"field\": \"fixtures_executed\", \"process_step\": \"G1-S4-STEP-01\", \"presentation\": {\"form\": \"extracted\", \"operation_id\": \"op-9\"}}, \"recomputed\""
+  },
+  {
+   "name": "S4 refusal detail recomputes to the perturbed text hash",
+   "pass": true,
+   "detail": "{\"entry\": {\"verification\": \"EXTRACTED\", \"source_ref\": \"r60-revision-change-record#009\", \"source_hash\": \"5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15\", \"value\": 38, \"rule_id\": \"EXT0"
+  },
+  {
+   "name": "adapter refuses a non-loopback base URL at start-up",
+   "pass": true,
+   "detail": "Stage 5 isolation: non-loopback base URL refused: http://10.0.0.9:9999/v1"
+  },
+  {
+   "name": "adapter completes the loopback exchange with proxy env poisoned (proxy structurally ignored)",
+   "pass": true,
+   "detail": "{\"proxy_env_set_to\": \"http://10.255.255.1:8080\", \"capture\": \"53b05142-bf19-4057-95b1-d2348840ef39\", \"failure_class\": \"ADAPTER_FAILURE\", \"failure_detail\": \"served model id 'STUB-SUBJECT-01' != pinned 'nvidia/nemotron-3-na"
+  }
+ ],
+ "all_pass": true
+}
