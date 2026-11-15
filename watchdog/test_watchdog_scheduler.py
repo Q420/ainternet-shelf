@@ -297,7 +297,7 @@ check("restart: re-offered event is in the pending queue",
       [(i["ledger_key"], i["reoffered"])
        for i in rep2["pending_queue"]], [(key, True)])
 check("restart: no event is re-created",
-      len(led2.state["events"]), 1)
+      len(led2.events_for_job("solo")), 1)
 check("restart: the job stays held by the ack lock",
       (entries_by_id(rep2)["solo"]["outcome"],
        entries_by_id(rep2)["solo"]["reason"]),
@@ -335,6 +335,71 @@ rep3 = sch.run_pass(now=now0 + 7200)
 check("alert: still due next pass, not raised twice",
       [(a["ledger_key"], a["newly_raised"])
        for a in rep3["alerts"]], [(key, False)])
+
+# ---------------- stuck dependency (Stage 4 review S-S4-1) ----
+# An upstream that never fires holds its downstream —
+# correctly — but not silently: a hold older than alert_age
+# raises exactly one ops-log alert per stuck pair and the
+# report names the stuck upstream. The hold never lifts and
+# nothing is triggered.
+
+ledger_dir = tempfile.mkdtemp()
+pool = Pool()
+sch, led, det = make_stack(pool.path, [
+    job("up"), job("down", deps=["up"]),
+], wd.StubJudge(ALWAYS_YES), ledger_dir=ledger_dir,
+    config={"alert_age_s": 600})
+t0 = POOL_EPOCH + 100
+rep1 = sch.run_pass(now=t0)
+by = entries_by_id(rep1)
+check("stuck dep: downstream held from the first pass",
+      (by["down"]["outcome"], by["down"]["reason"]),
+      ("held", "dependency_pending"))
+check("stuck dep: no stuck entry before alert_age",
+      "stuck_upstreams" in by["down"], False)
+rep2 = sch.run_pass(now=t0 + 700)
+by = entries_by_id(rep2)
+check("stuck dep: hold still in place past alert_age",
+      (by["down"]["outcome"], by["down"]["reason"]),
+      ("held", "dependency_pending"))
+check("stuck dep: report names the stuck upstream",
+      [(s["upstream_id"], s["newly_raised"])
+       for s in by["down"]["stuck_upstreams"]],
+      [("up", True)])
+with open(led.ops_path) as f:
+    ops = [json.loads(line) for line in f if line.strip()]
+check("stuck dep: exactly one ops-log alert",
+      len([o for o in ops
+           if o["kind"] == "dependency_stuck"]), 1)
+check("stuck dep: alert names downstream and upstream",
+      [(o["job_id"], o["upstream_id"]) for o in ops
+       if o["kind"] == "dependency_stuck"], [("down", "up")])
+rep3 = sch.run_pass(now=t0 + 5000)
+by = entries_by_id(rep3)
+with open(led.ops_path) as f:
+    ops = [json.loads(line) for line in f if line.strip()]
+check("stuck dep: still held and reported, not re-alerted",
+      ([(s["upstream_id"], s["newly_raised"])
+        for s in by["down"]["stuck_upstreams"]],
+       len([o for o in ops
+            if o["kind"] == "dependency_stuck"])),
+      ([("up", False)], 1))
+
+# A fresh scheduler over the same state keeps the original
+# first-held time (the age survives restart) and does not
+# alert a second time.
+sch2, led2, det2 = make_stack(pool.path, [
+    job("up"), job("down", deps=["up"]),
+], wd.StubJudge(ALWAYS_YES), ledger_dir=ledger_dir,
+    config={"alert_age_s": 600})
+rep4 = sch2.run_pass(now=t0 + 9000)
+by = entries_by_id(rep4)
+check("stuck dep: after restart the hold persists, aged "
+      "from the first held pass",
+      (by["down"]["reason"],
+       by["down"]["stuck_upstreams"][0]["held_for_s"],
+       by["down"]["stuck_upstreams"][0]["newly_raised"]),
+      ("dependency_pending", 9000, False))
 
 print(f"\n{len(total)} fixtures, {len(fails)} failed")
 sys.exit(1 if fails else 0)

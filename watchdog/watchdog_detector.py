@@ -435,13 +435,13 @@ class Detector:
     # -- internals -------------------------------------------
 
     def _dependency_state(self, job):
+        # §10 resolution, read through the ledger's accessor
+        # (Stage 4 review S-S4-2) — never ledger.state.
         state = {}
-        events = self.ledger.state["events"].values()
         for dep in job["depends_on"]:
-            state[dep] = "resolved" if any(
-                e["job_id"] == dep
-                and e["state"] == "acknowledged"
-                for e in events) else "pending"
+            state[dep] = "resolved" if \
+                self.ledger.has_acknowledged_event(dep) \
+                else "pending"
         return state
 
     def _buffer(self, turns, upto_index):

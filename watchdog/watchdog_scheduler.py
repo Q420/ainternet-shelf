@@ -5,10 +5,14 @@ v1.2 and v1.3 (frozen 2026-11-15). Implements §8's gates as a
 scheduling decision (acknowledgement lock, post-acknowledgement
 cooldown, alert age, restart re-offer) and §10 (dependencies
 and ordering), sequencing the Stage 3 detector's passes. The
-ledger (Stage 2) remains the only state: this module owns no
-events, no streaks and no cooldown records of its own — it
-reads the ledger's persisted state and asks the ledger to
-raise its alerts.
+ledger (Stage 2) remains the state for events, streaks and
+cooldowns: this module owns none of those, reads the ledger
+through its public accessors (Stage 4 review S-S4-2) and asks
+the ledger to raise its alerts. Its one record of its own is
+the dependency-hold tracker (Stage 4 review S-S4-1) — when
+each downstream/upstream pair was first held, and whether it
+has alerted — persisted beside the ledger so a stuck
+dependency is never silent, even across restarts.
 
 The scheduler never sends anything to a seat (§0), never
 calls a judge, and never creates an event: it only decides
@@ -21,6 +25,9 @@ the wake's concern (Stage 5); the scheduler's part is making
 the queue visible, which the report does.
 """
 
+import json
+import os
+import tempfile
 import time
 from datetime import datetime
 
@@ -73,41 +80,123 @@ class Scheduler:
         # ledger, under its duplicate suppression.
         self._reoffer_keys = [
             e["ledger_key"] for e in ledger.unacknowledged()]
+        # S-S4-1 hold tracker: {"pairs": {"<down>|<up>":
+        # {"first_held_at": epoch, "alerted": bool}}},
+        # persisted beside the ledger and written only when
+        # it changes (a pair first held, an alert raised, a
+        # pair resolved and pruned) — never per pass.
+        self._holds_path = os.path.join(
+            ledger.dir, "scheduler-state.json")
+        self._holds = self._load_holds()
 
-    # -- reads the ledger's API does not expose -------------
-    # Implemented from the ledger's persisted state (the
-    # ledger's own document), exactly as the detector's
-    # _dependency_state already reads it. Flagged in the
-    # build note for the reviewer: no ledger code was
-    # modified to add accessors.
+    # -- dependency-hold tracker (S-S4-1) ---------------------
+
+    def _load_holds(self):
+        if os.path.exists(self._holds_path):
+            with open(self._holds_path) as f:
+                holds = json.load(f)
+            if isinstance(holds, dict) \
+                    and isinstance(holds.get("pairs"), dict):
+                return holds
+        return {"pairs": {}}
+
+    def _save_holds(self):
+        fd, tmp = tempfile.mkstemp(
+            dir=os.path.dirname(self._holds_path),
+            prefix=".tmp-", suffix=".json")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(self._holds, f, indent=1,
+                          sort_keys=True)
+                f.flush()
+                os.fsync(f.fileno())
+            os.rename(tmp, self._holds_path)
+        except BaseException:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+
+    def _track_dependency_holds(self, job, pending, now):
+        """Age this job's dependency holds and alert on the
+        stuck ones (S-S4-1). A hold's age is measured from
+        the first pass that held the pair — the registry
+        carries no assignment timestamp, only a turn index,
+        so the first held pass is the measurable start.
+        A pair held past alert_age raises ONE ops-log alert
+        through the ledger (kind "dependency_stuck", naming
+        downstream and upstream) and is reported in the
+        pass's stuck list; the alerted flag persists, so no
+        pair ever alerts twice. The hold itself never lifts
+        here and nothing is triggered. Returns the stuck
+        entries for the report: pairs whose age exceeds
+        alert_age, each with upstream_id, held_for_s and
+        newly_raised."""
+        jid = job["job_id"]
+        pairs = self._holds["pairs"]
+        changed = False
+        stuck = []
+        for dep in pending:
+            key = jid + "|" + dep
+            rec = pairs.get(key)
+            if rec is None:
+                rec = {"first_held_at": now, "alerted": False}
+                pairs[key] = rec
+                changed = True
+            age = now - rec["first_held_at"]
+            if age > self.config["alert_age_s"]:
+                newly = False
+                if not rec["alerted"]:
+                    rec["alerted"] = True
+                    changed = True
+                    newly = True
+                    self.ledger._ops(
+                        "dependency_stuck", job_id=jid,
+                        upstream_id=dep, held_for_s=age)
+                stuck.append({"upstream_id": dep,
+                              "held_for_s": age,
+                              "alert_raised": True,
+                              "newly_raised": newly})
+        # Prune this job's pairs that are no longer pending
+        # (the upstream resolved). Under the §10 reading —
+        # resolution is any acknowledged event ever — a
+        # pruned pair can never be held again.
+        for key in list(pairs):
+            down, _, up = key.partition("|")
+            if down == jid and up not in pending:
+                del pairs[key]
+                changed = True
+        if changed:
+            self._save_holds()
+        return stuck
+
+    # -- ledger reads (Stage 4 review S-S4-2) ---------------
+    # Every read goes through the ledger's public accessors;
+    # the scheduler never touches ledger.state, so it is not
+    # coupled to the ledger's storage layout.
 
     def _dependency_resolved(self, dep_id):
         """§10: a dependency is resolved when the upstream
         job's event has been ACKNOWLEDGED — not when its
         precondition is merely true, and not when the event
         merely exists (detected-but-unacknowledged is
-        pending)."""
-        return any(
-            e["job_id"] == dep_id
-            and e["state"] == "acknowledged"
-            for e in self.ledger.state["events"].values())
+        pending). Resolution is "any acknowledged event
+        ever": a later unacknowledged event from the
+        upstream does not un-resolve it."""
+        return self.ledger.has_acknowledged_event(dep_id)
 
     def _blocking_event(self, job_id):
         """The job's unacknowledged event, if any (§8 ack
         lock)."""
-        for e in self.ledger.state["events"].values():
-            if (e["job_id"] == job_id
-                    and e["state"] == "unacknowledged"):
-                return e
-        return None
+        return self.ledger.unacknowledged_for_job(job_id)
 
     def _cooldown_until(self, job_id):
         """When the job's post-acknowledgement cooldown
         ends (epoch), or 0 if none is standing. The ledger
         sets this at acknowledgement (§8); the scheduler
         only reads it."""
-        return self.ledger.state["cooldown_until"].get(
-            job_id, 0)
+        return self.ledger.cooldown_until(job_id)
 
     # -- ordering (§10) ---------------------------------------
 
@@ -151,10 +240,14 @@ class Scheduler:
             return entry
         pending = [d for d in job["depends_on"]
                    if not self._dependency_resolved(d)]
+        stuck = self._track_dependency_holds(job, pending,
+                                              now)
         if pending:
             entry.update(
                 outcome="held", reason="dependency_pending",
                 pending_dependencies=pending)
+            if stuck:
+                entry["stuck_upstreams"] = stuck
             return entry
         blocking = self._blocking_event(jid)
         if blocking is not None:
@@ -193,7 +286,12 @@ class Scheduler:
           order           job_ids in evaluation order (§10)
           jobs            per job: outcome "ran" (with the
                           detector's summary) or "held" with
-                          the reason and its evidence
+                          the reason and its evidence; a
+                          dependency_pending entry whose hold
+                          is older than alert_age also carries
+                          stuck_upstreams, naming each stuck
+                          upstream with held_for_s and whether
+                          this pass raised its alert (S-S4-1)
           pending_queue   every unacknowledged event across
                           jobs, oldest first, each annotated
                           with age_s, alert_due and reoffered

@@ -389,6 +389,43 @@ class Ledger:
                if e["state"] == "unacknowledged"]
         return sorted(evs, key=lambda e: e["detected_at"])
 
+    # -- read accessors (Stage 4 review S-S4-2) ----------------
+    # Public reads over the ledger's state, so consumers (the
+    # scheduler, the detector) never touch self.state and are
+    # not coupled to the storage layout. Returned events are
+    # deep copies, as everywhere in this class.
+
+    def events_for_job(self, job_id):
+        """Every event recorded for the job, oldest first."""
+        evs = [copy.deepcopy(e)
+               for e in self.state["events"].values()
+               if e["job_id"] == job_id]
+        return sorted(evs, key=lambda e: e["detected_at"])
+
+    def unacknowledged_for_job(self, job_id):
+        """The job's unacknowledged event — the §8 ack lock's
+        blocker — or None when the job has none."""
+        for e in self.state["events"].values():
+            if (e["job_id"] == job_id
+                    and e["state"] == "unacknowledged"):
+                return copy.deepcopy(e)
+        return None
+
+    def has_acknowledged_event(self, job_id):
+        """True when any event for the job has ever been
+        acknowledged — the §10 dependency-resolution test:
+        resolution is "any acknowledged event ever", so a
+        later unacknowledged event does not un-resolve it."""
+        return any(
+            e["job_id"] == job_id
+            and e["state"] == "acknowledged"
+            for e in self.state["events"].values())
+
+    def cooldown_until(self, job_id):
+        """When the job's post-acknowledgement cooldown ends
+        (epoch seconds), or 0 when none is standing."""
+        return self.state["cooldown_until"].get(job_id, 0)
+
     # -- events (§8) ---------------------------------------------
 
     def record_event(self, packet):

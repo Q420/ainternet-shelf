@@ -481,5 +481,63 @@ check_raises("gate_terms, dropping the terms is also a "
              "record change", wl.RegistryError,
              lambda: wl.load_registry(rpg, state_dir=sdg))
 
+# ---------------- read accessors (Stage 4 review S-S4-2) ------
+# Public reads for the scheduler and the detector, so neither
+# touches ledger.state: events by job, the unacknowledged
+# event by job, the acknowledged-event lookup, cooldown_until.
+
+led8, _ = fresh_ledger({"cooldown_default_s": 120})
+check("accessors, events_for_job empty before any event",
+      led8.events_for_job("job-a"), [])
+check("accessors, unacknowledged_for_job None before any "
+      "event", led8.unacknowledged_for_job("job-a"), None)
+check("accessors, has_acknowledged_event false before any "
+      "event", led8.has_acknowledged_event("job-a"), False)
+check("accessors, cooldown_until 0 before any ack",
+      led8.cooldown_until("job-a"), 0)
+
+pa8 = packet(turn="turn-a1")
+pb8 = packet(job_id="job-b", turn="turn-b1")
+led8.record_event(pa8)
+led8.record_event(pb8)
+check("accessors, events_for_job returns only the job's "
+      "events",
+      [e["ledger_key"] for e in led8.events_for_job("job-a")],
+      [pa8["ledger_key"]])
+check("accessors, events_for_job for the other job",
+      [e["ledger_key"] for e in led8.events_for_job("job-b")],
+      [pb8["ledger_key"]])
+check("accessors, unacknowledged_for_job finds the blocker",
+      led8.unacknowledged_for_job("job-a")["ledger_key"],
+      pa8["ledger_key"])
+check("accessors, has_acknowledged_event false while "
+      "unacknowledged",
+      led8.has_acknowledged_event("job-a"), False)
+
+t8 = time.time()
+led8.acknowledge(pa8["ledger_key"], at=t8)
+check("accessors, has_acknowledged_event true after ack",
+      led8.has_acknowledged_event("job-a"), True)
+check("accessors, cooldown_until is ack time + cooldown",
+      led8.cooldown_until("job-a"), t8 + 120)
+check("accessors, unacknowledged_for_job None after ack",
+      led8.unacknowledged_for_job("job-a"), None)
+check("accessors, events_for_job still lists the acked event",
+      [e["state"] for e in led8.events_for_job("job-a")],
+      ["acknowledged"])
+
+# A later unacknowledged event does not un-resolve the job:
+# resolution is "any acknowledged event ever" (§10 reading).
+led8.record_event(packet(turn="turn-a2"))
+check("accessors, later unacked event keeps "
+      "has_acknowledged_event true",
+      led8.has_acknowledged_event("job-a"), True)
+
+# Returned events are copies — mutating one cannot reach in.
+evs8 = led8.events_for_job("job-b")
+evs8[0]["state"] = "acknowledged"
+check("accessors, returned events are copies",
+      led8.has_acknowledged_event("job-b"), False)
+
 print("\n%d fixtures, %d failed" % (len(total), len(fails)))
 raise SystemExit(1 if fails else 0)
