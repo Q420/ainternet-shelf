@@ -105,7 +105,7 @@ def _fsync_dir(dirpath):
         pass
 
 
-def load_registry(path, state_dir=None):
+def load_registry(path, state_dir):
     """Load and validate the registry. Any §2 failure raises
     RegistryError and nothing starts: unknown depends_on target,
     dependency cycle, duplicate job_id, seat outside the v1 set.
@@ -115,7 +115,9 @@ def load_registry(path, state_dir=None):
     §2 fills it on assignment confirmation, so a job may be
     registered before that; when present it must be an int.
 
-    When state_dir is given, immutability is enforced across
+    state_dir is required (resubmission-2 verdict M5 — the
+    pin must never be skippable, the same class of gap as M4):
+    immutability is enforced across
     loads (verdict S2): each active job's record hash is pinned
     on first sight, and a later load whose active record hashes
     differently fails — an active record is never edited (§2);
@@ -162,8 +164,7 @@ def load_registry(path, state_dir=None):
                 raise RegistryError(
                     f"job {jid!r} depends on unknown job {dep!r}")
     _reject_cycles(out)
-    if state_dir is not None:
-        _pin_active_jobs(out, state_dir)
+    _pin_active_jobs(out, state_dir)
     return out
 
 

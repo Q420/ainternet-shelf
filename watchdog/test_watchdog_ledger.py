@@ -84,9 +84,12 @@ def packet(job_id="job-a", turn="turn-1", detected=None):
     }
 
 
+SD0 = tempfile.mkdtemp()
+
+
 def default_registry():
     return wl.load_registry(registry_file(
-        [job("job-a"), job("job-b")]))
+        [job("job-a"), job("job-b")]), state_dir=SD0)
 
 
 def fresh_ledger(config=None):
@@ -98,21 +101,26 @@ def fresh_ledger(config=None):
 
 check("registry, valid loads",
       sorted(wl.load_registry(
-          registry_file([job("a"), job("b", deps=["a"])]))),
+          registry_file([job("a"), job("b", deps=["a"])]),
+          state_dir=tempfile.mkdtemp())),
       ["a", "b"])
 check_raises("registry, cycle fails (§13)", wl.RegistryError,
              lambda: wl.load_registry(registry_file(
-                 [job("a", deps=["b"]), job("b", deps=["a"])])))
+                 [job("a", deps=["b"]), job("b", deps=["a"])]),
+                 state_dir=tempfile.mkdtemp()))
 check_raises("registry, duplicate id fails", wl.RegistryError,
              lambda: wl.load_registry(registry_file(
-                 [job("a"), job("a")])))
+                 [job("a"), job("a")]),
+                 state_dir=tempfile.mkdtemp()))
 check_raises("registry, unknown dependency fails",
              wl.RegistryError,
              lambda: wl.load_registry(registry_file(
-                 [job("a", deps=["ghost"])])))
+                 [job("a", deps=["ghost"])]),
+                 state_dir=tempfile.mkdtemp()))
 check_raises("registry, unknown seat fails", wl.RegistryError,
              lambda: wl.load_registry(registry_file(
-                 [job("a", seat="api-seat")])))
+                 [job("a", seat="api-seat")]),
+                 state_dir=tempfile.mkdtemp()))
 
 # ---------------- ledger (§8) ----------------
 
@@ -263,7 +271,7 @@ check("M1, still exactly one event",
 
 # M2: packets are checked against the registry.
 reg = wl.load_registry(registry_file(
-    [job("job-a"), job("job-b")]))
+    [job("job-a"), job("job-b")]), state_dir=tempfile.mkdtemp())
 reg["job-b"]["state"] = "retired"
 led10, d10 = fresh_ledger()
 led10 = wl.Ledger(d10, registry=reg)
@@ -350,8 +358,14 @@ check_raises("M3, changing a set index fails load",
 noati = job("job-a")
 del noati["assigned_turn_index"]
 check("S5, job without assigned_turn_index loads",
-      sorted(wl.load_registry(registry_file([noati]))),
+      sorted(wl.load_registry(registry_file([noati]),
+                              state_dir=tempfile.mkdtemp())),
       ["job-a"])
+
+# M5: state_dir is required — the S2 pin is never skippable.
+check_raises("M5, load without state_dir refused", TypeError,
+             lambda: wl.load_registry(
+                 registry_file([job("job-a")])))
 
 print("\n%d fixtures, %d failed" % (len(total), len(fails)))
 raise SystemExit(1 if fails else 0)
