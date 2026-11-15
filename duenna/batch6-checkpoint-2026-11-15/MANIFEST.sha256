@@ -21,6 +21,7 @@ de3cc36bc833587472af94d9d4533d6563ed0cfe7c5ec89ee0a0dc4931dcb7bb  ./evidence/bat
 c2593bfe8cd943063ac3e942e0e8ef4afb9f243e27cd8bb8491f5648aab7d4e8  ./evidence/g1/ADAPTER-CHECKS.json
 a436bfd090b6a0a0c8daabf50199452f3f6da69881bb4deb69d3751ab786d156  ./evidence/g1/BATTERY-RESULT.json
 6ca44296c2efef4070a50614a05cfa09ee3b935615623e9e4a6f86ff874b4344  ./evidence/g1/ENV-INSPECTION.json
+fa8ef7223b04af3fa9cc9dc9d10bc10ec3e03b72d7fd1fb4e33ae61151857663  ./evidence/g1/G1-REDERIVATION-CORRECTED-EXAMINER-2026-11-15.md
 d618e03535206a6ea772522ac729ad6876746f7cf90027fa4f8b5ebe440f7779  ./evidence/g1/G1-REDERIVATION-REPORT.md
 ccc57af8fe4025f10515d8c73c8559ca9420466cfd974dd80ce1ab71ec73404e  ./evidence/g1/TRANSCRIPT.txt
 dfdf5f02a3802379a905a32caf96e47701610ef1a007e5eee7d3ca8897fe81c7  ./evidence/g1/captures/53b05142-bf19-4057-95b1-d2348840ef39.json
@@ -71,10 +72,12 @@ af1b17865ff86a1ad9035af7509ac615e244c214a8fe471365a59396c1d7b9be  ./evidence/g3/
 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945  ./evidence/g3/runs/G3VAULT-20261115-001/ledger.json
 9634349140deb8d54409fff3e3fff313b50693cc345e27c88be2c13a94670985  ./evidence/g3/runs/G3VAULT-20261115-001/run-record.jsonl
 0db904195f1aca3e58473eb281ad509b9ef362b7b17d838718b265b4d3ff2104  ./evidence/g4/G4-REPORT.md
+b4d28116e66d47c53d40e04cf1743fd497e445d35a23999ccc3ce90dc3f1232d  ./evidence/g4/G4-STACK-MANIFEST.sha256
 8f4c11efa21e307d889fcb7093cb15d136e1297c7f003b7bf7c4a96a95e90970  ./evidence/g4/commitments/G4STUB-20261115-001.crash.json
 48f0603379607869a3ad40c54a409f4345756b14d786fbcfb389373a4adf9226  ./evidence/g4/commitments/G4STUB-20261115-001.start.json
 6bf3c65a9aaeb6ec98c1e15487973e49b7f6ffdfd88fd7f0142c24afb4cf6626  ./evidence/g4/commitments/issuance-record.jsonl
 d2de482baf0cec75201bb8d3058ace6ebcfd675dc80051079a4ca25c3215db97  ./evidence/g4/evidence/G4STUB-20261115-001.launch-evidence.json
+5748287167d86d83574087e6b2faf53aeb945252823dbb6535b376692a312868  ./evidence/g4/freeze-manifest.sha256
 c6f00a7c3df674bee8a380dd37d50ce56f5c442878e36cbadd548d9907faba42  ./evidence/g4/logs/G4STUB-20261115-001.stdio.log
 05bdd122872129d7e9f1e036d73f17824edee965c3de36aec81bf43368767ac3  ./evidence/g4/runs/G4STUB-20261115-001/adapter-captures/175893a8-3049-4195-b7f8-59a3d01a007f.json
 98c7d98813d819b25265141edafe7b9f261e6b7c3a0b43967ccb6dbd45a23367  ./evidence/g4/runs/G4STUB-20261115-001/adapter-captures/3fc801cf-a077-4119-9f6a-d497dd206900.json
@@ -104,10 +107,13 @@ b02e0dd005e884c62d493c1f524da983d77b2468645cf342e2a7fc9d9d08d9e8  ./package/data
 b197e93eeb057f3ec00aee2479144cc97a0247d56eac954ff9aaf420a5db1ded  ./package/data/PILOT-DATA-PACKS-01.json
 c7eaec18db203651af894e7fbdb53c6df9b36a3da185c4b7ab703d73085b886c  ./package/data/PILOT-DATA-PACKS-01.pre-amendment.json
 55a6c979163a9ce0cb30fca4eb951aff0d02685979290df8bd18dfa28b355c4a  ./package/data/PILOT-DATA-T09-01.json
+dde42a284884a647a46cb2c4dc8ed40a4c70ffcb520aacc3def9081bbbfddcc7  ./package/driver/__pycache__/pilot_record.cpython-312.pyc
 97bbbcd6a48fa1eaa3e7c2b575f347adfac8fa9e3018930a41c1c47b7c3c0b0f  ./package/driver/pilot_driver.py
 ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216  ./package/driver/pilot_record.py
 d23f35f660ee4967039c56726b8f4d3d416adf265d109e67190a0dc0603e29ec  ./package/driver/pilot_trees.json
 142c9b9b25a8850a1fdee9a34fdb8d3c15c4790119eba9d3993fce612609cbd3  ./package/examiner/EXAMINER-INTERFACE-01.md
+a40b6a611e94ed95415997a14d5fbb6abb98f5e25781c5bdc809b3c14f170967  ./package/examiner/__pycache__/pilot_examiner.cpython-312.pyc
+6fa8a49989668bce2889649545b94b05175fd54778d93c6e1d59b705f965f303  ./package/examiner/__pycache__/pilot_jcs.cpython-312.pyc
 564925230a70c56d48ba5636a6431725876e7d2cfcf85ef904ce2b4c564b28af  ./package/examiner/pilot_examiner.py
 8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c  ./package/examiner/pilot_jcs.py
 36bf23e12c6913c6ca4e2615ae5471bd5e5e3e223e47010b14a987a682a3929f  ./package/examiner/prefix/pilot_examiner.py
@@ -128,6 +134,9 @@ e57e96610cf4b79f84e491a1c8f05db3796e54a103387d8a5731b4446e0aa514  ./package/supe
 001543f39b4d557f1bd157209a316c38104d4f7f37a42b6fab8ad664894de0de  ./package/supervisor/launcher-c3.c
 1a81e8b39cd666cc19b16b211a9203f92e14256c1dfc9d85d46b8914acf2ac0d  ./package/supervisor/launcher-production.b64
 c8a11370d06af5755d1cfa9af62d01065f7b95f926c1bb351bad9466b7dfb5a2  ./package/supervisor/pilot_supervisor.py
+c410480cbfa73427277a886a7b7c3da7f62696b65b659aafff6ce10ab6413378  ./package/tools/__pycache__/corpus_source.cpython-312.pyc
+0165bbcd4fbd9bc126146b6792e9530c5dbf9e83e4cd8125d9d8297fe309b7ac  ./package/tools/__pycache__/pilot_tools.cpython-312.pyc
+1057fee50be6f1834b0a187f463f183b1a25f9a04202cb3091a513746c9a7954  ./package/tools/__pycache__/rules_engine.cpython-312.pyc
 520f36fde41dfb76d5f92fe4da92b6c2f93ae8512051962f76d4942fb5c05a5a  ./package/tools/corpus_source.py
 df1045f7923b458cf0ad63b16a7245b1e4516306ff2b60c1f355dbb8431127d8  ./package/tools/pilot_tools.py
 7a2329154081b6e9c0417c07b1cc7184b167d02c1e820081b68a18dbabafacf3  ./package/tools/rules_engine.py
@@ -139,7 +148,7 @@ b1d8f0dcae3090b9d9a44c807a18fd58d67fb205cbfc5641f6f880b27c24fb9d  ./suites/test_
 e2faf856cc2627becd082ab85d828070b859e51d5318fe6126951fa5dc19ad24  ./suites/test_g1.py
 fe1a4c5ebf6f8d2c3b2353735dc5a6727a3a074644b277fe73b92ef153e7d4c6  ./suites/test_g2.py
 61123a7064872b23fd1d250d700d4adb3ac1b0d61a003c7874a057d32a80c4f2  ./suites/test_g3.py
-7dcc85b12dacc21a97dbd7ac2d8cdd495ea02d0ba836bdeeacaa491c9f571159  ./suites/test_g4.py
+f24b758c73896253a50ceeb16a801a639df21c25a85dcf02301c3211bf99fe2f  ./suites/test_g4.py
 c45f6fcaed9a35fd1a0189e36612731c8ba8f5cb55592cae323a853caf13690c  ./suites/test_step0.py
 b2794104290eeec79866a4b73008091460ba5dad13f04ae46d464206b9128177  ./suites/test_step12.py
 0b5e0cb9ca8ef037fe48da6ca332fef102ca7975ee4c06ff5095c63c344927f7  ./suites/test_step34.py

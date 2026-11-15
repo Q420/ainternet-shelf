@@ -18,19 +18,44 @@ from pathlib import Path
 
 H = Path.home()
 B6 = H / "workspace/ssh-door/batch6/build"
-RUN = (H / "workspace/ssh-door/batch6/scratch/g4/runs"
-       "/G4STUB-20261115-001")
-COMMITS = H / "workspace/ssh-door/batch6/scratch/g4/commitments"
-TOOLS_DIR = B6 / "tools"
-SNAP = H / "workspace/nemotron-pilot/freeze/PILOT-CORPUS-SNAPSHOT-01"
-DATA = H / "workspace/nemotron-pilot/batch1-2026-11-13"
-RULES = H / "workspace/ssh-door/EXTRACTOR-RULES-02.json"
-AUTH02 = B6 / "PILOT-PIN-AUTHORITY-02.json"
-FZMAN = H / "workspace/ssh-door/freeze-manifest.sha256"
-STACKMAN = H / "workspace/ssh-door/batch6/G4-STACK-MANIFEST.sha256"
-sys.path.insert(0, str(B6))
+ROOT = Path(__file__).resolve().parent.parent
+IN_BUNDLE = (ROOT / "evidence/g4").is_dir() and (ROOT / "package").is_dir()
+if IN_BUNDLE:
+    # Bundle layout (Claude Batch 6 inspection item 1,
+    # 2026-11-15): every input resolves inside the bundle.
+    RUN = ROOT / "evidence/g4/runs/G4STUB-20261115-001"
+    COMMITS = ROOT / "evidence/g4/commitments"
+    TOOLS_DIR = ROOT / "package/tools"
+    SNAP = ROOT / "package/snapshot"
+    DATA = ROOT / "package/data"
+    RULES = ROOT / "package/data/EXTRACTOR-RULES-02.json"
+    AUTH02 = ROOT / "package/calibration/PILOT-PIN-AUTHORITY-02.json"
+    FZMAN = ROOT / "evidence/g4/freeze-manifest.sha256"
+    STACKMAN = ROOT / "evidence/g4/G4-STACK-MANIFEST.sha256"
+    EXAM_DIR = ROOT / "package/examiner"
+    DRIVER_DIR = ROOT / "package/driver"
+    STUB_CFG_PATH = ROOT / "package/stub/stub_run_config.json"
+    TREES_PATH = ROOT / "package/driver/pilot_trees.json"
+    CAL_PATH = ROOT / "package/calibration/PILOT-CALIBRATION-02.json"
+else:
+    RUN = (H / "workspace/ssh-door/batch6/scratch/g4/runs"
+           "/G4STUB-20261115-001")
+    COMMITS = H / "workspace/ssh-door/batch6/scratch/g4/commitments"
+    TOOLS_DIR = B6 / "tools"
+    SNAP = H / "workspace/nemotron-pilot/freeze/PILOT-CORPUS-SNAPSHOT-01"
+    DATA = H / "workspace/nemotron-pilot/batch1-2026-11-13"
+    RULES = H / "workspace/ssh-door/EXTRACTOR-RULES-02.json"
+    AUTH02 = B6 / "PILOT-PIN-AUTHORITY-02.json"
+    FZMAN = H / "workspace/ssh-door/freeze-manifest.sha256"
+    STACKMAN = H / "workspace/ssh-door/batch6/G4-STACK-MANIFEST.sha256"
+    EXAM_DIR = B6
+    DRIVER_DIR = H / "workspace/ssh-door/batch3"
+    STUB_CFG_PATH = B6 / "stub_run_config.json"
+    TREES_PATH = DRIVER_DIR / "pilot_trees.json"
+    CAL_PATH = B6 / "PILOT-CALIBRATION-02.json"
+sys.path.insert(0, str(EXAM_DIR))
 sys.path.insert(0, str(TOOLS_DIR))
-sys.path.insert(0, str(H / "workspace/ssh-door/batch3"))
+sys.path.insert(0, str(DRIVER_DIR))
 from pilot_examiner import (step0, step1_chain, step2_inputs,  # noqa: E402
                             build_pin_index, load_tool_env,
                             step3_replay, step4_audit,
@@ -131,7 +156,7 @@ def _():
 
 @case("step 5: adapter captures verify; model calls link 1:1")
 def _():
-    stub_cfg = json.loads((B6 / "stub_run_config.json").read_text())
+    stub_cfg = json.loads(STUB_CFG_PATH.read_text())
     caps = {}
     for f in sorted((RUN / "adapter-captures").glob("*.json")):
         cap = json.loads(f.read_text())
@@ -157,8 +182,7 @@ def _():
 
 @case("step 6: reconstruction confirms closed trees; unclosed are undetermined")
 def _():
-    trees_doc = json.loads((H / "workspace/ssh-door/batch3"
-                            "/pilot_trees.json").read_text())
+    trees_doc = json.loads(TREES_PATH.read_text())
     r = step6_reconstruct(EVENTS, trees_doc)
     recorded = {e["payload"]["tree_id"]: e["payload"]["closure"]
                 for e in EVENTS if e["event_type"] == "TREE_CLOSED"}
@@ -196,7 +220,7 @@ def _():
 
 
 # ---- provisional worksheet (13 instances, true state) ----
-CAL = json.loads((B6 / "PILOT-CALIBRATION-02.json").read_text())
+CAL = json.loads(CAL_PATH.read_text())
 recorded = {e["payload"]["tree_id"]: e["payload"]["closure"]
             for e in EVENTS if e["event_type"] == "TREE_CLOSED"}
 ROWS = []
