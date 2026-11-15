@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+"""PILOT HARNESS — Batch 6 Gate G2 SCRATCH variant.
+
+Installed only inside the Batch 6 G2 scratch room
+(/srv/nemotron-pilot/batch6-g2/harness/pilot-harness), the
+programme at that room's scratch launcher's compiled-in
+HARNESS_PATH. Runs as pilot-harness against the STUB subject
+only — no subject call anywhere in Batch 6. Writes the run's
+canonical record with the Batch 3 record writer into the
+scratch runs root and nothing outside the run directory.
+
+This variant is built WITH the torn-write injector
+(PILOT_TORN_WRITE_INJECTOR=1, scratch configuration per C6-6):
+the injector module sits beside it and drives the G2TORN
+write path. The scoreable build contains neither this variant
+nor the injector.
+
+Behaviour is keyed on the run-id battery segment:
+  G2BETWEEN*  RUN_STARTED + one step event flushed, then the
+              process kills itself with SIGKILL: termination
+              between steps, no terminal event (the companion
+              between-steps crash case, Rev 26 SE-7(iii)).
+  G2TORN*     RUN_STARTED + one step event flushed; the third
+              event's exact record line is then written back
+              over the record through the injector's slow
+              fragmented path (16-byte fragments, 0.35 s
+              apart) while an external killer SIGKILLs the
+              process mid-append (the killer fires ~2 s after
+              the torn-started marker appears). The record is
+              left ending in genuinely incomplete trailing
+              bytes: a torn tail produced by a kill, not by
+              construction.
+"""
+import io
+import os
+import signal
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pilot_record import RunRecord  # noqa: E402
+import torn_write_injector  # noqa: E402
+
+RUNS_ROOT = os.environ.get("PILOT_RUNS_ROOT",
+                           "/srv/nemotron-pilot/batch6-g2/runs")
+
+STUB_PINS = [
+    {"path": "stub/subject.json",
+     "sha256": "0000000000000000000000000000000000000000000000000000000000000001"},
+    {"path": "stub/trees.json",
+     "sha256": "0000000000000000000000000000000000000000000000000000000000000002"},
+]
+
+BLOCK = {"pins": STUB_PINS, "stub": True, "gate": "G2",
+         "subject": "STUB (no subject call)",
+         "torn_write_injector":
+             "ENABLED — scratch build only "
+             "(PILOT_TORN_WRITE_INJECTOR=1)"}
+
+
+def utc_now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def main():
+    run_id = sys.argv[1]
+    run_dir = os.path.join(RUNS_ROOT, run_id)
+    os.makedirs(os.path.join(run_dir, "captures"), exist_ok=True)
+    os.makedirs(os.path.join(run_dir, "artefacts"), exist_ok=True)
+    record_path = os.path.join(run_dir, "run-record.jsonl")
+    record = RunRecord(record_path, run_id, BLOCK)
+    record.emit("RUN_STARTED", BLOCK, recorded_at_utc=utc_now())
+    record.emit("STEP_TRIGGERED", {"step": "stub-step"},
+                tree_id="stub-tree", step_id="stub-step",
+                recorded_at_utc=utc_now())
+    if run_id.startswith("G2BETWEEN"):
+        record.close()
+        os.kill(os.getpid(), signal.SIGKILL)
+        os._exit(137)
+    # G2TORN: capture event 3's exact line through the genuine
+    # writer (handle swapped to a buffer), then write
+    # base + line back through the injector's fragmented path.
+    buf = io.StringIO()
+    real_fh = record._fh
+    record._fh = buf
+    record.emit("STEP_SATISFIED", {"step": "stub-step"},
+                tree_id="stub-tree", step_id="stub-step",
+                recorded_at_utc=utc_now())
+    record._fh = real_fh
+    record.close()
+    line3 = buf.getvalue().encode("utf-8")
+    with open(record_path, "rb") as fh:
+        base = fh.read()
+    with open(os.path.join(run_dir, "torn-started"), "w") as fh:
+        fh.write(str(os.getpid()))
+    fragments = [len(base)] + [16] * ((len(line3) + 15) // 16)
+    torn_write_injector.torn_write(record_path, base + line3,
+                                   fragments, delay_s=0.35,
+                                   complete=False)
+    # Reached only if the killer missed: the record is whole,
+    # the run is invalid as a torn-tail artefact. Say so in the
+    # run directory, then wait for the supervisor's watchdog.
+    with open(os.path.join(run_dir, "artefacts",
+                           "WRITE-COMPLETED-UNKILLED.txt"),
+              "w") as fh:
+        fh.write("the fragmented write completed; no kill "
+                 "landed. This run is NOT a torn-tail "
+                 "artefact.\n")
+    time.sleep(120)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

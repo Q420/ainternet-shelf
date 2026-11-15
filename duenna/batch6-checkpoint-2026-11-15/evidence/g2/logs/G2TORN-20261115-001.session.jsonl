@@ -1,0 +1,21 @@
+{"at_utc":"2026-11-15T09:32:06Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31933,"mode":493,"path":"/srv/nemotron-pilot/batch6-g2/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"G2TORN-20261115-001","seq":1}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"LAUNCHER_SPAWNED","launcher_pid":70160,"run_id":"G2TORN-20261115-001","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"STATE","run_id":"G2TORN-20261115-001","seq":3,"state":"S0"}
+{"at_utc":"2026-11-15T09:32:06Z","expected_supervisor_pid":70156,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"G2TORN-20261115-001","seq":4}
+{"ack_code":0,"at_utc":"2026-11-15T09:32:06Z","child_pid":70161,"claimed_start_time":17321804,"fdinfo_target":70161,"kind":"HANDOFF_VALIDATION","observed_ppid":70160,"observed_start_time":17321804,"readiness":"NOT_OBSERVED","run_id":"G2TORN-20261115-001","seq":5}
+{"ack_code":0,"at_utc":"2026-11-15T09:32:06Z","kind":"HANDOFF_ACK_SENT","run_id":"G2TORN-20261115-001","seq":6}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"GATE_READY","run_id":"G2TORN-20261115-001","seq":7}
+{"at_utc":"2026-11-15T09:32:06Z","comparison":"PASS","failure":null,"kind":"LAUNCH_EVIDENCE","path":"/srv/nemotron-pilot/batch6-g2/evidence/G2TORN-20261115-001.launch-evidence.json","run_id":"G2TORN-20261115-001","seq":8}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"PRE_RELEASE_GUARD","outcome":"NOT_OBSERVED","run_id":"G2TORN-20261115-001","seq":9}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"RELEASE_SENT","run_id":"G2TORN-20261115-001","seq":10}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"GATE_ACTUATED","run_id":"G2TORN-20261115-001","seq":11}
+{"at_utc":"2026-11-15T09:32:06Z","event_sha_match":true,"genesis_in_file":"7e7df7edbf7aa2bb27bed3b69dd51fca57ae87a0a603789bea21eaa9ceaf3933","genesis_match":true,"genesis_recomputed":"7e7df7edbf7aa2bb27bed3b69dd51fca57ae87a0a603789bea21eaa9ceaf3933","kind":"START_SELF_COMPUTATION","run_id":"G2TORN-20261115-001","seq":12}
+{"at_utc":"2026-11-15T09:32:06Z","kind":"ISSUANCE","receipt_kind":"START","receipt_path":"/srv/nemotron-pilot/batch6-g2/commitments/G2TORN-20261115-001.start.json","receipt_sha256":"4a687962b01b818f55e2d994d54439f5e454a5bd45ebf46e17038f626e5c3337","run_id":"G2TORN-20261115-001","seq":13}
+{"at":"2026-11-15T09:32:09Z","at_utc":"2026-11-15T09:32:09Z","child_pid":70161,"kind":"TERMINATION_OBSERVED","run_id":"G2TORN-20261115-001","seq":14,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-15T09:32:09Z","exit_code":0,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":0,"run_id":"G2TORN-20261115-001","seq":15,"signal":null,"signalled":false}
+{"at_utc":"2026-11-15T09:32:09Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"G2TORN-20261115-001","seq":16,"source":"channel EOF (drained)","state_at_observation":"S7"}
+{"accepted":true,"at_utc":"2026-11-15T09:32:09Z","bytes":10,"child_pid":70161,"classification":"ACCEPT","decode":{"core_dump":false,"kind":"signalled","signal":9},"kind":"STATUS_RECORD","raw_word":9,"run_id":"G2TORN-20261115-001","seq":17,"word_valid":true}
+{"at_utc":"2026-11-15T09:32:09Z","kind":"STATE","run_id":"G2TORN-20261115-001","seq":18,"state":"S9","terminal_facts":{"pidfd_termination_observed":true,"status_child_pid":70161,"status_word":9}}
+{"at_utc":"2026-11-15T09:32:09Z","kind":"STATUS_ACK_OUTCOME","outcome":"STATUS_ACK_UNDELIVERABLE","run_id":"G2TORN-20261115-001","seq":19}
+{"at_utc":"2026-11-15T09:32:09Z","kind":"ISSUANCE","receipt_kind":"CRASH","receipt_path":"/srv/nemotron-pilot/batch6-g2/commitments/G2TORN-20261115-001.crash.json","receipt_sha256":"8bb34354b0de05b130bca30597a4b12a41e2a0655ea74bfd2691a5ce9ee61b0f","run_id":"G2TORN-20261115-001","seq":20}
+{"at_utc":"2026-11-15T09:32:09Z","kind":"ATTEMPT_CLOSED","outcome":"S9_CLOSED","run_id":"G2TORN-20261115-001","seq":21,"state":"S9"}
