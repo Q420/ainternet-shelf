@@ -377,4 +377,4 @@ alec-batch6-package.md
 Disposition: C6-5 and C6-11 require the pinned stub script(s) to cover all 13 instances end-to-end and exercise the declared fault/retry shapes (well-formed, malformed, refusal-shaped, truncation-shaped, and retry-then-success), leaving the exact per-instance assignment to the pinned stub script inspected at Batch 6 checkpoint.   
 alec-batch6-package.md
 
-— END OF DOCUMENT — 37237 Unicode code points
+— END OF DOCUMENT — 37249 Unicode code points
