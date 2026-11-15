@@ -1,7 +1,8 @@
 """Fixtures for watchdog_wake (Stage 5 wake layer; Stage 6
 in contract §12 numbering), mapped to the wake shape ruling
 (claude/WATCHDOG-WAKE-SHAPE-RULING): the §13 wake rows
-(fixtures 1–4) and amendments A1–A6 (fixtures 5–12).
+(fixtures 1–4) and amendments A1–A6 (fixtures 5–12), plus
+the review's blocking defect B1 (fixtures 13–15).
 Offline only: synthetic scheduler reports and throwaway
 ledgers — no live pool, no live judge, no seat is touched.
 Run: ./venv/bin/python test_watchdog_wake.py
@@ -368,6 +369,70 @@ except AssertionError as e:
     boundary = ("crossed", str(e))
 check("f12: mock ledger — boundary held through consume "
       "and rotation", boundary, ("held", False))
+
+# ---------------- fixture 13 (B1-i: torn tail) ------------
+# A crash leaves the outbox ending in a torn partial line
+# for this very wake (no newline), and the state cache
+# claims the wake_id fired. The outbox is the only fired
+# authority: the wake has NOT fired. Consume must land
+# exactly one readable record for the key — the append
+# terminates the torn tail instead of merging into it, and
+# the torn line stays unreadable and skipped.
+
+ob13, st13, _ = paths()
+led13 = make_ledger([job("job-a")])
+_, ev13 = led13.record_event(packet())
+wid13 = ev13["ledger_key"] + "|wake|1"
+would_be13 = json.dumps({"kind": "wake", "wake_id": wid13,
+                         "job_id": "job-a"}, sort_keys=True)
+with open(ob13, "w") as f:
+    f.write(would_be13[:40])  # torn: partial JSON, no newline
+with open(st13, "w") as f:
+    json.dump({"fired": [wid13]}, f)  # cache claims it fired
+r13 = ww.WakeLayer(ob13, st13, ledger=led13).consume(
+    report(pending=[pending_item(ev13)]), now=T0 + 10)
+readable13 = [r for r in ww.Outbox(ob13).records()
+              if r["ledger_key"] == ev13["ledger_key"]]
+check("f13: torn tail -> exactly one readable wake",
+      len(readable13), 1)
+check("f13: the readable wake is the re-appended record",
+      (readable13[0]["wake_id"],
+       [w["wake_id"] for w in r13["new_wakes"]]),
+      (wid13, [wid13]))
+
+# ---------------- fixture 14 (B1-ii: cache phantom) --------
+# The cache lists a wake_id the outbox has never held. The
+# outbox wins: the id has not fired, and consume appends it.
+
+ob14, st14, _ = paths()
+led14 = make_ledger([job("job-a")])
+_, ev14 = led14.record_event(packet())
+wid14 = ev14["ledger_key"] + "|wake|1"
+with open(st14, "w") as f:
+    json.dump({"fired": [wid14]}, f)  # phantom: no outbox yet
+r14 = ww.WakeLayer(ob14, st14, ledger=led14).consume(
+    report(pending=[pending_item(ev14)]), now=T0 + 10)
+check("f14: cache phantom does not suppress the wake",
+      ([w["wake_id"] for w in r14["new_wakes"]],
+       len(ww.Outbox(ob14).records())), ([wid14], 1))
+
+# ---------------- fixture 15 (B1-iii: corrupt cache) -------
+# Intact outbox, corrupt cache: the fired set rebuilds from
+# the outbox alone and the wake is not duplicated.
+
+ob15, st15, _ = paths()
+led15 = make_ledger([job("job-a")])
+_, ev15 = led15.record_event(packet())
+rep15 = report(pending=[pending_item(ev15)])
+ww.WakeLayer(ob15, st15, ledger=led15).consume(rep15,
+                                               now=T0 + 10)
+with open(st15, "w") as f:
+    f.write("corrupt {{{ not json")
+r15 = ww.WakeLayer(ob15, st15, ledger=led15).consume(
+    rep15, now=T0 + 20)
+check("f15: corrupt cache, intact outbox -> no duplicate",
+      (len(ww.Outbox(ob15).records()), r15["new_wakes"]),
+      (1, []))
 
 print(f"\n{len(total)} fixtures, {len(fails)} failed")
 sys.exit(1 if fails else 0)

@@ -167,8 +167,22 @@ class Outbox:
         d = os.path.dirname(self.path)
         if d:
             os.makedirs(d, exist_ok=True)
+        # B1: a crash can leave the file ending in a torn
+        # partial line with no newline. Terminate that tail
+        # before appending, so the new record can never merge
+        # into the corrupt line and become unreadable itself.
+        # The torn line stays unreadable and is skipped by
+        # the reader, as before.
+        prefix = ""
+        if os.path.exists(self.path) \
+                and os.path.getsize(self.path) > 0:
+            with open(self.path, "rb") as bf:
+                bf.seek(-1, os.SEEK_END)
+                if bf.read(1) != b"\n":
+                    prefix = "\n"
         with open(self.path, "a") as f:
-            f.write(json.dumps(record, sort_keys=True) + "\n")
+            f.write(prefix
+                    + json.dumps(record, sort_keys=True) + "\n")
             f.flush()
             os.fsync(f.fileno())
         return True
@@ -247,12 +261,15 @@ class WakeLayer:
             self.config.update(config)
         self.clock = clock or time.time
         cache = _load_json_tolerant(self.state_path)
-        # A1: the fired set is rebuilt from the outbox before
-        # anything is appended; the cache can only add ids
-        # the outbox already justifies (post-rotation it is
-        # rewritten to match), so the union is safe.
-        self._fired = self.outbox.fired_ids() | set(
-            cache.get("fired", []))
+        # A1: the fired set is rebuilt from the outbox ONLY,
+        # before anything is appended. The state cache holds
+        # no fired authority: an id the outbox does not hold
+        # has not fired, whatever the cache claims. (The
+        # cache still carries a "fired" list, written for
+        # observability; it is never read back as authority.
+        # B1: a cache union let a torn, unreadable outbox
+        # line mask a wake that never landed.)
+        self._fired = self.outbox.fired_ids()
         self._queue_since = cache.get("queue_since")
         self._last_ack_at = cache.get("last_ack_at")
         self._pending_keys = set(cache.get("pending_keys", []))
@@ -272,7 +289,12 @@ class WakeLayer:
             _atomic_write_json(self.state_path, self._state_obj())
 
     def _refresh_fired(self):
-        self._fired |= self.outbox.fired_ids()
+        # Rebuilt from the outbox only (A1, B1): assignment,
+        # not union — no id survives here unless the outbox
+        # holds a readable record for it. Ids appended this
+        # session are fsync'd into the outbox before they
+        # are added to _fired, so nothing live is lost.
+        self._fired = self.outbox.fired_ids()
 
     # -- pending summary + idle tracking (A2, A5) -----------
 
@@ -480,7 +502,12 @@ def check(outbox_path, cursor_path, summary=None):
     pending summary riding along (A2) — or "" when there is
     nothing new: silent, and nothing is written (no outbox
     record, no cursor move). The cursor moves only when text
-    is returned, and only past the records it carried."""
+    is returned, and only past the records it carried.
+    If the cursor file is lost, every current record is
+    shown again: display is at-least-once (S1, accepted
+    behaviour — see the Stage 5 wake fix note). The checker
+    never writes to the outbox, so a wake still fires
+    exactly once; only its display can repeat."""
     outbox = Outbox(outbox_path)
     records = outbox.records()
     shown = set(_load_json_tolerant(cursor_path).get("shown", []))
