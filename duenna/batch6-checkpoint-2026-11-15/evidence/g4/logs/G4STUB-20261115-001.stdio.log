@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/srv/nemotron-pilot/batch6-g2/harness/pilot-harness", line 135, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/srv/nemotron-pilot/batch6-g2/harness/pilot-harness", line 116, in main
+    run_dir = driver.run(SUBSET)
+  File "/srv/nemotron-pilot/batch6-g2/harness/g4/work/pilot_driver.py", line 192, in run
+    self._run_tree(key)
+    ~~~~~~~~~~~~~~^^^^^
+  File "/srv/nemotron-pilot/batch6-g2/harness/g4/work/pilot_driver.py", line 247, in _run_tree
+    outcome = self._run_step(key, tree, step, state)
+  File "/srv/nemotron-pilot/batch6-g2/harness/g4/work/pilot_driver.py", line 298, in _run_step
+    res = self._model_step(key, tree, step, attempt, state)
+  File "/srv/nemotron-pilot/batch6-g2/harness/g4/work/pilot_driver.py", line 388, in _model_step
+    manifest, artefacts = builder(key, step, state, attempt)
+                          ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/nemotron-pilot/batch6-g2/harness/g4/work/pilot_driver.py", line 863, in op_t08_recovery_inputs
+    "failed_checks": state["field_failures"]["T08-STEP-03"],
+                     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+KeyError: 'T08-STEP-03'
