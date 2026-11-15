@@ -367,5 +367,32 @@ check_raises("M5, load without state_dir refused", TypeError,
              lambda: wl.load_registry(
                  registry_file([job("job-a")])))
 
+# ---------------- Stage 3 correction round ----------------
+
+# M-S3-1: the explicit gate-reset method (ruling D2). A
+# gated-out completed seat turn resets the streak, recorded
+# distinctly as gate_reset — never as a judged NO.
+led12, d12 = fresh_ledger()
+led12.apply_judgement("job-a", "t1", "YES")
+sg = led12.reset_streak_gate("job-a", "t2")
+check("gate reset, count zeroed", sg["count"], 0)
+check("gate reset, cause recorded distinctly",
+      sg["reset_cause"], "gate_reset")
+check("gate reset, resume key advances to the gated turn",
+      sg["last_turn_key"], "t2")
+led12b = wl.Ledger(d12, registry=default_registry())
+check("gate reset, persisted across restart",
+      led12b.streak("job-a")["reset_cause"], "gate_reset")
+ops12 = open(os.path.join(d12, "ops-log.jsonl")).read()
+check("gate reset, ops log records it", "gate_reset" in ops12,
+      True)
+check("gate reset, never recorded as a judged NO",
+      led12b.streak("job-a")["reset_cause"] != "judged_no",
+      True)
+led12b.apply_judgement("job-a", "t3", "YES")
+led12b.apply_judgement("job-a", "t4", "NO")
+check("streak, a judged NO records its own cause",
+      led12b.streak("job-a")["reset_cause"], "judged_no")
+
 print("\n%d fixtures, %d failed" % (len(total), len(fails)))
 raise SystemExit(1 if fails else 0)

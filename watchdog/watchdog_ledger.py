@@ -503,8 +503,8 @@ class Ledger:
 
     def streak(self, job_id):
         s = self.state["streaks"].get(job_id)
-        return {"count": 0, "last_turn_key": None} if s is None \
-            else dict(s)
+        return {"count": 0, "last_turn_key": None,
+                "reset_cause": None} if s is None else dict(s)
 
     def apply_judgement(self, job_id, turn_key, result):
         """One judged turn (§6). CALLER'S RESPONSIBILITY
@@ -527,10 +527,36 @@ class Ledger:
             return s
         if result == "YES":
             s = {"count": s["count"] + 1,
-                 "last_turn_key": turn_key}
+                 "last_turn_key": turn_key,
+                 "reset_cause": s.get("reset_cause")}
         else:
-            s = {"count": 0, "last_turn_key": turn_key}
+            s = {"count": 0, "last_turn_key": turn_key,
+                 "reset_cause": "judged_no"}
         self.state["streaks"][job_id] = s
+        self._save()
+        return dict(s)
+
+    def reset_streak_gate(self, job_id, turn_key):
+        """Reset the streak for a GATED-OUT completed seat
+        turn (§6 as amended by the v1.3 draft; Stage 3 review
+        ruling D2 / must-fix M-S3-1). The keyword gate excluded
+        this turn before the judge, so NO judge call was made
+        and this is never recorded as a judged NO: the reset
+        is recorded distinctly, as reset_cause "gate_reset" in
+        the streak record and a "gate_reset" entry in the ops
+        log. last_turn_key advances to the gated turn so the
+        detector resumes after it and never reprocesses it.
+        Returns the streak after the reset."""
+        s = self.streak(job_id)
+        if (s["count"] == 0
+                and s["last_turn_key"] == turn_key
+                and s.get("reset_cause") == "gate_reset"):
+            return s
+        s = {"count": 0, "last_turn_key": turn_key,
+             "reset_cause": "gate_reset"}
+        self.state["streaks"][job_id] = s
+        self._ops("gate_reset", job_id=job_id,
+                  turn_key=turn_key)
         self._save()
         return dict(s)
 
@@ -538,4 +564,5 @@ class Ledger:
         self.state["streaks"][job_id] = {
             "count": 0,
             "last_turn_key":
-                self.streak(job_id)["last_turn_key"]}
+                self.streak(job_id)["last_turn_key"],
+            "reset_cause": "event_recorded"}

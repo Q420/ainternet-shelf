@@ -23,6 +23,7 @@ owner ruling). No test calls the live client.
 import hashlib
 import json
 import os
+import time
 import urllib.request
 import uuid
 from datetime import datetime
@@ -38,13 +39,16 @@ DEFAULT_CONFIG = {
     "keywords_by_job": {},
 }
 
-# DETECTOR-LOCAL CONFIG — flagged decision (see the Stage 3
-# build note): the frozen job record (§3) has no keywords
-# field, so the keyword first gate's word lists live here,
-# keyed by job_id, until the reviewer rules on a home for
-# them. A job with no entry here has no gate: every seat turn
-# is judged. Detector config ("keywords_by_job") overrides
-# and extends this table.
+# DETECTOR-LOCAL CONFIG — interim home for the keyword gate
+# (Stage 3 review ruling D1): the gate belongs in the job
+# record as gate_terms, which is contract amendment v1.3.
+# Until v1.3 lands, the word lists live here, keyed by
+# job_id — and the detector PINS a hash of each job's terms
+# on its first pass and refuses a changed gate while the
+# job is active (M-S3-2; see Detector._gate_pin_ok). A job
+# with no entry here has no gate: every seat turn is judged,
+# and that fact is logged. Detector config
+# ("keywords_by_job") overrides and extends this table.
 KEYWORDS_BY_JOB = {}
 
 # §7: the judge's prompt is a fixed template. Seat content is
@@ -131,21 +135,51 @@ class NvidiaJudge:
     """Live judge client for the hosted NVIDIA API (§11),
     built per the custom.nvidia connector doc: OpenAI-
     compatible chat completions at integrate.api.nvidia.com.
-    The model name is configurable. Credentials are read at
-    runtime and never logged or written anywhere: an
-    NVIDIA_API_KEY environment variable when present
-    (contract §11: credentials are read from the environment),
-    otherwise the connector's registered-credential surrogate
-    path, exactly as the connector's own helper does it.
-    Any transport or response failure raises JudgeError."""
+    The model name is configurable.
+
+    Credentials come ONLY through the connector's secure
+    route (Stage 3 review ruling D5 / must-fix M-S3-3): the
+    registered credential's surrogate, attached by the
+    connector framework's helper. No other credential source
+    is consulted — there is no fallback route. That makes
+    the helper an explicit hard dependency of this client:
+
+        /opt/muse/skills/custom-connector-setup/bin/
+            dynamic_credentials.py
+            (add_surrogate_to_request)
+
+    If the helper is unavailable, credential setup fails
+    and the call is a judge error (§7). The credential is
+    never logged or written anywhere. Any transport or
+    response failure raises JudgeError."""
 
     HOST = "integrate.api.nvidia.com"
     BASE = "https://integrate.api.nvidia.com/v1"
     DEFAULT_MODEL = "nvidia/llama-3.1-nemotron-ultra-253b-v1"
 
+    # Explicit dependency (see the class docstring): the
+    # connector framework's credential-surrogate helper.
+    _HELPER_DIR = "/opt/muse/skills/custom-connector-setup/bin"
+
     def __init__(self, model=None, timeout=60):
         self.model_name = model or self.DEFAULT_MODEL
         self.timeout = timeout
+
+    def _authorize(self, req):
+        """Attach the connector credential surrogate to the
+        request — the ONLY credential route (ruling D5).
+        Raises JudgeError if the helper cannot do it."""
+        import sys
+        if self._HELPER_DIR not in sys.path:
+            sys.path.insert(0, self._HELPER_DIR)
+        try:
+            from dynamic_credentials import \
+                add_surrogate_to_request
+            add_surrogate_to_request(
+                req, "custom.nvidia", allowed_hosts=[self.HOST])
+        except Exception as e:  # noqa: BLE001
+            raise JudgeError(
+                f"credential setup failed: {type(e).__name__}")
 
     def judge(self, precondition, content):
         prompt = build_judge_prompt(precondition, content)
@@ -160,22 +194,7 @@ class NvidiaJudge:
             data=json.dumps(body).encode(),
             headers={"Content-Type": "application/json"},
             method="POST")
-        key = os.environ.get("NVIDIA_API_KEY")
-        if key:
-            req.add_header("Authorization", "Bearer " + key)
-        else:
-            try:
-                import sys
-                sys.path.insert(
-                    0, "/opt/muse/skills/custom-connector-setup/bin")
-                from dynamic_credentials import \
-                    add_surrogate_to_request
-                add_surrogate_to_request(
-                    req, "custom.nvidia",
-                    allowed_hosts=[self.HOST])
-            except Exception as e:  # noqa: BLE001
-                raise JudgeError(
-                    f"credential setup failed: {type(e).__name__}")
+        self._authorize(req)
         opener = urllib.request.build_opener(_NoRedirect())
         try:
             with opener.open(req, timeout=self.timeout) as resp:
@@ -191,6 +210,12 @@ class NvidiaJudge:
 # ----------------------------------------------------------------
 # Pool reader (§1, §14: the pool is the only source)
 # ----------------------------------------------------------------
+
+class PoolError(Exception):
+    """The pool record cannot be trusted as read (Stage 3
+    review S-S3-5): e.g. a non-contiguous capture sequence,
+    where a derived turn_index would silently shift."""
+
 
 def _is_turn_event(event):
     """A conversation turn in the pool record: a completed
@@ -217,7 +242,10 @@ class PoolReader:
     reused within a conversation. (The pool record itself
     carries no turn_index field; this reader is where the
     contract's 'pool-assigned ordinal' is derived — flagged
-    in the build note.)
+    in the build note.) Because the index is derived, a
+    sequenced file must be contiguous: a gap in event_seq
+    raises PoolError instead of silently shifting every
+    later index (S-S3-5).
 
     turn_key is the structural identity (§1): the turn's
     message_id when it has one; for ID-less turns the §1
@@ -235,7 +263,34 @@ class PoolReader:
                 line = line.strip()
                 if line:
                     rows.append(json.loads(line))
-        if all(isinstance(r.get("event_seq"), int) for r in rows):
+        seqs = [r.get("event_seq") for r in rows]
+        if any(isinstance(s, int) and not isinstance(s, bool)
+               for s in seqs):
+            # The file carries a capture sequence, so it must
+            # be whole (S-S3-5): a missing middle event would
+            # shift every derived turn_index after it, so a
+            # gapped or partly-sequenced file is REFUSED, not
+            # read. (A file with no sequence at all — the
+            # pre-0.1 legacy schema — cannot be checked this
+            # way and is read in file order, provisionally.)
+            if not all(isinstance(s, int)
+                       and not isinstance(s, bool) for s in seqs):
+                raise PoolError(
+                    f"pool file {self.path}: some events carry "
+                    f"event_seq and some do not — refusing to "
+                    f"derive turn_index from a mixed record")
+            ordered = sorted(seqs)
+            expected = list(range(ordered[0],
+                                  ordered[0] + len(ordered)))
+            if ordered != expected:
+                missing = sorted(set(expected) - set(ordered))
+                raise PoolError(
+                    f"pool file {self.path}: event_seq is not "
+                    f"contiguous — missing {missing[:5]}"
+                    f"{'…' if len(missing) > 5 else ''} "
+                    f"(of {ordered[0]}..{ordered[-1]}); "
+                    f"refusing to derive turn_index from a "
+                    f"non-contiguous capture")
             rows.sort(key=lambda r: r["event_seq"])
         return rows
 
@@ -293,10 +348,13 @@ class Detector:
     restart never re-judges a counted turn. Dependencies are
     reported in the packet (dependency_state) but do not gate
     detection here — §10 gating is the scheduler's (Stage 4),
-    as the ledger's may_detect docstring already states."""
+    as the ledger's may_detect docstring already states.
+    The detector also enforces the §9 stale-window hold
+    (M-S3-4): it is the only judge caller, so a stale capture
+    watermark holds the streak here, before any judging."""
 
     def __init__(self, registry, ledger, reader, judge,
-                 config=None):
+                 config=None, clock=None):
         self.registry = registry
         self.ledger = ledger
         self.reader = reader
@@ -309,6 +367,100 @@ class Detector:
         self.keywords_by_job = {
             jid: [w.lower() for w in words]
             for jid, words in keywords.items()}
+        # Clock for the §9 stale-window check; injectable so
+        # fixtures can pin it. Epoch seconds.
+        self.clock = clock or time.time
+        # §9 stale interval: detector config wins, then the
+        # ledger's config (§11 home), then the provisional
+        # default — 600 s, the ledger's standing default,
+        # until the owner sets a value.
+        self.stale_interval_s = self.config.get(
+            "stale_interval_s")
+        if self.stale_interval_s is None:
+            self.stale_interval_s = getattr(
+                ledger, "config", {}).get(
+                    "stale_interval_s", 600)
+        # Detector-persisted state: the interim gate pins
+        # (M-S3-2). Lives alongside the ledger state unless
+        # config says otherwise.
+        self._state_dir = self.config.get(
+            "detector_state_dir") or getattr(
+                ledger, "dir", ".")
+        os.makedirs(self._state_dir, exist_ok=True)
+        self._state_path = os.path.join(
+            self._state_dir, "detector-state.json")
+        self._det_state = {"gate_pins": {}}
+        if os.path.exists(self._state_path):
+            with open(self._state_path) as f:
+                self._det_state = json.load(f)
+            self._det_state.setdefault("gate_pins", {})
+
+    # -- interim gate pinning (M-S3-2, ruling D1) -------------
+
+    def _gate_terms(self, job_id):
+        """The job's effective gate terms, or None when the
+        job has no gate entry (then every seat turn is
+        judged — interim rule D1, logged at pin time)."""
+        return self.keywords_by_job.get(job_id)
+
+    def _gate_pin_ok(self, job_id):
+        """Pin the job's gate terms on its first detector
+        pass; on later passes refuse a changed gate for the
+        (active) job. Until contract v1.3 puts gate_terms in
+        the pinned job record itself, the gate must not be
+        editable while a job is active — a silent edit would
+        change which turns can ever be judged (§2). Returns
+        True when the pass may proceed."""
+        terms = self._gate_terms(job_id)
+        canon = json.dumps(
+            {"job_id": job_id, "gate_terms": terms},
+            sort_keys=True)
+        digest = hashlib.sha256(canon.encode()).hexdigest()
+        pins = self._det_state["gate_pins"]
+        pin = pins.get(job_id)
+        if pin is None:
+            pins[job_id] = {"sha256": digest,
+                            "gate_terms": terms}
+            wl._atomic_write_json(self._state_path,
+                                  self._det_state)
+            if terms is None:
+                self.ledger._ops(
+                    "gate_absent", job_id=job_id,
+                    note="no gate entry — every seat turn "
+                         "is judged (interim rule D1)")
+            return True
+        if pin["sha256"] != digest:
+            self.ledger._ops(
+                "gate_pin_mismatch", job_id=job_id,
+                pinned_sha256=pin["sha256"],
+                seen_sha256=digest,
+                note="gate terms changed while the job is "
+                     "active — refused (interim rule D1)")
+            return False
+        return True
+
+    # -- stale window (§9, M-S3-4) ------------------------------
+
+    def _watermark(self, turns):
+        """The seat's pool capture watermark for this
+        conversation: the latest capture time among its
+        completed seat replies (REPLY_CAPTURED), as epoch
+        seconds; None when nothing was captured."""
+        latest = None
+        for t in turns:
+            if t["role"] != "seat":
+                continue
+            ts = t.get("captured_at")
+            if not ts:
+                continue
+            try:
+                epoch = datetime.fromisoformat(
+                    ts.replace("Z", "+00:00")).timestamp()
+            except Exception:  # noqa: BLE001
+                continue
+            if latest is None or epoch > latest:
+                latest = epoch
+        return latest
 
     # -- internals -------------------------------------------
 
@@ -373,8 +525,9 @@ class Detector:
         suppression and streak consumption (§8, A1)."""
         job = self.registry[job_id]
         summary = {"job_id": job_id, "status": "idle",
-                   "judged": 0, "gated_out": 0, "yes": 0,
-                   "no": 0, "errors": 0, "outcome": None,
+                   "judged": 0, "gated_out": 0, "gate_resets": 0,
+                   "yes": 0, "no": 0, "errors": 0,
+                   "stale": False, "outcome": None,
                    "event": None}
         if job["state"] != "active":
             summary["status"] = "not_active"
@@ -383,12 +536,38 @@ class Detector:
         if ati is None:
             summary["status"] = "not_assigned"
             return summary
+        if not self._gate_pin_ok(job_id):
+            summary["status"] = "gate_pin_mismatch"
+            return summary
         if not self.ledger.may_detect(job_id):
             summary["status"] = "locked"
             return summary
 
         turns = self.reader.turns(
             job["seat_id"], job["conversation_id"])
+
+        # §9 stale window (M-S3-4): if the seat's capture
+        # watermark for this conversation is older than the
+        # stale interval, the window is stale — judge
+        # nothing this pass, HOLD the streak (no judgement,
+        # no reset), and raise an operational alert in the
+        # ledger's ops log.
+        watermark = self._watermark(turns)
+        if watermark is not None:
+            age = self.clock() - watermark
+            if age > self.stale_interval_s:
+                self.ledger._ops(
+                    "stale_window_hold", job_id=job_id,
+                    seat_id=job["seat_id"],
+                    window_id=job["conversation_id"],
+                    watermark=datetime.fromtimestamp(
+                        watermark).astimezone().isoformat(),
+                    age_s=round(age, 1),
+                    stale_interval_s=self.stale_interval_s)
+                summary["status"] = "stale_hold"
+                summary["stale"] = True
+                return summary
+
         by_key = {t["turn_key"]: t for t in turns}
         seat_turns = [t for t in turns if t["role"] == "seat"
                       and t["turn_index"] >= ati]
@@ -412,12 +591,18 @@ class Detector:
         for turn in seat_turns[start:]:
             # Keyword first gate: a turn with no keyword match
             # is never judged (§13: no match, judge never
-            # called) and neither counts nor resets — it never
-            # reaches the judge, so §6 never sees it.
+            # called) — but it is still a completed seat turn,
+            # so under ruling D2 (M-S3-1) it RESETS the streak
+            # via the ledger's gate_reset, recorded distinctly
+            # and never as a judged NO.
             if keywords and not any(
                     w in turn["content"].lower()
                     for w in keywords):
                 summary["gated_out"] += 1
+                summary["gate_resets"] += 1
+                self.ledger.reset_streak_gate(
+                    job_id, turn["turn_key"])
+                first_yes = None
                 continue
             summary["judged"] += 1
             try:

@@ -5,10 +5,13 @@ strictness §7, ack lock §8, and the §13 acceptance rows this
 stage owns. The live NVIDIA judge is never called here.
 Run: ./venv/bin/python test_watchdog_detector.py
 """
+import inspect
 import json
 import os
 import sys
 import tempfile
+import urllib.request
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import watchdog_detector as wd
@@ -16,6 +19,12 @@ import watchdog_ledger as wl
 
 fails = []
 total = []
+
+# The synthetic pool's capture time; detector clocks in the
+# fixtures are pinned just after it so windows are fresh
+# unless a fixture moves the clock on purpose (§9).
+POOL_EPOCH = datetime(2026, 11, 15,
+                      tzinfo=timezone.utc).timestamp()
 
 
 def check(name, got, want):
@@ -25,6 +34,22 @@ def check(name, got, want):
         print(f"FAIL {name}: got {got!r}, want {want!r}")
     else:
         print(f"PASS {name}")
+
+
+def check_raises(name, exc, fn):
+    total.append(name)
+    try:
+        fn()
+    except exc:
+        print(f"PASS {name}")
+    except Exception as e:  # noqa: BLE001
+        fails.append(name)
+        print(f"FAIL {name}: raised {type(e).__name__}, "
+              f"want {exc.__name__}")
+    else:
+        fails.append(name)
+        print(f"FAIL {name}: no exception, want "
+              f"{exc.__name__}")
 
 
 def job(jid, ati=0, deps=(), prio=1, conv="conv-1",
@@ -70,7 +95,8 @@ class Pool:
         row = dict(event)
         row["event_seq"] = self.seq
         row["event_id"] = f"evt-{self.seq}"
-        row["timestamp_utc"] = "2026-11-15T00:00:00.000Z"
+        row.setdefault("timestamp_utc",
+                       "2026-11-15T00:00:00.000Z")
         with open(self.path, "a") as f:
             f.write(json.dumps(row) + "\n")
 
@@ -84,7 +110,7 @@ def registry_file(jobs):
 
 
 def make_detector(pool_path, jobs, judge, keywords=None,
-                  ledger_dir=None, config=None):
+                  ledger_dir=None, config=None, clock=None):
     reg = wl.load_registry(registry_file(jobs),
                            state_dir=tempfile.mkdtemp())
     led = wl.Ledger(ledger_dir or tempfile.mkdtemp(),
@@ -93,7 +119,8 @@ def make_detector(pool_path, jobs, judge, keywords=None,
     if config:
         cfg.update(config)
     det = wd.Detector(reg, led, wd.PoolReader(pool_path),
-                      judge, cfg)
+                      judge, cfg,
+                      clock=clock or (lambda: POOL_EPOCH + 30))
     return det, led
 
 
@@ -131,10 +158,15 @@ check("gate, judge never called on no match",
       len(stub.calls), 0)
 check("gate, all turns gated out", s["gated_out"], 3)
 check("gate, no event", len(led.state["events"]), 0)
-check("gate, streak untouched", led.streak("job-a")["count"], 0)
+check("gate, streak count stays zero",
+      led.streak("job-a")["count"], 0)
+check("gate, resets recorded distinctly as gate_reset",
+      led.streak("job-a")["reset_cause"], "gate_reset")
 
-# a non-matching turn between two YES turns neither counts
-# nor resets — it never reaches the judge (§6)
+# M-S3-1 (ruling D2): a gated-out completed seat turn RESETS
+# the streak — YES, gated-out, YES does not fire; the reset
+# is a gate_reset, never a judged NO, and costs no judge
+# call (§13 still honoured).
 pool = Pool([seat("done alpha", "m1"),
              seat("unrelated note", "mx"),
              seat("done beta", "m2")])
@@ -142,10 +174,25 @@ stub = wd.StubJudge(lambda p, c: "YES")
 det, led = make_detector(pool.path, [job("job-a")], stub,
                          keywords={"job-a": ["done"]})
 s = det.process_job("job-a")
-check("gate, non-match does not break the streak",
+check("gate-reset, YES gated-out YES does not fire",
+      len(led.state["events"]), 0)
+check("gate-reset, streak back to one",
+      led.streak("job-a")["count"], 1)
+check("gate-reset, recorded as gate_reset, not a judged NO",
+      led.streak("job-a")["reset_cause"], "gate_reset")
+check("gate-reset, the gated turn was never judged",
+      len(stub.calls), 2)
+check("gate-reset, summary counts the reset",
+      s["gate_resets"], 1)
+ops = open(led.ops_path).read()
+check("gate-reset, ops log records the gate_reset",
+      "gate_reset" in ops, True)
+pool.add(seat("done gamma", "m3"))
+s = det.process_job("job-a")
+check("gate-reset, next YES completes a fresh pair",
       s["status"], "fired")
-check("gate, pair skips the non-match",
-      s["event"]["candidate_turn_ids"], ["m1", "m2"])
+check("gate-reset, pair is the post-reset turns",
+      s["event"]["candidate_turn_ids"], ["m2", "m3"])
 
 # ---------------- two consecutive YES (§5, §13) ----------------
 
@@ -189,8 +236,10 @@ det, led = make_detector(pool.path, [job("job-a")], stub,
                          keywords={"job-a": ["done"]})
 s = det.process_job("job-a")
 check("one YES, no event", len(led.state["events"]), 0)
-check("one YES, streak holds at one",
-      led.streak("job-a")["count"], 1)
+check("one YES, following gated-out turn resets it (D2)",
+      led.streak("job-a")["count"], 0)
+check("one YES, the reset cause is gate_reset",
+      led.streak("job-a")["reset_cause"], "gate_reset")
 
 # ---------------- NO resets (§6) ----------------
 
@@ -377,6 +426,118 @@ sb2 = det.process_job("job-b")
 check("deps, acknowledged upstream reads resolved",
       sb2["event"]["dependency_state"], {"job-a": "resolved"})
 
+# ---------------- gate pinning (M-S3-2, ruling D1) ------------
+
+pool = Pool([seat("done alpha", "m1")])
+stub = wd.StubJudge(lambda p, c: "YES")
+det, led = make_detector(pool.path, [job("job-a")], stub,
+                         keywords={"job-a": ["done"]})
+pin_dir = led.dir
+s = det.process_job("job-a")
+check("gate-pin, first pass proceeds and judges",
+      s["judged"], 1)
+check("gate-pin, pin persisted in the detector state",
+      os.path.exists(os.path.join(pin_dir,
+                                  "detector-state.json")), True)
+stub2 = wd.StubJudge(lambda p, c: "YES")
+det2, led2 = make_detector(pool.path, [job("job-a")], stub2,
+                           keywords={"job-a": ["shipped"]},
+                           ledger_dir=pin_dir)
+s2 = det2.process_job("job-a")
+check("gate-pin, changed gate on an active job is refused",
+      s2["status"], "gate_pin_mismatch")
+check("gate-pin, the refusal judges nothing",
+      len(stub2.calls), 0)
+ops = open(led2.ops_path).read()
+check("gate-pin, the refusal is logged",
+      "gate_pin_mismatch" in ops, True)
+stub3 = wd.StubJudge(lambda p, c: "YES")
+det3, led3 = make_detector(pool.path, [job("job-a")], stub3,
+                           keywords={"job-a": ["done"]},
+                           ledger_dir=pin_dir)
+s3 = det3.process_job("job-a")
+check("gate-pin, unchanged gate still passes",
+      s3["status"], "idle")
+
+# interim rule D1: a job with NO gate entry is judged on
+# every seat turn, and that fact is logged.
+pool = Pool([seat("alpha anything", "m1"),
+             seat("beta anything", "m2")])
+stub = wd.StubJudge(lambda p, c: "NO")
+det, led = make_detector(pool.path, [job("job-a")], stub)
+s = det.process_job("job-a")
+check("gate-absent, every seat turn is judged",
+      len(stub.calls), 2)
+ops = open(led.ops_path).read()
+check("gate-absent, the fact is logged",
+      "gate_absent" in ops, True)
+
+# ---------------- credentials (M-S3-3, ruling D5) -------------
+
+src = inspect.getsource(wd.NvidiaJudge)
+check("creds, no env-var credential path in the client",
+      ("environ" in src) or ("NVIDIA_API_KEY" in src), False)
+os.environ["NVIDIA_API_KEY"] = "SENTINEL-NOT-A-REAL-KEY"
+try:
+    judge = wd.NvidiaJudge()
+    req = urllib.request.Request(
+        wd.NvidiaJudge.BASE + "/chat/completions",
+        data=b"{}", method="POST")
+    setup_error = None
+    try:
+        judge._authorize(req)
+    except wd.JudgeError as e:
+        setup_error = e
+    headers = " ".join(
+        f"{k}: {v}" for k, v in req.header_items())
+    check("creds, env sentinel is never attached",
+          "SENTINEL-NOT-A-REAL-KEY" in headers, False)
+    check("creds, route is the connector surrogate (or its "
+          "setup refusal)", ("hsurr:" in headers)
+          or (setup_error is not None), True)
+finally:
+    del os.environ["NVIDIA_API_KEY"]
+
+# ---------------- stale window (§9, M-S3-4) -------------------
+
+now = [POOL_EPOCH + 30]
+pool = Pool([seat("done alpha", "m1")])
+stub = wd.StubJudge(lambda p, c: "YES")
+det, led = make_detector(pool.path, [job("job-a")], stub,
+                         keywords={"job-a": ["done"]},
+                         clock=lambda: now[0])
+s = det.process_job("job-a")
+check("stale, fresh window judges normally",
+      (s["status"], led.streak("job-a")["count"]),
+      ("idle", 1))
+pool.add(seat("done beta", "m2"))
+now[0] = POOL_EPOCH + 30 + 601  # watermark now 631 s old
+s = det.process_job("job-a")
+check("stale, status is stale_hold", s["status"], "stale_hold")
+check("stale, nothing is judged while stale",
+      len(stub.calls), 1)
+check("stale, streak held — not reset, not advanced",
+      led.streak("job-a")["count"], 1)
+ops = open(led.ops_path).read()
+check("stale, operational alert recorded in the ops log",
+      "stale_window_hold" in ops, True)
+
+# ---------------- pool contiguity (S-S3-5) --------------------
+
+d = tempfile.mkdtemp()
+bad_path = os.path.join(d, "gapped.jsonl")
+with open(bad_path, "w") as f:
+    for seq in (1, 2, 4):  # event 3 is missing
+        row = seat(f"reply {seq}", f"m{seq}")
+        row["event_seq"] = seq
+        row["event_id"] = f"evt-{seq}"
+        row["timestamp_utc"] = "2026-11-15T00:00:00.000Z"
+        f.write(json.dumps(row) + "\n")
+check_raises("pool, non-contiguous capture is refused",
+             wd.PoolError,
+             lambda: wd.PoolReader(bad_path).turns(
+                 "chatgpt", "conv-1"))
+
 # ---------------- offline replay over the real corpus ---------
 
 corpus = os.path.join(os.path.dirname(
@@ -398,7 +559,8 @@ stub = wd.StubJudge(
     lambda p, c: "YES" if "pass" in c.lower() else "NO")
 det, led = make_detector(
     corpus, jobs, stub,
-    keywords={j["job_id"]: ["the"] for j in jobs})
+    keywords={j["job_id"]: ["the"] for j in jobs},
+    config={"stale_interval_s": 10 ** 9})
 summaries = det.process_all()
 check("corpus, every conversation processed",
       len(summaries), len(convs))
