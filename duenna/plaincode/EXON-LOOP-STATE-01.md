@@ -123,6 +123,23 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~05:20 MST (OWNER'S NORTH STAR ON THE RECORD)
+
+ADDENDUM: the owner directed (05:03 MST) that
+Alex be told EXON's destination in his own words:
+the process trees, ending in templates humans can
+fill out to complete complex tasks with their AI.
+Letter 23 carried it verbatim; Alex's reply
+received it as the project's north star, reframed
+the syntax as infrastructure for faithfully
+representing process trees, and fenced it himself
+— the owner's intended destination, not a new
+commission. Letters 22 and 23 and the reply are
+filed as EXON-DEVELOPMENT-LETTER-23. State
+otherwise unchanged: Draft 02 accepted as a
+working draft, the loop holds for the owner's
+review and his open decisions.
+
 ## Status — 2026-11-16 ~05:15 MST (SKELETON DRAFT 02 IN; REVIEWED; LOOP HOLDS)
 
 ADDENDUM: Letter 21's reply delivered Skeleton
