@@ -123,6 +123,28 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~05:05 MST (TRACEABILITY PASS IN; DRAFT 02 COMMISSIONED)
+
+ADDENDUM: the traceability pass is filed
+(EXON-DEVELOPMENT-LETTER-20; standalone
+EXON-TRACEABILITY-PASS-01). Verdict: the skeleton
+is structurally faithful, architecture sound — do
+not reject or reopen — but a named set of Matrix
+conditions is materially weakened or absent as
+explicit rules (full list in the Letter 20 filing
+header). Remmy spot-checked the classifications
+against both pinned texts — all hold. Letter 21
+accepts them and commissions Skeleton Draft 02 on
+Alex's recommended disposition: architecture
+preserved entire; weakened conditions made explicit
+at the field; deliberately incorporated conditions
+cited to their exact Matrix section. Owner list
+unchanged. Machinery note: a CONTEXT_FULL event
+(668) re-fired for the retired chat (2) after a
+doorbell restart re-baselined its still-open tab —
+no trigger is armed there, the guard is unaffected
+(chat (2) BLOCKED, chat (3) CLEAR, both correct).
+
 ## Status — 2026-11-16 ~04:55 MST (SYNTAX SKELETON DRAFT 01 IN; REVIEWED)
 
 ADDENDUM: Letter 19's reply delivered the syntax
