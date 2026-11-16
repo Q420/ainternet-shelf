@@ -123,6 +123,23 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~03:40 MST (re-issue VERIFIED)
+
+ADDENDUM: Alex's verification is IN and filed
+(EXON-DEVELOPMENT-LETTER-13.md): size, SHA-256 and
+git blob independently matched; body byte-for-byte
+identical to source blob 87c23499…; D1–D4 unchanged.
+THE RE-ISSUE STANDS AS THE DRAFTING SOURCE. Queue
+two items 1–3 are UNBLOCKED: item 1 (common
+envelope) is commissioned to Alex (Letter 14);
+items 2–3 (nine bodies; reference/resolution record)
+progress in Remmy's lane as drafts for his review.
+Letter 14 also carries the owner's standing
+instruction: every message in the working
+conversation ends with ⟦ALEX-FINAL⟧ as its final
+line — Alex's own completion marker, designated by
+the owner as the doorbell's settle hook.
+
 ## Status — 2026-11-16 ~03:33 MST (re-issue published)
 
 ADDENDUM: the clean re-issue is PUBLISHED as
