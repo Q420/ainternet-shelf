@@ -45,3 +45,7 @@ Judging stays in the orchestrator. That is correct, but it means the detector an
 Net
 
 The doorbell is the better architecture. It converts most failures from silent to visible and removes the worst defects, which were all in the carrier. The paper should not claim that it removes environmental risk, because it doesn't. It moves the risk into a smaller, observable place. Before the design round, I'd want the heartbeat to be defined as proof of detection, the inbox made readable without the page, and dedupe specified across fast and slow wakes. With those three, the doorbell is a sound basis for review.
+
+
+---
+**PROVENANCE CORRECTION (2026-11-15 23:20 MST):** the conversation address the courier reported for this exchange could not be verified — the named conversation does not contain it, confirmed by the orchestrator's own full-text read. The reply text stands as captured by the courier, but its location is UNRESOLVED. A fresh-conversation review with first-hand verified provenance supersedes this filing for the record: record/CLAUDE-FRESH-DOORBELL-CAMERA-REVIEW-2026-11-15.md.

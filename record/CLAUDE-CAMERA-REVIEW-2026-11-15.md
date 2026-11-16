@@ -40,3 +40,7 @@ Frames are not evidence. If the pictures are kept for debugging, they are retain
 Net
 
 Use it beside the DOM observer, not instead of it. The DOM says which turn and whose, the camera says the page is alive and visibly changing, and each one is the witness for the other: a DOM observer that reports a landing the camera didn’t see is suspicious, and a camera change with no DOM turn is a candidate for the alert path. That pairing is what turns the heartbeat into real proof of detection. The paper should state the trigger rule (camera change → DOM check → identity-keyed notice), the probe set (minimal reply, scroll, composer growth), and the retention rule for frames before it goes to review.
+
+
+---
+**PROVENANCE CORRECTION (2026-11-15 23:20 MST):** the conversation address the courier reported for this exchange could not be verified — the named conversation does not contain it, confirmed by the orchestrator's own full-text read. The reply text stands as captured by the courier, but its location is UNRESOLVED. A fresh-conversation review with first-hand verified provenance supersedes this filing for the record: record/CLAUDE-FRESH-DOORBELL-CAMERA-REVIEW-2026-11-15.md.
