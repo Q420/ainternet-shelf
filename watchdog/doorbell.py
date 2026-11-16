@@ -223,9 +223,70 @@ def stamp_diff(a, b):
 TAIL_JS = r"""
 (() => {
   const txt = document.body ? document.body.innerText : '';
-  return JSON.stringify({ len: txt.length, tail: txt.slice(-400) });
+  const stop = [...document.querySelectorAll('button')]
+    .some(b => /stop/i.test(b.getAttribute('aria-label') || ''));
+  const main = document.querySelector('main') || document.body;
+  const dots = [...main.querySelectorAll('[class*="waveDot"]')]
+    .some(e => e.offsetWidth || e.offsetHeight);
+  return JSON.stringify({ len: txt.length, tail: txt.slice(-400),
+                          gen: stop || dots });
 })()
 """
+
+# --- generation gate (Watched Orchestrator Stage 3, Ben's
+# typing-dots ruling 2026-11-16 01:27 MST; ordered built
+# 2026-11-16 03:21 MST after the Letter 11 false settles).
+# A still tail is NOT a landed reply: during a long thinking
+# pause the tail sits unchanged while the seat is still
+# working (live proof 2026-11-16: settles fired at 03:12
+# "Retrieving…" and 03:13 "Checked matrix provenance"; the
+# true completion settled at 03:16). The platform's own
+# generation signal gates the settle: while the seat is
+# generating (Stop button present, or the animated waveDot
+# typing dots visible — both observed live on this surface
+# mid-generation 2026-11-16 03:2x MST, class prefix waveDot,
+# suffix is a build hash), stability does not accumulate.
+# Settle requires generation absent AND the tail stable
+# across the usual window. If the markup moves and gen
+# reads false forever, behaviour degrades to the Stage 2
+# tail-only rule — never worse.
+
+def settle_step(cv, tail_hash, tail, gen):
+    """One poll of the settle state machine. Returns
+    (shape, text) when a REPLY_SETTLED should be emitted,
+    else None. Pure: mutates only cv."""
+    if gen:
+        # Still working: track the newest tail as the
+        # candidate (it arrived during generation, so its
+        # shape is 'grown'), but stability must be earned
+        # after generation ends — hits stay at zero here.
+        if tail_hash != cv.baseline_tail:
+            if cv.candidate_tail != tail_hash:
+                cv.candidate_tail = tail_hash
+                cv.candidate_shape = "grown"
+                cv.candidate_text = tail
+            cv.candidate_hits = 0
+        cv.prev_tail = tail_hash
+        return None
+    if tail_hash != cv.prev_tail:
+        shape = "grown" if cv.candidate_tail is not None else "instant"
+        cv.candidate_tail = tail_hash
+        cv.candidate_hits = 0
+        cv.candidate_shape = shape
+        cv.candidate_text = tail
+        cv.prev_tail = tail_hash
+        return None
+    if cv.candidate_tail is not None and tail_hash == cv.candidate_tail:
+        cv.candidate_hits += 1
+        if cv.candidate_hits >= 2 and tail_hash != cv.baseline_tail:
+            out = (cv.candidate_shape, cv.candidate_text)
+            cv.baseline_tail = tail_hash
+            cv.candidate_tail = None
+            cv.candidate_hits = 0
+            return out
+        return None
+    cv.prev_tail = tail_hash
+    return None
 
 class Convo:
     def __init__(self, cid):
@@ -236,6 +297,7 @@ class Convo:
         self.candidate_shape = None    # 'grown' | 'instant'
         self.prev_tail = None
         self.prev_stamp = None
+        self.gen = False               # seat currently generating
         self.seen = False
         self.banner = False           # context-full banner currently present
 
@@ -286,24 +348,13 @@ def main():
                     cv.prev_tail = tail_hash
                     log({"doorbell": "baseline", "conversation": url[-12:]})
                     continue
-                if tail_hash != cv.prev_tail:
-                    # A change. Grown = the tail also differed last poll
-                    # (streaming); instant = appeared fully formed.
-                    shape = "grown" if cv.candidate_tail is not None else "instant"
-                    cv.candidate_tail = tail_hash
-                    cv.candidate_hits = 0
-                    cv.candidate_shape = shape
-                    cv.candidate_text = tail
-                    cv.prev_tail = tail_hash
-                elif cv.candidate_tail is not None and tail_hash == cv.candidate_tail:
-                    cv.candidate_hits += 1
-                    if cv.candidate_hits >= 2 and tail_hash != cv.baseline_tail:
-                        append_event(url, cv.candidate_text, cv.candidate_shape)
-                        cv.baseline_tail = tail_hash
-                        cv.candidate_tail = None
-                        cv.candidate_hits = 0
-                else:
-                    cv.prev_tail = tail_hash
+                gen = bool(data.get("gen"))
+                if gen and not cv.gen:
+                    log({"doorbell": "generating", "conversation": url[-12:]})
+                cv.gen = gen
+                out = settle_step(cv, tail_hash, tail, gen)
+                if out is not None:
+                    append_event(url, out[1], out[0])
             for gone in [k for k in convos if k not in live]:
                 del convos[gone]
         except Exception as e:  # noqa: BLE001
