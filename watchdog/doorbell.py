@@ -251,6 +251,7 @@ def main():
          "pool_seq_at_start": SEQ})
     convos = {}
     loops = 0
+    last_heal = [0.0]
     while True:
         loops += 1
         try:
@@ -307,6 +308,25 @@ def main():
                 del convos[gone]
         except Exception as e:  # noqa: BLE001
             log({"doorbell": "loop_error", "error": str(e)[:160]})
+            # Self-heal the witness path (Ben's lesson, 2026-11-16:
+            # a heartbeat proves the loop, not the seeing). When
+            # the CDP endpoint stops answering — classically the
+            # SSH tunnel died with a runtime restart — the loop
+            # used to retry blind forever until a human noticed.
+            # Now: ask the browser layer to rebuild the tunnel,
+            # throttled to one attempt per 30 s, and log the
+            # outcome either way. A failed heal never kills the
+            # loop; the keeper restarts the process if it dies.
+            now = time.time()
+            if now - last_heal[0] >= 30:
+                last_heal[0] = now
+                try:
+                    rb.ensure_tunnel()
+                    log({"doorbell": "tunnel_heal", "result": "up"})
+                except BaseException as he:  # noqa: BLE001
+                    log({"doorbell": "tunnel_heal",
+                         "result": "failed",
+                         "error": str(he)[:120]})
         time.sleep(POLL_S)
 
 if __name__ == "__main__":
