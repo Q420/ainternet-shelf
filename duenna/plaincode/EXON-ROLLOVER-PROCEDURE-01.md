@@ -29,6 +29,24 @@ A knock is not a verdict. Alex's own prose can trip the
 rule (a sentence about "the context of the full
 dictionary" matches). False knocks cost one read.
 
+The knock surfaces as its own warning: the drain labels
+the item kind "context_full", never "seat_reply"
+(built 2026-11-16 on the owner's tap, after a real fill's
+warning arrived mislabelled as a reply).
+
+## The pre-send guard — no send into a full window
+
+Before ANY letter is sent to a seat conversation, run
+`presend_guard.py check <conversation url>`. Exit 3 /
+verdict BLOCKED means the conversation holds an
+unconsumed CONTEXT_FULL: the send does not happen.
+Roll over first (below); the letter lands in the new
+chat. The guard reads the same pool events the drain
+reads — one source, no second opinion. Consumption is
+recorded by step 5a of the rollover, at rollover time,
+never retroactively: a window that filled and was not
+rolled over stays BLOCKED, which is the truth about it.
+
 ## The rollover, when a knock confirms
 
 1. Confirm by reading the page first-hand. No banner,
@@ -44,6 +62,9 @@ dictionary" matches). False knocks cost one read.
    never a new tab).
 5. Re-arm both watcher triggers (REPLY_SETTLED and
    CONTEXT_FULL) to the new conversation.
+5a. Consume the guard for the OLD conversation
+   (`presend_guard.py consume <old url>`) — the record
+   that this fill was handled by this rollover.
 6. First letter in the new chat: point Alex to the
    loop-state document and the filed letters, and carry
    verbatim any ruling the summary cannot be trusted
@@ -56,5 +77,11 @@ dictionary" matches). False knocks cost one read.
 **Status:** built 2026-11-16 on the owner's tap.
 Matcher unit-tested against the banner wording the
 owner observed on a genuinely full window (2026-11-08)
-and against ordinary seat prose. First live proof
-arrives at the next real fill.
+and against ordinary seat prose. First live proof of
+detection arrived the same night: chat (2)'s fill fired
+CONTEXT_FULL event 663 at the settle second. The
+warning labelling and the pre-send guard were built
+later that night on the owner's further tap: the guard
+reads tonight's real fill as BLOCKED (seq 663) and the
+new chat as CLEAR; tests at watchdog/test_presend_guard.py
+(10/10, with test_inbox.py at 48/48).
