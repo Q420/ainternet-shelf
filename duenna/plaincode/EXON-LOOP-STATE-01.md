@@ -123,6 +123,21 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~03:45 MST (item 1 delivered)
+
+ADDENDUM: item 1 is DELIVERED and filed
+(EXON-DEVELOPMENT-LETTER-14.md; standalone as
+EXON-COMMON-ENVELOPE-DRAFT-01.md) — the common
+message envelope, Draft 01, from the re-issued
+Matrix 03 §§A–B, §L. Remmy's review (Letter 15):
+faithful to the source; the three flagged
+distinctions correctly drawn; the unresolved list
+matches the owner's open items. Accepted as a
+working draft. The reply closed with ⟦ALEX-FINAL⟧
+and the signature gate knocked exactly once on it —
+the gate's first full live arc. Items 2–3 are in
+Remmy's lane as the next drafting work.
+
 ## Status — 2026-11-16 ~03:40 MST (re-issue VERIFIED)
 
 ADDENDUM: Alex's verification is IN and filed
