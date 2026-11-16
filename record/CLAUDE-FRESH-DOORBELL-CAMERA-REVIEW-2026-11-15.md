@@ -234,3 +234,60 @@ The calibration gauge: a fixed labeled replay set, run at intervals, comparing d
 The owner’s terminal is unchanged: escalations ride on settled evidence, and the replay set is the way to find out whether the judge’s filter is still honest.
 
 No build; the owner’s stop stands.
+
+---
+
+# Fifth exchange — Stage 0 design round on the assembled plan (2026-11-15 23:42 MST)
+
+**Provenance:** same verified conversation. Sent by the orchestrator's
+own hand per the owner's "Alright, let's make it happen" (taken as
+the go for Stage 0, the design round — paper only; builds and the
+lift remain gated as the plan states). Read-back verified.
+
+**Material limit, stated by Claude himself:** he could NOT open the
+GitHub link ("I have no browsing of GitHub from here"). This is a
+review of the design as the exchanges shaped it, NOT a ruling on the
+document text. A text-level ruling requires the document pasted in
+parts (the RB-50 route), which he explicitly invites.
+
+## Claude's reply (verbatim; page chrome excluded)
+
+I can’t open that link. I have no browsing of GitHub from here, and nothing about the document has been pasted into this conversation, so I have no basis to rule on the text itself. What follows is a review of the design as the exchanges have shaped it, and it should be checked against the file. If you paste the document in parts, I’ll rule on the text directly.
+
+Does the assembly cohere?
+
+Mostly, yes. The pieces fit together in a sensible hierarchy: the orchestrator is the watched subject, the wake and her canary sit on top, the doorbell and camera are audit sensors for her claims, and the owner is the terminal. The two tuning regimes divide cleanly along the attention axis. The calibration gauge replaces the fatigue gauge without disturbing anything else.
+
+Two places where pieces could fight:
+
+Refresh versus fence. The wake refreshes her with a two-half summary, which is a compression of the record. Settlement requires citing a value only a real read yields. If the summary is rich enough to supply that value, she can cite the summary and never touch the record, and the settlement fence is hollow. The summary must be explicitly non-citable for settlement: the cited value must come from the inbox record itself, and the paper should say so.
+
+Cheap knocks versus strict claims. The over-fire regime for knocks is fine, but the wake is also the vehicle for the proof-of-attention loop. If the same cheap-end wake stream carries the settlement demand, false knocks dilute the very test that’s supposed to be strict. Knocks and settlement demands should be separate messages, or the settlement demand should be flagged so the judge can’t treat it as one more knock.
+
+What the exchanges haven’t caught
+
+Who can change the plan. The owner’s stop, the scoped lift, and the rule that the orchestrator cannot lift her own stop all need to be stated as the plan’s first constraint, not as a status line. Nothing in the design stops her from quietly widening the scope she’s allowed.
+
+Failure of the escalation channel itself. Escalation depends on the owner receiving it. The paper says he’s the terminal but not how an escalation is delivered, how delivery is confirmed, or what happens when it isn’t. The terminal needs its own witness, and the same dead-man logic applies to it.
+
+Replay-set provenance. The calibration replay set is only as honest as its labels. Who labels it, when, and whether the labels can drift toward the judge’s current behavior, are open. A replay set labeled by the same judge it measures is circular.
+
+Schema and identity. Every witness depends on a stable identity key across seat, conversation, and message. The paper should specify that key, its format, and how it survives a site changing its DOM.
+
+Privacy of the summary. The wake’s two-half summary carries conversation content into the orchestrator’s chat. The paper should state what the summary may and may not contain, consistent with the minimal-content principle.
+
+Is the stage order right?
+
+The order is sound in principle: design round first, then replay and labeling, then the passive sensor, then the canary, then the gated wake, then escalations. The risk is that Stage 0 is accepted without the replay-set and identity-key work, and those are the parts most likely to need redesign. I’d move the identity-key specification and the replay-set labeling protocol ahead of any sensor build, and make both paper-only deliverables that Stage 1 cannot start without.
+
+What must change before Stage 1?
+
+The owner’s lift is recorded, scoped, and named in the first section, with the orchestrator explicitly excluded from changing it.
+The summary is declared non-citable for settlement, and the settlement rule is restated against the inbox record.
+Knocks and settlement demands are separated, or flagged so the judge can’t mistake one for the other.
+The escalation channel has a delivery witness and a failure rule.
+The identity key is specified with its format and DOM-change behaviour.
+The replay set has a labeling protocol with an independent labeler, and the labels are frozen before any measurement.
+Each stage has an entry criterion and an exit test written into the plan, not just a gate name.
+
+Paste the document in parts and I’ll go through it against this list.
