@@ -353,4 +353,88 @@ The discussion clarifies candidate responsibilities for the Distillery and candi
 
 ---
 
+## 9. Further governance and scaling assessment (2026-11-16)
+
+**Provenance:** A further seat assessment pasted by Ben into the main discussion; the pasted text does not identify its author. The material below is recorded as a discussion contribution, not as a new owner ruling.
+
+**Status: candidate design considerations only.** This section extends the discussion record. It does not amend the completed design, change frozen specifications, or authorize implementation.
+
+### 9.1 The contribution is the discipline, not the folder
+
+The assessment argues that the briefcase's important contribution is not the digital folder itself, but the institutional discipline made machine-legible and enforced at the boundary.
+
+The analogy is a professional case file: a practitioner carries the indexed file needed for the current matter, not the institution's entire archive. Prior cases remain in the records room and can be reached by citation. A trusted packing role prepares the file, and provenance and chain of custody matter.
+
+The institutional office persists while its occupants rotate; records outlive both. Applied to agents, the agent receives a bounded assignment and its case file, while organizational knowledge remains external and addressable.
+
+The assessment connects this to the Duenna principle that structure and governance can outperform simply increasing model scale or injecting more context. In this programme, a well-packed task case may let a lower-cost seat perform more reliably than a larger model overwhelmed by undifferentiated context. This is a design hypothesis to test, not an established benchmark result.
+
+It also challenges the claim that EXON addressing is itself the most novel element. URI-addressed resources, fragment identifiers and citation systems have precedents (the assessment explicitly labels this a general-knowledge observation, not a checked survey). EXON's additional vocabulary bindings, authority, trust grades, negative assertions and precedence are valuable; the more distinctive contribution may be the discipline around addressing: one-turn sufficiency as a falsifiable test, provenance-bearing retrieval without inheritance, and packing as a governed act.
+
+### 9.2 Candidate pressure: the map is also context
+
+A complete map of a growing Shelf can itself become too large. Without control, the architecture could replace scanning the Shelf with scanning an ever-growing map.
+
+The proposed response is to make map partiality explicit and auditable. A map could declare its coverage (for example, the number or classes of Shelf items represented) and provide a route for requesting discovery beyond that coverage. Lossiness is treated as an explicit boundary, not a silent omission.
+
+This extends the earlier discovery concern into a scaling concern: the discovery map must remain useful without becoming a second copy of the Shelf.
+
+### 9.3 Candidate pressure: close should include an independent cold-read
+
+The worked example's closing check asks the producing agent to judge whether a successor could understand its work. The assessment notes the weakness of self-certification: the author is grading its own work.
+
+It proposes an independent cold-read at close. A reader who did not produce the case receives the closed briefcase and EXON and is asked: "What did this task conclude, and on what evidence?" If the reader can recover the conclusion and supporting basis, the case passes; if not, it does not.
+
+The cold reader should be of the assignee's class. Sufficiency is a property of the task, pack and receiving seat together, not of the pack in isolation. The test record should identify which seat performed the cold-read.
+
+This complements the opening incomplete-pack tests: Tests A and B examine sufficiency and discovery at task start; the cold-read examines whether the closed case communicates its conclusions and evidence to a successor.
+
+### 9.4 Candidate pressure: make no-inheritance structural
+
+The assessment identifies a possible gap between the no-inheritance principle and a historical address space that exposes all case contents. If working residue is addressable through ordinary `hist()` retrieval, separation may depend on convention rather than structure.
+
+A candidate design is to separate the closed case into:
+
+- **Certified deliverables:** outputs with provenance and evidence grades, available through ordinary historical retrieval.
+- **Working residue:** retained for archival purposes but excluded from `hist()`'s default address space. Access would require an explicit, logged override.
+
+This would make the boundary between reusable institutional output and an agent's transient working state an architectural property. The proposal is not yet adopted; its implications and compatibility with existing Shelf/EXON rules require review.
+
+### 9.5 Further candidate rules
+
+**Precedence:** resolve conflicts by evidence grade and explicit supersession, not merely by the age of a case. For example, a HARDENED historical result should not automatically lose to a fresh but unverified extract. A new output that contradicts a cited historical result should record whether and how it supersedes that result.
+
+**Instruction boundary:** distinguish address classes and content authority. The proposal is that only the Required layer carries task directives; material retrieved from Available or Historical layers is evidence or testimony, not an instruction source. Retrieved fragments may inform the agent but should not silently acquire authority to redirect its task.
+
+**Operational cost:** packing is not free. The design trades some per-turn context cost for Distillery work per task. It may amortize well across substantial, repeated assignments, but could be a net cost for trivial tasks. This is a deployment trade-off to measure rather than assume away.
+
+### 9.6 Discovery-map question and Alex's proposed direction
+
+The assessment raises an open scaling choice: when the Shelf grows enough that a complete map strains the one-turn budget, should the map be hierarchical (maps of maps) or sliced per task?
+
+Alex's response is a combined approach rather than either extreme:
+
+1. **A small persistent discovery map:** a compact overview of major collections, information categories, index locations and the route for requesting discovery beyond the current map. It is not a complete catalogue.
+2. **A task-specific map:** the Distillery prepares a more detailed map for the assignment, included in the briefcase. It identifies relevant sources, available documents and sections, historical references, known omissions and coverage boundaries.
+3. **Discovery beyond the map:** an agent can request discovery by describing the information it needs, even if it cannot name the missing document. A governed route should allow the request to be resolved without pretending that the current map is complete.
+
+The intended balance is hierarchical discovery plus task-scoped maps, explicit coverage boundaries and a governed route beyond them. The persistent map provides orientation; the task map protects one-turn sufficiency; the request route reduces dependence on an agent already knowing the name of what it does not know.
+
+This is Alex's proposed direction for further evaluation, not an approved implementation decision.
+
+### 9.7 Disposition
+
+The new pressures are worth retaining for design review:
+
+- map coverage and explicit partiality;
+- independent, seat-matched cold-read at close;
+- structural separation of certified deliverables from working residue;
+- evidence-grade and supersession-based precedence;
+- directive/testimony separation between Required and retrieved material; and
+- measurement of Distillery packing cost against per-task benefit.
+
+**No change to the original design ruling.** These remain candidate considerations. The current priority remains validation of incomplete-briefcase behaviour; the additional proposals should not be converted into implementation requirements or blockers without owner review and evidence.
+
+---
+
 End of current design record.
