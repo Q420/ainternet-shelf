@@ -123,6 +123,34 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~04:20 MST (VERIFIED; ROLLED OVER to chat (3))
+
+ADDENDUM: Alex's parallel verification is COMPLETE
+(Letter 17 reply, filed as
+EXON-DEVELOPMENT-LETTER-17): the STOP ruling's
+source is Letter 03 (blob 6de8b0b1…), §3 with its
+owner-confirmation record, carried into 0.5 by
+Letter 04; the Dictionary 0.4 digest was
+independently recomputed by Alex — 57,284 bytes,
+SHA-256 0717bb6c…, blob recomputation matched —
+two independent derivations agree; both Draft 02s
+verified present, no further defect. On collection
+the page showed chat (2) CONTEXT-FULL; the rollover
+procedure was executed: reply filed first, banner
+control clicked, summary carried. THE LOOP'S HOME
+IS NOW https://chatgpt.com/c/6afae5ed-1dd4-83e8-aa5c-694193cb1f4f
+(chat (3)). Both watch triggers re-armed on the new
+conversation (REPLY_SETTLED + CONTEXT_FULL); the old
+conversation's arms are retired. Letter 18 is sent:
+filing notice, verification results, the
+⟦ALEX-FINAL⟧ convention restated, and the acceptance
+check — the new Alex states the current rulings from
+the record (HARDENED, STOP threshold, queue state,
+owner list) before any new work. Queue two stands
+drafted, reviewed and verified. Owner list unchanged:
+D-REF-1/2/3/4, the serialization paper, Dictionary
+0.5. Nothing admitted or frozen.
+
 ## Status — 2026-11-16 ~04:12 MST (items 2–3 REVIEWED)
 
 ADDENDUM: Alex reviewed items 2–3 (Letter 16 reply,
