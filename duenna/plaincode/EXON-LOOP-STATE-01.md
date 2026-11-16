@@ -471,3 +471,14 @@ and admitted DESTINATION as a term (his gloss:
 Record: EXON-OWNER-RULINGS-2026-11-16-ADDENDUM. Both
 rulings ride to Alex with the next letter after his
 Letter 29 reply.
+Addendum, 2026-11-16 13:47 MST: Alex's gap report on
+Draft 03 §3 received (Letter 29 reply, filed). Gaps:
+component-descriptor PARTIAL, structural projections
+ABSENT, quiesced capture NOT DEMONSTRATED, digest-
+addressed publication PARTIAL. Remmy verified first-hand
+against the live index (~/workspace/pulse-bridge/index):
+admit_2026_11_11_exon.py exists locally (uncommitted);
+projections confirmed absent; the remaining gaps stand.
+Letter 30 carries the SUCCESS/DESTINATION rulings and
+commissions Draft 04 (drafting amendments only). No
+rebuild decision taken.
