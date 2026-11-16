@@ -27,6 +27,14 @@ pid, boot_id, instance_id, loop_count, last_tick — no state
 field) and records a waker transition at boot: capture is now
 provided by the doorbell. The sensor never sends anything to
 any seat and never acknowledges an inbox item.
+
+Context-full witness (owner's rollover fix, tapped 2026-11-16):
+the tail text the sensor already reads on every poll is matched
+against the context-window-full banner's wording (observed by
+the owner on a genuinely full window, 2026-11-08). On the
+banner's first appearance in a conversation it appends one
+CONTEXT_FULL event — no new probe, no new sweep; the check
+rides the read that already happens.
 """
 import base64, hashlib, io, json, os, sys, time, uuid
 sys.path.insert(0, "/home/hatch/workspace/remmy-browser")
@@ -92,6 +100,71 @@ def pool_state():
     return last_seq, last_hash, counts
 
 SEQ, PREV_HASH, EMITTED = pool_state()
+
+# --- context-full banner witness (owner's rule, 2026-11-16:
+# a sentence that says "context" and "full" in it). Matched
+# against the tail text already read on every poll — no new
+# probe. A knock, not a verdict: the orchestrator confirms by
+# reading the page before any rollover.
+import re as _re
+_SENTENCE_SPLIT = _re.compile(r"[.!?\n]+")
+_CTX_WORD = _re.compile(r"\bcontext\b")
+_FULL_WORD = _re.compile(r"\bfull\b")
+
+def banner_present(text):
+    if not text:
+        return False
+    low = text.lower()
+    if "automatic summary of this conversation" in low:
+        return True
+    for sentence in _SENTENCE_SPLIT.split(low):
+        if _CTX_WORD.search(sentence) and _FULL_WORD.search(sentence):
+            return True
+    return False
+
+CF_EMITTED = {}
+
+def append_context_full(conversation_id, tail):
+    global SEQ, PREV_HASH
+    content = (tail or "")[-400:]
+    sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    ordinal = CF_EMITTED.get(conversation_id, 0) + 1
+    CF_EMITTED[conversation_id] = ordinal
+    message_id = str(uuid.uuid5(uuid.NAMESPACE_URL,
+                                conversation_id + "|context-full|" + str(ordinal) + "|" + sha))
+    SEQ += 1
+    ev = {
+        "schema_version": "0.1",
+        "event_id": "evt-" + uuid.uuid4().hex,
+        "event_seq": SEQ,
+        "timestamp_utc": now_iso_z(),
+        "session_id": SESSION,
+        "conversation_id": conversation_id,
+        "seat_id": "chatgpt",
+        "direction": "inbound",
+        "event_type": "CONTEXT_FULL",
+        "lifecycle_state": "CONTEXT_FULL",
+        "outcome": "success",
+        "evidence_class": "BANNER_OBSERVED",
+        "message_id": message_id,
+        "exchange_id": "ex-" + uuid.uuid4().hex[:12],
+        "content": content,
+        "content_sha256": sha,
+        "failure_code": None,
+        "failure_detail": None,
+        "attempted_transition": None,
+        "source_reference": "doorbell tail-witness extraction; context-full banner match on rendered-text tail",
+        "previous_event_hash": PREV_HASH,
+    }
+    line = json.dumps(ev)
+    with open(EVENTS, "a") as f:
+        f.write(line + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+    PREV_HASH = hashlib.sha256(line.encode("utf-8")).hexdigest()
+    log({"doorbell": "context_full_event_appended", "seq": SEQ,
+         "conversation": conversation_id[-12:], "message_id": message_id})
+    return ev
 
 def append_event(conversation_id, content, shape):
     global SEQ, PREV_HASH
@@ -164,6 +237,7 @@ class Convo:
         self.prev_tail = None
         self.prev_stamp = None
         self.seen = False
+        self.banner = False           # context-full banner currently present
 
 def main():
     # Record the capture handover in the waker state file.
@@ -201,6 +275,10 @@ def main():
                     log({"doorbell": "witness_error", "conversation": url[-12:],
                          "error": str(e)[:120]})
                     continue
+                bp = banner_present(tail)
+                if bp and not cv.banner:
+                    append_context_full(url, tail)
+                cv.banner = bp
                 if not cv.seen:
                     cv.seen = True
                     cv.baseline_tail = tail_hash
