@@ -406,3 +406,47 @@ the third settle was the true completion — tails
 prove it). The owner's typing-dots fix (Stage 3:
 generation signal gates the settle) was ordered
 2026-11-16 03:21 MST and is being implemented.
+
+Addendum, 2026-11-16 (Letters 18–24). The loop rolled
+over to conversation (3),
+https://chatgpt.com/c/6afae5ed-1dd4-83e8-aa5c-694193cb1f4f,
+per EXON-ROLLOVER-PROCEDURE-01; the acceptance check
+PASSED (Letter 18). The syntax line reconciled at
+Skeleton Draft 02, accepted as a working draft
+(Letters 19–22). Letter 23 carried the owner's north
+star: EXON's process trees, ending in templates humans
+can fill out to complete complex tasks with their AI.
+The owner's seven desk items — Dictionary 0.5 review,
+D-REF-1 to D-REF-4, the serialization five, the Stage 6
+calls — remain OPEN: no rulings have been received on
+them through any channel the record can cite (the desk
+sign-offs the owner reported on 2026-11-16 did not land
+in the desk's records; checked twice). Letter 24
+(2026-11-16) commissioned the foundational-words
+reconciliation; the reply returned a reconciled draft
+set (nine words; layer assignments preserved as
+proposals; DESTINATION recommended to remain Neither,
+the decision the owner's), filed standalone as
+EXON-FOUNDATIONAL-VOCABULARY-RECONCILED-DRAFT-01.md.
+Remmy's review: accepted as a working draft; one note
+carried in Letter 25 (the CHECK entry's fence for
+VERIFIED reads stronger than the owner's corrected
+simplest form). The loop holds for the owner's rulings;
+the lines they block (reference finalization,
+serialization) stay blocked.
+Letter 25's reply (2026-11-16) acknowledged the review
+and accepted the VERIFIED-fence correction exactly as
+noted, scoped to that one boundary when the set next
+moves; the draft set stands unchanged. The loop is
+quiet: no commission outstanding in either lane.
+The owner's seven rulings landed 2026-11-16 (confirmed
+in main chat 13:26 MST; record:
+EXON-OWNER-RULINGS-2026-11-16). Dictionary 0.5 is
+ADMITTED as the standing dictionary. D-REF-1: index pin
+required. D-REF-2: both locators required. D-REF-3:
+SHA-256 sole normative. D-REF-4: (a) separate success
+record. Serialization: the package is adopted. Stage 6:
+proceed to the decisions (Duenna lane; the figures
+remain the owner's to name). The loop's blocked lines
+are unblocked; Letter 26 carries the rulings and the
+next commissions.
