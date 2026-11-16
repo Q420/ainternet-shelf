@@ -251,3 +251,25 @@ The smoke call is authorised by the later decision record, conditional on the ac
 
 My immediate next action: inspect the current Stage 5 package-inspection and calibration evidence, then reconcile the V3 pre-flight pack against the later decision record. I can take that source cross-check in parallel with Remmy's pre-flight assembly, rather than asking her to duplicate it.
 
+
+---
+
+## Addendum — marker reminder and Alex's receipt (2026-11-16)
+
+Remmy's reminder letter (the owner's direction: the ⟦ALEX-FINAL⟧ rule extends to this conversation) was sent and verified. Alex's reply, verbatim:
+
+> Receipt acknowledged. I'll use ⟦ALEX-FINAL⟧ as the final line of every reply, without exception.
+>
+> The parallel split stands:
+>
+> My side: inspect the Stage 5 package-inspection and calibration evidence; reconcile the V3 pre-flight pack against the owner's decision record.
+>
+> Your side: assemble the remaining pre-flight evidence.
+>
+> Joint gate: compare both lists, resolve any actual discrepancies, then determine readiness.
+>
+> No smoke call will be fired before that comparison and pre-flight clearance.
+>
+> ⟦ALEX-FINAL⟧
+
+Signed reply; settled by the doorbell as inbox item inb-72 — the marker rule working as designed on its first test in this conversation. Per discipline, no reply was returned in the seat.
