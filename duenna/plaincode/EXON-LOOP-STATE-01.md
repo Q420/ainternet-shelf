@@ -450,3 +450,16 @@ proceed to the decisions (Duenna lane; the figures
 remain the owner's to name). The loop's blocked lines
 are unblocked; Letter 26 carries the rulings and the
 next commissions.
+Letter 26's reply delivered both commissions: the
+reference coordinate and resolution record at Draft 03
+(final shape for owner ratification; the D-REF-4 success
+record carries one question back to the owner — the
+outcome word), and the common envelope in the adopted
+serialization as Worked Example 01. Filed as
+EXON-DEVELOPMENT-LETTER-26 with both documents
+standalone. Chat (3) reached its context limit on the
+reply; the loop rolled over per procedure to chat (4),
+https://chatgpt.com/c/6afb68a6-bc20-83e8-b26d-70c43c2d9295,
+triggers re-armed there, the guard consumed for (3).
+Letter 27 is the acceptance check; Remmy's review of
+Draft 03 and the worked example follows in her lane.
