@@ -105,3 +105,13 @@ correction runs, venue this VM. Battery_id STAGE6SMOKE.
 Claude's formal §7 Step 6 disposition (the discharge-package
 round is Remmy's next action). No smoke call is requested
 until the examiner's final gate ruling.
+
+## Erratum (2026-11-16, after the examiner's inspection)
+
+smoke_harness.py: one stale docstring line described the tree
+as T02; corrected to T04 (the executable selection and the
+run record always identified T04 — documentation only, as the
+examiner classified it). Corrected file sha256:
+a2639808b624b6f7922ef043f52a493d03fd9106d173c17b9e3f8b293f822f33
+(supersedes the hash listed above for smoke_harness.py; no
+other file changed).

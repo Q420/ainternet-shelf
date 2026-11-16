@@ -2,7 +2,7 @@
 """SMOKE HARNESS — Duenna Stage 6 smoke run (derived from the
 Batch 6 G4 correction harness, same skeleton).
 
-Runs the genuine driver over ONE tree (T02: 3 steps, exactly
+Runs the genuine driver over ONE tree (T04: 3 steps, exactly
 one MODEL step, one adapter call) with the REAL adapter
 (smoke variant, smoke config) behind the driver's complete()
 contract. Two modes, selected by SMOKE_MODE:
