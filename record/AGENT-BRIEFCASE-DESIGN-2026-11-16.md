@@ -180,3 +180,89 @@ Pressure Remmy raised in the same discussion, standing: **packing** (who decides
 ## 6. Ben's ruling
 
 2026-11-16 14:21 MST: "My design idea is complete." The design is filed as complete on that word. Any build is a separate owner decision.
+
+---
+
+## 7. Worked example — an agent thought-flow on the briefcase model
+
+Presented by Ben in main chat, 2026-11-16 14:35 MST; ordered filed to this paper by Ben the same minute ("Add this to my file on the shelf"). A concrete run of the design above: one agent, one task, one turn.
+
+---
+
+**Task:** 014 – Analyst
+**Agent:** Analyst-7
+**Briefcase:** freshly packed for this assignment only
+
+### 1. Boot / Required Context
+I receive only the Required layer:
+- Task brief
+- EXON document (addresses + glossary bindings for this job)
+- Minimal preamble
+
+I do **not** receive the full history, previous agents’ working notes, or the entire shelf.
+
+Internal check:
+“I have a clean briefcase. Manifest shows:
+- Required: task.md, EXON.md
+- Available inside case: source-findings/, data-extracts/, prior-decisions-summary.md
+- Historical references (addressable): briefcase:009 (Researcher), briefcase:011 (Collector)
+
+I can operate from this. No need to scan the shelf yet.”
+
+### 2. Orient
+Read EXON first.
+It tells me the exact addresses I am allowed to treat as authoritative for this task and binds the vocabulary I should use (“claim”, “evidence-strength”, “open-question”, etc.).
+
+I now know:
+- What I am expected to produce
+- Which earlier artifacts are in-scope
+- How to point at them precisely later
+
+### 3. First working decision
+Do I already have enough inside the current briefcase to begin substantive work?
+
+→ Yes. The Available material was packed so that a competent analyst can make progress in one turn without leaving the case.
+
+I open only what I need:
+- `open(prior-decisions-summary.md)`
+- `open(source-findings/key-claims.md)` (specific section via EXON address)
+
+I do **not** load the full historical briefcases.
+
+### 4. Reasoning loop (on-demand)
+While working I hit a gap:
+
+“This claim references a measurement method I don’t fully understand. EXON shows an address into briefcase:009.”
+
+Decision:
+- Retrieve only the needed fragment: `dereference(briefcase:009/methods/measurement-protocol#v2)`
+- Bring it into my active context temporarily
+- Use it
+- Note the provenance in my own output
+
+I never inherit the Researcher agent’s full working state or unfinished notes.
+
+### 5. Writing into my own briefcase
+All my intermediate reasoning, new distinctions, strength assessments, and final outputs go into **my** briefcase only.
+
+I update the manifest as I go (status, new files, references I used).
+Nothing is written back into earlier briefcases.
+
+### 6. Closing check
+Before I finish the turn I ask the packing test in reverse:
+
+“Could the next agent (or a later version of me) understand what I did and why, using only:
+- my briefcase contents, and
+- the EXON addresses I left?”
+
+If yes, I mark the briefcase status → completed.
+It is now indexed into the Historical shelf for selective future retrieval.
+
+### 7. End of turn
+I return control.
+My context is discarded.
+Only the briefcase (with its manifest and provenance) persists.
+
+---
+
+This flow keeps the agent focused, prevents context bloat, preserves isolation, and still allows precise continuity when it is actually needed. The briefcase is not a passive folder — it is the agent’s scoped, addressable working world for that single assignment.
