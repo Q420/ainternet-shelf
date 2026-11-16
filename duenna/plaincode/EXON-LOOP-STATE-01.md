@@ -123,6 +123,29 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~04:55 MST (SYNTAX SKELETON DRAFT 01 IN; REVIEWED)
+
+ADDENDUM: Letter 19's reply delivered the syntax
+specification's first abstract skeleton (filed as
+EXON-DEVELOPMENT-LETTER-19 and standalone as
+EXON-SYNTAX-SKELETON-DRAFT-01). Remmy's review:
+ACCEPTED as a working draft. Four layers separated
+(decoding / well-formedness / VALID-FORM / meaning);
+Rules A-H formalized; the MALFORMED conformance
+observation proposed without a tenth message type
+and without borrowing FAILED (D-REF-4 untouched);
+the five serialization questions and D-REF-1 to
+D-REF-4 expressly left open. His two exposed source
+overlaps (task_registry_ref in the REGISTER_TASK
+inventory; in_reply_to in the RESULT inventory) are
+VERIFIED as editorial mentions of envelope fields —
+Matrix sections A/B own their location; noted for
+the matrix's next reconciliation, no draft changes
+needed. Letter 20 carries the review and commissions
+his offered traceability pass: every Matrix 03 field
+condition carried, or listed as lost/weakened with
+its citation. The owner's list is unchanged.
+
 ## Status — 2026-11-16 ~04:40 MST (SUPPLEMENT FILED; LOOP RESUMED)
 
 ADDENDUM: the standalone Dictionary 0.5 supplement is
