@@ -281,5 +281,21 @@ check_true("r4: the ops log raised dependency_stuck",
 s = lay.run()
 check("r4: the alert never fires twice", len(lay.records()), 1)
 
+# ---------- seat-name seam (arming smoke finding) ----------
+# The pool records the Claude seat as "claude"; the registry
+# name is "this-seat" (ledger V1_SEATS). The runner must
+# translate at the reader seam: the job runs on the pool's
+# turns, and the wake carries the contract seat name.
+lay = Layout([job("job-ts", "this-seat", "conv-ts")])
+lay.pool("claude", [reply("claude", "conv-ts", "t1"),
+                    reply("claude", "conv-ts", "t2")])
+s = lay.run()
+check("seam: the this-seat job ran",
+      s["seats"]["this-seat"]["jobs"][0]["outcome"], "ran")
+recs = lay.records()
+check("seam: exactly one wake", len(recs), 1)
+check("seam: the wake carries the contract seat name",
+      recs[0]["seat_id"] if recs else None, "this-seat")
+
 print(f"\n{len(total)} fixtures, {len(fails)} failed")
 sys.exit(1 if fails else 0)

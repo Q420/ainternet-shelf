@@ -77,6 +77,29 @@ WAKE_CONFIG = {"idle_after_s": 3660}
 DEFAULT_MODEL = "nvidia/llama-3.1-nemotron-ultra-253b-v1"
 
 
+# The contract's v1 seat names (the ledger's V1_SEATS) and
+# the watcher's pool names differ for one seat: the pool
+# records the Claude seat as "claude"; the registry name is
+# "this-seat". The runner translates at the reader seam.
+SEAT_POOL_ALIASES = {"this-seat": "claude"}
+
+
+class AliasedPoolReader(wd.PoolReader):
+    """Reads turns under the pool's seat name and re-labels
+    them with the job's contract seat name, so packets,
+    ledger keys and wakes all carry the registry seat_id."""
+
+    def __init__(self, path, pool_seat):
+        super().__init__(path)
+        self.pool_seat = pool_seat
+
+    def turns(self, seat_id, conversation_id):
+        out = super().turns(self.pool_seat, conversation_id)
+        for t in out:
+            t["seat_id"] = seat_id
+        return out
+
+
 def seat_pool_files(events_dir):
     """Map seat_id -> pool file, from each file's first event."""
     out = {}
@@ -187,12 +210,18 @@ def run_pass(home, events_dir, outbox_path, wake_state_path,
                 state_dir=os.path.join(seat_dir, "reg-state"))
             led = wl.Ledger(os.path.join(seat_dir, "ledger"),
                             dict(OWNER_CONFIG), registry=reg)
-            pool_path = pools.get(seat)
+            pool_seat = seat if seat in pools else \
+                SEAT_POOL_ALIASES.get(seat)
+            pool_path = pools.get(pool_seat) if pool_seat \
+                else None
             if pool_path is None:
                 summary["seats"][seat] = {
                     "error": "no pool file for seat"}
                 continue
-            det = wd.Detector(reg, led, wd.PoolReader(pool_path),
+            reader = wd.PoolReader(pool_path)
+            if pool_seat != seat:
+                reader = AliasedPoolReader(pool_path, pool_seat)
+            det = wd.Detector(reg, led, reader,
                               judge, dict(DETECTOR_CONFIG))
             sch = ws.Scheduler(reg, led, det)
             report = sch.run_pass(now=now)
