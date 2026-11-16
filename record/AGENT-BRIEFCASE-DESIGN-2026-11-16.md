@@ -382,3 +382,69 @@ The Comparator may already provide the independent source-auditing function cont
 **The ground for that ruling (Ben, same exchange):** "simply because the exon shelf is definitely absolutely fact." The reference side of every comparison is the EXON shelf, and the EXON shelf is fact — the canonical record of what stands. An audit judges an output against a standard someone must interpret; a comparison against fact interprets nothing — the difference either is there or it is not. That is why the Comparator's act stays comparison no matter what it is pointed at, Duenna's outputs included.
 
 **The terminus (Ben, same exchange):** "If we didn't do this, it would just be a constant loop of checking, checking, checking, checking. So there needs to be an end point so the end point is going to be the comparator." The checking chain ends at the Comparator — not at a final judge whose verdict must be trusted, but at a measurement anyone can re-perform. Judgment still terminates at the owner; checking terminates at the comparison, so judgment is not drowned in an infinite regress of checks.
+
+
+---
+
+## 10. Follow-up discussion — modular verification and interface contracts (2026-11-16)
+
+**Status:** Agreed design principle recorded from the Ben/Alex exchange. This note does not amend the completed Briefcase design ruling in §6, authorise a build, open an implementation stage, or change any component's mandate.
+
+### 10.1 Assessment and scope
+
+The architecture is understood as a set of small, independently testable machines that can be composed, rather than one monolithic system. Modularity provides:
+
+- Independent falsifiability: each machine can demonstrate its own guarantee without requiring the rest of the programme to exist.
+- Incremental adoption and proof: a machine can provide value before optional layers are implemented.
+- Failure isolation: a failure in one machine need not invalidate the guarantees of another.
+
+Modularity does not remove complexity; it moves risk to the interfaces. The interfaces become load-bearing when the relevant machines are authorised to compose. Until then, unresolved interface questions are future specification work, not defects in the completed design.
+
+Examples of seams to specify when implementation is authorised include:
+
+- Duenna ↔ Distillery/Briefcase: the form and guarantees required for a verified briefcase to be consumed by a governed agent.
+- Briefcase ↔ EXON: how the briefcase's discovery map uses EXON addressing and vocabulary.
+- Warehouse Worker ↔ Duenna RECORD: the form and evidence requirements for a shipment-verification record if it is to be consumed as Duenna evidence.
+
+These are examples of potential composition seams, not approved interface designs.
+
+### 10.2 Agreed modular verification principle
+
+1. **Component verification.** Each machine demonstrates its own guarantees against its own acceptance criteria, independently of the machines with which it may later compose.
+
+2. **Interface verification.** Each composition seam has a written, versioned and pinned contract. Its conformance fixtures are independently executable against the contract, without requiring either participating machine to implement the other.
+
+3. **Composition verification.** The actual machines are composed and tested against that same contract. Their individual guarantees must survive the connection.
+
+4. **Failure classification.** A failed composition is investigated and classified as one of:
+   - **Component breach:** a machine failed a guarantee it owns.
+   - **Contract breach:** a machine or the composition violated the interface contract.
+   - **Contract ambiguity:** the contract did not specify enough to determine the required behaviour.
+
+5. **Evidence preservation.** Failed composition attempts are evidence and remain recorded, including attempts followed by retries. A later passing attempt does not erase an earlier failure.
+
+6. **Pinned identity.** Interface contracts, conformance fixtures and test results carry pinned identities and versions. An unpinned contract is vulnerable to silent seam drift.
+
+### 10.3 What the tests establish — and do not establish
+
+A conformance fixture passing establishes that the stated contract can be tested against that fixture. It does not, by itself, establish that either real machine conforms. Composition testing with the actual machines is still required.
+
+The verification sequence therefore keeps three evidence classes distinct:
+
+- Evidence that each component meets its own guarantees.
+- Evidence that the interface contract behaves as specified against its fixtures.
+- Evidence that the actual composition preserves the component guarantees across the interface.
+
+This separation is intended to localise a composition failure without adding another machine. The conformance fixtures are a discipline attached to the interface specification.
+
+### 10.4 Pilot evidence boundary
+
+The Stage 6 decision record authorises a conditional smoke call to test full harness traversal and production of a complete, well-formed run record. The battery and its pass bar follow from smoke evidence.
+
+An objective statement that a pilot compares a model alone against a governed model is not, by itself, a test design. Unless the actual pack encodes a controlled comparison, the pilot must not be cited as proof of that proposition. The pilot may bear on the proposition; it does not establish it merely by being run.
+
+### 10.5 Disposition
+
+The modularity assessment is accepted as a strength. The interface-verification principle above is agreed as a design principle for future authorised composition work. No new machinery is proposed or authorised by this note. Interface contracts and their fixtures are to be specified when the relevant implementation is authorised, not treated as defects or blockers before then.
+
+The existing design-complete ruling remains unchanged. Implementation authority remains separate and must be obtained through the programme's established decision process.
