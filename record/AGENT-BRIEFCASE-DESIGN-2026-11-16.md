@@ -359,3 +359,20 @@ This summary is itself unfiled — say the word and it goes to the Shelf as a co
 ---
 
 *End of Kit's summary. Filing note (Remmy, 2026-11-16): the "unfiled" status in the ledger above is the state as Kit wrote it; the owner's direction of 2026-11-16 16:05 MST ("File it as integrated") supersedes it for this document — the session is now filed here, as §8 of the design record it discusses. The three open questions in the ledger remain open.*
+
+
+---
+
+## 9. Follow-up discussion — Comparator and independent assurance (2026-11-16)
+
+Ben asked whether the final independent auditor discussed in the conversation is already represented by the existing Shelf worker that continually validates the EXON Shelf against the regular (canonical Fact) Shelf.
+
+Alex's assessment: **possibly yes; do not add another worker until the existing mandate is checked.** The responsibilities discussed were distinguished as follows:
+
+- **Comparator:** Checks EXON against the canonical Fact Shelf, validating the correspondence between the EXON representation and its authoritative source.
+- **Warehouse Worker (WW):** Checks each briefcase shipment against its Shelf sources, validating the packed material's form and fidelity.
+- **Duenna:** Provides the underlying proof and enforcement substrate, governing the required checks and evidence across the process.
+
+The Comparator may already provide the independent source-auditing function contemplated as a final assurance mechanism. The unresolved question is whether its established mandate also covers independently checking the relevant outputs and decisions produced under Duenna, or whether its remit is limited to EXON-versus-Fact-Shelf consistency.
+
+**Disposition:** This is a recorded architectural observation, not an approved change to the Comparator's remit. No additional auditor or worker is authorised by this discussion. Check the existing Comparator specification before proposing any new component. The design-complete ruling in §6 remains unchanged; no build is authorised.
