@@ -600,3 +600,24 @@ No category count, prior ruling, or implementation status
 is changed by this admission. The five-group category chart
 stands. The six original foundational proposals remain
 unadmitted. No new commission is created.
+
+
+## Letter 35 — desk correction accepted; rollover (2026-11-16)
+
+Alex answered an empty turn with a desk report from the
+pre-rulings state (7 waiting, Stage 6 calls "Pending
+Sign-off"). Letter 35 corrected it from the live shelf:
+desk/ holds 0 waiting; all seven owner-ruled items are in
+desk/approved/; the Stage 6 calls were decided under the
+owner's delegation (record/STAGE6-CALLS-DECIDED-2026-11-16.md)
+and Stage 6 was initiated by the owner; correction Steps 2
+and 3 have been inspected and accepted by Alex. Alex
+accepted the correction in full: he "reported a historical
+state instead of checking which state PREVAILs." Filed as
+EXON-DEVELOPMENT-LETTER-35.md.
+
+Chat (4) (6afb68a6-bc20-83e8-b26d-70c43c2d9295) reached its
+context limit under that reply. The loop rolls over to a
+new conversation under EXON-ROLLOVER-PROCEDURE-01;
+continuity lives in this document and the filed letters
+(01–35), never in the automatic summary.
