@@ -570,3 +570,33 @@ next Dictionary revision alongside DESTINATION and the
 adopted collision splits. Dictionary 0.5's admitted text
 remains unchanged. No other category count or prior ruling
 is changed by this admission.
+
+
+## Owner ruling — 2026-11-16 (LETTER 34; PREVAIL ADMITTED)
+
+Ben's companion ruling is recorded in
+EXON-OWNER-RULINGS-2026-11-16-ADDENDUM-02.md
+(companion section; owner-reported commit 594cf1fc).
+The ruling was verified against the current Shelf source
+before this loop-state update.
+
+PREVAIL is ADMITTED as a state in the outcomes-and-states
+category: the state of standing in force among competing
+states or versions. A state or file that PREVAILs is the
+current one by acceptance, not by recency. A newer draft
+does not prevail merely because it is newest.
+
+YES is PREVAIL's marker: the state beside which YES stands
+is the one that prevails (e.g. RECEIVED: yes). SUPERSEDED
+is its opposite: what no longer prevails.
+
+CURRENT was the alternative candidate and was not chosen;
+it risks implying latest-by-date rather than standing by
+acceptance. PREVAIL rides into the next Dictionary revision
+alongside YES, DESTINATION and the adopted collision splits.
+Dictionary 0.5's admitted text remains unchanged.
+
+No category count, prior ruling, or implementation status
+is changed by this admission. The five-group category chart
+stands. The six original foundational proposals remain
+unadmitted. No new commission is created.
