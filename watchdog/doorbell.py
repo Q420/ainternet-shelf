@@ -220,7 +220,28 @@ def tail_stamp(cdp):
 def stamp_diff(a, b):
     return sum(abs(x - y) for x, y in zip(a, b)) / len(a)
 
-TAIL_JS = r"""
+# Signature test, scoped to the seat's own latest turn
+# (refinement, Ben's word 2026-11-16 04:53 MST:
+# "Definitely use the marker for your trigger"). The
+# marker counts only inside the region after the last
+# "ChatGPT said:" turn header, and only when that turn
+# is newer than the last "You said:" turn — so a letter
+# of Remmy's that QUOTES the marker (Letter 18 did, and
+# its knock fired seconds after the send) can no longer
+# trip the gate. No assistant turn last -> no signature
+# -> silence, the safe direction.
+SIG_JS = r"""
+function remmySig(txt) {
+  const ai = txt.lastIndexOf('ChatGPT said:');
+  const me = txt.lastIndexOf('You said:');
+  if (ai < 0 || ai < me) return false;
+  const win = txt.slice(ai).slice(-1500);
+  return win.includes('⟦ALEX-FINAL⟧') || win.includes('— Alex')
+    || win.includes('White Tulip');
+}
+"""
+
+TAIL_JS = SIG_JS + r"""
 (() => {
   const txt = document.body ? document.body.innerText : '';
   const stop = [...document.querySelectorAll('button')]
@@ -228,9 +249,7 @@ TAIL_JS = r"""
   const main = document.querySelector('main') || document.body;
   const dots = [...main.querySelectorAll('[class*="waveDot"]')]
     .some(e => e.offsetWidth || e.offsetHeight);
-  const win = txt.slice(-1500);
-  const sig = win.includes('⟦ALEX-FINAL⟧') || win.includes('— Alex')
-    || win.includes('White Tulip');
+  const sig = remmySig(txt);
   return JSON.stringify({ len: txt.length, tail: txt.slice(-400),
                           gen: stop || dots, sig: sig });
 })()
@@ -254,6 +273,15 @@ TAIL_JS = r"""
 # still working, absent means nothing. The matching
 # convention (end every message with the sign-off, last
 # line, nothing after) is put to Alex in Letter 14.
+# REFINEMENT (Ben, 2026-11-16 04:53 MST — "Definitely
+# use the marker for your trigger"): the signature is
+# tested only inside the seat's own latest turn (see
+# SIG_JS above). Before this, the scan read the raw
+# page tail, and the knock for the Letter 18 cycle
+# fired seconds after the send — off the marker quoted
+# inside Remmy's own letter, before the seat had even
+# begun. The trigger is the seat's marker, in the
+# seat's message, or it is not the trigger.
 # Live failure this replaces: settles at 03:12
 # "Retrieving…" and 03:13 "Checked matrix provenance"
 # during the Letter 11 reply; true completion 03:16.
