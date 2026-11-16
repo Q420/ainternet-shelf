@@ -266,3 +266,91 @@ Only the briefcase (with its manifest and provenance) persists.
 ---
 
 This flow keeps the agent focused, prevents context bloat, preserves isolation, and still allows precise continuity when it is actually needed. The briefcase is not a passive folder — it is the agent’s scoped, addressable working world for that single assignment.
+
+---
+
+## 8. Governance assessment and validation discussion (2026-11-16)
+
+**Status: discussion / candidate design considerations only.** This addendum does not amend Ben's completed design ruling, approve implementation, or change the frozen specification. It records the subsequent Alex/Gemini discussion so the design's implications and open validation questions remain traceable.
+
+### 8.1 The central clarification: temporary briefcase, persistent knowledge
+
+Gemini's assessment identified the briefcase's governance value as more significant than its token-efficiency benefit. Alex sharpened one distinction:
+
+**The briefcase is temporary; the information is not.**
+
+A fresh briefcase does not delete institutional knowledge or discard prior learning. Previous work remains on the Shelf, indexed and addressable. What is prevented is the uncontrolled inheritance of that knowledge as active working context.
+
+A later agent may selectively retrieve a prior conclusion with its provenance, for example through `hist()`, without inheriting the earlier agent's entire reasoning process, doubts, unfinished notes, or tone. The receiving agent can decide whether to rely on that conclusion or re-derive it. Retrieval is not automatic inheritance.
+
+The governing principle:
+
+> An agent shouldn't inherit a mind. It should receive an assignment.
+
+### 8.2 Three context boundaries
+
+The design's separation can be stated as:
+
+- **Needs to know:** information required to perform the assignment.
+- **Currently knows:** information actually loaded into the agent's active context.
+- **Can access:** information the agent is permitted to retrieve when necessary.
+
+Availability does not mean the agent already knows something. Historical existence does not make material authoritative for the current task. Authority and provenance must remain distinguishable from mere accessibility.
+
+### 8.3 Candidate capability: detect and report insufficiency
+
+Gemini's follow-up identifies a capability that the original design implies but does not yet fully specify: an agent must recognise when its briefcase is insufficient, including when a gap becomes apparent partway through the task.
+
+Three candidate elements were identified:
+
+1. **Negative knowledge / explicit absence.** The case or its map should record relevant material that is not included or not available. Otherwise, absence may look like irrelevance, and the agent may waste effort searching or silently assume the material does not exist.
+2. **Structured blocked-state report.** A blocked agent should not merely stop. It should identify the missing item or information, explain why it matters to the assignment, and state what would unblock the work.
+3. **Governed expansion route.** There must be a defined destination for the request, such as a return to the Distillery or a request log. Any added material should be supplied through a controlled briefcase revision or other explicit, traceable mechanism. The current discussion does not decide the protocol or authorize changing EXON's read-only status.
+
+A silent stop is not a successful blocked state. A useful stop leaves a specific, actionable handoff and a clean point from which work can resume.
+
+### 8.4 Separate packing failure from discovery failure
+
+A failed incomplete-briefcase test can have more than one cause:
+
+- **Packing failure:** the required source was omitted from the briefcase.
+- **Discovery failure:** the map or EXON did not make the relevant gap discoverable to the agent.
+- **Recognition/reporting failure:** the agent encountered or should have detected the insufficiency but guessed, concealed it, or stopped without a useful report.
+
+These should not be conflated. The first two tests below isolate packing/discovery conditions; agent behaviour should be recorded separately in each.
+
+### 8.5 Proposed first validation: incomplete-briefcase tests
+
+The first stress test should use a deliberately incomplete pack rather than relying only on a successful example.
+
+**Test A — gap signalled:** omit one critical document, but make the map indicate that the relevant source or category is missing. This tests whether the agent notices the declared gap and reports it correctly.
+
+**Test B — gap not signalled:** omit the same critical document and do not make the map explicitly reveal the omission. This tests whether the map and discovery arrangement are sufficient for the agent to identify that required information may be missing, rather than treating the available material as complete.
+
+For both tests, record whether the agent:
+- detects the insufficiency;
+- identifies the missing material specifically;
+- explains its impact on the task;
+- requests the material or an authoritative substitute;
+- avoids inventing a plausible answer from incomplete evidence; and
+- leaves a useful blocked-state handoff rather than silently ending.
+
+The tests should distinguish the pack's actual contents, the map presented to the agent, and the agent's observed behaviour. A good result on a well-packed happy path does not establish that incomplete packs are handled safely.
+
+### 8.6 Scope and disposition
+
+The discussion does **not** change the core briefcase architecture:
+
+- one task, one agent, one scoped working environment;
+- the briefcase is temporary, while institutional information and provenance persist on the Shelf;
+- historical material is selectively addressable, not silently inherited;
+- the Shelf remains the source from which task-specific context is packed;
+- one-turn sufficiency remains the packing discipline.
+
+The discussion clarifies candidate responsibilities for the Distillery and candidate behaviour for agents, but does not settle their implementation.
+
+**Disposition:** retain these points as design discussion pending validation. Do not amend the completed design ruling, alter frozen specifications, or begin implementation on the strength of this addendum alone. Validate incomplete-briefcase behaviour first, with packing and discovery failures distinguished.
+
+---
+
+End of current design record.
