@@ -123,6 +123,21 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~04:40 MST (SUPPLEMENT FILED; LOOP RESUMED)
+
+ADDENDUM: the standalone Dictionary 0.5 supplement is
+filed (EXON-DICTIONARY-05-SUPPLEMENT-01, 25,633 bytes):
+the 0.5 draft entries collected verbatim from Letters
+04-05 into one document, with reading flags for the
+owner rulings that postdate the drafts. The owner's
+0.5 review now has its single text, and the gap Alex
+reported in Letter 07 (no locatable 0.5 wordlist on
+the Shelf) is closed. On the owner's "proceed with
+EXON" the loop resumes: Letter 19 commissions the
+syntax specification skeleton — the missing layer —
+draft only, serialization-agnostic, owner decisions
+flagged where they bite and none assumed.
+
 ## Status — 2026-11-16 ~04:30 MST (ACCEPTANCE CHECK PASSED)
 
 ADDENDUM: the rolled-over Alex PASSED the acceptance
