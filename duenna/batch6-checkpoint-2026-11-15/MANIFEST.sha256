@@ -107,13 +107,10 @@ b02e0dd005e884c62d493c1f524da983d77b2468645cf342e2a7fc9d9d08d9e8  ./package/data
 b197e93eeb057f3ec00aee2479144cc97a0247d56eac954ff9aaf420a5db1ded  ./package/data/PILOT-DATA-PACKS-01.json
 c7eaec18db203651af894e7fbdb53c6df9b36a3da185c4b7ab703d73085b886c  ./package/data/PILOT-DATA-PACKS-01.pre-amendment.json
 55a6c979163a9ce0cb30fca4eb951aff0d02685979290df8bd18dfa28b355c4a  ./package/data/PILOT-DATA-T09-01.json
-dde42a284884a647a46cb2c4dc8ed40a4c70ffcb520aacc3def9081bbbfddcc7  ./package/driver/__pycache__/pilot_record.cpython-312.pyc
 97bbbcd6a48fa1eaa3e7c2b575f347adfac8fa9e3018930a41c1c47b7c3c0b0f  ./package/driver/pilot_driver.py
 ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216  ./package/driver/pilot_record.py
 d23f35f660ee4967039c56726b8f4d3d416adf265d109e67190a0dc0603e29ec  ./package/driver/pilot_trees.json
 142c9b9b25a8850a1fdee9a34fdb8d3c15c4790119eba9d3993fce612609cbd3  ./package/examiner/EXAMINER-INTERFACE-01.md
-a40b6a611e94ed95415997a14d5fbb6abb98f5e25781c5bdc809b3c14f170967  ./package/examiner/__pycache__/pilot_examiner.cpython-312.pyc
-6fa8a49989668bce2889649545b94b05175fd54778d93c6e1d59b705f965f303  ./package/examiner/__pycache__/pilot_jcs.cpython-312.pyc
 564925230a70c56d48ba5636a6431725876e7d2cfcf85ef904ce2b4c564b28af  ./package/examiner/pilot_examiner.py
 8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c  ./package/examiner/pilot_jcs.py
 36bf23e12c6913c6ca4e2615ae5471bd5e5e3e223e47010b14a987a682a3929f  ./package/examiner/prefix/pilot_examiner.py
@@ -134,9 +131,6 @@ e57e96610cf4b79f84e491a1c8f05db3796e54a103387d8a5731b4446e0aa514  ./package/supe
 001543f39b4d557f1bd157209a316c38104d4f7f37a42b6fab8ad664894de0de  ./package/supervisor/launcher-c3.c
 1a81e8b39cd666cc19b16b211a9203f92e14256c1dfc9d85d46b8914acf2ac0d  ./package/supervisor/launcher-production.b64
 c8a11370d06af5755d1cfa9af62d01065f7b95f926c1bb351bad9466b7dfb5a2  ./package/supervisor/pilot_supervisor.py
-c410480cbfa73427277a886a7b7c3da7f62696b65b659aafff6ce10ab6413378  ./package/tools/__pycache__/corpus_source.cpython-312.pyc
-0165bbcd4fbd9bc126146b6792e9530c5dbf9e83e4cd8125d9d8297fe309b7ac  ./package/tools/__pycache__/pilot_tools.cpython-312.pyc
-1057fee50be6f1834b0a187f463f183b1a25f9a04202cb3091a513746c9a7954  ./package/tools/__pycache__/rules_engine.cpython-312.pyc
 520f36fde41dfb76d5f92fe4da92b6c2f93ae8512051962f76d4942fb5c05a5a  ./package/tools/corpus_source.py
 df1045f7923b458cf0ad63b16a7245b1e4516306ff2b60c1f355dbb8431127d8  ./package/tools/pilot_tools.py
 7a2329154081b6e9c0417c07b1cc7184b167d02c1e820081b68a18dbabafacf3  ./package/tools/rules_engine.py
