@@ -533,3 +533,40 @@ The chart stands at five groups. No sixth group is to be
 added absent a demonstrated gap. No new implementation
 or minting-mechanism commission is created by Letters
 31–32.
+
+
+## Owner ruling — 2026-11-16 (LETTER 33; YES ADMITTED)
+
+Ben's owner ruling is recorded in
+EXON-OWNER-RULINGS-2026-11-16-ADDENDUM-02.md
+(Shelf commit 907c4a7c; current file blob
+b7a5303eca53306388f3c750d52f095031f3acbf).
+
+YES is ADMITTED as a word in the outcomes-and-states
+category, with one meaning only: the current state. Of the
+states a record names, YES marks the one presently in force.
+It pairs with superseded: superseded marks the state formerly
+in force; YES marks the one that is.
+
+Usage: a word stands in a record and YES sits beside the one
+that is current (e.g. RECEIVED: yes; APPROVED: yes;
+FUTILE: yes). YES is defined once in the state category and
+serves as the currency marker beside words from any category
+that name a thing's current standing. Exactly one YES per
+record per dimension.
+
+YES also applies at file grain: it describes the file's full
+current state — the file as it stands, in full, is the
+standing version among its predecessors and successors.
+
+Fences: YES is not agreement or evidential verification
+(VERIFIED, HARDENED); not authorisation (a ruling); not
+receipt (RECEIVED); and not a gate verdict (PASS). Each
+retains its distinct meaning.
+
+This is an OWNER ruling and supersedes Remmy's earlier
+proposal that yes remain outside EXON. YES rides into the
+next Dictionary revision alongside DESTINATION and the
+adopted collision splits. Dictionary 0.5's admitted text
+remains unchanged. No other category count or prior ruling
+is changed by this admission.
