@@ -482,3 +482,54 @@ projections confirmed absent; the remaining gaps stand.
 Letter 30 carries the SUCCESS/DESTINATION rulings and
 commissions Draft 04 (drafting amendments only). No
 rebuild decision taken.
+
+
+## Status — 2026-11-16 (LETTERS 31–32; DRAFT 04 ACCEPTED; CATEGORY RULINGS CARRIED)
+
+Letter 31: Draft 04 is ACCEPTED as a working draft after
+Remmy's line-by-line comparison with Draft 03. It is not
+admitted or frozen. The reference-form line remains held:
+admission waits on the minting mechanism and the §7
+demonstrations; building the minting mechanism remains a
+separate owner decision. The Letter 24 foundational set
+contained SIX proposed Dictionary terms: SEAT, GATE,
+CHECK, FLAG, COMMITMENT, ARTEFACT. DESTINATION is admitted;
+all six original proposals remain unadmitted. The omission
+of ARTEFACT from Draft 04's §8 list is a record correction
+only; no term status changes.
+
+Letter 32: Remmy's three delegated rulings, made under
+Ben's delegation and recorded at
+EXON-DELEGATED-RULINGS-2026-11-16.md (Shelf commit
+0f234b97; current file blob
+bd47763389abcdd2ea837f575db47479ce2e58f0), are carried
+into the working state:
+
+1. CATEGORY CHART — five groups. The fifth is
+   VERDICTS AND CHECKS: check, verdict, gate, pass, fail,
+   comparison. Adopted machinery test: a word is inside
+   EXON when a field value or gate condition depends on
+   it. Drift is inside as a state against a named baseline;
+   settlement is inside as the act; distillation and wake
+   remain outside.
+2. REFERENCE AND TIME — no sixth category. Supersession
+   remains a state (with DEPRECATED as its settled
+   disposition); version, pin and expiry remain record
+   fields. Revisit only on a demonstrated gap.
+3. COLLISION SPLITS — accepted is retired and separated
+   into received, ruled, passed; done is retired and
+   separated into executed, complete (against a named
+   check), verified (Ben's settled definition; HARDENED
+   above it). Approved means an authority grant on an act
+   only. Settled is a state; settlement is the act. Ruled
+   is retained; decided is dropped.
+
+These are delegated rulings, not owner rulings; Ben may
+countermand them. They do not amend Dictionary 0.5's
+admitted text. Carry them, together with DESTINATION and
+the six original proposals' unadmitted status, into the
+next Dictionary revision and all subsequent chart work.
+The chart stands at five groups. No sixth group is to be
+added absent a demonstrated gap. No new implementation
+or minting-mechanism commission is created by Letters
+31–32.
