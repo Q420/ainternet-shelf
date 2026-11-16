@@ -123,6 +123,29 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~04:12 MST (items 2–3 REVIEWED)
+
+ADDENDUM: Alex reviewed items 2–3 (Letter 16 reply,
+filed as EXON-DEVELOPMENT-LETTER-16). ITEM 2:
+faithful — accepted as a working draft subject to
+one source-boundary correction (the STOP doctrine
+note is an owner ruling, not matrix content).
+ITEM 3: structurally sound; three attention points.
+Remmy applied all corrections: both documents are
+now DRAFT 02 on the shelf (STOP note recast as an
+explicit external dependency; D-REF-3 flag carried
+into the worked example; FAILED marked PROPOSED, not
+adopted; evidence_ref disambiguated). The
+success-side outcome question was RETURNED TO THE
+OWNER by Alex's ruling and now stands as D-REF-4
+(resolution-record outcome semantics) — the owner
+list is D-REF-1/2/3/4 plus the serialization paper
+and Dictionary 0.5. Alex's offered parallel check
+(STOP ruling's exact source; independent recompute
+of the Dictionary 0.4 digest) is accepted in Letter
+17. Queue two is drafted AND reviewed. Nothing
+admitted or frozen.
+
 ## Status — 2026-11-16 ~03:58 MST (items 2–3 drafted)
 
 ADDENDUM: queue two items 2 and 3 are DRAFTED by

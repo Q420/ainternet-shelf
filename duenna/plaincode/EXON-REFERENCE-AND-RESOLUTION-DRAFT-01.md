@@ -1,6 +1,13 @@
-# EXON — REFERENCE COORDINATE AND RESOLUTION RECORD — DRAFT 01
+# EXON — REFERENCE COORDINATE AND RESOLUTION RECORD — DRAFT 02
 
 Item 3 · Queue two · Drafted by Remmy · For Alex's review
+
+Revision (Draft 02, 2026-11-16): per Alex's review
+(Development Letter 16 reply) — the D-REF-3 flag is
+carried into the worked example; the FAILED reuse in
+section 4.1 is marked PROPOSED, not adopted, and the
+question is added to the owner list as D-REF-4;
+evidence_ref is disambiguated. No other change.
 
 Sources: the reference-form proposal (Development Letter
 06, Alex) and the failed-resolution addition with the
@@ -9,8 +16,9 @@ under the owner's design ruling of 2026-11-16: the EXON
 shelf is the glossary and index of the fact shelf; every
 solidified entry carries its source coordinates.
 
-Status: Draft, to final shape EXCEPT the three owner
-decisions. Wherever a decision bites, the shape carries
+Status: Draft, to final shape EXCEPT the owner
+decisions (three from Letters 06–07; a fourth, D-REF-4,
+added in Draft 02 per Alex's ruling). Wherever a decision bites, the shape carries
 an explicit ⟦OWNER DECISION — PENDING⟧ flag and states
 the options; nothing is assumed. The record shapes below
 are presented in YAML-like notation as shapes, not as
@@ -136,7 +144,9 @@ REFERENCE_RESOLUTION:
     expected: <expected identity or location>
     observed: <actual observation, if available>
   attempted_at: <timestamp>
-  evidence_ref: <resolution attempt record>
+  evidence_ref: <the resolver's attempt evidence — the
+    run record evidencing this attempt; NOT this
+    resolution record itself>
 ```
 
 Closed failure codes:
@@ -159,8 +169,15 @@ resolution attempt — never the referenced material: it
 does not establish that the material is false, absent
 from every source, or invalid for every purpose.
 SOURCE_UNAVAILABLE must never be reported as
-INDEX_POSITION_ABSENT. FAILED reuses the existing
-dictionary outcome; no new outcome word is invented.
+INDEX_POSITION_ABSENT.
+
+STATUS — UNRESOLVED: the FAILED reuse is PROPOSED, not
+adopted. Letter 07 offered this shape as a proposal and
+said so; FAILED is defined in Matrix 03 section G as a
+RESULT outcome, which does not by itself establish a
+resolution-record outcome. Whether the resolution
+record carries its own schema-level outcome semantics
+is owner decision D-REF-4 (section 5).
 
 ### 4.2 Success — FLAGGED OPEN
 
@@ -170,12 +187,13 @@ record minimally carries: reference_ref, resolver
 (method + version), attempted_at, and the verified
 coordinate (document digest as retrieved, index
 position as found, source location as resolved). This
-draft does not invent a success token — ⟦FLAGGED FOR
-ALEX'S REVIEW: name the success-side outcome word, or
-rule that a successful resolution is recorded by the
-entry's own citation and no separate record exists.⟧
+draft does not invent a success token. Alex's ruling
+(Letter 16 reply): returned to the owner — a design
+choice, not a reviewer-level wording correction. It is
+owner decision D-REF-4 (section 5), the same decision
+that governs the FAILED reuse in 4.1.
 
-## 5. The three owner decisions (flagged, not assumed)
+## 5. The owner decisions (flagged, not assumed)
 
 D-REF-1 — INDEX PIN. Does every reference carry the
 index snapshot's digest, or does the position resolve
@@ -204,6 +222,18 @@ optional repository metadata? Alex's recommendation
 (Letter 06): yes. Until the owner rules, the digest
 block names SHA-256 as the working algorithm, flagged.
 
+D-REF-4 — RESOLUTION-RECORD OUTCOME SEMANTICS (added
+Draft 02, per Alex's Letter 16 ruling). Does the
+resolution record carry its own schema-level outcome
+semantics? If yes: the FAILED reuse in 4.1 is validated
+as proposed, and the success side needs an explicitly
+chosen outcome representation in a separate success
+record. If no: the resolved reference's own citation
+suffices and no separate success record exists. Alex
+returned this to the owner rather than inventing a
+token; the FAILED reuse stays visibly proposed until
+it is ruled.
+
 ## 6. Worked example (real, except where flagged)
 
 Dictionary 0.4, evidence-and-reference section:
@@ -216,7 +246,7 @@ REFERENCE:
     doc_id: exon-dictionary-04
     path: duenna/plaincode/DICTIONARY-04.md
     digest:
-      algorithm: SHA-256
+      algorithm: SHA-256            ⟦D-REF-3⟧
       value: 0717bb6c3b372be3f5eb6091bef63338d88e22b7
              fd8edacb1c0d85c2569047f6
     git_blob: 49c2408065110ef5e096781862d4b9a59f449623
@@ -267,9 +297,10 @@ as EXON's complete grammar.
 
 Sections 1–3 and 7–8 restate Letters 06–07 without
 alteration of substance; section 4.1 is Letter 07's
-shape verbatim in substance; 4.2 and the decision flags
-are this draft's additions, each marked. Nothing here
-decides D-REF-1, D-REF-2 or D-REF-3, and nothing is
+shape verbatim in substance; 4.2, the decision flags
+and D-REF-4 (per Alex's Letter 16 ruling) are this
+draft's additions, each marked. Nothing here decides
+D-REF-1, D-REF-2, D-REF-3 or D-REF-4, and nothing is
 admitted or frozen.
 
 — Remmy, 2026-11-16. Draft for Alex's review.

@@ -1,6 +1,12 @@
-# EXON — THE NINE MESSAGE BODIES — DRAFT 01
+# EXON — THE NINE MESSAGE BODIES — DRAFT 02
 
 Item 2 · Queue two · Drafted by Remmy · For Alex's review
+
+Revision (Draft 02, 2026-11-16): the section 7 STOP note
+is recast as an explicit external dependency and the
+section 13 derivation claim is qualified to match, per
+Alex's source-boundary correction (Development Letter
+16 reply). No other change.
 
 Source: EXON-FIELD-MATRIX-03-ADJUDICATED-MERGE-REISSUE-01.md
 Verified Git blob: ffe407681b0dcc8021433ff393effc8261c646f3
@@ -166,11 +172,15 @@ belongs to REGISTER_TASK alone (§J decision).
 | reason_ref | Opt | resolves (§D) |
 | bounded_explanation | Opt | at most one of reason_ref / bounded_explanation may be supplied; both absent is permitted (§D) |
 
-Note: the STOP doctrine — STOP is initiated only by
-falsity entering the canonical records — is carried by
-the Dictionary 0.5 STOP entry (owner's ruling,
-2026-11-16), not restated here; this body specifies the
-record shape only.
+External dependency (NOT matrix-derived): the STOP
+doctrine — STOP is initiated only by falsity entering
+the canonical records — is the owner's ruling of
+2026-11-16, carried by the Dictionary 0.5 STOP entry
+(Development Letters 03–04). It is cited here because
+it governs when this body is used. It is not part of
+the matrix-derived inventory above, and this draft
+neither restates nor derives it; this body specifies
+the record shape only.
 
 ## 8. REGISTER_TASK
 
@@ -263,9 +273,12 @@ event order is established by no field in this draft.
 
 Every inventory above is §L's; every rule is its owning
 section's. This draft introduces no field, value, rule
-or exception. Where the matrix marks a fact UNKNOWN,
-this draft carries UNKNOWN. Matrix 03 (re-issue) remains
-the controlling source.
+or exception of its own. One external dependency is
+cited, not derived: the STOP doctrine note in section 7
+(owner's ruling of 2026-11-16, Dictionary 0.5). Where
+the matrix marks a fact UNKNOWN, this draft carries
+UNKNOWN. Matrix 03 (re-issue) remains the controlling
+source.
 
 — Remmy, 2026-11-16. Draft for Alex's review. Nothing
 admitted or frozen.
