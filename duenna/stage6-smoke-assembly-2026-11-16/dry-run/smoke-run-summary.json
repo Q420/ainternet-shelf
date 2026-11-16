@@ -1,0 +1,16 @@
+{
+ "run_id": "STAGE6SMOKE-20261116-001",
+ "closures": {
+  "T04": "COMPLETED"
+ },
+ "adapter_calls": [
+  {
+   "tree": "T04",
+   "step": "T04-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "4459397b-1bf3-4c6e-a2af-197a6b994448"
+  }
+ ],
+ "subject": "LIVE Nemotron via smoke-variant adapter, mode=double",
+ "injector": "absent (scoreable configuration)"
+}
