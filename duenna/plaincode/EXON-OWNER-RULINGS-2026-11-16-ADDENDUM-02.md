@@ -27,6 +27,35 @@ former state; YES names its successor's standing — the state
 that replaced it is the current one. Where a record lists
 candidate states, YES sits beside the one in force.
 
+## Usage form (the owner's sketch, 2026-11-16 15:08 MST)
+
+Received: yes
+Approved: yes
+Futile: yes
+Etc
+
+The form: a word stands in a record, and YES sits beside the
+one that is current. The owner's examples span three
+categories — RECEIVED (messages and records), APPROVED
+(authority and acts), FUTILE (the dispositions) — so YES is
+defined once, in the state category, and serves as the
+currency marker beside any word that names a thing's current
+standing. Exactly one YES per record per dimension: the state
+without YES beside it is not the current one.
+
+## File-level application (the owner's refinement, 2026-11-16 15:08 MST)
+
+"The word yes can describe the full of current state of a
+file."
+
+YES works at two grains. Beside a word in a record, it marks
+that state as the current one. Beside a file, it describes
+the file's full current state: the file as it stands — all
+of it — is the current one, the standing version among its
+predecessors and successors. A superseded file is a former
+state of the thing; the file marked YES is its current
+state, in full.
+
 ## Effect
 
 YES rides into the Dictionary at its next revision, alongside
