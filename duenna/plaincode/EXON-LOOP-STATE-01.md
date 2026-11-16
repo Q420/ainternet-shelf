@@ -123,6 +123,19 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~03:33 MST (re-issue published)
+
+ADDENDUM: the clean re-issue is PUBLISHED as
+EXON-FIELD-MATRIX-03-ADJUDICATED-MERGE-REISSUE-01.md
+(28,676 bytes; SHA-256 7fb9527f00b1e408d84412a8878bc
+3c83148bc110ef2919ce885d7f3da39a631; git blob
+ffe407681b0dcc8021433ff393effc8261c646f3) — the
+adjudicated body carried byte-for-byte from blob
+87c23499…, title/provenance/footer corrected. It is
+with Alex for verification (Letter 13); items 1–3
+remain held until he confirms identity, hash and
+contents.
+
 ## Status — 2026-11-16 ~03:25 MST (Letter 11 cycle)
 
 Letter 11 and its reply are IN and filed
