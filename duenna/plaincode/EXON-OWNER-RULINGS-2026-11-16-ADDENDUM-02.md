@@ -56,6 +56,22 @@ predecessors and successors. A superseded file is a former
 state of the thing; the file marked YES is its current
 state, in full.
 
+## Companion state: PREVAIL (the owner's ruling, 2026-11-16 15:16 MST)
+
+The state YES marks now has its name. **PREVAIL is admitted
+as a state of the outcomes-and-states category: the state of
+standing in force among competing states or versions.** A
+state or file that prevails is the current one — standing by
+acceptance, not by recency: the newest draft does not prevail
+merely for being newest. YES is PREVAIL's marker (the usage
+form above); SUPERSEDED is its opposite — what no longer
+prevails.
+
+CURRENT was the other candidate and was not chosen: it
+drifts toward "latest by date," which is the wrong test for
+standing. PREVAIL rides into the Dictionary at its next
+revision with YES.
+
 ## Effect
 
 YES rides into the Dictionary at its next revision, alongside
