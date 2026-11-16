@@ -13,10 +13,15 @@ Previous: (1) 6afac161 (superseded), original dev chat
 6afab3af (context-full). Letters 01–05 were exchanged in
 the original chat, 06–07 in (1), 08 onward in (2).
 
-**State:** PAUSED by the owner 2026-11-16 02:31 MST.
-Two of Alex's replies are held unread in the inbox
-(inb-32, inb-33). Nothing is admitted or frozen; the
-owner's review of Dictionary 0.5 is the gate.
+**State:** the owner's queue is EXHAUSTED (2026-11-16).
+All four items are drafted; the loop holds for the
+owner's next direction. (The owner paused the loop at
+02:31 MST and lifted the pause at 02:38 MST; the held
+replies were then worked and filed.) Nothing is
+admitted or frozen; the owner's review of Dictionary
+0.5 is the gate. Rollover is governed by
+EXON-ROLLOVER-PROCEDURE-01 — continuity lives in this
+document, not in any chat's summary.
 Calibration (owner, 2026-11-16): EXON development stands
 at about 6%. A dictionary is not a language.
 
@@ -37,11 +42,21 @@ at about 6%. A dictionary is not a language.
    (Letter 08 reply), filed standalone as
    EXON-DICTIONARY-SIMPLEST-FORMS-01.md. All 50 terms.
    Review notes sent in Letter 09 (items below).
-4. **Grammar sketch** — COMMISSIONED in Letter 09.
-   Replies landed 2026-11-16 and are HELD under the
-   owner's pause. When item 4 is worked, the queue is
-   exhausted and the loop holds for the owner's next
-   direction.
+4. **Grammar sketch** — DRAFTED (Letter 09 reply):
+   reading order, reference form as component one, an
+   EBNF-style envelope skeleton for the nine message
+   types, eight interpretation rules, ten open syntax
+   questions, a borrowing register. The same reply
+   carries the CORRECTED VERIFIED and HARDENED
+   simplest-form entries, which replace the entries in
+   EXON-DICTIONARY-SIMPLEST-FORMS-01.
+   One reconciliation flag from Alex: his retrieval
+   for the Matrix 03 path returned the Matrix 02
+   independent-repair document (HELD), and he declined
+   to treat it as Matrix 03. The shelf does hold
+   EXON-FIELD-MATRIX-03-ADJUDICATED-MERGE-DRAFT.md at
+   its own path; the final grammar alignment needs the
+   exact Matrix 03 source carried to him directly.
 
 ## Owner rulings — these must survive every rollover
 
