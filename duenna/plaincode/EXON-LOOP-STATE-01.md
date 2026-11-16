@@ -463,3 +463,11 @@ https://chatgpt.com/c/6afb68a6-bc20-83e8-b26d-70c43c2d9295,
 triggers re-armed there, the guard consumed for (3).
 Letter 27 is the acceptance check; Remmy's review of
 Draft 03 and the worked example follows in her lane.
+Addendum, 2026-11-16 13:42 MST: the owner ratified the
+success outcome word as SUCCESS (his gloss: "triumph"),
+replacing Draft 03's proposed RESOLVED, fence unchanged;
+and admitted DESTINATION as a term (his gloss:
+"endpoint"), overruling the Neither recommendation.
+Record: EXON-OWNER-RULINGS-2026-11-16-ADDENDUM. Both
+rulings ride to Alex with the next letter after his
+Letter 29 reply.
