@@ -23,3 +23,16 @@ the subject is the ack lock or replay coverage; the corpus replay pins
 its calibration config alongside its existing stale pin). No
 production behaviour changed. All suites green at this re-filing:
 ledger 84, detector 101, scheduler 44, wake 41, guard 45, waker 0.
+
+---
+
+## Correction (Claude's review, 2026-11-15)
+
+The line above, "No production behaviour changed," is wrong as
+stated and is corrected here: applying the owner's values DID
+change production defaults on purpose — cooldown 0 → 600 s and
+stale_interval 600 → 300 s in the ledger and the detector.
+What did not change is any module's logic; the fixtures that
+broke had encoded the old provisional defaults, and they now
+pin their configuration explicitly. This correction is recorded
+so the claim is not carried into later notes.
