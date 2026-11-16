@@ -228,38 +228,45 @@ TAIL_JS = r"""
   const main = document.querySelector('main') || document.body;
   const dots = [...main.querySelectorAll('[class*="waveDot"]')]
     .some(e => e.offsetWidth || e.offsetHeight);
+  const win = txt.slice(-1500);
+  const sig = win.includes('⟦ALEX-FINAL⟧') || win.includes('— Alex')
+    || win.includes('White Tulip');
   return JSON.stringify({ len: txt.length, tail: txt.slice(-400),
-                          gen: stop || dots });
+                          gen: stop || dots, sig: sig });
 })()
 """
 
-# --- generation gate (Watched Orchestrator Stage 3, Ben's
-# typing-dots ruling 2026-11-16 01:27 MST; ordered built
-# 2026-11-16 03:21 MST after the Letter 11 false settles).
-# A still tail is NOT a landed reply: during a long thinking
-# pause the tail sits unchanged while the seat is still
-# working (live proof 2026-11-16: settles fired at 03:12
-# "Retrieving…" and 03:13 "Checked matrix provenance"; the
-# true completion settled at 03:16). The platform's own
-# generation signal gates the settle: while the seat is
-# generating (Stop button present, or the animated waveDot
-# typing dots visible — both observed live on this surface
-# mid-generation 2026-11-16 03:2x MST, class prefix waveDot,
-# suffix is a build hash), stability does not accumulate.
-# Settle requires generation absent AND the tail stable
-# across the usual window. If the markup moves and gen
-# reads false forever, behaviour degrades to the Stage 2
-# tail-only rule — never worse.
+# --- completion gate (Watched Orchestrator Stage 3).
+# First form (Ben's typing-dots ruling 2026-11-16 01:27
+# MST, built 03:21): the platform's generation signal
+# (Stop button / waveDot typing dots) gated the settle.
+# Ben's correction 03:35 MST, from his own screen: the
+# dots DISAPPEAR while the seat is doing work (retrieval
+# phases show status text, not dots), so absence of dots
+# cannot mean finished. The hook is the seat's SIGNATURE
+# instead: Alex ends his messages with a sign-off
+# ("— Alex"; "White Tulip" in the friendly chat), and a
+# signature can only exist once the message is complete.
+# REVISED RULE (Ben's tap, 2026-11-16 03:35 MST): settle
+# requires the signature present in the tail window AND
+# the tail stable across the usual window; the dots and
+# Stop button are veto-only — present means definitely
+# still working, absent means nothing. The matching
+# convention (end every message with the sign-off, last
+# line, nothing after) is put to Alex in Letter 14.
+# Live failure this replaces: settles at 03:12
+# "Retrieving…" and 03:13 "Checked matrix provenance"
+# during the Letter 11 reply; true completion 03:16.
 
-def settle_step(cv, tail_hash, tail, gen):
+def settle_step(cv, tail_hash, tail, gen, sig):
     """One poll of the settle state machine. Returns
     (shape, text) when a REPLY_SETTLED should be emitted,
     else None. Pure: mutates only cv."""
-    if gen:
-        # Still working: track the newest tail as the
-        # candidate (it arrived during generation, so its
-        # shape is 'grown'), but stability must be earned
-        # after generation ends — hits stay at zero here.
+    if gen or not sig:
+        # Vetoed (seat visibly generating) or unsigned
+        # (no completion marker yet): track the newest
+        # tail as the candidate, but stability does not
+        # accumulate — hits stay at zero.
         if tail_hash != cv.baseline_tail:
             if cv.candidate_tail != tail_hash:
                 cv.candidate_tail = tail_hash
@@ -352,7 +359,8 @@ def main():
                 if gen and not cv.gen:
                     log({"doorbell": "generating", "conversation": url[-12:]})
                 cv.gen = gen
-                out = settle_step(cv, tail_hash, tail, gen)
+                sig = bool(data.get("sig"))
+                out = settle_step(cv, tail_hash, tail, gen, sig)
                 if out is not None:
                     append_event(url, out[1], out[0])
             for gone in [k for k in convos if k not in live]:
