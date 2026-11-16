@@ -142,6 +142,7 @@ def main():
     trees_doc = json.loads(TREES_PATH.read_text())
     out["step6"] = step6_reconstruct(events, trees_doc)
 
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=1) + "\n")
     print("wrote", OUT)
     print("step2:", json.dumps(out["step2"])[:300])

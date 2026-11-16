@@ -61,6 +61,16 @@ Only the path-resolution block differs in each script.
  
  sys.path.insert(0, str(B6))
  sys.path.insert(0, str(TOOLS_DIR))
+@@ -124,7 +142,7 @@
+     trees_doc = json.loads(TREES_PATH.read_text())
+     out["step6"] = step6_reconstruct(events, trees_doc)
+ 
+-    OUT.write_text(json.dumps(out, indent=1) + "\n")
++    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(out, indent=1) + "\n")
+     print("wrote", OUT)
+     print("step2:", json.dumps(out["step2"])[:300])
+     print("step3 divergence:", out["step3"].get("divergence"),
 
 --- original/test_g4corr.py
 +++ shelf/test_g4corr.py
