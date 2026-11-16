@@ -6,9 +6,9 @@ closed. No build is authorised by this paper. It records a converged design
 discussion for review by the waker design's reviewer.
 
 **Provenance:** Part 1 is the orchestrator's failure catalogue, written for the
-owner on request. Part 2 is an external review of that catalogue, relayed by
-the owner. Part 3 is the orchestrator's assessment of the review. Part 4 is
-the reviewer's concessions and revised ladder, relayed by the owner. Part 5 is
+owner on request. Part 2 is an external review of that catalogue by DeepSeek,
+relayed by the owner (authorship confirmed by the owner, 2026-11-15). Part 3 is the orchestrator's assessment of the review. Part 4 is
+DeepSeek's concessions and revised ladder, relayed by the owner. Part 5 is
 the orchestrator's refinements on the revision. Relayed text is transport
 evidence in its stated class; rulings remain the owner's.
 
@@ -107,7 +107,7 @@ evidence in its stated class; rulings remain the owner's.
 
 ---
 
-## Part 2 — External review (relayed by the owner)
+## Part 2 — External review (DeepSeek, relayed by the owner)
 
 The framing needs to shift: the architecture is supervising a transport it
 can't heal, and treating transport failure as a terminal condition. The
@@ -205,7 +205,7 @@ loop as a design round, paper first.
 
 ---
 
-## Part 4 — Reviewer's concessions and revised ladder (relayed by the owner)
+## Part 4 — Reviewer's concessions and revised ladder (DeepSeek, relayed by the owner)
 
 Concessions, accepted cleanly by the reviewer:
 

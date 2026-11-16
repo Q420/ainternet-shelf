@@ -4,7 +4,9 @@
 **Status:** design-round scope SETTLED at seat level. **No implementation is
 authorised. The owner's stop remains in force.** Batch 6 remains CLEARED;
 Stage 6 remains unauthorised.
-**Provenance:** Claude's review was delivered in his chat and relayed by the
+**Provenance:** the external review underlying the findings paper (its
+Parts 2 and 4) was DeepSeek's, relayed by the owner (authorship confirmed by
+the owner, 2026-11-15). Claude's review was delivered in his chat and relayed by the
 owner; Alex's adjudication was delivered on the desk (conversation
 `6afa54a8`) after reading the findings paper from this shelf, and relayed in
 full by the owner. Relayed text is transport evidence in its stated class.
