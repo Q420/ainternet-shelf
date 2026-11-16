@@ -12,7 +12,6 @@ import json
 import os
 import sys
 import tempfile
-import time
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -357,6 +356,37 @@ check("row7, the held pass adds no judge calls",
 check("row7, operational alert recorded in the ops log",
       "stale_window_hold" in ops_of(st.led), True)
 
+# ---------------- F1: detected_at follows the clock ------
+# Finding F1 (run note): the detector once stamped each
+# packet's detected_at from the wall clock while the stale
+# path used the injected clock, so alert ageing could not
+# be replayed on a synthetic clock. Post-fix the stamp
+# comes from the injected clock: two stacks pinned to two
+# different synthetic times stamp their events with
+# exactly those times — the precondition for row 8 below
+# running entirely on the pool-epoch clock.
+
+def stamp_epoch(event):
+    return datetime.fromisoformat(
+        event["detected_at"].replace(
+            "Z", "+00:00")).timestamp()
+
+pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
+judge = wd.StubJudge(ALWAYS_YES)
+st = Stack(pool.path, [job("job-a", gate=["done"])], judge,
+           start=POOL_EPOCH + 4242)
+rep, cres = st.pass_and_consume()
+check("F1, detected_at is the injected clock's time",
+      stamp_epoch(st.events()[0]), POOL_EPOCH + 4242)
+
+pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
+judge = wd.StubJudge(ALWAYS_YES)
+st = Stack(pool.path, [job("job-a", gate=["done"])], judge,
+           start=POOL_EPOCH + 9999)
+rep, cres = st.pass_and_consume()
+check("F1, a different injected time stamps differently",
+      stamp_epoch(st.events()[0]), POOL_EPOCH + 9999)
+
 # ---------------- row 8: unacknowledged event --------------
 # The ack lock blocks any new event for the job; past the
 # owner's alert_age (3600 s) the alert raises — and the
@@ -365,15 +395,13 @@ check("row7, operational alert recorded in the ops log",
 pool = Pool([seat("done alpha", "m1"), seat("done beta", "m2")])
 judge = wd.StubJudge(ALWAYS_YES)
 st = Stack(pool.path, [job("job-a", gate=["done"])], judge)
-# Clock discipline for this row: the detector stamps each
-# packet's detected_at from the wall clock (datetime.now(),
-# not its injected clock — finding F1 in the run note), and
-# the ledger ages events from detected_at. The alert path
-# is therefore driven on the wall clock here, as in live
-# operation and in the scheduler suite's own alert fixture.
-# This pool holds no sends, so the detector's stale path —
-# the one consumer of its injected clock — never engages.
-st.now[0] = time.time()
+# Clock discipline for this row: ENTIRELY the synthetic
+# pool-epoch clock. The detector stamps detected_at from
+# its injected clock (F1 fixed — see the fixture above)
+# and the ledger ages events from detected_at, so the
+# alert path replays on the same clock as every other
+# row: the event is stamped at POOL_EPOCH + 30 and the
+# pass below runs 3601 s later on that same clock.
 rep, cres = st.pass_and_consume()
 event = st.events()[0]
 key = event["ledger_key"]

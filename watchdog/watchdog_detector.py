@@ -363,8 +363,14 @@ class Detector:
         # already logged (§3, v1.3): the note is written
         # once per run, not once per pass.
         self._gate_absent_logged = set()
-        # Clock for the §9 stale-window check; injectable so
-        # fixtures can pin it. Epoch seconds.
+        # The detector's one clock: the §9 stale-window
+        # check and the detected_at stamp on every packet
+        # (§5) both read it — one clock discipline, so an
+        # injected replay clock ages alerts exactly as it
+        # drives staleness (finding F1, acceptance run).
+        # Injectable so fixtures can pin it. Epoch seconds.
+        # The default is time.time: production injects the
+        # wall clock, so live behaviour is unchanged.
         self.clock = clock or time.time
         # §9 stale interval: detector config wins, then the
         # ledger's config (§11 home), then the standing
@@ -482,7 +488,8 @@ class Detector:
             "relevant_buffer_slice": slice_,
             "dependency_state": self._dependency_state(job),
             "detected_at":
-                datetime.now().astimezone().isoformat(),
+                datetime.fromtimestamp(
+                    self.clock()).astimezone().isoformat(),
             "priority": job["priority"],
         }
 

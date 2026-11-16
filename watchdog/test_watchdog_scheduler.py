@@ -313,7 +313,13 @@ pool = Pool([seat("done one", mid="a1"),
 sch, led, det = make_stack(pool.path, [job("solo")],
                            wd.StubJudge(ALWAYS_YES),
                            config={"alert_age_s": 600})
-now0 = time.time()
+# The passes run on the same synthetic clock make_stack
+# pins into the detector (POOL_EPOCH + 30): since the F1
+# fix the detector stamps detected_at from that clock, so
+# alert ageing is driven on it too — one clock discipline.
+# (This fixture previously ran its passes on time.time()
+# and passed only because detected_at was wall-stamped.)
+now0 = POOL_EPOCH + 30
 rep1 = sch.run_pass(now=now0)
 key = rep1["pending_queue"][0]["ledger_key"]
 check("alert: fresh event raises no alert", rep1["alerts"], [])

@@ -157,3 +157,52 @@ reviewer's call.
 
 Not armed. Enabling the wake checker hook remains gated
 on the owner's final go, per the Stage 5 acceptance.
+
+## Correction — F1 fixed (2026-11-15, post-review)
+
+Claude's acceptance review made F1 blocking. It is fixed:
+
+- **`watchdog_detector.py`**: the packet build now stamps
+  `detected_at` from the detector's injected clock —
+  `datetime.fromtimestamp(self.clock()).astimezone()
+  .isoformat()` — the same clock the §9 stale path uses.
+  That was the only `datetime.now()` stamp in the
+  detector. The clock's default remains `time.time`, so
+  production wiring still injects the wall clock and live
+  behaviour is unchanged; an injected replay clock now
+  stamps packets in replay time, and alert ageing
+  (`due_alerts` / `raise_alerts`, which read
+  `detected_at`) runs on that same clock.
+- **New fixture** in `test_watchdog_acceptance.py`
+  (section "F1: detected_at follows the clock", 2 checks):
+  two stacks pinned to two different synthetic times
+  (POOL_EPOCH + 4242 and POOL_EPOCH + 9999) stamp their
+  events' `detected_at` with exactly those times.
+- **Row 8 re-driven entirely on the synthetic pool-epoch
+  clock**: the wall-clock drive and its F1-workaround
+  comment are gone. The event is stamped at
+  POOL_EPOCH + 30 by the injected clock and the second
+  pass runs 3601 s later on that same clock. No
+  expectation changed — alert_age is still the owner's
+  3600 s and all 7 row-8 assertions are the filed ones.
+  All 7 PASS.
+- **Scheduler suite, same correction**: its §8 alert
+  fixture drove its passes on `time.time()` while
+  `make_stack` pins the detector's clock to
+  POOL_EPOCH + 30 — it passed only because `detected_at`
+  was wall-stamped (the fixture the F1 finding cited).
+  Its passes now run on POOL_EPOCH + 30; every assertion
+  is unchanged. No other fixture in any suite depended
+  on the wall stamp.
+
+Suite counts after the correction (all
+`./venv/bin/python`):
+
+- test_watchdog_acceptance.py: **57 fixtures, 0 failed**
+  (55 filed + 2 F1)
+- test_watchdog_detector.py: 101 fixtures, 0 failed
+- test_watchdog_ledger.py: 84 fixtures, 0 failed
+- test_watchdog_scheduler.py: 44 fixtures, 0 failed
+- test_watchdog_wake.py: 41 fixtures, 0 failed
+- test_guard.py: 45 fixtures, 0 failed
+- test_waker_check.py: FAILURES: 0
