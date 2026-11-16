@@ -123,6 +123,31 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~05:15 MST (SKELETON DRAFT 02 IN; REVIEWED; LOOP HOLDS)
+
+ADDENDUM: Letter 21's reply delivered Skeleton
+Draft 02, the reconciliation draft (filed as
+EXON-DEVELOPMENT-LETTER-21 and standalone as
+EXON-SYNTAX-SKELETON-DRAFT-02). Remmy's independent
+review, read in full against the Traceability Pass
+01 checklist: every named finding is either stated
+at its field or cited to its exact Matrix section;
+the architecture, Rules A–H, the conformance
+observation and the source hierarchy are preserved;
+no owner decision is taken; enforcement is stated
+UNKNOWN wherever an invariant is asserted.
+Disposition: ACCEPTED as a working draft. The
+syntax line stands reconciled at Draft 02; its next
+step is the owner's review, whenever he chooses.
+Letter 22 carries the review to Alex with no new
+commission — the loop holds for the owner's next
+direction. Owner list unchanged. Machinery note:
+the reply's knock (event 670) was the scoped
+signature gate's first live arc — the marker now
+counts only inside the seat's own latest turn
+(Ben's word, 2026-11-16 04:53 MST); it fired on
+Alex's signature in his message, once, on time.
+
 ## Status — 2026-11-16 ~05:05 MST (TRACEABILITY PASS IN; DRAFT 02 COMMISSIONED)
 
 ADDENDUM: the traceability pass is filed
