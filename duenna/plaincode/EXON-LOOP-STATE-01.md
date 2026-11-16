@@ -13,13 +13,10 @@ Previous: (1) 6afac161 (superseded), original dev chat
 6afab3af (context-full). Letters 01–05 were exchanged in
 the original chat, 06–07 in (1), 08 onward in (2).
 
-**State:** the owner's queue is EXHAUSTED (2026-11-16).
-All four items are drafted; the loop holds for the
-owner's next direction. (The owner paused the loop at
-02:31 MST and lifted the pause at 02:38 MST; the held
-replies were then worked and filed.) Nothing is
-admitted or frozen; the owner's review of Dictionary
-0.5 is the gate. Rollover is governed by
+**State:** queue one EXHAUSTED and queue two
+COMMISSIONED (owner: "Loop it", 2026-11-16 02:41 MST).
+Nothing is admitted or frozen; the owner's review of
+Dictionary 0.5 is the gate. Rollover is governed by
 EXON-ROLLOVER-PROCEDURE-01 — continuity lives in this
 document, not in any chat's summary.
 Calibration (owner, 2026-11-16): EXON development stands
@@ -94,6 +91,22 @@ at about 6%. A dictionary is not a language.
   Letter 08; the index-pin question remains a named
   evidence gap (the live index has no established pin —
   Letter 07 inspection).
+
+## Queue two (commissioned in Letter 10, from Alex's
+own recommended order)
+
+1. The common message envelope, specified from the
+   adjudicated Matrix 03 (exact shelf path carried in
+   Letter 10 — Alex's earlier retrieval had returned
+   the HELD Matrix 02 repair document instead).
+2. The nine message bodies, defined from the accepted
+   field matrix.
+3. The reference coordinate and resolution record to
+   final draft shape — the three owner decisions below
+   flagged wherever they bite, none assumed.
+4. Canonical serialization and hashing as a DECISION
+   PAPER (options, costs, Alex's recommendation) for
+   the owner to rule on.
 
 ## Open owner decisions (reference form)
 
