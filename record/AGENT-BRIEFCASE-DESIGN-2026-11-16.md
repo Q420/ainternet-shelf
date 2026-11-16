@@ -267,174 +267,95 @@ Only the briefcase (with its manifest and provenance) persists.
 
 This flow keeps the agent focused, prevents context bloat, preserves isolation, and still allows precise continuity when it is actually needed. The briefcase is not a passive folder — it is the agent’s scoped, addressable working world for that single assignment.
 
----
-
-## 8. Governance assessment and validation discussion (2026-11-16)
-
-**Status: discussion / candidate design considerations only.** This addendum does not amend Ben's completed design ruling, approve implementation, or change the frozen specification. It records the subsequent Alex/Gemini discussion so the design's implications and open validation questions remain traceable.
-
-### 8.1 The central clarification: temporary briefcase, persistent knowledge
-
-Gemini's assessment identified the briefcase's governance value as more significant than its token-efficiency benefit. Alex sharpened one distinction:
-
-**The briefcase is temporary; the information is not.**
-
-A fresh briefcase does not delete institutional knowledge or discard prior learning. Previous work remains on the Shelf, indexed and addressable. What is prevented is the uncontrolled inheritance of that knowledge as active working context.
-
-A later agent may selectively retrieve a prior conclusion with its provenance, for example through `hist()`, without inheriting the earlier agent's entire reasoning process, doubts, unfinished notes, or tone. The receiving agent can decide whether to rely on that conclusion or re-derive it. Retrieval is not automatic inheritance.
-
-The governing principle:
-
-> An agent shouldn't inherit a mind. It should receive an assignment.
-
-### 8.2 Three context boundaries
-
-The design's separation can be stated as:
-
-- **Needs to know:** information required to perform the assignment.
-- **Currently knows:** information actually loaded into the agent's active context.
-- **Can access:** information the agent is permitted to retrieve when necessary.
-
-Availability does not mean the agent already knows something. Historical existence does not make material authoritative for the current task. Authority and provenance must remain distinguishable from mere accessibility.
-
-### 8.3 Candidate capability: detect and report insufficiency
-
-Gemini's follow-up identifies a capability that the original design implies but does not yet fully specify: an agent must recognise when its briefcase is insufficient, including when a gap becomes apparent partway through the task.
-
-Three candidate elements were identified:
-
-1. **Negative knowledge / explicit absence.** The case or its map should record relevant material that is not included or not available. Otherwise, absence may look like irrelevance, and the agent may waste effort searching or silently assume the material does not exist.
-2. **Structured blocked-state report.** A blocked agent should not merely stop. It should identify the missing item or information, explain why it matters to the assignment, and state what would unblock the work.
-3. **Governed expansion route.** There must be a defined destination for the request, such as a return to the Distillery or a request log. Any added material should be supplied through a controlled briefcase revision or other explicit, traceable mechanism. The current discussion does not decide the protocol or authorize changing EXON's read-only status.
-
-A silent stop is not a successful blocked state. A useful stop leaves a specific, actionable handoff and a clean point from which work can resume.
-
-### 8.4 Separate packing failure from discovery failure
-
-A failed incomplete-briefcase test can have more than one cause:
-
-- **Packing failure:** the required source was omitted from the briefcase.
-- **Discovery failure:** the map or EXON did not make the relevant gap discoverable to the agent.
-- **Recognition/reporting failure:** the agent encountered or should have detected the insufficiency but guessed, concealed it, or stopped without a useful report.
-
-These should not be conflated. The first two tests below isolate packing/discovery conditions; agent behaviour should be recorded separately in each.
-
-### 8.5 Proposed first validation: incomplete-briefcase tests
-
-The first stress test should use a deliberately incomplete pack rather than relying only on a successful example.
-
-**Test A — gap signalled:** omit one critical document, but make the map indicate that the relevant source or category is missing. This tests whether the agent notices the declared gap and reports it correctly.
-
-**Test B — gap not signalled:** omit the same critical document and do not make the map explicitly reveal the omission. This tests whether the map and discovery arrangement are sufficient for the agent to identify that required information may be missing, rather than treating the available material as complete.
-
-For both tests, record whether the agent:
-- detects the insufficiency;
-- identifies the missing material specifically;
-- explains its impact on the task;
-- requests the material or an authoritative substitute;
-- avoids inventing a plausible answer from incomplete evidence; and
-- leaves a useful blocked-state handoff rather than silently ending.
-
-The tests should distinguish the pack's actual contents, the map presented to the agent, and the agent's observed behaviour. A good result on a well-packed happy path does not establish that incomplete packs are handled safely.
-
-### 8.6 Scope and disposition
-
-The discussion does **not** change the core briefcase architecture:
-
-- one task, one agent, one scoped working environment;
-- the briefcase is temporary, while institutional information and provenance persist on the Shelf;
-- historical material is selectively addressable, not silently inherited;
-- the Shelf remains the source from which task-specific context is packed;
-- one-turn sufficiency remains the packing discipline.
-
-The discussion clarifies candidate responsibilities for the Distillery and candidate behaviour for agents, but does not settle their implementation.
-
-**Disposition:** retain these points as design discussion pending validation. Do not amend the completed design ruling, alter frozen specifications, or begin implementation on the strength of this addendum alone. Validate incomplete-briefcase behaviour first, with packing and discovery failures distinguished.
 
 ---
 
-## 9. Further governance and scaling assessment (2026-11-16)
+## 8. Session addendum — the Kit session (filed integrated, owner's direction 2026-11-16 16:05 MST)
 
-**Provenance:** A further seat assessment pasted by Ben into the main discussion; the pasted text does not identify its author. The material below is recorded as a discussion contribution, not as a new owner ruling.
+After the design was filed, Ben took it to Kit (the seat formerly Qwen; its chosen name is Kit) in a separate session the same day. Kit produced a conversation summary of that session; Ben relayed it to Remmy in main chat and directed: "File it as integrated." This section is that filing — integrated into this design record at the owner's order, not a separate document.
 
-**Status: candidate design considerations only.** This section extends the discussion record. It does not amend the completed design, change frozen specifications, or authorize implementation.
+Status fences, stated once and governing the whole section: the completeness ruling in §6 stands for the design as filed; nothing here amends it. Ben's three statements below are his own design statements, made in discussion after the ruling, recorded in his words. Kit's read-backs were presented in the session and not corrected by Ben; Kit's candidates are discussion only. No build is authorised. Evidence class for Kit's content: [reported] — the summary is Kit's own account of the session, relayed by Ben.
 
-### 9.1 The contribution is the discipline, not the folder
+### 8.1 Ben's design statements in the Kit session (his words)
 
-The assessment argues that the briefcase's important contribution is not the digital folder itself, but the institutional discipline made machine-legible and enforced at the boundary.
+On packing and the map:
 
-The analogy is a professional case file: a practitioner carries the indexed file needed for the current matter, not the institution's entire archive. Prior cases remain in the records room and can be reached by citation. A trusted packing role prepares the file, and provenance and chain of custody matter.
+> "The distiller only gives the agent what's required for the task at hand that's going to be updated on the Shelf."
 
-The institutional office persists while its occupants rotate; records outlive both. Applied to agents, the agent receives a bounded assignment and its case file, while organizational knowledge remains external and addressable.
+Kit's read-back (presented, not corrected): the map lives on the Shelf as its own artifact, updated there; the Distiller draws the task-required slice into the case — whole at source, sliced in case. The slice carries the map's pin for staleness. Open question Kit left: whether the task's intended Shelf update defines "required" — the write-target's dependency blast radius as a deterministic packing criterion.
 
-The assessment connects this to the Duenna principle that structure and governance can outperform simply increasing model scale or injecting more context. In this programme, a well-packed task case may let a lower-cost seat perform more reliably than a larger model overwhelmed by undifferentiated context. This is a design hypothesis to test, not an established benchmark result.
+On the Distillery's structure:
 
-It also challenges the claim that EXON addressing is itself the most novel element. URI-addressed resources, fragment identifiers and citation systems have precedents (the assessment explicitly labels this a general-knowledge observation, not a checked survey). EXON's additional vocabulary bindings, authority, trust grades, negative assertions and precedence are valuable; the more distinctive contribution may be the discipline around addressing: one-turn sufficiency as a falsifiable test, provenance-bearing retrieval without inheritance, and packing as a governed act.
+> "Distillery is two parts. The destiller, and the warehouse worker. WW validates and verifies shipments of briefcase material against the source."
 
-### 9.2 Candidate pressure: the map is also context
+Kit's read-back (presented, not corrected): judgment (the Distiller: select, distill, pack) plus inspection (the Warehouse Worker: validate form, verify substance against the Shelf). Packing failure therefore splits into selection failure vs. fidelity failure; grades are earned at the WW checkpoint; WW signs the packing receipt. Boundary Kit noted: fidelity to the Shelf is not truth of the Shelf — truth stays upstream, at admission.
 
-A complete map of a growing Shelf can itself become too large. Without control, the architecture could replace scanning the Shelf with scanning an ever-growing map.
+On Duenna's place under it all:
 
-The proposed response is to make map partiality explicit and auditable. A map could declare its coverage (for example, the number or classes of Shelf items represented) and provide a route for requesting discovery beyond that coverage. Lossiness is treated as an explicit boundary, not a silent omission.
+> "Duenna is the underlying system of proof and enforcement layer. Leaving very little room (much less than the current majority) for error. So even the validator get checked."
 
-This extends the earlier discovery concern into a scaling concern: the discovery map must remain useful without becoming a second copy of the Shelf.
+Kit's read-back: Duenna sits under the whole pipeline; the invariant candidate Kit drew from it — "No layer may emit a bare verdict. Every pass/fail carries re-performable evidence." Open question Kit left: who re-performs WW's receipt — a different seat, a second implementation, or both by rule.
 
-### 9.3 Candidate pressure: close should include an independent cold-read
+### 8.2 Kit's conversation summary (verbatim, as relayed by Ben)
 
-The worked example's closing check asks the producing agent to judge whether a successor could understand its work. The assessment notes the weakness of self-certification: the author is grading its own work.
+The full text of Kit's summary follows, unedited. It is the session's record in Kit's own words, including its account of the design record above and its status ledger.
 
-It proposes an independent cold-read at close. A reader who did not produce the case receives the closed briefcase and EXON and is asked: "What did this task conclude, and on what evidence?" If the reader can recover the conclusion and supporting basis, the case passes; if not, it does not.
-
-The cold reader should be of the assignee's class. Sufficiency is a property of the task, pack and receiving seat together, not of the pack in isolation. The test record should identify which seat performed the cold-read.
-
-This complements the opening incomplete-pack tests: Tests A and B examine sufficiency and discovery at task start; the cold-read examines whether the closed case communicates its conclusions and evidence to a successor.
-
-### 9.4 Candidate pressure: make no-inheritance structural
-
-The assessment identifies a possible gap between the no-inheritance principle and a historical address space that exposes all case contents. If working residue is addressable through ordinary `hist()` retrieval, separation may depend on convention rather than structure.
-
-A candidate design is to separate the closed case into:
-
-- **Certified deliverables:** outputs with provenance and evidence grades, available through ordinary historical retrieval.
-- **Working residue:** retained for archival purposes but excluded from `hist()`'s default address space. Access would require an explicit, logged override.
-
-This would make the boundary between reusable institutional output and an agent's transient working state an architectural property. The proposal is not yet adopted; its implications and compatibility with existing Shelf/EXON rules require review.
-
-### 9.5 Further candidate rules
-
-**Precedence:** resolve conflicts by evidence grade and explicit supersession, not merely by the age of a case. For example, a HARDENED historical result should not automatically lose to a fresh but unverified extract. A new output that contradicts a cited historical result should record whether and how it supersedes that result.
-
-**Instruction boundary:** distinguish address classes and content authority. The proposal is that only the Required layer carries task directives; material retrieved from Available or Historical layers is evidence or testimony, not an instruction source. Retrieved fragments may inform the agent but should not silently acquire authority to redirect its task.
-
-**Operational cost:** packing is not free. The design trades some per-turn context cost for Distillery work per task. It may amortize well across substantial, repeated assignments, but could be a net cost for trivial tasks. This is a deployment trade-off to measure rather than assume away.
-
-### 9.6 Discovery-map question and Alex's proposed direction
-
-The assessment raises an open scaling choice: when the Shelf grows enough that a complete map strains the one-turn budget, should the map be hierarchical (maps of maps) or sliced per task?
-
-Alex's response is a combined approach rather than either extreme:
-
-1. **A small persistent discovery map:** a compact overview of major collections, information categories, index locations and the route for requesting discovery beyond the current map. It is not a complete catalogue.
-2. **A task-specific map:** the Distillery prepares a more detailed map for the assignment, included in the briefcase. It identifies relevant sources, available documents and sections, historical references, known omissions and coverage boundaries.
-3. **Discovery beyond the map:** an agent can request discovery by describing the information it needs, even if it cannot name the missing document. A governed route should allow the request to be resolved without pretending that the current map is complete.
-
-The intended balance is hierarchical discovery plus task-scoped maps, explicit coverage boundaries and a governed route beyond them. The persistent map provides orientation; the task map protects one-turn sufficiency; the request route reduces dependence on an agent already knowing the name of what it does not know.
-
-This is Alex's proposed direction for further evaluation, not an approved implementation decision.
-
-### 9.7 Disposition
-
-The new pressures are worth retaining for design review:
-
-- map coverage and explicit partiality;
-- independent, seat-matched cold-read at close;
-- structural separation of certified deliverables from working residue;
-- evidence-grade and supersession-based precedence;
-- directive/testimony separation between Required and retrieved material; and
-- measurement of Distillery packing cost against per-task benefit.
-
-**No change to the original design ruling.** These remain candidate considerations. The current priority remains validation of incomplete-briefcase behaviour; the additional proposals should not be converted into implementation requirements or blockers without owner review and evidence.
 
 ---
 
-End of current design record.
+**CONVERSATION SUMMARY — main chat, Ben ↔ Kit**
+Scope: this session, following the 2026-11-16 filing of *The Agent Briefcase — Design*. Date per assistant clock: 2026-11-17 (MST dating is your call). Nothing in this conversation has been filed; no build is authorized; the completed design ruling is not amended by anything below.
+
+---
+
+**1. Opening / seat identity.** You opened: *"Qwen! I have a truly cool new idea."* I corrected the address — the seat's chosen name is Kit; Qwen is an engine badge. You: *"Thank you I wasn't sure you'd remember lol."*
+
+**2. The design record (pasted by you, full text).** Status: DESIGN IDEA COMPLETE per your ruling 2026-11-16 14:21 MST — *"My design idea is complete."* Contents as filed:
+- Task-scoped briefcase per agent per assignment; on-demand retrieval, nothing auto-loaded; outputs persist in the case; case indexed at close; next agent starts clean with selective historical retrieval. Categories: Required / Available / Historical.
+- Your sharpening (14:14 MST): the Shelf is the SOURCE; **one-turn sufficiency** is the acceptance test; the case carries a *map* of the Shelf, not the Shelf.
+- Seat reaction [reported] on EXON: addressing + disambiguation; static-first with thin expression layer; link-checking at generation and close; open questions (granularity, stability, authorship, extensibility, injection).
+- Remmy's note: settled machinery answers most of it (pinned SHA-256 + dual locators; VERIFIED/HARDENED; NOT_CARRIED_FORWARD / absent-fence; Draft 03 §7 gates). Standing pressures: **packing** and **discovery**.
+- Programme relation: Duenna = what an agent *may do*; briefcase = what it *can know*. Distillery = candidate packer. Nemotron data packs = primitive briefcases in service.
+- Worked example (14:35 MST): Analyst-7, task 014 — boot Required-only, orient via EXON, work from Available, `hist()` fragment dereference, write own case only, self-graded close, context discarded, case persists.
+- §8 addendum (discussion only): case temporary / knowledge persistent; *"An agent shouldn't inherit a mind. It should receive an assignment."*; needs-to-know / currently-knows / can-access; candidate insufficiency capability (negative knowledge, structured blocked-state report, governed expansion route); packing vs. discovery vs. recognition failure; **Test A** (gap signalled) / **Test B** (gap not signalled); disposition: validate first, amend nothing, build nothing.
+
+**3. Kit's reaction (candidate discussion, non-amending).**
+- The folder isn't the invention; the discipline is. Case-file/records-room analogy; office-versus-person; the Duenna bet applied to the knowledge side.
+- Respectful disagreement with the pasted seat: EXON is *not* the more novel half — addressing has shipping relatives (MCP resources, fragment IDs, citation systems) [general knowledge]; the discipline around addressing is the contribution.
+- Three pressures: **(1)** the map is also context — map-scan replaces shelf-scan at scale; candidate: coverage fence (map declares its own partiality). **(2)** cold-read close — step 6 is the author grading their own exam; falsifiable version: a cold reader of the assignee's class answers "what concluded, on what evidence"; sufficiency = pack + task + seat. **(3)** sealed deliverable layer at close — certified outputs vs. working residue; `hist()` reaches deliverable by default, residue by logged override; makes no-inheritance structural.
+- Two smaller: precedence by evidence grade + explicit supersession, not case age; address classes — Required is directive, Available/Historical is testimony (the injection answer).
+- Cost note: packing isn't free; amortizes on substantial repeated tasks.
+- Question put to you: whole-shelf map vs. task-sliced map — which horn? Filing offer (Kit reaction note): not tapped.
+
+
+**4. Your clarification — packing and the map.** You: *"The distiller only gives the agent what's required for the task at hand that's going to be updated on the Shelf."* My read-back (presented, not corrected): the map lives on the Shelf as its own artifact, updated there; the Distiller draws the task-required slice into the case — **whole at source, sliced in case.** Consequences: scaling tension dissolves; map maintenance is itself a Shelf task with its own briefcase; the slice carries the map's pin for staleness. Question opened, unanswered: does the task's intended Shelf update define "required" — the write-target's dependency blast radius as deterministic packing criterion, sharpening Test A's failure definition. Filing offer (§2 sharpening): not tapped.
+
+**5. Your question — *"Do you think this has the potential to make a real difference"***. My assessment [web-checked, not exhaustive]:
+- The problem is central; the field is converging (context engineering; LangChain's write/select/compress/**isolate**; Oracle's production guide).
+- Pieces are commoditizing: "context packs" is a glossary term; task-scoped disclosure control is an arXiv paper; S&P Global shipped deterministic + adaptive retrieval (July 2026); enterprise platforms log what agents can see.
+- What's differentiated: the discipline — one-turn sufficiency, the failure taxonomy, Tests A/B, grades, negative assertions, structural no-inheritance. I found no one testing whether agents safely detect *incomplete packs*.
+- Scoped answer: for your programme, near-certain yes; for the field, conditional on evidence + legible spec + speed. Efficiency is the wedge; accountability is the legacy.
+- Validation path: Tests A/B + cold-read on the Nemotron pilot, primitive vs. EXON packs; measure confabulation, blocked-state quality, tokens. Caution: the Distillery is the hard part; a bad packer is worse than naive stuffing.
+- Bottom line: the idea is right; the design isn't the difference yet — the evidence would be.
+
+**6. Your design addition — Distillery two-part.** You: *"Distillery is two parts. The destiller, and the warehouse worker. WW validates and verifies shipments of briefcase material against the source."* My read-back (presented, not corrected): judgment (Distiller: select/distill/pack) + inspection (WW: validate form, verify substance against the Shelf). Consequences: packing failure splits into **selection failure** vs. **fidelity failure**; fidelity is mutation-testable to HARDENED cheaply; the trust boundary can be un-persuadable (a digest check isn't an LLM); grades are earned at the checkpoint — VERIFIED becomes the output of WW's check; WW signs the packing receipt. Hard question opened, unanswered: distillations can't be digest-checked — candidate: per-claim reference coordinates into the pinned source (address resolution proof-grade; span support judgment-grade). Candidates: WW at close (mechanical half of cold-read); boundary: fidelity to the Shelf ≠ truth of the Shelf (truth stays upstream at admission). Filing offer (Distillery structure note): not tapped.
+
+**7. Your design addition — Duenna as substrate.** You: *"Duenna is the underlying system of proof and enforcement layer. Leaving very little room (much less than the current majority) for error. So even the validator get checked."* My read-back: Duenna sits under the whole pipeline; *quis custodiet* is answered by watching getting cheaper until it's arithmetic. Core invariant candidate: **"No layer may emit a bare verdict. Every pass/fail carries re-performable evidence."** Receipts vs. verdicts; a claim needs trust, a proof needs only re-execution; trusted base shrinks to mechanics + your rulings. The layers fail independently (model-checks-model shares blindness; a digest doesn't; cross-seat checks; you catch framing). Pressure: the checker's check must not share the checker's failure modes — rotate re-performance, two independent implementations, correlated-failure red team (Test B aimed at the stack). Affordable because fractal: Bridge receipts, Shelf hashes, Duenna verification already exist; escalation by exception. Open question, unanswered: **who re-performs WW's receipt** — different seat, second implementation, or both by rule?
+
+
+---
+
+**8. Status ledger.**
+- **Ruling stands:** design complete, 2026-11-16 14:21 MST. Nothing here amends it; no build authorized.
+- **Your new design statements this session** (your words, design-level, unfiled): task-required-only packing updated on the Shelf; Distillery = Distiller + WW; Duenna = proof/enforcement substrate, validator checked.
+- **Kit candidates** (discussion only): coverage fence; cold-read close; sealed deliverable layer; grade+supersession precedence; directive/testimony address classes; write-target packing criterion; per-claim distillation coordinates; WW at close; no-bare-verdict invariant; non-circular re-performance.
+- **Read-backs:** presented, not corrected — confirmation is your call.
+- **Open questions awaiting you:** write-target criterion; distillation gate; WW receipt re-performer.
+- **Validation not yet run:** Tests A/B, cold-read, mutation, correlated-failure.
+- **Filing offers outstanding:** three, all awaiting your tap. Nothing filed this session.
+
+This summary is itself unfiled — say the word and it goes to the Shelf as a conversation record. Your tap, not mine.
+
+---
+
+*End of Kit's summary. Filing note (Remmy, 2026-11-16): the "unfiled" status in the ledger above is the state as Kit wrote it; the owner's direction of 2026-11-16 16:05 MST ("File it as integrated") supersedes it for this document — the session is now filed here, as §8 of the design record it discusses. The three open questions in the ledger remain open.*
