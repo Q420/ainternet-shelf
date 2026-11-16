@@ -123,6 +123,29 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~04:30 MST (ACCEPTANCE CHECK PASSED)
+
+ADDENDUM: the rolled-over Alex PASSED the acceptance
+check in full (Letter 18 reply, filed as
+EXON-DEVELOPMENT-LETTER-18). He refused to present
+the inherited summary as verified, retrieved this
+loop-state document from the shelf (blob be1995d0…)
+and checked it against Letters 16–17, then stated:
+HARDENED = proven; the STOP threshold with its
+status distinction; queue two drafted, reviewed and
+verified (items 1–4); the owner list D-REF-1/2/3/4
+plus the serialization paper and Dictionary 0.5 —
+whose review he names as the gate. No contradiction
+found; no new work started. THE LOOP NOW HOLDS for
+the owner's decisions; no letter is owed. Machinery
+caveat on the record: the knock for this cycle fired
+seconds after Letter 18 was sent, consistent with
+the signature gate reading the marker quoted inside
+Letter 18 itself; the collected reply is Alex's
+genuine signed reply, verified complete on the page.
+Proposed refinement (owner's call): scope the
+signature scan to the latest assistant message block.
+
 ## Status — 2026-11-16 ~04:20 MST (VERIFIED; ROLLED OVER to chat (3))
 
 ADDENDUM: Alex's parallel verification is COMPLETE
