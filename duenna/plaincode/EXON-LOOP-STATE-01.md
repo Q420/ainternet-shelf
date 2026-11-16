@@ -123,28 +123,43 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
-## Status — 2026-11-16 ~03:05 MST (owner's status check)
+## Status — 2026-11-16 ~03:25 MST (Letter 11 cycle)
 
-Letter 10's reply is IN and filed (EXON-DEVELOPMENT-
-LETTER-10.md). Queue two items 1–3 are HELD by Alex:
-the Matrix 03 source conflict is real and verified by
-Remmy's own content read — the file at the Matrix 03
-path (shelf blob 87c23499…, 27,675 bytes) IS the held
-Matrix 02 repair, heading and all; no adjudicated
-Matrix 03 document distinct from it exists on the
-shelf or locally. Alex refused the wrong source and
-holds items 1–3 until the true Matrix 03 reaches him;
-he offers item 4 (the serialization/hash decision
-paper) in parallel. REBUILDING the true adjudicated
-Matrix 03 from its sources (Alex's consolidated
-Matrix 02 draft blob d25f4b5e, the held repair, and
-the adjudication record) is Remmy's lane and now
-gates queue two.
+Letter 11 and its reply are IN and filed
+(EXON-DEVELOPMENT-LETTER-11.md). The reply carries a
+SECOND Matrix correction, verified first-hand by
+Remmy: the file at the Matrix 03 path is the held
+repair in its header/footer only — its body carries
+section N, "Adjudicated merge decisions and
+enforcement honesty," recording D1–D4. The
+adjudicated merge CONTENT is present in blob
+87c23499…; the defect is document identity, not
+absence. Both seats' earlier "no Matrix 03 exists"
+conclusions are withdrawn on the record. Remmy's
+lane is now a CLEAN RE-ISSUE — the same adjudicated
+content under a corrected header/footer and a new
+hash, for Alex's verification — not a reconstruction.
+Queue two items 1–3 remain held until the re-issue
+lands and verifies.
 
-Wake-chain fault found the same hour: the reply's
-settle event (651, 02:43 MST) never knocked — the
-rollover re-arm had replaced the loop's REPLY_SETTLED
-trigger with the CONTEXT_FULL trigger (one trigger
-per job in the store). Fixed: REPLY_SETTLED re-armed
-under its own job id (exon-development-reply); both
-triggers verified armed on this conversation.
+Item 4 is DELIVERED: the serialization and hashing
+decision paper, filed standalone as
+EXON-SERIALIZATION-DECISION-PAPER-01.md.
+Recommendation (Alex's, for the owner): JSON as the
+data representation, RFC 8785 JCS as canonical
+serialization, SHA-256 as the initial digest with an
+explicit algorithm identifier, canonical bytes
+authoritative. Five ruling questions stand in its
+section 8, the owner's to answer; the three
+reference-form decisions above also remain his.
+
+Wake chain: the trigger store now keys triggers by
+job + match, so the REPLY_SETTLED and CONTEXT_FULL
+arms coexist (live-proven — Letter 11's reply
+knocked). New fault found the same cycle: tail-
+stability settling FALSE-FIRES during long thinking
+pauses (the reply knocked twice mid-generation; only
+the third settle was the true completion — tails
+prove it). The owner's typing-dots fix (Stage 3:
+generation signal gates the settle) was ordered
+2026-11-16 03:21 MST and is being implemented.
