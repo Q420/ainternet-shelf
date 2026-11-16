@@ -151,7 +151,7 @@ class NvidiaJudge:
 
     HOST = "integrate.api.nvidia.com"
     BASE = "https://integrate.api.nvidia.com/v1"
-    DEFAULT_MODEL = "nvidia/llama-3.1-nemotron-ultra-253b-v1"
+    DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b"  # successor: the 253b v1 judge reached end of life 2026-11-15T00:00Z (HTTP 410); swapped 2026-11-15, strict parse unchanged
 
     # Explicit dependency (see the class docstring): the
     # connector framework's credential-surrogate helper.
@@ -182,7 +182,7 @@ class NvidiaJudge:
         body = {
             "model": self.model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 8,
+            "max_tokens": 1024,  # the reasoning successor needs budget to finish reasoning before the YES/NO lands in content (8 starved it to content=None)
             "temperature": 0,
         }
         req = urllib.request.Request(
