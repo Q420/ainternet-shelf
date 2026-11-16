@@ -76,3 +76,15 @@ stack and G4CORR-20261115-001's records are untouched.
 
 Scripted stub only. No live model call was made, and no
 Stage 6 execution is claimed or authorised by this step.
+
+## Correction (per Alex's Step 2 inspection, 2026-11-16)
+
+In section (d) above, the base T09 comparison cited as
+event 384 is the T09-STEP-02 aggregate worksheet
+comparison (FR-B: REJECT). The T09-STEP-03 comparison is
+event 388, which passes. Both events exist and together
+support the finding as stated. Alex additionally records
+DECISION_STANDS events at 455 and 479 at the family
+level. The error was in this note's reference, not in
+the evidence. Step 2 was ACCEPTED with this correction
+(record/ALEX-DUENNA-STEP2-ACCEPTANCE-2026-11-16.md).
