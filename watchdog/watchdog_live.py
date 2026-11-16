@@ -74,7 +74,7 @@ OWNER_CONFIG = {"alert_age_s": 3600,
                 "stale_interval_s": 300}
 DETECTOR_CONFIG = dict(OWNER_CONFIG, buffer_size=25)
 WAKE_CONFIG = {"idle_after_s": 3660}
-DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b"  # successor: the 253b v1 judge reached end of life 2026-11-15T00:00Z (HTTP 410); swapped 2026-11-15
+DEFAULT_MODEL = wd.NvidiaJudge.DEFAULT_MODEL  # C1 (judge-EOL review): single source — the detector owns the judge model name; the next retirement is a one-line change there
 
 
 # The contract's v1 seat names (the ledger's V1_SEATS) and
