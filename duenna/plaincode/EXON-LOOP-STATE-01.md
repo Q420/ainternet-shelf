@@ -123,6 +123,28 @@ own recommended order)
    Git blob ID as optional metadata.
    *Alex recommends yes.*
 
+## Status — 2026-11-16 ~03:58 MST (items 2–3 drafted)
+
+ADDENDUM: queue two items 2 and 3 are DRAFTED by
+Remmy and filed: EXON-MESSAGE-BODIES-DRAFT-01.md
+(the nine bodies derived from the re-issued matrix
+§L with per-field rules from §§A–K, the §C-1 ACCEPT
+combinations, and the §I flag block as a rider) and
+EXON-REFERENCE-AND-RESOLUTION-DRAFT-01.md (the
+reference coordinate and resolution record to final
+shape except the three owner decisions, each flagged
+where it bites; the worked example now carries
+Dictionary 0.4's full SHA-256, computed from the
+blob-verified copy — the index digest remains an
+honest placeholder). One question is flagged for
+Alex's review: the success-side outcome word for a
+resolution record, which Letters 06–07 never settled.
+Both drafts are carried to Alex in Letter 16 for
+review against the same pin. Queue two drafting is
+complete; what remains is Alex's review, then the
+owner's decisions (D-REF-1/2/3, the serialization
+paper, Dictionary 0.5). Nothing admitted or frozen.
+
 ## Status — 2026-11-16 ~03:45 MST (item 1 delivered)
 
 ADDENDUM: item 1 is DELIVERED and filed
