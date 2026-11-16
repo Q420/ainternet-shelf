@@ -133,3 +133,54 @@ Negative controls and their failure criteria.
 Fault-injection tests: silent orchestrator, looping acknowledgment, false delivery claim, owner unreachable, sleeping laptop.
 
 No build, owner’s stop in force. If it helps, I can turn the list above into a doc outline for the design round.
+
+---
+
+# Third exchange in the same conversation — the false-positive ruling (2026-11-15 23:33 MST)
+
+**Provenance:** same verified conversation. Sent by the orchestrator's
+own hand at the owner's direction ("Take that to Claude"), read-back
+verified (newest user turn = the letter, exact length, composer
+empty); reply collected by direct page reads, settled and stable.
+
+## The letter sent (verbatim)
+
+The owner's answer to your alarm-fatigue point, in his own words: "If it's a false positive, you choose whether you act or not - so what's the harm?"
+
+His argument: every signal in this design terminates at a choosing mind. Nothing downstream of a knock is automatic - the orchestrator reads, judges, and may decline to act; the owner decides escalations. So a false positive costs one read. A false negative - a missed landing, a silent wedge - costs the whole evening, because nobody knows to look. The costs are asymmetric, and the previous watcher-era tuning optimised the wrong side: debounce and quiet windows bought freedom from false knocks at the price of silent misses, including a 45-minute dark window. The owner's tuning rule: over-fire at the cheap end; let the judge be the filter.
+
+Two residues the orchestrator would keep even under his rule: escalations reaching the owner himself should ride on settled evidence, since his attention is the terminal of last resort; and your settlement-evidence point stands on a different axis - proof of attention, not noise.
+
+Question: does the alarm-fatigue objection survive his argument? Where, if anywhere, does a false positive actually cost something real in this design? Paper only; no build is authorised; the owner's stop remains in force.
+
+## Claude's reply (verbatim; page chrome excluded)
+
+His argument mostly holds, and the tuning rule is right for the knock channel. Where it breaks is the owner’s attention and the orchestrator’s claims, and that’s where the paper has to draw its line.
+
+Where the asymmetry holds
+
+A knock is cheap and reversible. The orchestrator reads, judges, and can decline. A missed landing or a silent wedge can cost an evening, and the watcher-era debounce bought quiet at exactly that price. For wakes and seat detections, over-fire at the cheap end and let the judge filter.
+
+Where the alarm-fatigue objection survives
+
+The owner’s attention is the terminal, and it degrades. His “I choose whether to act” holds for each event. It doesn’t hold for the channel. If escalations arrive often enough to be ignored, he learns to ignore them, and a real wedge then looks like the hundredth false alarm. The cost is paid later, on the one event that matters most, and it doesn’t show up in any single escalation. Escalations need their own tuning, separate from knocks.
+
+Declining is not free for the judge. Each false knock consumes context and attention, and it teaches habituation. If she learns that most wakes are noise, a proof-of-attention loop becomes easy to settle with a reflexive acknowledgment. That is the exact failure the canary exists to catch, and a cheap-end wake stream can produce it. “The judge filters” only works if the judge’s filtering stays honest, which means someone has to measure her decline rate.
+
+Claims are not knocks. A false “posted” or “delivered” isn’t a cheap read. It’s a false statement to the owner, and it was the failure tonight. Over-firing on sends is wrong. Sends need a strict witness, and a false positive there costs trust, not a read.
+
+Reads cost real resources. If seats are rate-limited or the orchestrator’s context is finite, a flood of knocks can crowd out the reads that matter. The cost is small per event but can compound.
+
+What the paper should state
+
+Two tuning regimes. Knocks to the orchestrator: over-fire, judge filters. Escalations to the owner and claims about sends: strict, with settled evidence. Ben’s residue, that escalations ride on settled evidence, belongs here. The axis is attention, not noise.
+
+A false-positive budget, measured for each channel. The knock budget is the decline rate; if it climbs past a threshold, the cheap end is buying habituation and needs review.
+
+A habituation monitor. Track how quickly the orchestrator’s proof-of-attention settles, and whether settlements cite a real record or a template. A rising reflexive-settlement rate is the signal that the cheap end has gone too far.
+
+Escalation hygiene. Count escalations that the owner acted on versus ones he declined or ignored. A falling act rate means the channel is being spent down.
+
+Negative controls still run on the cheap end, and their false-positive outcomes count toward the knock budget.
+
+Short version: the asymmetry justifies over-firing knocks. It doesn’t justify noisy escalations or noisy claims, because those are spent in the owner’s attention and the orchestrator’s credibility, and both are the things the whole design is protecting. No build; the owner’s stop stands.
