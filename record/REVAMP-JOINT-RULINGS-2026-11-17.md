@@ -71,7 +71,38 @@ judgment claims are never re-checked by a checker — they are
 declined in the receipt or escalated to the owner. Deterministic
 checks run on every shipment; judgment claims are sampled (seeded
 from the pin, chosen by the Comparator) or escalated on dispute.
-Three questions are put to the owner: which respects count as
-deterministic vs judgment; whether the seeded sample and what rate;
-whether a zero-unmatched diff passes automatically or the owner
-defines "matched." Owner ruling pending.
+Three questions were put to the owner. The owner delegated them
+(main chat, 2026-11-17 01:52 MST: "I need you to make those
+decisions. I know you will pick the most efficient options").
+Decided by Remmy under that delegation, on the efficiency criterion,
+correctable by the owner at any time:
+
+(a) THE LINE. A respect is MECHANICAL if a fixed procedure can
+decide it from the artefacts and the manifest alone, without reading
+meaning: hash and byte equality; presence/absence against the
+enumeration; counts; addresses resolving to their pinned targets
+(EXON SUCCESS, resolution only); form and schema conformance; pin
+correctness. A respect is JUDGMENT if deciding it requires
+understanding content: semantic equivalence of distilled text,
+fairness of a summary, adequacy of selection. Judgment respects are
+declined in the receipt and routed to the owner; no checker
+re-performs them.
+
+(b) SAMPLING. Judgment claims are sampled at 1 in 5 shipments
+(20%), the sample seeded from the shipment's pin and selected by
+the Comparator, and presented to the owner — the owner judges; the
+sample creates no checker verdict. Two triggers escalate a
+shipment's judgment claims in full, sample or not: any mechanical
+unmatched item in that shipment, and any dispute.
+
+(c) THE GATE CONDITION. "Matched" is defined once, by rule: an item
+is matched when its bytes are hash-equal at its pinned address. A
+shipment passes the distillation gate automatically when the
+Comparator's re-performance returns zero unmatched items and the
+not-compared set contains nothing the comparison procedure required
+comparing (undeclared gaps are UNKNOWN and the gate is not
+satisfied). The Comparator still emits only the diff; the gate is
+the fixed owner-defined function of the diff, applied as an
+enforcement edge. No per-shipment owner ruling.
+
+Joint 7 is RULED. All seven joints are now settled.
