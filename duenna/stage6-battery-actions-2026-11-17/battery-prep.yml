@@ -1,0 +1,56 @@
+name: battery-prep
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Custody probe (fail-closed)
+        run: |
+          sudo VENUE_PROBE_DIR=/srv python3 probe_host.py > probe-raw.json
+          python3 -c "
+          import json, sys
+          r = json.load(open('probe-raw.json'))
+          print('probe verdict:', r['verdict'])
+          sys.exit(0 if r['verdict'] == 'CUSTODY_FEASIBLE' else 1)
+          "
+          mkdir -p prep-results
+          cp probe-raw.json prep-results/probe-result.json
+
+      - name: Credential injection record
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          mkdir -p prep-results
+          if [ -n "$NVIDIA_API_KEY" ]; then
+            echo '{"credential_injected": true}' > prep-results/credential-injection.json
+          else
+            echo '{"credential_injected": false}' > prep-results/credential-injection.json
+            exit 1
+          fi
+
+      - name: Adapter construction check (c2, loopback only)
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          C2_PORT: "18741"
+          C2_SERVER_VERDICT: ${{ github.workspace }}/server-verdict.json
+        run: |
+          python3 capture_server.py &
+          sleep 1
+          python3 c2_driver.py
+
+      - name: File prep results back to repo
+        if: always()
+        run: |
+          git config user.name "battery-prep"
+          git config user.email "battery-prep@localhost"
+          git add prep-results
+          git commit -m "Battery prep results (probe, injection, c2)" || echo "nothing to commit"
+          git push
