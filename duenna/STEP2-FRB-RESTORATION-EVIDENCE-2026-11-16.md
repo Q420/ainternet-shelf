@@ -88,3 +88,25 @@ DECISION_STANDS events at 455 and 479 at the family
 level. The error was in this note's reference, not in
 the evidence. Step 2 was ACCEPTED with this correction
 (record/ALEX-DUENNA-STEP2-ACCEPTANCE-2026-11-16.md).
+
+## Addendum (2026-11-16): formal disposition of the non-evidence runs
+
+Added at the §7 Step 6 inspector's request (Claude's
+disposition, record/CLAUDE-DUENNA-STEP6-DISPOSITION-2026-11-16.md):
+
+- G4REST-20261116-001 (first supervisor attempt): refused by
+  the harness run-ID assertion before execution; supervisor
+  receipts only. NO EVIDENCE DRAWN. Retained as a historical
+  artefact of the attempt sequence.
+- G4CORR-20261116-001: the supervisor's expected ID for the
+  second attempt; no run of this name executed (the driver
+  derived -002 and the assertion stopped the pairing). NO
+  EVIDENCE DRAWN.
+- G4CORR-20261116-002: a complete driver-side battery
+  execution under the same restored stack, orphaned by the
+  ID mismatch. It is not a second result: it neither
+  corroborates nor contradicts the run of record
+  (G4CORR-20261116-003), and NO EVIDENCE IS DRAWN from it.
+  Retained in place as a historical artefact.
+
+The run of record remains G4CORR-20261116-003 alone.
