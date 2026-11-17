@@ -83,3 +83,17 @@ evidence:
   — the relay is not yet built; its construction checks run
   when it is. The rehearsal neither needs nor exercises the
   relay (it runs against the in-room transport double).
+
+## Status correction (2026-11-17 — per Amendment 01 and the Route 1 inspection ruling)
+
+The paragraph above was written before the relay existed. The relay
+was subsequently built and its §6(b) construction checks PASSED
+under Route 2 (filed @ 20c80878). Route 2 was then superseded by the
+owner's Route 1 ruling (Amendment 01 @ eadfda06, §7 @ faf5bb7d): the
+relay and tunnel are retired as load-bearing, and §6(c) is retired
+with that design — unproven, not failed. The examiner's Route 1
+inspection ruling (record/ALEX-STAGE6-BATTERY-ROUTE1-INSPECTION-
+2026-11-17.md) accepts the dress rehearsal (Correction 4 closed)
+and the Route 1 replacement checks (c1)–(c3). This rehearsal
+document's remaining statements stand as the record of the
+rehearsal itself.
