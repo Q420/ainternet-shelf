@@ -24,6 +24,7 @@ The following are fixed design inputs, not open questions in this draft:
 6. A bound run retains its pinned edition. A later edition never silently rewrites an existing binding.
 7. Until a dedicated authoritative ledger is approved and implemented, pinned Shelf commits and blob/content digests provide interim version evidence.
 8. Mindkeep is outside Duenna and is not part of this mechanism.
+9. Every edition carries an owner-set `improvise` flag with value `YES` or `NO`. It controls whether a worker may propose a workaround after task failure; it never grants execution authority.
 
 The file's words express intent. The harness does not interpret those words to decide what Ben meant. It performs the deterministic checks specified here and stops where authority or semantic judgement is required.
 
@@ -38,6 +39,7 @@ The file's words express intent. The harness does not interpret those words to d
 - **Run binding:** immutable record pinning the edition actually used by a run.
 - **Applicability:** explicit project/scope identifiers declared in an edition's machine-readable metadata. Applicability is identifier matching, not semantic interpretation.
 - **Delegation:** a recorded, bounded grant from Ben authorising a named delegate to perform a specified approval act within specified scope and conditions.
+- **Improvise flag:** the edition-pinned owner setting `YES` or `NO` governing whether a workaround proposal may be submitted after a task failure.
 
 Identity, integrity, authority, applicability and meaning are separate:
 - an ID identifies an edition;
@@ -92,7 +94,15 @@ Every edition contains these three top-level sections in this order:
 
 Rules intended to persist across projects and scopes. They remain operative unless changed by an approved edition. Each rule should have a stable rule ID within the file to make changes traceable. The harness may check IDs and schema, but it must not infer a rule's meaning.
 
-### 4.2 Current scope
+### 4.2 Edition control settings
+
+Each edition contains an explicit owner-set `improvise` field in its machine-readable header, with exactly one allowed value: `YES` or `NO`. The setting is edition-wide and applies to every active scope entry in that edition. If the owner requires different settings for concurrent scopes, those scopes must be represented in separate editions; a single edition cannot produce ambiguous per-scope flag values.
+
+The owner sets or approves the value as part of approving the complete edition. A worker may propose a value change in a candidate edition but cannot change the effective flag by editing the canonical file or a run record.
+
+**Default:** if the field is absent, malformed, duplicated, or not exactly `YES` or `NO`, the effective value is `NO` and the harness records `IMPROVISE_FLAG_DEFAULTED_NO` or `IMPROVISE_FLAG_INVALID_DEFAULTED_NO`. This default grants no latitude by assumption. The edition remains subject to all other validity checks; a malformed flag is reported and should be corrected through a properly approved edition, not silently rewritten.
+
+### 4.3 Current scope
 
 One or more explicit active scope entries. Each entry must identify:
 - project ID;
@@ -109,7 +119,7 @@ One or more explicit active scope entries. Each entry must identify:
 
 Multiple active entries are permitted in the single file if the owner has approved them. A run must match one explicit project/scope entry; it may not infer applicability from similar names or prose. A scope not listed as ACTIVE is not made active by the existence of the file.
 
-### 4.3 Transition record
+### 4.4 Transition record
 
 A concise in-file record identifying:
 - the immediately preceding edition;
@@ -142,6 +152,7 @@ Required fields:
 | `approval_ref` | Exact approval event/reference for this edition |
 | `effective_event_ref` | Event at which the edition became CURRENT |
 | `canonicalisation_id` | Exact digest procedure identifier, initially `STAYTRUE-BYTES-UTF8-LF-v1` |
+| `improvise` | Owner-set enum: `YES` or `NO`; absent/invalid defaults to effective `NO` |
 
 The full content digest is stored in the detached evidence manifest, not self-embedded in the bytes it hashes. This avoids a self-referential digest. The manifest binds the digest to the edition ID, exact archived path, and Shelf commit/blob pins.
 
@@ -166,6 +177,11 @@ change_reason: "<why an edition change is proposed>"
 change_summary: "<descriptive summary; not authority>"
 affected_project_ids: ["<project-id>"]
 affected_scope_ids: ["<scope-id>"]
+improvise_change:
+  previous_value: "NO"
+  proposed_value: "YES"
+  owner_set_by: null
+  owner_decision_ref: null
 changed_sections:
   - section_id: "<stable-rule-or-scope-entry-id>"
     change_type: "ADD | MODIFY | CLOSE | REMOVE"
@@ -337,9 +353,11 @@ scope_id: "<exact scope ID>"
 scope_approval_ref: "<exact owner-approved scope reference>"
 bound_at: "<UTC timestamp>"
 canonicalisation_id: "STAYTRUE-BYTES-UTF8-LF-v1"
+improvise: "NO"
+improvise_source: "edition-header"
 ```
 
-The binding is created by the harness, not supplied by the worker. The worker may report which edition it inspected, but that report does not establish the binding.
+The `improvise` value in the binding is a copied, verified value from the pinned edition header (or effective `NO` when absent/invalid); it is included for direct auditability and must agree with the pinned edition. The edition remains the source of authority. The binding is created by the harness, not supplied by the worker. The worker may report which edition it inspected, but that report does not establish the binding.
 
 The harness records the binding in the canonical run record. A run cannot proceed if any required field is absent or if the edition does not apply to the run's exact project/scope identifiers.
 
@@ -428,16 +446,23 @@ A worker's statement that Ben approved, a name typed into a file, or a commit au
 
 No fuzzy matching, project-name similarity, inferred parent/child relationship, or natural-language interpretation is permitted. Any scope relationship requiring judgement must be resolved in the owner-approved scope record before binding.
 
-### 11.5 Create run binding
+### 11.5 Verify improvise flag
+
+1. Read the `improvise` field from the exact edition header pinned for the run.
+2. If exactly `YES`, bind `YES`. If exactly `NO`, bind `NO`.
+3. If absent, duplicated, malformed or any other value, bind effective `NO` and emit the corresponding default/invalid outcome. Do not infer a value from a previous edition, another scope, a worker preference or the current canonical file.
+4. Verify the run-binding copy equals the derived effective value. A mismatch returns `IMPROVISE_BINDING_MISMATCH` and STOP.
+
+### 11.6 Create run binding
 
 1. Resolve current head.
-2. Run §§11.2–11.4.
-3. Record all §9 fields, including full commit, blob and SHA-256 pins.
+2. Run §§11.2–11.5.
+3. Record all §9 fields, including full commit, blob and SHA-256 pins and the effective `improvise` value.
 4. Persist the binding in the canonical run record before the first governed action.
 5. Make the binding immutable for the run.
 6. If any check fails or evidence is unavailable, do not start governed work.
 
-### 11.6 Detect a mid-run edition advance
+### 11.7 Detect a mid-run edition advance
 
 At each harness-defined governed action boundary, compare the current head for `DUENNA-STAYTRUE` with the run's pinned edition.
 
@@ -456,7 +481,54 @@ To resume after `TETHER_ADVANCED_REVIEW_REQUIRED`, require a new owner decision 
 
 A valid delegate may choose only if the delegation explicitly covers this act and exact run/scope. Otherwise Ben decides. The harness checks the decision record and authority mechanically; it does not decide which option is substantively appropriate.
 
-A later edition never retroactively changes the historical binding or the record of actions already performed.
+A later edition never retroactively changes the historical binding or the record of actions already performed. The run's `improvise` setting remains the value pinned at run binding; an edition advance cannot silently enable or disable workaround proposals for that run.
+
+### 11.8 Handle task failure and workaround proposals
+
+On a task failure, read only the effective `improvise` value in the run binding:
+
+- **NO:** stop the failed task, preserve its failure evidence, and report the failure. Do not generate or submit a workaround proposal.
+- **YES:** the agent may prepare and submit a workaround proposal. It must not attempt, execute, publish or otherwise enact the workaround merely because the flag is YES.
+
+A workaround proposal must use this record shape:
+
+```yaml
+schema_version: "STAYTRUE-WORKAROUND-PROPOSAL-1"
+proposal_id: "<unique-id>"
+run_id: "<run-id>"
+project_id: "<project-id>"
+scope_id: "<scope-id>"
+pinned_edition_id: "<edition-id>"
+pinned_content_sha256: "<full SHA-256>"
+improvise_value: "YES"
+task_id: "<failed-task-id>"
+failure:
+  observed_result: "<what failed>"
+  expected_result: "<what was expected>"
+  evidence_refs: ["<failure evidence references>"]
+workaround:
+  description: "<proposed alternative>"
+  steps: ["<proposed step>"]
+tether_delta:
+  affected_rule_ids: ["<stable rule IDs, or empty>"]
+  affected_scope_fields: ["<scope fields, or empty>"]
+  constraints_or_exclusions_touched: ["<exact references, or empty>"]
+  change_description: "<what differs from the pinned tether>"
+  impact: "<scope, deliverable, evidence, dependency or risk impact>"
+  requires_tether_edition_change: true
+proposed_by: "<authenticated agent/worker identity>"
+submitted_at: "<UTC timestamp>"
+status: "PROPOSED"
+approval_ref: null
+```
+
+The proposal must identify the failed task and supporting evidence, describe the alternative, and make the delta against the exact pinned edition explicit. It must not rewrite the tether, alter the run binding, or describe itself as approved.
+
+The proposal enters the same authority chain used for changes to settled intent: Ben, or a delegate whose recorded delegation explicitly covers the relevant approval act and scope. The authority must approve or reject the exact proposal and its tether delta. Silence, receipt, acknowledgement, or a worker's own assessment is not approval.
+
+If accepted workaround changes settled intent, scope, constraints, exclusions, acceptance conditions, or any other tethered term, it cannot be executed until a new Staytrue edition has been prepared, approved and made CURRENT through the normal lifecycle. If the authority instead approves a strictly run-scoped deviation without changing the standing tether, that approval must explicitly identify the exact run, pinned edition, proposal ID, permitted actions and limits; it does not alter the tether or authorise reuse in another run. The harness verifies the approval record and scope mechanically. If the approval's classification or bounds are missing or ambiguous, STOP.
+
+A rejected proposal returns the run to stopped/failed status; no workaround action is taken. A YES flag permits proposal only, not unilateral action.
 
 ## 12. Required machine outcomes
 
@@ -477,6 +549,11 @@ The harness must emit stable, distinguishable outcomes, at minimum:
 - `TETHER_ADVANCED_REVIEW_REQUIRED`
 - `TETHER_HEAD_UNKNOWN`
 - `SHELF_EVIDENCE_UNAVAILABLE`
+- `IMPROVISE_FLAG_DEFAULTED_NO`
+- `IMPROVISE_FLAG_INVALID_DEFAULTED_NO`
+- `IMPROVISE_BINDING_MISMATCH`
+- `WORKAROUND_PROPOSAL_NOT_PERMITTED`
+- `WORKAROUND_APPROVAL_UNVERIFIED`
 
 Each result records run/change ID, input pins, check procedure/version, observed values, result code and timestamp. UNKNOWN/unavailable evidence is never converted to PASS.
 
@@ -493,6 +570,9 @@ Each result records run/change ID, input pins, check procedure/version, observed
 9. A relevant mid-run head advance requires an explicit authority decision before further governed action.
 10. Hashes and deterministic checks never claim to establish semantic fidelity to owner intent.
 11. Mindkeep and personal-memory content are not part of this artefact or its checks.
+12. An effective `improvise` value of `YES` permits proposal only; it never grants permission to execute a workaround.
+13. An effective `improvise` value of `NO` requires stop-and-report on task failure, without workaround proposal.
+14. A run's effective flag is determined solely by its pinned edition and cannot change mid-run through canonical-file advancement.
 
 ## 14. Review and non-authorisation
 
