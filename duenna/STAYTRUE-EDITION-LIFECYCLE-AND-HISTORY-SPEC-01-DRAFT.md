@@ -54,6 +54,9 @@ The following paths are normative for the proposed Shelf layout:
 duenna/
   Staytrue.md
   staytrue/
+    HEAD.yaml
+    events/
+      STAYTRUE-EVENT-<unique-id>.yaml
     editions/
       STAYTRUE-E0001.md
       STAYTRUE-E0002.md
@@ -74,6 +77,8 @@ duenna/
 - `editions/` contains the complete byte-preserved snapshot of every edition that reached APPROVED. Rejected and withdrawn proposals may be retained as proposal artefacts but must never be presented as approved editions.
 - `changes/` contains one immutable change record per proposed transition, including rejected and withdrawn proposals.
 - `evidence/` contains the detached edition evidence manifest, including full digests and Shelf pins.
+- `events/` contains immutable lifecycle events: submission, approval/rejection/withdrawal, publication, head advance, supersession, and any later authority decision.
+- `HEAD.yaml` is the single current-head pointer for the configured Shelf branch. It is updated only in the same commit that adds the new immutable event and edition evidence. Its prior values remain recoverable through Git history.
 - `delegations/` contains the immutable authority records needed to verify delegated approval. A revocation is a new record referencing the delegation; the original is not edited.
 - No history file is overwritten. The canonical `Staytrue.md` is the only intentionally moving path; its Git history is retained, and every approved version also has a permanent edition path.
 
@@ -251,6 +256,40 @@ The harness validates delegate identity, act class, item, project/scope membersh
 
 The approval event must record the delegation ID and the exact scope entry approved. A delegation for one project or scope cannot approve another. A delegation does not transfer or enlarge itself.
 
+### 7.4 Lifecycle event record
+
+Every lifecycle transition is represented by a new immutable event at `duenna/staytrue/events/<event_id>.yaml`. Required fields are:
+
+- `event_id`, `event_type`, `item_id`, `edition_id`, and `change_record_id`;
+- `from_state` and `to_state`;
+- `actor` and `actor_role`;
+- `authority_ref` and `delegation_id`, where applicable;
+- `evidence_refs`;
+- `occurred_at` (informational timestamp);
+- `previous_event_id`, where a prior event exists;
+- `shelf_commit` containing the event.
+
+An event is append-only. Corrections are additional events that explicitly reference the event corrected; the original event remains intact. Event order is established by the predecessor chain and pinned Git history, not timestamps alone.
+
+### 7.5 Current-head pointer
+
+`duenna/staytrue/HEAD.yaml` contains exactly one current-head declaration:
+
+```yaml
+schema_version: "STAYTRUE-HEAD-1"
+item_id: "DUENNA-STAYTRUE"
+current_edition_id: "STAYTRUE-E0008"
+current_content_sha256: "<full SHA-256>"
+current_edition_path: "duenna/staytrue/editions/STAYTRUE-E0008.md"
+current_change_record_id: "STAYTRUE-CHANGE-0008"
+current_event_id: "<CURRENT event ID>"
+current_commit: "<full commit SHA containing this pointer and event>"
+```
+
+The pointer is a mutable discovery record, not an immutable historical record. Its full prior versions remain in Git history. A valid head advance commits the new immutable edition, evidence manifest, lifecycle event, canonical `Staytrue.md`, and updated `HEAD.yaml` together. The commit must have the previously observed head commit as its parent. Concurrent advances must fail rather than overwrite one another.
+
+The configured Shelf branch is the interim authoritative discovery location. A branch name alone is never a run pin: the resolved commit SHA, edition blob ID and full SHA-256 are copied into the run binding.
+
 ## 8. Approval and publication separation
 
 Approval establishes that the named authority accepted the exact candidate content and declared applicability. Publication establishes that the approved bytes became the current canonical file.
@@ -333,6 +372,7 @@ Interim rules:
 6. Treat the Git commit as immutable version evidence, not as proof of approval or truth. Approval evidence remains separately required.
 7. If the Shelf commit, blob or full digest cannot be retrieved or verified, edition status is UNKNOWN and the run must not bind to it.
 8. A branch head is a discovery pointer only. It is not a historical pin and does not replace the full commit SHA.
+9. Each current-head advance is one commit containing the new edition snapshot, detached evidence manifest, change record, approval/lifecycle event, canonical file update and `HEAD.yaml` update. The previous head commit is its parent. A failed or conflicting update leaves the prior head untouched.
 
 A later dedicated ledger may replace the interim current-head lookup only by approved migration. Historical Shelf pins remain valid evidence and must remain resolvable.
 
@@ -344,11 +384,12 @@ These checks are mechanical. The harness must not interpret natural-language int
 
 Input: requested project ID and scope ID; trusted Shelf repository/ref configuration.
 
-1. Resolve the approved current-head evidence record from the configured authoritative Shelf head.
-2. Require exactly one CURRENT head for `DUENNA-STAYTRUE`.
-3. Retrieve the exact edition snapshot, change record, approval evidence, and delegation evidence if referenced.
-4. Verify all references resolve at the pinned commit.
-5. If zero or multiple current heads exist, return `NO_CURRENT_HEAD` or `CONFLICTING_CURRENT_HEADS` and STOP.
+1. Resolve the configured Shelf branch to one full commit SHA.
+2. Retrieve `duenna/staytrue/HEAD.yaml` at that commit and require exactly one current-head declaration for `DUENNA-STAYTRUE`.
+3. Verify that the referenced CURRENT event, edition, evidence manifest and change record exist at that same commit and agree with the pointer.
+4. Retrieve the exact edition snapshot, approval evidence, and delegation evidence if referenced.
+5. Verify all references resolve at the pinned commit.
+6. If the pointer is absent, malformed, or internally inconsistent, return `NO_CURRENT_HEAD` or `CONFLICTING_CURRENT_HEADS` and STOP.
 
 ### 11.2 Verify digest and identity
 
@@ -372,6 +413,8 @@ The digest establishes byte identity only. It does not establish owner approval,
 6. Missing or inconsistent evidence returns `APPROVAL_UNVERIFIED` or `DELEGATION_INVALID`; STOP.
 
 A worker's statement that Ben approved, a name typed into a file, or a commit authored by a trusted collaborator is not approval evidence by itself.
+
+**Authentication boundary:** this draft does not assume that Git commit authorship authenticates Ben or a delegate. Before implementation, the approval-evidence source and its verification method must be explicitly designated and approved. If the harness cannot verify the owner/delegate provenance from that designated source, it returns `APPROVAL_UNVERIFIED`; a Shelf commit alone cannot cure that gap.
 
 ### 11.4 Verify applicability
 
@@ -398,6 +441,7 @@ No fuzzy matching, project-name similarity, inferred parent/child relationship, 
 
 At each harness-defined governed action boundary, compare the current head for `DUENNA-STAYTRUE` with the run's pinned edition.
 
+- Resolve the configured Shelf branch and read `HEAD.yaml` at its latest commit; verify the pointer and its event chain as in §11.1.
 - If the current head is unchanged, continue.
 - If the current head has advanced but its declared project/scope applicability does not include the run's exact project/scope, retain the original binding and continue. Record the observed head and non-overlap result.
 - If the new current edition explicitly includes the run's exact project/scope, pause before the next governed action and return `TETHER_ADVANCED_REVIEW_REQUIRED`.
