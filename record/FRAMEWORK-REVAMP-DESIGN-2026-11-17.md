@@ -4,8 +4,9 @@
 2026-11-16 20:18 MST ("Let's pick it up"), in the owner's sequence:
 pre-flight → smoke (PASS, adjudicated 2026-11-16) → **revamp** →
 battery.
-**Status:** DESIGN. This paper authorises no build. Every build that
-falls out of it needs its own owner approval.
+**Status:** ADOPTED — framework of record (owner's tap, main chat,
+2026-11-17 02:09 MST). This paper authorises no build. Every build
+that falls out of it needs its own owner approval.
 **Revision:** 2026-11-17 — six documentary corrections applied per
 Alex's review (`record/ALEX-FRAMEWORK-REVAMP-DESIGN-REVIEW-2026-11-17.md`
 @ b6b39002): smoke provenance (§2), Shelf/RECORD distinction (§3),
