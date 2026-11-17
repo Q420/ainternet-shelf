@@ -33,9 +33,26 @@ A direct factual comparison to the source. A distilled shipment
 passes its gate by being compared, factually and directly, against
 the source it was distilled from.
 
-## 5. Three-shelf taxonomy vs Comparator terminus — EXPLANATION REQUESTED
-No ruling yet. The owner asked for a plain-words explanation of the
-tension before deciding. Explanation given in main chat 2026-11-17.
+## 5. Three-shelf taxonomy vs Comparator terminus — RULED
+The owner's model (main chat, 2026-11-17 01:40 MST, his words):
+"Things from the library are validated. They trickle down to the
+shelf. Then once they're in the shelf they're absolutely double
+checked and considered fact and then from there they trickle down
+to Exxon."
+
+The structure is a cascade, not rival shelves:
+- LIBRARY (the AInternet, the whole collection): things are
+  VALIDATED before moving down.
+- SHELF: validated things trickle down onto the shelf; once on the
+  shelf they are absolutely double-checked and CONSIDERED FACT.
+  The shelf is the fact layer.
+- EXON: fact trickles down from the shelf into EXON — the distilled,
+  addressed, operational form of the shelf's fact. EXON's authority
+  is inherited from the shelf; its failure mode is fidelity
+  (mis-distilling fact), never sourcing.
+The Comparator terminus holds unchanged: EXON is the reference side
+because it is fact in working form; beneath it sits only the same
+fact undistilled, so no further checking layer exists above it.
 
 ## 6. Custody venue — RULED
 Ben's laptop. Custody-grade governed runs run in the laptop room,
