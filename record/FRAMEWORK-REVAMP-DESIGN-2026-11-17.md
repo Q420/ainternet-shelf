@@ -6,6 +6,12 @@ pre-flight → smoke (PASS, adjudicated 2026-11-16) → **revamp** →
 battery.
 **Status:** DESIGN. This paper authorises no build. Every build that
 falls out of it needs its own owner approval.
+**Revision:** 2026-11-17 — six documentary corrections applied per
+Alex's review (`record/ALEX-FRAMEWORK-REVAMP-DESIGN-REVIEW-2026-11-17.md`
+@ b6b39002): smoke provenance (§2), Shelf/RECORD distinction (§3),
+mechanical-only WW fidelity (§4.3), gate ownership (§5 step 5),
+close-declaration status (§5 step 7), and the two omitted Step 6
+carried items (§10).
 **Comparison basis:** the owner's Stage 1 skeleton and Alex's
 independent map (`record/ALEX-STEP6-REVAMP-INDEPENDENT-MAP-2026-11-17.md`
 @ e19c59a4) were compared before drafting; where the two maps
@@ -55,8 +61,11 @@ through it. EXAMINER SURFACE depends on RECORD, the pinned contract
 and the reproduction rules — never on EVALUATOR outputs.
 
 The pilot (harness, driver, adapter, supervisor) is the first
-working slice of this spine, live-proven by the Stage 6 smoke
-(2026-11-16: one governed call, full traversal, Alex 12/12 PASS).
+working slice of this spine. Its Stage 6 smoke ran on 2026-11-17 as
+one authorised SUPERVISOR-LESS call (STAGE6SMOKE-20261117-001):
+full T04 traversal, RUN_CLOSED, and all 12 smoke pass-bar checks
+PASS. It was not a custody-wrapped governed run and is not a
+custody precedent.
 
 ## 3. The cascade — Library / Shelf / EXON (owner's ruling, joint 5)
 
@@ -69,9 +78,11 @@ there they trickle down to Exxon."
 - **LIBRARY** — the AInternet: the whole collection. Everything in
   it is unproven. Material is **validated** before it may move down.
 - **SHELF** — validated material lands here and is **absolutely
-  double-checked**; shelf residence is fact status. The shelf is the
-  fact layer, and in Step 6 terms it is the RECORD's content face:
-  preserved whole, append-only, addressable.
+  double-checked**; shelf residence is fact status. The Shelf is the
+  knowledge-side fact layer. Duenna RECORD can preserve the Shelf
+  and EXON artefacts, their pins and provenance as evidence; this is
+  a defined relationship, not an assertion that the Shelf and Duenna
+  RECORD are identical.
 - **EXON** — fact trickles down from the shelf into EXON: the
   distilled, addressed, operational form of the shelf's fact — its
   glossary and index, in the language all programme records are
@@ -169,8 +180,12 @@ Briefcase, in two parts with two different guarantees:
   bound by BINDER to a pinned contract. The Binder cannot choose what
   is required; the Distiller cannot authorise its own scope.
 - **Warehouse Worker (WW)** — inspection: validates the shipment's
-  form and verifies its fidelity against the pinned source. Its
-  receipt is a RECORD artefact. Packing failure splits in two:
+  form and verifies its **mechanical fidelity** against the pinned
+  source (hash and byte equality, enumeration, presence, counts,
+  address resolution, schema and pin correctness). Judgment respects
+  are outside the WW's remit entirely — they are declined in the
+  receipt and routed to the owner (§4.3, joint 7). Its receipt is a
+  RECORD artefact. Packing failure splits in two:
   **selection failure** (the wrong material) vs **fidelity failure**
   (the material misstates its source). Fidelity to the shelf is not
   truth of the shelf — under the cascade (§3) the shelf is fact, so
@@ -239,11 +254,14 @@ form, and beneath it sits only the same fact undistilled.
    at boot, Available discoverable in the case, Historical
    addressable by reference — with source coordinates and the map's
    pin preserved in the shipment.
-5. **Warehouse Worker inspects; the gate.** The WW validates form
-   and verifies fidelity; the Comparator re-performs the comparison
-   (the gate, §4.3). The shipment is released only on the gate
-   condition; failures are recorded with their class — selection or
-   fidelity — and failed attempts remain evidence.
+5. **Warehouse Worker inspects; the gate.** The WW emits its
+   mechanical receipt. The Comparator independently re-performs the
+   source/shipment comparison and emits the diff. The fixed F5
+   enforcement rule applies the owner-defined gate condition to that
+   diff; the Comparator issues no verdict and does not decide
+   release. The shipment is released only on the gate condition;
+   failures are recorded with their class — selection or fidelity —
+   and failed attempts remain evidence.
 6. **The agent works in an isolated case.** It retrieves Available
    material on demand and Historical fragments only through permitted
    addresses, records its work and provenance in its own case, and
@@ -253,8 +271,12 @@ form, and beneath it sits only the same fact undistilled.
    could the next agent understand what was done and why, from the
    case and its EXON addresses alone?). The deliverable and
    provenance persist; transient working context is discarded; the
-   closed case is indexed for selective retrieval. The author does
-   not self-certify the close.
+   closed case is indexed for selective retrieval. The agent's close
+   declaration records its completion claim; it does not
+   independently verify the truth or quality of the work. An
+   independent cold-read close certification remains a separate,
+   unadopted design decision (a Kit-session candidate), not a
+   requirement of this tree.
 8. **Compare.** The Comparator compares the named output record
    against the pinned EXON reference under the pinned procedure and
    reports exact differences, with enough material to re-perform.
@@ -370,9 +392,11 @@ listed here.
 
 - The Step 6 architecture's own carried items (stream-entry
   correction, checker-verdict correction, discharge-record
-  supersession, LINK equivalence, the provisional identity taxonomy)
-  remain carried by that architecture and its Step 7 line; the
-  revamp neither solves nor inherits them silently.
+  supersession, LINK equivalence, the provisional identity taxonomy,
+  and the unresolved audit items CANON-1 excluded paths (U-1) and
+  the Family E schema (U-3)) remain carried by that architecture and
+  its Step 7 line; the revamp neither solves nor inherits them
+  silently.
 - The battery: preparation, custody re-establishment in the laptop
   room, and execution each need their own steps under the owner's
   sequence; the pass bar is set, the execution is not authorised by
