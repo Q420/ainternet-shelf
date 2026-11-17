@@ -259,7 +259,7 @@ Required fields:
 - `delegation_id` — unique immutable ID;
 - `delegator` — Ben's authenticated principal;
 - `delegate` — exact authenticated principal permitted to act;
-- `act_class` — exact value `APPROVE_STAYTRUE_EDITION`;
+- `act_class` — one exact value from the enumerated set: `APPROVE_STAYTRUE_EDITION` or `APPROVE_STAYTRUE_WORKAROUND`. The latter authorises approval/rejection of a workaround proposal only within the delegation's recorded project/scope and conditions; it does not authorise editing Staytrue or approving an edition unless the separate edition act is also granted.
 - `item_id` — `DUENNA-STAYTRUE`;
 - `project_ids` and `scope_ids` — explicit bounded scope; no implicit global authority;
 - `conditions` — any exact restrictions;
@@ -270,7 +270,7 @@ Required fields:
 
 The harness validates delegate identity, act class, item, project/scope membership, time window, use limit, conditions and revocation status. Missing, ambiguous, expired, revoked or out-of-scope delegation is invalid. It does not fall back to inferred authority.
 
-The approval event must record the delegation ID and the exact scope entry approved. A delegation for one project or scope cannot approve another. A delegation does not transfer or enlarge itself.
+The approval event must record the delegation ID, act class, and exact scope entry or workaround proposal approved. For `APPROVE_STAYTRUE_WORKAROUND`, it must also identify the exact run ID and proposal ID. A delegation for one project or scope cannot approve another. A delegation does not transfer or enlarge itself.
 
 ### 7.4 Lifecycle event record
 
@@ -522,9 +522,9 @@ status: "PROPOSED"
 approval_ref: null
 ```
 
-The proposal must identify the failed task and supporting evidence, describe the alternative, and make the delta against the exact pinned edition explicit. It must not rewrite the tether, alter the run binding, or describe itself as approved.
+The proposal must identify the failed task and supporting evidence, describe the alternative, and make the delta against the exact pinned edition explicit. `requires_tether_edition_change` must be a boolean: `true` when any settled tether term would change; `false` only when the requested workaround is a run-scoped deviation that leaves the standing tether unchanged. It must not rewrite the tether, alter the run binding, or describe itself as approved. The approval record must identify the exact proposal ID, run ID, pinned edition, decision (`APPROVED` or `REJECTED`), approver, authority type, delegation ID if applicable, permitted actions/limits, and approval evidence reference.
 
-The proposal enters the same authority chain used for changes to settled intent: Ben, or a delegate whose recorded delegation explicitly covers the relevant approval act and scope. The authority must approve or reject the exact proposal and its tether delta. Silence, receipt, acknowledgement, or a worker's own assessment is not approval.
+The proposal enters the same authority chain used for changes to settled intent: Ben, or a delegate whose recorded delegation explicitly covers the relevant approval act and scope. For a delegate, the required act class is `APPROVE_STAYTRUE_WORKAROUND`; `APPROVE_STAYTRUE_EDITION` alone does not imply workaround-approval authority. The authority must approve or reject the exact proposal and its tether delta. Silence, receipt, acknowledgement, or a worker's own assessment is not approval.
 
 If accepted workaround changes settled intent, scope, constraints, exclusions, acceptance conditions, or any other tethered term, it cannot be executed until a new Staytrue edition has been prepared, approved and made CURRENT through the normal lifecycle. If the authority instead approves a strictly run-scoped deviation without changing the standing tether, that approval must explicitly identify the exact run, pinned edition, proposal ID, permitted actions and limits; it does not alter the tether or authorise reuse in another run. The harness verifies the approval record and scope mechanically. If the approval's classification or bounds are missing or ambiguous, STOP.
 
