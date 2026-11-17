@@ -60,8 +60,18 @@ where the supervisor chain works. The VM is disproved for that class
 of run (NoNewPrivs=1, measured 2026-11-16). The supervisor-less smoke
 remains a one-call exception, not a precedent.
 
-## 7. Warehouse Worker receipt re-performance — REFERRED
-Discuss with Claude. The owner has ruled who ends the checking chain
-(the Comparator, by comparison; judgment at the owner). How a WW
-receipt is independently re-performed in practice goes to Claude for
-discussion before the owner rules.
+## 7. Warehouse Worker receipt re-performance — DISCUSSED, AWAITING RULING
+Referred to Claude; his discussion is filed at
+record/CLAUDE-WW-RECEIPT-REPERFORMANCE-DISCUSSION-2026-11-17.md.
+His line: make the receipt mechanical (enumerations and hashes, not
+conclusions); the Comparator re-performs the mechanical comparison
+from source and shipment directly and emits the diff record; a
+second independent implementation checks the Comparator's tooling;
+judgment claims are never re-checked by a checker — they are
+declined in the receipt or escalated to the owner. Deterministic
+checks run on every shipment; judgment claims are sampled (seeded
+from the pin, chosen by the Comparator) or escalated on dispute.
+Three questions are put to the owner: which respects count as
+deterministic vs judgment; whether the seeded sample and what rate;
+whether a zero-unmatched diff passes automatically or the owner
+defines "matched." Owner ruling pending.
