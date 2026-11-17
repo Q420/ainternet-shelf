@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/srv/nemotron-pilot/batch6-g2/harness/pilot-harness", line 135, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/srv/nemotron-pilot/batch6-g2/harness/pilot-harness", line 117, in main
+    assert driver.run_id == expected_run_id, (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: driver run id G4CORR-20261117-002 != supervisor's G4CORR-20261117-001
