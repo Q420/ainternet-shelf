@@ -35,6 +35,7 @@ jobs:
           sudo cp $STAGE/g4corr_harness.py $G2/harness/pilot-harness
           sudo chmod 755 $G2/harness/pilot-harness
           sudo cp $STAGE/pilot_supervisor.py $G2/sup/pilot_supervisor.py
+          sudo cp $STAGE/stack/work/pilot_jcs.py $G2/sup/pilot_jcs.py
           sudo bash $STAGE/gen_identity_records.sh $G2/harness/pilot-harness /usr/bin/python3 $STAGE/identity_records.h
           sudo python3 $STAGE/write_identity_records.py $G2
           sudo gcc -O2 -DPILOT_TEST_HOOKS -DHARNESS_PATH="\"$G2/harness/pilot-harness\"" -I$STAGE -o $G2/launcher-scratch $STAGE/launcher-c3.c
