@@ -1,0 +1,49 @@
+{
+ "verdict": "NOT_FEASIBLE",
+ "checks": {
+  "no_new_privs": {
+   "status": "FAIL",
+   "detail": "NoNewPrivs=1 (1 = kernel ignores setuid = custody impossible)"
+  },
+  "seccomp": {
+   "status": "INFO",
+   "detail": "2"
+  },
+  "mount_setuid": {
+   "status": "PASS",
+   "detail": "test dir /srv/.venue-probe-tmp on / options=rw,relatime,lowerdir=/sysroot,upperdir=/run/hatch/overlay/upper,workdir=/run/hatch/overlay/work,redirect_dir=on,uuid=on,xino=on,metacopy=on,fsync=volatile,nouserxattr"
+  },
+  "setuid_elevation": {
+   "status": "FAIL",
+   "detail": "helper as nobody: uid=65534 euid=65534"
+  },
+  "loopback_bind": {
+   "status": "PASS",
+   "detail": "bound+connected on 127.0.0.1:54935"
+  },
+  "tool_gcc": {
+   "status": "PASS",
+   "detail": "/usr/bin/gcc"
+  },
+  "tool_python3": {
+   "status": "PASS",
+   "detail": "/usr/bin/python3"
+  },
+  "tool_useradd": {
+   "status": "PASS",
+   "detail": "/usr/sbin/useradd"
+  },
+  "tool_systemctl": {
+   "status": "PASS",
+   "detail": "/usr/bin/systemctl"
+  },
+  "resources": {
+   "status": "INFO",
+   "detail": "cpus=4 disk_free_gb=7 MemTotal:        8124900 kB"
+  },
+  "outbound_https": {
+   "status": "UNKNOWN",
+   "detail": "not tested (no live call in this test scope)"
+  }
+ }
+}
