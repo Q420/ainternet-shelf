@@ -83,7 +83,7 @@ For project `<project_id>`, the item ID is exactly `STAYTRUE-<project_id>`; ever
 
 - Each project's `Staytrue.md` is the sole standing/current file for that project.
 - `editions/` contains the complete byte-preserved snapshot of every edition that reached APPROVED.
-- `changes/` contains one immutable submitted snapshot per proposed transition, including rejected and withdrawn proposals.
+- `proposals/` contains the exact immutable candidate edition bytes submitted for approval. `changes/` contains one immutable submitted change-record snapshot per proposed transition, including rejected and withdrawn proposals.
 - `evidence/` contains detached edition evidence manifests, including full digests and Shelf pins.
 - `events/` contains immutable lifecycle and authority events.
 - `HEAD.yaml` is the one current-head pointer for that project's item.
@@ -98,7 +98,7 @@ Every edition contains these three top-level sections in this order:
 
 ### 4.1 Standing rules
 
-Rules intended to persist across projects and scopes. They remain operative unless changed by an approved edition. Each rule should have a stable rule ID within the file to make changes traceable. The harness may check IDs and schema, but it must not infer a rule's meaning.
+Rules intended to persist across scopes within this one project. They remain operative unless changed by an approved edition. Each rule should have a stable rule ID within the file to make changes traceable. The harness may check IDs and schema, but it must not infer a rule's meaning.
 
 ### 4.2 Edition control settings
 
@@ -571,13 +571,13 @@ Each result records run/change ID, input pins, check procedure/version, observed
 
 ## 13. Invariants
 
-1. Exactly one canonical standing file exists at the designated path.
-2. Every approved edition has a unique immutable edition ID and complete retained bytes.
+1. Each project has exactly one canonical standing file at its project-specific path; no two projects share a Staytrue item, edition chain, head or history.
+2. Every approved edition has a unique immutable edition ID within its project item and complete retained bytes.
 3. No approved edition or change record is overwritten.
 4. Every CURRENT edition has one verifiable approval event.
 5. Every delegated approval resolves to a valid, prior, bounded delegation.
-6. Every run binding pins edition ID, full digest and immutable Shelf location.
-7. A run binds only to an edition explicitly applicable to its exact project and scope.
+6. Every run binding pins project-bound item ID, edition ID, full digest, immutable Shelf location and bound head commit.
+7. A run binds only to its own project's item and an edition explicitly applicable to its exact scope.
 8. A later edition does not mutate an existing run binding.
 9. A relevant mid-run head advance requires an explicit authority decision before further governed action.
 10. Hashes and deterministic checks never claim to establish semantic fidelity to owner intent.
