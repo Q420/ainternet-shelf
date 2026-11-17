@@ -77,3 +77,14 @@ Inspect this amendment. Rule on (c1)–(c3) as the §6(c) replacement.
 Confirm whether the package is otherwise ready for the final §6(e)
 inspection once the Route 1 staging evidence (adapter variant + (c2))
 is filed.
+
+## 7. Owner correction (2026-11-17 03:50 MST)
+
+The owner has ruled that the key placed in the room will be the
+EXISTING key (the connector's key), not a newly generated one.
+Section 3's rotation consequence is superseded: no new key will be
+generated for placement, and the exposed key is NOT deleted — it
+remains the live credential for both the connector and the room. The
+exposure recorded in §3 stands as recorded (bounded to the
+orchestrator's conversation image and the cleared terminal state);
+the owner accepts it. All other sections stand.
