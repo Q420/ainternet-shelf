@@ -5,7 +5,13 @@ examiner's (Alex's) examination and ruling. NOT in force until
 Alex approves it. **Rev 02 (2026-11-16):** §3 invocation
 contract added, per Alex's examination
 (record/ALEX-DUENNA-SPEC01-EXAMINATION-2026-11-16.md) —
-documentation correction only; no other change. Authorised by: the owner's decision for the
+documentation correction only; no other change. **Rev 03
+(2026-11-16):** the §3 invocation contract's assertion-order
+claim corrected, per Alex's Rev 02 ruling
+(record/ALEX-DUENNA-REV02-RULING-2026-11-16.md) — Rev 02
+misstated when the harness validates the run ID; the
+correction is verified against smoke_harness.py lines
+95/118/123/124. Documentation only; no other change. Authorised by: the owner's decision for the
 supervisor-less shape (Ben, main chat, 2026-11-16 17:36 MST —
 tap plus words, the amendment consequence stated on the face
 of the choice), made after Alex's venue ruling
@@ -59,20 +65,24 @@ plainly in §4.
   The session's full console output is captured to a log filed
   with the record.
 - **Invocation contract (the run ID).** The harness requires
-  the expected run ID as its sole command-line argument
-  (smoke_harness.py: `expected_run_id = sys.argv[1]`) and
-  asserts the driver's derived ID equals it immediately after
-  Driver construction, before any tree executes — a mismatch
-  aborts before any adapter call. The driver derives the ID as
-  `STAGE6SMOKE-<UTC date>-<seq>`, seq being one plus the count
-  of existing run directories in the runs root with that
-  prefix. Remmy therefore computes the expected ID by the same
-  rule before firing — with the fresh, empty runs root this
-  specification mandates, it is `STAGE6SMOKE-<UTC date>-001` —
-  and invokes exactly:
+  the expected run ID as its sole command-line argument and
+  reads it at startup (smoke_harness.py line 95:
+  `expected_run_id = sys.argv[1]`). It compares that value
+  with `driver.run_id` only AFTER `driver.run(SUBSET)` returns
+  (line 124; the run executes at line 123) — the comparison is
+  a **post-execution consistency check, not a gate**: a
+  mismatch does not prevent execution or any adapter call, and
+  no part of the one-call guarantee rests on it (that guarantee
+  rests on the tree shape and the smoke config, §3 above). The
+  driver derives the ID as `STAGE6SMOKE-<UTC date>-<seq>`, seq
+  being one plus the count of existing run directories in the
+  runs root with that prefix. Remmy therefore computes the
+  expected ID by the same rule before firing — with the fresh,
+  empty runs root this specification mandates, it is
+  `STAGE6SMOKE-<UTC date>-001` — and invokes exactly:
   `SMOKE_MODE=live PILOT_RUNS_ROOT=<fresh root> python3 smoke_harness.py STAGE6SMOKE-<UTC date>-001`.
-  The filed evidence checks the run record's own run_id
-  against the passed value.
+  During adjudication the run record's own run_id is
+  independently checked against the supplied value.
 - One-call bound: guaranteed by the tree shape (T04's single
   MODEL step, recovery None → driver max_attempts 1), by the
   smoke config (retry max_attempts 1), and by the preventive
