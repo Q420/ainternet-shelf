@@ -44,23 +44,32 @@ the adjudication).
 
 ## 2. Budget enforcement (preventive ceilings)
 
-Rule: an instance's worst case — every model step attempted the
-frozen maximum number of times, every call returning the maximum
-completion, plus a conservative per-call input allowance — must
-not exceed 50,000 tokens. Input allowance: 2,048 tokens per call
-(the smoke's real input was 190; pack prompts are bounded and
-will be measured from the pack before this assembly is final —
-see §6 verification (a)).
+Rule: an instance's worst case — every model call the tree can
+produce (model steps × TREE-level attempts × ADAPTER attempts),
+every call returning the maximum completion, plus a per-call
+input allowance — must not exceed 50,000 tokens. Input
+allowance: 2,048 tokens per call, CONFIRMED by measurement
+(`duenna/STAGE6-BATTERY-INPUT-MEASUREMENT-2026-11-17.md`;
+largest measured call ~1,179 tokens; the two conditional
+recovery calls bounded by construction in
+`duenna/STAGE6-BATTERY-PREPARATION-CORRECTIONS-2026-11-17.md`).
 
 Frozen adapter values retained: temperature 0.6, top_p 0.95,
 retry max_attempts 2, thinking enabled, reasoning budget 16384,
-stream false. The one derived value is per-instance max_tokens:
+stream false. The one derived value is per-instance max_tokens,
+set by the instance's true worst-case call count:
 
-- Single-step instances (12): max_tokens stays at the frozen
-  20,480. Worst case: 2 attempts × (20,480 + 2,048) = 45,056
-  ≤ 50,000. ✓
-- T03 (2 steps): max_tokens 10,240. Worst case: 2 steps ×
-  2 attempts × (10,240 + 2,048) = 49,152 ≤ 50,000. ✓
+- 2-call instances (T04, T06, T07, T09 ×5): frozen 20,480
+  retained. Worst case: 2 × (20,480 + 2,048) = 45,056 ≤ 50,000. ✓
+- 4-call instances (T01, T02, T05, T08): max_tokens 10,240.
+  Worst case: 4 × (10,240 + 2,048) = 49,152 ≤ 50,000. ✓
+- T03 (6 calls across its two steps): max_tokens 6,144.
+  Worst case: 6 × (6,144 + 2,048) = 49,152 ≤ 50,000. ✓
+
+(Revision note, 2026-11-17: the original derivation counted
+steps × adapter attempts only and undercounted instances whose
+model steps carry tree-level recovery attempts; corrected in
+the corrections document above, §2.)
 
 Actual usage is accounted from the adapter captures by the
 harness budget ledger; a cap hit records BUDGET_EXHAUSTED for
@@ -93,6 +102,19 @@ no credential, honours no proxy, and is loopback-only by design
 dynamic surrogate is minted by the VM-side authd over a Unix
 socket and swapped for the real credential by Sentinel at the
 VM's egress; neither exists on the laptop.
+
+Trust position: the relay is part of the TRUSTED transport
+path. It receives the complete request, attaches the surrogate
+and forwards the request; it can therefore affect the integrity
+and confidentiality of the model interaction. It is not a
+transparent or untrusted conduit, and never receiving the real
+credential does not remove it from the trust boundary. The
+run's trust evidence binds the relay: its artefact and
+configuration are pinned by hash in the custody evidence; the
+upstream is fixed by construction (below); forwarding is
+faithful (verified in §6 test mode); no headers, bodies or
+credential material persist in its logs; and its failure
+produces transport errors, never a direct-connection fallback.
 
 Design:
 
