@@ -1,0 +1,5 @@
+2026-11-17T10:01:25Z relay listening on 127.0.0.1:18923 mode=TEST
+2026-11-17T10:01:27Z relay outcome=TEST_CAPTURE status=200 bytes=262
+2026-11-17T10:01:27Z relay outcome=REFUSED_PATH status=404 bytes=20
+2026-11-17T10:01:27Z relay outcome=REFUSED_PATH status=404 bytes=20
+2026-11-17T10:01:27Z relay outcome=REFUSED_METHOD status=405 bytes=20

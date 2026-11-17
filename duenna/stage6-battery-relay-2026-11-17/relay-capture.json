@@ -1,0 +1,11 @@
+{
+ "mode": "TEST-CAPTURE",
+ "recorded_at_utc": "2026-11-17T10:01:27Z",
+ "upstream_url": "https://integrate.api.nvidia.com/v1/chat/completions",
+ "method": "POST",
+ "authorization_present": true,
+ "authorization_scheme": "Bearer",
+ "surrogate_prefix_ok": true,
+ "body_bytes": 287,
+ "body_sha256": "f6802b73a4ab13ac8f8a38c04807270e950e1a1379a607d7b1308efb42bd65f2"
+}
