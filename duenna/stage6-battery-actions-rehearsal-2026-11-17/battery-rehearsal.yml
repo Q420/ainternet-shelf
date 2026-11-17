@@ -1,0 +1,78 @@
+name: battery-rehearsal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Custody probe (fail-closed)
+        run: |
+          sudo VENUE_PROBE_DIR=/srv python3 probe_host.py > probe-raw.json
+          python3 -c "
+          import json, sys
+          r = json.load(open('probe-raw.json'))
+          print('probe verdict:', r['verdict'])
+          sys.exit(0 if r['verdict'] == 'CUSTODY_FEASIBLE' else 1)
+          "
+
+      - name: Build the room
+        run: |
+          set -eux
+          G2=/srv/nemotron-pilot/batch6-g2
+          STAGE=$GITHUB_WORKSPACE/rehearsal
+          sudo useradd --system --no-create-home --shell /usr/sbin/nologin pilot-supervisor || true
+          sudo useradd --system --no-create-home --shell /usr/sbin/nologin pilot-harness || true
+          sudo mkdir -p $G2/harness/g4corr $G2/sup $G2/runs $G2/commitments $G2/logs $G2/evidence
+          sudo cp -r $STAGE/stack/work $STAGE/stack/data $STAGE/stack/snapshot $G2/harness/g4corr/
+          sudo cp $STAGE/g4corr_harness.py $G2/harness/pilot-harness
+          sudo chmod 755 $G2/harness/pilot-harness
+          sudo cp $STAGE/pilot_supervisor.py $G2/sup/pilot_supervisor.py
+          sudo bash $STAGE/gen_identity_records.sh $G2/harness/pilot-harness /usr/bin/python3 $STAGE/identity_records.h
+          sudo python3 $STAGE/write_identity_records.py $G2
+          sudo gcc -O2 -DPILOT_TEST_HOOKS -DHARNESS_PATH="\"$G2/harness/pilot-harness\"" -I$STAGE -o $G2/launcher-scratch $STAGE/launcher-c3.c
+          sudo chown root:pilot-supervisor $G2/launcher-scratch
+          sudo chmod 4710 $G2/launcher-scratch
+          sudo chown -R pilot-supervisor:pilot-supervisor $G2/sup $G2/runs $G2/commitments $G2/logs $G2/evidence
+          find $G2/harness/g4corr -type f | sort | xargs sha256sum | sed "s|$G2/harness/g4corr/||" > room-stack.sha256
+          cat room-stack.sha256
+
+      - name: Fire the rehearsal run (stub subject, no live call)
+        run: |
+          G2=/srv/nemotron-pilot/batch6-g2
+          RID="G4CORR-$(date -u +%Y%m%d)-001"
+          echo "RID=$RID" >> $GITHUB_ENV
+          echo "REHEARSAL RUN ID: $RID"
+          sudo python3 rehearsal/g2_run.py "$RID" || true
+          ls $G2/runs/$RID
+
+      - name: Collect rehearsal results
+        if: always()
+        run: |
+          G2=/srv/nemotron-pilot/batch6-g2
+          OUT=rehearsal-results/$RID
+          mkdir -p $OUT
+          sudo cp probe-raw.json $OUT/probe-result.json || true
+          sudo cp room-stack.sha256 $OUT/room-stack.sha256 || true
+          sudo cp -r $G2/runs/$RID $OUT/run || true
+          sudo cp $G2/logs/$RID.stdio.log $OUT/$RID.stdio.log || true
+          for f in $G2/commitments/*$RID*; do sudo cp "$f" $OUT/ 2>/dev/null || true; done
+          sudo python3 rehearsal/summarise_run.py $G2/runs/$RID $RID $OUT/rehearsal-result.json || true
+          sudo chown -R $(id -u):$(id -g) rehearsal-results || true
+          ls -R rehearsal-results | head -50
+
+      - name: File rehearsal results back to repo
+        if: always()
+        run: |
+          git config user.name "battery-rehearsal"
+          git config user.email "battery-rehearsal@localhost"
+          git add rehearsal-results
+          git commit -m "Battery rehearsal results (Actions venue)" || echo "nothing to commit"
+          git push
