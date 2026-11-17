@@ -76,10 +76,10 @@ harness budget ledger; a cap hit records BUDGET_EXHAUSTED for
 the instance (not passed), and 3 exhaustions across the battery
 halt the run for review, per the decided rules.
 
-Open for the examiner: whether retry stays at the frozen
-max_attempts 2 for the battery (the smoke cut it to 1 as a
-one-call-run derivation; here it is retained and bounded by the
-max_tokens derivation above).
+Retry policy: RULED by the examiner (revised budget ruling,
+2026-11-17) — the frozen max_attempts 2 is retained for the
+battery; the smoke's cut to 1 was specific to that run and
+does not supersede the frozen policy.
 
 ## 3. Venue and custody
 

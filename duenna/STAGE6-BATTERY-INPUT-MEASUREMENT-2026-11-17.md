@@ -50,17 +50,23 @@ the largest. The §2 budget derivation stands unchanged for the
 twelve measured calls (T03's largest single call bounds at ~605,
 far under the allowance its worst case assumed).
 
-## Open: T05-STEP-06 and T08-STEP-04
+## T05-STEP-06 and T08-STEP-04 — bounded by construction (not measured)
 
 No capture in any rehearsal run on record (G4 stub battery,
 G4 correction runs, Step 2 restoration) contains a request for
-T05-STEP-06 or T08-STEP-04: in every rehearsal to date, those
-two trees completed without reaching their model steps, although
-PILOT-CALIBRATION-02 lists a stubbed model step for each. Their
-inputs are therefore NOT measured here. Next preparation step:
-construct both requests directly by driving those trees in stub
-mode under the battery pack resolution, and put the discrepancy
-(rehearsals never call; calibration expects a call) to the
-examiner with the measurement package.
+T05-STEP-06 or T08-STEP-04. Both are RECOVERY steps,
+conditional on a validation failure the pinned pack does not
+produce, so they have never fired; the calibration's
+`stubbed_model_steps` enumerates the model steps present in
+each tree, not a guarantee of firing — there is no discrepancy.
+
+Their inputs remain UNMEASURED. They are instead bounded by
+construction from the driver builders
+(`op_t05_correct_inputs`, `op_t08_recovery_inputs`), as filed
+in `duenna/STAGE6-BATTERY-PREPARATION-CORRECTIONS-2026-11-17.md`
+§1: T08-STEP-04 ≈ 1,530 tokens; T05-STEP-06 ≈ 2,000 tokens,
+both within the 2,048 allowance. The examiner accepted these
+as source-derived bounds, explicitly not measured results
+(revised budget ruling, 2026-11-17).
 
 Filed by Remmy, 2026-11-17. No live call was made or needed.
