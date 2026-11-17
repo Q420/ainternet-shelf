@@ -41,7 +41,8 @@ jobs:
           sudo gcc -O2 -DPILOT_TEST_HOOKS -DHARNESS_PATH="\"$G2/harness/pilot-harness\"" -I$STAGE -o $G2/launcher-scratch $STAGE/launcher-c3.c
           sudo chown root:pilot-supervisor $G2/launcher-scratch
           sudo chmod 4710 $G2/launcher-scratch
-          sudo chown -R pilot-supervisor:pilot-supervisor $G2/sup $G2/runs $G2/commitments $G2/logs $G2/evidence
+          sudo chown pilot-supervisor:pilot-supervisor $G2/commitments $G2/logs $G2/evidence
+          sudo chown pilot-harness:pilot-harness $G2/runs
           sudo chmod 700 $G2/commitments
           find $G2/harness/g4corr -type f | sort | xargs sha256sum | sed "s|$G2/harness/g4corr/||" > room-stack.sha256
           cat room-stack.sha256
