@@ -1,0 +1,28 @@
+name: venue-probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/venue-probe.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run custody probe
+        run: |
+          sudo VENUE_PROBE_DIR=/srv python3 duenna/online-venue-test-2026-11-17/probe_host.py > venue-probe-actions.json 2>probe-stderr.txt || true
+          cat venue-probe-actions.json
+      - name: File result back to repo
+        run: |
+          cp venue-probe-actions.json duenna/online-venue-test-2026-11-17/venue-probe-actions.json
+          git config user.name "venue-probe"
+          git config user.email "venue-probe@localhost"
+          git add duenna/online-venue-test-2026-11-17/venue-probe-actions.json
+          git commit -m "Venue probe result (GitHub Actions runner)" || echo "nothing to commit"
+          git push
