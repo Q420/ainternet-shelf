@@ -2,7 +2,10 @@
 
 **Status:** Drafted by Remmy under the owner's decision; for the
 examiner's (Alex's) examination and ruling. NOT in force until
-Alex approves it. Authorised by: the owner's decision for the
+Alex approves it. **Rev 02 (2026-11-16):** §3 invocation
+contract added, per Alex's examination
+(record/ALEX-DUENNA-SPEC01-EXAMINATION-2026-11-16.md) —
+documentation correction only; no other change. Authorised by: the owner's decision for the
 supervisor-less shape (Ben, main chat, 2026-11-16 17:36 MST —
 tap plus words, the amendment consequence stated on the face
 of the choice), made after Alex's venue ruling
@@ -52,10 +55,24 @@ plainly in §4.
   exactly as inspected and accepted in the assembly inspection
   (record/ALEX-DUENNA-SMOKE-ASSEMBLY-INSPECTION-2026-11-16.md).
 - Invocation: one execution session, run by Remmy, environment
-  SMOKE_MODE=live and PILOT_RUNS_ROOT set to a fresh runs root;
-  the driver derives the run id (STAGE6SMOKE-<UTC date>-001).
+  SMOKE_MODE=live and PILOT_RUNS_ROOT set to a fresh runs root.
   The session's full console output is captured to a log filed
   with the record.
+- **Invocation contract (the run ID).** The harness requires
+  the expected run ID as its sole command-line argument
+  (smoke_harness.py: `expected_run_id = sys.argv[1]`) and
+  asserts the driver's derived ID equals it immediately after
+  Driver construction, before any tree executes — a mismatch
+  aborts before any adapter call. The driver derives the ID as
+  `STAGE6SMOKE-<UTC date>-<seq>`, seq being one plus the count
+  of existing run directories in the runs root with that
+  prefix. Remmy therefore computes the expected ID by the same
+  rule before firing — with the fresh, empty runs root this
+  specification mandates, it is `STAGE6SMOKE-<UTC date>-001` —
+  and invokes exactly:
+  `SMOKE_MODE=live PILOT_RUNS_ROOT=<fresh root> python3 smoke_harness.py STAGE6SMOKE-<UTC date>-001`.
+  The filed evidence checks the run record's own run_id
+  against the passed value.
 - One-call bound: guaranteed by the tree shape (T04's single
   MODEL step, recovery None → driver max_attempts 1), by the
   smoke config (retry max_attempts 1), and by the preventive
