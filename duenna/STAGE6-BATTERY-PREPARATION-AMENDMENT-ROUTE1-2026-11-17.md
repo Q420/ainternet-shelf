@@ -88,3 +88,19 @@ remains the live credential for both the connector and the room. The
 exposure recorded in §3 stands as recorded (bounded to the
 orchestrator's conversation image and the cleared terminal state);
 the owner accepts it. All other sections stand.
+
+## 8. Owner override of the (c1) rotation condition (2026-11-17 04:04 MST)
+
+The examiner's Route 1 inspection ruling
+(`record/ALEX-STAGE6-BATTERY-ROUTE1-INSPECTION-2026-11-17.md`,
+@ 5eddac3d) accepted (c1)–(c3) subject to conditions including: a
+newly generated key placed, the exposed key revoked/deleted at the
+provider, and the connector's stored credential updated. The owner
+has OVERRULED that rotation condition. Section 7 stands in full:
+the existing key is the battery's key; no rotation; the exposed key
+is not deleted. The examiner's condition and this override both
+remain on the record; the override is the owner's judgment and
+governs the preparation. (c1) is to be evidenced on the existing
+key — owner placement, metadata-only room-side evidence, staging
+file removed; the ruling's rotation-specific evidence items do not
+apply.
