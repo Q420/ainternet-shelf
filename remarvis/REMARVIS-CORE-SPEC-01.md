@@ -10,6 +10,8 @@ A Jarvis-style interface for Ben, on his laptop, carrying Remmy's presence: an o
 
 Ben supplied the reference image: the classic JARVIS sphere. Three layers, inside out — (1) a wireframe geodesic globe at the centre, slowly turning; (2) concentric segmented tech rings around it; (3) an outer wave band: a living, undulating waveform wrapped around the sphere like sound made visible, in holographic teal. **That outer wave band is the voice-reactive element**: it ripples with Ben's voice (and with the speech rhythm while Remarvis talks); the globe and rings stay calm underneath. This reference governs the look; the layout in §3 hangs off it.
 
+**3D (Ben, 2026-11-18):** the sphere is genuinely 3D, not a flat drawing — WebGL in the page (Three.js, bundled locally in the Remarvis folder so nothing loads from the internet). The globe is real geometry turning in space; the rings tilt on their own axes; the wave band is a shell of points around the sphere whose surface pushes in and out with the audio spectrum, wrapping the sphere in the round. The scene is deliberately light (wireframes and points, no heavy shaders) so the laptop's integrated graphics stay smooth. If WebGL is unavailable, the page falls back to a flat 2D rendering of the same three layers.
+
 ## The core (v1) — three things, nothing else
 
 1. **The orb page.** One standalone page on Ben's laptop (Acer, Chrome), nothing installed, nothing else on the machine touched. Deep-navy holographic material in Ben's house style (BLACKBOX glass: cyan-to-violet gradients, hairline light borders, ambient glow). The orb sits centre-screen.
