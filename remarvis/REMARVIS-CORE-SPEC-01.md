@@ -10,7 +10,7 @@ A Jarvis-style interface for Ben, on his laptop, carrying Remmy's presence: an o
 
 1. **The orb page.** One standalone page on Ben's laptop (Acer, Chrome), nothing installed, nothing else on the machine touched. Deep-navy holographic material in Ben's house style (BLACKBOX glass: cyan-to-violet gradients, hairline light borders, ambient glow). The orb sits centre-screen.
 2. **Voice-reactive waves.** The laptop microphone feeds a live audio analysis; holographic rings and waves around the orb move with Ben's voice — loudness and pitch shape the motion. When nobody is speaking, the orb idles with a slow breathing motion.
-3. **Speak on the fly.** A text box on the page: type or paste any written text and the page speaks it aloud immediately (browser text-to-speech), the orb pulsing in a speech rhythm while it talks, settling back to idle when it finishes. A stop control cuts speech at once.
+3. **Speak on the fly.** A text box on the page: type or paste any written text and the page speaks it aloud immediately, the orb pulsing in a speech rhythm while it talks, settling back to idle when it finishes. A stop control cuts speech at once. The voice engine is **Kokoro** (owner decision, 2026-11-18): a small open model (82M parameters, Apache-2.0) that runs in real time on a plain CPU, served by a tiny local helper on the laptop — the page sends text to the helper on localhost and plays the speech it streams back. No cloud, no account, no cost. The exact Kokoro voice preset is picked at first run, by Ben's ear.
 
 ## Explicitly out of v1
 
@@ -22,7 +22,7 @@ A Jarvis-style interface for Ben, on his laptop, carrying Remmy's presence: an o
 ## Known honest limits
 
 - While the page speaks, the orb's motion follows a generated speech rhythm — a browser page cannot listen to its own text-to-speech output directly.
-- Browser text-to-speech voices vary in quality; the page uses the best voice the laptop's Chrome offers.
+- Kokoro runs on the laptop's CPU; on an 82M-parameter model this is comfortably faster than real time, but the first words of a long paste may arrive a breath after the click while the helper warms up.
 - The microphone needs one permission grant in Chrome, given by Ben on first open.
 
 ## Acceptance (Ben's terms, his real flow)
@@ -31,10 +31,10 @@ Ben opens the page on the laptop. He talks; the waves answer his voice. He paste
 
 ## Owner decisions (Ben's to make at review)
 
-1. Voice: use Chrome's default voice, or pick from the laptop's available voices at first run?
+1. Voice: **RESOLVED (Ben, 2026-11-18)** — Kokoro, local and real time (see §3). Ben does not want his own cloned voice for this; the Chatterbox question was only because the software was already in-house. The Kokoro preset voice is chosen at first run by Ben's ear.
 2. Name on the page: "REMARVIS" as coined, or plain "Remmy"?
 3. Where it lives on the laptop: a file in Ben's user folder (e.g. C:\Users\ben\Remarvis\), opened in Chrome — proposed; Ben confirms or names another spot.
 
 ## Build note
 
-UI is Remmy's own hands (standing rule). One HTML file, no build agents, no dependencies beyond the browser. Build starts only on Ben's tap after this paper is settled.
+UI is Remmy's own hands (standing rule). Two pieces, both written by Remmy: the page (one HTML file) and the tiny Kokoro helper (a small local server), started together by one launcher so it still feels like opening one thing. No build agents. Build starts only on Ben's tap after this paper is settled.
