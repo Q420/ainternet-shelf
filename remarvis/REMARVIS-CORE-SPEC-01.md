@@ -6,6 +6,10 @@ Filed 2026-11-18. Status: DRAFT — no build authorised. Process: the Duenna pro
 
 A Jarvis-style interface for Ben, on his laptop, carrying Remmy's presence: an orb at the centre of the screen, holographic waves around it that react to voice, and text-to-speech that speaks written responses aloud on the fly. Small scope, built for the fun of it. Features come after the core, one at a time, each on its own paper.
 
+## Visual reference (Ben, 2026-11-18)
+
+Ben supplied the reference image: the classic JARVIS sphere. Three layers, inside out — (1) a wireframe geodesic globe at the centre, slowly turning; (2) concentric segmented tech rings around it; (3) an outer wave band: a living, undulating waveform wrapped around the sphere like sound made visible, in holographic teal. **That outer wave band is the voice-reactive element**: it ripples with Ben's voice (and with the speech rhythm while Remarvis talks); the globe and rings stay calm underneath. This reference governs the look; the layout in §3 hangs off it.
+
 ## The core (v1) — three things, nothing else
 
 1. **The orb page.** One standalone page on Ben's laptop (Acer, Chrome), nothing installed, nothing else on the machine touched. Deep-navy holographic material in Ben's house style (BLACKBOX glass: cyan-to-violet gradients, hairline light borders, ambient glow). The orb sits centre-screen.
