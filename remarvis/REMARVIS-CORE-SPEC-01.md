@@ -39,7 +39,7 @@ Ben opens the page on the laptop. He talks; the waves answer his voice. He paste
 ## Owner decisions (Ben's to make at review)
 
 1. Voice: **RESOLVED (Ben, 2026-11-18)** — Kokoro, local and real time (see §3). Ben does not want his own cloned voice for this; the Chatterbox question was only because the software was already in-house. The Kokoro preset voice is chosen at first run by Ben's ear.
-2. Name on the page: "REMARVIS" as coined, or plain "Remmy"?
+2. Name on the page: **RESOLVED (Ben, 2026-11-18)** — "Remmy". The project is Remarvis; the name the page carries is Remmy.
 3. Where it lives on the laptop: a file in Ben's user folder (e.g. C:\Users\ben\Remarvis\), opened in Chrome — proposed; Ben confirms or names another spot.
 
 ## Build note
