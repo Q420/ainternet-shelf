@@ -1,12 +1,14 @@
 # REMARVIS — CORE SPEC 01 (DRAFT for owner's review)
 
-Filed 2026-11-18. Status: DRAFT — no build authorised. Process: the Duenna process — paper first, scope settled before any build, features only after the core is accepted.
+Filed 2026-11-18. Status: APPROVED — Ben's tap on the scope card, 2026-11-18 01:55 MST. Build by Remmy's own hands. Process: the Duenna process — paper first, scope settled before any build, features only after the core is accepted.
 
 ## Purpose
 
 A Jarvis-style interface for Ben, on his laptop, carrying Remmy's presence: an orb at the centre of the screen, holographic waves around it that react to voice, and text-to-speech that speaks written responses aloud on the fly. Small scope, built for the fun of it. Features come after the core, one at a time, each on its own paper.
 
 ## Visual reference (Ben, 2026-11-18)
+
+**Colour palette (Ben, 2026-11-18):** Ben supplied the palette image — a displaced wireframe sphere graded blue (upper left) through cyan and violet to hot magenta (lower right), on a deep-navy void, with a soft particle halo. This palette governs colour (it is Ben's BLACKBOX family); the JARVIS reference below governs structure. The sphere's vertex colours follow the gradient, so the displacement reads in colour as well as shape.
 
 Ben supplied the reference image: the classic JARVIS sphere. Three layers, inside out — (1) a wireframe geodesic globe at the centre, slowly turning; (2) concentric segmented tech rings around it; (3) an outer wave band: a living, undulating waveform wrapped around the sphere like sound made visible, in holographic teal. **That outer wave band is the voice-reactive element**: it ripples with Ben's voice (and with the speech rhythm while Remarvis talks); the globe and rings stay calm underneath. This reference governs the look; the layout in §3 hangs off it.
 
