@@ -10,13 +10,15 @@ A Jarvis-style interface for Ben, on his laptop, carrying Remmy's presence: an o
 
 Ben supplied the reference image: the classic JARVIS sphere. Three layers, inside out — (1) a wireframe geodesic globe at the centre, slowly turning; (2) concentric segmented tech rings around it; (3) an outer wave band: a living, undulating waveform wrapped around the sphere like sound made visible, in holographic teal. **That outer wave band is the voice-reactive element**: it ripples with Ben's voice (and with the speech rhythm while Remarvis talks); the globe and rings stay calm underneath. This reference governs the look; the layout in §3 hangs off it.
 
-**3D (Ben, 2026-11-18):** the sphere is genuinely 3D, not a flat drawing — WebGL in the page (Three.js, bundled locally in the Remarvis folder so nothing loads from the internet). The globe is real geometry turning in space; the rings tilt on their own axes; the wave band is a shell of points around the sphere whose surface pushes in and out with the audio spectrum, wrapping the sphere in the round. The scene is deliberately light (wireframes and points, no heavy shaders) so the laptop's integrated graphics stay smooth. If WebGL is unavailable, the page falls back to a flat 2D rendering of the same three layers.
+**3D (Ben, 2026-11-18):** the sphere is genuinely 3D, not a flat drawing — WebGL in the page (Three.js, bundled locally in the Remarvis folder so nothing loads from the internet). The rings tilt on their own axes. The scene is deliberately light so the laptop's integrated graphics stay smooth. If WebGL is unavailable, the page falls back to a flat 2D rendering of the same layers.
+
+**The sphere itself (Ben's design, 2026-11-18):** one subdivided sphere with **audio displacement** — its surface pushes in and out with the live audio spectrum, the reference's wave band become the sphere's own skin. It reacts to **both voices**: Ben's, from the microphone, and Remarvis's, from the Kokoro playback — both analysed as real audio (the Kokoro architecture makes the spoken voice analysable too, so the earlier "simulated speech rhythm" limit is REMOVED; nothing about the motion is faked). **The centre glows only when Remarvis talks.** Ben's voice moves the surface but leaves the core dark; when Remarvis speaks, the heart of the sphere lights. Whose voice it is, is visible at a glance.
 
 ## The core (v1) — three things, nothing else
 
 1. **The orb page.** One standalone page on Ben's laptop (Acer, Chrome), nothing installed, nothing else on the machine touched. Deep-navy holographic material in Ben's house style (BLACKBOX glass: cyan-to-violet gradients, hairline light borders, ambient glow). The orb sits centre-screen.
-2. **Voice-reactive waves.** The laptop microphone feeds a live audio analysis; holographic rings and waves around the orb move with Ben's voice — loudness and pitch shape the motion. When nobody is speaking, the orb idles with a slow breathing motion.
-3. **Speak on the fly.** A text box on the page: type or paste any written text and the page speaks it aloud immediately, the orb pulsing in a speech rhythm while it talks, settling back to idle when it finishes. A stop control cuts speech at once. The voice engine is **Kokoro** (owner decision, 2026-11-18): a small open model (82M parameters, Apache-2.0) that runs in real time on a plain CPU, served by a tiny local helper on the laptop — the page sends text to the helper on localhost and plays the speech it streams back. No cloud, no account, no cost. The exact Kokoro voice preset is picked at first run, by Ben's ear.
+2. **Voice-reactive sphere.** The laptop microphone feeds a live audio analysis; the sphere's surface displaces with Ben's voice — loudness and pitch shape the motion — and the rings move with it. When nobody is speaking, the orb idles with a slow breathing motion.
+3. **Speak on the fly.** A text box on the page: type or paste any written text and the page speaks it aloud immediately, the sphere displacing with the spoken audio and its centre glowing for exactly as long as Remarvis is talking, settling back to idle when it finishes. A stop control cuts speech at once. The voice engine is **Kokoro** (owner decision, 2026-11-18): a small open model (82M parameters, Apache-2.0) that runs in real time on a plain CPU, served by a tiny local helper on the laptop — the page sends text to the helper on localhost and plays the speech it streams back. No cloud, no account, no cost. The exact Kokoro voice preset is picked at first run, by Ben's ear.
 
 ## Explicitly out of v1
 
@@ -27,7 +29,6 @@ Ben supplied the reference image: the classic JARVIS sphere. Three layers, insid
 
 ## Known honest limits
 
-- While the page speaks, the orb's motion follows a generated speech rhythm — a browser page cannot listen to its own text-to-speech output directly.
 - Kokoro runs on the laptop's CPU; on an 82M-parameter model this is comfortably faster than real time, but the first words of a long paste may arrive a breath after the click while the helper warms up.
 - The microphone needs one permission grant in Chrome, given by Ben on first open.
 
