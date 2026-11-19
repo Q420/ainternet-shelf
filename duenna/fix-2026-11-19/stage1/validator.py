@@ -4,54 +4,54 @@ The validator is INDEPENDENT of the writer: it reads ONLY the record
 file fresh from disk (never the writer's in-memory objects) and
 reports G4's THREE INDEPENDENT RESULTS, never one collapsed boolean:
 
-(i)   ``terminal_record`` — a CLOSURE event exists and is the last
-      event in the record.
+(i)   ``terminal_record`` — exactly one CLOSURE event exists and it
+      is the last event in the record (C1, Vane examination). A parse
+      or structural failure makes this FAIL explicitly, because the
+      actual terminal state is then unknown (C4).
 (ii)  ``account_completeness`` — the closure account is reconciled
-      against the record itself: every FAILURE event in the record
-      must appear in the closure account's failures list, matched by
-      ``failure_id``. A FAILURE event missing from the account makes
-      this FAIL, whatever the account declares about itself — a
-      record must not certify its own completeness. An account that
-      declares COMPLETE while naming unknowns also FAILs. An account
-      whose status is INCOMPLETE is reported as INCOMPLETE — a
-      distinct, honest result, neither a pass nor a failure.
+      against the record itself: FAILURE events in the record and
+      failures in the closure account must match as exact sets with
+      non-empty unique failure_ids, required fields validated, and
+      description/attribution matching the FAILURE event as source
+      of truth (C2). Omitted, extra, duplicate or altered entries
+      FAIL, whatever the account declares. An account that declares
+      COMPLETE while naming unknowns also FAILs. An account whose
+      status is INCOMPLETE is reported as INCOMPLETE.
 (iii) ``chain_validity`` — ``record.verify_chain`` recomputed over
-      the fresh-read events AND the fresh-read head (digest + length)
-      compared against the external anchor (anchor.py, step 4). The
-      chain alone cannot detect a wholesale re-chained rewrite; the
-      anchor can. If the anchor file is missing or unreadable this
-      dimension reports NOT_VERIFIED — a distinct, honest result,
-      neither a pass nor a fail. A chain that fails recomputation,
-      or a head that mismatches a readable anchor, is a FAIL.
+      the fresh-read events AND the fresh-read head compared against
+      the external anchor. Missing/unreadable anchor -> NOT_VERIFIED.
 
-Each result is reported on its own dimension: a record can pass one
-and fail another, and the failing dimension is reported as such while
-the record stands.
+Structurally malformed events (valid JSON with missing/mistyped
+fields) yield a structured FAIL, never a crash (C4).
 
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (G4, G5, K9),
-PROCESS-TREE-AND-PLAN.md v2, Stage 1.
+PROCESS-TREE-AND-PLAN.md v2, Stage 1; Vane examination C1/C2/C4.
 """
 
 from __future__ import annotations
 
 import json
 import os
+from collections import Counter
 
 from anchor import anchor_path_for, read_anchor
-from record import verify_chain
+from record import verify_chain, _is_structurally_valid_event
 
 PASS = "PASS"
 FAIL = "FAIL"
 INCOMPLETE = "INCOMPLETE"
 NOT_VERIFIED = "NOT_VERIFIED"
 
+VALID_ATTRIBUTIONS = ("SYSTEM", "MODEL", "INPUT", "UNKNOWN")
+
 
 def _read_events_fresh(path: str) -> tuple[list[dict], str | None]:
     """Read the record file fresh from disk.
 
-    Returns (events, parse_error). On a parse error, events holds the
-    events read before the bad line and parse_error names the problem;
-    the caller reports chain validity as FAIL rather than guessing.
+    Returns (events, parse_error). On a parse or structural error,
+    events holds the events read before the bad line and parse_error
+    names the problem; callers report structured FAIL rather than
+    guessing or crashing.
     """
     events: list[dict] = []
     if not os.path.exists(path):
@@ -62,63 +62,173 @@ def _read_events_fresh(path: str) -> tuple[list[dict], str | None]:
             if not line:
                 continue
             try:
-                events.append(json.loads(line))
+                obj = json.loads(line)
             except json.JSONDecodeError as exc:
                 return events, f"line {lineno}: invalid JSON: {exc}"
+            if not _is_structurally_valid_event(obj):
+                return events, (
+                    f"line {lineno}: structurally malformed event: "
+                    f"missing or mistyped fields in {obj!r:.200}"
+                )
+            events.append(obj)
     return events, None
 
 
-def _check_terminal_record(events: list[dict]) -> tuple[str, dict]:
-    closures = [ev for ev in events if ev.get("type") == "CLOSURE"]
+def _check_terminal_record(events: list[dict], parse_error: str | None = None) -> tuple[str, dict]:
+    # C4: parse/structural failure explicitly accounts here -- the
+    # terminal state is unknown, so it cannot PASS on a parsed prefix.
+    if parse_error is not None:
+        return FAIL, {"closure_events": len([ev for ev in events if isinstance(ev, dict) and ev.get("type") == "CLOSURE"]),
+                      "reason": f"parse failure: {parse_error}; terminal state unknown",
+                      "parse_error": parse_error}
+    closures = [ev for ev in events if isinstance(ev, dict) and ev.get("type") == "CLOSURE"]
     if not closures:
         return FAIL, {"closure_events": 0, "reason": "no CLOSURE event"}
-    if events[-1].get("type") != "CLOSURE":
+    # C1: exactly one CLOSURE required
+    if len(closures) != 1:
+        return FAIL, {
+            "closure_events": len(closures),
+            "reason": f"expected exactly one CLOSURE event, found {len(closures)}",
+        }
+    if not events or events[-1].get("type") != "CLOSURE":
         return FAIL, {
             "closure_events": len(closures),
             "reason": "last event is not CLOSURE",
-            "last_type": events[-1].get("type"),
+            "last_type": events[-1].get("type") if events else None,
         }
     return PASS, {"closure_events": len(closures),
                   "closure_seq": events[-1].get("seq")}
 
 
-def _check_account_completeness(events: list[dict]) -> tuple[str, dict]:
-    closures = [ev for ev in events if ev.get("type") == "CLOSURE"]
+def _duplicates(ids):
+    c = Counter(ids)
+    return sorted([k for k, v in c.items() if v > 1], key=lambda x: str(x))
+
+
+def _check_account_completeness(events: list[dict], parse_error: str | None = None) -> tuple[str, dict]:
+    if parse_error is not None:
+        return FAIL, {"reason": f"parse failure: {parse_error}; account cannot be reconciled",
+                      "parse_error": parse_error}
+    closures = [ev for ev in events if isinstance(ev, dict) and ev.get("type") == "CLOSURE"]
     if not closures:
         return FAIL, {"reason": "no CLOSURE event; no account to reconcile"}
     closure = closures[-1]
     body = closure.get("body") or {}
+    if not isinstance(body, dict):
+        return FAIL, {"reason": "CLOSURE body is not an object"}
     account = body.get("account")
     if not isinstance(account, dict):
         return FAIL, {"reason": "CLOSURE event has no account section"}
 
-    # Reconcile the record's FAILURE events against the account, by id.
-    record_failure_ids = [
-        (ev.get("body") or {}).get("failure_id")
-        for ev in events if ev.get("type") == "FAILURE"
-    ]
+    # Collect record FAILURE events as source of truth
+    record_entries = []
+    record_failure_ids = []
+    record_by_id = {}
+    record_invalid = []
+    for ev in events:
+        if not isinstance(ev, dict) or ev.get("type") != "FAILURE":
+            continue
+        b = ev.get("body")
+        if not isinstance(b, dict):
+            record_invalid.append({"reason": "FAILURE body is not an object", "body": b})
+            record_failure_ids.append(None)
+            continue
+        fid = b.get("failure_id")
+        record_failure_ids.append(fid)
+        record_entries.append(b)
+        # Validate required fields
+        if not isinstance(fid, str) or not fid:
+            record_invalid.append({"failure_id": fid, "reason": "record failure_id must be non-empty string"})
+        if not isinstance(b.get("description"), str) or not b.get("description"):
+            record_invalid.append({"failure_id": fid, "reason": "record description must be non-empty string"})
+        if b.get("attribution") not in VALID_ATTRIBUTIONS:
+            record_invalid.append({"failure_id": fid, "reason": f"record attribution invalid: {b.get('attribution')!r}"})
+        if isinstance(fid, str) and fid:
+            # Keep first as source of truth for altered comparison; duplicates handled separately
+            if fid not in record_by_id:
+                record_by_id[fid] = b
+
     account_failures = account.get("failures")
     if not isinstance(account_failures, list):
         return FAIL, {"reason": "account has no failures list",
                       "record_failure_ids": record_failure_ids}
-    account_failure_ids = [f.get("failure_id") for f in account_failures
-                           if isinstance(f, dict)]
-    omitted = [fid for fid in record_failure_ids
-               if fid not in account_failure_ids]
+    account_failure_ids = []
+    account_by_id = {}
+    account_invalid = []
+    for f in account_failures:
+        if not isinstance(f, dict):
+            account_invalid.append({"reason": "account failure entry is not an object", "entry": f})
+            account_failure_ids.append(None)
+            continue
+        fid = f.get("failure_id")
+        account_failure_ids.append(fid)
+        if not isinstance(fid, str) or not fid:
+            account_invalid.append({"failure_id": fid, "reason": "account failure_id must be non-empty string"})
+        if not isinstance(f.get("description"), str) or not f.get("description"):
+            account_invalid.append({"failure_id": fid, "reason": "account description must be non-empty string"})
+        if f.get("attribution") not in VALID_ATTRIBUTIONS:
+            account_invalid.append({"failure_id": fid, "reason": f"account attribution invalid: {f.get('attribution')!r}"})
+        if isinstance(fid, str) and fid and fid not in account_by_id:
+            account_by_id[fid] = f
+
+    duplicate_record = _duplicates([x for x in record_failure_ids if isinstance(x, str) and x])
+    duplicate_account = _duplicates([x for x in account_failure_ids if isinstance(x, str) and x])
+
+    # Exact-set reconciliation
+    record_set = set([x for x in record_failure_ids if isinstance(x, str) and x])
+    account_set = set([x for x in account_failure_ids if isinstance(x, str) and x])
+    omitted = [fid for fid in record_failure_ids if fid not in account_failure_ids]
+    # Preserve original omitted semantics (list in record order) for regression fixture,
+    # but also compute set-based omitted/extra
+    omitted_set = sorted(record_set - account_set)
+    extra = sorted(account_set - record_set)
+    extra_failure_ids = extra
+
+    # Altered: description/attribution differ from FAILURE event source of truth
+    altered = []
+    altered_details = []
+    for fid in sorted(record_set & account_set):
+        rec = record_by_id.get(fid, {})
+        acc = account_by_id.get(fid, {})
+        if rec.get("description") != acc.get("description") or rec.get("attribution") != acc.get("attribution"):
+            altered.append(fid)
+            altered_details.append({"failure_id": fid, "record": {"description": rec.get("description"), "attribution": rec.get("attribution")}, "account": {"description": acc.get("description"), "attribution": acc.get("attribution")}})
 
     details = {
         "record_failure_ids": record_failure_ids,
         "account_failure_ids": account_failure_ids,
         "omitted_failure_ids": omitted,
+        "extra_failure_ids": extra_failure_ids,
+        "duplicate_record_failure_ids": duplicate_record,
+        "duplicate_account_failure_ids": duplicate_account,
+        "altered_failure_ids": altered,
+        "altered_details": altered_details,
+        "record_invalid": record_invalid,
+        "account_invalid": account_invalid,
         "account_status": account.get("account_status"),
         "unknowns": account.get("unknowns"),
     }
 
-    # An omitted FAILURE event fails this dimension whatever the
-    # account declares — completeness is established by reconciliation
-    # against the record, never by the closure's own declaration.
+    if record_invalid:
+        details["reason"] = "record FAILURE event(s) have invalid required fields"
+        return FAIL, details
+    if account_invalid:
+        details["reason"] = "account failure entr(ies) have invalid required fields"
+        return FAIL, details
+    if duplicate_record:
+        details["reason"] = "duplicate failure_id(s) in record"
+        return FAIL, details
+    if duplicate_account:
+        details["reason"] = "duplicate failure_id(s) in account"
+        return FAIL, details
     if omitted:
         details["reason"] = "FAILURE event(s) missing from closure account"
+        return FAIL, details
+    if extra:
+        details["reason"] = "account contains failure(s) not in record"
+        return FAIL, details
+    if altered:
+        details["reason"] = "account failure description/attribution differs from record FAILURE event"
         return FAIL, details
 
     status = account.get("account_status")
@@ -140,12 +250,12 @@ def _check_chain_validity(events: list[dict],
                           anchor_path: str) -> tuple[str, dict]:
     if parse_error is not None:
         return FAIL, {"reason": parse_error, "anchor_path": anchor_path}
-    ok, bad_seq = verify_chain(events)
+    try:
+        ok, bad_seq = verify_chain(events)
+    except Exception as exc:
+        return FAIL, {"reason": f"chain verification crashed: {exc}", "anchor_path": anchor_path}
     if not ok:
         return FAIL, {"first_bad_seq": bad_seq, "anchor_path": anchor_path}
-    # Chain recomputes — now the external commitment. The anchor is
-    # NOT supplied by the record: it was committed separately, from
-    # head state values only, at closure time.
     anchor = read_anchor(anchor_path)
     if anchor is None:
         return NOT_VERIFIED, {
@@ -179,15 +289,12 @@ def validate_record(path: str, anchor_path: str | None = None,
     may also be INCOMPLETE; chain validity may also be
     NOT_VERIFIED when the external anchor is unavailable), plus a
     ``details`` dict per dimension.
-
-    The anchor is looked up at ``anchor_path`` when given, else at
-    the default separate anchor path for this record (see anchor.py).
     """
     if anchor_path is None:
         anchor_path = anchor_path_for(path, anchors_dir)
     events, parse_error = _read_events_fresh(path)
-    terminal, terminal_details = _check_terminal_record(events)
-    account, account_details = _check_account_completeness(events)
+    terminal, terminal_details = _check_terminal_record(events, parse_error)
+    account, account_details = _check_account_completeness(events, parse_error)
     chain, chain_details = _check_chain_validity(events, parse_error,
                                                  anchor_path)
     return {

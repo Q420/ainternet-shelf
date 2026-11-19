@@ -34,6 +34,23 @@ def _digest(seq: int, prev_digest: str, event_type: str, body: Any) -> str:
     return hashlib.sha256(_canonical(payload)).hexdigest()
 
 
+def _is_structurally_valid_event(ev) -> bool:
+    """True iff ev is a dict with required fields of correct types."""
+    if not isinstance(ev, dict):
+        return False
+    if not isinstance(ev.get("seq"), int) or isinstance(ev.get("seq"), bool):
+        return False
+    if not isinstance(ev.get("prev"), str):
+        return False
+    if not isinstance(ev.get("type"), str):
+        return False
+    if "body" not in ev:
+        return False
+    if not isinstance(ev.get("digest"), str):
+        return False
+    return True
+
+
 class EventRecord:
     """An append-only event record backed by a JSONL file.
 
@@ -46,7 +63,29 @@ class EventRecord:
         self._seq = 0
         self._head = GENESIS
         if os.path.exists(path):
-            for ev in self._iter_file():
+            # C5 (Vane examination): reopening verifies the existing
+            # chain before permitting appends. A corrupted record
+            # refuses append -- constructing the record raises.
+            try:
+                events = list(self._iter_file())
+            except Exception as exc:
+                raise ValueError(
+                    f"corrupted record: cannot parse existing record: {exc}"
+                ) from exc
+            # Structural check: every event must be a dict with the
+            # required fields and types; malformed events are corruption.
+            for ev in events:
+                if not _is_structurally_valid_event(ev):
+                    raise ValueError(
+                        "corrupted record: structurally malformed event: "
+                        f"{ev!r}"
+                    )
+            ok, bad = verify_chain(events)
+            if not ok:
+                raise ValueError(
+                    f"corrupted record: chain verification failed at seq {bad}"
+                )
+            for ev in events:
                 self._seq = ev["seq"]
                 self._head = ev["digest"]
 
@@ -98,11 +137,19 @@ def verify_chain(events: list[dict]) -> tuple[bool, int | None]:
     expected_seq = 0
     for ev in events:
         expected_seq += 1
+        # C4: structurally malformed events yield a controlled failure,
+        # never a crash.
+        if not _is_structurally_valid_event(ev):
+            seq_val = ev.get("seq") if isinstance(ev, dict) else None
+            return False, seq_val if isinstance(seq_val, int) else expected_seq
         if ev.get("seq") != expected_seq:
             return False, ev.get("seq", expected_seq)
         if ev.get("prev") != prev:
             return False, ev["seq"]
-        want = _digest(ev["seq"], ev["prev"], ev["type"], ev["body"])
+        try:
+            want = _digest(ev["seq"], ev["prev"], ev["type"], ev["body"])
+        except Exception:
+            return False, ev["seq"]
         if ev.get("digest") != want:
             return False, ev["seq"]
         prev = ev["digest"]
