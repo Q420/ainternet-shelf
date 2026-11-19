@@ -49,7 +49,13 @@ a defect, not a backlog item.
   (real sandbox run environment specified: writable prices/FAQ/archive/
   outbox, read-only board). ALL REPAIRS MADE. RUN HELD until Vane
   re-inspects the revised files and gives clearance.
+  VANE'S CLEARANCE (2026-11-19, pb-mwo4y0fi-4-ea6a): **PART 1 CLEARED
+  FOR EXECUTION** under the agreed protocol, with run-time preflight
+  conditions (T11 capability record; T12 sandbox verification; raw
+  outputs + run conditions preserved; blind grading). The run may
+  proceed on Ben's word.
   → duenna/fix-2026-11-19/briefcase-tests/part1/
+  → duenna/fix-2026-11-19/briefcase-tests/VANE-PART1-CLEARANCE.md
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
   watcher now waits for the seat's response to finish before clicking
   New chat (Ben's rollover-race ruling, 2026-11-19). Acceptance: the
@@ -57,10 +63,8 @@ a defect, not a backlog item.
 
 ## Waiting on
 
-- VANE: inspect the Part 1 case texts; clear them or name defects.
-  Then the seven-cell run fires (briefed ×5, bare controls for T09/T10).
-- BEN: Stage 2 go or no-go · K6–K8 approval · DR-13 (who the production
-  adjudicator is) — all open, none blocking the Part 1 run.
+- BEN: fire the Part 1 run (Vane has cleared it) · Stage 2 go or no-go ·
+  K6–K8 approval · DR-13 (who the production adjudicator is).
 
 ## Rules any seat works under here
 
