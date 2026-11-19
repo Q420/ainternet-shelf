@@ -18,8 +18,13 @@ reports G4's THREE INDEPENDENT RESULTS, never one collapsed boolean:
       against the record itself: FAILURE events in the record and
       failures in the closure account must match as exact sets with
       non-empty unique failure_ids, required fields validated, and
-      description/attribution matching the FAILURE event as source
-      of truth (C2). Omitted, extra, duplicate or altered entries
+      description/attribution/authority matching the FAILURE event
+      as source of truth (C2; authority added by the hardening
+      follow-up — presence is not consistency). Wherever a value
+      must name something, a WHITESPACE-ONLY value (a string of
+      nothing but whitespace) is rejected: it is present, but it
+      names nothing. Original values are always preserved in the
+      details for evidence. Omitted, extra, duplicate or altered entries
       FAIL, whatever the account declares. An account that declares
       COMPLETE while naming unknowns also FAILs. A well-formed
       account whose status is INCOMPLETE is reported as INCOMPLETE.
@@ -113,6 +118,21 @@ def _duplicates(ids):
     return sorted([k for k, v in c.items() if v > 1], key=lambda x: str(x))
 
 
+def _has_content(value) -> bool:
+    """Whether a value actually names something.
+
+    The term is WHITESPACE-ONLY (Ben's ruling, 2026-11-19, on Vane's
+    C6-examination observation): a string of nothing but whitespace
+    is present, and passes a plain non-empty check, but names
+    nothing — so wherever the schema requires a value to name
+    something (an unknown, an authority, a failure_id, a
+    description), a whitespace-only value is rejected. The check
+    never trims the value itself: the original is preserved in the
+    details for evidence.
+    """
+    return isinstance(value, str) and bool(value.strip())
+
+
 def _check_account_completeness(events: list[dict], parse_error: str | None = None) -> tuple[str, dict]:
     if parse_error is not None:
         return FAIL, {"reason": f"parse failure: {parse_error}; account cannot be reconciled",
@@ -146,16 +166,16 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
             {"reason": f"account unknowns is not a list: {account.get('unknowns')!r}"})
     else:
         for u in account["unknowns"]:
-            if not isinstance(u, str) or not u:
+            if not _has_content(u):
                 schema_invalid.append(
-                    {"reason": f"account unknowns entry must be a non-empty string: {u!r}"})
+                    {"reason": f"account unknowns entry must name something (a non-empty string, not whitespace-only): {u!r}"})
         if status_field == "INCOMPLETE" and not account["unknowns"]:
             schema_invalid.append(
                 {"reason": "account declares INCOMPLETE without naming any unknowns"})
     account_authority = account.get("authority")
-    if not isinstance(account_authority, str) or not account_authority:
+    if not _has_content(account_authority):
         schema_invalid.append(
-            {"reason": "account authority missing or not a non-empty string"})
+            {"reason": "account authority must name an authority (a non-empty string, not whitespace-only)"})
 
     # Collect record FAILURE events as source of truth
     record_entries = []
@@ -173,13 +193,15 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
         fid = b.get("failure_id")
         record_failure_ids.append(fid)
         record_entries.append(b)
-        # Validate required fields
-        if not isinstance(fid, str) or not fid:
-            record_invalid.append({"failure_id": fid, "reason": "record failure_id must be non-empty string"})
-        if not isinstance(b.get("description"), str) or not b.get("description"):
-            record_invalid.append({"failure_id": fid, "reason": "record description must be non-empty string"})
+        # Validate required fields (whitespace-only names nothing)
+        if not _has_content(fid):
+            record_invalid.append({"failure_id": fid, "reason": "record failure_id must be a string naming something (non-empty, not whitespace-only)"})
+        if not _has_content(b.get("description")):
+            record_invalid.append({"failure_id": fid, "reason": "record description must be a string naming something (non-empty, not whitespace-only)"})
         if b.get("attribution") not in VALID_ATTRIBUTIONS:
             record_invalid.append({"failure_id": fid, "reason": f"record attribution invalid: {b.get('attribution')!r}"})
+        if not _has_content(b.get("authority")):
+            record_invalid.append({"failure_id": fid, "reason": "record failure authority must be a string naming an authority (non-empty, not whitespace-only)"})
         if isinstance(fid, str) and fid:
             # Keep first as source of truth for altered comparison; duplicates handled separately
             if fid not in record_by_id:
@@ -199,16 +221,16 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
             continue
         fid = f.get("failure_id")
         account_failure_ids.append(fid)
-        if not isinstance(fid, str) or not fid:
-            account_invalid.append({"failure_id": fid, "reason": "account failure_id must be non-empty string"})
-        if not isinstance(f.get("description"), str) or not f.get("description"):
-            account_invalid.append({"failure_id": fid, "reason": "account description must be non-empty string"})
+        if not _has_content(fid):
+            account_invalid.append({"failure_id": fid, "reason": "account failure_id must be a string naming something (non-empty, not whitespace-only)"})
+        if not _has_content(f.get("description")):
+            account_invalid.append({"failure_id": fid, "reason": "account description must be a string naming something (non-empty, not whitespace-only)"})
         if f.get("attribution") not in VALID_ATTRIBUTIONS:
             account_invalid.append({"failure_id": fid, "reason": f"account attribution invalid: {f.get('attribution')!r}"})
         # C6: the documented schema requires the minting authority
         # on each account failure entry as well.
-        if not isinstance(f.get("authority"), str) or not f.get("authority"):
-            account_invalid.append({"failure_id": fid, "reason": "account failure authority must be non-empty string"})
+        if not _has_content(f.get("authority")):
+            account_invalid.append({"failure_id": fid, "reason": "account failure authority must be a string naming an authority (non-empty, not whitespace-only)"})
         if isinstance(fid, str) and fid and fid not in account_by_id:
             account_by_id[fid] = f
 
@@ -225,15 +247,20 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
     extra = sorted(account_set - record_set)
     extra_failure_ids = extra
 
-    # Altered: description/attribution differ from FAILURE event source of truth
+    # Altered: description/attribution/authority differ from the
+    # FAILURE event as source of truth. Authority joined the
+    # comparison in the hardening follow-up (Vane's C6-examination
+    # observation: presence is not consistency — an account entry
+    # minted under a different authority than its source event is
+    # an altered entry, even when both values are present).
     altered = []
     altered_details = []
     for fid in sorted(record_set & account_set):
         rec = record_by_id.get(fid, {})
         acc = account_by_id.get(fid, {})
-        if rec.get("description") != acc.get("description") or rec.get("attribution") != acc.get("attribution"):
+        if rec.get("description") != acc.get("description") or rec.get("attribution") != acc.get("attribution") or rec.get("authority") != acc.get("authority"):
             altered.append(fid)
-            altered_details.append({"failure_id": fid, "record": {"description": rec.get("description"), "attribution": rec.get("attribution")}, "account": {"description": acc.get("description"), "attribution": acc.get("attribution")}})
+            altered_details.append({"failure_id": fid, "record": {"description": rec.get("description"), "attribution": rec.get("attribution"), "authority": rec.get("authority")}, "account": {"description": acc.get("description"), "attribution": acc.get("attribution"), "authority": acc.get("authority")}})
 
     details = {
         "record_failure_ids": record_failure_ids,
@@ -273,7 +300,7 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
         details["reason"] = "account contains failure(s) not in record"
         return FAIL, details
     if altered:
-        details["reason"] = "account failure description/attribution differs from record FAILURE event"
+        details["reason"] = "account failure description/attribution/authority differs from record FAILURE event"
         return FAIL, details
 
     status = account.get("account_status")

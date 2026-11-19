@@ -345,3 +345,43 @@ independent execution of the suite remains outstanding: his
 examination environment cannot resolve GitHub for a runnable
 checkout, a limit he stated himself rather than papering over.
 DR-05 and DR-22 remain at IMPLEMENTATION SHOWING.
+
+## Hardening follow-up addendum (2026-11-19)
+
+Source: VANE-C6-EXAMINATION.md in this directory (bridge
+pb-mwo2r8oe-1-jbdg). Vane examined the C6 round at commit 9e4d781e
+and confirmed C6 implemented for the requested cases. He raised
+two additional observations — hardening points, explicitly not
+reasons to erase or relabel C6 — applied in this follow-up at
+Ben's tap:
+
+1. **Authority consistency.** Presence is not consistency: the
+   reconciliation compared description and attribution but not
+   authority, so an account entry minted under a different
+   authority than its source FAILURE event passed. The altered
+   comparison now covers description, attribution AND authority,
+   with the authority values shown in the altered details.
+2. **Whitespace-only values.** The term is WHITESPACE-ONLY (Ben's
+   ruling, 2026-11-19): a string of nothing but whitespace is
+   present, and passes a plain non-empty check, but names
+   nothing. Wherever the validator requires a value to name
+   something — unknowns entries, the account authority, failure
+   entries' authority, failure_id, description, on either the
+   record or the account side — a whitespace-only value is now
+   rejected. The check never trims: original values are preserved
+   in the details for evidence (a value with real content and
+   surrounding whitespace is accepted and reported as recorded).
+
+Tests: tests/test_vane_hardening.py — 8 tests (authority mismatch
+flagged as altered with both values evidenced; authority match
+control; whitespace-only unknown, account authority, entry
+authority, description and failure_id each rejected; padded-but-
+substantive content accepted and preserved untrimmed). Full suite
+after the follow-up: **Ran 66 tests — OK (66 passed, 0 failed)**.
+
+Status: still CONDITIONAL PASS on Vane's terms; the follow-up is
+his to examine. His three-property framing is recorded with his
+examination: does the account reconcile with the events; does it
+satisfy its own schema; does it faithfully preserve the authority
+and meaning of its source events. Independent execution remains
+outstanding; DR-05 and DR-22 remain at IMPLEMENTATION SHOWING.
