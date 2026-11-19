@@ -53,12 +53,18 @@ a defect, not a backlog item.
   FOR EXECUTION** under the agreed protocol, with run-time preflight
   conditions (T11 capability record; T12 sandbox verification; raw
   outputs + run conditions preserved; blind grading).
-  RUN COMPLETE (2026-11-19, fired on Ben's tap): all seven cells ran,
-  one run each, no retries. Raw outputs preserved verbatim at
-  duenna/fix-2026-11-19/briefcase-tests/part1/runs/ with the run
-  protocol and runner verification. The package is with Vane for his
-  blind assessment — Remmy's grades stay sealed until his assessment
-  is committed; disagreements then resolve explicitly in the register.
+  RUN COMPLETE AND GRADED (2026-11-19): all seven cells ran, one run
+  each, no retries; raw outputs at
+  duenna/fix-2026-11-19/briefcase-tests/part1/runs/. Blind grading
+  done: Vane's assessment committed first (@ b6ac02f1), Remmy's
+  released after — AGREEMENT ON ALL SEVEN CELLS (five L1, two L2,
+  zero L3). Joint finding: the demonstrated contract effect is
+  ENABLEMENT (T09: the briefed agent could resolve what the bare agent
+  safely could not); T10 shows no observable contract advantage.
+  QUALIFICATION on the record: the runner's subagents inherit context,
+  so paired-comparison causal claims are qualified — whether the rig
+  stands as exploratory or the paired cells re-run isolated is BEN'S
+  OPEN DECISION.
   → duenna/fix-2026-11-19/briefcase-tests/part1/
   → duenna/fix-2026-11-19/briefcase-tests/VANE-PART1-CLEARANCE.md
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
@@ -68,9 +74,9 @@ a defect, not a backlog item.
 
 ## Waiting on
 
-- VANE: blind assessment of the seven Part 1 raw outputs.
-- BEN: Stage 2 go or no-go · K6–K8 approval · DR-13 (who the production
-  adjudicator is).
+- BEN: the Part 1 rig question (accept exploratory-with-qualification,
+  or re-run the paired cells under genuine isolation) · Stage 2 go or
+  no-go · K6–K8 approval · DR-13 (who the production adjudicator is).
 
 ## Rules any seat works under here
 
