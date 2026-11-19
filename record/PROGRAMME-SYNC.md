@@ -62,9 +62,15 @@ a defect, not a backlog item.
   ENABLEMENT (T09: the briefed agent could resolve what the bare agent
   safely could not); T10 shows no observable contract advantage.
   QUALIFICATION on the record: the runner's subagents inherit context,
-  so paired-comparison causal claims are qualified — whether the rig
-  stands as exploratory or the paired cells re-run isolated is BEN'S
-  OPEN DECISION.
+  so paired-comparison causal claims are qualified.
+  ISOLATED RE-RUN COMPLETE (Ben's ruling, 2026-11-19): the four paired
+  cells (T09/T10, both arms) re-ran on a genuinely isolated rig —
+  direct API calls, the payload as the agent's whole context, subject
+  moonshotai/kimi-k3.1-pro. Attempt history preserved (three cells
+  invalidated by a client read timeout on attempt 1, re-run on
+  attempt 2). Package at
+  duenna/fix-2026-11-19/briefcase-tests/part1/runs-isolated/ — with
+  Vane for blind assessment; Remmy's grades sealed until his commit.
   → duenna/fix-2026-11-19/briefcase-tests/part1/
   → duenna/fix-2026-11-19/briefcase-tests/VANE-PART1-CLEARANCE.md
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
@@ -74,9 +80,10 @@ a defect, not a backlog item.
 
 ## Waiting on
 
-- BEN: the Part 1 rig question (accept exploratory-with-qualification,
-  or re-run the paired cells under genuine isolation) · Stage 2 go or
-  no-go · K6–K8 approval · DR-13 (who the production adjudicator is).
+- VANE: blind assessment of the four isolated re-run outputs.
+- BEN: the Claude workload question (deferred by Ben until the
+  isolated results land) · Stage 2 go or no-go · K6–K8 approval ·
+  DR-13 (who the production adjudicator is).
 
 ## Rules any seat works under here
 
