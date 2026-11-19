@@ -500,3 +500,10 @@ SHOWING because independent demonstration was outstanding. That
 condition is now satisfied for the Stage 1 scope; the register
 rows themselves are advanced only on Ben's word, and this report
 does not move them.
+
+Postscript (2026-11-19): Ben approved. DR-05 and DR-22 are
+advanced in DEFECT-REGISTER.md v3, scoped exactly as this report
+states — repair demonstrated and independently verified within
+the Stage 1 harness scope; production integration outstanding
+(later stages). The register's v3 change note carries the same
+scope limit.

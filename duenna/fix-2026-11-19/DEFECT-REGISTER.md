@@ -1,4 +1,4 @@
-# DUENNA — DEFECT REGISTER (merged, v2, 2026-11-19)
+# DUENNA — DEFECT REGISTER (merged, v3, 2026-11-19)
 
 Joint register: Vane (examiner) + Remmy (orchestrator), under Ben's commission of 2026-11-19.
 Schema per row (Vane's, adopted): defect identity / affected identities / symptom / evidence /
@@ -13,6 +13,12 @@ v2 change note (2026-11-19): DR-23..DR-25 placeholders replaced with the examine
 was lost to a conversation rollover); the R60/v2.4 qualifications block added as §5b; DR-21's
 root-cause wording corrected per the examiner's precision note. DR-19..DR-22 are Remmy's
 additions, accepted by the examiner as written (his wording check is in the restatement letter).
+v3 change note (2026-11-19): DR-05 and DR-22 advanced on Ben's approval, after Vane's
+Stage 1 verdict moved to PASS with his independent execution of the full suite
+(68/68, exit code 0, bridge pb-mwo3u2rt-3-1hzw). The advancement is scoped exactly:
+the corrected closure mechanism is demonstrated and independently verified in the
+Stage 1 harness; the production battery machinery is not rewritten by Stage 1, and
+its integration belongs to the later stages. No other row changes in v3.
 Evidence states are kept distinct throughout and never compressed into a single word such as
 "verified": EXECUTED REPRODUCTION / SOURCE INSPECTION / IMPLEMENTER-RUN FIXTURE /
 IMPLEMENTER-RUN SABOTAGE / INDEPENDENT TARGETED SABOTAGE / INDEPENDENT EXAMINATION OUTSTANDING.
@@ -70,8 +76,8 @@ Evidence: attempt-3 run record seq 495; pilot_driver.py closure emission (ll.196
 Mechanism: closure construction assembles counts/hashes/tree state only.
 Root cause: execution completion and failure accounting are not joined at closure (the closure schema predates Ben's 2026-11-18 rulings).
 Attribution: SYSTEM. First discovery: attempt-3 adjudication (governance FAILURE).
-Repair/disposition: Ben's rulings 1–2 (closure always completes; no silent closure) are the design law for the fix; not yet implemented.
-Status: CONFIRMED against source + runtime.
+Repair/disposition: Ben's rulings 1–2 (closure always completes; no silent closure) are the design law for the fix. Implemented in the Stage 1 closure harness (duenna/fix-2026-11-19/stage1/): the closure writer appends exactly one CLOSURE carrying the mandatory failure account on every controlled termination path, and the independent validator reconciles the account against the record's FAILURE events — a closure cannot certify its own completeness. Examined by Vane through corrections C1–C6 and the hardening rounds; independently executed by Vane (full suite 68/68, exit code 0) — his verdict: PASS for the Stage 1 scope, 2026-11-19. Advanced on Ben's approval, 2026-11-19. Scope limit: this discharges the mechanism in the harness; pilot_driver's own closure emission is not rewritten — production integration belongs to the later stages.
+Status: CONFIRMED against source + runtime (attempt-3 closure); repair demonstrated and independently verified within the Stage 1 harness scope — production integration outstanding.
 Identity requirement: closure references the canonical failure records and their attribution; closure always completes and cannot silently omit known failures.
 
 ### DR-06 — Attribution is not one synchronized fact
@@ -177,7 +183,8 @@ Affected: attempt-1 and attempt-2 run records (72 events, 3 TREE_CLOSED each; RU
 Symptom: early-failure runs simply stop; no closing event exists.
 Mechanism: closure was a success-path act in the pre-ruling machinery.
 Root cause: no always-close path existed. Ben's ruling 1 (closure always completes) now forbids this shape.
-Attribution: SYSTEM. Status: CONFIRMED; design obligation carried into the fix.
+Attribution: SYSTEM. Disposition (2026-11-19): the always-close obligation is discharged in the Stage 1 closure harness — all four controlled termination paths (normal completion, known failure, early stop, exception) append exactly one CLOSURE as the terminal event; independently examined by Vane and independently executed by him (68/68, exit code 0; PASS for the Stage 1 scope). Advanced on Ben's approval, 2026-11-19. Scope limit: hard termination remains outside the demonstrated guarantee, and the battery machinery's own closure path is not rewritten — production integration belongs to the later stages.
+Status: CONFIRMED; always-close repair demonstrated and independently verified within the Stage 1 harness scope — production integration outstanding.
 
 ### DR-18 — RETIRED combined reference (examiner's numbering)
 "Earlier battery attempts did not produce scored evidence" — split into DR-20 and DR-21 (defects) and DR-22 (closure absence). Retained as a retired pointer; do not cite as a live row.
