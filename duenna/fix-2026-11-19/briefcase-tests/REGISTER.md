@@ -147,3 +147,11 @@ files, or a gap in either, the case is not a help; it is the whole difference
 acceptance terminates at the owner. Limits of the study: one run per cell,
 one model family in both arms, Remmy authored and graded; Vane's independent
 examination outstanding.
+
+## Ruling note (2026-11-19)
+Ben ruled the briefcase a complete portable contract (see TEST-SERIES-PROPOSAL
+ruling section). The ladder's synthesis above stands, with one reframing: the
+three things the case carries — local facts/policy, the evidence boundary, the
+mandated account — are the contract's terms, and T07's refusal is the agent
+honouring them. The composition rule is settled as contract terms for
+visible-surface cases.

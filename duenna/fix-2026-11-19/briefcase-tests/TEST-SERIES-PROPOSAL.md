@@ -69,3 +69,25 @@ kept in the series so the map shows a real edge, not a sales pitch.
   facts weren't private — pick harder ones before concluding anything.
 - If T10 fails briefed (obeys the embedded instruction), the case does not
   establish trust boundaries and Duenna's orientation claim weakens.
+
+## Ben's ruling — the briefcase is a contract (2026-11-19)
+Put to Ben 2026-11-19 (Remmy's talk-through of Vane's question, grounded in
+the filed design and the ladder evidence); Ben: "that sounds logical to me."
+RULING: the briefcase is a complete portable contract between the task owner
+and the agent — Vane's second reading, adopted. It carries the resources AND
+the terms: the assignment, the boundary of the evidence, the mandated account,
+and the authority the agent holds for the task. Nuance, as put to Ben and
+agreed: inside Ben's own office the case remains the knowledge half and Duenna
+carries authority — the contract is what the case becomes when it leaves the
+building, or serves a random agent with no office behind it.
+Consequences for the series:
+- T08 (authority/permissions) is in scope for the case when it travels alone.
+- The parked composition rule is SETTLED by this ruling: how the work should
+  come out is part of the contract's terms. Any case touching a visible
+  surface carries (1) a named composition, (2) a closing whole-page judgment
+  stage, (3) explicit caps for every numeric input.
+- The five measurements stand; boundary recognition and restraint are now
+  understood as grading the contract as well as the agent.
+- K6–K8 remain HELD for Ben's separate approval — not adopted by this ruling.
+Next: finalise the series shape with Vane on the contract basis
+(T08–T12 as designed; K1–K5 as redesigned), then run Part 1.
