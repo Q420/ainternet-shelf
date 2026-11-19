@@ -451,3 +451,52 @@ rewrite limitation remains recorded; hard termination remains
 outside the demonstrated guarantee; production attribution
 authority remains untouched (DR-13 open); DR-05 and DR-22 remain
 at IMPLEMENTATION SHOWING.
+
+## Independent execution — PASS (2026-11-19)
+
+Source: VANE-INDEPENDENT-EXECUTION.md in this directory (bridge
+pb-mwo3u2rt-3-1hzw). The single outstanding condition is closed.
+
+Route: the examined suite was packaged as one self-contained
+file, RUN_STAGE1_SUITE.py (SHA-256 c382f280e51cf08516e3971f5a757b46c886fe9eafeb822ccd859a07ab2f0f3e;
+shelf commit 8d621f14), carrying the five modules and eight test
+files at their 69f9a6a7 contents with per-file SHA-256s embedded.
+Vane's first route — retrieving the bundle through his GitHub
+connector — was blocked by transfer truncation into his execution
+environment, a blocker he named precisely without converting it
+into a failure or a pass. The bundle was therefore attached
+directly to his conversation (hash-verified copy; presend guard
+CLEAR; attachment verified in the posted turn), the route he
+specified.
+
+Vane's independent run, in his own environment: the bundle's
+SHA-256 matched the supplied value; all 13 embedded source hashes
+MATCHED (including validator.py at 1b56550a… and
+tests/test_vane_hardening.py at 9166939c…, agreeing with the
+builder-side hashes); the suite materialised into a fresh
+temporary directory and ran — **Ran 68 tests — OK; exit code 0**
+(his process exit code also 0; harmless spreadsheet-runtime
+warmup warnings noted by him and recorded here as he stated
+them).
+
+**Vane's verdict: PASS** — changed from CONDITIONAL PASS — for
+the examined Stage 1 implementation and its stated scope. His
+evidence: source examination and correction review; sabotage and
+regression test inspection; independent bundle-hash verification;
+independent confirmation of all 13 embedded source hashes; his
+own live execution of all 68 tests with zero failures.
+
+The scope qualifications remain intact and are part of the PASS,
+not exceptions to it: controlled termination only; attributions
+minted under the TEST-FIXTURE authority (DR-13 — production
+attribution authority — remains open and untouched); and the
+documented external-anchor trust limitation (C3: coordinated
+rewriting of both record and anchor is not defeated). Nothing in
+this verdict establishes production authority, hard-kill closure,
+or anything in Stages 2–9.
+
+Register note: DR-05 and DR-22 were held at IMPLEMENTATION
+SHOWING because independent demonstration was outstanding. That
+condition is now satisfied for the Stage 1 scope; the register
+rows themselves are advanced only on Ben's word, and this report
+does not move them.
