@@ -1,8 +1,12 @@
-# DUENNA — PROCESS TREE AND STAGED IMPLEMENTATION PLAN (2026-11-19)
+# DUENNA — PROCESS TREE AND STAGED IMPLEMENTATION PLAN (v2, 2026-11-19)
 
 By Remmy, from defect register v2 (shelf 355e1c1e) and identity design v3
 (ID-SYSTEM-DESIGN-DRAFT-V3.md), with the examiner's suite order and smallest-build
-specification (pb-20261119-vane-identity-design-v2-examination-01 §3 Q4).
+specification (pb-20261119-vane-identity-design-v2-examination-01 §3 Q4). V2
+incorporates the examiner's plan examination (pb-20261119-vane-process-plan-
+examination-01): the omitted-known-failure test (Stage 1), the K2 refusal correction
+(Stage 3), the Stage 9 reference disambiguation, the test-authority distinction
+(Stage 0), and the briefcase / Part II scope clarifications (§1 note, §3).
 STATUS: PLAN ONLY. Every build stage requires Ben's word on the finished package
 (commission boundary, 2026-11-19). The plan's end state is the commission's: a battery
 that can be run again — Stage 9.
@@ -57,6 +61,16 @@ RUN
    └─ NOT-EXERCISED fixtures, incomplete accounts and unresolved discrepancies are
       first-class displayed facts
 
+PROJECT MAP NOTE (scope clarification, per the plan examination): the briefcase's own
+delegation lifecycle — Generate → Verify → Pack → Approve — is a SEPARATE UPSTREAM
+WORKSTREAM governing how agents are briefed for work, Duenna's runs included. It is
+outside this plan's build scope and is not staged here; its own acceptance and
+examination work remains outstanding, and its absence from Stages 0–9 must not be read
+as absence from the project. Part II's information model (§1, information flow below)
+likewise requires its own acceptance plan — Distiller, Warehouse Worker, RECORD and
+Comparator responsibilities, closing at the owner's judgment — as a named future
+planning obligation, not an enlargement of any stage here.
+
 INFORMATION FLOW (parallel track; not load-bearing for Stages 1–9)
 item (canonical identity) → source reference pinned → claim record → grade transitions
 by recorded verification acts → derivation records for anything produced from it →
@@ -69,7 +83,11 @@ entry references the distillation record) → deeper detail resolves via the SHE
 ### Stage 0 — Groundwork (no build)
 Scope: (a) consumer audit — inventory every downstream consumer of the event stream's
 failure_class fields before any meaning changes (K10 condition); (b) pin the governance
-authority record (who may mint attributions, under what instrument); (c) evidence
+authority record (who may mint attributions, under what instrument) — with the
+TEST-AUTHORITY DISTINCTION (v2): Stage 1's harness exercises attribution under a
+clearly-marked TEST authority fixture; that fixture settles nothing about the production
+adjudicator authority, and DR-13's authority decision remains Ben's, open and untouched
+by any test result; (c) evidence
 completion — pin the executed attempt-3 checkout (battery_run.py / battery_harness.py)
 against the Q420/Battery repo now that the GitHub route is open, and settle whether
 receipt contents were retained anywhere (register R2); (d) stage the remaining examiner
@@ -96,6 +114,17 @@ recorded as UNKNOWN, failure not omitted); rewritten chain (internal chain recom
 external anchor detects); anchor unavailable (integrity NOT reported as verified).
 Sabotage: remove the account section; rewrite history; remove the anchor — each must be
 caught by the dimension that claims it.
+THE OMITTED-KNOWN-FAILURE CASE (v2, the plan examination's first correction — the most
+important test in this stage): the validator must establish completeness by RECONCILING
+the failure events in the preserved record against the closure account; it must never
+accept the closure's own declaration of completeness as proof. Sabotage: produce a run
+containing two known failures; construct a closure account containing only one, marked
+COMPLETE; the independent validator must detect the omission and report the account
+incomplete or invalid. A closure with every required field, a valid chain and an
+external commitment that silently omits a known failure is exactly what Ben's second
+ruling prohibits — a record must not certify its own completeness.
+The harness also distinguishes a closure record emitted by the run process from any
+later supervisor record; the two are never interchangeable in any report.
 Boundary: controlled termination only; hard-kill behaviour is OUTSIDE this stage's
 guarantee and the stage report must say so.
 Register effect: DR-05, DR-22 → IMPLEMENTATION SHOWING REQUIRED until independent
@@ -110,7 +139,10 @@ plan takes that decision at Stage 1's close, on evidence.)
 Acceptance (his Test 2 sabotages): direct assignment of artifact/evidence reintroduced;
 fixtures_total renamed; a ledger entry dropped while the field retained; an extra entry
 outside the schema; the canonical path bypassed — construction must refuse to close in
-every case, exercising the real artefact path, not the ledger projection.
+every case, exercising the real artefact path, not the ledger projection. Plus (v2): a
+schema-required field absent from BOTH the artefact and its provenance entries must
+still fail construction — equality between two incomplete representations is not schema
+completeness; the frozen schema is the third party to every comparison.
 Register effect: DR-02 advanced on demonstration.
 
 ### Stage 3 — Configuration and subject (K1, K2, K3, G1)
@@ -120,9 +152,14 @@ per-capture served identity and the consistency condition; derived limits policy
 at freeze.
 Acceptance (his Test 3 sabotages): contradictory driver/adapter subject configurations;
 a component quoting the canonical hash while using a private value; preflight verifies
-one model, a later capture routed to another; served identity differing from the pin —
-the run must refuse or record the conflict in every case; no capture may borrow the
-verified subject's claim.
+one model, a later capture routed to another; served identity differing from the pin.
+REFUSAL, NOT EITHER/OR (v2, the plan examination's second correction): in every mismatch
+case BOTH obligations hold — the mismatch is preserved as a conflict record (the closure
+obligation) AND enforcement refuses (the execution obligation): the mismatched capture's
+admission is refused; any governed output depending on it is refused; the run's
+subject-dependent execution is refused or invalidated per the frozen run policy. A
+conflict record never substitutes for enforcement, and no capture may borrow another
+capture's verified identity.
 Register effect: DR-03, DR-20, DR-21 (established part) advanced on demonstration.
 
 ### Stage 4 — Verdict issuance and procedure dispatch (K7, K8) + the outstanding examinations
@@ -137,7 +174,9 @@ genuine pinned hash rejected; A's verdict rejected by B (different and identical
 contents); byte-identical copy rejected; mutated issued object rejected; removing the
 object-identity check fails the dependent fixture; removing the fingerprint check fails
 its fixture; fictitious procedure identity, registry remapping and rebinding each fail
-to redirect dispatch.
+to redirect dispatch. Every sabotage result is reported SEPARATELY (v2): FX-R60i,
+FX-R60k and FX-R60l are never compressed into a single "v2.4 passed" statement — they
+establish different properties.
 Register effect: DR-23, DR-24, DR-25, DR-09, DR-10, DR-11 advanced strictly per the
 evidence each showing actually produces.
 
@@ -147,7 +186,9 @@ receiver-recognised insertion with a recovery-surviving idempotency record.
 Acceptance (his Test 5): retry after partial insertion; interruption between insertion
 and state recording; retry after recovery; re-presentation of consumed and unconsumed
 operations — no duplicate side effect, no false refusal, no reconstruction of a consumed
-operation as new.
+operation as new. Recognition must be proven AFTER AN ACTUAL PROCESS RESTART (v2): the
+receiver's durable recognition surviving recovery is the property under test, not the
+same live process declining a duplicate.
 Register effect: DR-01 advanced on demonstration.
 
 ### Stage 6 — Attribution and response contracts (K10, K12, G6)
@@ -184,8 +225,11 @@ re-confirmed or downgraded on this stage's evidence.
 
 ### Stage 9 — The re-runnable battery (the commission's end state)
 Scope: assemble RECORD + BINDER + EVALUATOR + EXAMINER SURFACE from the staged
-components; freeze the Stage 6 tree set and acceptance criteria (Stage 0 evidence);
-verify the subject live (K2); run the battery end to end.
+components; freeze the earlier battery programme's Stage 6 test-tree set and acceptance
+criteria (the STEP6 artefact family, staged as Stage 0 evidence — NOT this plan's
+Stage 6, which is attribution and response contracts; the two share a label and nothing
+else, and are named in full wherever referenced); verify the subject live (K2); run the
+battery end to end.
 Acceptance: the frozen Stage 6 pass bar, applied as frozen; closure accounts complete
 under the five rulings; adjudication issued against the run with attributions as single
 synchronised facts; the run's full record — events, artefacts, receipts, attributions,
@@ -203,4 +247,5 @@ model on the build critical path; that track proceeds on paper (model acceptance
 its own plan) in parallel. It does not promise hard-termination behaviour anywhere; the
 supervisor question remains an explicitly open design item for Ben.
 
-— Remmy, 2026-11-19. Plan v1 for the examiner's review and Ben's decision.
+— Remmy, 2026-11-19. Plan v2, incorporating the examiner's corrections; the package
+(register v2, design v3, plan v2) is test-ready on paper for Ben's decision.
