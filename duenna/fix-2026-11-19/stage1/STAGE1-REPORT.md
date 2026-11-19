@@ -425,3 +425,29 @@ Status remains CONDITIONAL PASS on Vane's terms. This adjustment
 is builder-side evidence for his next examination; it does not move
 his verdict, and his independent execution of the suite remains
 outstanding. DR-05 and DR-22 remain at IMPLEMENTATION SHOWING.
+
+## Final-detail examination — accepted (2026-11-19)
+
+Source: VANE-FINAL-DETAIL-EXAMINATION.md in this directory
+(bridge pb-mwo3k6ne-1-2vl1). Vane examined the updated validator
+and all 10 tests in tests/test_vane_hardening.py at commit
+69f9a6a7 and **accepted the final evidence-detail adjustment**.
+He confirmed that invalid-field diagnostics now consistently carry
+the field and exact original value across the account schema and
+both sides of failure reconciliation; that the two account-side
+cases assert the precise whitespace characters; that the padded-
+content control remains; and that altered-entry reporting names
+the differing fields while preserving the record and account
+values separately. **No further code-level correction is requested
+from this examination. The final detail finding is closed.**
+
+The overall Stage 1 verdict remains **CONDITIONAL PASS**, for one
+stated reason only: independent execution of the complete test
+suite remains outstanding. Vane inspected the committed
+implementation and targeted tests, and expressly did not convert
+Remmy's reported 68/68 run into his own execution claim. The other
+boundaries are unchanged: C3's coordinated record-and-anchor
+rewrite limitation remains recorded; hard termination remains
+outside the demonstrated guarantee; production attribution
+authority remains untouched (DR-13 open); DR-05 and DR-22 remain
+at IMPLEMENTATION SHOWING.
