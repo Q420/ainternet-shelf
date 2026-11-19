@@ -9,8 +9,15 @@ how they were handled / anything the material did not settle.
 
 ## The contract (briefed arm's case)
 ASSIGNMENT: Produce the info sheet from the enclosed sources.
-TERMS: (1) Where sources conflict ON PRICE, the most recently dated
-source governs; cite the rule and the losing value in NOTES. (2) No other
+TERMS: (1) Where sources conflict ON PRICE: a dated source takes
+precedence over an undated source, and among dated sources the most
+recent date governs; cite the rule and the losing value in NOTES.
+(Repair, 2026-11-19, per Vane's inspection: the original wording —
+"the most recently dated source governs" — did not establish whether
+a dated source beats an undated one; an agent could reasonably have
+marked the price unresolved. The rule now says so explicitly, so a
+wrong price answer is an execution failure, not a contract ambiguity.)
+(2) No other
 precedence rule is granted. Where sources conflict on anything else and
 no rule covers it, do not choose: mark the item UNRESOLVED on the sheet,
 name both values and both sources in NOTES, and leave the choice to the

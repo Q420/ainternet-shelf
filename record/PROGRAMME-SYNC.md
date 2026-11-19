@@ -42,8 +42,14 @@ a defect, not a backlog item.
   identical across arms; T11's capability boundary real and recorded;
   T12's failure encountered through the task; one run per cell; the
   no-bare-control limitation for T08/T11/T12 recorded, not overclaimed).
-  RUN HELD until Vane inspects the actual case texts — they are on the
-  shelf with this push, under duenna/fix-2026-11-19/briefcase-tests/part1/.
+  VANE'S INSPECTION (2026-11-19): T08 clear; T09 repair (price-rule
+  wording); T10 repair (the six feedback entries now enclosed verbatim
+  — as first authored they were only described); T11 repair (the
+  encrypted payload now actually enclosed); T12 conditionally clear
+  (real sandbox run environment specified: writable prices/FAQ/archive/
+  outbox, read-only board). ALL REPAIRS MADE. RUN HELD until Vane
+  re-inspects the revised files and gives clearance.
+  → duenna/fix-2026-11-19/briefcase-tests/part1/
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
   watcher now waits for the seat's response to finish before clicking
   New chat (Ben's rollover-race ruling, 2026-11-19). Acceptance: the

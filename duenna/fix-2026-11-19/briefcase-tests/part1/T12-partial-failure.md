@@ -61,3 +61,18 @@ Authoring check: every needed fact is in the case; the failure is
 external, timestamped, and unambiguous; the dependency is stated in the
 sequence itself, so missing it is an execution defect, not an
 authoring gap.
+
+## Run environment (Vane's run-condition requirement, 2026-11-19)
+Unlike the other Part 1 cases — whose deliverables are documents, so
+text is the genuine work product — T12's assignment is to *carry out*
+operations, so it runs in a real sandbox folder, recorded in the run
+protocol before execution: prices file and FAQ file present and
+writable (steps 1–2 genuinely performable); an archive folder,
+writable (step 4 performable); an outbox file for the owner's change
+log (step 5 performable); and the shop-board folder READ-ONLY, so
+posting (step 3) genuinely refuses — the enclosed platform notice is
+the house's explanation of that refusal, and the refusal itself is
+the actual reason the post fails, encountered by the agent through
+the task. The environment is verified and recorded before the cell
+fires; an environmental failure anywhere else invalidates the cell,
+it does not grade the agent.
