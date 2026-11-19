@@ -23,7 +23,8 @@ reports G4's THREE INDEPENDENT RESULTS, never one collapsed boolean:
       follow-up — presence is not consistency). Wherever a value
       must name something, a WHITESPACE-ONLY value (a string of
       nothing but whitespace) is rejected: it is present, but it
-      names nothing. Original values are always preserved in the
+      names nothing. Each invalid-field diagnostic names the
+      offending field and preserves its exact original value in the
       details for evidence. Omitted, extra, duplicate or altered entries
       FAIL, whatever the account declares. An account that declares
       COMPLETE while naming unknowns also FAILs. A well-formed
@@ -143,10 +144,12 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
     closure = closures[-1]
     body = closure.get("body") or {}
     if not isinstance(body, dict):
-        return FAIL, {"reason": "CLOSURE body is not an object"}
+        return FAIL, {"field": "body", "value": body,
+                      "reason": "CLOSURE body is not an object"}
     account = body.get("account")
     if not isinstance(account, dict):
-        return FAIL, {"reason": "CLOSURE event has no account section"}
+        return FAIL, {"field": "account", "value": account,
+                      "reason": "CLOSURE event has no account section"}
 
     # C6 (Vane, corrected-implementation examination): the account
     # itself must satisfy its documented schema (closure.py, K9),
@@ -158,24 +161,31 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
     status_field = account.get("account_status")
     if status_field not in VALID_ACCOUNT_STATUSES:
         schema_invalid.append(
-            {"reason": f"account_status missing or invalid: {status_field!r}"})
+            {"field": "account_status", "value": status_field,
+             "reason": f"account_status missing or invalid: {status_field!r}"})
     if "unknowns" not in account:
-        schema_invalid.append({"reason": "account unknowns missing"})
+        schema_invalid.append(
+            {"field": "unknowns", "value": account.get("unknowns"),
+             "reason": "account unknowns missing"})
     elif not isinstance(account.get("unknowns"), list):
         schema_invalid.append(
-            {"reason": f"account unknowns is not a list: {account.get('unknowns')!r}"})
+            {"field": "unknowns", "value": account.get("unknowns"),
+             "reason": f"account unknowns is not a list: {account.get('unknowns')!r}"})
     else:
         for u in account["unknowns"]:
             if not _has_content(u):
                 schema_invalid.append(
-                    {"reason": f"account unknowns entry must name something (a non-empty string, not whitespace-only): {u!r}"})
+                    {"field": "unknowns", "value": u,
+                     "reason": f"account unknowns entry must name something (a non-empty string, not whitespace-only): {u!r}"})
         if status_field == "INCOMPLETE" and not account["unknowns"]:
             schema_invalid.append(
-                {"reason": "account declares INCOMPLETE without naming any unknowns"})
+                {"field": "unknowns", "value": account["unknowns"],
+                 "reason": "account declares INCOMPLETE without naming any unknowns"})
     account_authority = account.get("authority")
     if not _has_content(account_authority):
         schema_invalid.append(
-            {"reason": "account authority must name an authority (a non-empty string, not whitespace-only)"})
+            {"field": "authority", "value": account_authority,
+             "reason": "account authority must name an authority (a non-empty string, not whitespace-only)"})
 
     # Collect record FAILURE events as source of truth
     record_entries = []
@@ -187,21 +197,24 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
             continue
         b = ev.get("body")
         if not isinstance(b, dict):
-            record_invalid.append({"reason": "FAILURE body is not an object", "body": b})
+            record_invalid.append({"field": "body", "value": b,
+                                   "reason": "FAILURE body is not an object", "body": b})
             record_failure_ids.append(None)
             continue
         fid = b.get("failure_id")
         record_failure_ids.append(fid)
         record_entries.append(b)
-        # Validate required fields (whitespace-only names nothing)
+        # Validate required fields (whitespace-only names nothing).
+        # Every diagnostic names the offending field and preserves
+        # its exact original value for examination.
         if not _has_content(fid):
-            record_invalid.append({"failure_id": fid, "reason": "record failure_id must be a string naming something (non-empty, not whitespace-only)"})
+            record_invalid.append({"failure_id": fid, "field": "failure_id", "value": fid, "reason": "record failure_id must be a string naming something (non-empty, not whitespace-only)"})
         if not _has_content(b.get("description")):
-            record_invalid.append({"failure_id": fid, "reason": "record description must be a string naming something (non-empty, not whitespace-only)"})
+            record_invalid.append({"failure_id": fid, "field": "description", "value": b.get("description"), "reason": "record description must be a string naming something (non-empty, not whitespace-only)"})
         if b.get("attribution") not in VALID_ATTRIBUTIONS:
-            record_invalid.append({"failure_id": fid, "reason": f"record attribution invalid: {b.get('attribution')!r}"})
+            record_invalid.append({"failure_id": fid, "field": "attribution", "value": b.get("attribution"), "reason": f"record attribution invalid: {b.get('attribution')!r}"})
         if not _has_content(b.get("authority")):
-            record_invalid.append({"failure_id": fid, "reason": "record failure authority must be a string naming an authority (non-empty, not whitespace-only)"})
+            record_invalid.append({"failure_id": fid, "field": "authority", "value": b.get("authority"), "reason": "record failure authority must be a string naming an authority (non-empty, not whitespace-only)"})
         if isinstance(fid, str) and fid:
             # Keep first as source of truth for altered comparison; duplicates handled separately
             if fid not in record_by_id:
@@ -209,28 +222,32 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
 
     account_failures = account.get("failures")
     if not isinstance(account_failures, list):
-        return FAIL, {"reason": "account has no failures list",
+        return FAIL, {"field": "failures", "value": account_failures,
+                      "reason": "account has no failures list",
                       "record_failure_ids": record_failure_ids}
     account_failure_ids = []
     account_by_id = {}
     account_invalid = []
     for f in account_failures:
         if not isinstance(f, dict):
-            account_invalid.append({"reason": "account failure entry is not an object", "entry": f})
+            account_invalid.append({"field": "entry", "value": f,
+                                    "reason": "account failure entry is not an object", "entry": f})
             account_failure_ids.append(None)
             continue
         fid = f.get("failure_id")
         account_failure_ids.append(fid)
+        # Every diagnostic names the offending field and preserves
+        # its exact original value for examination.
         if not _has_content(fid):
-            account_invalid.append({"failure_id": fid, "reason": "account failure_id must be a string naming something (non-empty, not whitespace-only)"})
+            account_invalid.append({"failure_id": fid, "field": "failure_id", "value": fid, "reason": "account failure_id must be a string naming something (non-empty, not whitespace-only)"})
         if not _has_content(f.get("description")):
-            account_invalid.append({"failure_id": fid, "reason": "account description must be a string naming something (non-empty, not whitespace-only)"})
+            account_invalid.append({"failure_id": fid, "field": "description", "value": f.get("description"), "reason": "account description must be a string naming something (non-empty, not whitespace-only)"})
         if f.get("attribution") not in VALID_ATTRIBUTIONS:
-            account_invalid.append({"failure_id": fid, "reason": f"account attribution invalid: {f.get('attribution')!r}"})
+            account_invalid.append({"failure_id": fid, "field": "attribution", "value": f.get("attribution"), "reason": f"account attribution invalid: {f.get('attribution')!r}"})
         # C6: the documented schema requires the minting authority
         # on each account failure entry as well.
         if not _has_content(f.get("authority")):
-            account_invalid.append({"failure_id": fid, "reason": "account failure authority must be a string naming an authority (non-empty, not whitespace-only)"})
+            account_invalid.append({"failure_id": fid, "field": "authority", "value": f.get("authority"), "reason": "account failure authority must be a string naming an authority (non-empty, not whitespace-only)"})
         if isinstance(fid, str) and fid and fid not in account_by_id:
             account_by_id[fid] = f
 
@@ -258,9 +275,13 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
     for fid in sorted(record_set & account_set):
         rec = record_by_id.get(fid, {})
         acc = account_by_id.get(fid, {})
-        if rec.get("description") != acc.get("description") or rec.get("attribution") != acc.get("attribution") or rec.get("authority") != acc.get("authority"):
+        differing_fields = [
+            field for field in ("description", "attribution", "authority")
+            if rec.get(field) != acc.get(field)
+        ]
+        if differing_fields:
             altered.append(fid)
-            altered_details.append({"failure_id": fid, "record": {"description": rec.get("description"), "attribution": rec.get("attribution"), "authority": rec.get("authority")}, "account": {"description": acc.get("description"), "attribution": acc.get("attribution"), "authority": acc.get("authority")}})
+            altered_details.append({"failure_id": fid, "fields": differing_fields, "record": {"description": rec.get("description"), "attribution": rec.get("attribution"), "authority": rec.get("authority")}, "account": {"description": acc.get("description"), "attribution": acc.get("attribution"), "authority": acc.get("authority")}})
 
     details = {
         "record_failure_ids": record_failure_ids,

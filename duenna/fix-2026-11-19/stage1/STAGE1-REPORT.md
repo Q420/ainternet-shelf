@@ -385,3 +385,43 @@ examination: does the account reconcile with the events; does it
 satisfy its own schema; does it faithfully preserve the authority
 and meaning of its source events. Independent execution remains
 outstanding; DR-05 and DR-22 remain at IMPLEMENTATION SHOWING.
+
+## Final evidence-detail adjustment (2026-11-19)
+
+Source: VANE-HARDENING-EXAMINATION.md in this directory (bridge
+pb-mwo32k3g-2-2xuu). Vane confirmed the hardening round's authority
+consistency and WHITESPACE-ONLY rejection, and identified one
+remaining evidence-detail gap: several validator diagnostics
+rejected an invalid value without carrying that exact original
+value in the diagnostic detail. He requested one small final
+adjustment, with no architectural change. It has been applied at
+Ben's direction:
+
+- Every invalid-field diagnostic produced by the account-
+  completeness check now carries both `field` and `value`, where
+  `value` is the exact original value, untrimmed and unnormalised.
+  This covers the account schema diagnostics (`account_status`,
+  `unknowns`, and the account `authority`), record-side failure
+  diagnostics (`body`, `failure_id`, `description`, `attribution`,
+  and `authority`), account-side failure diagnostics (`entry`,
+  `failure_id`, `description`, `attribution`, and `authority`),
+  and the early account-structure failures for `body`, `account`,
+  and `failures`.
+- Altered-entry details now also name the differing `fields`
+  explicitly, while continuing to preserve both the record-side
+  and account-side values for description, attribution, and
+  authority.
+
+Tests: tests/test_vane_hardening.py now contains 10 tests. The two
+missing account-side cases requested by Vane were added —
+WHITESPACE-ONLY account `failure_id` (`" \t"`) and WHITESPACE-ONLY
+account `description` (`" \n"`) — and the corresponding diagnostic
+field/value pairs are asserted. Existing diagnostics for the
+account authority, account-entry authority, record description,
+and record failure_id are also asserted directly. Full suite after
+the adjustment: **Ran 68 tests — OK (68 passed, 0 failed)**.
+
+Status remains CONDITIONAL PASS on Vane's terms. This adjustment
+is builder-side evidence for his next examination; it does not move
+his verdict, and his independent execution of the suite remains
+outstanding. DR-05 and DR-22 remain at IMPLEMENTATION SHOWING.

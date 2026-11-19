@@ -16,6 +16,12 @@ not erase or relabel C6:
    failure_id, a description — a whitespace-only value is
    rejected. The original value is preserved untrimmed in the
    validator's details for evidence.
+
+Final evidence-detail adjustment (Vane's hardening examination):
+each invalid-field diagnostic must name the offending field and
+carry its exact original value, on both the record and account
+sides. The account-side failure_id and description cases are
+exercised explicitly below.
 """
 
 import os
@@ -51,6 +57,9 @@ class TestVaneHardening(unittest.TestCase):
     def _account(self, body, failures=()):
         result = self._validate(body, failures)
         return result["account_completeness"], result["details"]["account_completeness"]
+
+    def _diagnostic(self, entries, field):
+        return next(entry for entry in entries if entry.get("field") == field)
 
     # --- 1. Authority consistency ---------------------------------
     # Account entry minted under a different authority than its
@@ -94,7 +103,9 @@ class TestVaneHardening(unittest.TestCase):
         body["account"]["authority"] = "  "
         status, details = self._account(body)
         self.assertEqual(status, "FAIL")
-        self.assertTrue(details["account_schema_invalid"])
+        diagnostic = self._diagnostic(
+            details["account_schema_invalid"], "authority")
+        self.assertEqual(diagnostic["value"], "  ")
 
     def test_whitespace_only_entry_authority_rejected(self):
         record_failure = make_failure("F-1", "widget jammed", "SYSTEM")
@@ -103,7 +114,9 @@ class TestVaneHardening(unittest.TestCase):
         body = build_closure_body("known_failure", failures=[account_entry])
         status, details = self._account(body, failures=[record_failure])
         self.assertEqual(status, "FAIL")
-        self.assertTrue(details["account_invalid"])
+        diagnostic = self._diagnostic(details["account_invalid"], "authority")
+        self.assertEqual(diagnostic["failure_id"], "F-1")
+        self.assertEqual(diagnostic["value"], " ")
 
     def test_whitespace_only_description_rejected(self):
         record_failure = make_failure("F-1", "   ", "SYSTEM")
@@ -111,7 +124,9 @@ class TestVaneHardening(unittest.TestCase):
             "known_failure", failures=[dict(record_failure)])
         status, details = self._account(body, failures=[record_failure])
         self.assertEqual(status, "FAIL")
-        self.assertTrue(details["record_invalid"])
+        diagnostic = self._diagnostic(details["record_invalid"], "description")
+        self.assertEqual(diagnostic["failure_id"], "F-1")
+        self.assertEqual(diagnostic["value"], "   ")
 
     def test_whitespace_only_failure_id_rejected(self):
         record_failure = make_failure("  ", "widget jammed", "SYSTEM")
@@ -119,7 +134,29 @@ class TestVaneHardening(unittest.TestCase):
             "known_failure", failures=[dict(record_failure)])
         status, details = self._account(body, failures=[record_failure])
         self.assertEqual(status, "FAIL")
-        self.assertTrue(details["record_invalid"])
+        diagnostic = self._diagnostic(details["record_invalid"], "failure_id")
+        self.assertEqual(diagnostic["value"], "  ")
+
+    def test_whitespace_only_account_failure_id_rejected(self):
+        record_failure = make_failure("F-1", "widget jammed", "SYSTEM")
+        account_entry = dict(record_failure)
+        account_entry["failure_id"] = " \t"
+        body = build_closure_body("known_failure", failures=[account_entry])
+        status, details = self._account(body, failures=[record_failure])
+        self.assertEqual(status, "FAIL")
+        diagnostic = self._diagnostic(details["account_invalid"], "failure_id")
+        self.assertEqual(diagnostic["value"], " \t")
+
+    def test_whitespace_only_account_description_rejected(self):
+        record_failure = make_failure("F-1", "widget jammed", "SYSTEM")
+        account_entry = dict(record_failure)
+        account_entry["description"] = " \n"
+        body = build_closure_body("known_failure", failures=[account_entry])
+        status, details = self._account(body, failures=[record_failure])
+        self.assertEqual(status, "FAIL")
+        diagnostic = self._diagnostic(details["account_invalid"], "description")
+        self.assertEqual(diagnostic["failure_id"], "F-1")
+        self.assertEqual(diagnostic["value"], " \n")
 
     # Control: content with surrounding whitespace names something —
     # it is accepted, and the recorded value is preserved as-is.
