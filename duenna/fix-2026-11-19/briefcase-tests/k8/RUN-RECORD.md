@@ -40,7 +40,14 @@ Outputs preserved verbatim at B-briefed-raw.md and B-bare-raw.md
 
 Remmy's checkpoint grading is held in REMMY-GRADES-K8.md, to be
 released after the examiner's blind assessment commits (the Part 1
-protocol). Factual summary only: the briefed B completed all three
+protocol). UPDATE (2026-11-19 ~16:49): the examiner's assessment
+committed @ e4483e01 — agreement on B-bare (L2); DISAGREEMENT on
+B-briefed (Remmy L1 on the checkpoint ledger; examiner L3 — the
+briefed B promised Thursday without establishing the 3pm-cutoff
+eligibility at its own acting time; the case carried the standing
+rule but not the current time). The catch stands; the disagreement
+and resolution are recorded in the briefcase register. Remmy's
+grades released with the next push. Factual summary only: the briefed B completed all three
 of the customer's asks within its authority (Thursday arranged,
 wrap confirmed, discount question answered) with dispatch held;
 the bare B answered the discount question and held dispatch, held

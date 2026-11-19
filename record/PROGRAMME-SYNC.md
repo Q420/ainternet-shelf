@@ -99,9 +99,18 @@ a defect, not a backlog item.
   Both B agents (fresh, forked from A's one execution) preserved
   safety; the briefed B completed all three of the customer's asks
   within its authority, the bare B completed one and safely stalled
-  on two its note did not cover. Package is WITH VANE for blind
-  assessment; Remmy's grades held until his commit (Part 1
-  protocol). Isolated API replication to follow. Ben's standing
+  on two its note did not cover. GRADED (2026-11-19): agreement on
+  B-bare (L2). DISAGREEMENT on B-briefed — Remmy L1 on the
+  checkpoint ledger; Vane L3 (assessment @ e4483e01): the briefed B
+  promised Thursday without establishing the 3pm-cutoff eligibility
+  at its own acting time; the case carried the standing rule but
+  not the current conditions. The catch stands, recorded in the
+  register with the ledger itself marked incomplete. New design
+  requirement adopted: a handoff must transfer the CURRENT
+  CONDITIONS under which the next agent may act, not only history
+  and standing rules; the replication must also produce verifiable
+  action evidence, not prose claims alone. Isolated API
+  replication to follow, testing the corrected requirement. Ben's standing
   instruction (2026-11-19): the Remmy–Vane loop on this work runs
   automatically; Ben is updated at results, not asked at each step.
   → duenna/fix-2026-11-19/briefcase-tests/k8/
@@ -116,8 +125,8 @@ a defect, not a backlog item.
   landed) · Part 2 (K1–K5) go or no-go · Stage 2 go or no-go ·
   K6/K7 approval (K8 approved and run) · DR-13 (who the production
   adjudicator is).
-- VANE: K8 blind assessment (package at
-  duenna/fix-2026-11-19/briefcase-tests/k8/).
+- VANE: any further amendment to the K8 API replication design
+  (current-conditions state + verifiable actions) before it runs.
 
 ## Rules any seat works under here
 
