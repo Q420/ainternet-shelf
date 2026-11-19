@@ -8,15 +8,21 @@ reports G4's THREE INDEPENDENT RESULTS, never one collapsed boolean:
       is the last event in the record (C1, Vane examination). A parse
       or structural failure makes this FAIL explicitly, because the
       actual terminal state is then unknown (C4).
-(ii)  ``account_completeness`` — the closure account is reconciled
+(ii)  ``account_completeness`` — the closure account must first
+      satisfy its own documented schema (C6): ``account_status``
+      present and valid, ``unknowns`` present as a list of non-empty
+      strings, an INCOMPLETE account naming at least one unknown,
+      and the minting ``authority`` present on the account and on
+      each failure entry. A malformed account is rejected (FAIL),
+      never merely classified. The account is then reconciled
       against the record itself: FAILURE events in the record and
       failures in the closure account must match as exact sets with
       non-empty unique failure_ids, required fields validated, and
       description/attribution matching the FAILURE event as source
       of truth (C2). Omitted, extra, duplicate or altered entries
       FAIL, whatever the account declares. An account that declares
-      COMPLETE while naming unknowns also FAILs. An account whose
-      status is INCOMPLETE is reported as INCOMPLETE.
+      COMPLETE while naming unknowns also FAILs. A well-formed
+      account whose status is INCOMPLETE is reported as INCOMPLETE.
 (iii) ``chain_validity`` — ``record.verify_chain`` recomputed over
       the fresh-read events AND the fresh-read head compared against
       the external anchor. Missing/unreadable anchor -> NOT_VERIFIED.
@@ -25,7 +31,8 @@ Structurally malformed events (valid JSON with missing/mistyped
 fields) yield a structured FAIL, never a crash (C4).
 
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (G4, G5, K9),
-PROCESS-TREE-AND-PLAN.md v2, Stage 1; Vane examination C1/C2/C4.
+PROCESS-TREE-AND-PLAN.md v2, Stage 1; Vane examination C1/C2/C4/C5
+and his corrected-implementation examination (C6).
 """
 
 from __future__ import annotations
@@ -43,6 +50,7 @@ INCOMPLETE = "INCOMPLETE"
 NOT_VERIFIED = "NOT_VERIFIED"
 
 VALID_ATTRIBUTIONS = ("SYSTEM", "MODEL", "INPUT", "UNKNOWN")
+VALID_ACCOUNT_STATUSES = ("COMPLETE", "INCOMPLETE")
 
 
 def _read_events_fresh(path: str) -> tuple[list[dict], str | None]:
@@ -120,6 +128,35 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
     if not isinstance(account, dict):
         return FAIL, {"reason": "CLOSURE event has no account section"}
 
+    # C6 (Vane, corrected-implementation examination): the account
+    # itself must satisfy its documented schema (closure.py, K9),
+    # independently of whether its failures reconcile. C2 proves
+    # recorded failures are reconciled; C6 proves the account
+    # satisfies its declared contract. A malformed account is
+    # rejected below, never merely classified as incomplete.
+    schema_invalid = []
+    status_field = account.get("account_status")
+    if status_field not in VALID_ACCOUNT_STATUSES:
+        schema_invalid.append(
+            {"reason": f"account_status missing or invalid: {status_field!r}"})
+    if "unknowns" not in account:
+        schema_invalid.append({"reason": "account unknowns missing"})
+    elif not isinstance(account.get("unknowns"), list):
+        schema_invalid.append(
+            {"reason": f"account unknowns is not a list: {account.get('unknowns')!r}"})
+    else:
+        for u in account["unknowns"]:
+            if not isinstance(u, str) or not u:
+                schema_invalid.append(
+                    {"reason": f"account unknowns entry must be a non-empty string: {u!r}"})
+        if status_field == "INCOMPLETE" and not account["unknowns"]:
+            schema_invalid.append(
+                {"reason": "account declares INCOMPLETE without naming any unknowns"})
+    account_authority = account.get("authority")
+    if not isinstance(account_authority, str) or not account_authority:
+        schema_invalid.append(
+            {"reason": "account authority missing or not a non-empty string"})
+
     # Collect record FAILURE events as source of truth
     record_entries = []
     record_failure_ids = []
@@ -168,6 +205,10 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
             account_invalid.append({"failure_id": fid, "reason": "account description must be non-empty string"})
         if f.get("attribution") not in VALID_ATTRIBUTIONS:
             account_invalid.append({"failure_id": fid, "reason": f"account attribution invalid: {f.get('attribution')!r}"})
+        # C6: the documented schema requires the minting authority
+        # on each account failure entry as well.
+        if not isinstance(f.get("authority"), str) or not f.get("authority"):
+            account_invalid.append({"failure_id": fid, "reason": "account failure authority must be non-empty string"})
         if isinstance(fid, str) and fid and fid not in account_by_id:
             account_by_id[fid] = f
 
@@ -205,10 +246,14 @@ def _check_account_completeness(events: list[dict], parse_error: str | None = No
         "altered_details": altered_details,
         "record_invalid": record_invalid,
         "account_invalid": account_invalid,
+        "account_schema_invalid": schema_invalid,
         "account_status": account.get("account_status"),
         "unknowns": account.get("unknowns"),
     }
 
+    if schema_invalid:
+        details["reason"] = "closure account fails its documented schema (C6)"
+        return FAIL, details
     if record_invalid:
         details["reason"] = "record FAILURE event(s) have invalid required fields"
         return FAIL, details

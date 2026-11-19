@@ -151,13 +151,19 @@ end-to-end against the real record / runner / validator / anchor:
 
 ## Register effect
 
-- DR-05, DR-22 → **IMPLEMENTATION SHOWING**.
-- **EVIDENCE SHOWING COMPLETE only for the controlled-termination
-  scope**, stated as such: the four controlled termination paths, the
-  mandatory closure account reconciled independently, and the external
-  anchor — within Stage 1's scope only, and subject to Vane's
-  independent examination in S7. No register row is advanced beyond
-  that scope by this report.
+- DR-05, DR-22 → **IMPLEMENTATION SHOWING**. The register stays at
+  IMPLEMENTATION SHOWING until independent demonstration is actually
+  complete. Builder-side evidence for the controlled-termination
+  scope is assembled (the four controlled termination paths, the
+  mandatory closure account reconciled independently, and the
+  external anchor — within Stage 1's scope only), but the evidence
+  is NOT complete while the examiner's independent execution remains
+  outstanding. (Wording corrected 2026-11-19 at Vane's catch in his
+  corrected-implementation examination: an earlier version of this
+  section claimed evidence complete for the scope while also
+  recording that independent execution was outstanding; under the
+  plan's own evidence rules those statements cannot both stand.)
+  No register row is advanced beyond that scope by this report.
 
 ## Push state
 
@@ -285,3 +291,57 @@ Stage 1 is not declared unconditionally complete. On Vane's terms it
 is a CONDITIONAL PASS with corrections C1, C2, C4 and C5 applied as
 above and C3 recorded as a limitation. His independent execution of
 the suite remains outstanding.
+
+## C6 addendum — Vane's corrected-implementation examination (2026-11-19)
+
+Source: VANE-STAGE1-CORRECTED-EXAMINATION.md in this directory
+(bridge pb-mwo27muu-5-a8wq). Vane inspected the corrected source at
+commit a8c1d55e and confirmed C1, C2, C4 and C5 implemented, the
+omitted-failure regression preserved, S1–S8 present in source, and
+the C3 limitation honestly recorded. His disposition remained
+CONDITIONAL PASS, with one new correction requested — preserved
+here as its own finding, NOT folded into C2, in his distinction:
+C2 proves that recorded failures are reconciled; C6 proves that
+the account itself satisfies its declared contract.
+
+### C6 — mandatory account-schema validation (applied)
+
+The validator now enforces the documented account schema
+(closure.py, K9) before reconciliation, in
+`_check_account_completeness`:
+
+- `account_status` must be present and one of COMPLETE / INCOMPLETE.
+- `unknowns` must be present and a list; every entry must be a
+  non-empty string.
+- An account declaring INCOMPLETE must name at least one unknown —
+  a closure can no longer claim incompleteness while naming
+  nothing.
+- The minting `authority` must be present as a non-empty string on
+  the account, and on each account failure entry (the documented
+  schema requires it in both places).
+
+A malformed account is rejected — account_completeness FAIL, with
+the violations named in `account_schema_invalid` — never merely
+classified as incomplete. Well-formed accounts are unaffected: an
+honest INCOMPLETE still reports INCOMPLETE, an honest COMPLETE
+still passes (both covered by control tests).
+
+### C6 test evidence
+
+tests/test_c6_account_schema.py — 10 tests, all passing: Vane's
+five requested cases (INCOMPLETE with missing unknowns; INCOMPLETE
+with an empty unknowns list; COMPLETE with missing unknowns;
+COMPLETE with wrongly typed unknowns; unknowns with empty and
+non-string entries; missing authority on the account and on a
+failure entry) plus two controls. Full suite after C6: **Ran 58
+tests — OK (58 passed, 0 failed)**. The omitted-failure regression
+fixture is preserved untouched and still passes.
+
+### Status after C6
+
+Still a CONDITIONAL PASS on Vane's terms — C6 applied at his
+request; the verdict is his to move, not this report's. His
+independent execution of the suite remains outstanding: his
+examination environment cannot resolve GitHub for a runnable
+checkout, a limit he stated himself rather than papering over.
+DR-05 and DR-22 remain at IMPLEMENTATION SHOWING.
