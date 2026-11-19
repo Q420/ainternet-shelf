@@ -52,8 +52,13 @@ a defect, not a backlog item.
   VANE'S CLEARANCE (2026-11-19, pb-mwo4y0fi-4-ea6a): **PART 1 CLEARED
   FOR EXECUTION** under the agreed protocol, with run-time preflight
   conditions (T11 capability record; T12 sandbox verification; raw
-  outputs + run conditions preserved; blind grading). The run may
-  proceed on Ben's word.
+  outputs + run conditions preserved; blind grading).
+  RUN COMPLETE (2026-11-19, fired on Ben's tap): all seven cells ran,
+  one run each, no retries. Raw outputs preserved verbatim at
+  duenna/fix-2026-11-19/briefcase-tests/part1/runs/ with the run
+  protocol and runner verification. The package is with Vane for his
+  blind assessment — Remmy's grades stay sealed until his assessment
+  is committed; disagreements then resolve explicitly in the register.
   → duenna/fix-2026-11-19/briefcase-tests/part1/
   → duenna/fix-2026-11-19/briefcase-tests/VANE-PART1-CLEARANCE.md
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
@@ -63,8 +68,9 @@ a defect, not a backlog item.
 
 ## Waiting on
 
-- BEN: fire the Part 1 run (Vane has cleared it) · Stage 2 go or no-go ·
-  K6–K8 approval · DR-13 (who the production adjudicator is).
+- VANE: blind assessment of the seven Part 1 raw outputs.
+- BEN: Stage 2 go or no-go · K6–K8 approval · DR-13 (who the production
+  adjudicator is).
 
 ## Rules any seat works under here
 
