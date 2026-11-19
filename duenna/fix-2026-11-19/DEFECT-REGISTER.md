@@ -1,4 +1,4 @@
-# DUENNA — DEFECT REGISTER (merged, v1, 2026-11-19)
+# DUENNA — DEFECT REGISTER (merged, v2, 2026-11-19)
 
 Joint register: Vane (examiner) + Remmy (orchestrator), under Ben's commission of 2026-11-19.
 Schema per row (Vane's, adopted): defect identity / affected identities / symptom / evidence /
@@ -8,10 +8,14 @@ Attribution classes per Ben's ruling: SYSTEM / MODEL / INPUT / UNKNOWN.
 A repaired defect is never deleted; it gains a linked disposition. A green suite alone never
 marks a defect fixed: the fixture must reach the mechanism, and sabotage of the repair must
 fail the dependent test.
-DR-23..DR-25 are examiner entries whose detailed text was lost to a conversation rollover on
-2026-11-19; placeholders below, restatement requested. DR-19..DR-22 are Remmy's additions,
-accepted by the examiner (summary confirmation received; detailed reply lost to the same
-rollover — acceptance stands per his duplicate-confirmation letter).
+v2 change note (2026-11-19): DR-23..DR-25 placeholders replaced with the examiner's restatement
+(pb-20261119-vane-r-era-register-restatement-01, received via Pulse Bridge after the original
+was lost to a conversation rollover); the R60/v2.4 qualifications block added as §5b; DR-21's
+root-cause wording corrected per the examiner's precision note. DR-19..DR-22 are Remmy's
+additions, accepted by the examiner as written (his wording check is in the restatement letter).
+Evidence states are kept distinct throughout and never compressed into a single word such as
+"verified": EXECUTED REPRODUCTION / SOURCE INSPECTION / IMPLEMENTER-RUN FIXTURE /
+IMPLEMENTER-RUN SABOTAGE / INDEPENDENT TARGETED SABOTAGE / INDEPENDENT EXAMINATION OUTSTANDING.
 
 ## 1. Confirmed implementation defects — Attempt 3 (GPT-OSS battery, STAGE6BATT-20261118-001)
 
@@ -164,7 +168,7 @@ Affected: attempt 2 (GPT-OSS config f07204ec), run 44217537496; adapter captures
 Symptom: all captures TIMEOUT at the adapter's 120-second limit, twice per instance; no subject output; run UNSCORED.
 Evidence: STAGE6-SECOND-SUBJECT-ATTEMPT2-EVIDENCE-2026-11-17.md — preflight short call against the same pin/credential returned HTTP 200 in seconds; battery envelopes (full tree prompt, reasoning budget 16384, max_tokens ≥10240) returned nothing within 120s.
 Mechanism: the timeout is a constant, not derived from the run's own parameters.
-Root cause: the run's parameter identity never reaches the transport that must honour it. (The note's two candidate causes — lane latency vs timeout length — were not separable from that evidence alone; the constant-vs-derived defect stands either way.)
+Root cause (established part): a fixed 120-second transport limit was applied to runs whose reasoning envelopes were never consulted in setting it. NOT established: which of the two candidate causes — lane latency vs timeout length — was decisive in the observed timeouts; the evidence does not separate them, and no stronger source-level claim is made (examiner's precision note, 2026-11-19, accepted).
 Attribution: SYSTEM (original classification UNSCORED — transport, preserved).
 Status: CONFIRMED operational defect.
 
@@ -178,12 +182,59 @@ Attribution: SYSTEM. Status: CONFIRMED; design obligation carried into the fix.
 ### DR-18 — RETIRED combined reference (examiner's numbering)
 "Earlier battery attempts did not produce scored evidence" — split into DR-20 and DR-21 (defects) and DR-22 (closure absence). Retained as a retired pointer; do not cite as a live row.
 
-## 5. Examiner's R-era additions (detailed text lost to rollover; restatement requested)
+## 5. Examiner's R-era additions (restated by Vane, pb-20261119-vane-r-era-register-restatement-01)
 
-### DR-23 — [PLACEHOLDER] Examiner entry from the R-era package examination (2026-11-19). Substance to be restated by Vane.
-### DR-24 — [PLACEHOLDER] Examiner entry from the R-era package examination (2026-11-19). Substance to be restated by Vane.
-### DR-25 — [PLACEHOLDER] Examiner entry from the R-era package examination (2026-11-19). Substance to be restated by Vane.
-(Also carried from that examination: "R60/v2.4 qualifications" — to be restated with the entries.)
+### DR-23 — Forged verdict accepted without issuance provenance
+Affected: D3 v2.3 CheckerContract verdicts and their validation provenance.
+Symptom: a fabricated verdict dictionary was accepted even though its outcome had not been produced by the contract's run() method. The forged dictionary carried the genuine pinned implementation hash and other checked metadata, but claimed a fabricated preserved outcome. It was also accepted when offered as the outcome for an artefact whose actual run returned a failure path.
+Evidence: FX-R60J-FINDING-AND-PROPOSAL.md; reproduction against the unmodified v2.3 harness — genuine run() verdict ACCEPTED; forged dictionary with genuine pinned hash and fabricated outcome ACCEPTED; same forged dictionary offered against an artefact whose actual run returned FAILURE-PATH: ACCEPTED. Evidence state: EXECUTED REPRODUCTION (executed by Remmy against the shelved v2.3 harness).
+Mechanism: validate_verdict() checked procedure identity, version, implementation hash against the pinned anchor, and input identity. It did not inspect whether the verdict had actually been issued by CheckerContract.run().
+Root cause: the validator authenticated the identity of the procedure, but not the provenance of the verdict. A verdict that looked legitimate was treated as one the contract had actually produced.
+Attribution: SYSTEM. First discovery: Alex, 2026-11-10, in the independent v2.3 examination; reproduced by Remmy the same day.
+Repair/disposition: v2.4 introduced a private issuance record in the factory closure — the record retains the actual contract instance and the actual verdict object, with a fingerprint of the verdict's canonical contents at issuance. Validation now requires the submitted verdict to be the object issued by that contract and to retain its issuance contents.
+Regression fixture: FX-R60j — genuine verdict accepted; forged verdict carrying the genuine pinned hash rejected. Reported in the v2.4 suite (IMPLEMENTER-RUN FIXTURE).
+Re-examination: the v2.4 package remains subject to independent examination. The v2.3 reproduction is executed evidence; it must not be confused with independent approval of the v2.4 repair.
+Status: CONFIRMED historical defect, reproduced against v2.3. Repair implemented and reported passing in v2.4; final approval outstanding.
+Identity requirement: a verdict's provenance — issued by this contract's run(), as this object — is part of its identity; metadata that merely describes the procedure does not establish it.
+
+### DR-24 — Cross-contract verdict replay
+Affected: verdict issuance provenance; the receiving contract instance; the contract's expected input/digest terms.
+Symptom: a genuine verdict issued by Contract A could be submitted to Contract B and accepted, even where the two contracts protected different expected digests.
+Evidence: FX-R60K, documented in the FX-R60J finding's addendum — the four v2.3 validation checks are instance-independent; Contract A's verdict carries A's digest; B's own run against the corresponding payload produces a failure path. Evidence state: SOURCE INSPECTION — the implementer's attempt to execute the reproduction was blocked by her tooling and was not routed around; the finding explicitly assigns execution to independent examination. This classification must remain in the register.
+Mechanism: the v2.3 validator checked the verdict's procedure, version, pinned implementation hash, and input identity. None of those checks established that the receiving contract instance was the instance that issued the verdict.
+Root cause: verdict provenance was system-wide rather than bound to the specific contract instance. Genuine issuance somewhere in the system was insufficient proof of issuance by the contract doing the validation.
+Attribution: SYSTEM. First discovery: Alex, through the FX-R60K adversarial case, 2026-11-10.
+Repair/disposition: v2.4 introduced a per-contract issuance record. Validation requires both: the recorded issuing contract is the exact contract instance performing validation, and the recorded verdict is the exact verdict object issued by that contract. This is object identity, not a copyable instance identifier stamped into the verdict.
+Regression fixture: FX-R60k — a genuine verdict accepted by its own contract; A's verdict rejected by B where expected digests differ; A's verdict rejected by B even where both contracts issued identical contents; a byte-identical copied dictionary rejected. Reported in the 38/38 v2.4 suite (IMPLEMENTER-RUN FIXTURE).
+Re-examination: two items remain — independent execution of the original v2.3 cross-contract replay, and independent sabotage of v2.4's object-identity check demonstrating FX-R60k fails when that check is removed. Both INDEPENDENT EXAMINATION OUTSTANDING.
+Status: CONFIRMED by source inspection against v2.3; original reproduction not executed. Repair implemented and fixture reported passing in v2.4; independent identity-sabotage evidence outstanding.
+Identity requirement: provenance is bound to the issuing instance, not to the system; a fact issued by one identity-holder is not transferable to another by copying its contents.
+
+### DR-25 — Verdict object integrity after issuance
+Affected: the issued verdict object, its issuing contract, and the contents associated with that issuance.
+Symptom: the earlier serialized-content provenance proposal could establish that the same content had been issued, but not that the submitted dictionary was the exact object issued by the validating contract; it also did not independently protect against mutation of an issued object after return. Two exposing cases: (1) two contracts can issue identical serialized contents — a copy of A's dictionary can match B's content-based record despite not being B's issued object; (2) an issued dictionary can be mutated after return — its object identity remains the same, but its contents no longer represent the verdict as issued.
+Evidence: Alex's refinement in the FX-R60J finding's second addendum; the final v2.4 change record documents the revised mechanism and the FX-R60k/FX-R60l fixtures.
+Mechanism: the earlier proposal relied on serialized verdict contents as the issuance record. Equal content was treated as sufficient provenance, and the record did not require the exact returned object plus an integrity check against its state at issuance.
+Root cause: content equality was mistaken for issuance identity, and post-issuance mutation was not detected.
+Attribution: SYSTEM. First discovery: Alex, during refinement of the FX-R60J/K provenance repair, 2026-11-10.
+Repair/disposition: v2.4 retains, per contract: a reference to the actual contract instance; a reference to the actual verdict object returned; a fingerprint of the verdict's canonical contents at issuance. Validation requires both exact object identity and current-content agreement with the issuance fingerprint.
+Regression fixtures: FX-R60k (object identity, including identical-content contracts and byte-identical copies); FX-R60l (mutation of the exact issued object after return). Reported in the 38/38 v2.4 suite.
+Re-examination: the integrity sabotage was EXECUTED by the implementer — removing the fingerprint comparison caused FX-R60l alone to fail, 37 PASS / 1 FAIL (IMPLEMENTER-RUN SABOTAGE). The identity sabotage (removing the object-identity check so FX-R60k should fail) was NOT executed by the implementer and remains assigned to independent examination.
+Status: CONFIRMED as a weakness in the earlier provenance proposal; the v2.4 design addresses it. Integrity sabotage has executed evidence. Identity sabotage and independent package examination remain outstanding. This is not a claim that the final v2.4 implementation has been found defective.
+Identity requirement: identity is the issued object itself plus its issuance-state fingerprint — neither a copy of its contents nor the bare object without its issuance state.
+
+## 5b. R60 / v2.4 qualifications and evidence boundaries (from the examiner's restatement)
+These distinctions travel with DR-23..DR-25. A sequence of green suites is not a blanket approval.
+Suite progression (all implementer-reported): v2.2 — 33/33 (FX-R60f, FX-R60g added). Immutable-registry revision — 34/34 (FX-R60h). v2.3 — 35/35 (FX-R60i). v2.4 — 38/38 (FX-R60j, FX-R60k, FX-R60l).
+Sabotage evidence, per fixture:
+- FX-R60f: digest-comparison sabotage EXECUTED by the implementer; FX-R60f alone failed. Establishes the corrected fixture reaches the target comparison, unlike the earlier FX-R60d (see DR-08).
+- FX-R60h: mutable-registry sabotage INDEPENDENTLY EXECUTED by Vane — immutable baseline 8/8 in the focused R60 run; mutable variant 7/8 with FX-R60h failing. He did not execute the complete 34-fixture harness under sabotage; that limitation is preserved. This closes the specific independent test assignment for the mutable-registry remapping mechanism (DR-10). It does NOT close the FX-R60i or FX-R60k sabotages below; the three remain distinct.
+- FX-R60i: v2.3 factory-closure dispatch + pinned-anchor validation resists ordinary module-level registry rebinding (DR-11). The restored-global-dispatch sabotage remains OUTSTANDING. The v2.3 35/35 result is implementer-run.
+- FX-R60j: the original forged-verdict reproduction against v2.3 was EXECUTED (DR-23); the v2.4 repair adds the issuance record and fixture.
+- FX-R60k: the original v2.3 cross-contract replay was established by SOURCE INSPECTION, not executed (DR-24); the v2.4 fixture is reported in the 38/38 suite; the sabotage removing the object-identity check remains OUTSTANDING.
+- FX-R60l: v2.4 integrity sabotage EXECUTED by the implementer — removing the fingerprint check caused FX-R60l alone to fail, 37 PASS / 1 FAIL (DR-25).
+Threat-model and approval boundaries: the v2.3 factory-closure repair covers ordinary module-level attribute rebinding; it does not claim protection against arbitrary rewriting of module functions or direct manipulation of closure cells. The v2.4 issuance-provenance design is explicitly in-process; it does not establish cross-process or persisted provenance.
+Open items carried: the R60 unresolved-items record retains four fixture gaps — R38 H-6 (v)/(vi), R48, R53, R55. UX-1 through UX-5 remain open. R65's caller-supplied required-set authority remains a qualification, not a repaired defect (DR-13). The caller-supplied pinned=True qualification remains unresolved and was outside the authorised R60 revision scope. Grok's second adjudication of the v0.9 gate remains outstanding. The R60 change record and unresolved-items record both retain v0.10 NOT APPROVED; the 38/38 v2.4 result does not change that status by itself.
 
 ## 6. Attempt-3 subject outcomes (NOT machinery defects — kept separate)
 T01 GOVERNANCE-FAIL (DR-01) and also failed its subject check after permitted recovery — exact subject attribution requires the frozen expected/actual evidence. T02 NOT-SCORED (DR-14). T03 SUBJECT-FAIL (quarantine-list check: not every expected directive listed; MODEL is a candidate attribution only, pending retained expected/actual evidence). T04 PASS. T05 GOVERNANCE-FAIL (DR-02). T06 PASS (corrected checker pin; all four labels match). T07 NOT-SCORED (DR-15). T08 GOVERNANCE-FAIL (DR-02). T09 unqualified NOT-SCORED (DR-16); T09/FR-A/B/C/VALID NOT-SCORED (DR-17). The 11 STEP_FAILED and two RECOVERY_TAKEN events are not themselves proof of governance defects. T05/T08 had no adapter captures because their paths required no model calls — that absence is not a defect; the ledger omissions are. Formal determination for attempt 3: FAILURE under the frozen Stage 6 pass bar — a completed execution, not a successful GPT-OSS battery result. Attempts 1 and 2 remain UNSCORED and must not be retroactively converted into scored failures.
