@@ -63,16 +63,48 @@ a defect, not a backlog item.
   safely could not); T10 shows no observable contract advantage.
   QUALIFICATION on the record: the runner's subagents inherit context,
   so paired-comparison causal claims are qualified.
-  ISOLATED RE-RUN COMPLETE (Ben's ruling, 2026-11-19): the four paired
-  cells (T09/T10, both arms) re-ran on a genuinely isolated rig —
-  direct API calls, the payload as the agent's whole context, subject
-  moonshotai/kimi-k3.1-pro. Attempt history preserved (three cells
-  invalidated by a client read timeout on attempt 1, re-run on
-  attempt 2). Package at
-  duenna/fix-2026-11-19/briefcase-tests/part1/runs-isolated/ — with
-  Vane for blind assessment; Remmy's grades sealed until his commit.
+  ISOLATED RE-RUN COMPLETE AND GRADED (Ben's ruling, 2026-11-19):
+  the four paired cells (T09/T10, both arms) re-ran on a genuinely
+  isolated rig — direct API calls, the payload as the agent's whole
+  context, subject moonshotai/kimi-k3.1-pro. Attempt history preserved
+  (three cells invalidated by a client read timeout on attempt 1,
+  re-run on attempt 2). Blind grading: agreement on all four cells
+  (T09 briefed L1, T09 bare L2, T10 briefed L1, T10 bare L1). The
+  run-1 qualification is discharged for these comparisons; the T09
+  contrast is attributable to the case within this model, and the T10
+  null is confirmed. Part 1 is closed: the briefcase has demonstrated
+  value where it supplies decision authority the agent otherwise
+  lacks; it has not demonstrated universal value.
   → duenna/fix-2026-11-19/briefcase-tests/part1/
   → duenna/fix-2026-11-19/briefcase-tests/VANE-PART1-CLEARANCE.md
+- FOUNDING DEFINITION (Ben, 2026-11-19): the briefcase is NOT to help
+  one agent understand a job it has full context to; it is to pass on
+  the state of that work and context to another blind agent to
+  continue the autonomous collaboration while retaining human
+  approval. The case transfers work state, never approval authority.
+  Vane adopted it the same hour and set the governing hypothesis for
+  the next phase: a briefcase enables a blind receiving agent to
+  continue an existing body of work autonomously, preserving its
+  state, context, constraints and approval boundaries, without access
+  to the originating agent's conversation. Guard rail: autonomous
+  continuation does not mean autonomous authority expansion.
+  → duenna/fix-2026-11-19/briefcase-tests/REGISTER.md
+- K8 (agent-to-agent handoff — the first collaboration test): APPROVED
+  by Ben and authored under Vane's five conditions. SMOKE TEST RUN
+  COMPLETE (2026-11-19, subagent rig, on Ben's direction after the
+  isolated API attempt for Agent A crashed on a dropped connection —
+  environment failure, recorded): Agent A created the designed state
+  with no deviations (Friday promised, items reserved, LOYAL10
+  refused as expired, dispatch held for the missing unit number).
+  Both B agents (fresh, forked from A's one execution) preserved
+  safety; the briefed B completed all three of the customer's asks
+  within its authority, the bare B completed one and safely stalled
+  on two its note did not cover. Package is WITH VANE for blind
+  assessment; Remmy's grades held until his commit (Part 1
+  protocol). Isolated API replication to follow. Ben's standing
+  instruction (2026-11-19): the Remmy–Vane loop on this work runs
+  automatically; Ben is updated at results, not asked at each step.
+  → duenna/fix-2026-11-19/briefcase-tests/k8/
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
   watcher now waits for the seat's response to finish before clicking
   New chat (Ben's rollover-race ruling, 2026-11-19). Acceptance: the
@@ -80,10 +112,12 @@ a defect, not a backlog item.
 
 ## Waiting on
 
-- VANE: blind assessment of the four isolated re-run outputs.
-- BEN: the Claude workload question (deferred by Ben until the
-  isolated results land) · Stage 2 go or no-go · K6–K8 approval ·
-  DR-13 (who the production adjudicator is).
+- BEN: the Claude workload question (the isolated results have now
+  landed) · Part 2 (K1–K5) go or no-go · Stage 2 go or no-go ·
+  K6/K7 approval (K8 approved and run) · DR-13 (who the production
+  adjudicator is).
+- VANE: K8 blind assessment (package at
+  duenna/fix-2026-11-19/briefcase-tests/k8/).
 
 ## Rules any seat works under here
 
