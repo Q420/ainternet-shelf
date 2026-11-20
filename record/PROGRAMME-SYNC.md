@@ -439,3 +439,16 @@ a defect, not a backlog item.
   corrupted; handoff sizes recorded, abilities identical
   across chains. Design only — running still needs Ben's
   separate go. To Vane for examination as briefcase-53.
+- K9 v2 AMENDED on Vane's examination (her two points):
+  (1) the ACCESS BOUNDARY is now specified — a fresh folder
+  per hop containing only the current handoff, the current
+  dossier + source pack, and nothing else; history lives in
+  the run archive outside every agent's reach; reads are
+  recorded via the payload manifest; dossier-recovered
+  items are tallied separately, never credited to the
+  handoff. (2) "MATERIALLY ABOVE" is now a pre-fixed rule:
+  item-hop scoring (1 / 0.5 / 0 / 0, corrupted tallied
+  apart), success needs a ≥15%-of-maximum gap AND no named
+  loss at the final hop AND no worse corruption; the
+  ledger stays primary. Back to Vane for clearance as
+  briefcase-54. Running still needs Ben's separate go.

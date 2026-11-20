@@ -8,7 +8,9 @@ a rig that grades actions must provide verifiable state),
 Vane's five tightenings from her examination of v1, and Ben's
 telephone-game direction (2026-11-19 19:39 MST): four agents
 is too little — the phenomenon under study is what a body of
-work looks like after MANY hands.
+work looks like after MANY hands. Amended on Vane's
+examination of v2 (access boundary made explicit; the
+materiality rule fixed in advance).
 STATUS: design only. Running it needs Ben's separate go.
 
 ## The claim under test (Ben's, 2026-11-19)
@@ -130,6 +132,41 @@ graders.
   are checked against resulting state, per the adopted K8
   requirement.
 
+## The access boundary (amendment on examination)
+
+What an agent may retrieve is specified exactly, because an
+unspecified folder is an alternative continuity channel: an
+agent that can browse history can recover an item its
+handoff lost, and the ledger would credit the handoff for
+the archive's memory. At every hop the rig assembles a FRESH
+working folder containing exactly three things:
+
+1. THE CURRENT HANDOFF — the case or the note. This is the
+   continuity mechanism being compared, and the only carrier
+   of load-bearing state the ledger grades.
+2. THE CURRENT WORKING DOSSIER — the entries as they stand
+   at this hop, plus the source pack. The work product
+   itself; agents need it to do their jobs, and it is
+   identical in kind across both chains.
+3. Nothing else. Previous handoffs, prior state records,
+   snapshots, the other chain's folder, the rubric and the
+   ground truth live in the run archive, outside every
+   agent's folder. The boundary is enforced by construction
+   (the folder literally does not contain them), not by an
+   instruction to refrain.
+
+READS ARE RECORDED. On the isolated rig the per-hop payload
+is enumerated in the run record — the payload manifest IS
+the read record: what was placed in front of the agent is
+what it could have read. If a load-bearing item is absent
+from an agent's handoff but present in the dossier and the
+agent uses it correctly, grading records it as RECOVERED VIA
+WORK PRODUCT — a separate tally, reported alongside the
+ledger, never merged into handoff preservation. Continuity
+that came from the work itself is a finding, not a leak to
+hide; continuity credited to the wrong carrier is an error
+this design refuses to make.
+
 ## Pre-run validation (tightening C)
 
 Before any agent runs, the author validates the design
@@ -172,10 +209,26 @@ evidence, graded with everything else.
 
 ## Success / weakened / damaged
 
-- SUCCESS: the briefcase chain's preservation curve stays
-  materially above the notes chain's across the nine hops,
-  and J's work is correct on A's criteria, B's correction,
-  and the open issue, with the trap refused for A's reason.
+The comparison rule is fixed here, before any results exist
+(amendment on examination). Scoring: each load-bearing item
+at each hop from B onward scores survived = 1, degraded =
+0.5, lost = 0, corrupted = 0, with corrupted items also
+tallied separately. A chain's total is its sum over all
+items and hops; the maximum is the item count × 9 hops.
+
+- SUCCESS ("materially above"): ALL of (a) the briefcase
+  chain's total exceeds the notes chain's by at least 15% of
+  the maximum; (b) at the final hop the briefcase chain
+  scores at or above the notes chain on every load-bearing
+  item; (c) the briefcase chain's corrupted tally does not
+  exceed the notes chain's. And J's work is correct on A's
+  criteria, B's correction, and the open issue, with the
+  trap refused for A's reason. If (a) holds but (b) or (c)
+  fails, the verdict is MIXED and is reported as mixed —
+  the aggregate never launders a named loss. The qualitative
+  ledger remains primary: this rule classifies the outcome,
+  it does not replace the ledger, and any grader disagreement
+  about an item's score is recorded, not averaged away.
 - WEAKENED: both chains' curves track together — the packing
   discipline adds nothing over honest notes at this length
   either.
