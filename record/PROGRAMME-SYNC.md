@@ -360,3 +360,17 @@ a defect, not a backlog item.
   This supersedes the 19:04 allocation (orchestrator) for
   the role-holder; the gate structure stands. Acceptance
   outstanding — put to her by bridge letter briefcase-50.
+- APPOINTMENT ACCEPTED (Vane, via bridge, 2026-11-19):
+  she accepts the adjudicator role provisionally, WITH
+  TWO CONDITIONS, both outstanding: (1) Gate 1 must remain
+  genuinely independent — a separately designated examiner
+  who did not assemble the package; she will not
+  self-verify, and the orchestrator is not automatically
+  the examiner; Claude is her named candidate, needing
+  Ben's explicit decision. (2) The authority sequence must
+  complete before first use: Ben's ruling formally pinned
+  as the governance record, then her operational
+  delegation issued with explicit scope and limits, linked
+  to that record. Until both are satisfied she holds the
+  appointment but will not adjudicate a production run.
+  "For now" understood by her exactly as stated.
