@@ -832,7 +832,7 @@
    "evidence": "Raised in the Stage 1 qualifications as the test-fixture attribution authority question. Identifier caution (the examiner, 2026-11-19): the merged defect register's DR-13 is a different item (the R65 required-set qualification) — programme usage and the register collide on the number, so this map cites NO register number for the vacancy. It stands as an independent open architectural issue until Ben reconciles the numbering. Numbered DR-26 in the defect register on Ben's ruling (2026-11-19); the DR-13 collision is cross-noted at DR-13.",
    "id": "s-adjudicator-vacancy",
    "issue": "Who the production adjudicator IS — the authority that finally settles a run's outcome — has no named owner. The map shows this lit because a responsibility with no owner is precisely what this map exists to catch.",
-   "mitigation": "None until Ben rules. The vacancy is the finding.",
+   "mitigation": "ALLOCATED on Ben's ruling (2026-11-19): the orchestrator adjudicates, through status gates — package assembled, then independently verified, then decided. The verification gate precedes the decision and cannot be skipped; a decision on an unverified package is not a settlement. Implementation outstanding — the role is allocated, not yet exercised in production.",
    "name": "An ownerless job: the production adjudicator",
    "where": [
     "d-evaluator",
@@ -853,7 +853,7 @@
  ],
  "subtitle": "Parts, jobs, flows, gates — and where it could create an issue",
  "title": "Duenna — the whole system",
- "updated": "2026-11-19 · vacancy stress point cites DR-26 (Ben's numbering ruling)",
+ "updated": "2026-11-19 · adjudicator allocated on Ben's ruling (orchestrator, verification-gated)",
  "f5": [
   {
    "id": "f5-gov",
