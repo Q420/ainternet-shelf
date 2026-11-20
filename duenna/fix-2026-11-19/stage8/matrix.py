@@ -42,6 +42,20 @@ outcomes into changes with under_sabotage "MISSING", which
 classify() then credited as EXERCISED — absence of evidence
 masquerading as discrimination.)
 
+Record-shape hardening (correction round 2 — Gate 1 return,
+VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md @ c352207a): round
+1's validator parsed JSON syntax but assumed every test_id
+was hashable and sortable, so a syntactically valid but
+schema-invalid record — a list- or object-valued test_id,
+or a hashable non-string ID sorted against strings — raised
+TypeError inside validate_run_output() and aborted the
+matrix run instead of becoming the named anomaly and
+INVALID-RUN record the validator promises. Field types are
+now validated before any type-assuming use: a non-string or
+empty test_id and a non-string outcome are named anomalies
+and the record contributes nothing. No exception escapes
+validate_run_output() for any JSON value shape.
+
 Outcome policy (stated explicitly, per the same ruling): in
 a validated, complete run, a pair is credited EXERCISED when
 the fixture's observed outcome is FAIL or ERROR. Both are
@@ -163,7 +177,12 @@ def validate_run_output(returncode, stdout, expected_ids):
     exited cleanly, emitted exactly one summary record
     internally consistent with its outcome records, and
     produced exactly the expected test-ID set, each once,
-    each with a valid outcome value."""
+    each with a valid outcome value. Record FIELDS are
+    type-checked before any use that assumes their type
+    (correction round 2): a test_id that is not a non-empty
+    string, and an outcome that is not a string, are named
+    anomalies — no JSON value shape a record can carry may
+    make this function raise."""
     anomalies = []
     outcomes = {}
     summaries = []
@@ -187,10 +206,38 @@ def validate_run_output(returncode, stdout, expected_ids):
             summaries.append(row["summary"])
         elif "test_id" in row:
             test_id = row["test_id"]
+            if not isinstance(test_id, str) or not test_id:
+                # A malformed RECORD (correction round 2 —
+                # Gate 1 return,
+                # VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md @
+                # c352207a): the test_id is not a string in the
+                # expected test-ID form. It must never reach
+                # dictionary membership/insertion or sorting —
+                # an unhashable ID (list, object) raises
+                # TypeError there, and a hashable non-string
+                # ID can raise when a mixed set is sorted.
+                # Name it as an anomaly and record nothing
+                # from the record; exact membership in the
+                # expected set is enforced by the set
+                # comparison below for string IDs.
+                anomalies.append(
+                    f"malformed test id {test_id!r} on line "
+                    f"{lineno} — not a string test id")
+                continue
             if test_id in outcomes:
                 anomalies.append(
                     f"duplicate outcome record for {test_id}")
             outcome = row.get("outcome")
+            if not isinstance(outcome, str):
+                # Same suspicion, neighbouring field: a
+                # non-string outcome (list, object, number)
+                # is a malformed record. It is named and the
+                # record is not stored — an unhashable outcome
+                # would otherwise raise TypeError when the
+                # summary tally uses it as a dictionary key.
+                anomalies.append(
+                    f"invalid outcome {outcome!r} for {test_id}")
+                continue
             if outcome not in VALID_OUTCOMES:
                 anomalies.append(
                     f"invalid outcome {outcome!r} for {test_id}")

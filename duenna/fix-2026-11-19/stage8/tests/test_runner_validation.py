@@ -13,6 +13,16 @@ test-ID set) before classification, an invalid run credits
 nothing, and the outcome policy is explicit: FAIL or ERROR
 in a validated run credits; skipped does not; missing cannot
 occur in a valid run.
+
+Correction round 2 (VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md
+@ c352207a) adds the record-shape regressions below: round
+1's validator assumed every test_id was hashable and
+sortable, so malformed JSON records (a list- or
+object-valued test_id; a non-string ID sorted against
+strings) crashed it with TypeError instead of becoming
+named anomalies. Field types are now validated before any
+type-assuming use, and the end-to-end path records such a
+run INVALID-RUN with no credit.
 """
 
 import json
@@ -20,7 +30,9 @@ import os
 import shutil
 import sys
 import tempfile
+import types
 import unittest
+from unittest import mock
 
 STAGE8_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, STAGE8_DIR)
@@ -279,6 +291,132 @@ class TestClassifyFailsClosed(unittest.TestCase):
             self.assertNotIn(
                 summary["pairs"][f"{JOINT_FIXTURE} :: {mech}"],
                 ("EXERCISED", "JOINT-ONLY"))
+
+
+class TestMalformedRecordShapes(unittest.TestCase):
+    """Correction round 2 (Gate 1 return,
+    VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md @ c352207a):
+    round 1's validator parsed JSON syntax but assumed every
+    test_id was hashable and sortable, so a syntactically
+    valid but schema-invalid record crashed validation with
+    TypeError instead of becoming a named anomaly. These
+    tests pin the type/form gate: no exception escapes
+    validate_run_output() for any JSON value shape."""
+
+    def validate(self, returncode, stdout, expected=EXPECTED):
+        return matrix.validate_run_output(returncode, stdout, expected)
+
+    def test_list_valued_test_id_is_anomaly_not_crash(self):
+        # The verdict's first named shape: an unhashable ID
+        # raised TypeError at dictionary membership/insertion.
+        rows = [(ONE, "ok"), (["bad"], "FAIL")]
+        outcomes, anomalies = self.validate(0, make_stdout(rows))
+        self.assertIsNone(outcomes)
+        self.assertTrue(any("malformed test id" in a
+                            for a in anomalies))
+
+    def test_object_valued_test_id_is_anomaly_not_crash(self):
+        rows = [(ONE, "ok"), ({"x": 1}, "FAIL")]
+        outcomes, anomalies = self.validate(0, make_stdout(rows))
+        self.assertIsNone(outcomes)
+        self.assertTrue(any("malformed test id" in a
+                            for a in anomalies))
+
+    def test_integer_test_id_mixed_with_strings_is_anomaly(self):
+        # The verdict's second named shape: a hashable
+        # non-string ID reached the set comparison, and
+        # sorting the unexpected-ID difference (an integer
+        # alongside an unexpected string ID) raised TypeError.
+        rows = [(ONE, "ok"), (TWO, "ok"), (7, "FAIL"),
+                ("test_a.T.test_three", "FAIL")]
+        outcomes, anomalies = self.validate(0, make_stdout(rows))
+        self.assertIsNone(outcomes)
+        self.assertTrue(any("malformed test id 7" in a
+                            for a in anomalies))
+        self.assertTrue(any("unexpected test id" in a
+                            for a in anomalies))
+
+    def test_non_string_outcome_is_anomaly_not_crash(self):
+        # The neighbouring field, checked with the same
+        # suspicion: a list-valued outcome was stored by
+        # round 1's validator and raised TypeError when the
+        # summary tally used it as a dictionary key.
+        lines = [json.dumps({"test_id": ONE, "outcome": ["ok"]}),
+                 json.dumps({"test_id": TWO, "outcome": "ok"}),
+                 json.dumps({"summary": {"tests": 2,
+                                          "counts": {"ok": 2}}})]
+        outcomes, anomalies = self.validate(
+            0, "\n".join(lines) + "\n")
+        self.assertIsNone(outcomes)
+        self.assertTrue(any("invalid outcome" in a
+                            for a in anomalies))
+
+
+class TestMalformedRecordEndToEnd(unittest.TestCase):
+    """The round-2 proof end to end: a run whose witness
+    output carries a list-valued test_id travels run_one →
+    classify and is recorded INVALID-RUN with no pair
+    verdicts and no coverage credit — not merely a flag from
+    validate_run_output() in isolation. The witness runner
+    subprocess is replaced by a fake returning the crafted
+    stream; everything else (scratch copy, patching,
+    validation, classification) is the real path. matrix.
+    RESULTS is redirected to a temp dir holding copies of the
+    real baseline files."""
+
+    def setUp(self):
+        self._real_results = matrix.RESULTS
+        self._tmp = tempfile.mkdtemp(prefix="stage8-e2e-")
+        for stage in range(1, 8):
+            shutil.copy(
+                os.path.join(self._real_results,
+                             f"baseline-stage{stage}.jsonl"),
+                os.path.join(self._tmp,
+                             f"baseline-stage{stage}.jsonl"))
+        matrix.RESULTS = self._tmp
+
+    def tearDown(self):
+        matrix.RESULTS = self._real_results
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def test_malformed_record_run_is_invalid_run_no_credit(self):
+        from mechanisms import MECHANISMS
+        stage1_ids = sorted(matrix.expected_ids_by_stage()[1])
+        lines = [json.dumps({"test_id": t, "outcome": "ok"})
+                 for t in stage1_ids]
+        lines.append(json.dumps({"test_id": [],
+                                 "outcome": "FAIL"}))
+        lines.append(json.dumps({"summary": {
+            "tests": len(stage1_ids) + 1,
+            "counts": {"ok": len(stage1_ids), "FAIL": 1}}}))
+        crafted = "\n".join(lines) + "\n"
+
+        def fake_run(cmd, **kwargs):
+            return types.SimpleNamespace(
+                returncode=0, stdout=crafted, stderr="")
+
+        baseline = matrix.load_baseline()
+        with mock.patch.object(matrix.subprocess, "run", fake_run):
+            res = matrix.run_one(
+                "validation-test-malformed-record",
+                MECHANISMS[GUARD_MECH]["patches"], [1], baseline)
+        self.assertFalse(res["valid"])
+        self.assertFalse(res["suite_validations"]["1"]["valid"])
+        self.assertTrue(any("malformed test id" in r
+                            for r in res["invalid_reasons"]))
+        self.assertEqual(res["changed"], {})
+
+        res["run_id"] = f"mech-{GUARD_MECH}"
+        res["mechanism"] = GUARD_MECH
+        summary = matrix.classify({GUARD_MECH: res})
+        self.assertEqual(summary["pairs"][GUARD_PAIR],
+                         "INVALID-RUN")
+        self.assertIn(GUARD_MECH, summary["invalid_runs"])
+        self.assertIn(GUARD_PAIR,
+                      summary["invalid_runs"][GUARD_MECH]
+                      ["affected_pairs"])
+        self.assertNotIn(GUARD_PAIR, summary["pair_evidence"])
+        self.assertEqual(summary["exercised_by_outcome"], {})
 
 
 class TestRunOneValidity(unittest.TestCase):

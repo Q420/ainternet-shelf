@@ -654,3 +654,98 @@ of the corrected package, which has not yet occurred. The
 collateral-heavy sabotage shapes named in the Boundaries
 section remain limitations of those sabotage designs, as
 the ruling notes they must.
+
+## Correction round 2 — Gate 1 return
+
+**The ruling answered** (VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md,
+shelf commit c352207af85d9d58002d16969fabb57b265ef6c7, on the
+package @ 61587a35): Gate 1 FAIL, one narrow validator
+correction. Round 1's correction is accepted — validation
+before classification, invalid runs contributing nothing,
+the outcome policy explicit, the regenerated pair matrix
+unchanged with the two stale joint-run records accounted
+for. Everything substantive stands. The remaining defect is
+in the validator itself, at the record-shape boundary.
+
+**The defect.** `validate_run_output()` parsed JSON syntax
+but assumed every `test_id` was hashable and sortable. A
+syntactically valid but schema-invalid record such as
+`{"test_id": [], "outcome": "FAIL"}` raised `TypeError` at
+dictionary membership/insertion, because the ID is
+unhashable; a hashable non-string ID (an integer) mixed
+with string IDs raised `TypeError` when the unexpected-ID
+difference was sorted. Both escaped the validator's stated
+contract — malformed records become named anomalies and the
+run is recorded invalid — and, since `run_suite()` caught
+nothing, aborted the matrix run instead. Reproduced before
+the fix, all as `TypeError`: a list-valued test_id
+(unhashable), an object-valued test_id (unhashable), an
+integer test_id alongside an unexpected string ID (mixed
+sort), and — the neighbouring field, below — a list-valued
+outcome.
+
+**The correction** (`matrix.py`, `validate_run_output()`
+only; `witness_run.py` and `coverage.py` unchanged). Field
+types are now validated before any use that assumes them. A
+`test_id` that is not a non-empty string is a malformed
+record: it is named in the anomaly list (`malformed test id
+<value> on line <n> — not a string test id`) and nothing
+from the record is stored, so the ID never reaches
+membership, insertion, or sorting; exact membership in the
+expected set continues to be enforced by the set comparison
+for string IDs. The neighbouring fields were checked with
+the same suspicion, and one further crash was found and
+fixed: an `outcome` that is not a string (a list or object)
+was stored by round 1's validator and raised `TypeError`
+when the summary tally used it as a dictionary key — it is
+now named as an invalid outcome and the record is not
+stored. (String outcomes keep round 1's behaviour exactly:
+an out-of-vocabulary string is named and stored, so the
+tally semantics are unchanged.) The remaining fields were
+audited and need no change: the summary's `tests`/`counts`
+are only ever compared with `!=`, which no JSON value can
+make raise, and a non-dict summary is already refused by
+the isinstance check. No exception escapes
+`validate_run_output()` for any JSON value shape a record
+can carry.
+
+**Regression tests** (`tests/test_runner_validation.py`,
+five new). Both of the ruling's named shapes: a list-valued
+test_id and an object-valued test_id each produce the named
+malformed-ID anomaly and `None` outcomes; an integer
+test_id mixed among string IDs (with an unexpected string
+ID, the sorting-crash shape) produces the malformed-ID
+anomaly naming the integer and the unexpected-ID anomaly,
+no exception. The neighbouring field: a list-valued outcome
+produces the invalid-outcome anomaly, no exception. And the
+end-to-end proof: a crafted witness stream carrying every
+Stage 1 baseline ID plus one list-valued test_id record
+travels the real path — `run_one()` (scratch copy, patching,
+the runner subprocess replaced by a fake returning the
+crafted stream) records the run invalid with the malformed
+ID named in its reasons and no changes, and `classify()`
+then records the guard pair INVALID-RUN, names the run in
+`invalid_runs` with the pair among its affected pairs, and
+awards no pair evidence and no coverage credit.
+
+**The matrix check.** The fix changes validator behaviour
+only for malformed records; no real witness run emits one.
+Classification was re-run from the on-disk run records with
+the corrected code and diffed against the submitted
+summary: all 217 pair classifications identical — EXERCISED
+189, JOINT-ONLY 7, SELF-WITNESSED 4, NOT-EXERCISED 17 — and
+the joint verdicts, collateral, instrument-interaction
+records, pair evidence and exercised-by-outcome tallies are
+identical, with zero invalid runs and zero witness
+anomalies in both. The matrix was therefore not regenerated;
+per the ruling, the existing 217-pair findings stand on the
+corrected records.
+
+**Counts after correction.** Stage 8: 36/36 (the 31 prior
+tests with unchanged outcomes, plus five new). Regressions:
+Stage 1, 68/68; Stage 2, 27/27; Stage 3, 38/38; Stage 4,
+36/36; Stage 5, 30/30; Stage 6, 54/54; Stage 7, 34/34.
+`stage1/`–`stage7/` unmodified. The register disposition is
+unchanged by this round: DR-08 and DR-12 await the
+examiner's re-examination of the corrected package, which
+has not yet occurred.
