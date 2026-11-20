@@ -12,11 +12,13 @@ applicability before any decision.
 
 From: Ben (originating governance authority).
 To: Claude, as adjudicator (Gate 2).
-Under: the governance record for production adjudication
-(GOVERNANCE-RECORD, pinned at the shelf commit recorded on
-issuance — the pin is part of this instrument; a delegation
-read against any other governance record is not this
-delegation).
+Under: the governance record for production adjudication,
+identified by its SHA-256 content digest. That digest is
+recorded in the issuance block below and is part of this
+instrument: a delegation read against any other governance
+record, or against a record whose digest differs, is not
+this delegation. (The governance record's shelf commit is
+a location reference only, never its identity.)
 
 ## What is granted
 
@@ -29,10 +31,10 @@ identity and result preserved. The settlement may be
 INDETERMINATE where the evidence does not support a
 stronger conclusion.
 
-Named roles under the same instrument, for completeness of
-the chain Gate 1 verifies: the examiner (Vane) holds Gate 1
-verification; the orchestrator (Remmy) assembles the
-package. Neither role is granted any part of the decision.
+The other roles in the chain — the examiner at Gate 1, the
+orchestrator assembling — are as the governance record
+states. This instrument grants nothing to them and
+restates nothing of theirs: one fact, one home.
 
 ## Scope
 
@@ -63,10 +65,14 @@ Gate 1.
 This delegation is operative from Ben's issuance until he
 revokes or replaces it; revocation and replacement are
 recorded on the shelf in the same manner as issuance. An
-adjudication begun under it while operative stands; no new
-adjudication begins under a revoked delegation.
+adjudication has begun, for this clause, when its package
+has been assembled and recorded at Status 1 (PACKAGE
+ASSEMBLED) naming this delegation. An adjudication begun
+while the delegation was operative stands; an adjudication
+not yet begun at revocation may not begin under it.
 
 ## Issuance block (completed by Ben's word)
 
 Issued: — (date/time, Ben's words as recorded)
-Governance record pin: — (shelf commit at issuance)
+Governance record SHA-256 digest: — (the identity of the
+pinned governance record this delegation operates under)

@@ -704,3 +704,24 @@ a defect, not a backlog item.
   of the delegation, then the adjudicator offer to Claude.
   → duenna/fix-2026-11-19/GOVERNANCE-RECORD-DRAFT.md
   → duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-DRAFT.md
+- GATE 1 EXAMINATION OF THE INSTRUMENTS + CORRECTIONS
+  (2026-11-19 ~21:59): Vane examined both drafts.
+  Governance record: SUBSTANCE CLEARED, one identity
+  correction — a pin is a SHA-256 content digest (Ben's
+  standing ruling), not a shelf commit; the commit is a
+  location reference only. Delegation: two corrections —
+  the governance reference must be the exact digest in the
+  issuance block, and the duplicated role allocation comes
+  out (one fact, one home) — plus a defined trigger for
+  "an adjudication has begun" at the revocation boundary.
+  Evidence item 8: NOT satisfied by a draft; operative
+  authority exists only after Ben pins (by digest) and
+  issues. ALL CORRECTIONS APPLIED by Remmy the same round;
+  the corrected drafts are back with Vane for verification
+  of the corrections. The governance record's SHA-256, as
+  corrected: computed and carried in Remmy's letter to Ben
+  (pinning is his word; the digest is over the content, so
+  it stands unless the text changes). BRIEFCASE-52: reply
+  not located on either side; supersession not established;
+  recorded UNCLOSED pending confirmation or recovery.
+  → duenna/fix-2026-11-19/VANE-EXAMINATION-GOVERNANCE-DELEGATION-DRAFTS.md

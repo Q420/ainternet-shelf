@@ -3,9 +3,17 @@
 Drafted by Remmy (orchestrator), 2026-11-19, as step 2 of the
 first-use sequence settled in the adjudicator proposal
 (ADJUDICATOR-CORRECTION-PROPOSAL.md, content-cleared in full).
-This record pins the ruling; it does not extend it. When Ben
-confirms it as pinned, this file's shelf commit is the pin
-every later reference resolves to.
+This record pins the ruling; it does not extend it.
+Identity: this record is identified by the SHA-256 digest
+of its pinned content (Ben's standing ruling — a pin is a
+SHA-256 digest; it establishes identity, not truth). The
+shelf commit is a location and version reference only,
+never the identity. On pinning, the digest is computed
+over the pinned text and recorded in the operational
+delegation and the programme record; it is not written
+into this record, so the pinned text never changes under
+its own pin. (Correction per the examiner's Gate 1
+examination of the drafts, 2026-11-19.)
 
 ## The ruling pinned
 
