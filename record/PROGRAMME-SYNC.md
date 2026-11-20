@@ -308,3 +308,16 @@ a defect, not a backlog item.
   owner; OPEN), cross-note at DR-13; no existing row's
   substance changed. The map's vacancy stress point now
   cites DR-26. C-10 updated with the ruling.
+- Q1 RULED (Ben, 2026-11-19, confirmed 19:04 MST): "the
+  orchestrator knows the job, assembled the package and had
+  it verified, it would make sense that they decide if the
+  run was a pass." THE ORCHESTRATOR ADJUDICATES, through
+  status gates: package assembled → independently verified
+  → decided. The verification gate precedes the decision and
+  cannot be skipped; a decision on an unverified package is
+  not a settlement. Verification certifies the package, not
+  the verdict; settlements remain examinable after the fact.
+  The gate structure itself is Ben's non-delegable boundary.
+  Recorded in the proposal (superseding options a/b/c),
+  DR-26's status, C-10, and the map. With the examiner for
+  examination. Implementation outstanding.

@@ -141,35 +141,68 @@ certainty. The adjudicator:
   as disagreement, inside the settlement itself — not as
   footnotes to a cleaner verdict.
 
-## The open decision — for Ben, not for this design
+## The decision — Ben's ruling (2026-11-19)
 
-The role-separation concern is strongly motivated: the party
-producing work must not simply certify its own conclusions.
-But the evidence does NOT establish that the examiner
-function must hold the adjudicator role. Design v3 assigns
-the Examiner Surface independent re-derivation and G6; it
-does not assign final run settlement. Examination produces
-independent evidence; adjudication applies the governing
-criteria and settles the outcome. They might be one function
-or two — and if they are combined, the examiner's own
-question stands open: **what independently checks the
-adjudicator's substantive conclusion?** G6 cannot answer it.
+Ruled by Ben, in his words: "this is similar to the loop
+approvals from before. there needs to be status gates" —
+and: "the orchestrator knows the job, assembled the package
+and had it verified, it would make sense that they decide
+if the run was a pass." Confirmed by Ben as his ruling
+(2026-11-19 19:04 MST) after Remmy's plain-words playback.
 
-This proposal therefore presents the relationship as Ben's
-architectural ruling, with the options named and none
-smuggled in as proved:
+**The allocation: the ORCHESTRATOR adjudicates.** Not
+because she ran the work — because she knows the job,
+assembles the complete evidence package, and has that
+package independently verified before she decides. The
+examiner's question — what checks the adjudicator's
+conclusion? — is answered by position, not by a second
+settler: the check sits BEFORE the decision, as a gate the
+decision cannot be taken without passing.
 
-  (a) Examiner and adjudicator combined in one function,
-      with the check on the adjudicator still to be defined.
-  (b) Examiner and adjudicator separated: examination
-      evidence produced independently, settlement made by a
-      distinct holder of Ben's delegation.
-  (c) Settlement reserved to Ben himself, on examination
-      evidence — a possible explicit allocation of the
-      presently unresolved responsibility. (The inventory
-      establishes that the responsibility is unassigned; it
-      does not establish that Ben performs it in practice,
-      and this option is not worded as though it did.)
+**The status gates:**
+
+  Status 1 — PACKAGE ASSEMBLED. The orchestrator assembles
+  the adjudication package: the full admissible evidence
+  set (items 1–8 above).
+  GATE 1 — VERIFICATION. The examiner independently
+  verifies the package: complete against the run contract
+  and the evidence list; G4's results present and correctly
+  kept separate; G6 findings where implemented;
+  discrepancies surfaced, not smoothed. A failed
+  verification returns the package to Status 1 with the
+  failures recorded. The orchestrator cannot waive,
+  override, or self-verify. No decision may be taken on an
+  unverified package — such a decision is not a settlement.
+  Status 2 — PACKAGE VERIFIED.
+  GATE 2 — DECISION. The orchestrator settles the run's
+  outcome against the pinned contract, on the verified
+  package, and produces the adjudication record. The
+  settlement may be INDETERMINATE. Any disagreement the
+  verification recorded is carried into the adjudication
+  record, never silently resolved by the decision.
+  Status 3 — DECIDED.
+
+**The separation rules, as they now apply:** verification
+certifies the PACKAGE, not the verdict — passing Gate 1
+does not establish that the outcome decided at Gate 2 is
+correct. The decision remains a judgment, and it remains
+examinable after the fact: package, verification, and
+adjudication record are all preserved, so a later
+examination can re-derive and challenge the settlement.
+
+**Ben's non-delegable boundary:** the gate structure itself
+— which statuses exist, what each gate requires, who holds
+each role — is Ben's. Changing the structure, or settling
+outside it, returns to Ben under his standing authority.
+This ruling is the delegation's core; when the role is
+first exercised in production, the ruling is pinned as the
+governance record the adjudication cites (evidence item 8).
+
+The three options previously presented ((a) combined,
+(b) separated, (c) reserved to Ben) are superseded: the
+ruling is none of them exactly. It allocates the decision
+to the orchestrator and answers the independence question
+with mandatory prior verification.
 
 ## The numbering
 

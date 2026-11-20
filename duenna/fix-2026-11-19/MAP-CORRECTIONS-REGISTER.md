@@ -149,9 +149,12 @@ until then, and the map says so.
     correct on this. The proposal's v2 revision separates
     the three classes explicitly, and the holder question is
     presented there as Ben's decision.
-Needs: the holder is Ben's delegation, via the status-gate
-structure he directed (2026-11-19 18:57) — draft to follow
-on his confirmation of Remmy's reading. NUMBERING RULED
+Needs: ALLOCATION RULED (Ben, 2026-11-19, confirmed
+19:04 MST): the orchestrator adjudicates, through status
+gates — package assembled → independently verified →
+decided; verification precedes and gates the decision.
+Drafted into the proposal for the examiner's examination;
+implementation outstanding. NUMBERING RULED
 (Ben, 2026-11-19): the vacancy is DR-26 in the defect
 register (v4), with the collision cross-noted at DR-13.
 
