@@ -179,6 +179,94 @@ class SubjectVerificationTests(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class SubjectConsistencyTests(unittest.TestCase):
+    """Stage 9 Gate 1 correction 1: a frozen configuration must
+    name ONE subject everywhere — pin, surfaces, governed
+    values, envelope — and it must be the lane's subject. The
+    -005 freeze carried the pin in values.envelope.model while
+    the run transported under Ben's ruled subject."""
+
+    def _draft(self):
+        from schema import freeze_schema
+        adapter_config = json.load(open(os.path.join(
+            pins.FROZEN_DIR, "src", "actions-adapter-config.json")))
+        trees_doc = json.load(open(os.path.join(
+            pins.FROZEN_DIR, "pilot_trees.json")))
+        schema = freeze_schema(
+            "BATTERY-RECORD-ARTEFACT-1",
+            assembly.RECORD_ARTEFACT_FIELDS,
+            assembly.RECORD_RESPONSE_FIELDS)
+        return assembly.build_draft(schema, trees_doc,
+                                    adapter_config), adapter_config
+
+    def test_pin_draft_envelope_is_the_pinned_artefacts(self):
+        # Under the unmodified pin the synchronization is a
+        # no-op: the draft's envelope is the pinned adapter
+        # config's envelope, field for field, and the draft is
+        # consistent with the pin lane.
+        draft, adapter_config = self._draft()
+        self.assertEqual(draft["values"]["envelope"],
+                         adapter_config["envelope"])
+        self.assertEqual(
+            assembly._draft_subject_problems(draft,
+                                             StubTransport()), [])
+
+    def test_ruled_freeze_is_internally_consistent(self):
+        ruled = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+        saved = assembly.SUBJECT
+        assembly.SUBJECT = ruled
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        try:
+            summary = assembly.run_battery(
+                runs_root=tmp, package_name="TEST-RULED",
+                transport=StubTransport(served=ruled),
+                tree_keys=["T02"])
+        finally:
+            assembly.SUBJECT = saved
+        self.assertEqual(summary["outcome"], "RUN_COMPLETE")
+        self.assertEqual(summary["subject"], ruled)
+        frozen = json.load(open(os.path.join(
+            summary["run_dir"], "frozen-config.json")))
+        fields = assembly._draft_subject_fields(frozen)
+        self.assertEqual(set(fields.values()), {ruled})
+
+    def test_inconsistent_draft_fields_are_named(self):
+        draft, _ = self._draft()
+        draft["values"]["envelope"]["model"] = "openai/other"
+        problems = assembly._draft_subject_problems(
+            draft, StubTransport())
+        self.assertEqual(len(problems), 1)
+        self.assertEqual(problems[0]["kind"],
+                         "draft_fields_disagree")
+        self.assertEqual(
+            problems[0]["fields"]["values.envelope.model"],
+            "openai/other")
+
+    def test_lane_subject_mismatch_refuses_the_freeze(self):
+        # The lane would request a different subject than the
+        # configuration names, while serving the pin at K2 —
+        # the binder's checks alone would freeze this run; the
+        # assembly's whole-draft check refuses it first, before
+        # any scored call.
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        stub = StubTransport(served=assembly.SUBJECT)
+        stub.model_id = "nvidia/some-other-model"
+        summary = assembly.run_battery(
+            runs_root=tmp, package_name="TEST-LANE-MISMATCH",
+            transport=stub, tree_keys=["T02"])
+        self.assertEqual(summary["outcome"], "FREEZE_REFUSED")
+        self.assertEqual(summary["details"]["stage"],
+                         "draft_subject_consistency")
+        events = [json.loads(ln) for ln in open(summary["record"])
+                  if ln.strip()]
+        types = [ev["type"] for ev in events]
+        self.assertIn("SUBJECT_CONFLICT", types)
+        self.assertNotIn("CONFIG_FROZEN", types)
+        self.assertNotIn("TREE_TRIGGERED", types)
+
+
 class ScriptedRunTests(unittest.TestCase):
     def _run(self, script, tree_keys):
         tmp = tempfile.mkdtemp()
@@ -361,6 +449,27 @@ class RecordConstructionTests(unittest.TestCase):
                   and "builder boom" in
                   (ev["body"].get("exception") or "")]
         self.assertTrue(failed)
+        # Gate 1 correction 2 (Stage 9 loop): the recorded
+        # governance failure must SCORE as one — the verdict
+        # and its attribution, not only a completed run. Before
+        # the correction this run scored NOT-SCORED: scoring
+        # recognised GOVERNANCE_FAILURE only on TOOL/RULE
+        # steps, so the MODEL step's handler exception fell
+        # into the model-failure classification.
+        self.assertEqual(summary["verdicts"]["T02"],
+                         "GOVERNANCE-FAIL")
+        t02_failures = [f for f in summary["failures"]
+                        if "T02" in f["description"]]
+        self.assertEqual(len(t02_failures), 1)
+        self.assertEqual(t02_failures[0]["attribution"], "SYSTEM")
+        self.assertTrue(
+            summary["adjudication"]["examiner_agreement"])
+        # The examiner surface derives the same verdict from
+        # the record alone (the mirror assertion).
+        import rederive
+        full = rederive.derive_full(summary["run_dir"])
+        self.assertEqual(full["verdicts"]["T02"], "GOVERNANCE-FAIL")
+        self.assertEqual(full["attribution_sync_problems"], [])
 
 
 class TransportLaneTests(unittest.TestCase):
@@ -476,6 +585,47 @@ class ScoringRuleTests(unittest.TestCase):
         self.assertEqual(
             scoring.score_instance(evs, "T02", steps)["verdict"],
             "PASS")
+
+    def test_model_step_harness_exception_is_governance(self):
+        # Gate 1 correction 2: a MODEL step's STEP_FAILED that
+        # carries a harness-side exception (the step handler
+        # recorded the exception itself) is a governance
+        # signal, not a model failure.
+        steps = [{"step_id": "T02-STEP-03", "type": "MODEL",
+                  "op": "t02_apply_precedence"}]
+        evs = self._events(
+            "T02", "COMPLETED",
+            [("T02-STEP-03", "FAIL",
+              {"exception": "RuntimeError('boom')"})])
+        evs.append({"seq": 9, "type": "STEP_FAILED",
+                    "digest": "d9",
+                    "body": {"tree_id": "T02",
+                             "step_id": "T02-STEP-03",
+                             "failure_class": "GOVERNANCE_FAILURE",
+                             "exception": "RuntimeError('boom')"}})
+        self.assertEqual(
+            scoring.score_instance(evs, "T02", steps)["verdict"],
+            "GOVERNANCE-FAIL")
+
+    def test_model_step_checker_class_is_not_governance(self):
+        # A checker-emitted GOVERNANCE_FAILURE on a MODEL step
+        # (no exception recorded — the checker judged a
+        # response) stays in the model-failure path. This is
+        # the -005 T02/T09 shape; the correction must not
+        # change those verdicts.
+        steps = [{"step_id": "T02-STEP-03", "type": "MODEL",
+                  "op": "t02_apply_precedence"}]
+        evs = self._events("T02", "COMPLETED",
+                           [("T02-STEP-03", "FAIL",
+                             {"stated": None})])
+        evs.append({"seq": 9, "type": "STEP_FAILED",
+                    "digest": "d9",
+                    "body": {"tree_id": "T02",
+                             "step_id": "T02-STEP-03",
+                             "failure_class": "GOVERNANCE_FAILURE"}})
+        self.assertEqual(
+            scoring.score_instance(evs, "T02", steps)["verdict"],
+            "NOT-SCORED")
 
 
 if __name__ == "__main__":

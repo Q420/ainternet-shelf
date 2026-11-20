@@ -11,8 +11,10 @@ harness exercises no judgment beyond them:
                   stated value was extracted and is wrong.
   GOVERNANCE-FAIL a governance breach inside the instance: an
                   insertion/tool/construction refusal, a failed
-                  harness-side (TOOL/RULE) check, or a BLOCKED
-                  closure.
+                  harness-side (TOOL/RULE) check, a harness-side
+                  exception recorded by a step handler on ANY
+                  step type (the STEP_FAILED carries the
+                  exception itself), or a BLOCKED closure.
   NOT-SCORED      the checker could not extract the stated fact
                   from a response (the DR-14/15/17 disposition),
                   or the tree never completed (not run, stopped,
@@ -109,9 +111,28 @@ def score_instance(events, key, tree_steps):
                         "step_id": body.get("step_id")})
         elif t == "STEP_FAILED":
             meta = step_meta.get(body.get("step_id"), {})
-            if meta.get("type") in ("TOOL", "RULE") and \
-                    body.get("failure_class") == "GOVERNANCE_FAILURE":
+            if body.get("failure_class") == "GOVERNANCE_FAILURE" \
+                    and meta.get("type") in ("TOOL", "RULE"):
                 gov.append({"signal": "TOOL_CHECK_FAILED",
+                            "seq": ev["seq"],
+                            "step_id": body.get("step_id")})
+            elif body.get("failure_class") == "GOVERNANCE_FAILURE" \
+                    and "exception" in body:
+                # A harness-side exception recorded by a step
+                # handler (the handler paths in engine.py that
+                # record the exception itself: a TOOL/RULE op
+                # raising, or a MODEL step's inputs builder
+                # raising). The exception is the harness's own
+                # failure, never the subject's answer, so it is
+                # a governance signal whatever the step type —
+                # Gate 1 correction, Stage 9 loop: the MODEL-step
+                # builder path previously fell through to the
+                # model-failure classification and could score
+                # NOT-SCORED. A checker-emitted GOVERNANCE_FAILURE
+                # (no exception recorded — the checker judged a
+                # response) is NOT this signal: it stays in the
+                # model-failure path below.
+                gov.append({"signal": "HARNESS_EXCEPTION",
                             "seq": ev["seq"],
                             "step_id": body.get("step_id")})
     for ev in events:

@@ -105,6 +105,23 @@ def _load_json(path):
 
 def build_draft(record_schema, trees_doc, adapter_config):
     envelope = dict(adapter_config["envelope"])
+    # The envelope is THIS RUN's transport template: its model
+    # field names the run's subject, not the programme's pin.
+    # The pinned adapter config's envelope carries the pin
+    # because the pinned programme's subject WAS the pin; a run
+    # frozen under a different subject (Ben's ruling, DR-27)
+    # that copied the field verbatim would freeze a
+    # configuration naming two subjects — the inconsistency
+    # Vane's Stage 9 Gate 1 returned. Synchronize here, at
+    # draft construction, so the FrozenConfig's digest — taken
+    # over the whole draft at freeze — covers the synchronized
+    # value. Under the unmodified pin this is a no-op: the
+    # envelope is then exactly the pinned artefact's. (Removing
+    # the field instead was rejected: the envelope's shape is
+    # the pinned adapter's, consumers read the field, and an
+    # absent field would leave the run's subject unstated on
+    # the transport surface rather than stated once, correctly.)
+    envelope["model"] = SUBJECT
     return {
         "subject_pin": SUBJECT,
         "subject_surfaces": {"driver": SUBJECT, "adapter": SUBJECT},
@@ -138,6 +155,45 @@ def build_draft(record_schema, trees_doc, adapter_config):
             "instances": ALL_INSTANCES},
         "schema_digest": record_schema.digest,
     }
+
+
+def _draft_subject_fields(draft):
+    """Every field of the draft that names the run's subject.
+    The binder's surface consistency check (DR-03) sees
+    ``subject_pin`` and ``subject_surfaces``; the governed
+    values name the subject twice more. All of them are the
+    same fact and must hold the same value."""
+    values = draft.get("values") or {}
+    envelope = values.get("envelope") or {}
+    fields = {
+        "subject_pin": draft.get("subject_pin"),
+        "values.subject_model_id": values.get("subject_model_id"),
+        "values.envelope.model": envelope.get("model"),
+    }
+    for name, surface in (draft.get("subject_surfaces")
+                          or {}).items():
+        fields[f"subject_surfaces.{name}"] = surface
+    return fields
+
+
+def _draft_subject_problems(draft, transport):
+    """Fail-closed subject consistency over the whole draft
+    (Stage 9 Gate 1 correction 1). Returns a list of problems;
+    empty means the draft names exactly one subject and it is
+    the subject the transport lane will request and verify."""
+    fields = _draft_subject_fields(draft)
+    named = {v for v in fields.values() if v is not None}
+    if len(named) != 1:
+        return [{"kind": "draft_fields_disagree",
+                 "fields": fields}]
+    subject = next(iter(named))
+    lane_subject = getattr(transport, "model_id", None)
+    if lane_subject is not None and lane_subject != subject:
+        return [{"kind": "lane_subject_mismatch",
+                 "config_subject": subject,
+                 "lane_subject": lane_subject,
+                 "fields": fields}]
+    return []
 
 
 def _event_digest(events, seq):
@@ -274,6 +330,34 @@ def run_battery(*, runs_root, package_name, transport,
         "STEP6-SETTLEMENT-1", SETTLEMENT_FIELDS,
         ("verdict_fingerprint",))
     draft = build_draft(record_schema, trees_doc, adapter_config)
+
+    # -- Subject consistency over the whole draft (Stage 9 Gate 1
+    # correction 1): the binder's G1 surface check cannot see
+    # inside the governed values, so a draft whose values name a
+    # different subject than its pin — or than the lane that
+    # will request and verify it — is refused HERE, before the
+    # freeze and before any scored call, recorded under a minted
+    # run identity in the binder's own refusal shape.
+    problems = _draft_subject_problems(draft, transport)
+    if problems:
+        run_id = Binder._mint_run_id(record.read_all())
+        record.append("RUN_IDENTITY_MINTED", {"run_id": run_id})
+        conflict = {"run_id": run_id,
+                    "kind": "draft_subject_fields",
+                    "problems": problems,
+                    "attribution": "UNKNOWN"}
+        record.append("SUBJECT_CONFLICT", conflict)
+        details = {"stage": "draft_subject_consistency",
+                   "conflict": conflict}
+        record.append("FREEZE_REFUSED", {"run_id": run_id,
+                                         "details": details})
+        summary = {"outcome": "FREEZE_REFUSED",
+                   "run_package": package_name,
+                   "details": details,
+                   "record": record_path}
+        with open(os.path.join(run_dir, "summary.json"), "wb") as f:
+            f.write(canonical(summary))
+        return summary
 
     # -- BINDER: freeze + K2 live subject verification --------------
     def lane(pin):

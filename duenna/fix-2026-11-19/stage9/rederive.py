@@ -97,9 +97,15 @@ def _derive_verdicts(events, trees_map, tree_keys):
             elif t == "TOOL_REFUSED":
                 gov = True
             elif t == "STEP_FAILED" and \
-                    meta.get(b.get("step_id"), {}).get("type") in \
-                    ("TOOL", "RULE") and \
-                    b.get("failure_class") == "GOVERNANCE_FAILURE":
+                    b.get("failure_class") == "GOVERNANCE_FAILURE" \
+                    and (meta.get(b.get("step_id"), {}).get("type")
+                         in ("TOOL", "RULE")
+                         or "exception" in b):
+                # TOOL/RULE harness check failure, or a
+                # harness-side exception recorded by a step
+                # handler on any step type (the event carries
+                # the exception itself) — the evaluator's rule,
+                # mirrored exactly (Stage 9 Gate 1 correction).
                 gov = True
         for ev in events:
             if ev.get("type") == "CONSTRUCTION_REFUSED" and \

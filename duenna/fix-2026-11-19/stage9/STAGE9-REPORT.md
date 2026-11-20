@@ -382,3 +382,285 @@ complete list: `run_battery_ruled.py` (new driver),
 tests). The receipts and adjudication stand under the
 harness's marked TEST fixtures, as before; nothing here is
 a Gate 2 act.
+
+## Correction loop (2026-11-20) — Gate 1 FAIL returned, two corrections, the checker audit, and a rerun
+
+Vane's Gate 1 verdict on the Stage 9 package (filed by her @
+85600a41) was FAIL, returning the stage for two bounded
+corrections, with the substantive -005 result expressly
+preserved: the ruled subject did not pass the frozen STEP6 bar,
+and neither correction may change that. Ben additionally
+ordered the checker/instruction audit in the same loop. This
+section is the loop's account. Stages 1–8 unmodified; the
+frozen STEP6 set unmodified (digest cd367933…, verified);
+runs -004 and -005 untouched.
+
+### Part A — Frozen subject inconsistency (correction 1)
+
+**Diagnosis.** `build_draft` copies the draft's envelope
+verbatim from the pinned adapter config
+(`frozen/src/actions-adapter-config.json`), whose
+`envelope.model` is the pin, `openai/gpt-oss-20b`. Every other
+subject field in the draft is built from the assembly's subject
+value — the one the ruled driver rebinds — so a run frozen
+under Ben's ruling carried two subjects in one configuration:
+the pin in `values.envelope.model`, the ruled subject in
+`subject_pin`, `subject_surfaces` and
+`values.subject_model_id`. The binder's G1 surface check
+(DR-03) sees only the pin and the surfaces; it cannot see
+inside the governed values. The transport never read the
+envelope's model field (it builds each request from its own
+`model_id`, and refuses a served identity that differs), which
+is why the calls were right while the frozen configuration was
+wrong.
+
+**Fix (chosen: synchronize; the alternative — removing the
+field — rejected).** `build_draft` now sets
+`envelope["model"]` to the run's subject at draft
+construction, before the binder freezes, so the FrozenConfig
+digest covers the synchronized value. The envelope is the
+run's transport template and its model field is a subject
+surface of the run; the pinned artefact's value is the pin
+because the pinned programme's subject was the pin.
+Synchronizing keeps the subject stated once, correctly, on
+every surface; removing the field would change the pinned
+envelope's shape and leave the transport surface silent about
+the subject instead. Under the unmodified pin the
+synchronization is a no-op (regression-tested: the pin draft's
+envelope is the pinned artefact's, field for field).
+
+**Fail-closed check.** The assembly now verifies the whole
+draft before the freeze (`_draft_subject_problems`): every
+subject-naming field (`subject_pin`, both surfaces,
+`values.subject_model_id`, `values.envelope.model`) must name
+exactly one subject, and it must be the transport lane's
+subject. A violation is refused before the freeze and before
+any scored call, recorded under a minted run identity in the
+binder's own refusal shape (RUN_IDENTITY_MINTED,
+SUBJECT_CONFLICT with attribution UNKNOWN, FREEZE_REFUSED) —
+regression-tested, including a lane that would serve the pin
+at K2 while requesting a different model, which the binder's
+checks alone would have frozen.
+
+**The rerun — STAGE9BATT-20261120-006.** The complete battery,
+rerun once under the corrected machinery: same ruled subject
+(`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`, Ben's
+2026-11-20 05:27 MST ruling; selected at preference step (b)
+from the live list, 33 served, no `openai/*` served; K2
+re-verified live inside the freeze), same frozen STEP6 trees
+and bar (digests unchanged), one bounded execution, no
+selective retries. The frozen configuration is internally
+consistent — pin, surfaces, `subject_model_id` and
+`envelope.model` all name the ruled subject; config digest
+54a271a1bfdd15c4edb1bc5b6d2476daa1cd227c3e8fff5e87759741cf7b36be
+(changed from -005's adeb2ea5…, as it must: the synchronized
+envelope is inside the digest). 751 events, terminal CLOSURE;
+14 model calls; closure COMPLETE; both receipts VERIFIED;
+adjudication issued on examiner agreement (validation
+ACCEPTED); Stage 1 validation PASS ×3; the examiner surface,
+run standalone in a fresh process, re-derives all 13 verdicts
+identically, with zero attribution-sync problems and zero
+capture problems.
+
+**Result against the bar, and against -005.** The subject did
+not pass the frozen bar — the same outcome as -005, failing
+the same single criterion, `zero_not_scored`:
+
+| | PASS | SUBJECT-FAIL | NOT-SCORED |
+|---|---|---|---|
+| -005 | 6 (T03 T04 T05 T06 T08 T09/FR-VALID) | 1 (T01) | 6 (T02 T07 T09 FR-A FR-B FR-C) |
+| -006 | 7 (T03 T04 T05 T06 T07 T08 T09) | 1 (T01) | 5 (T02 FR-A FR-B FR-C T09/FR-VALID) |
+
+The per-instance differences are live-model variance on the
+*unrevised* exam's format guessing, and they cut both ways:
+T07 and base T09 passed this time because the subject happened
+to produce the prescribed-looking format; T09/FR-VALID, which
+passed in -005, produced no `DECISION:` line this time and is
+NOT-SCORED. That variance is itself the Part C finding,
+demonstrated live a second time. It is reported, not smoothed:
+the bar outcome — the substantive result Vane preserved — is
+identical.
+
+### Part B — Builder-exception misclassification (correction 2)
+
+**The emitter map** (every `STEP_FAILED` append in engine.py;
+ops9.py appends none directly — its check dicts supply
+`failure_class` values to emitters 3 and 7):
+
+| # | Site | Trigger | failure_class | `exception` field | `kind` |
+|---|---|---|---|---|---|
+| 1 | `_run_step` budget conversion | a satisfied step over its budget | ADAPTER_TIMEOUT (MODEL) / GOVERNANCE_FAILURE (TOOL) | no | BUDGET_CONVERSION |
+| 2 | `_tool_step` handler | a TOOL/RULE op raises | GOVERNANCE_FAILURE | **yes** | — |
+| 3 | `_tool_step` check failure | checker returns failed | checker's, default GOVERNANCE_FAILURE | no | — |
+| 4 | `_model_step` inputs builder | a MODEL op's `*_inputs` raises (the -004 correction) | GOVERNANCE_FAILURE | **yes** | — |
+| 5 | `_model_step` adapter failure | transport `complete()` fails | ADAPTER_FAILURE | no | — |
+| 6 | `_model_step` capture refused | CaptureGate refusal | ADAPTER_FAILURE | no | — |
+| 7 | `_model_step` check failure | checker returns failed | checker's, default SUBJECT_FAILURE | no | — |
+
+Check dicts carrying GOVERNANCE_FAILURE into emitters 3/7:
+`t05_locate_artifact`, `t05_construct_record`,
+`t08_construct_validate` (TOOL, refusal paths) and
+`t02_apply_precedence_check`, `t06_report_check`,
+`t09_state_decision_check` (MODEL). ops9 also appends one
+GOVERNANCE_EVENT directly (DECISION_STANDS, T09); scoring
+treats only INSERT_REFUSED governance events as signals —
+unchanged.
+
+**The defect.** Scoring (and, identically, the examiner's
+re-derivation) recognised a STEP_FAILED GOVERNANCE_FAILURE as
+a governance signal only for TOOL/RULE steps. Emitter 4's
+events — a harness-side exception on a MODEL step — fell into
+the model-failure classification, where the T02 regression
+case classified NOT-SCORED. The handler's stated semantics
+("a harness-side exception is a governance failure of the
+instance") were recorded on the record and then not honoured
+by either scoring surface.
+
+**The fix.** In both `scoring.py` and `rederive.py`,
+identically: a STEP_FAILED with failure_class GOVERNANCE_FAILURE
+that carries an `exception` (emitters 2 and 4 — the handler
+paths that record the exception itself) is a governance signal
+**regardless of step type**, yielding GOVERNANCE-FAIL for the
+instance (scoring names the signal HARNESS_EXCEPTION).
+Checker-emitted GOVERNANCE_FAILURE (emitter 7, no exception)
+is expressly NOT captured: a checker's class is its judgment
+of a response and stays in the model-failure path. Ordinary
+MODEL content failures and ADAPTER_TIMEOUT budget conversions
+are unchanged, and evaluator/examiner agreement is preserved
+(the extended regression run's adjudication issued on
+byte-for-byte agreement).
+
+**Tests.** The T02 builder-boom regression now asserts the
+resulting verdict (GOVERNANCE-FAIL), its attribution (SYSTEM,
+via the failure account), and the mirror verdict through
+`rederive.derive_full`. Two scoring-rule unit tests pin both
+sides of the discriminator: MODEL step + GOVERNANCE_FAILURE +
+exception → GOVERNANCE-FAIL; MODEL step + GOVERNANCE_FAILURE
+without exception → NOT-SCORED (the -005 shape).
+
+**The -005 re-scoring statement (headline).** -005 was
+re-scored with the corrected `scoring.py` and re-derived with
+the corrected `rederive.py`, read-only, in this session.
+**No -005 verdict changes.** All 13 re-scored verdicts and all
+13 re-derived verdicts are identical to the stored summary and
+examiner report, key for key; the re-derived bar still fails
+only `zero_not_scored`. Reason, established from the record:
+-005's six GOVERNANCE_FAILURE STEP_FAILED events (T02-STEP-03
+×2; T09-STEP-03 on T09, FR-A, FR-B, FR-C) carry **no**
+`exception` field — they are emitter 7, the check-failure
+path, with the class supplied by the T02/T09 checkers — so the
+new rule does not capture them, by design. Vane's preservation
+constraint holds in full.
+
+### Part C — Checker/instruction audit and the proposed exam revision
+
+Full audit: `exam-revision-1/AUDIT.md`. Summary: all six
+NOT-SCORED instances are class **(i)** — the format the
+checker extracts was never prescribed in the delivered
+instructions. T02's text mentions no format at all; T07's and
+T09's invoke "the required format" without stating it. In
+every case the subject's preserved response contains the
+correct fact in an unlabelled shape (T02 attempt 2 states OPEN
+in prose; T07 states all three statuses correctly, missing
+only the unprescribed space in "OB-1:CLOSED"; the T09 family
+states CLOSE/REJECT as a bare first line). No instance is
+class (iii); T07 carries a class-(ii) aspect (exact-substring
+brittleness on an unprescribed whitespace detail).
+
+The revision (`exam-revision-1/pilot_trees.revised.json`)
+takes one direction for all three steps — **prescribe in the
+instructions exactly what the checker extracts** — changing
+exactly three step texts and nothing else in the tree set
+(test-verified). The checkers, the substantive demands, the
+facts and the values are unchanged. Scripted-lane tests
+(`exam-revision-1/test_exam_revision.py`, 10/10) demonstrate
+all six instances markable: compliant+correct passes;
+compliant-format+wrong-fact fails on content (SUBJECT-FAIL
+classification for T02/T09; for T07 a judged lines-match
+content failure — the frozen scoring vocabulary still calls a
+failed T07 lines-match NOT-SCORED, stated in the audit rather
+than smoothed over); and each preserved -005 response,
+reformatted only by applying the now-prescribed label, passes
+the unmodified checker. **No live run of the revised exam has
+been made**: it is a proposed new freeze for Gate 1, and
+adopting it means a new tree-set digest under the battery's
+freeze discipline.
+
+### Part D — Examination by execution
+
+`EXAMINATION-RUNBOOK.md`: exact commands for every stage
+suite, the revision suite, freeze verification, the standalone
+re-derivation of both preserved runs, and the -005 re-scoring
+reproduction, with expected counts and verdicts stated for
+each.
+
+### Counts (all re-run this session, orchestrator's runs)
+
+Stages 1–8 unchanged and green: 68 / 27 / 38 / 36 / 30 / 54 /
+34 / 36. Stage 9: **20/20** (14 prior + 4 subject-consistency
++ 2 scoring-rule; the builder-exception test extended in
+place). Exam revision 1: **10/10**. The -006 rerun's counts
+are in Part A above.
+
+### What did not hold
+
+- The new HARNESS_EXCEPTION path did not fire during -006 (no
+  harness-side exception occurred in the live run); its
+  demonstration is the scripted tests, not the live record.
+- The rerun did not reproduce -005 instance-for-instance (four
+  instances differ) — live-model variance on the unrevised
+  exam, reported in Part A. The bar outcome is unchanged.
+- The exam revision cures the format contract only on paper
+  until Gate 1 accepts it and a run is frozen under it; the
+  frozen exam that -005 and -006 sat still contains the
+  defect, by design of the freeze.
+
+### Proposed register text (for the orchestrator to file)
+
+**Correction 1 — proposed new entry.** Defect: a run frozen
+under a subject ruling produced a FrozenConfig naming two
+subjects — the ruled subject in the pin, surfaces and
+`subject_model_id`, the original pin in
+`values.envelope.model`, copied verbatim from the pinned
+adapter config; the binder's surface check cannot see inside
+the governed values, and the evaluator's consumption receipts
+inherited the inconsistency (Stage 9 Gate 1, Vane, run
+STAGE9BATT-20261120-005). Evidence: -005 frozen-config.json
+(`values/envelope/model` = openai/gpt-oss-20b) against its
+captures (14/14 requests naming the ruled subject). Attribution:
+SYSTEM. Repair/disposition: `build_draft` synchronizes the
+envelope's model field to the run's subject before the freeze
+digest is taken; the assembly refuses, before any scored call
+and on the record, any draft whose subject fields disagree or
+differ from the lane's subject; regression-tested (pin freeze
+unchanged; ruled freeze consistent; inconsistent draft
+refused); the battery reran end to end as
+STAGE9BATT-20261120-006 under a consistent freeze with the
+bar outcome unchanged. Status: correction built and
+demonstrated; Gate 1 re-examination pending.
+
+**Correction 2 — proposed new entry.** Defect: a MODEL step's
+inputs-builder exception, recorded by the engine's handler as
+STEP_FAILED/GOVERNANCE_FAILURE (the -004 correction), was not
+recognised as a governance signal by scoring or by the
+examiner's re-derivation — both honoured that class only on
+TOOL/RULE steps — so the instance could score NOT-SCORED
+instead of GOVERNANCE-FAIL; the regression test asserted run
+completion only, not the verdict (Stage 9 Gate 1, Vane).
+Evidence: scoring.py / rederive.py governance scans against
+engine.py's handler paths; the T02 builder-boom case.
+Attribution: SYSTEM. Repair/disposition: both scoring
+surfaces, identically, now treat a GOVERNANCE_FAILURE
+STEP_FAILED carrying a recorded exception as a governance
+signal on any step type; checker-emitted classes without an
+exception are expressly excluded; the regression asserts
+verdict (GOVERNANCE-FAIL), attribution (SYSTEM) and the
+examiner mirror; -005 re-scored and re-derived under the
+corrected rules with **no verdict changed** (its
+GOVERNANCE_FAILURE events are checker-emitted, emitter 7, no
+exception recorded). Status: correction built and
+demonstrated; Gate 1 re-examination pending.
+
+The receipts and adjudication stand under the harness's
+marked TEST fixtures, as before; nothing in this loop is a
+Gate 2 act.
