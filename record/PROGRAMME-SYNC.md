@@ -208,3 +208,11 @@ a defect, not a backlog item.
   The map now cites no number for the vacancy. The numbering
   collision itself is Ben's to reconcile.
 - Amended map is back with the examiner for re-examination.
+- MAP RE-EXAMINATION (briefcase-28): PASS on all structural areas;
+  four targeted classifications corrected in a final amendment
+  (G4/G5 removed from F5 enforcement membership — a validation
+  and a cross-cutting requirement are not enforcement gates;
+  G1 removed from the contract flow — one gate, one check; the
+  case authority boundary clarified as standing, per-action;
+  G6 no longer credited with the independence guarantee).
+  Awaiting the examiner's clearance on the amended data.

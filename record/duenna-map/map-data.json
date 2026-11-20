@@ -307,7 +307,7 @@
    "to": "d-binder",
    "carries": "The approved contract and pinned artifacts the Binder binds into instances — mechanically, and without discretion.",
    "breaks": "If the Binder's contract source were its own choosing, binding would become authorship. Its outputs go only to RECORD.",
-   "gate": "g1"
+   "gate": null
   }
  ],
  "gates": [
@@ -389,7 +389,7 @@
    "where": "On any letter stuck in DELIVERING past 8 minutes."
   },
   {
-   "checks": "That the action sits inside the authority the case carries: what the agent may do, what needs the human, what is forbidden. A commitment inherited from a prior agent is a fact, not permission to make new ones.",
+   "checks": "That the action sits inside the authority the case carries: what the agent may do, what needs the human, what is forbidden. A commitment inherited from a prior agent is a fact, not permission to make new ones. This is not a single check performed when an agent enters the chain — it is a standing boundary, evaluated at each action as it is taken.",
    "holder": "Ben's approval, retained at the boundary",
    "id": "g-case-authority",
    "kind": "briefcase",
@@ -844,7 +844,7 @@
    "name": "The second check that isn't",
    "issue": "If the Examiner Surface ever derives from the Evaluator's conclusions instead of the preserved originals, the system gains the appearance of independent verification without the substance — and the first check's errors come back wearing two signatures.",
    "evidence": "This map's first drawing made exactly that error — an Evaluator → Examiner flow carrying verdicts — caught on the examiner's examination of the map itself (2026-11-19). The failure mode is live, not theoretical.",
-   "mitigation": "The architecture's rule, now drawn correctly: originals + pinned contract + reproduction rules are the Examiner's only derivation inputs; Evaluator findings are admitted afterwards, labelled, for comparison only. Guarded by G5 and G6.",
+   "mitigation": "The architecture's rule, now drawn correctly: originals + pinned contract + reproduction rules are the Examiner's only derivation inputs; Evaluator findings are admitted afterwards, labelled, for comparison only. Guarded by G5, the validation-independence requirement. (G6 checks report references and locations — a different class of defect; it is not credited with this guarantee.)",
    "where": [
     "d-evaluator",
     "d-examiner"
@@ -853,7 +853,7 @@
  ],
  "subtitle": "Parts, jobs, flows, gates — and where it could create an issue",
  "title": "Duenna — the whole system",
- "updated": "2026-11-19 · amended after the examiner's examination (briefcase-26)",
+ "updated": "2026-11-19 · amended after the examiner's re-examination (briefcase-28)",
  "f5": [
   {
    "id": "f5-gov",
@@ -864,13 +864,11 @@
   {
    "id": "f5-enf",
    "name": "F5 — Enforcement edges",
-   "text": "Mechanical checks of pinned, approved artifacts at entry and progression points. The G-gates live here. An enforcement edge invents no permission and holds no discretion: it compares what arrives against what was pinned, and records the result. No gate, evaluator, or examiner creates authority — they only check against it.",
+   "text": "Mechanical checks of pinned, approved artifacts at entry and progression points. The enforcement gates live here: G1, G2, G3, G6. (G4 is a validation, not a gate, and G5 is a cross-cutting independence requirement on validators — neither is listed as an enforcement gate, because neither authorizes or refuses a progression.) An enforcement edge invents no permission and holds no discretion: it compares what arrives against what was pinned, and records the result. No gate, evaluator, or examiner creates authority — they only check against it.",
    "gates": [
     "g1",
     "g2",
     "g3",
-    "g4",
-    "g5",
     "g6"
    ]
   }
