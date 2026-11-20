@@ -33,6 +33,29 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 7: **GATE 1 PASS — DR-04 ADVANCED** on the
+  harness demonstration (2026-11-20). The receipt lifecycle
+  holds five distinct states under one canonical identity;
+  COLLECTED is established from the package's bytes, and
+  VERIFIED is a fresh derivation at every read (record
+  issuance × package content × presented tag × pinned
+  anchor) — never a recorded claim. Closure states every
+  non-VERIFIED receipt as its exact gap. One correction
+  round: the trust anchor could be chosen by the caller —
+  construction is now token-gated to the verifier's
+  pinned-store path and every verification/closure entry
+  point validates the anchor against the independently held
+  pin before deriving or writing; the decisive case shows
+  the attacker's tag genuinely authenticating under the
+  attacker's forged anchor and the anchor still refused, the
+  receipt landing COLLECTED_UNAUTHENTICATED under the
+  genuine pin. Final counts: Stage 7, 34/34; Stages 1–6
+  regressions green. Boundaries: counts builder-run; HMAC is
+  a stated stand-in; the production collector, the
+  historical attempt-3 receipts and production anchor
+  custody remain open. Stage 8 (fixture discipline across
+  the suites) follows under Ben's Stages 2–9 approval.
+  → duenna/fix-2026-11-19/stage7/ (verdict @ f9548dbc)
 - DUENNA STAGE 6: **GATE 1 PASS — DR-06, DR-07, DR-19
   ADVANCED** (2026-11-20). Attribution is one record per
   failure under a pinned governance authority, referenced

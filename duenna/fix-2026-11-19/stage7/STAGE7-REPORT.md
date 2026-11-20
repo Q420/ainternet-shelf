@@ -8,14 +8,24 @@ Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 7 built from the plan, a
 ## Status of this report
 
 The Stage 7 harness is built and its full test suite passes
-(23/23, below), with the Stage 1 (68/68), Stage 2 (27/27),
-Stage 3 (38/38), Stage 4 (36/36), Stage 5 (30/30) and
-Stage 6 (54/54) suites green as regression. This report is
-EVIDENCE for the examiner, not a verdict: a builder's green
-run establishes that the mechanism behaves as specified on
-the exercised cases; whether Stage 7 passes is the
-examiner's determination (Gate 1 discipline), not this
-report's. Nothing here declares Stage 7 complete.
+(34/34, including the correction-round section below), with
+the Stage 1 (68/68), Stage 2 (27/27), Stage 3 (38/38),
+Stage 4 (36/36), Stage 5 (30/30) and Stage 6 (54/54) suites
+green as regression. This report is EVIDENCE for the
+examiner, not a verdict: a builder's green run establishes
+that the mechanism behaves as specified on the exercised
+cases; whether Stage 7 passes is the examiner's
+determination (Gate 1 discipline), not this report's. That
+determination has since been made: Gate 1 PASS within the
+harness, VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md, shelf
+commit f9548dbcd1213f79f51e68da80961b0ce3a02f54 — DR-04
+advanced on the harness demonstration; the production
+collector, the historical attempt-3 receipts, and production
+trust-anchor custody remain open, and the counts in this
+report remain builder-run evidence. (This paragraph
+reconciled after the PASS, on the Stage 3–6 precedent: the
+original submission count, 23/23, stood here while the
+correction section recorded the growing suite.)
 
 ## What was built
 
