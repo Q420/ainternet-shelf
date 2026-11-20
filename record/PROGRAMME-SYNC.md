@@ -374,3 +374,14 @@ a defect, not a backlog item.
   to that record. Until both are satisfied she holds the
   appointment but will not adjudicate a production run.
   "For now" understood by her exactly as stated.
+- GATE 1 EXAMINER DESIGNATED (Ben, 2026-11-19): "Let's
+  just switch to Claude anyway" — clarified by Ben as
+  DIVISION OF RESPONSIBILITIES. The settled division:
+  the ORCHESTRATOR (Remmy) assembles the package; CLAUDE
+  is the Gate 1 examiner, independently verifying package
+  completeness and the delegation's validity, recording
+  identity, findings and result; VANE adjudicates at
+  Gate 2 on the verified package; BEN holds the structure
+  itself. Vane's condition 1 is thereby satisfied by
+  designation. Condition 2 (governance record pinned,
+  delegation issued) remains in preparation.
