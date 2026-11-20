@@ -800,3 +800,18 @@ a defect, not a backlog item.
   That confirmation is with Ben. Per-run Gate 1 checks
   against an actual package still stand.
   → duenna/fix-2026-11-19/VANE-VERIFICATION-FINAL-ARTIFACTS.md
+- BEN RULES: ALEX AS ADJUDICATOR (2026-11-19 22:27): with
+  Gate 2 vacant after Claude's refusal, Ben ruled "Then
+  we will use Alex as adjudicator." Because the pinned
+  governance record names the holder, the ruling requires
+  an amendment: GOVERNANCE-RECORD-V2-DRAFT changes exactly
+  one provision (the Gate 2 holder, Claude → Alex) with an
+  amendment note citing the refusal and the ruling; every
+  other provision is word-for-word v1. The draft is with
+  Vane for a Gate 1 form check; pinning (new digest) and a
+  fresh delegation to Alex follow on Ben's tap. The v1
+  delegation to Claude stands on the record as issued and
+  refused. Open practical question, with Ben: Alex's
+  channel — his ChatGPT account is not the one signed
+  into RemmyChrome (Vane's is).
+  → duenna/fix-2026-11-19/GOVERNANCE-RECORD-V2-DRAFT.md
