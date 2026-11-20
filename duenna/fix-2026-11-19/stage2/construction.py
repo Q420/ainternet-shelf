@@ -83,6 +83,24 @@ construction refuses, naming the first bad seq, before any digest
 is trusted. Only a verified chain's digests are compared against
 the registry.
 
+CORRECTION ROUND 3 (Gate 1 re-examination of correction round 2,
+2026-11-20). The chain check was correctly placed, but the
+safe-refusal behaviour had a flaw: on chain-verification failure,
+``construct`` still called ``_record_refusal``, which appends a
+``CONSTRUCTION_REFUSED`` event to the record — writing onto the
+already-corrupted file, extending a broken chain with the live
+record object's stale seq and head, and mutating the very record
+whose integrity had just failed. The rule now enforced: a refusal
+caused by chain-verification failure appends NOTHING. The record
+file is left byte-identical to its (corrupted) state; the refusal
+surfaces only as the raised :class:`ConstructionRefused` carrying
+the violation, including the first bad seq. Refusals on a VERIFIED
+chain — unissued provenance events, registry mismatch, malformed
+entries, three-way close failures — keep the examined behaviour:
+``CONSTRUCTION_REFUSED`` is appended, because there the append
+extends a valid chain and the refusal belongs on the record. A
+refusal must never mutate the record whose integrity just failed.
+
 HONEST BOUNDARY: enforcement holds where the canonical writer is
 the sole issuer within the construction process. A fresh writer
 over a reloaded record has an empty registry and refuses
@@ -116,6 +134,12 @@ from record import _canonical, verify_chain
 PROVENANCE_ENTRY = "PROVENANCE_ENTRY"
 CONSTRUCTION_CLOSED = "CONSTRUCTION_CLOSED"
 CONSTRUCTION_REFUSED = "CONSTRUCTION_REFUSED"
+
+# The verify() violation key for a record whose chain does not
+# recompute. A refusal carrying this key is raised WITHOUT
+# recording anything on the record (correction round 3): the
+# record's integrity just failed, so it must not be mutated.
+CHAIN_VERIFICATION_FAILED = "record_chain_verification_failed"
 
 
 class ConstructionRefused(Exception):
@@ -257,7 +281,7 @@ class ProvenanceLog:
         events = self.record.read_all()
         chain_ok, first_bad_seq = verify_chain(events)
         if not chain_ok:
-            return {"record_chain_verification_failed": first_bad_seq}
+            return {CHAIN_VERIFICATION_FAILED: first_bad_seq}
         provenance_events = [
             ev for ev in events
             if ev.get("type") == PROVENANCE_ENTRY
@@ -412,6 +436,11 @@ class ArtefactConstructor:
         self.schema = schema
 
     def _record_refusal(self, artefact_id: str, details: dict):
+        """Append the CONSTRUCTION_REFUSED event. PRECONDITION:
+        the record's chain has verified. Recording a refusal
+        extends the chain, which is only sound on a valid chain —
+        this is never called for a chain-verification failure
+        (see construct())."""
         self.record.append(CONSTRUCTION_REFUSED, {
             "artefact_id": artefact_id,
             "schema_digest": self.schema.digest,
@@ -421,12 +450,23 @@ class ArtefactConstructor:
     def construct(self, artefact_id: str) -> dict:
         """Construct and close one artefact. On success appends a
         CONSTRUCTION_CLOSED event and returns the artefact dict.
-        On any refusal — a boundary violation at verification, or
-        a differing three-way comparison at the close — appends a
-        CONSTRUCTION_REFUSED event carrying the evidence and raises
-        :class:`ConstructionRefused`."""
+        On a refusal — a boundary violation at verification on a
+        verified chain, or a differing three-way comparison at
+        the close — appends a CONSTRUCTION_REFUSED event carrying
+        the evidence and raises :class:`ConstructionRefused`.
+
+        The one exception (correction round 3): if verification
+        failed because the record's CHAIN does not recompute,
+        nothing is appended. Appending would mutate the record
+        whose integrity just failed — extending a broken chain
+        with the live object's stale seq and head — so the
+        refusal surfaces only as the raised exception, carrying
+        the violation and the first bad seq, and the record file
+        is left byte-identical."""
         problems = self.log.verify(artefact_id)
         if problems:
+            if CHAIN_VERIFICATION_FAILED in problems:
+                raise ConstructionRefused(artefact_id, problems)
             self._record_refusal(artefact_id, problems)
             raise ConstructionRefused(artefact_id, problems)
         entries = self.log.issued_entries(artefact_id)

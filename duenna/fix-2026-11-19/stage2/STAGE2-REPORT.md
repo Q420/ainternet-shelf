@@ -553,3 +553,134 @@ trusted (this round) — and demonstrated by sabotages (g),
 advances on this evidence is the examiner's determination on
 re-examination, which has not yet occurred. This report claims
 nothing further.
+
+## Correction round 3 — Gate 1 return (2026-11-20)
+
+**Finding cited:** the examiner's re-examination of correction
+round 2 (Gate 1, 2026-11-20). What stands from round 2, per that
+examination: the chain-verification step itself is correctly
+placed — `verify()` recomputes the live chain before any digest
+is compared against the writer's registry — and both tamper
+scenarios assert the expected first bad seq. ONE flaw was found,
+in the safe-refusal behaviour. This round corrects only the
+refusal path: the writer, the registry, the chain check and the
+close are unchanged. This section is appended; all earlier
+sections are preserved. Where the round-2 section states that a
+chain failure "is recorded on the record as a
+`CONSTRUCTION_REFUSED` event" and that in cases (h) and
+(h-companion) "the refusal is recorded", those statements are
+superseded by this round, for the chain-failure case only.
+
+### The finding
+
+`construct()` called `_record_refusal()` after chain
+verification failed, and `_record_refusal()` unconditionally
+called `record.append()`. That wrote a `CONSTRUCTION_REFUSED`
+event onto the already-corrupted file, using the live record
+object's old sequence and head: the refusal exception was
+raised, but the record was further mutated and remained
+invalid. The round-2 tests counted that appended refusal event
+as success; they did not assert that the corrupted file remained
+untouched. Recording a refusal extends the chain — sound on a
+valid chain, and precisely wrong on the chain whose integrity
+just failed.
+
+### The correction — a chain-failure refusal appends nothing
+
+`construction.py` is revised in the refusal path only:
+
+- **The distinction is made at the refusal site.**
+  `construct()` already branches on `verify()`'s result. It now
+  checks for the `record_chain_verification_failed` violation
+  first (the key is a module constant,
+  `CHAIN_VERIFICATION_FAILED`, used by both `verify()` and
+  `construct()`): if the chain failed, `ConstructionRefused` is
+  raised carrying the violation — including the first bad seq —
+  and `_record_refusal()` is NOT called. Nothing is appended;
+  the record file is left byte-identical to its corrupted state.
+- **Refusals on a verified chain are unchanged.** Unissued
+  provenance events, registry mismatch or incompleteness,
+  malformed entries, and three-way close failures all still
+  append `CONSTRUCTION_REFUSED` before raising, because there
+  the append extends a valid chain and the refusal belongs on
+  the record. `_record_refusal()` now documents that
+  precondition.
+- **The rule, stated in the code:** a refusal must never mutate
+  the record whose integrity just failed.
+
+### Test changes — each case separate
+
+13. **(h) Issued event's body tampered on disk, stored digest
+    retained** —
+    test_sabotage_h_tampered_body_retained_digest_refused —
+    REFUSED, as before, naming seq 3 under
+    `record_chain_verification_failed`; and now SAFE: the test
+    captures the record file's bytes after the tamper and
+    asserts they are BYTE-IDENTICAL after the refused
+    construction, and that no `CONSTRUCTION_REFUSED` and no
+    `CONSTRUCTION_CLOSED` event was added. (The previous
+    assertion — exactly one recorded refusal — is removed: it
+    counted the defect as success.)
+14. **(h-companion) Issued event deleted from the middle of the
+    record** —
+    test_sabotage_h_companion_deleted_middle_event_refused —
+    REFUSED, as before, naming seq 5; with the same new
+    assertions: file byte-identical to its corrupted state after
+    the refusal, no refusal or closure event added.
+15. **(g) Forged canonical-type event set — the control for the
+    other branch** —
+    test_sabotage_g_forged_canonical_events_refused —
+    UNCHANGED outcome, now labelled in the test as the round-3
+    control: the forged events chain correctly, so this boundary
+    refusal happens on a VERIFIED chain and still appends exactly
+    one `CONSTRUCTION_REFUSED`. The round-3 change did not
+    suppress recorded refusals where recording is sound. The
+    (mixed) and (malformed) cases assert the same recorded
+    refusal on a verified chain, unchanged, as does
+    test_construction.py's no-entries close refusal.
+
+Countercheck (builder-run): with `construct()` temporarily
+reverted to the round-2 behaviour (record every refusal) in a
+scratch copy, exactly cases (h) and (h-companion) fail — (h) on
+the byte-identity assertion — and the remaining 25 pass. The new
+assertions bite on precisely the corrected defect.
+
+### Test evidence — correction round 3 (builder-run)
+
+Full suite run 2026-11-20, after the correction:
+
+Command: `python3 -m unittest discover -s tests` (from stage2/)
+
+Result: **Ran 27 tests — OK (27 passed, 0 failed)**, exit code 0.
+(No tests added or removed this round; the two (h) cases'
+assertions changed, and (g) is unchanged in behaviour.)
+
+Per file:
+- tests/test_schema.py — 7 tests, all ok (unchanged)
+- tests/test_construction.py — 8 tests, all ok (unchanged)
+- tests/test_stage2_sabotage.py — 12 tests, all ok ((a)–(g),
+  (mixed), (malformed), value-mismatch, (h), (h-companion))
+
+Stage 1 regression run 2026-11-20 (from stage1/):
+
+Command: `python3 -m unittest discover -s tests`
+
+Result: **Ran 68 tests — OK (68 passed, 0 failed)**, exit code 0 —
+no regression; stage1/ was not modified.
+
+These counts are builder-run evidence, as before; no independent
+examiner execution has yet occurred on the thrice-corrected
+package.
+
+### Register effect — disposition after correction round 3
+
+DR-02 remains **NOT ADVANCED**. The position of this package:
+the three boundary defects the examiner has found are corrected
+in the harness — the canonical writer (correction round), chain
+verification before any digest is trusted (correction round 2),
+and safe refusal that never mutates a record whose chain failed
+(this round) — and demonstrated by sabotages (g), (mixed),
+(malformed), (h) and (h-companion) above. Whether DR-02 advances
+on this evidence is the examiner's determination on
+re-examination, which has not yet occurred. This report claims
+nothing further.

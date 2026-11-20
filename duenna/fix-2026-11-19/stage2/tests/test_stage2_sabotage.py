@@ -41,6 +41,18 @@ cases are added, each reported separately:
     record file — construction must refuse (chain break at the
     gap; the registry comparison would mismatch as well).
 
+Correction round 3 (Gate 1 re-examination of correction round 2,
+2026-11-20): the round-2 tests counted the CONSTRUCTION_REFUSED
+event that construct() appended AFTER chain verification failed
+as success — but appending writes onto the already-corrupted
+file, mutating the record whose integrity just failed. Cases (h)
+and (h-companion) now assert the safe-refusal rule: the refusal
+raises, and the record file remains BYTE-IDENTICAL to its
+corrupted state — no CONSTRUCTION_REFUSED, no CONSTRUCTION_CLOSED
+added. Case (g) stands as the control for the other branch: a
+boundary refusal on a VERIFIED chain still appends
+CONSTRUCTION_REFUSED, as examined.
+
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage2/tests -v
 """
 
@@ -90,6 +102,13 @@ class TestStage2Sabotages(unittest.TestCase):
         with open(self.path, "w", encoding="utf-8") as f:
             for ev in events:
                 f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+
+    def _record_file_bytes(self):
+        """The record file's exact bytes — the ground truth for
+        the round-3 safe-refusal assertions (a chain-failure
+        refusal must leave the file byte-identical)."""
+        with open(self.path, "rb") as f:
+            return f.read()
 
     def _closed_events(self):
         return [ev for ev in self.record.read_all()
@@ -248,6 +267,11 @@ class TestStage2Sabotages(unittest.TestCase):
     # events was issued by the canonical writer, and provenance
     # authority, not content equality, is what the boundary
     # enforces. The refusal must be recorded on the record.
+    # ROUND-3 CONTROL: this refusal happens on a VERIFIED chain
+    # (the forged events chain correctly; only their provenance
+    # is unissued), so CONSTRUCTION_REFUSED is still appended —
+    # exactly one — proving the round-3 change did not suppress
+    # recorded refusals where recording is sound.
     def test_sabotage_g_forged_canonical_events_refused(self):
         for field, value in VALUES.items():
             self.record.append(PROVENANCE_ENTRY, {
@@ -319,6 +343,10 @@ class TestStage2Sabotages(unittest.TestCase):
     # the tampered body fails recomputation at its own seq, and
     # construction refuses, naming that seq, before any digest is
     # trusted.
+    # ROUND 3: the refusal must also be SAFE — it appends nothing.
+    # The record whose chain just failed must not be mutated: no
+    # CONSTRUCTION_REFUSED written onto the corrupted file, and
+    # the file stays byte-identical to its corrupted state.
     def test_sabotage_h_tampered_body_retained_digest_refused(self):
         self._enter("ART-H", list(VALUES))
         events = self.record.read_all()
@@ -329,12 +357,15 @@ class TestStage2Sabotages(unittest.TestCase):
         # left exactly as issued.
         target["body"] = {**target["body"], "value": 999}
         self._rewrite_record_file(events)
+        corrupted_bytes = self._record_file_bytes()
         with self.assertRaises(ConstructionRefused) as ctx:
             construct_artefact(self.log, "ART-H", TEST_SCHEMA)
         self.assertEqual(
             ctx.exception.details["record_chain_verification_failed"],
             3)
-        self.assertEqual(len(self._refused_events()), 1)
+        # Safe refusal: the corrupted record is untouched.
+        self.assertEqual(self._record_file_bytes(), corrupted_bytes)
+        self.assertEqual(self._refused_events(), [])
         self.assertEqual(self._closed_events(), [])
 
     # (h-companion) One issued event deleted from the middle of
@@ -343,18 +374,23 @@ class TestStage2Sabotages(unittest.TestCase):
     # registry comparison would mismatch as well (an issued digest
     # is absent). Construction refuses, naming the first bad seq:
     # the event after the gap, whose seq is not the expected one.
+    # ROUND 3: same safe-refusal rule as (h) — nothing appended,
+    # the corrupted file byte-identical after the refusal.
     def test_sabotage_h_companion_deleted_middle_event_refused(self):
         self._enter("ART-HD", list(VALUES))
         events = [ev for ev in self.record.read_all()
                   if ev["seq"] != 4]
         self.assertEqual(len(events), len(VALUES) - 1)
         self._rewrite_record_file(events)
+        corrupted_bytes = self._record_file_bytes()
         with self.assertRaises(ConstructionRefused) as ctx:
             construct_artefact(self.log, "ART-HD", TEST_SCHEMA)
         self.assertEqual(
             ctx.exception.details["record_chain_verification_failed"],
             5)
-        self.assertEqual(len(self._refused_events()), 1)
+        # Safe refusal: the corrupted record is untouched.
+        self.assertEqual(self._record_file_bytes(), corrupted_bytes)
+        self.assertEqual(self._refused_events(), [])
         self.assertEqual(self._closed_events(), [])
 
 
