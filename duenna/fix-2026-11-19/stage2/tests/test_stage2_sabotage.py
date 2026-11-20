@@ -27,9 +27,24 @@ trusts. Three cases are added, each reported separately:
 (malformed) malformed canonical-type bodies — recorded, controlled
     refusal, never an uncaught exception or accidental admission.
 
+Correction round 2 (Gate 1, 2026-11-20 —
+VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md): the first correction
+compared STORED digests against the writer's registry, and
+read_all does not verify the chain — so an issued event whose
+body was edited on disk, its stored digest retained, still
+matched the registry while the record itself was corrupted. Two
+cases are added, each reported separately:
+(h) a genuinely issued entry set, then one issued event's body
+    tampered in the record file with its stored digest retained
+    — construction must refuse, naming the broken seq;
+(h-companion) one issued event deleted from the middle of the
+    record file — construction must refuse (chain break at the
+    gap; the registry comparison would mismatch as well).
+
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage2/tests -v
 """
 
+import json
 import os
 import sys
 import tempfile
@@ -65,6 +80,16 @@ class TestStage2Sabotages(unittest.TestCase):
     def _enter(self, artefact_id, fields):
         for field in fields:
             self.log.append_entry(artefact_id, field, VALUES[field])
+
+    def _rewrite_record_file(self, events):
+        """Rewrite the record file from `events`. The record's
+        real persistence path is this JSONL file (one JSON object
+        per line, exactly as EventRecord.append writes it), so
+        on-disk tampering is done here — where an in-place edit
+        or deletion would actually land."""
+        with open(self.path, "w", encoding="utf-8") as f:
+            for ev in events:
+                f.write(json.dumps(ev, ensure_ascii=False) + "\n")
 
     def _closed_events(self):
         return [ev for ev in self.record.read_all()
@@ -280,6 +305,55 @@ class TestStage2Sabotages(unittest.TestCase):
         self.assertEqual(
             ctx.exception.details["unissued_provenance_events"],
             seqs)
+        self.assertEqual(len(self._refused_events()), 1)
+        self.assertEqual(self._closed_events(), [])
+
+    # (h) CORRECTION ROUND 2 — THE GATE 1 CASE: an issued event's
+    # body edited on disk, its STORED digest retained. The full
+    # entry set is genuinely issued by the canonical writer, so
+    # every stored digest on the record matches the writer's
+    # registry — a verification that trusts stored digests (as the
+    # first correction did: read_all performs no chain check)
+    # admits the corruption and closes. The constructor must
+    # first recompute the chain over the record as it now stands:
+    # the tampered body fails recomputation at its own seq, and
+    # construction refuses, naming that seq, before any digest is
+    # trusted.
+    def test_sabotage_h_tampered_body_retained_digest_refused(self):
+        self._enter("ART-H", list(VALUES))
+        events = self.record.read_all()
+        target = next(ev for ev in events if ev["seq"] == 3)
+        self.assertEqual(target["type"], PROVENANCE_ENTRY)
+        self.assertEqual(target["body"]["field"], "fixtures_total")
+        # The tamper: body changed, stored digest deliberately
+        # left exactly as issued.
+        target["body"] = {**target["body"], "value": 999}
+        self._rewrite_record_file(events)
+        with self.assertRaises(ConstructionRefused) as ctx:
+            construct_artefact(self.log, "ART-H", TEST_SCHEMA)
+        self.assertEqual(
+            ctx.exception.details["record_chain_verification_failed"],
+            3)
+        self.assertEqual(len(self._refused_events()), 1)
+        self.assertEqual(self._closed_events(), [])
+
+    # (h-companion) One issued event deleted from the middle of
+    # the record. The chain breaks at the gap — the following
+    # event's seq and prev link no longer recompute — and the
+    # registry comparison would mismatch as well (an issued digest
+    # is absent). Construction refuses, naming the first bad seq:
+    # the event after the gap, whose seq is not the expected one.
+    def test_sabotage_h_companion_deleted_middle_event_refused(self):
+        self._enter("ART-HD", list(VALUES))
+        events = [ev for ev in self.record.read_all()
+                  if ev["seq"] != 4]
+        self.assertEqual(len(events), len(VALUES) - 1)
+        self._rewrite_record_file(events)
+        with self.assertRaises(ConstructionRefused) as ctx:
+            construct_artefact(self.log, "ART-HD", TEST_SCHEMA)
+        self.assertEqual(
+            ctx.exception.details["record_chain_verification_failed"],
+            5)
         self.assertEqual(len(self._refused_events()), 1)
         self.assertEqual(self._closed_events(), [])
 

@@ -398,3 +398,158 @@ harness and demonstrated by sabotages (g), (mixed) and
 (malformed) above; whether DR-02 advances on this corrected
 evidence is the examiner's determination on re-examination, which
 has not yet occurred. This report claims nothing further.
+
+---
+
+## Correction round 2 — Gate 1 return (2026-11-20)
+
+**Verdict cited:** VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md,
+filed on the shelf at commit
+e20b0604cdc702687c765402dcbd6d6b43ee49a1 — **FAIL. DR-02 remains
+NOT ADVANCED.** What stands from the correction round, per the
+verdict: the canonical-writer mechanism itself (the original
+spoofing defect is fixed — forged `PROVENANCE_ENTRY` events carry
+no issued digest and construction refuses before building); the
+frozen schema mechanism and the three-way construction close
+remain PASS; the Stage 5 dependency decision stands. This is a
+targeted return on ONE further defect, not a redesign of the
+writer, and none is made here: `schema.py` is unchanged, the
+writer and registry are unchanged, the close is unchanged. This
+section is appended; the original report and the correction-round
+section above are preserved.
+
+### The defect
+
+`ProvenanceLog.verify()` checked each event's **stored** digest
+against the writer's `_issued_digests`. It never recomputed that
+digest from the event's current body, and
+`EventRecord.read_all()` performs no chain verification. So if an
+issued event's body was changed on disk while its stored digest
+was retained, the digest sequence on the record still matched
+the writer's registry exactly, and the constructor could close
+using the registry while the record itself was corrupted. The
+first correction's claimed binding — each registry digest binds
+its entry to the exact event on the record — was therefore not
+established: a stored digest is a claim, and the check trusted
+the claim.
+
+### The correction — verify the current chain before trusting any digest
+
+`construction.py` is revised in one place (`verify()`), plus its
+documentation:
+
+- **Chain verification first.** `ProvenanceLog.verify()` now
+  begins by running Stage 1's `verify_chain` over the events
+  exactly as they currently stand on the record
+  (`self.record.read_all()`). `verify_chain` recomputes every
+  event's digest from its current (seq, prev, type, body), so a
+  retained-digest body edit fails recomputation, as do deletions
+  and reorderings. If the chain does not verify, `verify()`
+  returns the single violation `record_chain_verification_failed`
+  naming the first bad seq, and no digest on the broken chain is
+  compared against the registry at all.
+- **Only verified digests are trusted.** The sole-issuer and
+  registry-completeness checks run unchanged, but only on a chain
+  that has just verified — so the digests they compare are now
+  recomputed facts about the current record, not stored claims.
+- **Ordering is structural.** `ArtefactConstructor.construct()`
+  calls `verify()` before it builds anything (as it did), so
+  every construction path passes through the chain check; a
+  chain failure is recorded on the record as a
+  `CONSTRUCTION_REFUSED` event carrying
+  `record_chain_verification_failed: <first bad seq>` and raised
+  as `ConstructionRefused` — the same recorded-refusal discipline
+  as every other refusal in this harness. Fail closed: nothing is
+  built, nothing closes.
+
+### New sabotage results — each separate
+
+11. **(h) Issued event's body tampered on disk, stored digest
+    retained (the verdict's required case)** —
+    test_sabotage_h_tampered_body_retained_digest_refused —
+    REFUSED, as required. All eight entries are genuinely issued
+    by the canonical writer; then the record file is rewritten
+    with one issued event's body changed (the `fixtures_total`
+    value, seq 3) and its stored digest left exactly as issued —
+    so every stored digest still matches the registry, and the
+    pre-correction check would have closed over a corrupted
+    record. The constructor refuses, naming seq 3 under
+    `record_chain_verification_failed`; the refusal is recorded;
+    no CONSTRUCTION_CLOSED event.
+12. **(h-companion) Issued event deleted from the middle of the
+    record** —
+    test_sabotage_h_companion_deleted_middle_event_refused —
+    REFUSED, as required. The record file is rewritten without
+    the seq-4 event. The chain breaks at the gap (the following
+    event's seq is not the expected one, and its prev link no
+    longer recomputes); the registry comparison would also
+    mismatch, an issued digest being absent. The constructor
+    refuses, naming seq 5 — the first bad seq — under
+    `record_chain_verification_failed`; the refusal is recorded;
+    no CONSTRUCTION_CLOSED event.
+
+Sabotages (a)–(g), (mixed) and (malformed) and the
+value-mismatch companion are preserved as separate cases with
+unchanged outcomes: forged and foreign events still refuse at
+the registry (their appends maintain the chain, so they reach
+the sole-issuer check exactly as before), and all positive
+controls still close — including the fresh-writer boundary
+control, whose record chain is intact and whose refusal still
+comes from the empty registry, as stated.
+
+### Honest boundary of the correction
+
+Chain verification detects edits and deletions: every digest is
+recomputed from the current bodies, so no stored digest is
+trusted on its own say-so. It does **not**, by itself, detect a
+wholesale rewrite that re-chains from genesis — `verify_chain`'s
+own docstring states this limit, and defeating it is the
+external anchor's job (Stage 1's C3 class), out of scope here.
+The combined position within this stage is stated accurately,
+not past that line: a content-changing re-chain still fails
+construction in this harness, because the recomputed digests are
+then digests the writer never issued, and the registry it is
+compared against is held by the writer — not by the record. What
+the chain check adds is that the record *as it stands* is now
+proven to be the record whose digests are compared; what it does
+not add is protection against a coordinated replacement of both
+the record and its anchor, which remains Stage 1's stated
+limitation.
+
+### Test evidence — correction round 2 (builder-run)
+
+Full suite run 2026-11-20, after the correction:
+
+Command: `python3 -m unittest discover -s tests -v` (from stage2/)
+
+Result: **Ran 27 tests — OK (27 passed, 0 failed)**, exit code 0.
+
+Per file:
+- tests/test_schema.py — 7 tests, all ok (unchanged)
+- tests/test_construction.py — 8 tests, all ok (unchanged)
+- tests/test_stage2_sabotage.py — 12 tests, all ok ((a)–(g),
+  (mixed), (malformed) and the value-mismatch companion
+  preserved; (h) and (h-companion) added)
+
+Stage 1 regression run 2026-11-20 (from stage1/):
+
+Command: `python3 -m unittest discover -s tests`
+
+Result: **Ran 68 tests — OK (68 passed, 0 failed)**, exit code 0 —
+no regression; stage1/ was not modified.
+
+These counts are builder-run evidence, as before; no independent
+examiner execution has yet occurred on the twice-corrected
+package.
+
+### Register effect — disposition after correction round 2
+
+DR-02 remains **NOT ADVANCED**, per the round-2 verdict. The
+position of this package: both boundary defects the examiner has
+found are corrected in the harness — the canonical writer
+(correction round) and chain verification before any digest is
+trusted (this round) — and demonstrated by sabotages (g),
+(mixed), (malformed), (h) and (h-companion) above. Whether DR-02
+advances on this evidence is the examiner's determination on
+re-examination, which has not yet occurred. This report claims
+nothing further.

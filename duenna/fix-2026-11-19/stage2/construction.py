@@ -67,6 +67,22 @@ Only after verification are the artefact's entries taken from the
 registry, built from, and closed by G2's three-way comparison —
 whose semantics are exactly as examined in the first submission.
 
+CORRECTION ROUND 2 (Gate 1, 2026-11-20 —
+VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md). The first correction
+compared the record's STORED digests against the registry — but a
+stored digest is itself only a claim. ``read_all`` does not verify
+the chain, so an issued event whose body was edited in place, its
+stored digest retained, still matched the registry while the
+record itself was corrupted: the claimed binding to the exact
+event currently on the record was not established. Now
+:meth:`ProvenanceLog.verify` first recomputes the record's chain
+over the events as they currently stand (Stage 1's
+``verify_chain``, which recomputes every digest from seq, prev,
+type and body). A retained-digest body edit fails recomputation;
+construction refuses, naming the first bad seq, before any digest
+is trusted. Only a verified chain's digests are compared against
+the registry.
+
 HONEST BOUNDARY: enforcement holds where the canonical writer is
 the sole issuer within the construction process. A fresh writer
 over a reloaded record has an empty registry and refuses
@@ -75,7 +91,14 @@ provenance authority in this harness. Wholesale replacement of the
 record itself is outside this boundary — the same out-of-scope
 class as Stage 1's C3 limitation (a coordinated record+anchor
 rewrite is not defeated), which belongs to the external anchor,
-not to this stage.
+not to this stage. Precisely: chain verification detects edits
+and deletions of events; it does not, by itself, detect a
+wholesale rewrite that re-chains from genesis (``verify_chain``'s
+own stated limit — the external anchor's job). Within the
+construction process, however, a content-changing re-chain still
+fails the writer-registry comparison, because the registry is
+held by the writer, not the record: the recomputed digests are
+digests this writer never issued.
 
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (K5, G2),
 PROCESS-TREE-AND-PLAN.md v2, Stage 2; DEFECT-REGISTER.md DR-02;
@@ -88,7 +111,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from record import _canonical
+from record import _canonical, verify_chain
 
 PROVENANCE_ENTRY = "PROVENANCE_ENTRY"
 CONSTRUCTION_CLOSED = "CONSTRUCTION_CLOSED"
@@ -124,11 +147,13 @@ class ProvenanceLog:
 
     The generic record API remains what Stage 1 made it — an
     unrestricted append. What changed is that construction no
-    longer trusts it: :meth:`verify` cross-checks the record's
-    whole ``PROVENANCE_ENTRY`` stream against this registry, and
-    :class:`ArtefactConstructor` refuses to operate without this
-    writer. An event the writer did not issue is not provenance,
-    whatever its type string or body claims.
+    longer trusts it: :meth:`verify` first recomputes the record's
+    chain over the events as they currently stand, then
+    cross-checks the record's whole ``PROVENANCE_ENTRY`` stream
+    against this registry, and :class:`ArtefactConstructor`
+    refuses to operate without this writer. An event the writer
+    did not issue is not provenance, whatever its type string or
+    body claims.
     """
 
     def __init__(self, record):
@@ -185,11 +210,27 @@ class ProvenanceLog:
     def verify(self, artefact_id: str) -> dict:
         """Cross-check the record against this writer's registry.
         Returns a dict of boundary violations; empty iff the
-        record's provenance stream is exactly what this writer
-        issued and this artefact's issued entries are all present
-        on the record, unaltered, in issue order.
+        record's current chain verifies, its provenance stream is
+        exactly what this writer issued, and this artefact's
+        issued entries are all present on the record, unaltered,
+        in issue order.
 
-        Two checks, neither of which is a content comparison of a
+        The checks, in order. The first is prior to the other two:
+        no digest is trusted until it passes.
+
+        - CHAIN INTEGRITY (first): the record's chain is
+          recomputed over the events as they currently stand
+          (Stage 1's ``verify_chain``). A stored digest is a
+          claim, not evidence — an issued event whose body was
+          edited in place, its stored digest retained, fails
+          recomputation, because the digest is recomputed from
+          the CURRENT body. If the chain does not verify, the
+          sole violation returned is
+          ``record_chain_verification_failed`` naming the first
+          bad seq, and no digest on the broken chain is compared
+          against the registry at all.
+
+        The remaining two checks are not content comparisons of a
         suspect event (the verdict's instruction: the issue is
         provenance authority, not equality of contents):
 
@@ -213,8 +254,12 @@ class ProvenanceLog:
           ``issued_entries_missing_or_altered``.
         """
         problems: dict = {}
+        events = self.record.read_all()
+        chain_ok, first_bad_seq = verify_chain(events)
+        if not chain_ok:
+            return {"record_chain_verification_failed": first_bad_seq}
         provenance_events = [
-            ev for ev in self.record.read_all()
+            ev for ev in events
             if ev.get("type") == PROVENANCE_ENTRY
         ]
         unissued = sorted(
@@ -354,11 +399,12 @@ class ArtefactConstructor:
 
     The constructor takes the canonical writer as a capability —
     there is no construction path from the raw record alone. The
-    whole path is: verify the record against the writer's registry
-    (the canonical provenance boundary), take the artefact's
-    entries from the registry, build the artefact from those
-    entries (never assigned), and close by G2's three-way
-    comparison against the frozen schema."""
+    whole path is: verify the record's current chain, then verify
+    the record against the writer's registry (the canonical
+    provenance boundary), take the artefact's entries from the
+    registry, build the artefact from those entries (never
+    assigned), and close by G2's three-way comparison against the
+    frozen schema."""
 
     def __init__(self, log: ProvenanceLog, schema):
         self.log = log
