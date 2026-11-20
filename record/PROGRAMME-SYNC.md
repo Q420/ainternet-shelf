@@ -426,3 +426,16 @@ a defect, not a backlog item.
   corrected in this round — it still carried the 19:04
   allocation; it now records the settled division.
   Current page: duenna-map-v10-journey.html.
+- K9 DESIGN v2 (Ben's "proceed", 2026-11-19): the relay is
+  now the TELEPHONE GAME, on Ben's direction — ten agents
+  per chain, nine handoffs, per-hop preservation curves as
+  a primary output; the trap is re-offered to the final
+  agent (J) under an exact recognition condition. Vane's
+  five tightenings from her v1 examination are folded in:
+  comparison begins at B; trap recognition by ID + hash +
+  distinctive claim, three verdicts only; a recorded
+  pre-run validation of J's question against ground truth;
+  operational definitions for survived / degraded / lost /
+  corrupted; handoff sizes recorded, abilities identical
+  across chains. Design only — running still needs Ben's
+  separate go. To Vane for examination as briefcase-53.
