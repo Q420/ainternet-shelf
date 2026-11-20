@@ -8,13 +8,21 @@ Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 3 built from the plan, a
 ## Status of this report
 
 The Stage 3 harness is built and its full test suite passes
-(23/23, below), with the Stage 1 (68/68) and Stage 2 (27/27)
-suites green as regression. This report is EVIDENCE for the
-examiner, not a verdict: a builder's green run establishes that
-the mechanism behaves as specified on the exercised cases;
-whether Stage 3 passes is the examiner's determination (Gate 1
-discipline), not this report's. Nothing here declares Stage 3
-complete.
+(38/38, including the correction-round sections below), with
+the Stage 1 (68/68) and Stage 2 (27/27) suites green as
+regression. This report is EVIDENCE for the examiner, not a
+verdict: a builder's green run establishes that the mechanism
+behaves as specified on the exercised cases; whether Stage 3
+passes is the examiner's determination (Gate 1 discipline),
+not this report's. That determination has since been made:
+Gate 1 PASS, VANE-GATE1-VERDICT-CORRECTION-ROUND-4.md, shelf
+commit 9522c160c57432f769eb9b8abdf17601d610498b — within the
+harness scope; independent demonstration and production
+integration remain separate obligations, as the verdict
+states. (This paragraph reconciled at the examiner's
+housekeeping note in that verdict: the original submission
+count, 23/23, stood here while the correction sections
+recorded the growing suite.)
 
 ## What was built
 

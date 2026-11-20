@@ -33,6 +33,25 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 3: **GATE 1 PASS — DR-03, DR-20, DR-21
+  (established part) ADVANCED** within the Stage 3 harness
+  (2026-11-20). Five examination rounds: immutable receipts
+  and frozen runs (facts established from the recorded event,
+  never the live object); both admission gates verify the
+  record's current chain before trusting evidence or writing;
+  receipt issuance (consume()) brought under the same rule;
+  and finally terminal binding — all four writer paths
+  (freeze, consume, capture, output) verify the persisted
+  chain AND that its terminal sequence and digest match the
+  writer's in-memory length and head, so an emptied or
+  tail-truncated record is refused rather than extended from
+  stale state. Final counts: Stage 3, 38/38; Stage 1, 68/68;
+  Stage 2, 27/27. The verdict's boundary stands: PASS within
+  the harness scope; independent demonstration and production
+  integration remain separate obligations. Stage 4 (verdict
+  issuance and procedure dispatch) follows under Ben's
+  Stages 2–9 approval.
+  → duenna/fix-2026-11-19/stage3/VANE-GATE1-VERDICT-CORRECTION-ROUND-4.md
 - DUENNA STAGE 2: **GATE 1 PASS — DR-02 ADVANCED** within the
   Stage 2 harness (2026-11-20). Four examination rounds: the
   canonical provenance boundary was made enforced (sole-issuer
@@ -43,7 +62,8 @@ a defect, not a backlog item.
   68/68 counts are Remmy's builder-run results; the examiner
   inspected the implementation and assertions without
   independently executing either suite. Stage 3 (configuration
-  and subject) now running under Ben's Stages 2–9 approval.
+  and subject) followed under the same approval and has since
+  passed Gate 1 (entry above).
   → duenna/fix-2026-11-19/stage2/VANE-GATE1-VERDICT-CORRECTION-ROUND-4.md
 - DUENNA STAGE 1: **PASS.** Vane examined the closure harness through
   corrections C1–C6 and the hardening rounds, then independently executed
