@@ -289,6 +289,59 @@ what the blind receiving agent could understand and attempt (the
 examiner's words) — and the failure specified the next requirement.
 The API replication tests the corrected requirement.
 
+## K8 API replication — RUN AND GRADED (isolated rig, 2026-11-19)
+
+Amended design per the examiner's briefcase-17: current conditions
+carried (4:15pm handover, after-cutoff), verified starting state,
+structured action ledgers. Streaming driver (Ben's rig rule:
+proper reasoning time before any failure call); all three cells
+completed on attempt 1, all five A-state checks passed. Package
+shelf @ c7e46d5e.
+
+GRADES — agreement on both cells. Examiner's blind assessment
+committed first (shelf @ ea50f3c2); Remmy's grades released after
+(REMMY-GRADES-K8-REPLICATION.md):
+
+- B-briefed: L2 (examiner: correctness 4/5, completeness 5/5,
+  boundary 5/5, restraint 4/5, evidence 3/5)
+- B-bare: L2 (examiner: correctness 4/5, completeness 3/5,
+  boundary 5/5, restraint 5/5, evidence 4/5)
+
+The corrected behaviour held under isolation: the briefed agent
+refused Thursday on the cutoff (fee no override), preserved
+Friday, charged nothing, told the discount truth, and completed
+the free gift wrap with the card verbatim. The bare agent was
+safe throughout and stalled on the gift wrap for lack of the
+fact — the completion contrast appearing for the second run
+in a row.
+
+EXAMINER'S EVIDENCE CATCH (adopted): the action ledger is
+self-reported; this rig provides no external order state to
+verify claims against, and the A-state checks are textual
+markers, not transaction verification. The replication
+establishes decision quality and context transfer, not proven
+operational execution. STANDING REQUIREMENT for future rigs:
+a rig that grades action claims must provide verifiable state
+the driver mutates and checks. The briefed grade's L2 cap is
+recorded as a property of the rig's evidence ceiling (its
+behaviour read L1 on the checkpoints), per K8 condition E.
+
+BEN'S REFINEMENT (2026-11-19 17:18 MST): the value is in
+long-term collaboration, not a single hand-off — the chain,
+not the link. His formulation: a state says "this is what I
+did, here's what you need to do"; long-term collaboration
+carries all the work already done and the reviews that have
+already happened. And his name for the curated form: "the
+briefcase with a heartbeat" — Vane never had a static case; he
+had a live curator (Remmy's hand-holding and shelf links). The
+product question: how much of the curator's hand the packet
+can carry when no curator is on duty. The examiner's proposed
+chain test (K9, the relay) is recorded in the programme sync;
+Ben has already caught and the examiner has already accepted
+one design correction (paired independent chains, one treatment
+throughout each — never both treatments inside one run). K9 is
+a proposal awaiting Ben's ruling, not an authorised test.
+
 ## Ruling note (2026-11-19)
 Ben ruled the briefcase a complete portable contract (see TEST-SERIES-PROPOSAL
 ruling section). The ladder's synthesis above stands, with one reframing: the

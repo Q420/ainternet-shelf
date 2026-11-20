@@ -113,11 +113,30 @@ a defect, not a backlog item.
   replication to follow, testing the corrected requirement. Ben's standing
   instruction (2026-11-19): the Remmy–Vane loop on this work runs
   automatically; Ben is updated at results, not asked at each step.
-  API REPLICATION RUN (2026-11-19): the replication has run under
-  the amended design — current conditions carried, structured action
-  ledgers, verified starting state from A's execution. The package
-  is with Vane for blind assessment; Remmy's grades are held until
-  his commit.
+  API REPLICATION RUN AND GRADED (2026-11-19): the replication ran
+  under the amended design — current conditions carried (4:15pm
+  handover, after-cutoff), structured action ledgers, verified
+  starting state from A's execution; all cells completed on
+  attempt 1. GRADED: agreement on both cells — B-briefed L2,
+  B-bare L2 (examiner's assessment @ ea50f3c2; Remmy's grades
+  released after his commit). The corrected behaviour held: the
+  briefed agent refused Thursday on the cutoff, preserved Friday,
+  and completed the free gift wrap; the bare agent was safe and
+  stalled on the wrap. Examiner's evidence catch adopted: the
+  action ledger is self-reported and this rig has no external
+  state to verify against — the run establishes decision quality
+  and context transfer, not proven execution; future rigs that
+  grade action claims must provide verifiable state.
+  BEN'S REFINEMENT (2026-11-19): the value is in long-term
+  collaboration, not a single hand-off — the chain, not the link;
+  and "the briefcase with a heartbeat" names the curated form
+  (a live curator's hand) the static case must approximate when
+  no curator is on duty. The examiner has proposed K9, the relay
+  (four agents, each authoring the next handoff, no curator
+  between stages); Ben caught a design flaw (both treatments
+  inside one run) and the examiner accepted the correction —
+  paired independent chains, one treatment throughout each. K9
+  is a proposal awaiting Ben's ruling.
   → duenna/fix-2026-11-19/briefcase-tests/k8/replication/
   → duenna/fix-2026-11-19/briefcase-tests/k8/
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
@@ -129,10 +148,11 @@ a defect, not a backlog item.
 
 - BEN: the Claude workload question (the isolated results have now
   landed) · Part 2 (K1–K5) go or no-go · Stage 2 go or no-go ·
-  K6/K7 approval (K8 approved and run) · DR-13 (who the production
-  adjudicator is).
-- VANE: any further amendment to the K8 API replication design
-  (current-conditions state + verifiable actions) before it runs.
+  K6/K7 approval (K8 approved, run and graded) · K9 relay proposal
+  go or no-go · DR-13 (who the production adjudicator is).
+- VANE: nothing outstanding — the K8 replication assessment is
+  committed and the K9 proposal, as corrected by Ben's catch, is
+  with Ben.
 
 ## Rules any seat works under here
 
