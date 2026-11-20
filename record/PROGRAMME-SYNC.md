@@ -224,3 +224,18 @@ a defect, not a backlog item.
   closed as content-cleared. Remaining open matters stay visible
   on it by design: production integration limitations, and the
   production-adjudicator vacancy (numbering collision Ben's).
+
+## The system correction — devised (2026-11-19)
+
+- Ben's commission: Remmy and Vane to devise the correction
+  for what the map exposed, "with evidence, not improv."
+- Drafted: the production adjudicator as a defined ROLE
+  (settles run outcomes only; rests only on the record;
+  produces a G6-resolvable adjudication record; authority a
+  recorded delegation from Ben; held by the examiner function,
+  never the runner), plus the numbering reconciliation
+  (proposed DR-26, collision cross-noted) and one genuine fork
+  (how much of adjudication is mechanical) for Ben's ruling.
+  → duenna/fix-2026-11-19/ADJUDICATOR-CORRECTION-PROPOSAL.md
+- With the examiner for examination. Builds nothing; the map
+  keeps the vacancy lit until Ben's delegation fills it.
