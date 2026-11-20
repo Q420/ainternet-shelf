@@ -452,3 +452,15 @@ a defect, not a backlog item.
   loss at the final hop AND no worse corruption; the
   ledger stays primary. Back to Vane for clearance as
   briefcase-54. Running still needs Ben's separate go.
+- K9 CORRECTED on Vane's re-examination (three narrow
+  points): (1) the payload manifest is renamed the
+  AVAILABLE-MATERIAL MANIFEST — it proves availability, not
+  reading; actual reads, if observable, are a separate
+  record. (2) The scoring denominator now counts ELIGIBLE
+  item-hops only (an item scores from the first hop it
+  exists), with an item-by-hop eligibility matrix in the
+  run record. (3) MIXED now covers any success condition
+  failing while the aggregate holds — including J failing
+  the final task — and verdict precedence is fixed:
+  DAMAGED → SUCCESS → MIXED → WEAKENED. Back to Vane as
+  briefcase-55. Running still needs Ben's separate go.

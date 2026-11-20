@@ -10,7 +10,10 @@ telephone-game direction (2026-11-19 19:39 MST): four agents
 is too little — the phenomenon under study is what a body of
 work looks like after MANY hands. Amended on Vane's
 examination of v2 (access boundary made explicit; the
-materiality rule fixed in advance).
+materiality rule fixed in advance), and corrected on her
+re-examination (available-material manifest, not a read
+record; eligibility-based scoring denominator; MIXED
+widened, with verdict precedence fixed).
 STATUS: design only. Running it needs Ben's separate go.
 
 ## The claim under test (Ben's, 2026-11-19)
@@ -155,10 +158,17 @@ working folder containing exactly three things:
    (the folder literally does not contain them), not by an
    instruction to refrain.
 
-READS ARE RECORDED. On the isolated rig the per-hop payload
-is enumerated in the run record — the payload manifest IS
-the read record: what was placed in front of the agent is
-what it could have read. If a load-bearing item is absent
+AVAILABILITY IS RECORDED — and named honestly (correction
+on re-examination). On the isolated rig the per-hop payload
+is enumerated in the run record as the AVAILABLE-MATERIAL
+MANIFEST: it establishes what was placed in front of the
+agent, not what the agent actually opened, inspected or
+used, and no claim in the grading may say "read" where the
+evidence only supports "available". If the rig can
+independently observe actual reads, they are recorded
+separately as the read record, and the distinction between
+the two is preserved in the run's evidence. If a
+load-bearing item is absent
 from an agent's handoff but present in the dossier and the
 agent uses it correctly, grading records it as RECOVERED VIA
 WORK PRODUCT — a separate tally, reported alongside the
@@ -214,21 +224,39 @@ The comparison rule is fixed here, before any results exist
 at each hop from B onward scores survived = 1, degraded =
 0.5, lost = 0, corrupted = 0, with corrupted items also
 tallied separately. A chain's total is its sum over all
-items and hops; the maximum is the item count × 9 hops.
+ELIGIBLE item-hops (correction on re-examination): an item
+enters the scoring set at the first hop where it exists and
+is available to be transferred — A's criteria are eligible
+from B onward, B's correction only from C onward, a
+mid-chain discovery only from the hop after its discovery —
+and the maximum is the count of eligible item-hops. The run
+record carries an item-by-hop eligibility matrix, built by
+the same rule for both chains, so the 15% threshold below
+is reproducible and the denominator cannot silently distort
+the result.
 
 - SUCCESS ("materially above"): ALL of (a) the briefcase
   chain's total exceeds the notes chain's by at least 15% of
   the maximum; (b) at the final hop the briefcase chain
   scores at or above the notes chain on every load-bearing
   item; (c) the briefcase chain's corrupted tally does not
-  exceed the notes chain's. And J's work is correct on A's
+  exceed the notes chain's; (d) J's work is correct on A's
   criteria, B's correction, and the open issue, with the
-  trap refused for A's reason. If (a) holds but (b) or (c)
-  fails, the verdict is MIXED and is reported as mixed —
-  the aggregate never launders a named loss. The qualitative
-  ledger remains primary: this rule classifies the outcome,
-  it does not replace the ledger, and any grader disagreement
-  about an item's score is recorded, not averaged away.
+  trap refused for A's reason.
+- MIXED (correction on re-examination): the aggregate
+  threshold (a) is met, but ANY of the other success
+  conditions — (b), (c), or (d), including J answering
+  incorrectly or mishandling the trap — fails. No impressive
+  preservation curve disguises a failed final task, and no
+  strong finish launders a named loss.
+- PRECEDENCE, fixed in advance: DAMAGED is assessed first
+  (its conditions below), then SUCCESS, then MIXED, then
+  WEAKENED. A result is reported under exactly one verdict —
+  the first whose conditions it meets in that order.
+  The qualitative ledger remains primary: this rule
+  classifies the outcome, it does not replace the ledger,
+  and any grader disagreement about an item's score is
+  recorded, not averaged away.
 - WEAKENED: both chains' curves track together — the packing
   discipline adds nothing over honest notes at this length
   either.
