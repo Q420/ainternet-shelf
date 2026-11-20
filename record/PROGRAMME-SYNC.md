@@ -5,8 +5,34 @@ the authoritative documents and copies nothing. Updated on state changes,
 in the same round as the change — never on a timer. A stale sync file is
 a defect, not a backlog item.
 
-## Current state (2026-11-19, ~15:36 MST)
+## Current state (2026-11-20, ~01:10 MST)
 
+- ADJUDICATOR SEQUENCE: **COMPLETE — AUTHORITY PACKAGE PASS.**
+  The delegation issued to Alex on 2026-11-19 FAILED Gate 1
+  (governance v2 passed; the instrument was materially shorter
+  than the cleared form). A corrected delegation was drafted in
+  the cleared form, passed Vane's form check (14/14), was issued
+  by Ben 2026-11-20 00:42 MST, and Alex recorded a fresh
+  acceptance against its verified bytes. Vane's Gate 1 verdict
+  on the completed package: AUTHORITY PACKAGE PASS. Gate 2 is
+  AVAILABLE IN PRINCIPLE — per production run, under its own
+  pinned contract, advanced by a Gate 1 PASS to Status 2. No
+  adjudication has commenced. Full sequence at the end of
+  this file.
+  → duenna/fix-2026-11-19/VANE-GATE1-VERDICT-CORRECTED-DELEGATION.md
+  → duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-ALEX-CORRECTED.md
+  → duenna/fix-2026-11-19/ALEX-ACCEPTANCE-CORRECTED-DELEGATION.md
+- PULSE BRIDGE: **Pulse Bridge (Rebuilt) v1.0.0 — LIVE-ACCEPTED
+  by Ben (2026-11-20).** The bridge is the Chrome extension +
+  the reserved markers, relaying between two chat windows —
+  settled by Ben's definition 2026-11-19; the laptop-access
+  machinery is a separate system, not the bridge. The rebuilt
+  extension keeps the v0.20.6 transport and adds Vane's cleared
+  indicator layer: both native sensors (ChatGPT turn marks;
+  Muse streaming + stop-button witness), background-held
+  state, in-window sending/receiving indicators and a
+  receiving-side confirmation under the same PB-ID.
+  → bridge/pulse-bridge-rebuilt-v1.0.0/
 - DUENNA STAGE 1: **PASS.** Vane examined the closure harness through
   corrections C1–C6 and the hardening rounds, then independently executed
   the packaged suite himself (13/13 hashes, 68/68 tests, exit 0) and
@@ -16,7 +42,8 @@ a defect, not a backlog item.
   record+anchor rewrite not defeated).
   → duenna/fix-2026-11-19/stage1/STAGE1-REPORT.md (shelf @ dbefd8d6)
   → duenna/fix-2026-11-19/stage1/VANE-INDEPENDENT-EXECUTION.md
-- DEFECT REGISTER: **v3.** DR-05 and DR-22 advanced on Ben's approval —
+- DEFECT REGISTER: **v4** (DR-26 added on Ben's Q2 ruling,
+  2026-11-19; see the correction rounds below). DR-05 and DR-22 advanced on Ben's approval —
   repair demonstrated and independently verified within the Stage 1
   harness scope; production integration outstanding (later stages).
   → duenna/fix-2026-11-19/DEFECT-REGISTER.md (shelf @ 41f8e3a5)
@@ -146,22 +173,27 @@ a defect, not a backlog item.
   → duenna/fix-2026-11-19/briefcase-tests/K9-DESIGN.md
   → duenna/fix-2026-11-19/briefcase-tests/k8/replication/
   → duenna/fix-2026-11-19/briefcase-tests/k8/
-- PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
+- PULSE BRIDGE (historical, superseded by the entry at the top):
+  v0.20.4 live (Ben loaded it). The context-full
   watcher now waits for the seat's response to finish before clicking
   New chat (Ben's rollover-race ruling, 2026-11-19). Acceptance: the
   next real rollover.
 
 ## Waiting on
 
-- BEN: the briefcase structure settlement (Vane's briefcase-59
-  positions) · a K9 re-run go or no-go in the corrected,
-  office-generated form · Part 2 (K1–K5) · K6/K7 · the Claude
-  workload question · the new bridge's next step (real traffic,
-  or the Remmy-side seat slice first). Duenna items are not
-  waiting on decisions — they are HELD by Ben's pause
-  (2026-11-19 20:45) until he calls them.
-- VANE: nothing outstanding. The built relay is Remmy's to
-  bring to her for examination when Ben calls it.
+- BEN: the draft-label confirmation (the pinned records'
+  "(DRAFT for pinning)" titles — Vane recommends confirming
+  them as historical provenance) · the briefcase structure
+  settlement (Vane's briefcase-59 positions) · a K9 re-run
+  go or no-go in the corrected, office-generated form ·
+  Part 2 (K1–K5) · K6/K7 · the Claude workload question ·
+  Duenna Stages 2–9, per-stage approval (Stage 2 next).
+  The 2026-11-19 Duenna pause was lifted by Ben for the
+  adjudicator sequence, which has now completed.
+- VANE: nothing outstanding.
+- ALEX: nothing outstanding. Gate 2 awaits its first
+  production package (per-run contract, Gate 1 PASS to
+  Status 2) before any settlement.
 
 ## Rules any seat works under here
 
@@ -872,3 +904,96 @@ a defect, not a backlog item.
   would not move in his tab — Ben has since instructed:
   use the bridge, and finish it from the plan.
   → duenna/fix-2026-11-19/ALEX-ADJUDICATOR-ACCEPTANCE.md
+- THE BRIDGE — DEFINITION SETTLED; REBUILT; LIVE-ACCEPTED
+  (2026-11-19 late evening → 2026-11-20 00:32 MST): after a
+  night in which Remmy worked from a compaction summary that
+  had merged two systems, Ben restated the definition from
+  zero and it is settled: **the bridge is a Chrome extension
+  plus the reserved markers, relaying messages between two
+  chat windows; the laptop-access machinery (SSH/CDP door,
+  send daemon, doorbell, spool, waker) is a separate system
+  for authorised laptop access and is not the bridge.** The
+  rules now stand at the top of Remmy's operating file,
+  including the context-dump rule (announce it; re-read the
+  governing record before continuing work). Ben installed
+  v19 himself; Vane examined the source (shelved @ edbfdf23)
+  and cleared a design: keep the transport, add a visual
+  layer — persistent in-window indicators in both windows,
+  background as sole authority, confirmation from
+  receiving-side evidence under the same PB-ID, both native
+  turn sensors retained. Remmy located the indicator
+  implementations in the bridge-lab v0.20.0 source (fetched
+  read-only on Ben's "proceed"; the bridge-lab folder and
+  the shelved v19-source are the same code, manifest
+  0.20.6). **Pulse Bridge (Rebuilt) v1.0.0** was built from
+  that baseline (transport untouched; indicator layer only),
+  verified on Remmy's side (13/13 indicator checks against
+  Vane's table; full content stack boots and renders under
+  stubs), installed by Ben, and LIVE-ACCEPTED on a real
+  exchange (letter pb-mwonv641-1-3c3s to Vane; her reply
+  pb-mwonvu2m-1-2igj home, each under its own PB-ID; Ben's
+  verdict on the panels: "it works"). One deviation,
+  accepted by Vane with no follow-up authorised: her
+  "Awaiting confirmation" row has no observable machine
+  state, so DELIVERING reads Sending / Incoming until the
+  receipt resolves.
+  → bridge/pulse-bridge-rebuilt-v1.0.0/
+- GATE 1 ON THE FIRST PACKAGE — FAIL (2026-11-20 ~00:36
+  MST): Ben picked Duenna back up over the rebuilt bridge.
+  Vane examined the authority package (governance v2, the
+  2026-11-19 Alex delegation, Alex's acceptance):
+  governance identity PASS (she recomputed the pin);
+  acceptance recorded; **delegation HOLD** — the issued
+  instrument was materially shorter than the form she had
+  cleared (no express scope or per-run coverage clause, no
+  ban on altering the gate structure or evidence set, no
+  non-transferability clause, no revocation-recording
+  requirement), and her v2 form check had covered the
+  governance amendment, not this changed delegation.
+  Verdict: FAIL / RETURN TO STATUS 1; Gate 2 NOT
+  AVAILABLE. The gap was the orchestrator's paperwork,
+  recorded as such.
+  → duenna/fix-2026-11-19/VANE-GATE1-VERDICT-ALEX-DELEGATION.md
+- CORRECTED DELEGATION — FORM CHECK PASSED (2026-11-20
+  ~00:41 MST): on Ben's tap, Remmy drafted the corrected
+  delegation from the cleared form + the issued instrument,
+  restoring the four missing provisions in the cleared
+  form's words. Vane's form check: PASSED, all fourteen
+  requirements. Her ruling on the acceptance question:
+  Alex's 2026-11-19 acceptance does NOT carry to a
+  replacement instrument — a fresh acceptance is required
+  after issuance; the earlier acceptance stays on the
+  record, untouched.
+  → duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-ALEX-CORRECTED-DRAFT.md
+  → duenna/fix-2026-11-19/VANE-FORM-CHECK-CORRECTED-DELEGATION.md
+- CORRECTED DELEGATION ISSUED + FRESH ACCEPTANCE
+  (2026-11-20 00:42–00:51 MST): Ben issued the corrected
+  delegation on his tap and words ("Issue the corrected
+  delegation to Alex"); the issued instrument's own
+  SHA-256 is e539f1b90a64f4d873d4560e86031f15853d7eeb7f47
+  edf5fd8c47740447900f (5,518 bytes; shelf @ adab0c9c).
+  Alex deferred (his shelf search missed the file), then
+  withheld on a hash mismatch (his b01becbd… against the
+  supplied e539f1b9…). Reconciliation: Remmy fetched the
+  shelf bytes at the pinned commit — byte-identical to the
+  issued instrument, digest confirmed, GitHub blob SHA
+  cross-matching Alex's own report. Alex re-fetched the
+  raw bytes, verified e539f1b9… exactly, recorded his
+  earlier digest as not a valid hash of the instrument
+  (cause UNKNOWN, preserved unexplained), and ACCEPTED
+  the corrected delegation. Filed unedited.
+  → duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-ALEX-CORRECTED.md
+  → duenna/fix-2026-11-19/ALEX-ACCEPTANCE-CORRECTED-DELEGATION.md
+- GATE 1 VERIFICATION OF THE COMPLETED PACKAGE —
+  **AUTHORITY PACKAGE PASS** (2026-11-20 ~01:02 MST):
+  Vane verified the pinned artefacts herself (not the
+  narrative): all ten requirements PASS. Gate 2
+  disposition: AVAILABLE IN PRINCIPLE — the office is
+  filled and the corrected delegation operative; no
+  production run has advanced to Status 2, and each run
+  still requires its own pinned contract, an assembled
+  package, and a Gate 1 PASS before Alex may settle. Her
+  verdict is filed by her own hand; the earlier FAIL
+  verdict remains untouched beside it. The delegation
+  problem is closed.
+  → duenna/fix-2026-11-19/VANE-GATE1-VERDICT-CORRECTED-DELEGATION.md
