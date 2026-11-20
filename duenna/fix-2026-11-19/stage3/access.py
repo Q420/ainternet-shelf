@@ -44,6 +44,26 @@ a receipt the path did not issue is not a receipt, whatever its
 contents claim — the output gate checks the registry, never a
 presented receipt's self-description).
 
+ISSUANCE INTEGRITY (Gate 1 correction round 3). Issuing a
+receipt is an append, and an append is only sound on a record
+whose chain currently verifies: the event's seq and digest are
+computed from the record's head, so a receipt appended with a
+stale in-memory head onto a record changed since the freeze
+would extend corruption, and its digest would attest a chain
+that does not recompute. That the output gate would later
+refuse to honour such a receipt does not make issuing it safe
+— the integrity rule protects the act of issuance as well as
+the act of admission (the examiner's ruling on correction
+round 2's scope note). :meth:`ConfigAccess.consume` therefore
+recomputes the record's CURRENT chain (Stage 1's
+``verify_chain`` over ``read_all()``) before appending
+anything; on integrity failure it raises
+:class:`ConsumptionRefused` carrying
+``record_chain_verification_failed`` and appends NOTHING — no
+receipt is issued and the record is left exactly as it lay
+(Stage 2, correction round 3; the freeze path's and the F5
+gates' discipline, carried to the last append in the stage).
+
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (K3, G5),
 PROCESS-TREE-AND-PLAN.md v2, Stage 3.
 """
@@ -52,9 +72,26 @@ from __future__ import annotations
 
 import json
 
-from record import _canonical
+from record import _canonical, verify_chain
+
+from binder import CHAIN_VERIFICATION_FAILED
 
 CONSUMPTION_RECEIPT = "CONSUMPTION_RECEIPT"
+
+
+class ConsumptionRefused(Exception):
+    """The access path refused to issue a consumption receipt.
+    Carries the run identity and the refusal evidence in
+    ``details``. Raised for a record-integrity failure WITHOUT
+    recording anything: no receipt is issued and the record
+    whose integrity just failed is not mutated."""
+
+    def __init__(self, run_id: str, details: dict):
+        self.run_id = run_id
+        self.details = details
+        super().__init__(
+            f"consumption refused for run {run_id!r}: "
+            f"{details!r}")
 
 
 class Receipt:
@@ -164,7 +201,15 @@ class ConfigAccess:
         values, it never supplies them. Naming a value the
         frozen configuration does not hold is refused
         (ValueError): the path has no private defaults to fall
-        back to, which is the supply-side half of K3(a)."""
+        back to, which is the supply-side half of K3(a).
+
+        Before anything is issued, the record's CURRENT chain
+        is recomputed (Gate 1 correction round 3): the chain
+        was verified at the freeze, but the record could have
+        changed since, and a receipt appended with a stale
+        in-memory head would extend corruption. On integrity
+        failure :class:`ConsumptionRefused` is raised and
+        NOTHING is appended — no receipt is issued."""
         if not isinstance(component, str) \
                 or not component.strip():
             raise ValueError(
@@ -178,6 +223,14 @@ class ConfigAccess:
             raise ValueError(
                 "a consumption receipt must cover at least one "
                 "governed value")
+        # Record integrity, prior to issuance: no receipt event
+        # is appended until the record it will extend proves
+        # intact in this operation.
+        chain_ok, first_bad_seq = verify_chain(
+            self.record.read_all())
+        if not chain_ok:
+            raise ConsumptionRefused(self.run.run_id, {
+                CHAIN_VERIFICATION_FAILED: first_bad_seq})
         frozen_values = self.run.config.values
         unknown = [n for n in names if n not in frozen_values]
         if unknown:

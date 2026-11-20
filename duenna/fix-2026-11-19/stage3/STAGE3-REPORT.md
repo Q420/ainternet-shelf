@@ -525,3 +525,61 @@ by this round: DR-03, DR-20 and DR-21 (established part)
 remain advanced on demonstration, subject to the examiner's
 re-examination of the corrected package — which has not yet
 occurred.
+
+## Correction round 3 — Gate 1 return
+
+**The ruling answered** (VANE-GATE1-VERDICT-CORRECTION-ROUND-2.md,
+shelf commit 6f9d6048622f45eacc31079bc858b9391e2602de): the
+round-2 gate corrections stand; the one remaining requirement
+is the seam the round-2 submission's own scope note flagged —
+`ConfigAccess.consume()` also appends to the record. It cannot
+safely issue a receipt event using a stale in-memory chain
+head merely because the output gate will later refuse to
+honour it. The integrity rule must protect the act of issuance
+as well as the later act of admission.
+
+**The correction** (`access.py` only). `consume()` now
+verifies the record's current chain (Stage 1's `verify_chain`
+over `read_all()`) after argument validation and before any
+append — the same discipline the freeze path and both
+admission gates apply. On integrity failure it raises the new
+`ConsumptionRefused` carrying `record_chain_verification_failed`
+and the first bad seq, and appends NOTHING: no receipt is
+issued and the record file is untouched. On a verified chain,
+issuance is unchanged (receipt appended, registered by event
+digest, frozen values only). With this round, all four writer
+paths hold the shared rule: freeze verifies before its
+writes; capture verifies before its lane call and writes;
+output verifies before trusting receipt evidence and writing;
+access verifies before issuing its receipt.
+
+**New sabotage, listed separately.**
+
+- (h) Receipt issuance attempted on a body-edited record.
+  After a healthy freeze, the `SUBJECT_VERIFICATION` event's
+  body is edited on disk through the real JSONL persistence
+  path, its stored digest retained (an event the access path
+  never itself inspects, so no cross-check stands in the
+  way). `consume(...)` raises `ConsumptionRefused` carrying
+  the tampered event's seq under
+  `record_chain_verification_failed`; zero `CONSUMPTION_RECEIPT`
+  events stand on the record, the path's registry stays
+  empty, and the file is byte-identical to its tampered
+  state. The positive control is not duplicated: the
+  pre-existing access/admission tests already exercise
+  `consume()` successfully on a healthy chain, and still pass.
+
+**Countercheck** (run by the orchestrator, the builder's
+session having ended before it): in a scratch copy with the
+new chain check in `consume()` neutralised, exactly one of
+the 30 tests fails — (h) — and the other 29 pass. The new
+assertion bites on precisely the corrected defect.
+
+**Counts after correction.** Stage 3: 30/30 (the 29 prior
+tests with unchanged outcomes, plus (h)). Stage 1 regression:
+68/68. Stage 2 regression: 27/27. `stage1/` and `stage2/`
+unmodified. The register disposition is unchanged by this
+round: DR-03, DR-20 and DR-21 (established part) remain
+advanced on demonstration, subject to the examiner's
+re-examination of the corrected package — which has not yet
+occurred.

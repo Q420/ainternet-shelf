@@ -33,6 +33,15 @@ not proceed either).
     record) must recompute the chain first; on failure they
     raise and append NOTHING — the tampered file is asserted
     byte-identical afterwards.
+(h) record tampered before ISSUANCE (Gate 1 correction
+    round 3): the access path appended receipt events without
+    verifying the current chain, on the reasoning that the
+    output gate would later refuse to honour a receipt on a
+    broken chain. The examiner ruled the integrity rule must
+    protect the act of issuance as well as the act of
+    admission: consume() must recompute the chain first; on
+    failure it raises and issues NOTHING — the tampered file
+    is asserted byte-identical afterwards.
 
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage3/tests -v
 """
@@ -48,7 +57,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage1"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage2"))
 from record import EventRecord, _canonical  # noqa: E402
-from access import CONSUMPTION_RECEIPT, ConfigAccess  # noqa: E402
+from access import (  # noqa: E402
+    CONSUMPTION_RECEIPT,
+    ConfigAccess,
+    ConsumptionRefused,
+)
 from admission import (  # noqa: E402
     CAPTURE_ADMITTED,
     CAPTURE_REFUSED,
@@ -683,6 +696,86 @@ class TestSabotageG(Stage3SabotageBase):
             bad_seq)
         self.assertEqual(self._file_bytes(), tampered)
         self.assertEqual(self.captures.admitted_captures(), [])
+
+
+class TestSabotageH(Stage3SabotageBase):
+    """(h) The record is tampered with AFTER the freeze but
+    BEFORE any receipt is issued, through its real persistence
+    path (the JSONL file EventRecord appends to). The access
+    path must verify the record's CURRENT chain before issuing
+    a receipt: a receipt appended with a stale in-memory head
+    onto a record changed since the freeze would extend
+    corruption, and the output gate's later refusal to honour
+    it does not make issuing it safe. On integrity failure
+    consume() raises and issues NOTHING — the tampered file is
+    byte-identical after the attempt."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+
+    def _seq_of(self, event_type):
+        for ev in self.record.read_all():
+            if ev.get("type") == event_type:
+                return ev["seq"]
+        raise AssertionError(f"no {event_type} event on record")
+
+    def _edit_event_body(self, event_type, mutate):
+        """Edit one event's body on disk, RETAINING its stored
+        digest — the naive in-place edit. The line is rewritten
+        in the record's own form (one JSON object per line, as
+        EventRecord.append writes it); every other line keeps
+        its original bytes."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        out = []
+        hit = False
+        for line in lines:
+            ev = json.loads(line)
+            if ev.get("type") == event_type and not hit:
+                mutate(ev["body"])
+                hit = True
+                out.append(json.dumps(
+                    ev, ensure_ascii=False).encode("utf-8"))
+            else:
+                out.append(line)
+        self.assertTrue(hit)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(out) + b"\n")
+
+    def _file_bytes(self):
+        with open(self.path, "rb") as f:
+            return f.read()
+
+    def test_consume_on_body_edited_record_issues_nothing(self):
+        # The tamper targets an event the access path never
+        # itself inspects — the subject verification — so no
+        # cross-check stands between issuance and the broken
+        # chain: pre-correction, consume() would have appended
+        # the receipt with the record object's stale head, its
+        # digest attesting a chain that does not recompute.
+        bad_seq = self._seq_of(SUBJECT_VERIFICATION)
+        self._edit_event_body(
+            SUBJECT_VERIFICATION,
+            lambda body: body.update(
+                {"endpoint": "lane://forged"}))
+        tampered = self._file_bytes()
+        with self.assertRaises(ConsumptionRefused) as ctx:
+            self.access.consume(
+                "adapter", "call-1", ["temperature"])
+        self.assertEqual(ctx.exception.run_id, self.run.run_id)
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            bad_seq)
+        # Nothing was issued — no CONSUMPTION_RECEIPT on the
+        # record, none in the registry: the file is
+        # byte-identical to its tampered state.
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(
+            events_of(self.record, CONSUMPTION_RECEIPT), [])
+        self.assertEqual(self.access.issued_receipts(), [])
 
 
 if __name__ == "__main__":
