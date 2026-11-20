@@ -5,7 +5,7 @@ the authoritative documents and copies nothing. Updated on state changes,
 in the same round as the change — never on a timer. A stale sync file is
 a defect, not a backlog item.
 
-## Current state (2026-11-20, ~01:10 MST)
+## Current state (2026-11-20, ~01:12 MST)
 
 - ADJUDICATOR SEQUENCE: **COMPLETE — AUTHORITY PACKAGE PASS.**
   The delegation issued to Alex on 2026-11-19 FAILED Gate 1
@@ -186,10 +186,13 @@ a defect, not a backlog item.
   them as historical provenance) · the briefcase structure
   settlement (Vane's briefcase-59 positions) · a K9 re-run
   go or no-go in the corrected, office-generated form ·
-  Part 2 (K1–K5) · K6/K7 · the Claude workload question ·
-  Duenna Stages 2–9, per-stage approval (Stage 2 next).
+  Part 2 (K1–K5) · K6/K7 · the Claude workload question.
   The 2026-11-19 Duenna pause was lifted by Ben for the
   adjudicator sequence, which has now completed.
+  DUENNA STAGES 2–9: APPROVED by Ben 2026-11-20 01:08 MST
+  ("You have my words to start two through nine") — running
+  in order, stage by stage, each examined by Vane; Stage 2
+  (artefact construction and provenance) first.
 - VANE: nothing outstanding.
 - ALEX: nothing outstanding. Gate 2 awaits its first
   production package (per-run contract, Gate 1 PASS to
