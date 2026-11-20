@@ -8,13 +8,24 @@ Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 5 built from the plan, a
 ## Status of this report
 
 The Stage 5 harness is built and its full test suite passes
-(26/26, below), with the Stage 1 (68/68), Stage 2 (27/27),
-Stage 3 (38/38) and Stage 4 (36/36) suites green as
-regression. This report is EVIDENCE for the examiner, not a
-verdict: a builder's green run establishes that the mechanism
-behaves as specified on the exercised cases; whether Stage 5
-passes is the examiner's determination (Gate 1 discipline),
-not this report's. Nothing here declares Stage 5 complete.
+(30/30, including the correction-round section below), with
+the Stage 1 (68/68), Stage 2 (27/27), Stage 3 (38/38) and
+Stage 4 (36/36) suites green as regression. This report is
+EVIDENCE for the examiner, not a verdict: a builder's green
+run establishes that the mechanism behaves as specified on
+the exercised cases; whether Stage 5 passes is the
+examiner's determination (Gate 1 discipline), not this
+report's. That determination has since been made: Gate 1
+PASS, verdict filed at shelf commit
+6506d0437cff2b8c5c2637bce63e3e4d0b766284 — DR-01 advanced on
+demonstration within the harness, with the verdict's
+boundaries preserved: the historical pilot is untouched and
+unre-run, no live insertion target is exercised, concurrent
+presenters remain outside scope, and the counts in this
+report remain builder-run evidence. (This paragraph
+reconciled after the PASS, on the Stage 3/4 precedent: the
+original submission count, 26/26, stood here while the
+correction section recorded the growing suite.)
 
 ## What was built
 

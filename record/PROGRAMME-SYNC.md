@@ -33,6 +33,27 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 5: **GATE 1 PASS — DR-01 ADVANCED** on
+  demonstration within the harness (2026-11-20). Operation
+  identity is a canonical function of (run, step, slot) —
+  computed, not issued — with pure input construction; the
+  receiver holds no consumption state in memory: consumption
+  is recorded state, and recognition was proven AFTER AN
+  ACTUAL PROCESS RESTART (a subprocess probe rebuilding the
+  operation from a spec file in its own interpreter). One
+  correction round: the consumed fast path returned
+  ALREADY_SATISFIED without checking completed-state
+  consistency; it now requires BOTH the effect still present
+  AND the consumption event's applied reference resolving to
+  the INSERTION_APPLIED event for that same operation —
+  either mismatch raises InsertionDivergence, writes nothing,
+  repairs nothing. Final counts: Stage 5, 30/30; Stages 1–4
+  regressions green. The verdict's boundaries stand: counts
+  builder-run; historical pilot untouched and unre-run; no
+  live insertion target; concurrent presenters outside
+  scope. Stage 6 (attribution and response contracts)
+  follows under Ben's Stages 2–9 approval.
+  → duenna/fix-2026-11-19/stage5/ (verdict @ 6506d043)
 - DUENNA STAGE 4: **GATE 1 PASS — K7 and K8** within their
   in-process scope (2026-11-20). Verdict issuance is bound to
   the retained object + issuance fingerprint, instance-bound
