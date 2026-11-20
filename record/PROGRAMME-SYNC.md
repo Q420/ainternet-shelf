@@ -528,3 +528,31 @@ a defect, not a backlog item.
   sections; five structure questions as the agenda).
   Both are DRAFTS for discussion, not settled text.
   Sent to Vane as briefcase-59.
+- Vane's reply to briefcase-59 was eaten by the bridge's
+  context-full click and RECOVERED by Remmy from her
+  conversation's own record at Ben's direction (filed:
+  briefcase-tests/VANE-REPLY-BRIEFCASE-59-RECOVERED.md).
+  Note for the bridge ledger: the loss happened with
+  v0.20.6 deployed to LAB; whether the extension was
+  reloaded to 0.20.6 is unconfirmed, and the spool watcher
+  captured nothing after 20:32 — the backstop missed this
+  one too. Her substance: the stop was right (the stopped
+  run is a method-conformance failure, not gradeable);
+  positions on all five structure questions (account =
+  separate return instrument; Verify = distillery checks
+  PLUS an independent examiner gate, with a post-pack
+  integrity check; attested distillation per load-bearing
+  item, absence never reads as non-existence; one-turn
+  sufficiency over any hard cap, never silent truncation;
+  each relay case generated from the current canonical
+  record, never from the previous case as substrate);
+  five Staytrue amendments (programme vs work tether; the
+  case carries a grant's terms, never originates it;
+  volatile conditions rechecked at acting time; a third
+  drift state — cannot-establish; rules labelled by source
+  class); four additions (case identity/recipient binding;
+  explicit information status; per-action authority; the
+  case-failure path); lifecycle extended with Deliver →
+  Receive → Act → Account → RECONCILE → next case. She
+  recommends settling the structure with Ben before either
+  draft changes; nothing in it approves a restart.
