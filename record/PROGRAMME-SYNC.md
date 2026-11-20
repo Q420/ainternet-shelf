@@ -398,3 +398,11 @@ a defect, not a backlog item.
   record pinned, delegation issued). Proposal, register
   v4 (DR-26) and corrections register aligned in this
   round; the map's stress point updated.
+- ALIGNMENT COMPLETED (correction to the previous entry):
+  the C-10 status in the corrections register and the
+  map's stress point now carry the settled allocation as
+  well; the earlier sync entry claimed both before they
+  landed — the claim ran ahead of the work by one step and
+  is corrected here. The map page Ben should use is
+  duenna-map-v8-settled.html (v7 was built from pre-update
+  data and is superseded).

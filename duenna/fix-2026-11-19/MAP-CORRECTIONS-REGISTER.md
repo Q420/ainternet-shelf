@@ -149,12 +149,14 @@ until then, and the map says so.
     correct on this. The proposal's v2 revision separates
     the three classes explicitly, and the holder question is
     presented there as Ben's decision.
-Needs: ALLOCATION RULED (Ben, 2026-11-19, confirmed
-19:04 MST): the orchestrator adjudicates, through status
-gates — package assembled → independently verified →
-decided; verification precedes and gates the decision.
-Drafted into the proposal for the examiner's examination;
-implementation outstanding. NUMBERING RULED
+Needs: ALLOCATION SETTLED (Ben, 2026-11-19 19:19 MST,
+superseding the holder named at 19:04 and the provisional
+appointment that followed it): DIVISION OF
+RESPONSIBILITIES — Vane remains the examiner (Gate 1
+verification), CLAUDE adjudicates (Gate 2), the
+orchestrator assembles; the status gates stand —
+assembled → independently verified → decided.
+Implementation outstanding. NUMBERING RULED
 (Ben, 2026-11-19): the vacancy is DR-26 in the defect
 register (v4), with the collision cross-noted at DR-13.
 
