@@ -276,3 +276,12 @@ a defect, not a backlog item.
   returned for FINAL examination. Ben's decision on the
   examiner/adjudicator relationship remains his, deliberately
   not folded into the drafts.
+- FINAL EXAMINATION (briefcase-39): REGISTER v3
+  CONTENT-CLEARED (C-10 tense correction applied). Proposal:
+  one amendment required and applied — the admissible
+  evidence set now includes item 8, the pinned delegation
+  itself (the contract establishes the criteria; the
+  delegation establishes who may settle; neither substitutes
+  for the other). Both returned for clearance; round one of
+  the correction work closes on her word, with Ben's two
+  decisions (adjudicator holder; DR-13/DR-26) still his.

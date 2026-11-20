@@ -146,8 +146,9 @@ until then, and the map says so.
     function to hold it. The draft's recommendation of the
     examiner function is a recommendation, not a finding —
     the examiner's preliminary note (briefcase-33 reply) is
-    correct on this, and draft v2 will separate the three
-    classes explicitly.
+    correct on this. The proposal's v2 revision separates
+    the three classes explicitly, and the holder question is
+    presented there as Ben's decision.
 Needs: draft v2 under the three-class discipline; the holder
 is Ben's delegation; the DR-13 numbering reconciliation is
 Ben's, recorded as a discrepancy until he rules.

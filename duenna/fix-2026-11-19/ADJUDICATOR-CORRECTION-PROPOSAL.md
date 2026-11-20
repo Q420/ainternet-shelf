@@ -67,6 +67,21 @@ The adjudicator may rest only on:
 6. G6 findings, where implemented.
 7. Any discrepancies and unresolved evidence gaps, carried
    as such.
+8. The pinned governance record and the exact delegation
+   authorising this adjudicator to settle this run,
+   including its scope and limits.
+
+The distinction is fundamental, and neither substitutes for
+the other: the run contract (item 2) establishes the criteria
+against which the work is judged; the delegation (item 8)
+establishes who is authorised to settle that judgment. The
+adjudicator must be able to establish both — a perfectly
+reasoned adjudication from an adjudicator who cannot prove
+entitlement to issue it is not a settlement. (Added per the
+examiner's final examination, briefcase-39: the proposal
+required the adjudication record to carry the delegation
+but had not named it in the evidence the adjudicator may
+rest on. The gap is closed here.)
 
 **What G6 can and cannot establish:** G6 resolves report
 references and literal locations against the record and the
