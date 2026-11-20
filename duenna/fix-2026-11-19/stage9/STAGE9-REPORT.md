@@ -637,7 +637,11 @@ unchanged; ruled freeze consistent; inconsistent draft
 refused); the battery reran end to end as
 STAGE9BATT-20261120-006 under a consistent freeze with the
 bar outcome unchanged. Status: correction built and
-demonstrated; Gate 1 re-examination pending.
+demonstrated; Gate 1 re-examination returned 2026-11-20 —
+accepted on source examination; PASS withheld pending
+independent execution (examiner cannot-execute in her
+environment). See the re-examination addendum at the end of
+this report.
 
 **Correction 2 — proposed new entry.** Defect: a MODEL step's
 inputs-builder exception, recorded by the engine's handler as
@@ -659,8 +663,58 @@ examiner mirror; -005 re-scored and re-derived under the
 corrected rules with **no verdict changed** (its
 GOVERNANCE_FAILURE events are checker-emitted, emitter 7, no
 exception recorded). Status: correction built and
-demonstrated; Gate 1 re-examination pending.
+demonstrated; Gate 1 re-examination returned 2026-11-20 —
+accepted on source examination; PASS withheld pending
+independent execution (examiner cannot-execute in her
+environment). See the re-examination addendum at the end of
+this report.
 
 The receipts and adjudication stand under the harness's
 marked TEST fixtures, as before; nothing in this loop is a
 Gate 2 act.
+
+## Gate 1 re-examination (2026-11-20) — PASS withheld; corrections accepted on inspection; independent execution outstanding
+
+Vane's re-examination of the correction package @ b55bed57
+(full text: `VANE-GATE1-REEXAMINATION-2026-11-20.md`,
+received via Ben 2026-11-20 14:00 MST — the 06:10 bridge
+letter never reached her window, so Ben carried the letter
+text to her by hand and carried the reply back): she could
+not execute the runbook. Her environment has no local
+checkout and the clone failed (GitHub unresolvable there);
+the GitHub connection permits file inspection only. All
+suites, the freeze verification, both re-derivations and
+the -005 re-scoring stand NOT EXECUTED — cannot-execute
+dispositions, not failures; the counts remain
+builder-reported (Remmy's runs).
+
+On source examination she supports both corrections as
+implemented: DR-28 (synchronisation before the freeze
+digest, the fail-closed guard, the -006 frozen config
+consistent on every subject surface) and DR-29 (the emitter
+distinction coherent, scoring.py and rederive.py aligned,
+the T02 regression asserting verdict, attribution and
+mirror). The -006 artifacts are internally consistent on
+the points inspected, and the HARNESS_EXCEPTION
+scripted-only qualification is accepted as stated.
+
+Exam revision 1 is examined as a proposal and NOT approved
+as a new freeze. One finding: the revised T07 checker can
+read the answer, but the scoring layer still classifies
+every failed `t07_report` lines-match as NOT-SCORED, so a
+readable, wrong answer cannot become SUBJECT-FAIL. Her
+recommendation: settle this as an explicit design decision
+for the proposed new freeze — retain NOT-SCORED as
+deliberate policy with its consequences stated, or revise
+the T07 scoring semantics with matching checker/examiner
+tests — and do not describe the revision as solving
+end-to-end markability until it is settled.
+
+Gate disposition: Stage 9 Gate 1 PASS is NOT issued.
+DR-28 and DR-29 stand addressed at source level, with
+independent execution pending; -005 and -006 are
+preserved, -006 NOT PASSED under the unchanged frozen bar.
+Her recommendation to Ben: judge the machinery corrections
+against the two original blockers, and keep the T07
+scoring question with the next examination's design — not
+a reason to rewrite -005 or -006.
