@@ -64,6 +64,17 @@ receipt is issued and the record is left exactly as it lay
 (Stage 2, correction round 3; the freeze path's and the F5
 gates' discipline, carried to the last append in the stage).
 
+TERMINAL BINDING (Gate 1 correction round 4). The chain check
+alone proves the bytes read form A valid chain — an empty file
+verifies — not that they form THE chain this record instance
+is about to extend. Issuance now runs the stage's shared check
+(:func:`binder.verify_record_current`): the verified chain's
+terminal (event count, last digest) must equal the instance's
+in-memory length and head, so a record deleted, truncated or
+otherwise desynced since the freeze refuses issuance exactly
+as a broken chain does, and nothing is appended under a stale
+head.
+
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (K3, G5),
 PROCESS-TREE-AND-PLAN.md v2, Stage 3.
 """
@@ -72,9 +83,10 @@ from __future__ import annotations
 
 import json
 
-from record import _canonical, verify_chain
+from record import _canonical
 
-from binder import CHAIN_VERIFICATION_FAILED
+from binder import (CHAIN_VERIFICATION_FAILED,
+                    verify_record_current)
 
 CONSUMPTION_RECEIPT = "CONSUMPTION_RECEIPT"
 
@@ -204,12 +216,14 @@ class ConfigAccess:
         back to, which is the supply-side half of K3(a).
 
         Before anything is issued, the record's CURRENT chain
-        is recomputed (Gate 1 correction round 3): the chain
-        was verified at the freeze, but the record could have
-        changed since, and a receipt appended with a stale
-        in-memory head would extend corruption. On integrity
-        failure :class:`ConsumptionRefused` is raised and
-        NOTHING is appended — no receipt is issued."""
+        is recomputed and its terminal bound to this record
+        instance's in-memory length and head (Gate 1 correction
+        rounds 3 and 4): the chain was verified at the freeze,
+        but the record could have changed since, and a receipt
+        appended with a stale in-memory head would extend
+        corruption. On integrity failure
+        :class:`ConsumptionRefused` is raised and NOTHING is
+        appended — no receipt is issued."""
         if not isinstance(component, str) \
                 or not component.strip():
             raise ValueError(
@@ -225,12 +239,13 @@ class ConfigAccess:
                 "governed value")
         # Record integrity, prior to issuance: no receipt event
         # is appended until the record it will extend proves
-        # intact in this operation.
-        chain_ok, first_bad_seq = verify_chain(
-            self.record.read_all())
-        if not chain_ok:
+        # intact in this operation — chain recomputed AND
+        # terminal bound to the writer's in-memory state.
+        _events, integrity_failure = verify_record_current(
+            self.record)
+        if integrity_failure is not None:
             raise ConsumptionRefused(self.run.run_id, {
-                CHAIN_VERIFICATION_FAILED: first_bad_seq})
+                CHAIN_VERIFICATION_FAILED: integrity_failure})
         frozen_values = self.run.config.values
         unknown = [n for n in names if n not in frozen_values]
         if unknown:

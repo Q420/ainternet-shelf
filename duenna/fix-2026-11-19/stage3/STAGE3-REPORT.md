@@ -583,3 +583,120 @@ round: DR-03, DR-20 and DR-21 (established part) remain
 advanced on demonstration, subject to the examiner's
 re-examination of the corrected package — which has not yet
 occurred.
+
+## Correction round 4 — Gate 1 return
+
+**The ruling answered**
+(VANE-GATE1-VERDICT-CORRECTION-ROUND-3.md, shelf commit
+b271f5d31b404d7ce7eba8180a263b3aa5c26e4a): the round-3 fix is
+confirmed — `consume()`'s chain check closes the body-edit
+case, the ordering is right, the healthy path intact. One
+further edge remains in the integrity check itself.
+`verify_chain([])` returns (True, None): if the record file
+is deleted or truncated to empty after the freeze,
+`read_all()` reports a valid empty chain, but the
+`EventRecord` instance still holds its old `_seq` and `_head`
+in memory, and a writer path proceeds to append using that
+stale state — creating an event whose sequence and
+predecessor do not match the now-empty file. The check proved
+the bytes read form A valid chain; it did not prove the
+verified chain is the same chain state the instance is about
+to extend. Required: verify BOTH the persisted chain AND
+that its terminal sequence and digest match the writer's
+in-memory length and head_digest, before any of the four
+writer paths proceeds; the capture check must happen before
+the lane call.
+
+**The correction** (one shared check, four call sites). A new
+helper, `binder.verify_record_current(record)`, now runs at
+the head of every writer path — `Binder.attempt_freeze`,
+`ConfigAccess.consume`, `CaptureGate.admit_capture` (before
+the lane call), `OutputGate.admit_output` — replacing the
+four separate `verify_chain` calls. It returns the current
+events and a failure value: the first bad seq for a chain
+that does not recompute (unchanged from every earlier
+round), or, for a chain that recomputes but whose terminal
+is not the instance's, a `{"terminal_mismatch": {...}}` dict
+naming both terminals — the persisted chain's length and
+head digest (GENESIS when empty) and the instance's
+in-memory `length` and `head_digest`. Each path carries the
+failure under `record_chain_verification_failed` in its
+existing non-recording integrity exception (`FreezeRefused`,
+`ConsumptionRefused`, `CaptureRefused`, `OutputRefused`) and
+appends NOTHING. A record genuinely at genesis — empty file,
+instance at (0, GENESIS) — passes, as it must: the binding
+compares two terminals; it does not require a non-empty
+chain. All other behaviour on an intact, in-sync record is
+unchanged.
+
+**The boundary, stated precisely.** Within a live writer
+process, tail truncation is now DETECTED: the writer holds
+the head it issued, and a persisted chain that ends anywhere
+else — earlier, later, or nowhere — desyncs from it and
+refuses. The external-anchor class is NOT thereby abolished:
+it remains for a wholesale rewrite when no live writer holds
+the true head (a fresh process opening a re-chained record
+has no in-memory terminal but the file's own). The claim is
+the narrower one the ruling required — a writer never
+extends a chain other than the one it verifiably holds.
+
+**New sabotages, listed separately** (`TestSabotageI`; both
+desyncs go through the record's real JSONL persistence path
+after a healthy freeze and a genuinely issued receipt; in
+every case the refusal carries the terminal mismatch naming
+both terminals, nothing is appended, and the file is
+byte-identical to its desynced state afterwards):
+
+- (i-freeze-empty) The file is truncated to empty; a second
+  freeze attempt raises `FreezeRefused` (persisted terminal
+  (0, GENESIS) against the writer's held length and head);
+  the file remains empty.
+- (i-freeze-tail) The last event is deleted; the remaining
+  bytes are a valid prefix chain. The freeze attempt raises
+  `FreezeRefused` on the terminal mismatch; file
+  byte-identical.
+- (i-consume-empty) The file is truncated to empty;
+  `consume()` raises `ConsumptionRefused`; no receipt is
+  issued (the registry holds only the earlier receipt); the
+  file remains empty.
+- (i-consume-tail) The deleted last event is the earlier
+  receipt's own event — the remaining freeze chain
+  recomputes as a valid prefix, so only the terminal binding
+  stands between issuance and an append under the stale
+  head. `consume()` raises `ConsumptionRefused`; registry
+  and file unchanged.
+- (i-output-empty) The file is truncated to empty; output
+  admission raises `OutputRefused` on the terminal mismatch;
+  nothing is appended; the file remains empty.
+- (i-output-tail) One output is admitted, then its
+  `OUTPUT_ADMITTED` event is deleted, leaving a valid prefix
+  ending at the receipt. A second output raises
+  `OutputRefused` on the terminal mismatch; file
+  byte-identical; only the first output stands admitted.
+- (i-capture-empty) The file is truncated to empty; capture
+  admission raises `CaptureRefused` — and the lane is NOT
+  called (a counting lane asserts zero calls): the check
+  happens before the lane call. The file remains empty.
+- (i-capture-tail) One capture is admitted (lane called
+  once), then its `CAPTURE_ADMITTED` event is deleted. A
+  second capture raises `CaptureRefused` on the terminal
+  mismatch; the lane's call count is still one; file
+  byte-identical.
+
+**Countercheck.** In a scratch copy with the terminal
+comparison in `verify_record_current` neutralised (the chain
+recomputation left intact), exactly the eight (i) tests
+fail — seven failures and one error (the emptied-record
+output test: the neutralised gate raises a refusal carrying
+no integrity key at all, having written onto the desynced
+file) — and the other 30 pass. The new assertions bite on
+precisely the corrected defect.
+
+**Counts after correction.** Stage 3: 38/38 (the 30 prior
+tests with unchanged outcomes, plus (i) ×8). Stage 1
+regression: 68/68. Stage 2 regression: 27/27. `stage1/` and
+`stage2/` unmodified. The register disposition is unchanged
+by this round: DR-03, DR-20 and DR-21 (established part)
+remain advanced on demonstration, subject to the examiner's
+re-examination of the corrected package — which has not yet
+occurred.

@@ -29,7 +29,10 @@ G1's checks, in order:
 
 0. RECORD INTEGRITY (prior to everything): the record's chain is
    recomputed over the events as they currently stand (Stage 1's
-   ``verify_chain``). If it does not verify, the freeze is
+   ``verify_chain``), AND the verified chain's terminal state is
+   bound to this record instance's in-memory length and head
+   (:func:`verify_record_current`, the stage's shared check —
+   Gate 1 correction round 4). If either fails, the freeze is
    refused by raised exception ONLY — nothing is appended,
    because a refusal must never mutate the record whose
    integrity just failed (Stage 2, correction round 3).
@@ -70,7 +73,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from record import _canonical, verify_chain
+from record import GENESIS, _canonical, verify_chain
 
 from config import (ConfigError, FrozenConfig, derived_limit_problems,
                     freeze_config)
@@ -87,6 +90,63 @@ RUN_INVALIDATED = "RUN_INVALIDATED"
 # As in Stage 2: a refusal carrying this key is raised WITHOUT
 # recording anything on the record.
 CHAIN_VERIFICATION_FAILED = "record_chain_verification_failed"
+
+
+def verify_record_current(record):
+    """The stage's shared record-integrity check: run by every
+    writer path (freeze, consumption issuance, capture
+    admission, output admission) before it reads evidence from,
+    or appends anything to, the record.
+
+    Returns ``(events, failure)`` — the events as they currently
+    stand on the record, and ``None`` iff the path may proceed.
+    ``failure`` is the value the path carries under
+    ``CHAIN_VERIFICATION_FAILED`` in its refusal details:
+
+    - a chain that does not recompute: the first bad seq, as in
+      every earlier round;
+    - a chain that recomputes but whose TERMINAL state is not
+      the state this record instance is about to extend: a
+      ``{"terminal_mismatch": {...}}`` dict naming both
+      terminals — the persisted chain's length and head digest,
+      and the instance's in-memory ``length`` and
+      ``head_digest``.
+
+    The terminal binding is Gate 1 correction round 4.
+    ``verify_chain`` alone proves the bytes read form A valid
+    chain; it does not prove they form THE chain this
+    ``EventRecord`` instance holds in memory — its length and
+    head, loaded at open and advanced by its own appends. An
+    empty event list verifies, so a record file deleted or
+    truncated to empty after the freeze would pass the chain
+    check while the instance still held its old head, and the
+    next append would extend a chain that no longer exists in
+    the file, under a sequence and predecessor that match
+    nothing in it. Comparing the verified chain's terminal —
+    event count, and the last event's digest (GENESIS when
+    empty) — against the instance's length and head closes
+    that gap: ANY desync between the persisted record and the
+    writer's in-memory state (truncation to empty, tail
+    truncation, deletion, extension by another writer) is an
+    integrity failure of the same class as a chain break, and
+    the path refuses without appending anything. A record
+    genuinely at genesis — empty file, instance at (0,
+    GENESIS) — passes, as it must: the binding compares two
+    terminals, it does not require a non-empty chain."""
+    events = record.read_all()
+    chain_ok, first_bad_seq = verify_chain(events)
+    if not chain_ok:
+        return events, first_bad_seq
+    persisted_head = events[-1]["digest"] if events else GENESIS
+    if len(events) != record.length \
+            or persisted_head != record.head_digest:
+        return events, {"terminal_mismatch": {
+            "persisted_length": len(events),
+            "persisted_head_digest": persisted_head,
+            "writer_length": record.length,
+            "writer_head_digest": record.head_digest,
+        }}
+    return events, None
 
 # K2: attribution of a mismatch is a single class, UNKNOWN, until
 # evidence establishes the cause.
@@ -255,12 +315,12 @@ class Binder:
         refusal raises :class:`FreezeRefused`, with the refusal
         recorded under the minted run identity (except a
         chain-integrity failure, which records nothing)."""
-        events = self.record.read_all()
-        chain_ok, first_bad_seq = verify_chain(events)
+        events, integrity_failure = verify_record_current(
+            self.record)
         run_id = self._mint_run_id(events)
-        if not chain_ok:
+        if integrity_failure is not None:
             raise FreezeRefused(run_id, {
-                CHAIN_VERIFICATION_FAILED: first_bad_seq})
+                CHAIN_VERIFICATION_FAILED: integrity_failure})
 
         self.record.append(RUN_IDENTITY_MINTED, {"run_id": run_id})
 

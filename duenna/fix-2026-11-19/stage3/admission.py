@@ -77,18 +77,30 @@ on a verified chain are recorded as before: recording is sound
 exactly because the chain it extends was verified in this
 operation, immediately before the append.
 
+TERMINAL BINDING (Gate 1 correction round 4). Both gates now
+run the stage's shared check
+(:func:`binder.verify_record_current`), which adds the
+terminal binding to the recomputation: the verified chain's
+terminal (event count, last digest) must equal the record
+instance's in-memory length and head. A chain that merely
+recomputes is not enough — an empty file recomputes, and a
+tail-truncated file recomputes as a valid prefix, while the
+instance still holds the head of the chain that was there
+before. On a terminal mismatch the gate raises the same
+non-recording integrity refusal and appends NOTHING. The
+capture gate's check remains before the lane call: a desynced
+record means the lane is never called.
+
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (K2, K3, G5),
 PROCESS-TREE-AND-PLAN.md v2, Stage 3; DEFECT-REGISTER.md DR-03.
 """
 
 from __future__ import annotations
 
-from record import verify_chain
-
 from access import CONSUMPTION_RECEIPT
 from binder import (ATTRIBUTION_UNKNOWN,
                     CHAIN_VERIFICATION_FAILED, RUN_INVALIDATED,
-                    SUBJECT_CONFLICT)
+                    SUBJECT_CONFLICT, verify_record_current)
 from config import INVALIDATE_RUN
 
 CAPTURE_SERVED = "CAPTURE_SERVED"
@@ -152,15 +164,19 @@ class CaptureGate:
         recording the conflict (on a subject mismatch) and the
         refusal.
 
-        The record's current chain is verified first (Gate 1
-        correction round 2): this gate appends the served
+        The record's current chain is verified first, and its
+        terminal bound to the record instance's in-memory
+        length and head (Gate 1 correction rounds 2 and 4):
+        this gate appends the served
         record, any conflict, any invalidation and the
         admission or refusal, and an append made with a stale
         in-memory chain head onto a record that no longer
-        verifies would extend corruption. A chain failure
-        raises :class:`CaptureRefused` carrying
+        verifies — or no longer ENDS where the instance's head
+        says it ends — would extend corruption. An integrity
+        failure raises :class:`CaptureRefused` carrying
         ``record_chain_verification_failed`` and appends
-        nothing — not even the refusal."""
+        nothing — not even the refusal — and the lane is not
+        called."""
         if not isinstance(capture_id, str) \
                 or not capture_id.strip():
             raise ValueError(
@@ -170,11 +186,11 @@ class CaptureGate:
                 f"capture {capture_id!r} is already admitted; a "
                 f"capture is one call and cannot be presented "
                 f"twice")
-        chain_ok, first_bad_seq = verify_chain(
-            self.record.read_all())
-        if not chain_ok:
+        _events, integrity_failure = verify_record_current(
+            self.record)
+        if integrity_failure is not None:
             raise CaptureRefused(capture_id, {
-                CHAIN_VERIFICATION_FAILED: first_bad_seq})
+                CHAIN_VERIFICATION_FAILED: integrity_failure})
         served_identity, endpoint = self.lane(
             self.run.config.subject_pin)
         self.record.append(CAPTURE_SERVED, {
@@ -284,21 +300,24 @@ class OutputGate:
             raise ValueError(
                 f"output must name an output_id: {output_id!r}")
         # Record integrity, prior to everything (Gate 1
-        # correction round 2): recompute the record's CURRENT
-        # chain over the events as they stand. The chain was
-        # verified at the freeze, but the record could have
-        # changed since; no receipt evidence is trusted, and no
-        # admission or refusal is appended, until the record
-        # the gate is about to read from — and extend — proves
-        # intact in this operation. A chain failure raises
-        # without appending anything: the refusal is NOT
-        # recorded, because recording it would mutate the
-        # record whose integrity just failed.
-        events = self.record.read_all()
-        chain_ok, first_bad_seq = verify_chain(events)
-        if not chain_ok:
+        # correction rounds 2 and 4): recompute the record's
+        # CURRENT chain over the events as they stand, and bind
+        # its terminal to the record instance's in-memory
+        # length and head. The chain was verified at the
+        # freeze, but the record could have changed since; no
+        # receipt evidence is trusted, and no admission or
+        # refusal is appended, until the record the gate is
+        # about to read from — and extend — proves intact, and
+        # proves to be the very chain the instance holds, in
+        # this operation. An integrity failure raises without
+        # appending anything: the refusal is NOT recorded,
+        # because recording it would mutate the record whose
+        # integrity just failed.
+        events, integrity_failure = verify_record_current(
+            self.record)
+        if integrity_failure is not None:
             raise OutputRefused(output_id, {
-                CHAIN_VERIFICATION_FAILED: first_bad_seq})
+                CHAIN_VERIFICATION_FAILED: integrity_failure})
         problems: dict = {}
 
         if output.get("subject_dependent", True) \

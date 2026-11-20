@@ -42,6 +42,19 @@ not proceed either).
     admission: consume() must recompute the chain first; on
     failure it raises and issues NOTHING — the tampered file
     is asserted byte-identical afterwards.
+(i) record DESYNCED from the writer (Gate 1 correction
+    round 4): the chain checks proved the bytes read form A
+    valid chain — but an empty file verifies, and a
+    tail-truncated file verifies as a valid prefix, while the
+    record instance still holds its old in-memory length and
+    head. A writer path would then append under a stale head,
+    extending a chain that no longer exists in the file. All
+    four writer paths must ALSO bind the verified chain's
+    terminal (event count, last digest) to the instance's
+    in-memory length and head; on mismatch they raise their
+    non-recording integrity refusal and append NOTHING — the
+    desynced file is asserted byte-identical afterwards, and
+    the capture gate must not even call the lane.
 
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage3/tests -v
 """
@@ -102,6 +115,22 @@ class SequenceLane:
 
     def __call__(self, pin):
         return (self._served.pop(0), self.endpoint)
+
+
+class CountingLane:
+    """Serves a fixed identity and counts its calls — the
+    capture tests assert the lane is NOT called when the
+    record's integrity fails: the chain-and-terminal check
+    happens before the lane call."""
+
+    def __init__(self, served, endpoint="lane://test"):
+        self.served = served
+        self.endpoint = endpoint
+        self.calls = 0
+
+    def __call__(self, pin):
+        self.calls += 1
+        return (self.served, self.endpoint)
 
 
 class Stage3SabotageBase(unittest.TestCase):
@@ -776,6 +805,226 @@ class TestSabotageH(Stage3SabotageBase):
         self.assertEqual(
             events_of(self.record, CONSUMPTION_RECEIPT), [])
         self.assertEqual(self.access.issued_receipts(), [])
+
+
+class TestSabotageI(Stage3SabotageBase):
+    """(i) The record file is DESYNCED from the record
+    instance after a healthy freeze and issuance activity,
+    through its real persistence path. Two desyncs, neither of
+    which breaks chain recomputation:
+
+    - the file is truncated to EMPTY: ``verify_chain([])``
+      returns (True, None) — an empty chain is a valid chain;
+    - the file's LAST event is deleted: the remaining bytes
+      are a valid prefix chain.
+
+    In both, the record instance still holds its old in-memory
+    length and head. Pre-correction, every writer path's check
+    passed, and the path proceeded to append using that stale
+    state — an event whose sequence and predecessor match
+    nothing in the file as it stands. The check proved the
+    bytes read form A valid chain; it did not prove the
+    verified chain is the same chain state the instance is
+    about to extend. All four writer paths (freeze, consume,
+    capture, output) must bind the verified chain's terminal
+    to the instance's length and head, and on mismatch raise
+    their non-recording integrity refusal and append NOTHING.
+    The capture gate must not call the lane."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.lane = CountingLane(PIN)
+        self.captures = CaptureGate(self.run, self.lane)
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+        self.receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+
+    def _output(self, **overrides):
+        output = {
+            "output_id": "OUT-I",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": self.receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        output.update(overrides)
+        return output
+
+    def _file_bytes(self):
+        with open(self.path, "rb") as f:
+            return f.read()
+
+    def _truncate_to_empty(self):
+        with open(self.path, "wb") as f:
+            f.write(b"")
+
+    def _delete_last_event(self):
+        """Remove the last event's line from the record file.
+        The remaining bytes are a valid prefix chain whose
+        terminal no longer matches the instance's head."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        self.assertTrue(lines)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(lines[:-1]) + b"\n")
+
+    def _assert_terminal_mismatch(self, details,
+                                  persisted_length):
+        """The refusal's integrity value names the terminal
+        mismatch: the persisted chain's terminal, and the
+        writer's in-memory terminal as captured before the
+        desync (self._writer_length / self._writer_head)."""
+        failure = details[CHAIN_VERIFICATION_FAILED]
+        self.assertIsInstance(failure, dict)
+        mismatch = failure["terminal_mismatch"]
+        self.assertEqual(mismatch["persisted_length"],
+                         persisted_length)
+        self.assertEqual(mismatch["writer_length"],
+                         self._writer_length)
+        self.assertEqual(mismatch["writer_head_digest"],
+                         self._writer_head)
+        persisted = self.record.read_all()
+        expected_head = persisted[-1]["digest"] \
+            if persisted else "GENESIS"
+        self.assertEqual(mismatch["persisted_head_digest"],
+                         expected_head)
+
+    def _capture_writer_terminal(self):
+        self._writer_length = self.record.length
+        self._writer_head = self.record.head_digest
+
+    # -- freeze ------------------------------------------------
+
+    def test_freeze_on_emptied_record_refuses_and_writes_nothing(
+            self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(FreezeRefused) as ctx:
+            Binder(self.record).attempt_freeze(
+                make_draft(), StaticLane(PIN))
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        # Nothing was appended: the file remains exactly as it
+        # lay — empty.
+        self.assertEqual(self._file_bytes(), b"")
+
+    def test_freeze_on_tail_truncated_record_refuses_and_writes_nothing(
+            self):
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(FreezeRefused) as ctx:
+            Binder(self.record).attempt_freeze(
+                make_draft(), StaticLane(PIN))
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self._file_bytes(), desynced)
+
+    # -- consume (issuance) ------------------------------------
+
+    def test_consume_on_emptied_record_issues_nothing(self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(ConsumptionRefused) as ctx:
+            self.access.consume(
+                "adapter", "call-2", ["temperature"])
+        self.assertEqual(ctx.exception.run_id, self.run.run_id)
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        # Nothing was issued: the file is still empty and the
+        # registry holds only the setUp receipt.
+        self.assertEqual(self._file_bytes(), b"")
+        self.assertEqual(len(self.access.issued_receipts()), 1)
+
+    def test_consume_on_tail_truncated_record_issues_nothing(
+            self):
+        # The deleted last event is the setUp receipt's own
+        # event: the remaining freeze chain recomputes as a
+        # valid prefix, so only the terminal binding stands
+        # between issuance and an append under the stale head.
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(ConsumptionRefused) as ctx:
+            self.access.consume(
+                "adapter", "call-2", ["temperature"])
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self._file_bytes(), desynced)
+        self.assertEqual(len(self.access.issued_receipts()), 1)
+
+    # -- output gate -------------------------------------------
+
+    def test_output_admission_on_emptied_record_writes_nothing(
+            self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output())
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        self.assertEqual(self._file_bytes(), b"")
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+
+    def test_output_admission_on_tail_truncated_record_writes_nothing(
+            self):
+        # One output is admitted first, so the record's last
+        # event is the admission itself; deleting it leaves a
+        # valid prefix ending at the receipt. A second output
+        # would be admitted on that prefix pre-correction —
+        # with the first admission's append extending a chain
+        # the file no longer holds.
+        self.outputs.admit_output(self._output())
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(
+                self._output(output_id="OUT-I2"))
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self._file_bytes(), desynced)
+        self.assertEqual(self.outputs.admitted_outputs(),
+                         ["OUT-I"])
+
+    # -- capture gate ------------------------------------------
+
+    def test_capture_gate_on_emptied_record_refuses_before_lane_call(
+            self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(CaptureRefused) as ctx:
+            self.captures.admit_capture("CAP-1")
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        # The check happens BEFORE the lane call: the lane was
+        # never called, and nothing was appended.
+        self.assertEqual(self.lane.calls, 0)
+        self.assertEqual(self._file_bytes(), b"")
+        self.assertEqual(self.captures.admitted_captures(), [])
+
+    def test_capture_gate_on_tail_truncated_record_refuses_before_lane_call(
+            self):
+        # One capture is admitted first (lane called once);
+        # deleting the last event (its CAPTURE_ADMITTED) leaves
+        # a valid prefix. A second capture must be refused
+        # before its lane call.
+        self.captures.admit_capture("CAP-1")
+        self.assertEqual(self.lane.calls, 1)
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(CaptureRefused) as ctx:
+            self.captures.admit_capture("CAP-2")
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self.lane.calls, 1)
+        self.assertEqual(self._file_bytes(), desynced)
+        self.assertEqual(self.captures.admitted_captures(),
+                         ["CAP-1"])
 
 
 if __name__ == "__main__":
