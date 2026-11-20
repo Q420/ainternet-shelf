@@ -239,7 +239,10 @@ with mandatory prior verification.
 A fresh register entry for the vacancy under DR-26 (DR-25 is
 the latest numbered defect; the examiner verified), with the
 DR-13 collision cross-noted rather than silently renumbered.
-The register stays untouched until Ben rules.
+EXECUTED on Ben's ruling (2026-11-19): defect register v4
+carries DR-26, the DR-13 entry carries the cross-note, and
+the map's stress point cites DR-26. No existing row's
+substance changed.
 
 ## What this proposal is not
 

@@ -331,3 +331,12 @@ a defect, not a backlog item.
   gates classified honestly as DESIGNED/procedural, with
   the enforcement mechanism stated as an implementation
   requirement. Back for examination.
+- GATE STRUCTURE CONTENT-CLEARED (examination of the
+  c4f50a12 shelf copy): allocation, Gate 1 delegation
+  verification, first-use sequence, Gate 2 boundary,
+  verification-vs-verdict, and the designed-vs-enforced
+  classification all accepted. One documentary correction
+  applied: the proposal's numbering section now records
+  the EXECUTED ruling (register v4, DR-26, cross-note)
+  instead of the obsolete pre-ruling sentence. Document
+  clearance awaited on that correction.
