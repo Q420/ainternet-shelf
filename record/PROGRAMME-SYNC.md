@@ -351,3 +351,12 @@ a defect, not a backlog item.
   the production adjudicator remains unappointed until
   Ben's delegation is formally issued; the gates remain
   designed, not enforced.
+- APPOINTMENT ISSUED (Ben, 2026-11-19 19:16 MST): "Vein
+  [Vane] will be the adjudicator. For now." — and, on the
+  fallback: "or if she doesn't want to, Claude can."
+  Recorded as: the adjudicator role is Ben's delegation to
+  VANE, provisional ("for now"), subject to her acceptance;
+  if she declines, CLAUDE is Ben's named fallback holder.
+  This supersedes the 19:04 allocation (orchestrator) for
+  the role-holder; the gate structure stands. Acceptance
+  outstanding — put to her by bridge letter briefcase-50.
