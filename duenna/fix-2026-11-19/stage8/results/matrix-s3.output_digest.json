@@ -12,10 +12,19 @@
   }
  },
  "description": "output gate: the output's quoted config digest is checked against the frozen object (stage3/admission.py)",
+ "invalid_reasons": [],
  "mechanism": "s3.output_digest",
  "patch_problems": [],
  "run_id": "mech-s3.output_digest",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3
- ]
+ ],
+ "valid": true
 }

@@ -12,10 +12,19 @@
   }
  },
  "description": "construction_close field-set facets: artefact/entry field disagreement (stage2/construction.py, _differing, indent 4)",
+ "invalid_reasons": [],
  "mechanism": "s2.close_fieldset",
  "patch_problems": [],
  "run_id": "mech-s2.close_fieldset",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   2
- ]
+ ],
+ "valid": true
 }

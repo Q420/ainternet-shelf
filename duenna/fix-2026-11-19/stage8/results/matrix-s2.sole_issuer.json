@@ -22,10 +22,19 @@
   }
  },
  "description": "verify(): provenance events whose digests the writer never issued are refused (stage2/construction.py)",
+ "invalid_reasons": [],
  "mechanism": "s2.sole_issuer",
  "patch_problems": [],
  "run_id": "mech-s2.sole_issuer",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   2
- ]
+ ],
+ "valid": true
 }

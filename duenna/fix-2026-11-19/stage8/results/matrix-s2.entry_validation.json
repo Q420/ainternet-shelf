@@ -7,10 +7,19 @@
   }
  },
  "description": "append_entry canonical-encodability check (stage2/construction.py)",
+ "invalid_reasons": [],
  "mechanism": "s2.entry_validation",
  "patch_problems": [],
  "run_id": "mech-s2.entry_validation",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   2
- ]
+ ],
+ "valid": true
 }

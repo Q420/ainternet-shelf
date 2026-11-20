@@ -12,10 +12,19 @@
   }
  },
  "description": "TrustAnchor construction is token-gated to the pinned store (stage7/trust_anchor.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.pin_constructor",
  "patch_problems": [],
  "run_id": "mech-s7.pin_constructor",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

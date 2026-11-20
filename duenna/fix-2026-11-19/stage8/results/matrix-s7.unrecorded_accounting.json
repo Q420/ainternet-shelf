@@ -7,10 +7,19 @@
   }
  },
  "description": "receipt_account: package entries with no issuance are named as unrecorded (stage7/receipts.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.unrecorded_accounting",
  "patch_problems": [],
  "run_id": "mech-s7.unrecorded_accounting",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

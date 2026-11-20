@@ -37,10 +37,19 @@
   }
  },
  "description": "account completeness reconciliation FAIL branches: duplicate_record / duplicate_account / omitted / extra / altered (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.account_reconciliation",
  "patch_problems": [],
  "run_id": "mech-s1.account_reconciliation",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

@@ -157,10 +157,19 @@
   }
  },
  "description": "validator._check_account_completeness as a whole (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.account_whole",
  "patch_problems": [],
  "run_id": "mech-s1.account_whole",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

@@ -7,10 +7,19 @@
   }
  },
  "description": "Operation immutability: the custom _sealed __setattr__ guard (stage5/operations.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.operation_seal",
  "patch_problems": [],
  "run_id": "mech-s5.operation_seal",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

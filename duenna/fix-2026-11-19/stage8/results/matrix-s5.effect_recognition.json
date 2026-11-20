@@ -22,10 +22,19 @@
   }
  },
  "description": "present(): a landed effect with the record behind it is recognised as the single application, not re-applied (stage5/receiver.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.effect_recognition",
  "patch_problems": [],
  "run_id": "mech-s5.effect_recognition",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

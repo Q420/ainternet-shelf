@@ -42,10 +42,19 @@
   }
  },
  "description": "_state_from: the presented tag must authenticate under the pinned anchor (stage7/receipts.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.authentication",
  "patch_problems": [],
  "run_id": "mech-s7.authentication",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

@@ -37,10 +37,19 @@
   }
  },
  "description": "validator._has_content: whitespace-only strings name nothing (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.whitespace",
  "patch_problems": [],
  "run_id": "mech-s1.whitespace",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

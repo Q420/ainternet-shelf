@@ -22,10 +22,19 @@
   }
  },
  "description": "record.verify_chain recomputes every event digest and link (stage1/record.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.verify_chain",
  "patch_problems": [],
  "run_id": "mech-s1.verify_chain",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

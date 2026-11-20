@@ -6,6 +6,7 @@
    "under_sabotage": "FAIL"
   }
  },
+ "invalid_reasons": [],
  "joint_fixtures": [
   "test_access_admission.TestAccessAdmission.test_output_with_fabricated_receipt_refused",
   "test_stage3_sabotage.TestSabotageB.test_fabricated_receipt_quoting_canonical_hash"
@@ -16,7 +17,15 @@
  ],
  "patch_problems": [],
  "run_id": "joint-s3_receipt_facts+s3_receipt_record_presence",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3
- ]
+ ],
+ "valid": true
 }

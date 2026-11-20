@@ -17,10 +17,19 @@
   }
  },
  "description": "discrepancy citations must resolve to a real ATTRIBUTION_RECORDED event on the verified snapshot (stage6/discrepancy.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.resolve_attribution",
  "patch_problems": [],
  "run_id": "mech-s6.resolve_attribution",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

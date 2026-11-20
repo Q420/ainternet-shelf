@@ -27,10 +27,19 @@
   }
  },
  "description": "validate_verdict K7 lookup, contract conjunct: the issuance entry must be an entry issued by THIS contract (stage4/contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s4.contract_identity",
  "patch_problems": [],
  "run_id": "mech-s4.contract_identity",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   4
- ]
+ ],
+ "valid": true
 }

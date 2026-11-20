@@ -24,3 +24,10 @@ if __name__ == "__main__":
           f"{len(summary['instrument_interaction'])}")
     for run_id, ids in summary["instrument_interaction"].items():
         print(f"  {run_id}: {ids}")
+    print(f"invalid runs: {len(summary['invalid_runs'])}")
+    for run_id, entry in summary["invalid_runs"].items():
+        print(f"  {run_id}: {entry['invalid_reasons']}")
+    print(f"witness anomalies: {len(summary['witness_anomalies'])}")
+    for anomaly in summary["witness_anomalies"]:
+        print(f"  {anomaly}")
+    print(f"exercised by outcome: {summary['exercised_by_outcome']}")

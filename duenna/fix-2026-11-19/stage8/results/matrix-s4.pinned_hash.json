@@ -27,10 +27,19 @@
   }
  },
  "description": "validate_verdict pinned implementation hash comparison (stage4/contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s4.pinned_hash",
  "patch_problems": [],
  "run_id": "mech-s4.pinned_hash",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   4
- ]
+ ],
+ "valid": true
 }

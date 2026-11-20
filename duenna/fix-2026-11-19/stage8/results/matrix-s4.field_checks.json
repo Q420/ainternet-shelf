@@ -52,10 +52,19 @@
   }
  },
  "description": "validate_verdict field presence and match checks: procedure, version, hash, input identity, verdict shape (stage4/contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s4.field_checks",
  "patch_problems": [],
  "run_id": "mech-s4.field_checks",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   4
- ]
+ ],
+ "valid": true
 }

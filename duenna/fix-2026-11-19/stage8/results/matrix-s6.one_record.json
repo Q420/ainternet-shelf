@@ -7,10 +7,19 @@
   }
  },
  "description": "one attribution record per failure: a second mint is refused (stage6/attribution.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.one_record",
  "patch_problems": [],
  "run_id": "mech-s6.one_record",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

@@ -22,10 +22,19 @@
   }
  },
  "description": "capability_is_issued point-of-use verification (stage6/authority.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.point_of_use",
  "patch_problems": [],
  "run_id": "mech-s6.point_of_use",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

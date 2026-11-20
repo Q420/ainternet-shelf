@@ -22,10 +22,19 @@
   }
  },
  "description": "missing/unreadable anchor yields NOT_VERIFIED, never PASS (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.anchor_absence",
  "patch_problems": [],
  "run_id": "mech-s1.anchor_absence",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

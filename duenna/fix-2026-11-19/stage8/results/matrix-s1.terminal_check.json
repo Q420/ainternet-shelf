@@ -32,10 +32,19 @@
   }
  },
  "description": "validator._check_terminal_record: exactly one CLOSURE, in last place (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.terminal_check",
  "patch_problems": [],
  "run_id": "mech-s1.terminal_check",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

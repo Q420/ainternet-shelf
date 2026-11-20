@@ -17,10 +17,19 @@
   }
  },
  "description": "derived-limit policy recompute (stage3/config.py)",
+ "invalid_reasons": [],
  "mechanism": "s3.policy_recompute",
  "patch_problems": [],
  "run_id": "mech-s3.policy_recompute",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3
- ]
+ ],
+ "valid": true
 }

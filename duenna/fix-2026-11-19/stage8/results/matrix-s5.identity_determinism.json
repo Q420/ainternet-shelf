@@ -62,10 +62,19 @@
   }
  },
  "description": "operation identity is deterministic \u2014 the same triple mints the same identity on every call; the sabotage variant mixes a per-call object hash into the minted identity (stage5/operations.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.identity_determinism",
  "patch_problems": [],
  "run_id": "mech-s5.identity_determinism",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

@@ -7,10 +7,19 @@
   }
  },
  "description": "output gate: values differing from the frozen object are refused (stage3/admission.py)",
+ "invalid_reasons": [],
  "mechanism": "s3.output_differing",
  "patch_problems": [],
  "run_id": "mech-s3.output_differing",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3
- ]
+ ],
+ "valid": true
 }

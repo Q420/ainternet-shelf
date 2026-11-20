@@ -57,10 +57,19 @@
   }
  },
  "description": "receiver._operation_events: operation state recognised from the record's INSERTION_APPLIED / OPERATION_CONSUMED events (stage5/receiver.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.event_recognition",
  "patch_problems": [],
  "run_id": "mech-s5.event_recognition",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

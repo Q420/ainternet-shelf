@@ -86,6 +86,7 @@
    "under_sabotage": "FAIL"
   }
  },
+ "invalid_reasons": [],
  "joint_fixtures": [
   "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
   "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct"
@@ -97,7 +98,15 @@
  ],
  "patch_problems": [],
  "run_id": "joint-s7_authentication+s7_digest_comparison+s7_package_lookup",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

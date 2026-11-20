@@ -1,10 +1,19 @@
 {
  "changed": {},
  "description": "build_from_entries duplicate-entry refusal (stage2/construction.py)",
+ "invalid_reasons": [],
  "mechanism": "s2.build_duplicates",
  "patch_problems": [],
  "run_id": "mech-s2.build_duplicates",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   2
- ]
+ ],
+ "valid": true
 }

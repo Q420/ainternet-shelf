@@ -6,6 +6,7 @@
    "under_sabotage": "FAIL"
   }
  },
+ "invalid_reasons": [],
  "joint_fixtures": [
   "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses"
  ],
@@ -15,7 +16,15 @@
  ],
  "patch_problems": [],
  "run_id": "joint-s2_build_duplicates+s2_close_duplicates",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   2
- ]
+ ],
+ "valid": true
 }

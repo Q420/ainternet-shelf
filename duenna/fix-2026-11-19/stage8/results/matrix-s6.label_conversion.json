@@ -7,10 +7,19 @@
   }
  },
  "description": "convert_local_label always refuses: no local label converts to an attribution class (stage6/attribution.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.label_conversion",
  "patch_problems": [],
  "run_id": "mech-s6.label_conversion",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

@@ -97,10 +97,19 @@
   }
  },
  "description": "the procedure registry is a MappingProxyType: remapping is refused (stage4/contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s4.registry_immutable",
  "patch_problems": [],
  "run_id": "mech-s4.registry_immutable",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   4
- ]
+ ],
+ "valid": true
 }

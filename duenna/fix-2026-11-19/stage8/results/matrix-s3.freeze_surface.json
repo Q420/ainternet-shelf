@@ -7,10 +7,19 @@
   }
  },
  "description": "freeze surface consistency: pin and every surface name one subject (stage3/binder.py)",
+ "invalid_reasons": [],
  "mechanism": "s3.freeze_surface",
  "patch_problems": [],
  "run_id": "mech-s3.freeze_surface",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3
- ]
+ ],
+ "valid": true
 }

@@ -12,10 +12,19 @@
   }
  },
  "description": "present(): a recorded payload digest binds the identity; a different payload under it is refused (stage5/receiver.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.payload_binding",
  "patch_problems": [],
  "run_id": "mech-s5.payload_binding",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

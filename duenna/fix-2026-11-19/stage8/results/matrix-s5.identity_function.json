@@ -27,10 +27,19 @@
   }
  },
  "description": "operation identity is a function of (run, step, slot) \u2014 every part binds; the sabotage drops slot from the mint_operation_id hash input (stage5/operations.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.identity_function",
  "patch_problems": [],
  "run_id": "mech-s5.identity_function",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

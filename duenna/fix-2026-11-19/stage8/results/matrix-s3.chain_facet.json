@@ -52,13 +52,37 @@
   }
  },
  "description": "verify_record_current chain facet: the persisted record's chain is recomputed before any writer trusts it (stage3/binder.py; shared by stages 3, 5, 6, 7)",
+ "invalid_reasons": [],
  "mechanism": "s3.chain_facet",
  "patch_problems": [],
  "run_id": "mech-s3.chain_facet",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  },
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  },
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  },
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3,
   5,
   6,
   7
- ]
+ ],
+ "valid": true
 }

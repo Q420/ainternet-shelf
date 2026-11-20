@@ -52,12 +52,31 @@
   }
  },
  "description": "verify_record_current terminal facet: persisted length/head must equal the writer's in-memory length/head (stage3/binder.py; shared by stages 3, 5, 7)",
+ "invalid_reasons": [],
  "mechanism": "s3.terminal_facet",
  "patch_problems": [],
  "run_id": "mech-s3.terminal_facet",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  },
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  },
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3,
   5,
   7
- ]
+ ],
+ "valid": true
 }

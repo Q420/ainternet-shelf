@@ -7,10 +7,19 @@
   }
  },
  "description": "examine(): the input-defect branch \u2014 a defect in what was supplied TO the agent is attributed INPUT before any extraction fact is read (stage6/schema_contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.input_defect_branch",
  "patch_problems": [],
  "run_id": "mech-s6.input_defect_branch",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

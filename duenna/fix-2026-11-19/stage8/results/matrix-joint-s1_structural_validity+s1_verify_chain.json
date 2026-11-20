@@ -26,6 +26,7 @@
    "under_sabotage": "FAIL"
   }
  },
+ "invalid_reasons": [],
  "joint_fixtures": [
   "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append"
  ],
@@ -35,7 +36,15 @@
  ],
  "patch_problems": [],
  "run_id": "joint-s1_structural_validity+s1_verify_chain",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

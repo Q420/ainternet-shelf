@@ -7,10 +7,19 @@
   }
  },
  "description": "CheckerContract seal: procedure binding write-once (stage4/contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s4.seal",
  "patch_problems": [],
  "run_id": "mech-s4.seal",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   4
- ]
+ ],
+ "valid": true
 }

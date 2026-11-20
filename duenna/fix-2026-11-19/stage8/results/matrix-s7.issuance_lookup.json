@@ -157,10 +157,19 @@
   }
  },
  "description": "_issuance_event: a receipt id with no RECEIPT_ISSUED event is not a lifecycle receipt (stage7/receipts.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.issuance_lookup",
  "patch_problems": [],
  "run_id": "mech-s7.issuance_lookup",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

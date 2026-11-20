@@ -27,10 +27,19 @@
   }
  },
  "description": "_require_pinned_anchor: every entry point validates the anchor against the pin (stage7/receipts.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.pin_point_of_use",
  "patch_problems": [],
  "run_id": "mech-s7.pin_point_of_use",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

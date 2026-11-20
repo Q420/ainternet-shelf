@@ -17,10 +17,19 @@
   }
  },
  "description": "_state_from: collected content's digest must equal the issuance body's content digest (stage7/receipts.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.digest_comparison",
  "patch_problems": [],
  "run_id": "mech-s7.digest_comparison",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

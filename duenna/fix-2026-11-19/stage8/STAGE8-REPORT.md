@@ -474,3 +474,183 @@ direction is listed as its own mechanism. The real trees were
 never patched: all sabotage ran in scratch copies, and after
 the matrix all seven suites re-run green in their real trees
 (68 / 27 / 38 / 36 / 30 / 54 / 34).
+
+## Correction round 1 — Gate 1 return
+
+**The ruling answered** (VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md,
+shelf commit 5107157c039fc64a53f9831d5f20094f227797af, on the
+package @ a1a3c290): Gate 1 FAIL, one targeted correction. The
+substantive fixture analysis is accepted as submitted — the
+Stage 2 and Stage 3 downgrades, the Stage 3 coverage gap, the
+Stage 4 corrections, and the named 17 NOT-EXERCISED pairs —
+subject to this correction and the regenerated matrix. The
+blocking finding is in the measurement machinery, not the
+analysis: the patrol's own log could convert an unobserved
+fixture into discrimination evidence.
+
+**The fail-open shape.** Three composed defects in
+`matrix.py` as submitted. (1) `run_suite()` invoked
+`witness_run.py`, parsed whatever JSON lines it happened to
+receive, and discarded the subprocess return code; it never
+validated the emitted summary, the expected test count, or
+the completeness of the outcome set. (2) `run_one()`
+explicitly converted every baseline test absent from a
+sabotage run's outcomes into a change with
+`under_sabotage: "MISSING"`. (3) `classify()` treated any
+changed claimed fixture as EXERCISED, without distinguishing
+an assertion failure from MISSING, ERROR, skipped, or any
+other non-ok result. Composed: if a runner process crashed
+before emitting outcomes, or a collection failure prevented
+a test from being observed, the baseline fixtures became
+MISSING, and any of them claiming the neutralised mechanism
+was classified EXERCISED. Absence of evidence was credited
+as discrimination — precisely the false assurance this stage
+exists to prevent, in the stage's own instrument. (The
+submitted matrix itself contained no MISSING change and no
+witness anomaly; the defect was latent, in the code path,
+not realised in the submitted numbers. That is luck about
+the runs that happened to execute, not a property of the
+machinery, and the correction treats it accordingly.)
+
+**The correction** (`matrix.py`; `witness_run.py` and
+`coverage.py` needed no change — the runner's output already
+carries everything validation requires, and the coverage
+accountant consumes the separate Test 8 witness log, not
+matrix runs). Every witness-runner execution is now
+validated by `validate_run_output()` before anything is
+classified from it: the runner must have exited cleanly
+(return code preserved; a timeout is an abnormal exit);
+stdout must parse line by line as JSON records (a malformed
+or unrecognised line is an anomaly); test IDs must be unique
+(each duplicate named); every outcome value must be one of
+ok / FAIL / ERROR / skipped; there must be exactly one
+summary record, whose test count equals the number of
+outcome records and whose outcome tally equals the records'
+own tally; and the observed test-ID set must equal the
+baseline test-ID set for that suite exactly — every missing
+and every unexpected ID is named. Any defect makes the run
+INVALID: `run_one()` records the validation per suite, the
+run's `valid` flag, and its `invalid_reasons`, and preserves
+the raw diagnostic (return code, anomaly list, stderr and
+stdout tails) in the run record. The MISSING synthesis is
+deleted — an absent outcome is now an anomaly, never a
+change. `classify()` fails closed on top of that: a run
+record that is invalid — or that carries no validation at
+all, as a pre-correction result file would not — yields no
+pair verdicts, no collateral, and no joint verdicts; its
+claimed pairs are recorded INVALID-RUN and the run is named,
+with its reasons and affected pairs, in
+`summary["invalid_runs"]`.
+
+**The outcome policy, stated explicitly** (the ruling's
+fourth requirement). In a validated, complete run, a claimed
+pair is credited EXERCISED when the fixture's observed
+outcome is FAIL or ERROR. Both are terminal outcomes in
+which the fixture was observed to execute and its baseline
+behaviour did not occur. The ERROR half of that policy is a
+judgement, and it is recorded here rather than left silent:
+in these suites the fixtures predominantly assert controlled
+refusals, and when the guard is removed, the guarded input
+characteristically flows past the missing guard into code
+that assumes the guard ran, raising an uncontrolled
+exception instead of producing the asserted refusal.
+Four of the fifteen ERROR-earned credits were sampled
+first-hand against their sabotage runs before this policy
+was adopted, and all four have exactly that shape:
+Stage 1's whitespace fixtures (the expected rejection
+diagnostic is never produced; the fixture's lookup of it
+raises StopIteration); Stage 2's forged-canonical-events
+fixture (a refusal is raised, but — the sole-issuer facet
+being gone — without the `unissued_provenance_events`
+details the fixture asserts; KeyError inside the test);
+Stage 3's consume-unknown fixture (the unknown governed
+value passes the missing check and raises KeyError inside
+`consume()` itself); Stage 4's missing-implementation-hash
+fixture (the malformed verdict reaches the comparison that
+indexes the very field the removed check existed to
+guarantee; KeyError in `validate_verdict`). None of the
+four is fixture-plumbing breakage or a collection failure.
+A "skipped" outcome never credits: the fixture abstained
+from executing its assertions, so the pair is INDETERMINATE
+and the abstention is recorded as a witness anomaly. A
+missing outcome cannot occur in a valid run at all. And the
+distinction the ruling demanded is carried in the record,
+not just the policy: `summary["pair_evidence"]` names the
+earning outcome of every credited pair, and
+`summary["exercised_by_outcome"]` totals them — FAIL-earned
+and ERROR-earned credits are never silently merged.
+
+**Regression tests** (`tests/test_runner_validation.py`, 20
+new tests; the stage's suite is now 31). Validation:
+a healthy run is valid; an ERROR outcome is a valid
+observation; a crashed runner (nonzero exit, no output);
+a runner exiting before emitting any outcomes; a partial
+outcome set with an internally consistent summary (still
+invalid — completeness is against the expected set, not the
+summary's own claim); a duplicate test ID; a malformed
+output line; a missing summary; a duplicate summary;
+a summary test-count mismatch; a summary tally mismatch;
+an invalid outcome value; an unexpected test ID — each
+asserted invalid, with the anomaly named. Classification:
+an invalid run containing a FAIL change for its claimed
+fixture credits nothing (the pair is INVALID-RUN, the run
+named, zero exercised-by-outcome); an unvalidated run record
+credits nothing; a valid run's FAIL credits EXERCISED with
+FAIL evidence; a valid run's ERROR credits EXERCISED with
+ERROR evidence; a valid run's skipped change credits
+nothing (INDETERMINATE, anomaly recorded); an invalid joint
+run gives no joint verdict. Plus one end-to-end check that a
+healthy `run_one` is valid and carries its suite validation.
+The pre-existing subTest regression and the unknown-ID
+anomaly handling in `classify()` remain intact (the latter
+is now defence in depth behind run validation).
+
+**Regeneration and the diff, stated exactly.** The full
+matrix was regenerated with the corrected machinery (88
+mechanism runs + 6 joint runs), and FIXTURE-INVENTORY.md was
+regenerated from the corrected summary. Every one of the 96
+regenerated runs validated clean: zero invalid runs, zero
+witness anomalies. The pair classifications are IDENTICAL
+to the submitted ones — the diff over all 217 pairs is
+empty: EXERCISED 189, JOINT-ONLY 7, SELF-WITNESSED 4,
+NOT-EXERCISED 17, every pair with the same verdict in both
+generations; the joint-fixture verdicts, the collateral
+record, and the instrument-interaction record are likewise
+identical, run for run. The credited pairs' earning outcomes
+are now recorded: of the 196 credited pairs (189 EXERCISED +
+7 JOINT-ONLY), 181 are FAIL-earned and 15 are ERROR-earned.
+One record-level difference, named rather than smoothed:
+the regenerated summary carries 94 run records against the
+submitted 96. The two absent records are joint runs —
+`joint-s4_identity_check+s4_pinned_hash` and
+`joint-s6_format_prescribed+s6_response_matching` — for
+target groups whose fixtures the FINAL inventory classifies
+as guard fixtures with single targets, not joint-guard
+fixtures: during the original build those fixtures were
+reclassified after their joint runs had executed (the Stage
+4 replay fixture's inventory note records "two classification
+attempts"; its discriminating facet is the single mechanism
+s4.contract_identity, and the Stage 6 causal-table controls
+resolve to s6.extraction, s6.input_defect_branch and
+s6.format_prescribed respectively). In the submitted summary
+those runs already contributed no verdict — `classify()`
+filtered joint verdicts to current joint-guard fixtures —
+and every affected fixture's pair verdict is EXERCISED via
+its single-mechanism run in both generations. Their stale
+run files were removed from `results/`; reclassifying from
+the on-disk records now reproduces the regenerated summary
+exactly. So the correction changes no finding: it removes
+the machinery path by which a future incomplete run could
+have manufactured one.
+
+**Counts after correction.** Stage 8 suite: 31/31 (the 11
+prior tests with unchanged outcomes, plus 20 new).
+Regressions in the real trees: Stage 1, 68/68; Stage 2,
+27/27; Stage 3, 38/38; Stage 4, 36/36; Stage 5, 30/30;
+Stage 6, 54/54; Stage 7, 34/34. `stage1/`–`stage7/`
+unmodified. The register disposition is unchanged by this
+round: DR-08 and DR-12 await the examiner's re-examination
+of the corrected package, which has not yet occurred. The
+collateral-heavy sabotage shapes named in the Boundaries
+section remain limitations of those sabotage designs, as
+the ruling notes they must.

@@ -42,10 +42,19 @@
   }
  },
  "description": "account schema facet: malformed account entries fail validation (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.account_schema",
  "patch_problems": [],
  "run_id": "mech-s1.account_schema",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

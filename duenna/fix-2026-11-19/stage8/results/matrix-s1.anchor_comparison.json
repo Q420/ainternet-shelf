@@ -12,10 +12,19 @@
   }
  },
  "description": "validator chain validity: record head compared with the anchor's head/length (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.anchor_comparison",
  "patch_problems": [],
  "run_id": "mech-s1.anchor_comparison",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

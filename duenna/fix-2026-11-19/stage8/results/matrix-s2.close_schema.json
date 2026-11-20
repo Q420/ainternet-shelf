@@ -27,10 +27,19 @@
   }
  },
  "description": "construction_close schema facets: fields absent from both / outside the schema (stage2/construction.py, _differing, indent 4)",
+ "invalid_reasons": [],
  "mechanism": "s2.close_schema",
  "patch_problems": [],
  "run_id": "mech-s2.close_schema",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   2
- ]
+ ],
+ "valid": true
 }

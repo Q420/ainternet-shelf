@@ -12,10 +12,19 @@
   }
  },
  "description": "a discrepancy already resolved cannot be resolved again: the follow check in _append_resolution (stage6/discrepancy.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.one_resolution",
  "patch_problems": [],
  "run_id": "mech-s6.one_resolution",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

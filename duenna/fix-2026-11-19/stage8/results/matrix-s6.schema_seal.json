@@ -7,10 +7,19 @@
   }
  },
  "description": "the _Sealed base: schema, contract, instruction and checker objects are sealed (stage6/authority.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.schema_seal",
  "patch_problems": [],
  "run_id": "mech-s6.schema_seal",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

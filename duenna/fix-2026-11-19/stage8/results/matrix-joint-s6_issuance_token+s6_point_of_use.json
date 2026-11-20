@@ -31,6 +31,7 @@
    "under_sabotage": "FAIL"
   }
  },
+ "invalid_reasons": [],
  "joint_fixtures": [
   "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution",
   "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy",
@@ -42,7 +43,15 @@
  ],
  "patch_problems": [],
  "run_id": "joint-s6_issuance_token+s6_point_of_use",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

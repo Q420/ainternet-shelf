@@ -7,10 +7,19 @@
   }
  },
  "description": "mint_attribution refuses classes outside the attribution vocabulary (stage6/attribution.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.vocabulary",
  "patch_problems": [],
  "run_id": "mech-s6.vocabulary",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

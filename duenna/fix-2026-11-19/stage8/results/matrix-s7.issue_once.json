@@ -7,10 +7,19 @@
   }
  },
  "description": "issue_receipt: one commitment has exactly one receipt (stage7/receipts.py)",
+ "invalid_reasons": [],
  "mechanism": "s7.issue_once",
  "patch_problems": [],
  "run_id": "mech-s7.issue_once",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   7
- ]
+ ],
+ "valid": true
 }

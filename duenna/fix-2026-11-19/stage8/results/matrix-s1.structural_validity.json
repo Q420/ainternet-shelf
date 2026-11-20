@@ -7,10 +7,19 @@
   }
  },
  "description": "validator._is_structurally_valid_event (stage1/validator.py)",
+ "invalid_reasons": [],
  "mechanism": "s1.structural_validity",
  "patch_problems": [],
  "run_id": "mech-s1.structural_validity",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   1
- ]
+ ],
+ "valid": true
 }

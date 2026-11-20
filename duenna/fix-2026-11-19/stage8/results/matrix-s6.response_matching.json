@@ -7,10 +7,19 @@
   }
  },
  "description": "ResponseContract required-lines matching: the response must carry the contract's required lines (stage6/schema_contract.py)",
+ "invalid_reasons": [],
  "mechanism": "s6.response_matching",
  "patch_problems": [],
  "run_id": "mech-s6.response_matching",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   6
- ]
+ ],
+ "valid": true
 }

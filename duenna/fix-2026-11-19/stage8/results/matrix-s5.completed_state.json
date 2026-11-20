@@ -22,10 +22,19 @@
   }
  },
  "description": "present() consumed fast path: the consumption's applied reference must resolve to this operation's applied event AND the effect must still exist (stage5/receiver.py)",
+ "invalid_reasons": [],
  "mechanism": "s5.completed_state",
  "patch_problems": [],
  "run_id": "mech-s5.completed_state",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   5
- ]
+ ],
+ "valid": true
 }

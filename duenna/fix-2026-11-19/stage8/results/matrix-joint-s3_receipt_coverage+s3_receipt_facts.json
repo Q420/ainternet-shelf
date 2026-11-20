@@ -16,6 +16,7 @@
    "under_sabotage": "FAIL"
   }
  },
+ "invalid_reasons": [],
  "joint_fixtures": [
   "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage"
  ],
@@ -25,7 +26,15 @@
  ],
  "patch_problems": [],
  "run_id": "joint-s3_receipt_coverage+s3_receipt_facts",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
  "suites": [
   3
- ]
+ ],
+ "valid": true
 }
