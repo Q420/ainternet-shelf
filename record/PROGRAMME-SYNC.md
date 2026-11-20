@@ -628,3 +628,27 @@ a defect, not a backlog item.
   only as replacements prove out); stop adding recovery
   patches to the legacy path. Ben directed: no reply to
   Vane. Awaiting Ben's decisions.
+- BEN'S REDESIGN + VANE'S PLAN (2026-11-19 evening): Ben
+  retired the pairs idea — a TRUE BUFFER instead: ordered
+  by arrival, nothing evicted, relay timed by the record's
+  own clocks, stacking delivered as one package once the
+  reply lands. Vane pressure-tested it against the source
+  and returned a staged plan (filed bridge/map-v1/
+  VANE-BUFFER-PLAN-01.md): direction endorsed; refinements
+  — two clocks (source time vs acceptance sequence, the
+  sequence is the order); packages SEALED at claim with
+  immutable manifests; Enter is a hypothesis to prove per
+  platform (Stage 4), not an invariant — the existing send
+  path stays until then; two queues, one ledger, one
+  conversation-wide dispatch lease; head-of-line blocks by
+  default, parking is loud and passing a parked message
+  needs a separate recorded bypass decision; Remmy-side
+  authority conditional on the spool passing a durability
+  audit. Plan shape: Stage 0 freeze the transport contract
+  → 1 authoritative ledger → 2 queue+packages (no sending)
+  → 3 evidence gates → 4 submission+confirmation proofs →
+  5 one-direction shadow then controlled delivery → 6
+  reverse direction + coordination → 7 retire the pair
+  machine. FIRST RULING SHE ASKS OF BEN: the package-
+  release boundary — release accumulated messages on
+  destination receipt, or only on observed reply.
