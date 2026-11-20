@@ -244,6 +244,16 @@ Attribution: SYSTEM (governance). First discovery: drawn as a stress point in th
 Repair/disposition: the correction is devised and content-cleared — see the Adjudicator Correction Proposal (v2, refined): the adjudicator as a defined role (settles run outcomes against the pinned contract; rests on the eight-category admissible evidence set, including the pinned delegation itself; produces a G6-resolvable adjudication record; INDETERMINATE is a legitimate settlement). Ben's direction (2026-11-19 18:57): settlement moves through status gates, modelled on the loop approvals — the gate structure is to be drafted and examined; the holder allocation is completed by that design and Ben's recorded delegation, not by this entry.
 Status: OPEN — correction designed and cleared; ALLOCATION RULED by Ben (2026-11-19): the orchestrator adjudicates, through status gates (package assembled → independently verified → decided); the verification gate is non-skippable and precedes the decision. Not yet implemented; the ruling is to be pinned as the governance record when the role is first exercised in production.
 
+### DR-27 — Subject not served at the Stage 9 freeze (2026-11-20)
+Affected: the Stage 9 scored battery run — the commission's end state.
+Symptom: the battery did not run. At the freeze, the mandatory K2 verification call naming the pinned second subject `openai/gpt-oss-20b` returned HTTP 410 (Gone), and the model is absent from the key's live model list (33 models).
+Evidence: run record `stage9/runs/STAGE9BATT-20261120-003/record.jsonl` (5 events, chain valid): SUBJECT_VERIFICATION_EVIDENCE (one call, HTTP_ERROR 410; pin not listed) → SUBJECT_CONFLICT → FREEZE_REFUSED at `subject_verification`. Live calls in total: 2 model-list reads, 1 verification call, 0 scored calls.
+Mechanism: the subject pin (Alex's ruling, 2026-11-17) names a model the NVIDIA endpoint no longer serves on the programme's key; Stage 3's binder recorded the conflict and refused the freeze, as designed. No substitution was made. The subject's result is not zero or failed — it is not measured.
+Root cause: external availability — the pinned model was withdrawn or unlisted by the provider; not a component failure.
+Attribution: the run record attributes the conflict UNKNOWN. First discovery: Stage 9 freeze, 2026-11-20.
+Repair/disposition: the pin stands as ruled; a scored Stage 9 run awaits the subject being served again, or a new pin ruling from the pin's authority. Stage 9's assembly is complete and re-runnable as built.
+Status: OPEN — assembly complete and Gate-1-examinable; the scored run is outstanding for the stated external reason. (Filed by the orchestrator from the Stage 9 builder's proposed text, 2026-11-20; nothing prior rewritten.)
+
 ## 5b. R60 / v2.4 qualifications and evidence boundaries (from the examiner's restatement)
 These distinctions travel with DR-23..DR-25. A sequence of green suites is not a blanket approval.
 Suite progression (all implementer-reported): v2.2 — 33/33 (FX-R60f, FX-R60g added). Immutable-registry revision — 34/34 (FX-R60h). v2.3 — 35/35 (FX-R60i). v2.4 — 38/38 (FX-R60j, FX-R60k, FX-R60l).
