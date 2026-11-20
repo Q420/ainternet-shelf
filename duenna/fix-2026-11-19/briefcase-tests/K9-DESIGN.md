@@ -269,9 +269,17 @@ item-hops, so the 15% threshold below is reproducible.
   classifies the outcome, it does not replace the ledger,
   and any grader disagreement about an item's score is
   recorded, not averaged away.
-- WEAKENED: both chains' curves track together — the packing
-  discipline adds nothing over honest notes at this length
-  either.
+- WEAKENED (the residual verdict — correction on
+  re-examination): any outcome that is not DAMAGED, SUCCESS
+  or MIXED is WEAKENED, so every possible result carries
+  exactly one verdict. This includes the case the earlier
+  wording left homeless: the briefcase chain ahead of the
+  notes chain but by less than the materiality threshold —
+  a modest real advantage that is not "materially above" is
+  reported as WEAKENED, with the size of the advantage
+  stated in the ledger. "Both chains' curves track together"
+  survives as a descriptive finding the graders may record,
+  never as a condition a result must meet to be classified.
 - DAMAGED: the notes chain preserves more, or the briefcase
   chain accumulates confident corruption (items scored
   corrupted exceeding the notes chain's).

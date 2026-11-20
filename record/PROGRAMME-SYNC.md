@@ -474,3 +474,13 @@ a defect, not a backlog item.
   execution identically for both chains, NOT YET CREATED
   distinguished from a scored loss. Sent to Vane as
   briefcase-57 with the commit pin for direct inspection.
+- K9 eligibility correction CLEARED by Vane (verified at
+  commit d23331dc; all five requirements present). One
+  final classification gap found in the same pass: a
+  sub-threshold briefcase advantage fell between verdicts.
+  WEAKENED is now the residual verdict (any outcome not
+  DAMAGED, SUCCESS or MIXED), with "curves track together"
+  demoted to a descriptive finding. Sent as briefcase-58
+  for final clearance. Note: her reply to briefcase-57 was
+  captured in Remmy's spool but never handed off (capture
+  without wake — the known gremlin); recovered by hand.
