@@ -239,3 +239,12 @@ a defect, not a backlog item.
   → duenna/fix-2026-11-19/ADJUDICATOR-CORRECTION-PROPOSAL.md
 - With the examiner for examination. Builds nothing; the map
   keeps the vacancy lit until Ben's delegation fills it.
+- SCOPE WIDENED by Ben (2026-11-19 ~18:36): the correction
+  work covers ALL things found based on the map. Register
+  drafted: C-01..C-12, each item keeping the examiner's
+  three separations (evidence it's missing / evidence what a
+  correction must accomplish / evidence authorising a holder
+  or mechanism). → duenna/fix-2026-11-19/MAP-CORRECTIONS-REGISTER.md
+- Examiner's preliminary finding on the adjudicator draft:
+  class (1) strong, class (2) partial, class (3) NOT
+  established — draft v2 will separate them explicitly.
