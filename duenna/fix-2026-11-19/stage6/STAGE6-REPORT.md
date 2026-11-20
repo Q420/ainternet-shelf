@@ -330,3 +330,93 @@ Stage 3 **38/38**, Stage 4 **36/36**, Stage 5 **30/30** —
   next examines the package.
 - Counts are builder-run, as in every stage; independent
   execution is the examiner's.
+
+## Correction round 1 — Gate 1 return
+
+**The ruling answered** (VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md,
+shelf commit b9916f4f6244861a0f91a4fe45ad07e7f12bdb60): Gate 1
+FAIL with two targeted K10 corrections. The rest of the stage
+stands as examined — the one-attribution/three-reference
+structure, label separation, the discrepancy lifecycle, K12,
+G6, and the T02/T07/T09 reproductions were not returned.
+
+**Defect 1 — the authority capability could be self-issued.**
+`AttributionAuthority(impostor)` was directly callable: the
+constructor copied the supplied record's identity and digest
+without checking the independently held pin, and the ledger
+accepted the object on its type alone. A component could
+bypass `issue_authority()` and self-appoint as adjudicator,
+and the same bypass reached discrepancy resolution.
+Correction (`authority.py`): construction is restricted to
+the verified issuance path — the constructor requires a
+module-private issuance token (`_ISSUANCE_TOKEN`) that only
+`issue_authority()` supplies, after the presented record
+resolves to the pinned governance record; direct construction
+raises `AuthorityRefused`, from an impostor record and from
+the genuine record alike (the PATH is verified, not just the
+record). Defence in depth: consumers verify the capability at
+the point of use via `capability_is_issued()` — the object is
+a capability, carries this module's token, and acts under the
+pinned digest. The ledger verifies at construction AND again
+inside `mint_attribution` (a capability swapped onto the
+ledger afterwards is refused at the act); discrepancy
+resolution's `_require_authority` verifies the same way. The
+threat-model boundary is stated in the module: importing the
+private token name is circumvention of the same class the
+Stage 4 seal was accepted under — outside the declared model.
+Sabotage outcomes (six tests, all passing): direct
+construction from an impostor record refused; direct
+construction from the genuine record refused, with the
+`issue_authority()` control still issuing; a hand-forged
+capability (constructor bypassed, no token) refused by the
+ledger, nothing appended; a forged capability whose digest
+copies the pin still refused — the token, not the digest
+string, is the proof of issuance; a genuine ledger with its
+capability swapped for a forged one after construction
+refused at the mint, nothing appended; a forged capability at
+discrepancy resolution refused by both `resolve_discrepancy`
+and `mark_indeterminate`, the disagreement still UNRESOLVED.
+
+**Defect 2 — a discrepancy could cite a nonexistent
+attribution.** `mint_discrepancy()` verified the record's
+chain but never resolved the supplied attribution digest; a
+fictitious digest, or one resolving to the wrong event type,
+was appended as a link. Correction (`discrepancy.py`): a
+shared `_resolve_attribution()` resolves the cited digest
+against the verified snapshot — the events whose chain and
+terminal binding were just verified — and requires an actual
+`ATTRIBUTION_RECORDED` event; resolution happens before any
+append. Per the filed verdict's further sentence (the
+builder followed the verdict's exact wording where it
+extended the submission brief), `discrepancy_state()` applies
+the same resolution on read-back: a stored reference that
+does not resolve is refused rather than presented as a valid
+link. Sabotage outcomes (three tests, all passing):
+nonexistent digest refused, no writes; wrong-type digest
+refused in two forms (a `LOCAL_LABEL_RECORDED` event; a
+`DISCREPANCY_RECORDED` event's own digest), no writes;
+read-back of a hand-appended discrepancy with a fictitious
+link refused, the record file byte-identical after the read.
+The healthy control is retained: a discrepancy citing the
+real attribution mints and reads back exactly as before.
+
+**Counterchecks** (run by the orchestrator — the builder's
+session ended before them; the code, tests and suite runs
+above are the builder's, these are Remmy's): with Defect 1's
+two guards neutralised in a scratch copy (constructor token
+check and `capability_is_issued`), exactly the six Defect 1
+sabotage tests fail and the other 48 pass. With
+`_resolve_attribution` neutralised, exactly the three
+Defect 2 sabotage tests fail and the other 51 pass. Each
+assertion set bites on precisely its corrected defect.
+
+**Counts after correction.** Stage 6: 54/54 (the 44 prior
+tests with unchanged outcomes, plus 10 new). Regressions:
+Stage 1, 68/68; Stage 2, 27/27; Stage 3, 38/38; Stage 4,
+36/36; Stage 5, 30/30. `stage1/`–`stage5/` unmodified. The
+register disposition is unchanged by this round: DR-06,
+DR-07's discrepancy linkage, and DR-19 await the examiner's
+re-examination of the corrected package, which has not yet
+occurred; DR-14/15/17 remain supported for re-examination
+with the transcription limitation stated in the body of this
+report.

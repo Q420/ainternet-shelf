@@ -22,12 +22,31 @@ This module is that condition, mechanised:
   presentation of a record whose digest equals the pin. Any
   other record — a component's self-authored instrument, a
   mutated copy of the genuine one — is refused with
-  :class:`AuthorityRefused`. There is no other constructor
-  path a caller can use to obtain the capability's powers:
-  the minting functions in this stage require the capability
-  object itself, and the capability cannot be usefully forged
-  because each mint also records the authority digest it
-  acted under, which the examiner re-derives from the pin.
+  :class:`AuthorityRefused`.
+
+CORRECTION ROUND 1 (Gate 1 verdict, shelf @ b9916f4f): as
+first built, the capability's constructor was itself
+publicly callable — ``AttributionAuthority(impostor)``
+copied the impostor's identity and digest with no pin
+check, and the consumers checked only the object's type,
+so a component could self-appoint by constructing the
+capability directly and bypassing ``issue_authority()``
+entirely. The constructor now requires the module-private
+issuance token (``_ISSUANCE_TOKEN``), which only
+``issue_authority()`` holds and supplies after the pin
+check; direct construction — from an impostor record, or
+even from the genuine record — raises
+:class:`AuthorityRefused`. The issued capability carries
+the token it was issued under, and consumers verify it at
+the point of use (:func:`capability_is_issued`: the object
+is a capability, it carries THIS module's issuance token,
+and its digest equals the pin), so a capability-shaped
+object that never passed issuance is refused by minting
+and by discrepancy resolution alike. As with the Stage 4
+seal, this is an API boundary, not a sandbox: deliberately
+importing the private token name is circumvention of the
+same class as ``object.__setattr__`` forgery, outside the
+declared threat model.
 
 TEST-AUTHORITY DISTINCTION (Stage 0, plan v2): the authority
 record below is a clearly-marked TEST authority fixture for
@@ -133,16 +152,55 @@ def make_test_authority_record() -> GovernanceAuthorityRecord:
 PINNED_AUTHORITY_DIGEST = make_test_authority_record().digest
 
 
+# The issuance token: a module-private unique object. Only
+# issue_authority() holds it, and the capability constructor
+# requires it — construction is therefore possible only on
+# the verified issuance path (correction round 1).
+_ISSUANCE_TOKEN = object()
+
+
 class AttributionAuthority(_Sealed):
     """The capability to mint attribution records. Obtainable
-    only through :func:`issue_authority`. Sealed: the
+    only through :func:`issue_authority`: the constructor
+    requires the module-private issuance token, supplied
+    only after the presented record has resolved to the
+    pinned governance authority record. Sealed: the
     authority identity and digest it acts under cannot be
     rebound after issuance."""
 
-    def __init__(self, record: GovernanceAuthorityRecord):
+    def __init__(self, record: GovernanceAuthorityRecord,
+                 _token=None):
+        if _token is not _ISSUANCE_TOKEN:
+            raise AuthorityRefused(
+                {"reason": "the attribution capability is "
+                           "constructed only by "
+                           "issue_authority(), after the "
+                           "presented record resolves to the "
+                           "pinned governance authority "
+                           "record; direct construction is "
+                           "self-appointment",
+                 "presented_authority": getattr(
+                     record, "authority_id", None)})
         self.authority_id = record.authority_id
         self.authority_digest = record.digest
+        self._issued_token = _token
         self._sealed = True
+
+
+def capability_is_issued(authority) -> bool:
+    """Point-of-use verification for capability consumers
+    (correction round 1, defence in depth): the object is
+    an AttributionAuthority, it carries the issuance token
+    it could only have received from issue_authority(), and
+    the authority digest it acts under equals the
+    independently held pin. A capability-shaped object
+    assembled without issuance — constructor bypassed,
+    attributes set by hand — fails the token check even if
+    its digest copies the pin."""
+    return isinstance(authority, AttributionAuthority) \
+        and getattr(authority, "_issued_token", None) \
+        is _ISSUANCE_TOKEN \
+        and authority.authority_digest == PINNED_AUTHORITY_DIGEST
 
 
 def issue_authority(
@@ -164,4 +222,4 @@ def issue_authority(
                        "the pinned governance authority record",
              "presented_digest": presented.digest,
              "pinned_digest": PINNED_AUTHORITY_DIGEST})
-    return AttributionAuthority(presented)
+    return AttributionAuthority(presented, _ISSUANCE_TOKEN)

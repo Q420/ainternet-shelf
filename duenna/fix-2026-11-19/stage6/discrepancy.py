@@ -31,14 +31,31 @@ A resolution attempted without the issued authority
 capability is refused and appends nothing. The state of a
 discrepancy is established by folding its events from the
 verified read-back — never from a live object's memory.
+
+CORRECTION ROUND 1 (Gate 1 verdict, shelf @ b9916f4f), two
+changes. First, the resolution-side authority check now
+verifies the capability itself (``capability_is_issued``),
+not merely its type — the same self-issuance bypass the
+verdict found at minting reached resolution through the
+shared type check. Second, the attribution link is now
+RESOLVED, not merely cited: ``mint_discrepancy`` resolves
+the supplied digest against the verified snapshot and
+requires an actual ATTRIBUTION_RECORDED event; a fictitious
+digest, or a digest belonging to an event of another type,
+is refused with nothing appended. ``discrepancy_state``
+applies the same resolution on read-back, so a stored
+reference that does not resolve is never presented as a
+valid attribution link. K10 requires the discrepancy to be
+linked to the canonical attribution record by its event
+digest — a string-shaped reference is not that link.
 """
 
 from __future__ import annotations
 
 from binder import CHAIN_VERIFICATION_FAILED, verify_record_current
 
-from attribution import RecordIntegrityRefused
-from authority import AttributionAuthority
+from attribution import ATTRIBUTION_RECORDED, RecordIntegrityRefused
+from authority import AttributionAuthority, capability_is_issued
 
 DISCREPANCY_RECORDED = "DISCREPANCY_RECORDED"
 DISCREPANCY_RESOLUTION = "DISCREPANCY_RESOLUTION"
@@ -76,6 +93,47 @@ def _require_authority(authority):
                        "party to the disagreement cannot "
                        "resolve it by assertion",
              "presented": type(authority).__name__})
+    if not capability_is_issued(authority):
+        raise DiscrepancyRefused(
+            {"reason": "the presented capability was not "
+                       "issued through the verified issuance "
+                       "path (authority.py issue_authority); a "
+                       "forged or self-constructed capability "
+                       "cannot resolve a discrepancy",
+             "presented_digest": getattr(
+                 authority, "authority_digest", None)})
+
+
+def _resolve_attribution(events, attribution_event):
+    """Resolve a cited attribution digest against the
+    verified snapshot (correction round 1): the digest must
+    identify an event ON THIS RECORD, and that event must be
+    an ATTRIBUTION_RECORDED event. Returns the event, or
+    raises DiscrepancyRefused naming why the reference does
+    not resolve. A string-shaped reference is not a link."""
+    found = None
+    for ev in events:
+        if ev.get("digest") == attribution_event:
+            found = ev
+            break
+    if found is None:
+        raise DiscrepancyRefused(
+            {"reason": "the cited attribution_event does "
+                       "not resolve to any event on the "
+                       "verified record; a discrepancy links "
+                       "to the canonical attribution record "
+                       "by its event digest, and a fictitious "
+                       "digest is not a link",
+             "attribution_event": attribution_event})
+    if found.get("type") != ATTRIBUTION_RECORDED:
+        raise DiscrepancyRefused(
+            {"reason": "the cited attribution_event "
+                       "resolves to an event of a different "
+                       "type, not an ATTRIBUTION_RECORDED "
+                       "event",
+             "attribution_event": attribution_event,
+             "resolved_type": found.get("type")})
+    return found
 
 
 def mint_discrepancy(record, attribution_event: str,
@@ -86,8 +144,12 @@ def mint_discrepancy(record, attribution_event: str,
     its statement, stored exactly as presented. The
     attribution it links to is cited by event digest; the
     attribution itself is not modified, restated or
-    re-minted."""
-    _verified_events(record)
+    re-minted. The cited digest is RESOLVED against the
+    verified snapshot before anything is appended
+    (correction round 1): it must identify an actual
+    ATTRIBUTION_RECORDED event on this record."""
+    events = _verified_events(record)
+    _resolve_attribution(events, attribution_event)
     return record.append(DISCREPANCY_RECORDED, {
         "attribution_event": attribution_event,
         "subject_ref": subject_ref,
@@ -124,6 +186,14 @@ def discrepancy_state(record, discrepancy_digest: str) -> dict:
         raise DiscrepancyRefused(
             {"reason": "no discrepancy with that identity",
              "discrepancy_event": discrepancy_digest})
+    # The read-back path preserves the minting invariant
+    # (correction round 1): the stored attribution
+    # reference is resolved against this verified snapshot
+    # before it is presented as the discrepancy's link — a
+    # reference that does not resolve to an
+    # ATTRIBUTION_RECORDED event is refused, never passed
+    # through as a valid link.
+    _resolve_attribution(events, minted["body"]["attribution_event"])
     state = UNRESOLVED
     resolution = None
     for ev in follow:

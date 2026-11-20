@@ -27,13 +27,22 @@ length and head. An integrity failure raises
 :class:`RecordIntegrityRefused` and appends NOTHING. Every
 fact a view returns is established from the record read back,
 never from a live object's memory.
+
+CORRECTION ROUND 1 (Gate 1 verdict, shelf @ b9916f4f): the
+ledger no longer accepts a capability on type alone. The
+authority is verified with ``capability_is_issued`` when the
+ledger is constructed AND again inside ``mint_attribution``
+at the moment of the act, so a capability-shaped object
+that never passed the verified issuance path — or one
+swapped onto the ledger after construction — cannot mint.
 """
 
 from __future__ import annotations
 
 from binder import CHAIN_VERIFICATION_FAILED, verify_record_current
 
-from authority import AttributionAuthority
+from authority import (AttributionAuthority,
+                       PINNED_AUTHORITY_DIGEST, capability_is_issued)
 
 ATTRIBUTION_RECORDED = "ATTRIBUTION_RECORDED"
 LOCAL_LABEL_RECORDED = "LOCAL_LABEL_RECORDED"
@@ -116,8 +125,29 @@ class AttributionLedger:
                            "AttributionAuthority (authority.py); "
                            "a component cannot appoint itself",
                  "presented": type(authority).__name__})
+        self._require_issued(authority)
         self.record = record
         self.authority = authority
+
+    @staticmethod
+    def _require_issued(authority):
+        """The capability must be one the verified issuance
+        path could have produced (correction round 1): it
+        carries issue_authority()'s issuance token and acts
+        under the pinned digest. A directly constructed or
+        hand-assembled capability object is refused here,
+        before any mint is attempted under it."""
+        if not capability_is_issued(authority):
+            raise AttributionRefused(
+                {"reason": "the presented capability was not "
+                           "issued through the verified "
+                           "issuance path (authority.py "
+                           "issue_authority); a forged or "
+                           "self-constructed capability cannot "
+                           "mint",
+                 "presented_digest": getattr(
+                     authority, "authority_digest", None),
+                 "pinned_digest": PINNED_AUTHORITY_DIGEST})
 
     # ------------------------------------------------------
     # Minting
@@ -131,6 +161,11 @@ class AttributionLedger:
         a second mint for the same failure is refused — a
         disagreement about an attribution is a discrepancy
         (discrepancy.py), never a second attribution."""
+        # Verified again at the moment of the act
+        # (correction round 1): a capability swapped onto
+        # this ledger after construction is refused here,
+        # before anything is read or written under it.
+        self._require_issued(self.authority)
         if cls not in ATTRIBUTION_CLASSES:
             raise AttributionRefused(
                 {"reason": "class outside Ben's attribution "
