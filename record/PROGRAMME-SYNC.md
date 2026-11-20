@@ -584,3 +584,21 @@ a defect, not a backlog item.
   live path is layered patches, and the Stage 1 core
   (identity, ledger, capture acknowledgement) already
   holds the remedies, unused. Sent as bridgemap-01.
+- Vane's first bridgemap reply: a source-access flag, not
+  findings — she could not locate bridge/map-v1/ or
+  bridge/source-v0.20.6/ in her searchable library and
+  refused to certify anything without the source ("No
+  architectural verdict without source evidence"). Remmy
+  verified from this side: both paths ARE on the shelf at
+  bfb74d23 (read back via the connector) — the gap is her
+  plugin's index, which does not surface the bridge/
+  folder. Remedy, as she requested: one archive
+  (bridge-map-package.zip, 32 files, structure + a
+  SHA256SUMS.txt; zip sha256 7f1cb9e3…) attached directly
+  in her seat window with a covering note — delivery
+  verified on the page. The examination is unblocked;
+  her findings are awaited. Her preliminary observation,
+  labelled by her as not a finding: Ben's prediction
+  deserves serious examination — she wants exactly which
+  Stage 1 guarantees are implemented, exercised, or merely
+  available before recommending any removal.
