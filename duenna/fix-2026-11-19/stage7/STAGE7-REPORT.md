@@ -235,3 +235,103 @@ fixture).
 Stage 7: 23/23. Regressions: Stage 1, 68/68; Stage 2,
 27/27; Stage 3, 38/38; Stage 4, 36/36; Stage 5, 30/30;
 Stage 6, 54/54. `stage1/`–`stage6/` unmodified.
+
+## Correction round 1 — Gate 1 return
+
+**The ruling answered** (VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md,
+shelf commit 9114fc3d74f6b9ee82bffa6d9962107ddbaf7c3c): Gate 1
+FAIL, one blocking finding. The five-state lifecycle stands
+as accepted — canonical identity, duplicate-issuance refusal,
+package-backed collection, the distinct states, VERIFIED as
+derivation, exact closure gaps, the record discipline. What
+was missing was the provenance of the trust anchor itself.
+
+**The defect.** `TrustAnchor.__init__()` was publicly
+callable with arbitrary issuer, terms and key, and all four
+verification and closure entry points (`lifecycle_state()`,
+`receipt_account()`, `append_receipt_account()`,
+`close_with_receipt_account()`) accepted an anchor supplied
+by their caller. Sealing does not establish provenance: a
+caller could construct an attacker-controlled anchor, mint a
+receipt and tag perfectly valid under it, and pass the anchor
+in — the derivation would return VERIFIED under a pin
+selected by the claimant. The submission's
+package-supplied-anchor test did not cover this: it placed
+the attacker's anchor in the package but kept verifying with
+the genuine anchor — package independence, not caller
+independence.
+
+**The correction** (`trust_anchor.py`, `receipts.py`) — both
+halves of the Stage 6 precedent, applied to the anchor.
+Construction (obtain): the constructor now requires a
+module-private pin token (`_PIN_TOKEN`) that only the
+verifier's pinned-store path (`make_test_anchor()`, issuing
+under the verifier's own pin — the marked TEST fixture
+values) supplies; direct construction raises the new
+`AnchorRefused`, from attacker values and from the genuine
+values alike — the path is verified, not the values presented
+on it. Point of use (validate): `anchor_is_pinned()` requires
+the object to be a TrustAnchor carrying this module's pin
+token, with issuer, terms digest and key all equal to the
+independently held pin; a hand-forged anchor whose values
+copy the pin exactly still fails the token check. A shared
+`_require_pinned_anchor()` enforces this at the head of all
+four entry points, raising `ReceiptRefused` carrying
+`anchor_not_the_verifier_pin` before any derivation or write
+(the append and closure paths also re-verify through
+`receipt_account`). No entry-point signature changed. Two
+honest test migrations, no assertion weakened: the shared
+test setup now obtains its anchor via `make_test_anchor()`
+(the store path the mechanism requires), and the
+package-supplied-anchor test's coherence assertion is now an
+independent HMAC recomputation instead of a call on an
+attacker anchor (which can no longer be constructed); its
+outcome is unchanged.
+
+**New tests, listed separately** (`test_anchor_provenance.py`,
+11 tests, all passing). Direct construction: attacker values
+refused; genuine values refused, with the store-path control
+issuing and `anchor_is_pinned` true. Substitution at
+`lifecycle_state()`: the coherence assertion comes first — a
+hand-forged attacker anchor (constructor bypassed, no token)
+genuinely `authenticates()` the attacker receipt's tag, so
+the boundary failure is provenance, not a malformed tag; the
+substitution is then refused with the anchor key in the
+details; the same receipt under the genuine pin lands in its
+true state, COLLECTED_UNAUTHENTICATED; and a value-identical
+forgery (issuer/terms/key copying the pin, no token) is
+refused on a genuine receipt that the genuine anchor
+verifies. Substitution through accounting and closure:
+refused at `receipt_account()`; refused at
+`append_receipt_account()` with the record asserted
+byte-identical and no account event present; refused at
+`close_with_receipt_account()` with the record byte-identical;
+and the gap-preservation control — after the refused
+substitutions, genuine accounting still states
+COLLECTED_UNAUTHENTICATED and the genuine closure is
+INCOMPLETE with exactly that one gap line. Healthy control:
+the genuine store anchor verifies the full lifecycle to
+VERIFIED and closes COMPLETE with no unknowns.
+
+**Countercheck** (run by the orchestrator — the builder's
+session ended before it; the implementation, tests and suite
+runs above are the builder's, this is Remmy's): with both
+guards neutralised in a scratch copy (the constructor token
+check and `anchor_is_pinned`), exactly 7 of the 34 tests
+fail — the two construction tests, the lifecycle refusal, the
+value-identical forgery, and the three accounting/closure
+refusals — and the other 27 pass, including the coherence,
+true-state, gap-preservation and healthy-control tests and
+all 23 original tests. This matches the failing set the
+builder predicted for the neutralisation before it was run.
+
+**Counts after correction.** Stage 7: 34/34 (the 23 prior
+tests with unchanged outcomes, plus 11 new). Regressions:
+Stage 1, 68/68; Stage 2, 27/27; Stage 3, 38/38; Stage 4,
+36/36; Stage 5, 30/30; Stage 6, 54/54. `stage1/`–`stage6/`
+unmodified. The register disposition is unchanged by this
+round: DR-04 awaits the examiner's re-examination of the
+corrected package, which has not yet occurred. Production
+cryptography, issuer custody and the actual collecting
+component remain outside this stage's evidence, as the
+ruling states.

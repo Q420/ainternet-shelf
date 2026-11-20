@@ -14,6 +14,8 @@ satisfies the end-to-end claim.
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage7/tests -v
 """
 
+import hashlib
+import hmac
 import json
 import os
 import sys
@@ -29,8 +31,8 @@ from receipts import (  # noqa: E402
     VERIFIED, ReceiptIssuer, ReceiptRefused, collect_receipt,
     issue_receipt, lifecycle_state, receipt_id_for)
 from trust_anchor import (  # noqa: E402
-    TEST_ISSUER_ID, TEST_KEY, TEST_TERMS, TrustAnchor,
-    compute_tag, terms_digest)
+    TEST_ISSUER_ID, TEST_KEY, TEST_TERMS, compute_tag,
+    tag_message, terms_digest)
 from stage7_support import fresh_setup  # noqa: E402
 
 CONTENT = b"the committed bytes for the session START"
@@ -164,9 +166,6 @@ class TestUnauthenticated(Stage7Base):
         not authenticate."""
         self._collected()
         entry = self.package.read_entry(self.rid)
-        attacker_anchor = TrustAnchor(TEST_ISSUER_ID,
-                                      ATTACKER_TERMS,
-                                      ATTACKER_KEY)
         forged = compute_tag(ATTACKER_KEY, self.rid,
                              TEST_ISSUER_ID,
                              terms_digest(ATTACKER_TERMS),
@@ -182,12 +181,23 @@ class TestUnauthenticated(Stage7Base):
             json.dump({"issuer_id": TEST_ISSUER_ID,
                        "terms": ATTACKER_TERMS,
                        "key": ATTACKER_KEY.decode()}, f)
-        # Sanity: the forged tag IS valid under the
-        # package-supplied anchor — the attack is coherent.
-        self.assertTrue(attacker_anchor.authenticates(
-            receipt_id=self.rid, issuer_id=TEST_ISSUER_ID,
-            terms_digest_value=terms_digest(ATTACKER_TERMS),
-            content_digest=entry["content_digest"], tag=forged))
+        # Sanity: the forged tag IS the attacker's own
+        # authentic tag over these facts — it recomputes
+        # exactly, by an independent HMAC path, under the
+        # attacker's key and terms, so the attack is
+        # coherent. (Since correction round 1 an attacker
+        # anchor cannot be constructed at all — the anchor
+        # constructor is restricted to the verifier's
+        # pinned-store path — so coherence is asserted by
+        # recomputation here; the caller-side substitution
+        # itself is exercised in test_anchor_provenance.py.)
+        expected = hmac.new(
+            ATTACKER_KEY,
+            tag_message(self.rid, TEST_ISSUER_ID,
+                        terms_digest(ATTACKER_TERMS),
+                        entry["content_digest"]),
+            hashlib.sha256).hexdigest()
+        self.assertEqual(expected, forged)
         # The verifier never consults it: under the pinned
         # anchor the receipt is unauthenticated. (The record's
         # issuance terms also disagree with the entry's

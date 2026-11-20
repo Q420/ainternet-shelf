@@ -64,6 +64,22 @@ themselves in the closure account):
   issuer. A digest match alone proves the collected bytes
   match a digest — not that the receipt is authentic (P8).
 
+ANCHOR PROVENANCE (correction round 1, Gate 1 verdict
+@ 9114fc3d): the anchor a derivation acts under must BE
+the verifier's independently held pin, not merely an
+anchor-shaped object the caller supplies. Construction is
+restricted to the verifier's pinned-store path
+(trust_anchor.py, token-gated), and every verification and
+closure entry point below — ``lifecycle_state``,
+``receipt_account``, ``append_receipt_account``,
+``close_with_receipt_account`` — verifies the presented
+anchor against the pin at the point of use
+(``_require_pinned_anchor``) and refuses, before any
+derivation or write, under
+``anchor_not_the_verifier_pin``. A claimant-selected anchor
+can therefore neither make a derivation return VERIFIED
+nor remove a receipt's gap from the closure account.
+
 RECORD DISCIPLINE (Stages 1–3, 5): every write path —
 issuance, collection, the lifecycle account, closure —
 first runs Stage 3's ``verify_record_current`` (chain
@@ -96,11 +112,18 @@ import os
 from binder import CHAIN_VERIFICATION_FAILED, verify_record_current
 from closure import ClosureWriter
 
-from trust_anchor import TrustAnchor, compute_tag, terms_digest
+from trust_anchor import TrustAnchor, anchor_is_pinned, \
+    compute_tag, terms_digest
 
 RECEIPT_ISSUED = "RECEIPT_ISSUED"
 RECEIPT_COLLECTED = "RECEIPT_COLLECTED"
 RECEIPT_LIFECYCLE_ACCOUNT = "RECEIPT_LIFECYCLE_ACCOUNT"
+
+# The anchor-provenance refusal key (correction round 1):
+# the details key under which a derivation or closure
+# refused because the presented anchor is not the verifier's
+# independently held pin.
+ANCHOR_NOT_THE_VERIFIER_PIN = "anchor_not_the_verifier_pin"
 
 # The lifecycle states. Distinct values for distinct facts;
 # the closure account states each receipt's state verbatim.
@@ -239,6 +262,34 @@ def _verify_or_refuse(record, receipt_id):
         raise ReceiptRefused(receipt_id, {
             CHAIN_VERIFICATION_FAILED: failure})
     return events
+
+
+def _require_pinned_anchor(anchor, receipt_id):
+    """The verifier's authority boundary (correction round
+    1, Gate 1 verdict @ 9114fc3d): every verification and
+    closure entry point acts only under the verifier's
+    independently held pin. The presented anchor must BE
+    the pinned anchor — issued by the verifier's pinned
+    store and carrying its pin token (trust_anchor.
+    anchor_is_pinned). A caller-supplied anchor that is not
+    the pinned one — attacker-constructed, hand-forged, or
+    value-identical but never issued by the store — is
+    refused here, before any derivation or write: a
+    claimant-selected pin can never make a derivation
+    return VERIFIED, nor remove a receipt's gap from the
+    closure account."""
+    if not anchor_is_pinned(anchor):
+        raise ReceiptRefused(receipt_id, {
+            ANCHOR_NOT_THE_VERIFIER_PIN: {
+                "reason": "the anchor presented is not the "
+                          "verifier's independently pinned "
+                          "trust anchor; verification acts "
+                          "only under the pin the verifier "
+                          "itself holds",
+                "presented_issuer": getattr(anchor,
+                                            "issuer_id", None),
+                "presented_terms_digest": getattr(
+                    anchor, "terms_digest", None)}})
 
 
 def _issuance_event(events, receipt_id: str):
@@ -380,7 +431,10 @@ def lifecycle_state(record, package, anchor: TrustAnchor,
     returned only when the full independently authenticated
     lifecycle stands — issued, content collected, digest
     matching, and the presented tag authenticating under
-    the pinned anchor."""
+    the pinned anchor. The anchor itself must be the
+    verifier's pin (correction round 1): an unpinned anchor
+    is refused before any derivation."""
+    _require_pinned_anchor(anchor, receipt_id)
     events = _verify_or_refuse(record, receipt_id)
     return _state_from(events, package, anchor, receipt_id)
 
@@ -391,7 +445,9 @@ def receipt_account(record, package,
     order, plus any package entries that no issuance on the
     record accounts for. The closure account is built from
     this — the states are derived once, here, from primary
-    facts, and reported verbatim."""
+    facts, and reported verbatim. The anchor must be the
+    verifier's pin (correction round 1)."""
+    _require_pinned_anchor(anchor, None)
     events = _verify_or_refuse(record, None)
     receipts = []
     issued_ids = []
@@ -416,7 +472,10 @@ def append_receipt_account(record, package,
                            anchor: TrustAnchor) -> dict:
     """Append the RECEIPT_LIFECYCLE_ACCOUNT event: the
     derived state of every receipt on the record, stated
-    exactly as derived."""
+    exactly as derived. The anchor must be the verifier's
+    pin (correction round 1) — refused before anything is
+    appended."""
+    _require_pinned_anchor(anchor, None)
     account = receipt_account(record, package, anchor)
     return record.append(RECEIPT_LIFECYCLE_ACCOUNT, account)
 
@@ -437,8 +496,13 @@ def close_with_receipt_account(record, package,
     exact gap it is, so the closure account is INCOMPLETE
     while any gap stands (Stage 1's rule: an account naming
     unknowns cannot declare COMPLETE), and a deficient
-    receipt is never stated as VERIFIED. Returns
-    ``(account_event, closure_event)``."""
+    receipt is never stated as VERIFIED. The anchor must be
+    the verifier's pin (correction round 1) — refused
+    before the account or the closure is appended, so a
+    substituted anchor can neither verify a receipt nor
+    remove its gap. Returns ``(account_event,
+    closure_event)``."""
+    _require_pinned_anchor(anchor, None)
     account_event = append_receipt_account(record, package,
                                            anchor)
     account = account_event["body"]
