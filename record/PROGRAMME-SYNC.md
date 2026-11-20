@@ -492,3 +492,13 @@ a defect, not a backlog item.
   design blocker. ROUND CLOSED. Clearance is of the DESIGN
   only: running K9 (scenario authoring, then nineteen
   executions) awaits Ben's separate decision.
+- K9 RUN AUTHORISED by Ben (2026-11-19 20:24 MST) and
+  LAUNCHED 20:27 MST. Scenario authored: the Larkspur
+  Streetcar dossier (8 source cards + trap card T-01,
+  staged tasks A–J, ground truth with the item chronology
+  and the eligibility matrix fixed pre-run — maximum 37
+  item-hops per chain, materiality threshold 5.55).
+  Pre-run validation recorded in the scenario folder.
+  Nineteen executions on the isolated rig (Kimi, temp 0,
+  streaming driver, transport-only retries). Results and
+  blind grading (Vane first) follow at completion.
