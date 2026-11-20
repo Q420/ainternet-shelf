@@ -181,6 +181,26 @@ class TestRestartRecognition(RecoveryBase):
                          [self.op.operation_id + ".json"])
         self.assertEqual(orphan_files(self.effects_dir), [])
 
+    def test_consumed_missing_effect_diverges_after_restart(self):
+        # Gate 1 correction round 1, across the process
+        # boundary: the operation is fully consumed in this
+        # process and its effect is then removed. A FRESH
+        # process must not report it satisfied either — it
+        # surfaces the same divergence, writes nothing, and
+        # does not re-create the effect.
+        self.receiver.present(self.op)
+        os.remove(os.path.join(
+            self.effects_dir, self.op.operation_id + ".json"))
+        events_before = len(self.record.read_all())
+        probe = run_probe(self.tmp.name, self.record_path,
+                          self.effects_dir, "present", self.op)
+        self.assertEqual(probe["outcome"], "DIVERGENCE")
+        self.assertIn("insertion_recorded_effect_missing",
+                      probe["details"])
+        self.assertEqual(len(self.record.read_all()), events_before)
+        self.assertEqual(effect_files(self.effects_dir), [])
+        self.assertEqual(len(self.consumed_events()), 1)
+
     def test_unconsumed_operation_applies_after_restart(self):
         # No false refusal across the boundary: an operation
         # the crashed process never presented applies cleanly

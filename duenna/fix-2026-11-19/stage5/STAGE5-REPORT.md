@@ -238,3 +238,92 @@ exercised (the effect store is a fixture, above); and
 concurrent presenters of one operation are outside the
 specified cases (the programme's single-writer discipline is
 assumed, as in every earlier stage).
+
+## Correction round 1 — Gate 1 return
+
+**The ruling answered**
+(VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md, shelf commit
+ec4c7fd54752965de32a1372ff5ced722dc85be6): Gate 1 FAIL, one
+targeted receiver-consistency correction. The divergence
+check guarded only the APPLIED_UNCONSUMED window: the
+consumed fast path returned ALREADY_SATISFIED without
+verifying the effect still existed, so a fully consumed
+operation whose effect had disappeared was reported
+satisfied — "consumed on paper, effect missing." The
+verdict's specification governs this round where it extends
+the submission brief: it requires the cross-artefact
+invariant for every recorded consumed operation (applied
+reference resolving AND effect present), and its second
+focused case is the malformed consumed-event reference,
+taken here in both its forms. The brief's fresh-process
+sabotage is retained as an additional showing of the same
+invariant across the restart boundary.
+
+**The correction** (`receiver.py` only; `operations.py` and
+the subprocess restart method are untouched, as the ruling
+preserves them). In `present()`, before the ALREADY_SATISFIED
+return, the consumed path now enforces the completed-state
+consistency check: the consumption event's
+`applied_event_digest` must resolve to THIS operation's
+recorded INSERTION_APPLIED event — otherwise
+InsertionDivergence carrying
+`consumed_event_applied_reference_unresolved` — and the
+effect that insertion wrote must still exist in the effect
+store — otherwise InsertionDivergence carrying
+`insertion_recorded_effect_missing`, now citing both the
+applied and consumed events. Either failure writes nothing
+and never re-creates the effect: the divergence is surfaced,
+not repaired. The healthy consumed path is unchanged:
+reference resolving + effect present → ALREADY_SATISFIED,
+citing the same consumption event, record length and effect
+count unchanged. The APPLIED_UNCONSUMED divergence, the
+payload binding, and the record discipline are as built.
+
+**New sabotage cases, listed separately.**
+
+- (verdict case 1) Consumed operation, effect removed.
+  A healthy presentation writes both events and the effect;
+  the effect file is deleted by hand, the complete record
+  left intact. Re-presentation raises InsertionDivergence
+  (EFFECT_MISSING); the record's length AND bytes are
+  asserted unchanged; the effect is not re-created.
+- (verdict case 2, first form) Consumed event with no
+  applied event. An OPERATION_CONSUMED is recorded by hand
+  (through the record itself, so the chain is valid) citing
+  a fictitious applied-event digest, with no
+  INSERTION_APPLIED for the operation. Re-presentation
+  raises InsertionDivergence
+  (CONSUMED_REFERENCE_UNRESOLVED); nothing is written.
+- (verdict case 2, second form) Consumed event citing
+  another operation's applied event. The cited digest
+  resolves to a real INSERTION_APPLIED — a different
+  operation's. Re-presentation raises InsertionDivergence
+  (CONSUMED_REFERENCE_UNRESOLVED); nothing is written for
+  this operation; only the other operation's effect stands.
+- (additional, from the brief) The first case across a
+  process restart. Fully consumed in the test process, the
+  effect removed, and the operation re-presented through
+  receiver_probe.py in a fresh process: the probe reports
+  DIVERGENCE with the effect-missing key; the record is
+  unchanged and the effect is not re-created.
+
+**Retained healthy control.** The existing re-presentation
+test stands and passes: consumed + effect present →
+ALREADY_SATISFIED citing the same consumption event, record
+length and effect count unchanged.
+
+**Countercheck.** In a scratch copy with the new
+consumed-path invariant neutralised (the pre-correction
+ordering restored: the fast path returns before any
+completed-state check), exactly the four new tests fail and
+the other 26 pass — the new assertions bite on precisely the
+corrected defect.
+
+**Counts after correction.** Stage 5: 30/30 (the 26 prior
+tests with unchanged outcomes, plus the four cases above).
+Stage 1 regression: 68/68. Stage 2 regression: 27/27.
+Stage 3 regression: 38/38. Stage 4 regression: 36/36.
+`stage1/`–`stage4/` unmodified. DR-01's disposition remains
+the examiner's: this round answers the completed-state
+consistency requirement her ruling set; advancement is hers
+to determine on re-examination, which has not yet occurred.

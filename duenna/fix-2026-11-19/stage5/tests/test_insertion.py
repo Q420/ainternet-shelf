@@ -19,10 +19,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage3")
 
 from binder import CHAIN_VERIFICATION_FAILED  # noqa: E402
 from operations import build_inputs, build_operation  # noqa: E402
-from receiver import (ALREADY_SATISFIED, APPLIED, INSERTION_APPLIED,  # noqa: E402
-                      OPERATION_CONSUMED, PAYLOAD_CONFLICT,
-                      InsertionDivergence, InsertionRefused, Receiver,
-                      SimulatedCrash)
+from receiver import (ALREADY_SATISFIED, APPLIED,  # noqa: E402
+                      CONSUMED_REFERENCE_UNRESOLVED, EFFECT_MISSING,
+                      INSERTION_APPLIED, OPERATION_CONSUMED,
+                      PAYLOAD_CONFLICT, InsertionDivergence,
+                      InsertionRefused, Receiver, SimulatedCrash)
 from stage5_support import (PAYLOADS, RUN, STEP, crash_at,  # noqa: E402
                             effect_files, make_receiver)
 
@@ -149,6 +150,76 @@ class TestPayloadBinding(Stage5Base):
 
 
 class TestDivergence(Stage5Base):
+    def test_consumed_operation_with_missing_effect_is_surfaced(self):
+        # Gate 1 correction round 1 (the verdict's sabotage
+        # case): a HEALTHY presentation writes both events and
+        # the effect; the effect file is then removed by hand,
+        # leaving the complete record intact. The consumed fast
+        # path must not answer ALREADY_SATISFIED for a
+        # "consumed on paper, effect missing" operation: the
+        # divergence check precedes it, nothing is written, and
+        # the effect is not silently re-created.
+        self.receiver.present(self.op)
+        os.remove(os.path.join(
+            self.effects_dir, self.op.operation_id + ".json"))
+        with open(self.record_path, "rb") as f:
+            bytes_before = f.read()
+        length_before = self.record.length
+        with self.assertRaises(InsertionDivergence) as ctx:
+            self.receiver.present(self.op)
+        self.assertIn(EFFECT_MISSING, ctx.exception.details)
+        self.assertEqual(self.record.length, length_before)
+        with open(self.record_path, "rb") as f:
+            self.assertEqual(f.read(), bytes_before)
+        self.assertEqual(effect_files(self.effects_dir), [])
+
+    def test_consumed_event_without_applied_event_is_not_accepted(self):
+        # Gate 1 correction round 1 (malformed state, first
+        # form): an OPERATION_CONSUMED recorded by hand, citing
+        # an applied event that does not exist. The chain is
+        # valid — the event is appended through the record
+        # itself — but a consumed event without its referenced
+        # applied event is not proof of a completed insertion.
+        self.record.append(OPERATION_CONSUMED, {
+            "operation_id": self.op.operation_id,
+            "run_id": RUN,
+            "step_id": STEP,
+            "slot": self.op.slot,
+            "applied_event_digest": "0" * 64})
+        length_before = self.record.length
+        with self.assertRaises(InsertionDivergence) as ctx:
+            self.receiver.present(self.op)
+        self.assertIn(CONSUMED_REFERENCE_UNRESOLVED,
+                      ctx.exception.details)
+        self.assertEqual(self.record.length, length_before)
+        self.assertEqual(effect_files(self.effects_dir), [])
+
+    def test_consumed_event_citing_another_operations_applied(self):
+        # Gate 1 correction round 1 (malformed state, second
+        # form): the cited digest resolves to a real
+        # INSERTION_APPLIED event — a DIFFERENT operation's.
+        # The reference must resolve to THIS operation's
+        # applied event; anything else is not accepted.
+        self.receiver.present(self.ops[1])
+        other_applied = self.events_of(
+            INSERTION_APPLIED, self.ops[1].operation_id)[0]
+        self.record.append(OPERATION_CONSUMED, {
+            "operation_id": self.op.operation_id,
+            "run_id": RUN,
+            "step_id": STEP,
+            "slot": self.op.slot,
+            "applied_event_digest": other_applied["digest"]})
+        length_before = self.record.length
+        with self.assertRaises(InsertionDivergence) as ctx:
+            self.receiver.present(self.op)
+        self.assertIn(CONSUMED_REFERENCE_UNRESOLVED,
+                      ctx.exception.details)
+        self.assertEqual(self.record.length, length_before)
+        # Only the other operation's effect stands; nothing was
+        # applied or written for this one.
+        self.assertEqual(effect_files(self.effects_dir),
+                         [self.ops[1].operation_id + ".json"])
+
     def test_recorded_insertion_with_missing_effect_is_surfaced(self):
         # Applied but not consumed (crash after the applied
         # event), then the effect file is removed by hand. No

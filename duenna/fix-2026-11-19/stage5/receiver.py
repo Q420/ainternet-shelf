@@ -61,18 +61,38 @@ K4's specified failure modes land in the windows:
 - A repeated presentation of a fully CONSUMED operation:
   ALREADY_SATISFIED, citing the recorded consumption event
   (its seq and digest), and NOTHING is appended — the answer
-  is read off the record, not written onto it.
+  is read off the record, not written onto it. The fast path
+  is taken only after the completed-state consistency check
+  below: the record alone is not proof the insertion stands.
 
-DIVERGENCES THE RECEIVER REFUSES RATHER THAN REPAIRS. Two
+DIVERGENCES THE RECEIVER REFUSES RATHER THAN REPAIRS. These
 states cannot arise from any crash in the apply sequence's
 order, so if one is found it is surfaced, not papered over:
-the record claims INSERTION_APPLIED but the effect file is
-absent (InsertionDivergence — raised, nothing written); and
-the same operation identity presented with a payload digest
-different from the recorded one (InsertionRefused carrying
-``payload_conflict`` — a changed input may not ride a
-consumed or applied identity into satisfaction, and may not
-be applied under it either).
+the record claims an insertion (INSERTION_APPLIED, with or
+without OPERATION_CONSUMED) but the effect file is absent
+(InsertionDivergence — raised, nothing written); a recorded
+OPERATION_CONSUMED whose ``applied_event_digest`` does not
+resolve to this operation's INSERTION_APPLIED event
+(InsertionDivergence — a consumed event without its
+referenced applied event is not proof of a completed
+insertion); and the same operation identity presented with a
+payload digest different from the recorded one
+(InsertionRefused carrying ``payload_conflict`` — a changed
+input may not ride a consumed or applied identity into
+satisfaction, and may not be applied under it either).
+
+COMPLETED-STATE CONSISTENCY (Gate 1 correction round 1). The
+divergence rule originally guarded only the
+APPLIED_UNCONSUMED window: the consumed fast path returned
+ALREADY_SATISFIED without checking the effect still existed,
+so a fully consumed operation whose effect had disappeared
+was reported satisfied — "consumed on paper, effect missing."
+The distinction between "consumed and still applied" and
+"consumed on paper, effect missing" is the whole point of
+having two durable artefacts, so the cross-artefact invariant
+is now enforced BEFORE the ALREADY_SATISFIED return, for
+every recorded consumed operation: its applied reference
+must resolve, and its effect must still exist.
 
 RECORD DISCIPLINE (Stages 1–3, applied unchanged): every
 presentation first runs the shared verify-then-extend check
@@ -125,6 +145,8 @@ ALREADY_SATISFIED = "ALREADY_SATISFIED"
 
 PAYLOAD_CONFLICT = "payload_conflict"
 EFFECT_MISSING = "insertion_recorded_effect_missing"
+CONSUMED_REFERENCE_UNRESOLVED = \
+    "consumed_event_applied_reference_unresolved"
 
 
 class SimulatedCrash(Exception):
@@ -151,9 +173,10 @@ class InsertionRefused(Exception):
 class InsertionDivergence(Exception):
     """The receiver's two durable artefacts disagree in a way
     no crash in the apply sequence's order can produce (the
-    record claims an insertion whose effect is absent).
-    Surfaced as its own class: the receiver writes nothing and
-    does not guess which artefact is wrong."""
+    record claims an insertion whose effect is absent; a
+    recorded consumption whose applied reference does not
+    resolve). Surfaced as its own class: the receiver writes
+    nothing and does not guess which artefact is wrong."""
 
     def __init__(self, operation_id: str, details: dict):
         self.operation_id = operation_id
@@ -333,6 +356,34 @@ class Receiver:
                         operation.payload_digest}})
 
         if consumed_ev is not None:
+            # Completed-state consistency, BEFORE the fast
+            # path (Gate 1 correction round 1): the recorded
+            # consumption is accepted as proof of a standing
+            # insertion only when both durable artefacts agree
+            # it stands. The consumption event's applied
+            # reference must resolve to THIS operation's
+            # recorded INSERTION_APPLIED event, and the effect
+            # that insertion wrote must still exist. Either
+            # failure is a divergence: raised, nothing written,
+            # the effect never silently re-created.
+            cited_applied_digest = consumed_ev["body"].get(
+                "applied_event_digest")
+            if applied_ev is None \
+                    or cited_applied_digest != applied_ev["digest"]:
+                raise InsertionDivergence(op_id, {
+                    CONSUMED_REFERENCE_UNRESOLVED: {
+                        "consumed_event_seq": consumed_ev["seq"],
+                        "cited_applied_event_digest":
+                            cited_applied_digest,
+                        "applied_event_seq":
+                            applied_ev["seq"]
+                            if applied_ev is not None else None}})
+            if effect is None:
+                raise InsertionDivergence(op_id, {
+                    EFFECT_MISSING: {
+                        "applied_event_seq": applied_ev["seq"],
+                        "consumed_event_seq": consumed_ev["seq"],
+                        "effect_path": self._effect_path(op_id)}})
             # Already satisfied, read off the record: the
             # recorded consumption event is cited, and nothing
             # is appended.
