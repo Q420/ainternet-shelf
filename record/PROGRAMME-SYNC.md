@@ -303,3 +303,8 @@ a defect, not a backlog item.
   decision points gate to Ben). The gate structure to be
   drafted on his confirmation and examined by Vane.
 - Still Ben's: Q2, the DR-13/DR-26 numbering reconciliation.
+- Q2 RULED AND EXECUTED (Ben, 2026-11-19): defect register
+  v4 — DR-26 added (production adjudication has no named
+  owner; OPEN), cross-note at DR-13; no existing row's
+  substance changed. The map's vacancy stress point now
+  cites DR-26. C-10 updated with the ruling.

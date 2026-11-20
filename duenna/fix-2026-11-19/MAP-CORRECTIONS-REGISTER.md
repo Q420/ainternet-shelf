@@ -149,9 +149,11 @@ until then, and the map says so.
     correct on this. The proposal's v2 revision separates
     the three classes explicitly, and the holder question is
     presented there as Ben's decision.
-Needs: draft v2 under the three-class discipline; the holder
-is Ben's delegation; the DR-13 numbering reconciliation is
-Ben's, recorded as a discrepancy until he rules.
+Needs: the holder is Ben's delegation, via the status-gate
+structure he directed (2026-11-19 18:57) — draft to follow
+on his confirmation of Remmy's reading. NUMBERING RULED
+(Ben, 2026-11-19): the vacancy is DR-26 in the defect
+register (v4), with the collision cross-noted at DR-13.
 
 ## C-11 — The second check that isn't (map: s-independence)
 (1) This map's own first drawing wired the Examiner to the

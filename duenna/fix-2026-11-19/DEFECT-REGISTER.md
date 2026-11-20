@@ -1,4 +1,4 @@
-# DUENNA — DEFECT REGISTER (merged, v3, 2026-11-19)
+# DUENNA — DEFECT REGISTER (merged, v4, 2026-11-19)
 
 Joint register: Vane (examiner) + Remmy (orchestrator), under Ben's commission of 2026-11-19.
 Schema per row (Vane's, adopted): defect identity / affected identities / symptom / evidence /
@@ -19,6 +19,9 @@ Stage 1 verdict moved to PASS with his independent execution of the full suite
 the corrected closure mechanism is demonstrated and independently verified in the
 Stage 1 harness; the production battery machinery is not rewritten by Stage 1, and
 its integration belongs to the later stages. No other row changes in v3.
+v4 change note (2026-11-19): DR-26 added (production adjudication has no named owner) and a
+cross-note added at DR-13, both on Ben's ruling of 2026-11-19 resolving the DR-13 numbering
+collision identified in the navigable map's examination. No existing row's substance changed.
 Evidence states are kept distinct throughout and never compressed into a single word such as
 "verified": EXECUTED REPRODUCTION / SOURCE INSPECTION / IMPLEMENTER-RUN FIXTURE /
 IMPLEMENTER-RUN SABOTAGE / INDEPENDENT TARGETED SABOTAGE / INDEPENDENT EXAMINATION OUTSTANDING.
@@ -133,6 +136,7 @@ R47 passed, but its claim is limited to the content examined; a failing-content 
 
 ### DR-13 — Qualification: R65 required-set authority is caller-supplied (NOT a defect)
 R65 passed, but the required set was supplied by the caller and its authority was not independently established. Status: PASS, qualified — mechanical checking of a supplied set is not proof the set is authoritative.
+Cross-note (2026-11-19, on Ben's ruling): during the fix programme, "DR-13" was also used in programme papers for the production-adjudicator question. That usage was a numbering collision, identified by the examiner during the navigable map's examination (briefcase-26) and never a second meaning of this entry. Ben ruled (2026-11-19) that the adjudicator vacancy carries its own entry — see DR-26. This entry is unchanged in substance.
 
 ## 3. Attempt-3 checker/response disagreements — NOT-SCORED, attribution UNKNOWN
 
@@ -229,6 +233,16 @@ Regression fixtures: FX-R60k (object identity, including identical-content contr
 Re-examination: the integrity sabotage was EXECUTED by the implementer — removing the fingerprint comparison caused FX-R60l alone to fail, 37 PASS / 1 FAIL (IMPLEMENTER-RUN SABOTAGE). The identity sabotage (removing the object-identity check so FX-R60k should fail) was NOT executed by the implementer and remains assigned to independent examination.
 Status: CONFIRMED as a weakness in the earlier provenance proposal; the v2.4 design addresses it. Integrity sabotage has executed evidence. Identity sabotage and independent package examination remain outstanding. This is not a claim that the final v2.4 implementation has been found defective.
 Identity requirement: identity is the issued object itself plus its issuance-state fingerprint — neither a copy of its contents nor the bare object without its issuance state.
+
+### DR-26 — Production adjudication has no named owner (open architectural issue)
+Affected: every production run's final outcome — the standing of its closure account and the final form of its attribution.
+Symptom: no named holder exists for final run adjudication in production. The responsibility is drawn ownerless in the navigable map's responsibility inventory (content-cleared, briefcase-30).
+Evidence: the map's responsibility inventory is the evidence of absence. Supporting facts, neither of which proves the absence alone: Stage 1 used TEST-FIXTURE attribution authority (its PASS covers the harness scope only), and DR-07 records an adjudication report that misstated a step location (a reporting defect, independently examinable).
+Mechanism: adjudication authority was never allocated when the machinery was designed; Stage 1 fixtured it, and no subsequent ruling named a production holder.
+Root cause: an unallocated responsibility, not a component failure.
+Attribution: SYSTEM (governance). First discovery: drawn as a stress point in the navigable map, 2026-11-19; examiner's examination (briefcase-26) confirmed the vacancy while rejecting its earlier informal citation as "DR-13" — that collision is reconciled by the cross-note at DR-13, on Ben's ruling (2026-11-19).
+Repair/disposition: the correction is devised and content-cleared — see the Adjudicator Correction Proposal (v2, refined): the adjudicator as a defined role (settles run outcomes against the pinned contract; rests on the eight-category admissible evidence set, including the pinned delegation itself; produces a G6-resolvable adjudication record; INDETERMINATE is a legitimate settlement). Ben's direction (2026-11-19 18:57): settlement moves through status gates, modelled on the loop approvals — the gate structure is to be drafted and examined; the holder allocation is completed by that design and Ben's recorded delegation, not by this entry.
+Status: OPEN — correction designed and cleared; not implemented; holder allocation awaits the status-gate design and Ben's delegation.
 
 ## 5b. R60 / v2.4 qualifications and evidence boundaries (from the examiner's restatement)
 These distinctions travel with DR-23..DR-25. A sequence of green suites is not a blanket approval.
