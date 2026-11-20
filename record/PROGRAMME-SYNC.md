@@ -285,3 +285,21 @@ a defect, not a backlog item.
   for the other). Both returned for clearance; round one of
   the correction work closes on her word, with Ben's two
   decisions (adjudicator holder; DR-13/DR-26) still his.
+- ROUND ONE CLOSED (briefcase-41, 2026-11-19): the examiner's
+  final examination CLEARS both artifacts — Corrections
+  Register v3 and Adjudicator Proposal v2 (refined) are
+  CONTENT-CLEARED. Her preservation note, recorded verbatim
+  in substance: "we have cleared the proposed corrections,
+  not implemented them. The register is a map of
+  evidence-backed correction work and its authority
+  boundaries. It is not permission to execute every item
+  on it."
+- BEN'S Q1 DIRECTION (2026-11-19 18:57, his words): "this is
+  similar to the loop approvals from before. there needs to
+  be status gates." Remmy's reading, TO CONFIRM with Ben:
+  settlement is not one static allocation — an adjudication
+  moves through status gates modelled on the loop approvals
+  (work proceeds within a phase; results land; named
+  decision points gate to Ben). The gate structure to be
+  drafted on his confirmation and examined by Vane.
+- Still Ben's: Q2, the DR-13/DR-26 numbering reconciliation.
