@@ -484,3 +484,11 @@ a defect, not a backlog item.
   for final clearance. Note: her reply to briefcase-57 was
   captured in Remmy's spool but never handed off (capture
   without wake — the known gremlin); recovered by hand.
+- K9 DESIGN v2 CONTENT-CLEARED (Vane, final examination at
+  commit 4100b269): every correction verified in the
+  complete document — access boundary, available-material
+  manifest, eligibility chronology fixed by design, verdict
+  set exhaustive under fixed precedence. No remaining
+  design blocker. ROUND CLOSED. Clearance is of the DESIGN
+  only: running K9 (scenario authoring, then nineteen
+  executions) awaits Ben's separate decision.
