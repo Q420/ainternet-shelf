@@ -321,3 +321,13 @@ a defect, not a backlog item.
   Recorded in the proposal (superseding options a/b/c),
   DR-26's status, C-10, and the map. With the examiner for
   examination. Implementation outstanding.
+- GATE-STRUCTURE EXAMINATION (briefcase-47): the examiner
+  AGREES with Ben's allocation; drafting not yet cleared.
+  Three repairs, all applied: Gate 1 now verifies the
+  delegation's validity and applicability, not just its
+  presence; the first-use circularity resolved (ruling →
+  pinned governance record → operational delegation →
+  adjudication; no run bootstraps its own authority); the
+  gates classified honestly as DESIGNED/procedural, with
+  the enforcement mechanism stated as an implementation
+  requirement. Back for examination.

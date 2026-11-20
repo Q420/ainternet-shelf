@@ -168,9 +168,17 @@ decision cannot be taken without passing.
   verifies the package: complete against the run contract
   and the evidence list; G4's results present and correctly
   kept separate; G6 findings where implemented;
-  discrepancies surfaced, not smoothed. A failed
-  verification returns the package to Status 1 with the
-  failures recorded. The orchestrator cannot waive,
+  discrepancies surfaced, not smoothed. Gate 1 also
+  verifies the DELEGATION itself (evidence item 8) — not
+  merely that it is present in the package, but that it is
+  valid and applies: the governance record is the correct
+  pinned record; the delegation identifies this orchestrator
+  as entitled to adjudicate; its scope covers this run and
+  this decision; its limits have not been exceeded; and it
+  remains operative. A complete package containing an
+  invalid delegation is still an unverified package. A
+  failed verification returns the package to Status 1 with
+  the failures recorded. The orchestrator cannot waive,
   override, or self-verify. No decision may be taken on an
   unverified package — such a decision is not a settlement.
   Status 2 — PACKAGE VERIFIED.
@@ -194,9 +202,31 @@ examination can re-derive and challenge the settlement.
 — which statuses exist, what each gate requires, who holds
 each role — is Ben's. Changing the structure, or settling
 outside it, returns to Ben under his standing authority.
-This ruling is the delegation's core; when the role is
-first exercised in production, the ruling is pinned as the
-governance record the adjudication cites (evidence item 8).
+**The sequence, without circularity:** (1) this
+architectural ruling — Ben establishes the statuses, gates,
+and allocation. (2) The governance record — the ruling is
+formally pinned. (3) The operational delegation — the
+authorised orchestrator receives the defined scope and
+limits. (4) Run adjudication — only then may a package
+proceed through verification and decision. The governance
+record and delegation must exist BEFORE the first
+production adjudication; the first run does not bootstrap
+its own authority. The ruling establishes the allocation —
+it is not, by itself, the complete pinned delegation that
+evidence item 8 requires.
+
+**Designed, not yet enforced — stated plainly:** as
+drafted, these gates are PROCEDURAL requirements. The rule
+forbids the ASSEMBLED → DECIDED transition; no mechanism
+yet prevents it. The implementation requirement, when the
+role is built: the verified state must be independently
+identifiable, and DECIDED must require it as a prerequisite,
+preserving the verifier's identity and the verification
+result; the orchestrator must not be able to alter the
+sequence, waive a gate, or manufacture a verification
+state. Until that mechanism exists and is examined, the
+gates carry the strength label DESIGNED — a relationship
+must never look enforced merely because it is intended.
 
 The three options previously presented ((a) combined,
 (b) separated, (c) reserved to Ben) are superseded: the
