@@ -185,7 +185,7 @@
    "to": "d-examiner"
   },
   {
-   "breaks": "Admission to the shelf is not proof a distillation is correct; an attested distillation record is required, or the library fills with confident error. Note: this admission condition is a requirement of the design, not yet a gate — the map shows it as such.",
+   "breaks": "Admission to the shelf is not proof a distillation is correct; an attested distillation record is required, or the library fills with confident error. The map records this as an outstanding design requirement, not an implemented gate.",
    "carries": "Distilled, verified results in their terminal form — the information the library keeps.",
    "from": "d-examiner",
    "gate": null,
@@ -853,7 +853,7 @@
  ],
  "subtitle": "Parts, jobs, flows, gates — and where it could create an issue",
  "title": "Duenna — the whole system",
- "updated": "2026-11-19 · amended after the examiner's re-examination (briefcase-28)",
+ "updated": "2026-11-19 · CONTENT-CLEARED by the examiner (briefcase-30), one wording correction applied",
  "f5": [
   {
    "id": "f5-gov",
