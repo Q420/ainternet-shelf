@@ -33,6 +33,37 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 8: **GATE 1 PASS (K14) — DR-08, DR-12
+  ADVANCED** with qualifications, not closed (2026-11-20).
+  Fixture discipline now patrols the whole programme: all
+  287 tests across Stages 1–7 inventoried with fixture
+  identities (completeness exact against discovery); an
+  88-mechanism sabotage matrix over 217 claimed pairs —
+  EXERCISED 189, JOINT-ONLY 7, SELF-WITNESSED 4,
+  NOT-EXERCISED 17, every one named (nearly all
+  overdetermination). Two mechanisms have no discriminating
+  fixture (Stage 2 registry completeness; Stage 3 receipt
+  recorded-event presence — whose showing belongs to an
+  unmechanised registry lookup) and one has neither a
+  claiming nor a discriminating fixture (Stage 3
+  output-not-frozen) — gaps that remain gaps. Stage 4's
+  corrupt-artefact fixture is DR-08's pattern recurring in
+  our own suite (the flag is checked before the comparison);
+  the comparison's evidence stands on the wrong-digest
+  fixture. Stage 2's and Stage 3's EVIDENCE SHOWING entries
+  were downgraded in part on this evidence; the rest
+  re-confirmed with named corrections. Two correction
+  rounds, both in the measuring instrument itself: the
+  classifier failed open on incomplete runs (now validated,
+  fail-closed, INVALID-RUN, zero credit), then the
+  validator crashed on malformed record shapes (now
+  type-gated before any use). The FAIL-or-ERROR crediting
+  policy is stated and evidenced. Final counts: Stage 8,
+  36/36; Stages 1–7 regressions green (287). Boundaries:
+  counts builder-run; harness scope. Stage 9 — the
+  re-runnable battery, the commission's end state — follows
+  under Ben's Stages 2–9 approval.
+  → duenna/fix-2026-11-19/stage8/ (verdict @ c7295a98)
 - DUENNA STAGE 7: **GATE 1 PASS — DR-04 ADVANCED** on the
   harness demonstration (2026-11-20). The receipt lifecycle
   holds five distinct states under one canonical identity;

@@ -9,8 +9,15 @@ Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 8 built from the plan, a
 
 This report is EVIDENCE for the examiner, not a verdict: whether
 Stage 8 passes is the examiner's determination (Gate 1
-discipline), not this report's. Nothing here declares Stage 8
-complete.
+discipline), not this report's. That determination has since
+been made: Gate 1 PASS (K14), VANE-GATE1-VERDICT-CORRECTION-
+ROUND-3.md, shelf commit c7295a984227de26d65ffd916eb4ae939b2738d8
+— DR-08 and DR-12 advanced with the verdict's qualifications,
+not closed (the named gaps remain gaps; the historical R60
+defect is not retroactively erased). The final suite count is
+36/36 including both correction rounds, and the counts in this
+report remain builder-run evidence. (This paragraph reconciled
+after the PASS, on the Stage 3–7 precedent.)
 
 ## Verdict first
 
