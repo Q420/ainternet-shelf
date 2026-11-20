@@ -406,3 +406,10 @@ a defect, not a backlog item.
   is corrected here. The map page Ben should use is
   duenna-map-v8-settled.html (v7 was built from pre-update
   data and is superseded).
+- MAP UPDATE LANDED (second correction): the map's stress
+  point now carries the settled allocation, verified in
+  the built page. The current page is
+  duenna-map-v9-settled.html; v7 and v8 were both built
+  from pre-update data and are superseded. The two
+  premature claims are on the record above, uncorrected
+  in place, with this entry as their correction.
