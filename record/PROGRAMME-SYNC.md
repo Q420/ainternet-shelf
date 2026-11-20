@@ -153,13 +153,15 @@ a defect, not a backlog item.
 
 ## Waiting on
 
-- BEN: the Claude workload question (the isolated results have now
-  landed) · Part 2 (K1–K5) go or no-go · Stage 2 go or no-go ·
-  K6/K7 approval (K8 approved, run and graded) · K9 relay proposal
-  go or no-go · DR-13 (who the production adjudicator is).
-- VANE: nothing outstanding — the K8 replication assessment is
-  committed and the K9 proposal, as corrected by Ben's catch, is
-  with Ben.
+- BEN: the briefcase structure settlement (Vane's briefcase-59
+  positions) · a K9 re-run go or no-go in the corrected,
+  office-generated form · Part 2 (K1–K5) · K6/K7 · the Claude
+  workload question · the new bridge's next step (real traffic,
+  or the Remmy-side seat slice first). Duenna items are not
+  waiting on decisions — they are HELD by Ben's pause
+  (2026-11-19 20:45) until he calls them.
+- VANE: nothing outstanding. The built relay is Remmy's to
+  bring to her for examination when Ben calls it.
 
 ## Rules any seat works under here
 
@@ -652,3 +654,34 @@ a defect, not a backlog item.
   machine. FIRST RULING SHE ASKS OF BEN: the package-
   release boundary — release accumulated messages on
   destination receipt, or only on observed reply.
+- BEN'S CUT + THE NEW BRIDGE ORDER (2026-11-19 21:20–21:22):
+  Ben cut the city: "capture the message, send the message…
+  Lets it relay messages reliably." His order, in his words:
+  take what we know and what the bridge currently is, and
+  build a NEW bridge — no Crusher, no AI; proper recognition,
+  buffer, send off, and button handling (context-window alert
+  and send button alike). Vane's seven-stage plan and map-v2
+  are SHELVED by this ruling; her audit stays as the knowledge
+  base. The old bridge keeps carrying traffic until the new
+  one proves itself.
+- NEW BRIDGE — BUILT + FIRST LIVE EXCHANGE PROVEN
+  (2026-11-19 evening): bench build at ~/workspace/bridge-v2/
+  (Remmy's own hands): buffer.js (the list — append-only,
+  nothing evicted, packages sealed at claim, unknown outcomes
+  go stuck for a human, never auto-resent), recognition.js
+  (conversation + native turn id + SHA-256 of the body),
+  rules.js (release gate incl. Ben's boundary — a confirmed
+  package holds the line until the reply lands; the rollover
+  click only when the newest reply is on the list), the
+  ChatGPT adapter + content/background. 24 unit/integration
+  tests green. Loaded on the laptop via the CDP Extensions
+  API (no picker, no restart) beside the old bridge. A probe
+  message was enqueued, claimed on Vane's idle seat,
+  submitted, confirmed from the conversation record, and
+  answered by Vane in words ("Hook received. Vane is live,
+  responsive, and listening."); the list closed the loop —
+  out: replied, in: confirmed. Field lessons: this ChatGPT
+  surface renders replies via the Dil renderer
+  ([data-dil-message-id]); recognition of the very newest
+  turn lags when virtualisation hasn't materialised it.
+  → ~/workspace/bridge-v2/README.md (build record)
