@@ -842,3 +842,19 @@ a defect, not a backlog item.
   the window; the occupant is whoever is signed in;
   Remmy verifies the occupant before every send. Alex is
   seated now; Vane is seated when Ben switches back.
+- GOVERNANCE RECORD v2 PINNED + DELEGATION TO ALEX
+  ISSUED (2026-11-19 22:36): on Ben's tap and words, v2
+  is pinned at SHA-256
+  1ca375e865bb6c1c187e4d4fc991130fc56cc84d8c383830a2352
+  1416ae47130, with Vane's status wording for Claude's
+  delegation folded into the amendment note at pinning.
+  The delegation to Alex is issued under that digest; it
+  REPLACES the v1 delegation to Claude (recorded ISSUED
+  · DECLINED · UNREVOKED · NOT AVAILABLE), and carries
+  an explicit ACCEPTANCE clause: the office is filled
+  when Alex accepts on the record; until then it
+  authorises no adjudication. The offer to Alex is the
+  next step, on Ben's word. Alex is seated in the
+  ChatGPT window now (account rotation, Ben's hand).
+  → duenna/fix-2026-11-19/GOVERNANCE-RECORD-V2.md
+  → duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-ALEX.md
