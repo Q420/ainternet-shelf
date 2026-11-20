@@ -8,10 +8,22 @@ Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 4 built from the plan, a
 ## Status of this report
 
 The Stage 4 harness is built and its full test suite passes
-(34/34), with the Stage 1 (68/68), Stage 2 (27/27) and Stage 3
-(38/38) suites green as regression. This report is EVIDENCE for
-the examiner, not a verdict: whether Stage 4 passes is the
-examiner's determination (Gate 1 discipline), not this report's.
+(36/36, including the correction-round section below), with the
+Stage 1 (68/68), Stage 2 (27/27) and Stage 3 (38/38) suites
+green as regression. This report is EVIDENCE for the examiner,
+not a verdict: whether Stage 4 passes is the examiner's
+determination (Gate 1 discipline), not this report's. That
+determination has since been made: Gate 1 PASS,
+VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md, shelf commit
+8ec0da3ca62d799c9bb33f8d0f5bfb08873e — K7 and K8 pass the
+mechanism examination within their stated in-process scope;
+the historical assurance reconciliation and
+independent-demonstration requirements remain distinct
+obligations, and the counts in this report remain builder-run
+evidence, as the verdict states. (This paragraph reconciled
+after the PASS, on the Stage 3 precedent: the original
+submission count, 34/34, stood here while the correction
+section recorded the growing suite.)
 
 Stage 4's scope, per the plan, is twofold: build verdict
 issuance identity (K7) and procedure dispatch (K8), AND execute

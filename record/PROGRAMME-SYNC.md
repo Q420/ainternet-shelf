@@ -33,6 +33,34 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 4: **GATE 1 PASS — K7 and K8** within their
+  in-process scope (2026-11-20). Verdict issuance is bound to
+  the retained object + issuance fingerprint, instance-bound
+  to its issuer; procedure dispatch runs through a
+  factory-closure registry with independently held pinned
+  anchors. The outstanding examinations were EXECUTED, each
+  reported separately: DR-24's original cross-contract replay
+  (the v2.3 artefact recovered byte-exact from shelf history
+  @ de6c4d01, admitted on its pinned digest — the defect
+  reproduces: A's verdict validates for B); FX-R60k
+  object-identity sabotage (exactly 3 of 29 fail, incl. an
+  explained FX-R60l reason cross-effect); FX-R60i
+  restored-global-dispatch sabotage (exactly 1 of 29 fails —
+  the rebind attack succeeds under the restored defect);
+  FX-R60l re-confirmed (exactly its 2 tests fail with the
+  fingerprint check removed). FX-R60h NOT re-run — its
+  independent evidence stands. One correction round: the
+  per-instance procedure binding was writable after
+  construction; it is now sealed write-once (FrozenRun
+  discipline), reassignment and deletion refused. Final
+  counts: Stage 4, 36/36; Stages 1–3 regressions green. The
+  verdict's boundaries stand: the sabotages executed against
+  this stage's rebuild of the v2.4 mechanism, not the
+  historical file; counts are builder-run; historical
+  assurance reconciliation and independent demonstration
+  remain distinct obligations. Stage 5 (operation identity
+  and recovery) follows under Ben's Stages 2–9 approval.
+  → duenna/fix-2026-11-19/stage4/VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md
 - DUENNA STAGE 3: **GATE 1 PASS — DR-03, DR-20, DR-21
   (established part) ADVANCED** within the Stage 3 harness
   (2026-11-20). Five examination rounds: immutable receipts
