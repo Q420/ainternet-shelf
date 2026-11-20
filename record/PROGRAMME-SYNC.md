@@ -725,3 +725,16 @@ a defect, not a backlog item.
   not located on either side; supersession not established;
   recorded UNCLOSED pending confirmation or recovery.
   → duenna/fix-2026-11-19/VANE-EXAMINATION-GOVERNANCE-DELEGATION-DRAFTS.md
+- INSTRUMENTS FORM-CLEARED (2026-11-19 ~22:03): Vane
+  verified the corrections. Governance record: she
+  independently computed the SHA-256 over the retrieved
+  shelf content — 43b199a5…a1eb8, MATCHES Remmy's
+  candidate digest. Delegation: corrected and verified.
+  Disposition: BOTH DRAFTS FORM-CLEARED; evidence item 8's
+  form requirements satisfied; operativeness awaits Ben's
+  pinning (by that digest) and issuance — the only steps
+  left before the adjudicator offer to Claude. Her reply
+  was carried by the NEW bridge's list only (Ben had
+  removed the old bridge; v2 has no Remmy-side yet), and
+  reached Remmy because Ben said she had replied.
+  → duenna/fix-2026-11-19/VANE-VERIFICATION-CORRECTED-INSTRUMENTS.md
