@@ -575,3 +575,12 @@ a defect, not a backlog item.
   two FERRY POINTS marked (the rollover guard; the wake
   path). Delivered as bridge-map-v1.html. Unexamined —
   Remmy's drawing from the code, not settled text.
+- Bridge map examination commissioned (Ben, 2026-11-19
+  20:51 MST): the map register AND the full v0.20.6 source
+  are shelved under bridge/ so Vane can compare the map
+  against the code first-hand. Ben's prediction, carried
+  to her as a prediction to test: the bandaids need to
+  come off, and we need to use the known remedies — the
+  live path is layered patches, and the Stage 1 core
+  (identity, ledger, capture acknowledgement) already
+  holds the remedies, unused. Sent as bridgemap-01.
