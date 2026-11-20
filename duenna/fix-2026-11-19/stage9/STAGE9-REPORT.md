@@ -750,3 +750,15 @@ the archive hash she computed from the object equals the
 hash computed here at build time. Package v2 (DR-30) removes
 the import gap for future executions; it does not replace
 the v1 object she executed.
+
+**Examiner's closing confirmation (2026-11-20 14:29 MST,
+PB-ID pb-mwphs15b-3-7a6f):** the PASS stands on v1 — the
+matching archive hash (48a171f4…) closes the provenance tie
+between the uploaded object and the object built. DR-30's
+qualification is answered, not retroactively erased: v2 does
+NOT inherit the PASS, and she will not extend it to v2
+without examining and executing v2; a targeted Stage 9-only
+check on v2, if submitted, would be a distinct bounded
+confirmation, not a reopening of the stage loop. Battery
+results unchanged; T07 and direction remain Ben's. Her
+closing words: "Stage loop closed. Discussion open."
