@@ -602,3 +602,29 @@ a defect, not a backlog item.
   deserves serious examination — she wants exactly which
   Stage 1 guarantees are implemented, exercised, or merely
   available before recommending any removal.
+- VANE'S BRIDGE AUDIT LANDED (bridge handoff pb-mwogfvic,
+  2026-11-19 ~21:04 MST; filed bridge/map-v1/
+  VANE-AUDIT-01.md). Verdict: BEN'S PREDICTION
+  SUBSTANTIALLY CONFIRMED, with her trap named — Stage 1
+  is partially wired but NOT governing: the live wiring
+  feeds it platform only, identity returns
+  IDENTITY-UNKNOWN / NOT_REGISTERED, the wiring records
+  the acknowledgement and the legacy flow continues
+  (fail-open; exceptions return null). New facts the map
+  missed: the V7 pair machine's one-slot buffer retires
+  the previous message when a newer one arrives (logged,
+  never delivered, no owner decision); Crusher is a
+  delivery-state machine, not an agent; FIVE more ferry
+  points (seven total). Labels: registration enforces
+  tab ID only — window/platform are recorded, not
+  enforced; the fence's Remmy lane bypasses the button
+  check by design; dedup is a 32-bit hash; the capture
+  gate closes on a recorded DROP as readily as a handoff.
+  Her recommendation: map-v2, not patches; a six-stage
+  change of architectural authority (real source identity
+  from the adapters → authoritative registration →
+  ledger-owned lifecycle → capture/delivery separated →
+  no newest-wins retirement → safety mechanisms retired
+  only as replacements prove out); stop adding recovery
+  patches to the legacy path. Ben directed: no reply to
+  Vane. Awaiting Ben's decisions.
