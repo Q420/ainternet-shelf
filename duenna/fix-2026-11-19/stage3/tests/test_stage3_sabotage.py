@@ -15,7 +15,15 @@ not proceed either).
     private value;
 (c) preflight verifies one model, a later capture routed to
     another;
-(d) served identity differing from the pin (DR-20's shape).
+(d) served identity differing from the pin (DR-20's shape);
+(e) post-issuance receipt mutation (Gate 1 correction
+    round 1): a value added to a receipt after issuance must
+    not become covered — the gate honours the recorded
+    CONSUMPTION_RECEIPT event, not the live object;
+(f) FrozenRun rebinding (Gate 1 correction round 1): the
+    capability holding the frozen configuration must not be
+    rebound after freeze — the digest bound in RUN_STARTED is
+    the digest the run, the access path and the gate honour.
 
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage3/tests -v
 """
@@ -29,8 +37,8 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage1"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage2"))
-from record import EventRecord  # noqa: E402
-from access import ConfigAccess  # noqa: E402
+from record import EventRecord, _canonical  # noqa: E402
+from access import CONSUMPTION_RECEIPT, ConfigAccess  # noqa: E402
 from admission import (  # noqa: E402
     CAPTURE_ADMITTED,
     CAPTURE_REFUSED,
@@ -41,6 +49,7 @@ from admission import (  # noqa: E402
     OutputGate,
     OutputRefused,
 )
+from config import freeze_config  # noqa: E402
 from binder import (  # noqa: E402
     CONFIG_FROZEN,
     FREEZE_REFUSED,
@@ -358,6 +367,158 @@ class TestSabotageD(Stage3SabotageBase):
         self.assertEqual(events_of(self.record, CONFIG_FROZEN),
                          [])
         self.assertEqual(events_of(self.record, RUN_STARTED), [])
+
+
+class TestSabotageE(Stage3SabotageBase):
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.captures = CaptureGate(self.run, StaticLane(PIN))
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+
+    def _output(self, receipt, **overrides):
+        output = {
+            "output_id": "OUT-E",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        output.update(overrides)
+        return output
+
+    def test_post_issuance_receipt_mutation_gains_no_coverage(self):
+        receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+        # The mutation attempts, on the public surface: field
+        # assignment raises on the issued receipt...
+        with self.assertRaises(AttributeError):
+            receipt.component = "driver"
+        with self.assertRaises(AttributeError):
+            receipt.values = {"temperature": 0,
+                              "timeout_seconds": 600}
+        # ...and adding a value to the dict the receipt hands
+        # out changes only that handed-out copy — the receipt's
+        # attestation is unchanged.
+        receipt.values["timeout_seconds"] = 600
+        self.assertEqual(receipt.values, {"temperature": 0})
+        # The recorded event — what the gate honours — never
+        # recorded the added value.
+        events = events_of(self.record, CONSUMPTION_RECEIPT)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["digest"], receipt.receipt_id)
+        self.assertEqual(events[0]["body"]["values"],
+                         {"temperature": 0})
+        # An output using the "added" value is refused: not
+        # covered. The refusal is on the record.
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output(
+                receipt,
+                values_used={"temperature": 0,
+                             "timeout_seconds": 600}))
+        self.assertEqual(
+            ctx.exception.details[
+                "values_not_covered_by_receipt"],
+            ["timeout_seconds"])
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(
+            len(events_of(self.record, OUTPUT_REFUSED)), 1)
+
+    def test_gate_honours_recorded_event_not_the_live_object(self):
+        # White-box companion: force the live object past its
+        # own frozen surface (object.__setattr__, beneath the
+        # public API) so the object CLAIMS coverage its recorded
+        # event never granted. The gate establishes coverage
+        # from the recorded event, so the claim gains nothing —
+        # and the disagreement itself is a refusal ground.
+        receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+        object.__setattr__(
+            receipt, "_values_json",
+            _canonical({"temperature": 0,
+                        "timeout_seconds": 600}).decode("utf-8"))
+        self.assertEqual(
+            receipt.values,
+            {"temperature": 0, "timeout_seconds": 600})
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output(
+                receipt,
+                values_used={"temperature": 0,
+                             "timeout_seconds": 600}))
+        self.assertIn("receipt_disagrees_with_recorded_event",
+                      ctx.exception.details)
+        self.assertEqual(
+            ctx.exception.details[
+                "values_not_covered_by_receipt"],
+            ["timeout_seconds"])
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+
+
+class TestSabotageF(Stage3SabotageBase):
+    def test_frozen_run_cannot_be_rebound(self):
+        run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        started = events_of(self.record, RUN_STARTED)
+        self.assertEqual(len(started), 1)
+        bound_digest = started[0]["body"]["config_digest"]
+        self.assertEqual(run.config_digest, bound_digest)
+        # A different configuration object: a real FrozenConfig
+        # whose digest differs (temperature 1, not the frozen 0).
+        other = freeze_config(make_draft(values={
+            "temperature": 1,
+            "max_tokens": 10240,
+            "timeout_seconds": 600,
+        }))
+        self.assertNotEqual(other.digest, bound_digest)
+        # The rebinding attempts raise on the frozen capability:
+        # the configuration, the run identity and the subject
+        # record were bound at freeze.
+        with self.assertRaises(AttributeError):
+            run.config = other
+        with self.assertRaises(AttributeError):
+            run.run_id = "RUN-9999"
+        with self.assertRaises(AttributeError):
+            run.subject_record = {}
+        # The digest the run reports is still the one captured
+        # at freeze — the one RUN_STARTED binds — and the held
+        # configuration is still the original object.
+        self.assertEqual(run.config_digest, bound_digest)
+        self.assertEqual(run.config.values["temperature"], 0)
+        # The access path still serves the ORIGINAL frozen
+        # values, under the bound digest.
+        access = ConfigAccess(run)
+        receipt = access.consume(
+            "adapter", "call-1", ["temperature"])
+        self.assertEqual(receipt.values, {"temperature": 0})
+        self.assertEqual(receipt.config_digest, bound_digest)
+        # An output quoting the rebound configuration's digest
+        # is refused against the bound digest; the refusal is
+        # on the record.
+        captures = CaptureGate(run, StaticLane(PIN))
+        outputs = OutputGate(run, access, captures)
+        with self.assertRaises(OutputRefused) as ctx:
+            outputs.admit_output({
+                "output_id": "OUT-F",
+                "component": "adapter",
+                "invocation": "call-1",
+                "config_digest": other.digest,
+                "receipt_id": receipt.receipt_id,
+                "values_used": {"temperature": 0},
+                "depends_on_captures": [],
+                "subject_dependent": True,
+            })
+        self.assertEqual(
+            ctx.exception.details["config_digest_mismatch"],
+            {"quoted": other.digest, "frozen": bound_digest})
+        self.assertEqual(outputs.admitted_outputs(), [])
+        self.assertEqual(
+            len(events_of(self.record, OUTPUT_REFUSED)), 1)
 
 
 if __name__ == "__main__":

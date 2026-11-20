@@ -38,7 +38,14 @@ only on positive consumption proof. The gate checks, against
 anchors it obtains independently of the output's presenter (G5):
 the receipt exists in the access path's registry (not merely
 presented), it matches the output's producing component and
-invocation, and it was issued under the frozen configuration;
+invocation, and it was issued under the frozen configuration.
+The receipt facts the gate checks — component, invocation,
+configuration, covered values — are established from the
+RECORDED ``CONSUMPTION_RECEIPT`` event, read back from the
+record by the registry's event digest (Gate 1 correction
+round 1): never from the live Receipt object's current state,
+so an object that disagrees with its recorded event gains no
+admission;
 the output's quoted configuration digest equals the FROZEN
 OBJECT's digest (a component quoting the canonical hash is
 checked against the object, not believed); every value the
@@ -63,6 +70,7 @@ PROCESS-TREE-AND-PLAN.md v2, Stage 3; DEFECT-REGISTER.md DR-03.
 
 from __future__ import annotations
 
+from access import CONSUMPTION_RECEIPT
 from binder import (ATTRIBUTION_UNKNOWN, RUN_INVALIDATED,
                     SUBJECT_CONFLICT)
 from config import INVALIDATE_RUN
@@ -162,8 +170,7 @@ class CaptureGate:
             if self.run.config.on_subject_conflict \
                     == INVALIDATE_RUN \
                     and not self.run.invalidated:
-                self.run.invalidated = True
-                self.run.invalidation_cause = capture_id
+                self.run._invalidate(capture_id)
                 self.record.append(RUN_INVALIDATED, {
                     "run_id": self.run.run_id,
                     "cause_capture_id": capture_id,
@@ -190,8 +197,10 @@ class CaptureGate:
 class OutputGate:
     """Admits governed outputs for one frozen run, on positive
     consumption proof (K3(c)), with anchors obtained from the
-    frozen object and the access path's registry — never from
-    the output's own claims (G5)."""
+    frozen object, the access path's registry, and the recorded
+    receipt events the registry names — never from the output's
+    own claims, and never from a live receipt object's current
+    state (G5)."""
 
     def __init__(self, frozen_run, access, capture_gate):
         self.run = frozen_run
@@ -202,6 +211,18 @@ class OutputGate:
 
     def admitted_outputs(self) -> list[str]:
         return sorted(self._admitted)
+
+    def _recorded_receipt_body(self, receipt) -> dict | None:
+        """The body of the ``CONSUMPTION_RECEIPT`` event the
+        registry's receipt names, read back from the record —
+        the recorded event is what the gate honours. Returns
+        None when no such event is on the record."""
+        for ev in self.record.read_all():
+            if ev.get("type") == CONSUMPTION_RECEIPT \
+                    and ev.get("digest") == receipt.receipt_id:
+                body = ev.get("body")
+                return body if isinstance(body, dict) else None
+        return None
 
     def admit_output(self, output: dict) -> dict:
         """Admit one governed output. ``output`` names its
@@ -229,25 +250,52 @@ class OutputGate:
             }
 
         receipt = self.access.receipt(output.get("receipt_id"))
+        recorded = None
         if receipt is None:
             problems["receipt_not_issued"] = output.get(
                 "receipt_id")
         else:
-            if receipt.component != output.get("component"):
-                problems["receipt_component_mismatch"] = {
-                    "receipt": receipt.component,
-                    "output": output.get("component"),
-                }
-            if receipt.invocation != output.get("invocation"):
-                problems["receipt_invocation_mismatch"] = {
-                    "receipt": receipt.invocation,
-                    "output": output.get("invocation"),
-                }
-            if receipt.config_digest != self.run.config_digest:
-                problems["receipt_config_mismatch"] = {
-                    "receipt": receipt.config_digest,
-                    "frozen": self.run.config_digest,
-                }
+            # The receipt's facts are established from the
+            # RECORDED event, read back from the record — not
+            # from the live object's current state. A registry
+            # object that disagrees with its recorded event
+            # gains no admission.
+            recorded = self._recorded_receipt_body(receipt)
+            if recorded is None:
+                problems["receipt_event_not_on_record"] = \
+                    receipt.receipt_id
+            else:
+                disagreements = {}
+                for field in ("run_id", "component", "invocation",
+                              "config_digest", "values"):
+                    object_value = getattr(receipt, field)
+                    if recorded.get(field) != object_value:
+                        disagreements[field] = {
+                            "recorded": recorded.get(field),
+                            "object": object_value,
+                        }
+                if disagreements:
+                    problems[
+                        "receipt_disagrees_with_recorded_event"] \
+                        = disagreements
+                if recorded.get("component") \
+                        != output.get("component"):
+                    problems["receipt_component_mismatch"] = {
+                        "receipt": recorded.get("component"),
+                        "output": output.get("component"),
+                    }
+                if recorded.get("invocation") \
+                        != output.get("invocation"):
+                    problems["receipt_invocation_mismatch"] = {
+                        "receipt": recorded.get("invocation"),
+                        "output": output.get("invocation"),
+                    }
+                if recorded.get("config_digest") \
+                        != self.run.config_digest:
+                    problems["receipt_config_mismatch"] = {
+                        "receipt": recorded.get("config_digest"),
+                        "frozen": self.run.config_digest,
+                    }
 
         if output.get("config_digest") != self.run.config_digest:
             problems["config_digest_mismatch"] = {
@@ -277,10 +325,13 @@ class OutputGate:
                  "frozen_value": frozen_values[name],
                  "used_value": values_used[name]}
                 for name in differing]
-        if receipt is not None:
+        if recorded is not None:
+            # Coverage is what the recorded event recorded —
+            # the values the access path actually supplied.
+            recorded_values = recorded.get("values", {})
             uncovered = sorted(
                 name for name in values_used
-                if name not in receipt.values)
+                if name not in recorded_values)
             if uncovered:
                 problems["values_not_covered_by_receipt"] = \
                     uncovered

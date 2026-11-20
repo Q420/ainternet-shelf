@@ -353,3 +353,83 @@ integration belongs to the later stages.
   anchor's scope). Stage 3 adds the freeze-time chain check
   and otherwise builds on the record as opened — Stage 1's
   constructor already refuses to open a corrupted record.
+
+## Correction round 1 — Gate 1 return
+
+The examiner's Gate 1 examination of the package at shelf
+commit `3d631161` established two boundary defects — specific
+failures of the authority boundaries this stage exists to
+establish, not objections to the overall design. Both are
+corrected here; nothing else in the stage changed.
+
+**Defect 1 — the receipt was mutable after issuance.** As
+first built, a `Receipt`'s fields were publicly writable and
+its `values` was the live dict the output gate later read: a
+caller could add a value to `receipt.values` after issuance
+and present an output using that value, and the gate could
+accept it as covered — although the recorded
+`CONSUMPTION_RECEIPT` event never recorded it. The positive-
+proof guarantee was broken at the receipt boundary.
+Correction, in two parts. (i) `Receipt` is now immutable in
+the same sense as `FrozenConfig`: attribute assignment after
+issuance raises, and the values are held as canonical JSON
+and handed out as a fresh dict. (ii) The output gate no longer
+trusts the live object at all for the facts it checks: it
+reads the recorded `CONSUMPTION_RECEIPT` event back from the
+record (by the registry's event digest) and establishes
+component, invocation, configuration and covered values from
+the EVENT. A registry object that disagrees with its recorded
+event is refused (`receipt_disagrees_with_recorded_event`),
+and a receipt whose event is not on the record is refused
+(`receipt_event_not_on_record`); the refusal is recorded as
+before (`OUTPUT_REFUSED`) — the record here is healthy, so
+recording is sound.
+
+**Defect 2 — the frozen run could be rebound.** As first
+built, `FrozenRun` exposed writable `config`, `run_id` and
+`subject_record` attributes: replacing `run.config` after
+freeze changed what `run.config_digest` and the access path
+treated as canonical, while the recorded `RUN_STARTED` event
+still bound the original configuration. The frozen object was
+immutable; the capability holding it was not. Correction:
+`FrozenRun` is now immutable in the same sense — attributes
+are set once at construction, assignment afterwards raises;
+`config_digest` is the value CAPTURED at freeze (the digest
+bound in `RUN_STARTED`), not recomputed from a replaceable
+attribute; the subject record is held as canonical JSON,
+handed out as a fresh dict, with its digest and served
+identity likewise captured. The one legitimate post-freeze
+transition, invalidation, now goes through the run's own
+`_invalidate` method, called by the capture gate where it
+records `RUN_INVALIDATED`; no other post-freeze assignment
+exists in the stage.
+
+**New sabotage results — listed separately.**
+
+- (e) Post-issuance receipt mutation. Field assignment on an
+  issued receipt raises (`AttributeError`); adding a value to
+  the handed-out values dict changes only that copy. An
+  output using the "added" value (`timeout_seconds`, never
+  recorded on the receipt's event) is REFUSED —
+  `values_not_covered_by_receipt: ["timeout_seconds"]` — with
+  the refusal recorded. A white-box companion forces the live
+  object past its frozen surface so it claims coverage its
+  event never granted: REFUSED on
+  `receipt_disagrees_with_recorded_event`, coverage still
+  established from the recorded event.
+- (f) FrozenRun rebinding. Replacing `run.config`, `run_id`
+  or `subject_record` after freeze raises (`AttributeError`).
+  `run.config_digest` still equals the digest bound in
+  `RUN_STARTED`; the access path still serves the ORIGINAL
+  frozen values (temperature 0, not the rebound object's 1);
+  an output quoting the rebound configuration's digest is
+  REFUSED (`config_digest_mismatch`, quoted vs the bound
+  digest), with the refusal recorded.
+
+**Counts after correction.** Stage 3: 26/26 (the 23 original
+tests with unchanged outcomes, plus (e) ×2 and (f)). Stage 1
+regression: 68/68. Stage 2 regression: 27/27. The register
+disposition is unchanged by this round: DR-03, DR-20 and
+DR-21 (established part) remain advanced on demonstration,
+subject to the examiner's re-examination of the corrected
+package — which has not yet occurred.

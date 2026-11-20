@@ -26,6 +26,15 @@ PROOF:
     consumption evidence is NOT ADMITTED. Consumption is a
     precondition, not a later audit observation.
 
+The receipt itself is immutable after issuance (Gate 1
+correction round 1): attribute assignment on a Receipt raises,
+and its values are held in canonical form and handed out as
+fresh copies, so nothing a caller does to a Receipt object can
+change what it attests. The output gate, moreover, does not
+trust even an intact live object: it establishes coverage from
+the RECORDED ``CONSUMPTION_RECEIPT`` event, read back from the
+record — the event is the proof; the object is a handle to it.
+
 The path is a capability: a :class:`ConfigAccess` exists only
 for a :class:`~binder.FrozenRun` — a run whose freeze succeeded
 at G1. Receipts are recorded on the run's record as
@@ -41,6 +50,10 @@ PROCESS-TREE-AND-PLAN.md v2, Stage 3.
 
 from __future__ import annotations
 
+import json
+
+from record import _canonical
+
 CONSUMPTION_RECEIPT = "CONSUMPTION_RECEIPT"
 
 
@@ -51,20 +64,73 @@ class Receipt:
 
     ``receipt_id`` is the digest of the ``CONSUMPTION_RECEIPT``
     event on the record — the receipt's identity is the recorded
-    event, not anything a component presents."""
+    event, not anything a component presents.
 
-    __slots__ = ("receipt_id", "run_id", "component", "invocation",
-                 "config_digest", "values", "seq")
+    Immutable after issuance, in the same sense as
+    :class:`~config.FrozenConfig`: attribute assignment raises,
+    and the values are held as canonical JSON and handed out as
+    a fresh dict, so a caller cannot add a value to a receipt
+    after issuance and have the receipt attest it. (Gate 1
+    correction round 1: as first built, every field was
+    publicly writable and the values dict was the live object
+    the gate later read.)"""
+
+    __slots__ = ("_receipt_id", "_run_id", "_component",
+                 "_invocation", "_config_digest", "_values_json",
+                 "_seq", "_frozen")
 
     def __init__(self, receipt_id, run_id, component, invocation,
                  config_digest, values, seq):
-        self.receipt_id = receipt_id
-        self.run_id = run_id
-        self.component = component
-        self.invocation = invocation
-        self.config_digest = config_digest
-        self.values = values
-        self.seq = seq
+        object.__setattr__(self, "_frozen", False)
+        object.__setattr__(self, "_receipt_id", receipt_id)
+        object.__setattr__(self, "_run_id", run_id)
+        object.__setattr__(self, "_component", component)
+        object.__setattr__(self, "_invocation", invocation)
+        object.__setattr__(self, "_config_digest", config_digest)
+        object.__setattr__(
+            self, "_values_json",
+            _canonical(values).decode("utf-8"))
+        object.__setattr__(self, "_seq", seq)
+        object.__setattr__(self, "_frozen", True)
+
+    def __setattr__(self, name, value):
+        if getattr(self, "_frozen", False):
+            raise AttributeError(
+                "receipt is immutable: it was issued as the "
+                "record of one consumption and cannot be "
+                "altered after issuance")
+        object.__setattr__(self, name, value)
+
+    @property
+    def receipt_id(self) -> str:
+        return self._receipt_id
+
+    @property
+    def run_id(self) -> str:
+        return self._run_id
+
+    @property
+    def component(self) -> str:
+        return self._component
+
+    @property
+    def invocation(self) -> str:
+        return self._invocation
+
+    @property
+    def config_digest(self) -> str:
+        return self._config_digest
+
+    @property
+    def values(self) -> dict:
+        """The governed values this receipt covers, as a fresh
+        dict (the receipt's attestation cannot be mutated
+        through it)."""
+        return json.loads(self._values_json)
+
+    @property
+    def seq(self) -> int:
+        return self._seq
 
     @property
     def value_names(self) -> tuple:

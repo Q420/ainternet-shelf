@@ -68,6 +68,7 @@ DR-03, DR-20, DR-21.
 from __future__ import annotations
 
 import hashlib
+import json
 
 from record import _canonical, verify_chain
 
@@ -109,29 +110,106 @@ class FrozenRun:
     configuration, and the verified subject record, bound by
     their digests. Minted only by :meth:`Binder.attempt_freeze`.
 
+    Immutable as a capability (Gate 1 correction round 1):
+    every attribute is set once at construction and assignment
+    afterwards raises — as first built, ``run.config`` (and
+    ``run_id``, ``subject_record``) were publicly writable, so
+    the capability holding the frozen object could be rebound
+    to a different configuration while the recorded
+    ``RUN_STARTED`` event still bound the original.
+    ``config_digest`` is the value CAPTURED at freeze — the
+    digest the ``RUN_STARTED`` event binds — not a value
+    recomputed from a replaceable attribute. The subject record
+    is held as canonical JSON and handed out as a fresh dict,
+    and its digest and served identity are likewise captured at
+    construction.
+
+    The one legitimate post-freeze transition is invalidation:
     ``invalidated`` is the run's subject-dependent execution
-    state under the frozen run policy: set by the capture gate
+    state under the frozen run policy, set — through
+    :meth:`_invalidate`, and only there — by the capture gate
     (admission.py) when a subject conflict invalidates the run,
-    read by the output gate. The invalidation is also recorded
-    on the record as ``RUN_INVALIDATED``; the flag is this
-    process's live copy of that recorded fact."""
+    and read by the output gate. The invalidation is also
+    recorded on the record as ``RUN_INVALIDATED``; the flag is
+    this process's live copy of that recorded fact."""
+
+    __slots__ = ("_record", "_run_id", "_config",
+                 "_config_digest", "_subject_json",
+                 "_subject_digest", "_verified_served_identity",
+                 "_invalidated", "_invalidation_cause", "_frozen")
 
     def __init__(self, record, run_id: str, config: FrozenConfig,
                  subject_record: dict):
-        self.record = record
-        self.run_id = run_id
-        self.config = config
-        self.subject_record = subject_record
-        self.invalidated = False
-        self.invalidation_cause = None
+        object.__setattr__(self, "_frozen", False)
+        object.__setattr__(self, "_record", record)
+        object.__setattr__(self, "_run_id", run_id)
+        object.__setattr__(self, "_config", config)
+        object.__setattr__(self, "_config_digest", config.digest)
+        object.__setattr__(
+            self, "_subject_json",
+            _canonical(subject_record).decode("utf-8"))
+        object.__setattr__(
+            self, "_subject_digest",
+            subject_record["subject_digest"])
+        object.__setattr__(
+            self, "_verified_served_identity",
+            subject_record["served_identity"])
+        object.__setattr__(self, "_invalidated", False)
+        object.__setattr__(self, "_invalidation_cause", None)
+        object.__setattr__(self, "_frozen", True)
+
+    def __setattr__(self, name, value):
+        if getattr(self, "_frozen", False):
+            raise AttributeError(
+                "run is frozen: its identity, configuration and "
+                "subject were bound at freeze and cannot be "
+                "rebound")
+        object.__setattr__(self, name, value)
+
+    def _invalidate(self, cause_capture_id: str) -> None:
+        """Mark the run invalidated under the frozen run policy.
+        The ONLY post-freeze state transition, called by the
+        capture gate when it records ``RUN_INVALIDATED``; the
+        recorded event is the fact, this flag its live copy."""
+        object.__setattr__(self, "_invalidated", True)
+        object.__setattr__(self, "_invalidation_cause",
+                           cause_capture_id)
+
+    @property
+    def record(self):
+        return self._record
+
+    @property
+    def run_id(self) -> str:
+        return self._run_id
+
+    @property
+    def config(self) -> FrozenConfig:
+        return self._config
+
+    @property
+    def subject_record(self) -> dict:
+        """The verified subject record, as a fresh dict (the
+        run's binding cannot be mutated through it)."""
+        return json.loads(self._subject_json)
+
+    @property
+    def invalidated(self) -> bool:
+        return self._invalidated
+
+    @property
+    def invalidation_cause(self):
+        return self._invalidation_cause
 
     @property
     def config_digest(self) -> str:
-        return self.config.digest
+        """The configuration digest captured at freeze — the
+        digest bound in the ``RUN_STARTED`` event."""
+        return self._config_digest
 
     @property
     def subject_digest(self) -> str:
-        return self.subject_record["subject_digest"]
+        return self._subject_digest
 
     @property
     def verified_served_identity(self) -> str:
@@ -140,7 +218,7 @@ class FrozenRun:
         recorded at verification — never the pin's assertion
         alone (they are equal in a frozen run, because a mismatch
         refused the freeze; the claim cites the SERVED value)."""
-        return self.subject_record["served_identity"]
+        return self._verified_served_identity
 
 
 class Binder:
