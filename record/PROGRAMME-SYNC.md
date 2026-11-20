@@ -754,3 +754,15 @@ a defect, not a backlog item.
   package: Gate 1 verifies the issued instrument's
   validity and applicability per run. Remaining in the
   sequence: the adjudicator offer to Claude.
+- ISSUANCE ACKNOWLEDGED; VERIFICATION OF FINAL FILES
+  REQUESTED (2026-11-19 ~22:19): Vane acknowledged the
+  pinning and issuance as REPORTED, not yet verified —
+  she has not inspected the two final files. Remmy sent
+  the verification step (letter duenna-resume-04): the
+  pinned GOVERNANCE-RECORD.md should recompute to the
+  verified digest; OPERATIONAL-DELEGATION.md carries the
+  completed issuance block. The adjudicator offer to
+  Claude remains the next step, on Ben's explicit word —
+  the delegation establishes authority; it does not
+  trigger its exercise (Vane's distinction, adopted).
+  → duenna/fix-2026-11-19/VANE-ACK-PINNING-ISSUANCE.md
