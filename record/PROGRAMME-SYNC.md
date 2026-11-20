@@ -385,3 +385,16 @@ a defect, not a backlog item.
   itself. Vane's condition 1 is thereby satisfied by
   designation. Condition 2 (governance record pinned,
   delegation issued) remains in preparation.
+- ALLOCATION SETTLED — CORRECTION TO THE PREVIOUS ENTRY
+  (Ben, 2026-11-19 19:19 MST): "Keep Vane doing what she's
+  doing. And have Claude do Adjudication." The division of
+  responsibilities is: VANE remains the examiner (Gate 1
+  verification — her current work); CLAUDE is the
+  ADJUDICATOR (Gate 2); the orchestrator assembles; Ben
+  holds the structure. This supersedes the mapping in the
+  0b6ebdfa entry (which had the two seats swapped) and the
+  provisional appointment of Vane as adjudicator; her
+  conditions stand as first-use requirements (governance
+  record pinned, delegation issued). Proposal, register
+  v4 (DR-26) and corrections register aligned in this
+  round; the map's stress point updated.

@@ -249,3 +249,22 @@ substance changed.
 Not a build. Stages 2–9 unchanged and unapproved beyond
 Stage 1. The map keeps the vacancy lit until Ben's
 delegation fills it.
+
+## Allocation — settled (Ben, 2026-11-19 19:19 MST)
+
+The holder question moved three times in one evening, and
+the record keeps all three moves: (1) 19:04 — the
+orchestrator adjudicates, verification-gated; (2) 19:16 —
+Vane appointed adjudicator provisionally ("for now"),
+which she accepted with two conditions (Gate 1 genuinely
+independent; the authority sequence completed before
+first use); (3) 19:19 — FINAL, on Ben's words "Keep Vane
+doing what she's doing. And have Claude do Adjudication":
+DIVISION OF RESPONSIBILITIES. Vane remains the examiner —
+Gate 1 verification is the work she is already doing.
+CLAUDE is the adjudicator at Gate 2. The orchestrator
+assembles. Ben holds the structure. The gates themselves
+are unchanged, and Vane's two conditions stand as
+requirements on first use: the governance record pinned
+and the delegation formally issued before any production
+adjudication.
