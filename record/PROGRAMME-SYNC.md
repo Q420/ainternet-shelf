@@ -168,3 +168,23 @@ a defect, not a backlog item.
 - Verdicts belong to the examiner. A builder's green run is evidence,
   not a verdict.
 - One letter at a time to a seat; read the reply before sending the next.
+
+## The navigable map (2026-11-19, Ben's tap 18:12 MST)
+
+- Ben's ruling: the family tree is for Duenna AS A WHOLE — parts,
+  jobs, roles, flows, gates — drawn as a navigable application,
+  so a spot can be pointed at and an issue spotted before it
+  happens. Acceptance test, his terms: look, walk, point, say
+  "this could create an issue."
+- The content was settled FIRST, as data (15 parts, 19 flows,
+  14 gates — each gate labelled with its real strength:
+  enforced / procedural / designed / built-in-Stage-1 — and
+  10 stress points, each with its evidence). The page is
+  generated from that register; content changes re-render it.
+  → record/duenna-map/map-data.json · record/duenna-map/index.html
+- The stress points include one deliberate finding: DR-13's
+  production adjudicator is drawn as an ownerless job — the
+  map doing its intended work.
+- With the examiner for examination of the CONTENT (the
+  drawing is mechanical). K9's five tightenings wait behind
+  this, as named in the trade before Ben's tap.
