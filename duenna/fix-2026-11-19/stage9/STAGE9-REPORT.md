@@ -718,3 +718,35 @@ Her recommendation to Ben: judge the machinery corrections
 against the two original blockers, and keep the T07
 scoring question with the next examination's design — not
 a reason to rewrite -005 or -006.
+
+## Gate 1 — PASS on independent execution (2026-11-20)
+
+The examiner executed the runbook herself against the
+uploaded execution package (duenna-execution-package-
+20261120.zip, SHA-256 48a171f4…; full text:
+`VANE-GATE1-EXECUTION-VERDICT-2026-11-20.md`). Her own runs,
+not the builder's: stages 1–8 suites 68/27/38/36/30/54/34/36
+PASS; exam-revision 10/10 PASS; freeze verification returns
+the expected tree-set digest; both preserved runs
+independently re-derived exactly (chains valid, validation
+3/3, 14 captures clean, receipts VERIFIED, bar failing only
+zero_not_scored); the corrected-rule re-scoring of -005
+reproduced key-for-key. The stage9 suite ran 20/20 under a
+test-only import shim after two import errors as supplied —
+the packaging defect at DR-30. Her environment ran Python
+3.13.5 against the runbook's 3.12.3; the difference is
+recorded, not smoothed.
+
+**Ruling: the Stage 9 correction round is accepted at
+Gate 1 — PASS within the declared harness scope, with the
+DR-30 packaging qualification.** DR-28 and DR-29 are
+ADVANCED on independent execution. -005 and -006 remain
+NOT PASSED under the frozen bar — the examination result,
+distinct from the machinery verdict, exactly as the examiner
+kept them. The T07 scoring question remains an open design
+decision for the proposed new freeze (Ben's), and the
+provenance qualification is answered in the covering letter:
+the archive hash she computed from the object equals the
+hash computed here at build time. Package v2 (DR-30) removes
+the import gap for future executions; it does not replace
+the v1 object she executed.
