@@ -815,3 +815,30 @@ a defect, not a backlog item.
   channel — his ChatGPT account is not the one signed
   into RemmyChrome (Vane's is).
   → duenna/fix-2026-11-19/GOVERNANCE-RECORD-V2-DRAFT.md
+- GATE 1 FORM CHECK OF THE AMENDMENT — PASSED (2026-11-19
+  ~22:31): Vane compared v2 against pinned v1 directly:
+  after the single holder substitution the ruling section
+  is identical; the amendment note's provenance is
+  accurate. One recommended precision, for Ben's
+  acceptance at pinning: the amendment note should carry
+  the explicit status of Claude's v1 delegation — ISSUED
+  · DECLINED BY NAMED GRANTEE · UNREVOKED · NOT AVAILABLE
+  FOR GATE 2 EXERCISE — and the new issuance record
+  should state its replacement explicitly. Her reply was
+  captured in full (3,568 chars) before the bridge
+  rolled her tab.
+  → duenna/fix-2026-11-19/VANE-FORM-CHECK-GOVERNANCE-V2.md
+- BRIDGE v2 ROLLOVER CLICK — DISABLED (2026-11-19
+  22:29): Ben observed the click fired the moment a
+  reply was recognised, with no settle margin proving
+  the reply fully collected. Her reply this time WAS
+  complete (verified), but the margin was zero. The
+  auto-click is off in the running bridge; re-enabling
+  needs a collection-stability rule and Ben's go.
+- SEAT ROTATION — SETTLED (Ben, 2026-11-19 22:34): both
+  ChatGPT accounts cannot be signed in at once; Ben
+  switches the one ChatGPT window's account manually as
+  needed — "as simple as pressing a button." The seat is
+  the window; the occupant is whoever is signed in;
+  Remmy verifies the occupant before every send. Alex is
+  seated now; Vane is seated when Ben switches back.
