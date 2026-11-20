@@ -224,16 +224,28 @@ The comparison rule is fixed here, before any results exist
 at each hop from B onward scores survived = 1, degraded =
 0.5, lost = 0, corrupted = 0, with corrupted items also
 tallied separately. A chain's total is its sum over all
-ELIGIBLE item-hops (correction on re-examination): an item
-enters the scoring set at the first hop where it exists and
-is available to be transferred — A's criteria are eligible
-from B onward, B's correction only from C onward, a
-mid-chain discovery only from the hop after its discovery —
-and the maximum is the count of eligible item-hops. The run
-record carries an item-by-hop eligibility matrix, built by
-the same rule for both chains, so the 15% threshold below
-is reproducible and the denominator cannot silently distort
-the result.
+ELIGIBLE item-hops. ELIGIBILITY IS FIXED BY THE DESIGN,
+NEVER BY THE RUN (correction on re-examination, second
+pass): the item chronology comes from this pre-authored
+design and the ground-truth record — every load-bearing
+item has a SCHEDULED creation point (A's criteria at A; the
+correction at B's staged task, which mandates it; the open
+issue at C's staged task, which is built to surface it;
+likewise any later staged item). An item becomes eligible
+at the first scheduled transfer after its scheduled
+creation, and stays eligible at every subsequent scheduled
+transfer through J — whether or not any agent actually
+creates, preserves, omits or corrupts it. An agent's
+failure can therefore never shrink the denominator that
+measures the failure: the telephone game cannot erase the
+evidence of what it lost. The item-by-hop eligibility
+matrix is constructed BEFORE execution, identically for
+both chains, and is part of the run record; in the matrix a
+cell before an item's scheduled creation is marked NOT YET
+CREATED — a state distinct from a scored loss — and every
+eligible cell scores survived / degraded / lost /
+corrupted as above. The maximum is the count of eligible
+item-hops, so the 15% threshold below is reproducible.
 
 - SUCCESS ("materially above"): ALL of (a) the briefcase
   chain's total exceeds the notes chain's by at least 15% of

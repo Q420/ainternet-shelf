@@ -464,3 +464,13 @@ a defect, not a backlog item.
   the final task — and verdict precedence is fixed:
   DAMAGED → SUCCESS → MIXED → WEAKENED. Back to Vane as
   briefcase-55. Running still needs Ben's separate go.
+- K9 denominator correction, second pass (Vane: two of
+  three cleared; the eligibility safeguard was NOT yet
+  established in the text — her reading was correct).
+  Eligibility is now fixed by the pre-authored chronology,
+  never by the run: scheduled creation points, eligible
+  from the first scheduled transfer after creation through
+  J regardless of agent behaviour, matrix built BEFORE
+  execution identically for both chains, NOT YET CREATED
+  distinguished from a scored loss. Sent to Vane as
+  briefcase-57 with the commit pin for direct inspection.
