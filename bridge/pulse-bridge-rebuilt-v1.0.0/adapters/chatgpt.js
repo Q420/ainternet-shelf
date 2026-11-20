@@ -506,6 +506,33 @@ window.PB_ADAPTER = {
     } catch (e) { return null; }
   },
 
+  /* V1.0.1 — AUTO-SCROLL (Ben's tap, 2026-11-20): the seat
+   * window keeps Ben's scroll position while bridged messages
+   * land and finish, so the newest turn sits unrendered out
+   * of view until he goes hunting for it. The watcher calls
+   * this on a new turn and on a turn settling complete: walk
+   * from the newest rendered turn up to its scrollable
+   * ancestor and take it to the bottom. The newest turn is
+   * always rendered (see turnMarks), so the tail is always
+   * reachable. */
+  scrollToNewestTurn() {
+    try {
+      const containers = Array.from(document.querySelectorAll("[data-content-search-turn-key]"));
+      const last = containers[containers.length - 1];
+      if (!last) return false;
+      let el = last;
+      while (el && el !== document.body) {
+        if (el.scrollHeight > el.clientHeight + 4) {
+          const oy = getComputedStyle(el).overflowY;
+          if (oy === "auto" || oy === "scroll") { el.scrollTop = el.scrollHeight; return true; }
+        }
+        el = el.parentElement;
+      }
+      last.scrollIntoView({ block: "end" });
+      return true;
+    } catch (e) { return false; }
+  },
+
   /* A stop control exists only while a response streams. */
   isGenerating() {
     return !!document.querySelector(this.candidates.stop.join(", "));

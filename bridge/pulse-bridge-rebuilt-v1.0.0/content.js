@@ -277,6 +277,16 @@
     return { closed: false, reason: "reply not yet captured" };
   }
 
+  /* V1.0.1 — AUTO-SCROLL (Ben's tap, 2026-11-20 15:03 MST:
+   * "always scroll to the newest message on completion").
+   * On a new turn and on a turn settling complete, the
+   * adapter — where it offers the primitive, ChatGPT today —
+   * takes the view to the newest message. Unconditional, per
+   * the tap: even scrolled-up reading is interrupted. */
+  function pbScrollToNewest() {
+    try { if (adapter.scrollToNewestTurn) adapter.scrollToNewestTurn(); } catch (e) { /* an unreadable page has nothing to scroll */ }
+  }
+
   function pbTurnRecord(evt) {
     try {
       chrome.storage.local.get(PB_TURNLOG_KEY).then((got) => {
@@ -314,6 +324,7 @@
           kind: "NEW_TURN", key: newest.key, roles: newest.roles, state: newest.state,
         }));
         pbTurnPrev = newest;
+        pbScrollToNewest();
         pbSettledKey = newest.key;
         pbSettledAt = newest.state === "complete" ? Date.now() : null;
       } else if (newest.state !== pbTurnPrev.state) {
@@ -326,6 +337,7 @@
         if (newest.state === "complete") {
           pbSettledKey = newest.key;
           pbSettledAt = Date.now();
+          pbScrollToNewest();
         }
       }
     }
@@ -405,7 +417,10 @@
     text-transform: uppercase; color: #9aa3c7; white-space: nowrap; }
   #pb-wait-panel .pb-toggle { background: none; border: 1px solid rgba(140,150,255,.4);
     color: #e8eaf2; border-radius: 6px; width: 20px; height: 20px; line-height: 1; cursor: pointer; flex: none; }
-  #pb-wait-panel .pb-body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+  #pb-wait-panel .pb-body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 8px;
+    max-height: calc(100vh - 140px); overflow-y: auto; }
+  #pb-wait-panel .pb-earlier-list { display: flex; flex-direction: column; gap: 6px;
+    max-height: 132px; overflow-y: auto; }
   #pb-wait-panel .pb-status { font-size: 12.5px; }
   #pb-wait-panel .pb-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   #pb-wait-panel .pb-sec { border-top: 1px solid rgba(140,150,255,.18); padding-top: 7px;
@@ -603,6 +618,8 @@
       title.className = "pb-sec-title";
       title.textContent = "Earlier";
       sec.appendChild(title);
+      const list = document.createElement("div");
+      list.className = "pb-earlier-list";
       for (const item of face.earlier) {
         const row = document.createElement("div");
         row.className = "pb-row";
@@ -614,9 +631,11 @@
           row.appendChild(pbBtn(PB_CMD_LABELS[ctl] || ctl, () =>
             pbPanelCommand({ kind: PB_CMD_KINDS[ctl], message_id: item.id })));
         }
-        sec.appendChild(row);
+        list.appendChild(row);
       }
+      sec.appendChild(list);
       body.appendChild(sec);
+      list.scrollTop = list.scrollHeight;
     }
   }
 
