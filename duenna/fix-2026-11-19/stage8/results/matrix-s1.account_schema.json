@@ -1,0 +1,51 @@
+{
+ "changed": {
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "account schema facet: malformed account entries fail validation (stage1/validator.py)",
+ "mechanism": "s1.account_schema",
+ "patch_problems": [],
+ "run_id": "mech-s1.account_schema",
+ "suites": [
+  1
+ ]
+}

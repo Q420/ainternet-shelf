@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_construction.TestConstruction.test_unencodable_provenance_value_refused_at_entry": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "ERROR"
+  }
+ },
+ "description": "append_entry canonical-encodability check (stage2/construction.py)",
+ "mechanism": "s2.entry_validation",
+ "patch_problems": [],
+ "run_id": "mech-s2.entry_validation",
+ "suites": [
+  2
+ ]
+}

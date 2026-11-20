@@ -1,0 +1,63 @@
+{
+ "changed": {
+  "test_insertion.TestRecordDiscipline.test_emptied_record_refuses_by_terminal_binding": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_emptied_record_refuses_before_lane_call": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_tail_truncated_record_refuses_before_lane_call": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_consume_on_emptied_record_issues_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_consume_on_tail_truncated_record_issues_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_freeze_on_emptied_record_refuses_and_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_freeze_on_tail_truncated_record_refuses_and_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_output_admission_on_emptied_record_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage3_sabotage.TestSabotageI.test_output_admission_on_tail_truncated_record_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "verify_record_current terminal facet: persisted length/head must equal the writer's in-memory length/head (stage3/binder.py; shared by stages 3, 5, 7)",
+ "mechanism": "s3.terminal_facet",
+ "patch_problems": [],
+ "run_id": "mech-s3.terminal_facet",
+ "suites": [
+  3,
+  5,
+  7
+ ]
+}

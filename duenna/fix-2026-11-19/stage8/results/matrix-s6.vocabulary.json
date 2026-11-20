@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_attribution.TestOneFailureOneRecord.test_class_outside_vocabulary_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "mint_attribution refuses classes outside the attribution vocabulary (stage6/attribution.py)",
+ "mechanism": "s6.vocabulary",
+ "patch_problems": [],
+ "run_id": "mech-s6.vocabulary",
+ "suites": [
+  6
+ ]
+}

@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "build_from_entries duplicate-entry refusal (stage2/construction.py)",
+ "mechanism": "s2.build_duplicates",
+ "patch_problems": [],
+ "run_id": "mech-s2.build_duplicates",
+ "suites": [
+  2
+ ]
+}

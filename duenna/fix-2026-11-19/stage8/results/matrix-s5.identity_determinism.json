@@ -1,0 +1,71 @@
+{
+ "changed": {
+  "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestRePresentation.test_reconstructed_operation_is_recognised_not_new": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_operations.TestCanonicalIdentity.test_identity_is_a_function_of_the_triple": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_operations.TestPureConstruction.test_build_touches_no_state": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_operations.TestPureConstruction.test_reconstruction_after_consumption_is_the_same_operation": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_operations.TestPureConstruction.test_repeated_builds_are_equal": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestRestartRecognition.test_consumed_operation_recognised_after_restart": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestRestartRecognition.test_partial_insertion_recovered_by_new_process": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "operation identity is deterministic \u2014 the same triple mints the same identity on every call; the sabotage variant mixes a per-call object hash into the minted identity (stage5/operations.py)",
+ "mechanism": "s5.identity_determinism",
+ "patch_problems": [],
+ "run_id": "mech-s5.identity_determinism",
+ "suites": [
+  5
+ ]
+}

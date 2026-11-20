@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "output gate: recorded receipt fields must agree with the live receipt object (stage3/admission.py)",
+ "mechanism": "s3.receipt_facts",
+ "patch_problems": [],
+ "run_id": "mech-s3.receipt_facts",
+ "suites": [
+  3
+ ]
+}

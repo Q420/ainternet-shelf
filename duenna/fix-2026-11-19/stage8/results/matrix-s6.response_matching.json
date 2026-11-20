@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_reproductions.TestT07.test_attribution": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "ResponseContract required-lines matching: the response must carry the contract's required lines (stage6/schema_contract.py)",
+ "mechanism": "s6.response_matching",
+ "patch_problems": [],
+ "run_id": "mech-s6.response_matching",
+ "suites": [
+  6
+ ]
+}

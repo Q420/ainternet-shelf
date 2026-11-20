@@ -1,0 +1,64 @@
+{
+ "changed": {
+  "test_attribution.TestRecordDiscipline.test_tampered_record_refuses_and_stays_byte_identical": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_freeze.TestFreeze.test_freeze_on_corrupted_record_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestRecordDiscipline.test_tampered_record_refuses_and_writes_nothing": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestTamperedRecord.test_account_refused_on_body_edited_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestTamperedRecord.test_issuance_refused_on_body_edited_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageG.test_capture_gate_on_body_edited_record_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageG.test_output_admission_on_body_edited_record_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageG.test_output_admission_on_deleted_event_record_writes_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageH.test_consume_on_body_edited_record_issues_nothing": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "verify_record_current chain facet: the persisted record's chain is recomputed before any writer trusts it (stage3/binder.py; shared by stages 3, 5, 6, 7)",
+ "mechanism": "s3.chain_facet",
+ "patch_problems": [],
+ "run_id": "mech-s3.chain_facet",
+ "suites": [
+  3,
+  5,
+  6,
+  7
+ ]
+}

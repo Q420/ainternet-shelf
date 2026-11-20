@@ -1,0 +1,166 @@
+{
+ "changed": {
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_unknowns_wrong_type": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_failure_entry_authority": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_complete_still_passes": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "ERROR"
+  },
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case3_early_stop_closes_with_known_unknown_stated": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case5_missing_failure_account": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case6_missing_attribution_recorded_as_unknown": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_omitted_failure_fails_account_completeness": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_record_with_no_closure_fails_terminal_record": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_padded_content_accepted_and_preserved": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "validator._check_account_completeness as a whole (stage1/validator.py)",
+ "mechanism": "s1.account_whole",
+ "patch_problems": [],
+ "run_id": "mech-s1.account_whole",
+ "suites": [
+  1
+ ]
+}

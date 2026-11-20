@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "COMPLETE declared with unknowns stands is refused (stage1/validator.py)",
+ "mechanism": "s1.account_complete_unknowns",
+ "patch_problems": [],
+ "run_id": "mech-s1.account_complete_unknowns",
+ "suites": [
+  1
+ ]
+}

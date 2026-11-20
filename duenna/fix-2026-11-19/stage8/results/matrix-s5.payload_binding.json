@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "present(): a recorded payload digest binds the identity; a different payload under it is refused (stage5/receiver.py)",
+ "mechanism": "s5.payload_binding",
+ "patch_problems": [],
+ "run_id": "mech-s5.payload_binding",
+ "suites": [
+  5
+ ]
+}

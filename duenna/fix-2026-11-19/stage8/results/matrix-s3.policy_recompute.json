@@ -1,0 +1,26 @@
+{
+ "changed": {
+  "test_freeze.TestFreeze.test_derivation_that_does_not_recompute_refused": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_freeze.TestFreeze.test_derived_limit_below_requirement_refused": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_freeze.TestFreeze.test_derived_limit_without_derivation_refused": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "derived-limit policy recompute (stage3/config.py)",
+ "mechanism": "s3.policy_recompute",
+ "patch_problems": [],
+ "run_id": "mech-s3.policy_recompute",
+ "suites": [
+  3
+ ]
+}

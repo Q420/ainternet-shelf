@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_operations.TestOperationImmutability.test_attributes_cannot_be_rebound": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "Operation immutability: the custom _sealed __setattr__ guard (stage5/operations.py)",
+ "mechanism": "s5.operation_seal",
+ "patch_problems": [],
+ "run_id": "mech-s5.operation_seal",
+ "suites": [
+  5
+ ]
+}

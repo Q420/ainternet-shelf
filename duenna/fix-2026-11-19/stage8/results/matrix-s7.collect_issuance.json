@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "collect_receipt: collection requires a standing issuance (stage7/receipts.py; the long anchor, through the refusal reason, distinguishes collect_receipt from _state_from's identical first two lines)",
+ "mechanism": "s7.collect_issuance",
+ "patch_problems": [],
+ "run_id": "mech-s7.collect_issuance",
+ "suites": [
+  7
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "changed": {
+  "test_reproductions.TestT02.test_attribution": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_reproductions.TestT07.test_attribution": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_reproductions.TestT09.test_attributions": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema_contract.TestCausalTableControls.test_unknown_branch": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema_contract.TestFindingIsRecorded.test_finding_event_on_the_record": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "ResponseContract.format_prescribed: was the demanded format actually prescribed in the delivered instruction (stage6/schema_contract.py)",
+ "mechanism": "s6.format_prescribed",
+ "patch_problems": [],
+ "run_id": "mech-s6.format_prescribed",
+ "suites": [
+  6
+ ]
+}

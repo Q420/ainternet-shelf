@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_anchor.TestAnchor.test_wholesale_rechained_rewrite_caught_by_anchor_mismatch": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case7_rewritten_chain_detected_by_anchor": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "validator chain validity: record head compared with the anchor's head/length (stage1/validator.py)",
+ "mechanism": "s1.anchor_comparison",
+ "patch_problems": [],
+ "run_id": "mech-s1.anchor_comparison",
+ "suites": [
+  1
+ ]
+}

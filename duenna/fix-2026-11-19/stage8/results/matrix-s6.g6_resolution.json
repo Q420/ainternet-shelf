@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "resolve_report: an unresolvable reference is an error, not a flag (stage6/examiner.py)",
+ "mechanism": "s6.g6_resolution",
+ "patch_problems": [],
+ "run_id": "mech-s6.g6_resolution",
+ "suites": [
+  6
+ ]
+}

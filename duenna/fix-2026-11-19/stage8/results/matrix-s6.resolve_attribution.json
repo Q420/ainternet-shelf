@@ -1,0 +1,26 @@
+{
+ "changed": {
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_nonexistent_attribution_digest_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_readback_refuses_an_unresolvable_link": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_wrong_type_attribution_digest_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "discrepancy citations must resolve to a real ATTRIBUTION_RECORDED event on the verified snapshot (stage6/discrepancy.py)",
+ "mechanism": "s6.resolve_attribution",
+ "patch_problems": [],
+ "run_id": "mech-s6.resolve_attribution",
+ "suites": [
+  6
+ ]
+}

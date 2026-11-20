@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "FrozenRun seal (stage3/binder.py)",
+ "mechanism": "s3.frozenrun_seal",
+ "patch_problems": [],
+ "run_id": "mech-s3.frozenrun_seal",
+ "suites": [
+  3
+ ]
+}

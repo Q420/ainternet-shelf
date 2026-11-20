@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_schema.TestFrozenSchema.test_duplicate_field_names_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema.TestFrozenSchema.test_nameless_field_or_version_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "schema section validation: duplicate and nameless fields refused (stage2/schema.py)",
+ "mechanism": "s2.schema_validation",
+ "patch_problems": [],
+ "run_id": "mech-s2.schema_validation",
+ "suites": [
+  2
+ ]
+}

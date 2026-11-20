@@ -1,0 +1,103 @@
+{
+ "changed": {
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_gap_survives_under_the_genuine_pin": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestFullLifecycle.test_issuance_never_satisfies_collection_or_verification": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestUnauthenticated.test_tag_absent": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "joint_fixtures": [
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct"
+ ],
+ "joint_targets": [
+  "s7.authentication",
+  "s7.digest_comparison",
+  "s7.package_lookup"
+ ],
+ "patch_problems": [],
+ "run_id": "joint-s7_authentication+s7_digest_comparison+s7_package_lookup",
+ "suites": [
+  7
+ ]
+}

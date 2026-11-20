@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "FrozenSchema seal (stage2/schema.py)",
+ "mechanism": "s2.schema_freeze",
+ "patch_problems": [],
+ "run_id": "mech-s2.schema_freeze",
+ "suites": [
+  2
+ ]
+}

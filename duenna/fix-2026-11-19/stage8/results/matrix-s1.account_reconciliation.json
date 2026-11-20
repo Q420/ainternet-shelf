@@ -1,0 +1,46 @@
+{
+ "changed": {
+  "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_omitted_failure_fails_account_completeness": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "account completeness reconciliation FAIL branches: duplicate_record / duplicate_account / omitted / extra / altered (stage1/validator.py)",
+ "mechanism": "s1.account_reconciliation",
+ "patch_problems": [],
+ "run_id": "mech-s1.account_reconciliation",
+ "suites": [
+  1
+ ]
+}

@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "output gate: values never frozen are refused (stage3/admission.py)",
+ "mechanism": "s3.output_not_frozen",
+ "patch_problems": [],
+ "run_id": "mech-s3.output_not_frozen",
+ "suites": [
+  3
+ ]
+}

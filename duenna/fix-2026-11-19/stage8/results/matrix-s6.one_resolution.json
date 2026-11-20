@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_discrepancy.TestAuthorisedResolution.test_second_resolution_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_discrepancy.TestIndeterminate.test_indeterminate_is_terminal_for_the_disagreement_only": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "a discrepancy already resolved cannot be resolved again: the follow check in _append_resolution (stage6/discrepancy.py)",
+ "mechanism": "s6.one_resolution",
+ "patch_problems": [],
+ "run_id": "mech-s6.one_resolution",
+ "suites": [
+  6
+ ]
+}

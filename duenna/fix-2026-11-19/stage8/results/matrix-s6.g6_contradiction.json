@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_examiner_g6.TestReportResolution.test_conflict_becomes_a_discrepancy_preserving_both": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "ERROR"
+  },
+  "test_examiner_g6.TestReportResolution.test_contradictory_literals_flagged_by_name": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "resolve_report: a literal location contradicting the rendered resolution is flagged, never corrected (stage6/examiner.py)",
+ "mechanism": "s6.g6_contradiction",
+ "patch_problems": [],
+ "run_id": "mech-s6.g6_contradiction",
+ "suites": [
+  6
+ ]
+}

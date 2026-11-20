@@ -1,0 +1,26 @@
+{
+ "changed": {
+  "test_schema_contract.TestChangedUnderUnchanged.test_checker_changed_schema_unchanged": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema_contract.TestChangedUnderUnchanged.test_checker_rebound_to_another_schema": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema_contract.TestChangedUnderUnchanged.test_schema_changed_checker_unchanged": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "examine(): the presented schema / checker binding must resolve to the independently held pin (stage6/schema_contract.py)",
+ "mechanism": "s6.schema_binding",
+ "patch_problems": [],
+ "run_id": "mech-s6.schema_binding",
+ "suites": [
+  6
+ ]
+}

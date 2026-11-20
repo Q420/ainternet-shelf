@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_attribution.TestLabelConversionRefused.test_every_conversion_attempt_raises": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "convert_local_label always refuses: no local label converts to an attribution class (stage6/attribution.py)",
+ "mechanism": "s6.label_conversion",
+ "patch_problems": [],
+ "run_id": "mech-s6.label_conversion",
+ "suites": [
+  6
+ ]
+}

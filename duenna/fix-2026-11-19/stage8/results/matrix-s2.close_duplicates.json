@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "construction_close duplicate-entry facet (stage2/construction.py, _differing, indent 4)",
+ "mechanism": "s2.close_duplicates",
+ "patch_problems": [],
+ "run_id": "mech-s2.close_duplicates",
+ "suites": [
+  2
+ ]
+}

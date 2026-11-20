@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "output gate: a receipt with no CONSUMPTION_RECEIPT event on the record is refused (stage3/admission.py)",
+ "mechanism": "s3.receipt_record_presence",
+ "patch_problems": [],
+ "run_id": "mech-s3.receipt_record_presence",
+ "suites": [
+  3
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "changed": {
+  "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "validator._is_structurally_valid_event (stage1/validator.py)",
+ "mechanism": "s1.structural_validity",
+ "patch_problems": [],
+ "run_id": "mech-s1.structural_validity",
+ "suites": [
+  1
+ ]
+}

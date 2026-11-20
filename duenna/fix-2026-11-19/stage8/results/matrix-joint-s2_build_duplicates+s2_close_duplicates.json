@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "joint_fixtures": [
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses"
+ ],
+ "joint_targets": [
+  "s2.build_duplicates",
+  "s2.close_duplicates"
+ ],
+ "patch_problems": [],
+ "run_id": "joint-s2_build_duplicates+s2_close_duplicates",
+ "suites": [
+  2
+ ]
+}

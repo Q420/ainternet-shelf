@@ -1,0 +1,43 @@
+{
+ "changed": {
+  "test_reproductions.TestT02.test_attribution": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_reproductions.TestT07.test_attribution": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_reproductions.TestT09.test_attributions": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema_contract.TestCausalTableControls.test_unknown_branch": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_schema_contract.TestFindingIsRecorded.test_finding_event_on_the_record": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "joint_fixtures": [
+  "test_schema_contract.TestCausalTableControls.test_agreement",
+  "test_schema_contract.TestCausalTableControls.test_input_branch",
+  "test_schema_contract.TestCausalTableControls.test_unknown_branch"
+ ],
+ "joint_targets": [
+  "s6.format_prescribed",
+  "s6.response_matching"
+ ],
+ "patch_problems": [],
+ "run_id": "joint-s6_format_prescribed+s6_response_matching",
+ "suites": [
+  6
+ ]
+}

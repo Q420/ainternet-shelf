@@ -1,0 +1,31 @@
+{
+ "changed": {
+  "test_anchor.TestAnchor.test_deleted_anchor_after_closure_yields_not_verified": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor.TestAnchor.test_missing_anchor_yields_not_verified": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor.TestAnchor.test_unreadable_anchor_yields_not_verified": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case8_anchor_unavailable_not_verified_never_passed": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "missing/unreadable anchor yields NOT_VERIFIED, never PASS (stage1/validator.py)",
+ "mechanism": "s1.anchor_absence",
+ "patch_problems": [],
+ "run_id": "mech-s1.anchor_absence",
+ "suites": [
+  1
+ ]
+}

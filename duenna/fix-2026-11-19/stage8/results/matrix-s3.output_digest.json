@@ -1,0 +1,21 @@
+{
+ "changed": {
+  "test_access_admission.TestAccessAdmission.test_quoted_digest_checked_against_the_frozen_object": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageF.test_frozen_run_cannot_be_rebound": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "output gate: the output's quoted config digest is checked against the frozen object (stage3/admission.py)",
+ "mechanism": "s3.output_digest",
+ "patch_problems": [],
+ "run_id": "mech-s3.output_digest",
+ "suites": [
+  3
+ ]
+}

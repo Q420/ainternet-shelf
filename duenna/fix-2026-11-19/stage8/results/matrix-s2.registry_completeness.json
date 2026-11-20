@@ -1,0 +1,10 @@
+{
+ "changed": {},
+ "description": "verify(): record provenance digests must equal the writer's issued registry (stage2/construction.py)",
+ "mechanism": "s2.registry_completeness",
+ "patch_problems": [],
+ "run_id": "mech-s2.registry_completeness",
+ "suites": [
+  2
+ ]
+}
