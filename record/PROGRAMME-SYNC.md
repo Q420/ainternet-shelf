@@ -113,6 +113,12 @@ a defect, not a backlog item.
   replication to follow, testing the corrected requirement. Ben's standing
   instruction (2026-11-19): the Remmy–Vane loop on this work runs
   automatically; Ben is updated at results, not asked at each step.
+  API REPLICATION RUN (2026-11-19): the replication has run under
+  the amended design — current conditions carried, structured action
+  ledgers, verified starting state from A's execution. The package
+  is with Vane for blind assessment; Remmy's grades are held until
+  his commit.
+  → duenna/fix-2026-11-19/briefcase-tests/k8/replication/
   → duenna/fix-2026-11-19/briefcase-tests/k8/
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
   watcher now waits for the seat's response to finish before clicking
