@@ -685,3 +685,22 @@ a defect, not a backlog item.
   ([data-dil-message-id]); recognition of the very newest
   turn lags when virtualisation hasn't materialised it.
   → ~/workspace/bridge-v2/README.md (build record)
+- DUENNA UNPAUSED + FIRST-USE PAPERWORK DRAFTED
+  (2026-11-19 21:50): Ben lifted the pause — "proceed with
+  Vane with Duenna from where you left off." Where it left
+  off: the settled allocation awaits its first-use sequence
+  (ruling → governance record pinned → delegation issued →
+  adjudication). Remmy has drafted steps 2 and 3:
+  GOVERNANCE-RECORD-DRAFT (the ruling pinned: statuses,
+  gates, evidence set, adjudication record, DESIGNED
+  strength label stated plainly) and
+  OPERATIONAL-DELEGATION-DRAFT (Ben's grant to Claude as
+  Gate 2 adjudicator; effective only on his issuance).
+  Both are with Vane for Gate 1 examination of the
+  instruments themselves. Briefcase-52's reply (map v10
+  front-page fidelity) never reached Remmy's record; the
+  letter asks her to resend it or point at where it lives.
+  Still outstanding after her examination: Ben's issuance
+  of the delegation, then the adjudicator offer to Claude.
+  → duenna/fix-2026-11-19/GOVERNANCE-RECORD-DRAFT.md
+  → duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-DRAFT.md
