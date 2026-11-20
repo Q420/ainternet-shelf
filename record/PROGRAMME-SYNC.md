@@ -502,3 +502,19 @@ a defect, not a backlog item.
   Nineteen executions on the isolated rig (Kimi, temp 0,
   streaming driver, transport-only retries). Results and
   blind grading (Vane first) follow at completion.
+- K9 RUN STOPPED by Ben (2026-11-19 20:32 MST), minutes
+  in, during A's first execution — no execution completed,
+  no chain ran, nothing graded. Ben's correction, recorded
+  as the reason: K9 as built had each outgoing agent author
+  its own case, which is NOT how briefcases are created in
+  his design — a briefcase is built by the office from the
+  record (Generate → Verify → Pack → Approve) and handed TO
+  the agent. As built, the test measured handover
+  discipline, not the briefcase as designed. Two questions
+  parked at Ben's word, to be addressed together: (1) the
+  briefcase creation method and what a faithful K9 must
+  build at each hop; (2) the Staytrue file's place in the
+  briefcase work (no Staytrue file is in any case today;
+  Spec 02 sits in Duenna's governing corpus, approved,
+  unimplemented). The cleared K9 DESIGN stands; the run
+  machinery is what failed the founder's check.
