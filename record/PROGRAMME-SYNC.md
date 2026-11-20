@@ -518,3 +518,13 @@ a defect, not a backlog item.
   Spec 02 sits in Duenna's governing corpus, approved,
   unimplemented). The cleared K9 DESIGN stands; the run
   machinery is what failed the founder's check.
+- At Ben's direction (2026-11-19 20:34 MST): the two stop
+  reasons taken to Vane, with two drafts for a structure
+  discussion — STAYTRUE-DRAFT.md (the tether for the
+  briefcase work: eight standing rules, each citing its
+  ruling; current scope; the drift check) and
+  BRIEFCASE-STRUCTURE-DRAFT.md (creation by the office —
+  Generate → Verify → Pack → Approve; twelve case
+  sections; five structure questions as the agenda).
+  Both are DRAFTS for discussion, not settled text.
+  Sent to Vane as briefcase-59.
