@@ -23,6 +23,19 @@ compared against the PINNED hash captured at definition for the
 claimed identity, never merely against the contract's own
 callable (P6).
 
+K8 — SEALED INSTANCE BINDING (Gate 1 correction round 1).
+Construction binds the closure-selected callable on the
+instance, and the instance is then sealed: once construction
+completes, any assignment to a contract attribute — the bound
+callable above all, and the seal flag itself — raises
+AttributeError, as does any attempt to delete one. The
+declared identity therefore cannot be detached from the
+executed callable after construction by ordinary attribute
+manipulation: run() dispatches to the callable construction
+selected, or the attempt to change it has already failed
+loudly. The seal is the FrozenRun discipline of Stage 3,
+carried to this stage's contract class.
+
 K7 — VERDICT ISSUANCE IDENTITY (scoped to checker verdicts, as
 the design narrows it). The factory closure holds a private
 issuance record. Every verdict run() returns is recorded before
@@ -134,6 +147,36 @@ def make_checker_system():
             self.version = version
             self.expected_sha = expected_sha
             self.pinned = pinned
+            # K8 (Gate 1 correction round 1): construction is
+            # complete — seal the instance so the binding made
+            # above cannot be reassigned after the fact (see
+            # __setattr__ below).
+            self._sealed = True
+
+        def __setattr__(self, name, value):
+            # Sealed at the end of construction (the FrozenRun
+            # discipline of Stage 3, carried here): once sealed,
+            # no attribute of this contract may be rebound — the
+            # declared procedure identity stays bound to the
+            # callable construction selected from the closure
+            # registry, and the seal flag itself cannot be
+            # switched off by assignment.
+            if getattr(self, "_sealed", False):
+                raise AttributeError(
+                    "contract is sealed: its procedure binding "
+                    "was fixed at construction and cannot be "
+                    "rebound")
+            object.__setattr__(self, name, value)
+
+        def __delattr__(self, name):
+            # The same seal covers removal: the binding cannot
+            # be deleted off a sealed contract either.
+            if getattr(self, "_sealed", False):
+                raise AttributeError(
+                    "contract is sealed: its procedure binding "
+                    "was fixed at construction and cannot be "
+                    "removed")
+            object.__delattr__(self, name)
 
         def run(self, artefact):
             if not self.pinned:

@@ -382,3 +382,89 @@ directly. All Stage 4 evidence is builder-run within the
 harness scope; independent demonstration and production
 integration remain separate obligations, as in every prior
 stage.
+
+## Correction round 1 — Gate 1 return
+
+**The ruling answered** (VANE-GATE1-VERDICT.md, shelf commit
+bdc586c56fa037271a7803917f0d2878a8a45f31): Gate 1 FAIL, one
+targeted K8 correction. K7 is accepted as built
+(retained-object identity plus issuance fingerprint), as are
+the closure-held registry and the independently held pinned
+anchor. The one defect: construction stored the
+closure-selected procedure in an ordinary instance attribute
+and `run()` dispatched through it, so any caller could
+reassign the attribute after construction and a substitute
+would execute under a contract constructed with the canonical
+procedure identity — the pinned-hash verdict check catching
+the result only after the wrong callable had already run. K8
+requires the declared identity bound to the executed
+callable, not merely detected after the fact. Ordinary
+instance-attribute reassignment is inside the threat model;
+no redesign was asked for.
+
+**The correction** (`contract.py` only). The contract
+instance is sealed at the end of construction — the FrozenRun
+discipline of Stage 3, carried to this class. `__init__`
+completes every binding exactly as before (construction's
+registry-selection line is untouched; it is also an anchor
+the FX-R60i examination patches by exact string, and all five
+examination anchors in the file were verified to still occur
+exactly once after this correction), then sets the seal flag
+as its last act. From that moment `__setattr__` raises
+AttributeError on any assignment — the bound callable above
+all, and the seal flag itself, which cannot be switched off
+by assignment — and `__delattr__` raises on any removal.
+Reassignment is refused at the attempt, loudly: it neither
+silently succeeds nor silently no-ops, and dispatch remains
+tied to the callable construction selected from the closure
+registry.
+
+Why this seal over holding the callable in the factory
+closure: per-instance state in this class already lives in
+instance attributes, and the construction line that selects
+the callable is both the mechanism's existing shape and an
+examination anchor; a closure-held per-instance store would
+have been the redesign the ruling said was not needed. The
+guard is the smallest change that makes reassignment itself
+refused.
+
+**New tests, listed separately** (`tests/test_instance_binding.py`
+— a separate file by design: the FX-R60 examinations copy
+exactly the two mechanism suites into their sabotage variants
+and assert exact failing sets over those 29 tests, and this
+correction does not change their composition; the full-suite
+discovery run includes the new file normally).
+
+- (sabotage) Rebinding the instance procedure is refused.
+  After construction, assigning a substitute callable to the
+  instance's bound procedure raises AttributeError, as does
+  assigning the seal flag off. The binding is asserted to
+  still be the canonical procedure object, and a tampered
+  artefact run through that contract still takes the
+  canonical failure path ("FAILURE-PATH: invalid artefact") —
+  the canonical procedure executed and refused it; the
+  substitute, which returns the expected digest for any
+  payload and would have certified the artefact, never ran.
+- (control) Healthy control. A sealed contract executes the
+  canonical procedure on the genuine artefact, the verdict
+  carries the pinned implementation hash, and
+  `validate_verdict` returns "ACCEPTED".
+
+**Countercheck.** In a scratch copy with the seal's guard
+condition neutralised (both the assignment and deletion
+guards), exactly one of the two new tests fails — the
+sabotage, at "AttributeError not raised" (the reassignment
+succeeds and the defect is live again) — and the healthy
+control passes. The new assertion bites on precisely the
+corrected defect.
+
+**Counts after correction.** Stage 4: 36/36 — the 34 prior
+tests with unchanged outcomes (verdict issuance 18, procedure
+dispatch 11, examinations 5; the three sabotage examinations'
+asserted failing sets over the 29 mechanism tests are
+unchanged and still exact), plus the 2 new binding tests.
+Stage 1 regression: 68/68. Stage 2 regression: 27/27.
+Stage 3 regression: 38/38. `stage1/`, `stage2/` and `stage3/`
+unmodified. DR-09 / DR-11's K8 disposition awaits the
+examiner's re-examination of the corrected package, which has
+not yet occurred.
