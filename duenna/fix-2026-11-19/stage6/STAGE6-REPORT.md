@@ -8,13 +8,26 @@ Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 6 built from the plan, a
 ## Status of this report
 
 The Stage 6 harness is built and its full test suite passes
-(44/44, below), with the Stage 1 (68/68), Stage 2 (27/27),
-Stage 3 (38/38), Stage 4 (36/36) and Stage 5 (30/30) suites
-green as regression. This report is EVIDENCE for the
-examiner, not a verdict: a builder's green run establishes
-that the mechanism behaves as specified on the exercised
-cases; whether Stage 6 passes is the examiner's
-determination (Gate 1 discipline), not this report's.
+(54/54, including the correction-round section below), with
+the Stage 1 (68/68), Stage 2 (27/27), Stage 3 (38/38),
+Stage 4 (36/36) and Stage 5 (30/30) suites green as
+regression. This report is EVIDENCE for the examiner, not a
+verdict: a builder's green run establishes that the mechanism
+behaves as specified on the exercised cases; whether Stage 6
+passes is the examiner's determination (Gate 1 discipline),
+not this report's. That determination has since been made:
+Gate 1 PASS, verdict filed at shelf commit
+7ab62fe8752f3752c5cc1190a4ef6b68f565fd4d — DR-06 and DR-07
+advanced on demonstration within the harness, DR-19
+advanced, DR-14/15/17 re-examined with SYSTEM attribution
+established on the preserved evidence and no retroactive
+scoring (the named trees remain NOT-SCORED); DR-16
+untouched; DR-26 and production authority remain open; the
+historical-checker transcription limitation is preserved,
+and the counts in this report remain builder-run evidence.
+(This paragraph reconciled after the PASS, on the Stage 3–5
+precedent: the original submission count, 44/44, stood here
+while the correction section recorded the growing suite.)
 
 ## What was built
 

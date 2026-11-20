@@ -33,6 +33,33 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 6: **GATE 1 PASS — DR-06, DR-07, DR-19
+  ADVANCED** (2026-11-20). Attribution is one record per
+  failure under a pinned governance authority, referenced
+  identically (never restated) by closure, ledger and
+  adjudication; local labels cannot be converted into
+  attribution classes; discrepancies preserve both positions
+  under a gated lifecycle; K12 findings attribute
+  schema/checker/response disagreements by causal source;
+  G6 renders report locations from event identity. The
+  T02/T07/T09 disagreements were reproduced against the
+  preserved attempt-3 evidence (transcribed checkers first
+  reproducing the record's own CHECK_RESULT values) and each
+  attributed **SYSTEM** — the checkers demanded formats the
+  delivered instructions never prescribed; the trees remain
+  NOT-SCORED (no retroactive scoring). One correction round:
+  the authority capability could be self-issued by direct
+  construction — now token-gated to the verified issuance
+  path with point-of-use verification — and discrepancies
+  could cite nonexistent attributions — citation now
+  resolves against the verified snapshot, on mint and on
+  read-back. Final counts: Stage 6, 54/54; Stages 1–5
+  regressions green. Boundaries: counts builder-run; the
+  in-harness authority is a TEST fixture — production
+  authority and DR-26 remain open; DR-16 untouched. Stage 7
+  (receipt lifecycle) follows under Ben's Stages 2–9
+  approval.
+  → duenna/fix-2026-11-19/stage6/ (verdict @ 7ab62fe8)
 - DUENNA STAGE 5: **GATE 1 PASS — DR-01 ADVANCED** on
   demonstration within the harness (2026-11-20). Operation
   identity is a canonical function of (run, step, slot) —
