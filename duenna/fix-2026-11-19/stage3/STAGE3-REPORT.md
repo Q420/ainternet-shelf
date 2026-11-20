@@ -433,3 +433,95 @@ disposition is unchanged by this round: DR-03, DR-20 and
 DR-21 (established part) remain advanced on demonstration,
 subject to the examiner's re-examination of the corrected
 package — which has not yet occurred.
+
+## Correction round 2 — Gate 1 return
+
+The examiner's re-examination of the round-1 package (verdict
+`VANE-GATE1-VERDICT-CORRECTION-ROUND-1.md`, shelf commit
+`525991a0`) confirmed both round-1 corrections hold in the
+public paths examined — the frozen run retains its freeze-time
+identity, and receipt coverage is established from the recorded
+event. ONE integrity boundary remained, and it is corrected
+here. Nothing else in the stage changed.
+
+**The defect.** `OutputGate._recorded_receipt_body()` read the
+record and trusted an event whose stored digest matched the
+receipt id. It did not verify the record's CURRENT chain.
+Stage 1's `read_all()` is a raw read: the chain had been
+verified at the freeze, but the record could have changed
+since. Output admission could therefore trust receipt evidence
+without proving the current record intact — and could append
+an admission or refusal using the record object's stale
+in-memory chain head. The module's own docstring carried the
+flawed assumption ("verified at open... every append extends
+that chain"); it has been replaced with the discipline below.
+
+**The correction — the chain-integrity discipline Stage 2 and
+the freeze path already enforce, now at both F5 edges.** In
+`admit_output`, before any receipt evidence is read and before
+anything is appended, the gate recomputes the record's current
+chain (`verify_chain` over `read_all()`). On integrity failure
+it raises `OutputRefused` carrying
+`record_chain_verification_failed` with the first bad seq and
+appends NOTHING — not the admission, and not the refusal
+either: a refusal must never mutate the record whose integrity
+just failed. On a verified chain, the receipt event is read
+from the very snapshot that was verified (the verified events
+are passed to `_recorded_receipt_body`), and every existing
+check, refusal reason and recorded refusal behaves exactly as
+before.
+
+**The capture gate — finding.** It shares the flaw's write
+half. `CaptureGate` reads no record evidence for its decision
+(its anchors are the lane's live response and the frozen run's
+captured values), but it appends the served record, conflicts,
+invalidations, admissions and refusals onto the same record,
+trusting the record object's in-memory head — an append onto a
+record changed since the freeze would extend corruption with
+a stale head. The same rule now applies at its head: the
+current chain is verified before the lane call and any append;
+on failure it raises `CaptureRefused` carrying
+`record_chain_verification_failed` and appends nothing.
+
+**New tamper results — listed separately.** Each tampers with
+the record on disk through its real persistence path (the
+JSONL file) after a healthy freeze and a genuinely issued
+receipt, and asserts the record file BYTE-IDENTICAL after the
+refused attempt.
+
+- (g) Body edited, stored digest retained. The
+  `SUBJECT_VERIFICATION` event's body is edited on disk (its
+  endpoint replaced) with its digest retained — an event the
+  output gate never itself inspects, so no cross-check stands
+  between the gate and the broken chain. Admission of an
+  otherwise valid output is REFUSED, carrying
+  `record_chain_verification_failed: 2` (the tampered event's
+  seq); no `OUTPUT_ADMITTED` and no `OUTPUT_REFUSED` is
+  appended; the file is byte-identical to its tampered state.
+- (g-companion) A middle event deleted. The `POLICY_CHECK`
+  event is removed from the file. (Deleting the LAST event
+  would only truncate the chain to a still-valid prefix — the
+  wholesale-rewrite class Stage 1 assigns to the external
+  anchor; a middle deletion is what recomputation detects.)
+  Admission is REFUSED, carrying
+  `record_chain_verification_failed: 4` (the seq of the event
+  that followed the gap); nothing is appended; the file is
+  byte-identical.
+- (g-capture) The capture gate on the body-edited record.
+  `admit_capture` raises `CaptureRefused` carrying
+  `record_chain_verification_failed: 2`; nothing is appended;
+  the file is byte-identical; the capture is not admitted.
+
+**Countercheck.** In a scratch copy with both gates' chain
+checks neutralised (the pre-correction behaviour), exactly
+the three (g) tests fail and the other 26 pass — the new
+assertions bite on precisely the corrected defect.
+
+**Counts after correction.** Stage 3: 29/29 (the 26 prior
+tests with unchanged outcomes, plus (g) ×3). Stage 1
+regression: 68/68. Stage 2 regression: 27/27. `stage1/` and
+`stage2/` unmodified. The register disposition is unchanged
+by this round: DR-03, DR-20 and DR-21 (established part)
+remain advanced on demonstration, subject to the examiner's
+re-examination of the corrected package — which has not yet
+occurred.

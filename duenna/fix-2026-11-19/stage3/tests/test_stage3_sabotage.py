@@ -24,11 +24,21 @@ not proceed either).
     capability holding the frozen configuration must not be
     rebound after freeze — the digest bound in RUN_STARTED is
     the digest the run, the access path and the gate honour.
+(g) record tampered after issuance (Gate 1 correction
+    round 2): the output gate trusted a receipt event whose
+    stored digest matched, without verifying the record's
+    CURRENT chain — a record changed since the freeze could
+    supply evidence, and receive admissions, unproven. The
+    gate (and the capture gate, which appends onto the same
+    record) must recompute the chain first; on failure they
+    raise and append NOTHING — the tampered file is asserted
+    byte-identical afterwards.
 
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage3/tests -v
 """
 
 import inspect
+import json
 import os
 import sys
 import tempfile
@@ -43,6 +53,7 @@ from admission import (  # noqa: E402
     CAPTURE_ADMITTED,
     CAPTURE_REFUSED,
     CONFIG_CONFLICT,
+    OUTPUT_ADMITTED,
     OUTPUT_REFUSED,
     CaptureGate,
     CaptureRefused,
@@ -51,8 +62,10 @@ from admission import (  # noqa: E402
 )
 from config import freeze_config  # noqa: E402
 from binder import (  # noqa: E402
+    CHAIN_VERIFICATION_FAILED,
     CONFIG_FROZEN,
     FREEZE_REFUSED,
+    POLICY_CHECK,
     RUN_INVALIDATED,
     RUN_STARTED,
     SUBJECT_CONFLICT,
@@ -519,6 +532,157 @@ class TestSabotageF(Stage3SabotageBase):
         self.assertEqual(outputs.admitted_outputs(), [])
         self.assertEqual(
             len(events_of(self.record, OUTPUT_REFUSED)), 1)
+
+
+class TestSabotageG(Stage3SabotageBase):
+    """(g) The record is tampered with AFTER the freeze and
+    the receipt's issuance, through its real persistence path
+    (the JSONL file EventRecord appends to). The output gate
+    must verify the record's CURRENT chain before trusting the
+    receipt evidence or writing anything; on integrity failure
+    it raises and appends nothing, so the tampered file is
+    byte-identical after the attempt. The capture gate, which
+    appends admissions and refusals onto the same record, is
+    under the same rule."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.captures = CaptureGate(self.run, StaticLane(PIN))
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+        self.receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+
+    def _output(self, **overrides):
+        output = {
+            "output_id": "OUT-G",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": self.receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        output.update(overrides)
+        return output
+
+    def _seq_of(self, event_type):
+        for ev in self.record.read_all():
+            if ev.get("type") == event_type:
+                return ev["seq"]
+        raise AssertionError(f"no {event_type} event on record")
+
+    def _edit_event_body(self, event_type, mutate):
+        """Edit one event's body on disk, RETAINING its stored
+        digest — the naive in-place edit. The line is rewritten
+        in the record's own form (one JSON object per line, as
+        EventRecord.append writes it); every other line keeps
+        its original bytes."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        out = []
+        hit = False
+        for line in lines:
+            ev = json.loads(line)
+            if ev.get("type") == event_type and not hit:
+                mutate(ev["body"])
+                hit = True
+                out.append(json.dumps(
+                    ev, ensure_ascii=False).encode("utf-8"))
+            else:
+                out.append(line)
+        self.assertTrue(hit)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(out) + b"\n")
+
+    def _delete_event(self, event_type):
+        """Remove one event's line from the record file."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        kept = [line for line in lines
+                if json.loads(line).get("type") != event_type]
+        self.assertEqual(len(kept), len(lines) - 1)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(kept) + b"\n")
+
+    def _file_bytes(self):
+        with open(self.path, "rb") as f:
+            return f.read()
+
+    def test_output_admission_on_body_edited_record_writes_nothing(
+            self):
+        # The tamper targets an event the output gate never
+        # itself inspects — the subject verification — so no
+        # cross-check stands between the gate and the broken
+        # chain: pre-correction, the receipt evidence (untouched,
+        # digest-matching) would be honoured and the admission
+        # appended with the record object's stale head.
+        bad_seq = self._seq_of(SUBJECT_VERIFICATION)
+        self._edit_event_body(
+            SUBJECT_VERIFICATION,
+            lambda body: body.update(
+                {"endpoint": "lane://forged"}))
+        tampered = self._file_bytes()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output())
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            bad_seq)
+        # Nothing was appended — not the admission, and not
+        # even the refusal: the file is byte-identical to its
+        # tampered state.
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(events_of(self.record, OUTPUT_ADMITTED),
+                         [])
+        self.assertEqual(events_of(self.record, OUTPUT_REFUSED),
+                         [])
+
+    def test_output_admission_on_deleted_event_record_writes_nothing(
+            self):
+        # Companion: a MIDDLE event is deleted. (Deleting the
+        # last event would only truncate the chain to a still-
+        # valid prefix — the wholesale-rewrite class Stage 1
+        # assigns to the external anchor; a middle deletion is
+        # what chain recomputation detects.) The first bad seq
+        # is the event that followed the gap.
+        first_bad = self._seq_of(CONFIG_FROZEN)
+        self._delete_event(POLICY_CHECK)
+        tampered = self._file_bytes()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output())
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            first_bad)
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(events_of(self.record, OUTPUT_ADMITTED),
+                         [])
+        self.assertEqual(events_of(self.record, OUTPUT_REFUSED),
+                         [])
+
+    def test_capture_gate_on_body_edited_record_writes_nothing(
+            self):
+        # The capture gate appends the served record, conflicts
+        # and admissions onto the same record: same rule. On a
+        # broken chain it raises and appends nothing.
+        bad_seq = self._seq_of(SUBJECT_VERIFICATION)
+        self._edit_event_body(
+            SUBJECT_VERIFICATION,
+            lambda body: body.update(
+                {"endpoint": "lane://forged"}))
+        tampered = self._file_bytes()
+        with self.assertRaises(CaptureRefused) as ctx:
+            self.captures.admit_capture("CAP-1")
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            bad_seq)
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(self.captures.admitted_captures(), [])
 
 
 if __name__ == "__main__":

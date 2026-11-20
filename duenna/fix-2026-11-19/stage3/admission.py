@@ -58,11 +58,24 @@ under its own identity. An output depending on a refused
 capture is refused. A subject-dependent output of an
 invalidated run is refused.
 
-All refusals here happen on a verified chain (the record was
-verified at open by Stage 1's constructor, and every append
-extends that chain), so refusals are recorded — the Stage 2
-discipline's other branch: recording a refusal is sound exactly
-because the chain it extends is valid.
+RECORD INTEGRITY (Gate 1 correction round 2). Both gates
+recompute the record's CURRENT chain (Stage 1's
+``verify_chain`` over ``read_all()``) before trusting any
+evidence read from the record and before appending anything.
+Verification at some earlier moment — at the record's open, or
+at the freeze — does not cover the record as it stands when
+the gate acts: ``read_all()`` is a raw read, and an event whose
+stored digest matches proves nothing until the chain over the
+current contents recomputes. If the chain does not verify, the
+gate raises its refusal exception carrying
+``record_chain_verification_failed`` and appends NOTHING — a
+refusal must never mutate the record whose integrity just
+failed, and no admission or refusal may be written with a
+stale in-memory chain head (Stage 2, correction round 3; the
+freeze path's discipline, carried to both F5 edges). Refusals
+on a verified chain are recorded as before: recording is sound
+exactly because the chain it extends was verified in this
+operation, immediately before the append.
 
 Design references: ID-SYSTEM-DESIGN-DRAFT-V3.md (K2, K3, G5),
 PROCESS-TREE-AND-PLAN.md v2, Stage 3; DEFECT-REGISTER.md DR-03.
@@ -70,8 +83,11 @@ PROCESS-TREE-AND-PLAN.md v2, Stage 3; DEFECT-REGISTER.md DR-03.
 
 from __future__ import annotations
 
+from record import verify_chain
+
 from access import CONSUMPTION_RECEIPT
-from binder import (ATTRIBUTION_UNKNOWN, RUN_INVALIDATED,
+from binder import (ATTRIBUTION_UNKNOWN,
+                    CHAIN_VERIFICATION_FAILED, RUN_INVALIDATED,
                     SUBJECT_CONFLICT)
 from config import INVALIDATE_RUN
 
@@ -134,7 +150,17 @@ class CaptureGate:
         iff that identity is the run's verified subject
         identity. Refusals raise :class:`CaptureRefused` after
         recording the conflict (on a subject mismatch) and the
-        refusal."""
+        refusal.
+
+        The record's current chain is verified first (Gate 1
+        correction round 2): this gate appends the served
+        record, any conflict, any invalidation and the
+        admission or refusal, and an append made with a stale
+        in-memory chain head onto a record that no longer
+        verifies would extend corruption. A chain failure
+        raises :class:`CaptureRefused` carrying
+        ``record_chain_verification_failed`` and appends
+        nothing — not even the refusal."""
         if not isinstance(capture_id, str) \
                 or not capture_id.strip():
             raise ValueError(
@@ -144,6 +170,11 @@ class CaptureGate:
                 f"capture {capture_id!r} is already admitted; a "
                 f"capture is one call and cannot be presented "
                 f"twice")
+        chain_ok, first_bad_seq = verify_chain(
+            self.record.read_all())
+        if not chain_ok:
+            raise CaptureRefused(capture_id, {
+                CHAIN_VERIFICATION_FAILED: first_bad_seq})
         served_identity, endpoint = self.lane(
             self.run.config.subject_pin)
         self.record.append(CAPTURE_SERVED, {
@@ -200,7 +231,13 @@ class OutputGate:
     frozen object, the access path's registry, and the recorded
     receipt events the registry names — never from the output's
     own claims, and never from a live receipt object's current
-    state (G5)."""
+    state (G5).
+
+    The receipt events are read from the snapshot whose chain
+    THIS admission recomputed and verified (Gate 1 correction
+    round 2): a stored digest matching the receipt id is a
+    claim about the record, and the gate does not honour claims
+    about a record whose current contents do not recompute."""
 
     def __init__(self, frozen_run, access, capture_gate):
         self.run = frozen_run
@@ -212,12 +249,14 @@ class OutputGate:
     def admitted_outputs(self) -> list[str]:
         return sorted(self._admitted)
 
-    def _recorded_receipt_body(self, receipt) -> dict | None:
+    def _recorded_receipt_body(self, receipt,
+                               events) -> dict | None:
         """The body of the ``CONSUMPTION_RECEIPT`` event the
-        registry's receipt names, read back from the record —
-        the recorded event is what the gate honours. Returns
-        None when no such event is on the record."""
-        for ev in self.record.read_all():
+        registry's receipt names, taken from ``events`` — the
+        record snapshot whose chain the caller has just
+        verified. The recorded event is what the gate honours.
+        Returns None when no such event is on the record."""
+        for ev in events:
             if ev.get("type") == CONSUMPTION_RECEIPT \
                     and ev.get("digest") == receipt.receipt_id:
                 body = ev.get("body")
@@ -234,12 +273,32 @@ class OutputGate:
         the frozen object, the receipt registry, or the capture
         registry. Refusal raises :class:`OutputRefused` after
         recording any value mismatch as a ``CONFIG_CONFLICT``
-        and the refusal itself as ``OUTPUT_REFUSED``."""
+        and the refusal itself as ``OUTPUT_REFUSED`` — except a
+        record-integrity failure, which raises
+        :class:`OutputRefused` carrying
+        ``record_chain_verification_failed`` and records
+        nothing at all."""
         output_id = output.get("output_id")
         if not isinstance(output_id, str) \
                 or not output_id.strip():
             raise ValueError(
                 f"output must name an output_id: {output_id!r}")
+        # Record integrity, prior to everything (Gate 1
+        # correction round 2): recompute the record's CURRENT
+        # chain over the events as they stand. The chain was
+        # verified at the freeze, but the record could have
+        # changed since; no receipt evidence is trusted, and no
+        # admission or refusal is appended, until the record
+        # the gate is about to read from — and extend — proves
+        # intact in this operation. A chain failure raises
+        # without appending anything: the refusal is NOT
+        # recorded, because recording it would mutate the
+        # record whose integrity just failed.
+        events = self.record.read_all()
+        chain_ok, first_bad_seq = verify_chain(events)
+        if not chain_ok:
+            raise OutputRefused(output_id, {
+                CHAIN_VERIFICATION_FAILED: first_bad_seq})
         problems: dict = {}
 
         if output.get("subject_dependent", True) \
@@ -256,11 +315,13 @@ class OutputGate:
                 "receipt_id")
         else:
             # The receipt's facts are established from the
-            # RECORDED event, read back from the record — not
-            # from the live object's current state. A registry
-            # object that disagrees with its recorded event
-            # gains no admission.
-            recorded = self._recorded_receipt_body(receipt)
+            # RECORDED event, in the snapshot whose chain was
+            # verified at the head of this admission — not from
+            # a fresh raw read, and not from the live object's
+            # current state. A registry object that disagrees
+            # with its recorded event gains no admission.
+            recorded = self._recorded_receipt_body(
+                receipt, events)
             if recorded is None:
                 problems["receipt_event_not_on_record"] = \
                     receipt.receipt_id
