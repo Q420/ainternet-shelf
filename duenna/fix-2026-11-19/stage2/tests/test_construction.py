@@ -6,6 +6,13 @@ nothing. A well-formed artefact, built from its provenance entries
 on the real record, must close; a field-for-field faithful artefact
 must pass equality.
 
+Correction round (Gate 1, 2026-11-20): construction now takes the
+canonical writer (ProvenanceLog) as a capability. These controls
+exercise that path, and test_fresh_writer_over_existing_record_
+refuses pins the stated honest boundary: a fresh writer over a
+reloaded record has an empty registry and refuses everything
+(fail-closed).
+
 Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage2/tests -v
 """
 
@@ -22,9 +29,8 @@ from construction import (  # noqa: E402
     CONSTRUCTION_CLOSED,
     CONSTRUCTION_REFUSED,
     ConstructionRefused,
-    append_provenance_entry,
+    ProvenanceLog,
     construct_artefact,
-    read_provenance_entries,
 )
 
 VALUES = {
@@ -44,14 +50,14 @@ class TestConstruction(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.path = os.path.join(self.tmp.name, "record.jsonl")
         self.record = EventRecord(self.path)
+        self.log = ProvenanceLog(self.record)
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def _enter_all(self, artefact_id="ART-1", values=None):
         for field, value in (values or VALUES).items():
-            append_provenance_entry(self.record, artefact_id, field,
-                                    value)
+            self.log.append_entry(artefact_id, field, value)
 
     def _events_of(self, event_type):
         return [ev for ev in self.record.read_all()
@@ -59,8 +65,7 @@ class TestConstruction(unittest.TestCase):
 
     def test_well_formed_artefact_closes(self):
         self._enter_all()
-        artefact = construct_artefact(self.record, "ART-1",
-                                      TEST_SCHEMA)
+        artefact = construct_artefact(self.log, "ART-1", TEST_SCHEMA)
         self.assertEqual(artefact, VALUES)
         closed = self._events_of(CONSTRUCTION_CLOSED)
         self.assertEqual(len(closed), 1)
@@ -73,8 +78,7 @@ class TestConstruction(unittest.TestCase):
 
     def test_faithful_artefact_passes_field_for_field(self):
         self._enter_all()
-        artefact = construct_artefact(self.record, "ART-1",
-                                      TEST_SCHEMA)
+        artefact = construct_artefact(self.log, "ART-1", TEST_SCHEMA)
         for field in TEST_SCHEMA.artefact_fields:
             self.assertIn(field, artefact)
             self.assertEqual(artefact[field], VALUES[field])
@@ -83,7 +87,7 @@ class TestConstruction(unittest.TestCase):
 
     def test_record_chain_still_verifies_after_construction(self):
         self._enter_all()
-        construct_artefact(self.record, "ART-1", TEST_SCHEMA)
+        construct_artefact(self.log, "ART-1", TEST_SCHEMA)
         ok, bad = verify_chain(self.record.read_all())
         self.assertTrue(ok, f"chain failed at seq {bad}")
 
@@ -91,16 +95,14 @@ class TestConstruction(unittest.TestCase):
         self._enter_all("ART-1")
         self._enter_all("ART-2", values={**VALUES,
                                          "run_id": "RUN-OTHER"})
-        entries = read_provenance_entries(self.record, "ART-1")
+        entries = self.log.issued_entries("ART-1")
         self.assertEqual(len(entries), 8)
-        artefact = construct_artefact(self.record, "ART-1",
-                                      TEST_SCHEMA)
+        artefact = construct_artefact(self.log, "ART-1", TEST_SCHEMA)
         self.assertEqual(artefact["run_id"], "RUN-TEST-1")
 
     def test_no_entries_at_all_refuses_and_records_refusal(self):
         with self.assertRaises(ConstructionRefused) as ctx:
-            construct_artefact(self.record, "ART-MISSING",
-                               TEST_SCHEMA)
+            construct_artefact(self.log, "ART-MISSING", TEST_SCHEMA)
         self.assertEqual(
             ctx.exception.details["schema_fields_absent_from_both"],
             sorted(TEST_SCHEMA.artefact_fields))
@@ -110,18 +112,33 @@ class TestConstruction(unittest.TestCase):
 
     def test_duplicate_entry_for_one_field_refuses(self):
         self._enter_all()
-        append_provenance_entry(self.record, "ART-1",
-                                "fixtures_total", 9)
+        self.log.append_entry("ART-1", "fixtures_total", 9)
         with self.assertRaises(ConstructionRefused) as ctx:
-            construct_artefact(self.record, "ART-1", TEST_SCHEMA)
+            construct_artefact(self.log, "ART-1", TEST_SCHEMA)
         self.assertEqual(ctx.exception.details["duplicate_entries"],
                          ["fixtures_total"])
         self.assertEqual(self._events_of(CONSTRUCTION_CLOSED), [])
 
     def test_unencodable_provenance_value_refused_at_entry(self):
         with self.assertRaises(ValueError):
-            append_provenance_entry(self.record, "ART-1", "artifact",
-                                    object())
+            self.log.append_entry("ART-1", "artifact", object())
+
+    # The honest boundary, fail-closed: the writer's registry is the
+    # provenance authority in this harness, so a FRESH writer over a
+    # reloaded record — same file, chain intact — has issued nothing
+    # and must refuse everything, naming every entry as unissued.
+    def test_fresh_writer_over_existing_record_refuses(self):
+        self._enter_all()
+        reloaded = EventRecord(self.path)
+        fresh_log = ProvenanceLog(reloaded)
+        with self.assertRaises(ConstructionRefused) as ctx:
+            construct_artefact(fresh_log, "ART-1", TEST_SCHEMA)
+        self.assertEqual(
+            ctx.exception.details["unissued_provenance_events"],
+            list(range(1, len(VALUES) + 1)))
+        closed = [ev for ev in reloaded.read_all()
+                  if ev["type"] == CONSTRUCTION_CLOSED]
+        self.assertEqual(closed, [])
 
 
 if __name__ == "__main__":

@@ -226,3 +226,175 @@ integration belongs to the later stages.
   rewrite detection) are Stage 1's, with Stage 1's stated limits —
   including that chain verification alone does not defeat a
   wholesale re-chained rewrite (the external anchor's scope).
+  **[This bullet is superseded by the correction round below:
+  provenance entries are no longer trusted as appended — see
+  "Correction round — Gate 1 return".]**
+
+---
+
+## Correction round — Gate 1 return (2026-11-20)
+
+**Verdict cited:** VANE-GATE1-VERDICT.md (Stage 2), filed on the
+shelf at commit c339dd097aa2b11c533ebd7ff25f6e05e327383c —
+**FAIL — RETURN TO STAGE 2 FOR CORRECTION. DR-02 NOT ADVANCED on
+the first submission.** The frozen schema mechanism (finding 1)
+and the three-way construction close (finding 2) PASS; the Stage 5
+dependency decision is ACCEPTED (finding 5) and stands as recorded
+above. The decisive finding is finding 3, the canonical provenance
+boundary. This section is appended to the original report; the
+original content above is preserved, and the statements it
+supersedes are marked where they stand (the "What was built"
+description of `append_provenance_entry` / `read_provenance_entries`
+as the canonical entry path, and the final Boundaries bullet).
+
+### The finding
+
+`EventRecord.append()` accepts arbitrary event types and bodies.
+The first submission's `read_provenance_entries()` trusted the
+`PROVENANCE_ENTRY` type string, so a caller could directly append
+a forged, complete, schema-matching `PROVENANCE_ENTRY` event
+through the generic record API — bypassing
+`append_provenance_entry()` — and the constructor would accept it.
+"Canonical" described a convention, not an enforced property.
+Sabotage (e) tested a foreign event type (`LEDGER_ENTRY`); it did
+not cover this forgery. The verdict's instruction, followed here:
+do not merely add a second comparison after reading the same
+forged event — the issue is provenance authority, not equality of
+its contents.
+
+### The correction — the canonical writer
+
+`construction.py` is revised (schema.py unchanged; stage1/
+untouched):
+
+- **`ProvenanceLog` — the canonical writer, sole issuer of
+  provenance entries.** `ProvenanceLog.append_entry` validates and
+  appends each entry (the validation of the old free function,
+  unchanged) and registers exactly what it issued: per artefact,
+  the ordered (field, value) pairs plus the record event's seq and
+  digest returned at append time. The Stage 1 record is
+  hash-chained, so each digest binds its registry entry to the
+  exact event (seq, predecessor, type, body) the record accepted.
+- **Construction takes the writer as a capability.**
+  `ArtefactConstructor(log, schema)` / `construct_artefact(log,
+  ...)` — there is no construction path from the raw record alone.
+  The free functions `append_provenance_entry` and
+  `read_provenance_entries` are removed; the writer's
+  `issued_entries(artefact_id)` is the only provenance read.
+- **Verification before build.** `construct` first calls
+  `ProvenanceLog.verify(artefact_id)`, which cross-checks the
+  record against the registry — by digest, never by trusting a
+  body's claims, and never by comparing a suspect event's contents
+  for equality:
+  - *Sole issuer (global):* every `PROVENANCE_ENTRY` event on the
+    record must carry a digest this writer issued. Any other such
+    event — forged, malformed, or another writer's — is named by
+    seq under `unissued_provenance_events` and refuses
+    construction. A forgery poisons the close; it never sneaks in.
+  - *Registry completeness (per artefact):* the record's
+    `PROVENANCE_ENTRY` digests for the artefact, in record order,
+    must equal the registry's digests in issue order; any issued
+    entry missing or altered is named under
+    `issued_entries_missing_or_altered`.
+  A boundary refusal is recorded on the record as a
+  `CONSTRUCTION_REFUSED` event carrying the violation details, and
+  raised as `ConstructionRefused` — the same recorded-refusal
+  discipline as a close refusal. Only after verification passes
+  are the artefact's entries taken from the registry, built from,
+  and closed by G2's three-way comparison, whose semantics are
+  unchanged from the examined submission.
+
+### New sabotage results — each separate
+
+8. **(g) Forged canonical-type event set (the verdict's required
+   case)** — test_sabotage_g_forged_canonical_events_refused —
+   REFUSED, as required. A complete, schema-matching set of eight
+   `PROVENANCE_ENTRY` events is appended directly via
+   `record.append`, bypassing the canonical writer; the bodies are
+   exactly right, so any content comparison would admit them. The
+   actual constructor refuses, naming all eight events by seq
+   under `unissued_provenance_events`; the refusal is recorded;
+   no CONSTRUCTION_CLOSED event.
+9. **(mixed) Genuine entries plus one forged entry** —
+   test_mixed_genuine_and_forged_entries_refused — REFUSED, as
+   required. All eight fields are issued by the canonical writer
+   (a set that would close on its own), then ONE forged
+   `PROVENANCE_ENTRY` is appended via the generic API. The
+   constructor refuses, naming the forged event's seq under
+   `unissued_provenance_events`; the refusal is recorded; no
+   CONSTRUCTION_CLOSED event.
+10. **(malformed) Malformed canonical-type bodies** —
+    test_malformed_canonical_bodies_controlled_refusal — REFUSED,
+    as required, in a controlled and recorded way. Six malformed
+    bodies are appended via the generic API under the
+    `PROVENANCE_ENTRY` type: a dict missing field/value, a field
+    of None, an unhashable (list) field, a dict with no
+    artefact_id, a string body, and a null body. Construction
+    raises `ConstructionRefused` naming all six seqs under
+    `unissued_provenance_events`, records the refusal, and admits
+    nothing — no uncaught exception (the unhashable field in
+    particular never reaches the comparison code).
+
+Sabotages (a)–(f) and the value-mismatch companion are preserved
+as separate cases, re-expressed through the writer API where they
+previously used the removed free functions; all still REFUSE with
+the same differing-field evidence as reported above. The positive
+controls still close. One positive control is added:
+**fresh writer over an existing record refuses** —
+test_fresh_writer_over_existing_record_refuses — PASS (i.e. the
+refusal occurs as the boundary states): a new `ProvenanceLog` over
+the reloaded record (chain intact) has an empty registry and
+refuses construction of a fully-entered artefact, naming all
+eight entries as unissued.
+
+### Honest boundary of the correction
+
+Enforcement holds where the canonical writer is the sole issuer
+within the construction process: provenance authority in this
+harness is the continuity of the writer and its registry. A fresh
+writer over a reloaded record refuses everything (fail-closed) —
+it cannot distinguish the record's genuine entries from forged
+ones, and says so by refusing rather than by trusting. Wholesale
+replacement of the record itself is outside this boundary: the
+same out-of-scope class as Stage 1's C3 limitation (a coordinated
+record+anchor rewrite is not defeated), which belongs to the
+external anchor, not to this stage. Nothing in this correction
+claims past that line.
+
+### Test evidence — correction round (builder-run)
+
+Full suite run 2026-11-20, after the correction:
+
+Command: `python3 -m unittest discover -s tests -v` (from stage2/)
+
+Result: **Ran 25 tests — OK (25 passed, 0 failed)**, exit code 0.
+
+Per file:
+- tests/test_schema.py — 7 tests, all ok (unchanged)
+- tests/test_construction.py — 8 tests, all ok (7 carried over to
+  the writer API; 1 added — the fresh-writer boundary control)
+- tests/test_stage2_sabotage.py — 10 tests, all ok ((a)–(f) and
+  the value-mismatch companion preserved; (g), (mixed) and
+  (malformed) added)
+
+Stage 1 regression run 2026-11-20 (from stage1/):
+
+Command: `python3 -m unittest discover -s tests`
+
+Result: **Ran 68 tests — OK (68 passed, 0 failed)**, exit code 0 —
+no regression; stage1/ was not modified.
+
+These counts are builder-run evidence, as before; no independent
+examiner execution has yet occurred on the corrected package.
+
+### Register effect — corrected disposition
+
+Per the verdict, DR-02 was **NOT ADVANCED** on the first
+submission, and the "Register effect" section above is superseded
+to that extent: it described advancement on demonstration before
+the examiner's examination had occurred. The corrected position:
+the boundary defect the examiner found is corrected in the
+harness and demonstrated by sabotages (g), (mixed) and
+(malformed) above; whether DR-02 advances on this corrected
+evidence is the examiner's determination on re-examination, which
+has not yet occurred. This report claims nothing further.
