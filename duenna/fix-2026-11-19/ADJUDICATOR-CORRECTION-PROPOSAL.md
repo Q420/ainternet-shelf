@@ -1,4 +1,8 @@
-# SYSTEM CORRECTION PROPOSAL — the production adjudicator (v2)
+# SYSTEM CORRECTION PROPOSAL — the production adjudicator (v2, refined)
+(v2 wording refinement applied per the examiner's
+re-examination, briefcase-37: option (c)'s parenthetical
+corrected — an unassigned responsibility is not an assumed
+existing practice.)
 
 Drafted by Remmy, 2026-11-19, on Ben's commission ("devise the
 system correction with evidence, not improv"). v2 revised per
@@ -146,8 +150,11 @@ smuggled in as proved:
       evidence produced independently, settlement made by a
       distinct holder of Ben's delegation.
   (c) Settlement reserved to Ben himself, on examination
-      evidence — the ternary's present de facto practice,
-      named as an option rather than assumed as a default.
+      evidence — a possible explicit allocation of the
+      presently unresolved responsibility. (The inventory
+      establishes that the responsibility is unassigned; it
+      does not establish that Ben performs it in practice,
+      and this option is not worded as though it did.)
 
 ## The numbering
 

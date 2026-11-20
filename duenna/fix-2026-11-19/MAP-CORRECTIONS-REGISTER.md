@@ -1,6 +1,8 @@
-# CORRECTIONS ARISING FROM THE NAVIGABLE MAP — register v2
+# CORRECTIONS ARISING FROM THE NAVIGABLE MAP — register v3
 (v2: amended per the examiner's examination of v1 — C-05 and
-C-10 tightened, C-13 added. briefcase-35.)
+C-10 tightened, C-13 added. briefcase-35.
+v3: C-03 and C-04 precision amendments per the examiner's
+re-examination of v2. briefcase-37.)
 
 Drafted by Remmy, 2026-11-19, on Ben's widened commission:
 the correction work covers ALL things found based on the map,
@@ -40,8 +42,15 @@ Needs: the residual joins C-07 (an outside observer).
 ## C-03 — One examiner, a rolling window (map: s-examiner-window)
 (1) Three of Vane's replies were nearly lost to the context-
     full race; examinations depend on one seat's window.
-(2) Examinations must survive seat rollovers — packages fully
-    shelf-resident so any qualified seat can pick up mid-flight.
+(2) Examinations must survive seat rollovers. Shelf residency
+    alone does NOT establish continuity: the package must
+    preserve the STATE of the examination — the question being
+    investigated, the evidence already examined, completed
+    work, outstanding questions, and the reasoning and
+    decisions that must not be repeated or silently abandoned.
+    A second examiner lane is not the same correction as
+    continuity: another seat's availability does not itself
+    resume an interrupted examination.
 (3) PARTLY ESTABLISHED: shelf-first delivery works today.
     A second examiner lane (Claude) is NOT ESTABLISHED.
 Needs: Ben's ruling on the Claude workload question (open
@@ -50,8 +59,13 @@ since 2026-11-19 ~15:58).
 ## C-04 — One copy of the truth (map: s-single-record)
 (1) The shelf manifest still names bridge v0.19.0 while the
     live bridge is v0.20.5 — staleness, live in the record now.
-(2) Currency must be detectable, not only disciplined:
-    staleness visible where it stands.
+(2) Currency must be detectable, not only disciplined. The
+    check must detect a MISMATCH between the identity/version
+    of the live artifact and the identity recorded in the
+    manifest or equivalent canonical record — a timestamp
+    comparison alone cannot establish currency. (Live example:
+    the manifest says bridge v0.19.0; the running bridge is
+    v0.20.5.)
 (3) The rule and the sync file are ESTABLISHED practice; any
     mechanical staleness check is NOT ESTABLISHED.
 Needs: a small design (staleness check), then Ben's tap.

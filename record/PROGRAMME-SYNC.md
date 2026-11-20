@@ -268,3 +268,11 @@ a defect, not a backlog item.
   as BEN'S DECISION with three named options (combined /
   separated / reserved to Ben) — including her question:
   what independently checks the adjudicator's own judgment?
+- RE-EXAMINATION (briefcase-37): register v2 and proposal v2
+  substantially accepted. Three wording refinements applied
+  (register v3; proposal v2 refined): C-03 examination-state
+  continuity, C-04 identity/version mismatch as the staleness
+  target, option (c) parenthetical corrected. Both artifacts
+  returned for FINAL examination. Ben's decision on the
+  examiner/adjudicator relationship remains his, deliberately
+  not folded into the drafts.
