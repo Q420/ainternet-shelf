@@ -188,3 +188,23 @@ a defect, not a backlog item.
 - With the examiner for examination of the CONTENT (the
   drawing is mechanical). K9's five tightenings wait behind
   this, as named in the trade before Ben's tap.
+
+- MAP EXAMINATION (briefcase-26, 2026-11-19): NOT content-cleared
+  on first examination. Confirmed errors, all since amended in
+  the data and re-rendered: the Examiner's input flow corrected
+  to RECORD originals + pinned contract (never Evaluator
+  conclusions; findings now a labelled comparison-only path);
+  G4 removed as a flow gate (it is a validation); G3 relocated
+  to insertion; G5 made cross-cutting; G2 moved to the F5 edge;
+  F5 governance/enforcement edges now represented; RECORD's
+  closure claim qualified to Stage 1's scope; Remarvis gained
+  the reverse command path; seats consult the record directly;
+  three gate associations scoped to their real conditions; an
+  eleventh stress point added (the second check that isn't).
+  Gate strength labels audited: all correct as drawn.
+- OPEN DISCREPANCY for Ben: the adjudicator vacancy was cited
+  in programme usage (and in this file) as "DR-13", but the
+  merged register's DR-13 is the R65 required-set qualification.
+  The map now cites no number for the vacancy. The numbering
+  collision itself is Ben's to reconcile.
+- Amended map is back with the examiner for re-examination.

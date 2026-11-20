@@ -13,7 +13,7 @@
    "breaks": "Stacked letters desync the seat. The presend guard checks for an unconsumed reply before any send.",
    "carries": "Assignments, packages, results — one letter at a time, shelf paths instead of long bodies.",
    "from": "remmy",
-   "gate": "g-presend",
+   "gate": null,
    "id": "f-letters-out",
    "name": "Letters out",
    "to": "bridge"
@@ -24,14 +24,14 @@
    "from": "bridge",
    "gate": "g-watchdog",
    "id": "f-delivery",
-   "name": "Delivery to the seat",
+   "name": "Delivery to the seat (the Vane route)",
    "to": "vane"
   },
   {
    "breaks": "The context-full banner can race the end of a reply; the watcher now waits for the response to finish before any rollover click. Capture is not wake — a captured reply nobody reads is a stalled loop.",
    "carries": "Examinations, verdicts, acknowledgements — routed by the marker, captured to the pool.",
    "from": "vane",
-   "gate": "g-rollover",
+   "gate": null,
    "id": "f-replies",
    "name": "Replies back",
    "to": "remmy"
@@ -101,7 +101,7 @@
    "breaks": "Packing is selection, and selection can omit the one fact that mattered — the K8 case carried the rule but not the current time.",
    "carries": "Selected record material, packed into a case: state, decisions, evidence boundary, authority, current conditions.",
    "from": "shelf",
-   "gate": "g-case-authority",
+   "gate": null,
    "id": "f-packing",
    "name": "Packing a case",
    "to": "briefcase",
@@ -122,7 +122,7 @@
   },
   {
    "breaks": "Whatever the case gets wrong, the agent inherits — confidently. A case amplifies its authoring errors.",
-   "carries": "The whole working context a blind agent gets. Nothing else reaches it.",
+   "carries": "The complete handoff continuity for a blind receiving agent. (The agent still receives its task framing and its operating environment — the case is the continuity, not the universe.)",
    "from": "briefcase",
    "gate": "g-case-authority",
    "id": "f-case-out",
@@ -152,7 +152,7 @@
    "breaks": "A run that ends without closure leaves the record unable to say what happened. Attempts 1 and 2 of the second battery did exactly that.",
    "carries": "Events, step records, and the closure account — what happened, including what failed and why.",
    "from": "agents",
-   "gate": "g4",
+   "gate": "g3",
    "id": "f-work-record",
    "name": "Work lands on the record",
    "to": "d-record"
@@ -170,25 +170,25 @@
    "breaks": "A validation whose anchor came from the component being validated proves nothing. Independence of anchors is the whole game.",
    "carries": "Recorded entries — the only inputs a verdict may rest on.",
    "from": "d-record",
-   "gate": "g5",
+   "gate": null,
    "id": "f-evaluate",
    "name": "Evaluation",
    "to": "d-evaluator"
   },
   {
-   "breaks": "If the examiner surface merely restates the evaluator, there is no second check — only the appearance of one.",
-   "carries": "Verdicts and findings — which the Examiner Surface checks against originals, never adopts on trust.",
-   "from": "d-evaluator",
+   "breaks": "If the Examiner instead consumes the Evaluator's conclusions, the second check is theatre: the appearance of independent verification without the substance, and every downstream verdict inherits the first check's errors under two signatures.",
+   "carries": "Preserved originals from the RECORD, the applicable pinned contract, and the reproduction rules — the Examiner's only derivation inputs.",
+   "from": "d-record",
    "gate": "g6",
    "id": "f-examine",
    "name": "Independent re-derivation",
    "to": "d-examiner"
   },
   {
-   "breaks": "Admission to the shelf is not proof a distillation is correct; an attested distillation record is required, or the library fills with confident error.",
+   "breaks": "Admission to the shelf is not proof a distillation is correct; an attested distillation record is required, or the library fills with confident error. Note: this admission condition is a requirement of the design, not yet a gate — the map shows it as such.",
    "carries": "Distilled, verified results in their terminal form — the information the library keeps.",
    "from": "d-examiner",
-   "gate": "g4",
+   "gate": null,
    "id": "f-reflux",
    "name": "REFLUX — verified knowledge returns",
    "to": "shelf"
@@ -248,6 +248,66 @@
      62
     ]
    ]
+  },
+  {
+   "id": "f-compare",
+   "name": "Findings, for comparison only",
+   "from": "d-evaluator",
+   "to": "d-examiner",
+   "carries": "Evaluator verdicts and findings, admitted only AFTER independent re-derivation, for comparison. Non-authoritative: never a derivation input.",
+   "breaks": "If comparison material arrives before the Examiner's own derivation, it anchors the derivation it was meant only to be compared against.",
+   "gate": null
+  },
+  {
+   "id": "f-commands",
+   "name": "Taps & commands",
+   "from": "ben",
+   "to": "remarvis",
+   "carries": "Ben's taps, approvals, and controls, entered through the face. Remarvis originates no authority; it is the interface through which Ben exercises his.",
+   "breaks": "If the face ever appeared to originate an approval, the authority line would be broken. (Settled already: verbal approvals do not press approval cards.)",
+   "gate": "g-tap",
+   "via": [
+    [
+     1356,
+     62
+    ],
+    [
+     1356,
+     300
+    ],
+    [
+     1356,
+     812
+    ]
+   ]
+  },
+  {
+   "id": "f-seats-record",
+   "name": "The record, consulted",
+   "from": "shelf",
+   "to": "vane",
+   "carries": "The canonical record, read directly by the examiner: examinations are composed from the shelf itself, not only from what the orchestrator forwards.",
+   "breaks": "If the examiner could only see what the orchestrator selected, examination independence would quietly depend on the orchestrator's selection.",
+   "gate": "g-currency",
+   "via": [
+    [
+     1218,
+     790
+    ],
+    [
+     1218,
+     232
+    ]
+   ]
+  },
+  {
+   "id": "f-contract",
+   "name": "The pinned contract",
+   "from": "d-record",
+   "to": "d-binder",
+   "carries": "The approved contract and pinned artifacts the Binder binds into instances — mechanically, and without discretion.",
+   "breaks": "If the Binder's contract source were its own choosing, binding would become authorship. Its outputs go only to RECORD.",
+   "gate": "g1"
   }
  ],
  "gates": [
@@ -282,7 +342,7 @@
    "onFail": "Send blocked until the reply is read.",
    "strength": "enforced",
    "weakness": "Covers the window route; bridge-delivered letters rely on the bridge's own queue discipline.",
-   "where": "Before any letter is sent into a seat window."
+   "where": "Before any letter is sent into a seat window — the window route. Bridge-delivered letters follow the bridge's own queue discipline; this guard's coverage is the route it actually checks."
   },
   {
    "checks": "That the examiner's assessment is committed to the shelf BEFORE the orchestrator's grades are released, and that agents never see the rubric.",
@@ -315,7 +375,7 @@
    "onFail": "The watcher waits and logs CONTEXT_FULL_WAITING; no click while a response is in flight.",
    "strength": "enforced",
    "weakness": "Waits for the finish; it does not itself capture the reply in the click path. Ben ruled the wait; the stronger capture-first form is his to ask for.",
-   "where": "On the context-full banner in a seat window."
+   "where": "On the context-full transition in a seat window — a specific condition, not a general gate on replies."
   },
   {
    "checks": "That a delivery attempt has not severed silently — tab navigation mid-delivery, a promise that never settles.",
@@ -337,7 +397,7 @@
    "onFail": "The agent stops and returns control to the human. Acting anyway is the K8 failure: yesterday's authority spent on today's decision.",
    "strength": "procedural",
    "weakness": "The case carries an ACCOUNT of delegated authority; it cannot create authority, and nothing yet enforces the boundary mechanically.",
-   "where": "At every agent action taken under a case."
+   "where": "At every agent ACTION taken under a case — not at packing, not at reading: at the moment of acting."
   },
   {
    "checks": "Draft configuration, subject pin, tree set, derived limits, and the required-set authority record — all present and consistent; outputs the frozen configuration and its hash.",
@@ -348,7 +408,7 @@
    "onFail": "Freeze refused and recorded; no RUN_STARTED; never scored as a subject outcome.",
    "strength": "designed",
    "weakness": "Designed, not yet built beyond Stage 1's groundwork.",
-   "where": "BINDER, before any run starts."
+   "where": "BINDER, before any run starts — an F5 enforcement edge."
   },
   {
    "checks": "Three-way equality: artifact fields, provenance entries, frozen schema — names and values.",
@@ -359,7 +419,7 @@
    "onFail": "Construction does not close; the mismatch is recorded with the differing field identities.",
    "strength": "designed",
    "weakness": "Stage 2 of the plan; not yet approved to build.",
-   "where": "Per artifact, at the F5 edge."
+   "where": "At the F5 construction-close edge, per artifact. The producing component is responsible for the artifact; the check is independent of that responsibility."
   },
   {
    "checks": "The operation's recorded state: an operation identity may be applied once; consumption must be provable, not assumed.",
@@ -370,7 +430,7 @@
    "onFail": "Already-satisfied (consumed) or refused, with the recorded state cited.",
    "strength": "designed",
    "weakness": "Stage 5 of the plan.",
-   "where": "Per operation."
+   "where": "Per operation, at the insertion boundary — an F5 enforcement edge."
   },
   {
    "checks": "THREE independent results, never one boolean: (i) the terminal record exists and is correctly positioned; (ii) the failure account is complete, or explicitly incomplete with unknowns; (iii) integrity and external anchoring are valid.",
@@ -392,7 +452,7 @@
    "onFail": "The validation fails by definition.",
    "strength": "designed",
    "weakness": "The discipline that keeps the whole examiner story honest; only as strong as its anchors.",
-   "where": "Per validation."
+   "where": "Cross-cutting: on every validator — the Evaluator, the Examiner Surface, and RECORD's closure validator alike. Not a gate on any flow of entries."
   },
   {
    "checks": "Every event reference and literal location in a report resolves against the record and the frozen tree set, exactly.",
@@ -403,7 +463,7 @@
    "onFail": "The report is flagged with the conflicting identities. The conflict is a discrepancy — never silently corrected.",
    "strength": "designed",
    "weakness": "Born of DR-07: an adjudication that restated a step location inconsistently, and nothing caught it.",
-   "where": "Per report, on the Examiner Surface."
+   "where": "Per report, on the Examiner Surface — an F5 enforcement edge."
   }
  ],
  "layers": [
@@ -458,7 +518,7 @@
    "job": "Orchestration and curation.",
    "layer": "seats",
    "name": "REMMY",
-   "role": "Packs cases, carries letters between seats, verifies before claiming, keeps the record current in the same round state changes. For Vane she has been the briefcase with a heartbeat — a live curator pointing at the record.",
+   "role": "Orchestrates communication between seats, authors and packs assignments, routes letters through the Pulse Bridge (she orchestrates delivery; the Bridge is the mechanism), verifies before claiming, and maintains the shelf's currency. For Vane she has been the briefcase with a heartbeat — a live curator pointing at the record.",
    "stresses": [
     "s-heartbeat",
     "s-silent-death"
@@ -505,7 +565,7 @@
    "job": "Communication transport between seats.",
    "layer": "machinery",
    "name": "PULSE BRIDGE",
-   "role": "Carries letters under markers, watches turns, and reports delivery honestly — queued, delivering, acknowledged, stopped. It carries words, never authority.",
+   "role": "Carries letters under markers, watches turns, and reports delivery honestly — queued, delivering, acknowledged, stopped. It serves every seat; this map draws the Vane collaboration route, and the other seats ride the same machinery. It carries words, never authority.",
    "stresses": [
     "s-bridge-road",
     "s-silent-death"
@@ -515,9 +575,7 @@
    "y": 396
   },
   {
-   "gates": [
-    "g-case-authority"
-   ],
+   "gates": [],
    "id": "briefcase",
    "job": "Portable work continuity.",
    "layer": "machinery",
@@ -564,6 +622,7 @@
   {
    "cluster": "duenna",
    "gates": [
+    "g3",
     "g4",
     "g5"
    ],
@@ -571,7 +630,7 @@
    "job": "Preservation and append discipline.",
    "layer": "duenna",
    "name": "RECORD",
-   "role": "Owns the event stream, the closure records, and the external anchoring of the hash chain. Closure always completes; there is no silent closure.",
+   "role": "Owns the event stream, the closure records, and the external anchoring of the hash chain. In the Stage 1 harness, closure always completes and there is no silent closure — demonstrated under controlled termination. Production integration is outstanding: the production system must not inherit that assurance until it is implemented and examined, and hard kills sit outside the demonstrated guarantee.",
    "stresses": [
     "s-anchor-limit"
    ],
@@ -582,14 +641,13 @@
   {
    "cluster": "duenna",
    "gates": [
-    "g1",
-    "g2"
+    "g1"
    ],
    "id": "d-binder",
    "job": "Bind inputs to identities before anything runs.",
    "layer": "duenna",
    "name": "BINDER",
-   "role": "Freezes the configuration, mints the run identity, binds artifacts to their provenance entries. Runs the freeze gate G1.",
+   "role": "Freezes the configuration, mints the run identity, binds artifacts to their provenance entries. Runs the freeze gate G1. Its outputs go only to RECORD — and binding a configuration does not by itself establish authority for it.",
    "stresses": [],
    "w": 150,
    "x": 690,
@@ -598,7 +656,6 @@
   {
    "cluster": "duenna",
    "gates": [
-    "g3",
     "g5"
    ],
    "id": "d-evaluator",
@@ -617,6 +674,7 @@
    "cluster": "duenna",
    "gates": [
     "g4",
+    "g5",
     "g6"
    ],
    "id": "d-examiner",
@@ -668,7 +726,7 @@
    "job": "Human visibility and control.",
    "layer": "record",
    "name": "REMARVIS",
-   "role": "The face: Ben's window into the state of the whole — gauges, seats, the operation. It shows the work; it is not the work.",
+   "role": "The face: Ben's window into the state of the whole — gauges, seats, the operation — and the surface through which his taps and commands flow back. It shows the work; it is not the work; it originates nothing.",
    "stresses": [],
    "w": 190,
    "x": 1105,
@@ -771,11 +829,22 @@
    ]
   },
   {
-   "evidence": "Defect register DR-13, open. In the harness, attribution authority was a TEST FIXTURE. Production needs Ben's ruling.",
+   "evidence": "Raised in the Stage 1 qualifications as the test-fixture attribution authority question. Identifier caution (the examiner, 2026-11-19): the merged defect register's DR-13 is a different item (the R65 required-set qualification) — programme usage and the register collide on the number, so this map cites NO register number for the vacancy. It stands as an independent open architectural issue until Ben reconciles the numbering.",
    "id": "s-adjudicator-vacancy",
-   "issue": "DR-13: who the production adjudicator IS — the authority that finally settles a run's outcome — has no named owner. The map shows this lit because a responsibility with no owner is precisely what this map exists to catch.",
+   "issue": "Who the production adjudicator IS — the authority that finally settles a run's outcome — has no named owner. The map shows this lit because a responsibility with no owner is precisely what this map exists to catch.",
    "mitigation": "None until Ben rules. The vacancy is the finding.",
    "name": "An ownerless job: the production adjudicator",
+   "where": [
+    "d-evaluator",
+    "d-examiner"
+   ]
+  },
+  {
+   "id": "s-independence",
+   "name": "The second check that isn't",
+   "issue": "If the Examiner Surface ever derives from the Evaluator's conclusions instead of the preserved originals, the system gains the appearance of independent verification without the substance — and the first check's errors come back wearing two signatures.",
+   "evidence": "This map's first drawing made exactly that error — an Evaluator → Examiner flow carrying verdicts — caught on the examiner's examination of the map itself (2026-11-19). The failure mode is live, not theoretical.",
+   "mitigation": "The architecture's rule, now drawn correctly: originals + pinned contract + reproduction rules are the Examiner's only derivation inputs; Evaluator findings are admitted afterwards, labelled, for comparison only. Guarded by G5 and G6.",
    "where": [
     "d-evaluator",
     "d-examiner"
@@ -784,5 +853,26 @@
  ],
  "subtitle": "Parts, jobs, flows, gates — and where it could create an issue",
  "title": "Duenna — the whole system",
- "updated": "2026-11-19"
+ "updated": "2026-11-19 · amended after the examiner's examination (briefcase-26)",
+ "f5": [
+  {
+   "id": "f5-gov",
+   "name": "F5 — Governance edges",
+   "text": "Originate externally, from Ben: the approved artifacts, the pinned contracts, the rulings. This is the only source of permission in the system. Governance edges carry what is approved; they are not drawn as arrows because they are not a flow — they are the standing condition every other edge answers to.",
+   "gates": []
+  },
+  {
+   "id": "f5-enf",
+   "name": "F5 — Enforcement edges",
+   "text": "Mechanical checks of pinned, approved artifacts at entry and progression points. The G-gates live here. An enforcement edge invents no permission and holds no discretion: it compares what arrives against what was pinned, and records the result. No gate, evaluator, or examiner creates authority — they only check against it.",
+   "gates": [
+    "g1",
+    "g2",
+    "g3",
+    "g4",
+    "g5",
+    "g6"
+   ]
+  }
+ ]
 }
