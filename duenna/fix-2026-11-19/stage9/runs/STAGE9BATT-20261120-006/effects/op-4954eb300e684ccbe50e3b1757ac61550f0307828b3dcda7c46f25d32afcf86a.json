@@ -1,0 +1,1 @@
+{"operation_id": "op-4954eb300e684ccbe50e3b1757ac61550f0307828b3dcda7c46f25d32afcf86a", "payload": {"args": {"field": "harness_sha256", "source_ref": "r60-revision-change-record#009"}, "tool": "source_extract"}, "payload_digest": "849201876fed78ee8616e0eb3669cd300bf2b08dd0a30c8d1b19271a7569cdce"}
