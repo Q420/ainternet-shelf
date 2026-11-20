@@ -556,3 +556,22 @@ a defect, not a backlog item.
   Receive → Act → Account → RECONCILE → next case. She
   recommends settling the structure with Ben before either
   draft changes; nothing in it approves a restart.
+- DIRECTION CHANGE (Ben, 2026-11-19 20:45 MST): "I want
+  to proceed. I don't want to keep being the bridge."
+  DUENNA IS PAUSED at his word — the fix programme, the
+  correction rounds, the adjudicator errand and Stages 2-9
+  all hold until he calls them. The briefcase structure
+  discussion proceeds (Vane's briefcase-59 positions are on
+  the table, awaiting Ben's settlement). New standing
+  requirement for all bridge work: the machinery must carry
+  the flow without Ben ferrying — his hands are the failure
+  mode, not the transport.
+- THE BRIDGE MAP v1 (Ben's commission, same message): a
+  navigable map of the Pulse Bridge drawn FROM THE CODE
+  (v0.20.6 lab source), built exactly like the Duenna map —
+  same machinery, new register (~/workspace/bridge-map/):
+  19 parts, 15 flows, 9 gates with honest strengths, 9
+  stress points, front page = a letter's journey with the
+  two FERRY POINTS marked (the rollover guard; the wake
+  path). Delivered as bridge-map-v1.html. Unexamined —
+  Remmy's drawing from the code, not settled text.
