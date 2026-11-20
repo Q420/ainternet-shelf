@@ -1,0 +1,216 @@
+{
+ "source": {
+  "run_record": "duenna/attempt3-adjudication/run-record.jsonl (shelf copy of Q420/Battery qwen-battery-results/STAGE6BATT-20261118-001-attempt3/)",
+  "run_record_events": 495,
+  "pilot_driver_sha256": "304310e26e977d713d0cc2dc2007e490c8099a06897f720d96da6529c92169c7",
+  "pilot_trees_sha256": "cd367933c261d1172d024c65d4469c8880965cf954ccfcb7ae93edce30e24673",
+  "pin_source": "RUN_STARTED configuration_hashes in the run record itself"
+ },
+ "cases": {
+  "T02": {
+   "tree_id": "T02",
+   "step_id": "T02-STEP-03",
+   "delivered_instruction": "Apply precedence. Input: worksheet + conflict list. Rule (from the record's own authority order): adjudication outranks examiner findings; examiner findings outrank implementer claims. Op: state the status the record supports and the conflict it resolves.",
+   "raw_responses": [
+    "**Resolved conflicts**\n\n| Conflict pair | Status supported | Source record that resolves it |\n|---------------|------------------|--------------------------------|\n| implementer ↔ examiner | **CLOSED** | Examiner’s claim (“The re‑run matches the delivered results…”) |\n| examiner ↔ adjudicator | **OPEN** | Adjudicator’s claim (“- **R60 — FAIL.** Both examiners found genuine defects…”) |\n\n*Explanation*  \n- The adjudicator’s claim outranks the examiner’s, so the examiner‑vs‑adjudicator conflict is resolved with the adjudicator’s status **OPEN**.  \n- The examiner’s claim outranks the implementer’s, so the implementer‑vs‑examiner conflict is resolved with the examiner’s status **CLOSED**.",
+    "**Conflict implementer ↔ examiner**  \n*Record that resolves it:* **Examiner** (source `claude-verification-report-v010#001a`)  \n*Status it supports:* **CLOSED**  \n\n**Conflict examiner ↔ adjudicator**  \n*Record that resolves it:* **Adjudicator** (source `alex‑combined‑adjudication-v010#002`)  \n*Status it supports:* **OPEN**"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T02-T02-STEP-03-a1",
+    "STAGE6BATT-20261118-001-T02-T02-STEP-03-a2"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "adjudication": "OPEN",
+      "stated": null,
+      "verify_field": false
+     },
+     "condition": "the stated status value is checked by verify_field against the adjudication extraction",
+     "result": "FAIL"
+    },
+    {
+     "compared": {
+      "adjudication": "OPEN",
+      "stated": null,
+      "verify_field": false
+     },
+     "condition": "the stated status value is checked by verify_field against the adjudication extraction",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": []
+  },
+  "T07": {
+   "tree_id": "T07",
+   "step_id": "T07-STEP-04",
+   "delivered_instruction": "Report. Input: worksheet + statuses. Op: one line per obligation in the required format + the deciding elements. Output: report + ledger.",
+   "raw_responses": [
+    "**Report**\n\n| Obligation | Status | Deciding Elements |\n|------------|--------|-------------------|\n| OB‑1 | CLOSED | `shelf record naming the report and its commit` |\n| OB‑2 | OPEN | `[verified] execution receipt for the v2.4 identity sabotage`, `combined adjudication closing Correction B` |\n| OB‑3 | OPEN | `publication record` |\n\n**Ledger**\n\n```json\n{\n  \"OB-1\": \"CLOSED\",\n  \"OB-2\": \"OPEN\",\n  \"OB-3\": \"OPEN\"\n}\n```"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T07-T07-STEP-04-a1"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "lines_match": false,
+      "statuses": {
+       "OB-1": "CLOSED",
+       "OB-2": "OPEN",
+       "OB-3": "OPEN"
+      }
+     },
+     "condition": "each line's status equals STEP-03",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": []
+  },
+  "T09/FR-A": {
+   "tree_id": "T09/FR-A",
+   "step_id": "T09-STEP-03",
+   "delivered_instruction": "State the decision. Input: the worksheet only. Op: return DECISION + the failed rows as reasons, in the required format. Output: decision + ledger (the worksheet rows are the provenance).",
+   "raw_responses": [
+    "REJECT\nsha256 equals obligation\n{\n  \"checks\": [\n    {\n      \"check\": \"required field present: artifact\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"required field present: sha256\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"required field present: result\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"required field present: evidence_status\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"required field present: examiner\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"artifact equals obligation\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"sha256 equals obligation\",\n      \"ok\": false\n    },\n    {\n      \"check\": \"result contains obligation text\",\n      \"ok\": true\n    },\n    {\n      \"check\": \"evidence_status equals obligation\",\n      \"ok\": true\n    }\n  ],\n  \"cited_file\": \"PILOT-DATA-T09-01\",\n  \"cited_file_sha256\": \"55a6c979163a9ce0cb30fca4eb951aff0d02685979290df8bd18dfa28b355c4a\",\n  \"decision\": \"REJECT\",\n  \"reasons\": [\n    \"sha256 mismatch\"\n  ],\n  \"receipt\": {\n    \"artifact\": \"harness-r60rev.py\",\n    \"evidence_status\": \"[verified]\",\n    \"examiner\": \"Claude\",\n    \"result\": \"Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.\",\n    \"sha256\": \"854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b20000\"\n  },\n  \"receipt_id\": \"FR-A\"\n}"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T09-FR-A-T09-STEP-03-a1"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "stated": null,
+      "worksheet": "REJECT"
+     },
+     "condition": "the stated decision equals the worksheet's",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": [
+    {
+     "consequence": "the worksheet stands as the system decision; the mismatch is recorded as a subject error",
+     "kind": "DECISION_STANDS",
+     "stated_decision": null,
+     "worksheet_decision": "REJECT"
+    }
+   ]
+  },
+  "T09/FR-B": {
+   "tree_id": "T09/FR-B",
+   "step_id": "T09-STEP-03",
+   "delivered_instruction": "State the decision. Input: the worksheet only. Op: return DECISION + the failed rows as reasons, in the required format. Output: decision + ledger (the worksheet rows are the provenance).",
+   "raw_responses": [
+    "```json\n{\n  \"decision\": \"REJECT\",\n  \"ledger\": [\n    {\n      \"check\": \"required field present: result\",\n      \"ok\": false\n    },\n    {\n      \"check\": \"result contains obligation text\",\n      \"ok\": false\n    }\n  ]\n}\n```"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T09-FR-B-T09-STEP-03-a1"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "stated": null,
+      "worksheet": "REJECT"
+     },
+     "condition": "the stated decision equals the worksheet's",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": [
+    {
+     "consequence": "the worksheet stands as the system decision; the mismatch is recorded as a subject error",
+     "kind": "DECISION_STANDS",
+     "stated_decision": null,
+     "worksheet_decision": "REJECT"
+    }
+   ]
+  },
+  "T09/FR-C": {
+   "tree_id": "T09/FR-C",
+   "step_id": "T09-STEP-03",
+   "delivered_instruction": "State the decision. Input: the worksheet only. Op: return DECISION + the failed rows as reasons, in the required format. Output: decision + ledger (the worksheet rows are the provenance).",
+   "raw_responses": [
+    "```json\n{\n  \"decision\": \"REJECT\",\n  \"ledger\": [\n    {\"check\":\"required field present: artifact\",\"ok\":true},\n    {\"check\":\"required field present: sha256\",\"ok\":true},\n    {\"check\":\"required field present: result\",\"ok\":true},\n    {\"check\":\"required field present: evidence_status\",\"ok\":true},\n    {\"check\":\"required field present: examiner\",\"ok\":true},\n    {\"check\":\"artifact equals obligation\",\"ok\":true},\n    {\"check\":\"sha256 equals obligation\",\"ok\":true},\n    {\"check\":\"result contains obligation text\",\"ok\":true},\n    {\"check\":\"evidence_status equals obligation\",\"ok\":false}\n  ]\n}\n```"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T09-FR-C-T09-STEP-03-a1"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "stated": null,
+      "worksheet": "REJECT"
+     },
+     "condition": "the stated decision equals the worksheet's",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": [
+    {
+     "consequence": "the worksheet stands as the system decision; the mismatch is recorded as a subject error",
+     "kind": "DECISION_STANDS",
+     "stated_decision": null,
+     "worksheet_decision": "REJECT"
+    }
+   ]
+  },
+  "T09/FR-VALID": {
+   "tree_id": "T09/FR-VALID",
+   "step_id": "T09-STEP-03",
+   "delivered_instruction": "State the decision. Input: the worksheet only. Op: return DECISION + the failed rows as reasons, in the required format. Output: decision + ledger (the worksheet rows are the provenance).",
+   "raw_responses": [
+    "```json\n{\n  \"decision\": \"CLOSE\",\n  \"reasons\": [],\n  \"ledger\": [\n    {\"check\":\"required field present: artifact\",\"ok\":true},\n    {\"check\":\"required field present: sha256\",\"ok\":true},\n    {\"check\":\"required field present: result\",\"ok\":true},\n    {\"check\":\"required field present: evidence_status\",\"ok\":true},\n    {\"check\":\"required field present: examiner\",\"ok\":true},\n    {\"check\":\"artifact equals obligation\",\"ok\":true},\n    {\"check\":\"sha256 equals obligation\",\"ok\":true},\n    {\"check\":\"result contains obligation text\",\"ok\":true},\n    {\"check\":\"evidence_status equals obligation\",\"ok\":true}\n  ]\n}\n```"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T09-FR-VALID-T09-STEP-03-a1"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "stated": null,
+      "worksheet": "CLOSE"
+     },
+     "condition": "the stated decision equals the worksheet's",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": [
+    {
+     "consequence": "the worksheet stands as the system decision; the mismatch is recorded as a subject error",
+     "kind": "DECISION_STANDS",
+     "stated_decision": null,
+     "worksheet_decision": "CLOSE"
+    }
+   ]
+  },
+  "T09": {
+   "tree_id": "T09",
+   "step_id": "T09-STEP-03",
+   "delivered_instruction": "State the decision. Input: the worksheet only. Op: return DECISION + the failed rows as reasons, in the required format. Output: decision + ledger (the worksheet rows are the provenance).",
+   "raw_responses": [
+    "```json\n{\n  \"decision\": \"CLOSE\",\n  \"ledger\": [\n    {\"check\": \"sha256 equals obligation\", \"ok\": false},\n    {\"check\": \"required field present: result\", \"ok\": false},\n    {\"check\": \"result contains obligation text\", \"ok\": false},\n    {\"check\": \"evidence_status equals obligation\", \"ok\": false}\n  ]\n}\n```"
+   ],
+   "capture_ids": [
+    "STAGE6BATT-20261118-001-T09-T09-STEP-03-a1"
+   ],
+   "recorded_checks": [
+    {
+     "compared": {
+      "stated": null,
+      "worksheet": "CLOSE"
+     },
+     "condition": "the stated decision equals the worksheet's",
+     "result": "FAIL"
+    }
+   ],
+   "governance_events": [
+    {
+     "consequence": "the worksheet stands as the system decision; the mismatch is recorded as a subject error",
+     "kind": "DECISION_STANDS",
+     "stated_decision": null,
+     "worksheet_decision": "CLOSE"
+    }
+   ]
+  }
+ }
+}
