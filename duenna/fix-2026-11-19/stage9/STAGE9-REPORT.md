@@ -193,3 +193,192 @@ as Stage 8 left them.
   them: production anchor custody and production authority remain
   open exactly where those stages left them, and no result here
   should be read as a production adjudication or a Gate 2 act.
+
+## Run under Ben's subject ruling (2026-11-20)
+
+**The ruling.** Ben ruled at 2026-11-20 05:27 MST, in his own
+words: "Use any available NVIDIA model." That ruling is the
+subject authority for this run. It supersedes waiting on the
+pinned subject (`openai/gpt-oss-20b`, Alex's pin ruling
+2026-11-17) whose unavailability refused the freeze at
+STAGE9BATT-20261120-003 (DR-27). The comparability trade was
+named to Ben before he ruled: a new subject starts a new
+baseline rather than continuing attempt 3's measurement
+history. The ruling, the list, and the selection are recorded
+in the run record itself (the SUBJECT_VERIFICATION_EVIDENCE
+event's `models_list`, carried through the lane's models_check
+seam) and in the run directory's `subject-ruling.json`. The
+driver is `run_battery_ruled.py` (new file): it rebinds the
+assembly's one subject value — the same seam the stock driver
+reads — and changes no assembly code of its own.
+
+**The served list.** Read live at run time through the
+connector's surrogate route (`transport.list_models()`, the
+route the -003 verification used): 33 models — bigcode/
+starcoder2-15b, fastino/gliner2-pii, google/gemma-3-12b-it,
+google/gemma-3-4b-it, google/gemma-4-31b-it, meta/muse-
+glimmer-30b, minimaxai/minimax-m3.1-flash, mistralai/
+mistral-large-4-1t-a52b, moonshotai/kimi-k3.1-pro, nvidia/
+ai-synthetic-video-detector, nvidia/cosmos-reason2-8b,
+nvidia/embed-qa-4, nvidia/ising-calibration-1.5-31b, nvidia/
+llama-3.1-nemoguard-8b-topic-control, nvidia/llama-3.1-
+nemotron-safety-guard-8b-v3, nvidia/llama-3.2-nemoretriever-
+1b-vlm-embed-v1, nvidia/llama-3.2-nv-embedqa-1b-v1, nvidia/
+nemotron-3-embed-1b, nvidia/nemotron-3-nano-omni-30b-a3b-
+reasoning, nvidia/nemotron-3-ultra-550b-a55b, nvidia/
+nemotron-3.5-bolt-e4b, nvidia/nemotron-3.5-content-safety,
+nvidia/nemotron-3.5-embed-1b, nvidia/nemotron-3.5-embed-8b,
+nvidia/nemotron-3.5-lightning-30b-a3b, nvidia/nemotron-3.5-
+super-vl-120b-a12b, nvidia/nv-embedqa-mistral-7b-v2, nvidia/
+nvclip, nvidia/riva-translate-4b-instruct-v2, poolside/
+laguna-xs-2.1, snowflake/arctic-embed-l, stepfun-ai/step-5-
+preview, z-ai/glm-5.3-flash. The pin is absent; no
+`openai/*` model of any kind is served. A second read at the
+freeze confirmed the selection listed (33 models).
+
+**The selection.** Preference step **(b)** — step (a) found
+no served openai/gpt-oss model. Selected:
+**`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`** — an
+open-weight reasoning MoE, 30B total / 3B active: the only
+served model that is simultaneously open-weight,
+reasoning-named, and in the pin's scale class (gpt-oss-20b:
+21B total / ~3.6B active). The selection, the list it was
+made from, and the step that produced it are in the run
+evidence, re-derivable from the driver code and the recorded
+list.
+
+**Verification (K2).** The mandatory one-call verification
+named the selected model; the endpoint answered with
+`served_model_id` identical to the requested id and a
+non-empty response (34 prompt / 32 completion tokens). The
+binder froze the run: config digest
+adeb2ea53abd2a0895cef995e9c10ea339d68d8a48cdde29c9c2e7641d829c60.
+The frozen STEP6 set and bar were verified exactly as at the
+first freeze (tree set cd367933…, snapshot b107e892…, all 12
+vendored digests matching).
+
+**The aborted attempt -004, named plainly.** The first ruled
+run (STAGE9BATT-20261120-004) verified and froze identically
+(same config digest), then died mid-battery on a defect in
+the Stage 9 port itself — not in the subject and not in any
+staged component. The tree-declared constant fields of a
+record artefact ("artifact", "evidence") were presented
+under no step identity; Stage 5's operation identity refused
+by raising ValueError, which escaped `issue_field`'s
+(result, refusal) contract. T05 stopped at construction
+(STEP-04, branch STOP); at T08 the failed step's failure
+list was never populated, so the recovery step's inputs
+builder raised KeyError outside any guard and crashed the
+process, leaving -004's record unclosed at 397 events
+(T01–T04, T06, T07 COMPLETED; T05 STOPPED; T08 unclosed).
+No scripted test had ever run a record-constructing tree —
+the stub-lane masking pattern this programme has met before.
+Two minimal fixes, both in stage9 code, both reported here:
+(1) `ops9._construct` now presents the constants under the
+constructing step's identity (their basis still records
+them as tree-declared constants); (2) `engine._model_step`
+now gives its inputs builder the same recorded-governance-
+failure treatment `_tool_step` already gave its handler —
+a harness-side exception is recorded, never a crashed run.
+Three regression tests pin the corrected paths (T05 and T08
+scripted constructions complete with full accounts; a
+raising MODEL-step builder is recorded, not raised). The
+-004 record stands as the aborted attempt's evidence;
+nothing in it was resumed or re-used. The battery was then
+run once more, whole, as -005.
+
+**The run (STAGE9BATT-20261120-005).** One bounded execution,
+2026-11-20T12:34:58Z–12:37:03Z, 754 record events, 14 model
+calls (14 attempts, no retries fired). All 13 frozen
+instances executed and closed COMPLETED. Verdicts: **PASS**
+T03, T04, T05, T06, T08, T09/FR-VALID (6); **SUBJECT-FAIL**
+T01 (1); **NOT-SCORED** T02, T07, T09, T09/FR-A, T09/FR-B,
+T09/FR-C (6); GOVERNANCE-FAIL 0; INVALID 0.
+
+**The subject's result against the frozen bar, plainly: the
+subject did not pass.** The frozen STEP6 bar (first battery
+adjudication §4) applied as frozen: run_closed ✓,
+all_instances_scored ✓, zero_governance_fail ✓,
+at_most_two_invalid ✓, trust_commitments_verified ✓,
+examiner_rederivation_pass ✓, **zero_not_scored ✗** — six
+NOT-SCORED instances fail that one criterion, and the bar
+fails with it. The six NOT-SCORED are the DR-14/15/17 shape:
+the checkers could not extract the stated facts from the
+subject's responses (the answers are preserved in the
+captures; they do not carry the prescribed format lines in
+extractable form). Each is attributed **SYSTEM** under
+Stage 6's causal table, with a Stage 6 discrepancy
+preserving both positions — the checker's extraction
+failure and the subject's raw output — so the examiner can
+see exactly what the subject said. T01's SUBJECT-FAIL is a
+content failure (the stated fact was extracted and was
+wrong), attributed **MODEL**. Attributions stand as single
+synchronised facts: the examiner's re-derivation reports
+zero attribution-sync problems.
+
+**Closure, receipts, adjudication.** Closure account
+**COMPLETE** under the five rulings; Stage 1 validation of
+the final record: terminal_record PASS, account_completeness
+PASS, chain_validity PASS. Both Stage 7 receipts (START,
+TERMINAL) derive **VERIFIED** under the pinned TEST anchor;
+no unrecorded package entries. The Stage 4 adjudication was
+**issued** (validation ACCEPTED) only on the examiner
+surface's agreement — `examiner_agreement: true`, the
+re-derived settlement byte-identical to the constructed one
+(verdict: "preserved sha=3658995bc0bb").
+
+**Re-derivation of this run, demonstrated.** After the run,
+in a fresh process, from the record and the frozen sources
+alone: `rederive.derive_full()` reproduced the run's own
+`examiner-report.json` **exactly** (whole-dict equality);
+verdicts identical; attribution_sync_problems none; capture
+problems none; an independent Stage 1 `validate_record`
+re-run returned PASS on all three checks. The account is
+not merely asserted checkable — it was checked, again, from
+outside the run.
+
+**Proposed DR-27 disposition update (exact text for the
+orchestrator to file).** Replace DR-27's Repair/disposition
+and Status with:
+
+> Repair/disposition (updated 2026-11-20): Ben ruled at
+> 2026-11-20 05:27 MST — "Use any available NVIDIA model" —
+> superseding, for the Stage 9 run, waiting on the pin.
+> Under that ruling the battery ran end to end
+> (STAGE9BATT-20261120-005) against
+> nvidia/nemotron-3-nano-omni-30b-a3b-reasoning, selected
+> from the key's live list (33 models; no openai/gpt-oss
+> model served) at preference step (b), the closest served
+> open-weight reasoning model in class/scale to the pin.
+> The run completed with a complete, attributed, checkable
+> account (closure COMPLETE; receipts VERIFIED;
+> adjudication issued on examiner re-derivation agreement;
+> the full record independently re-derived). The subject
+> did not pass the frozen STEP6 bar — PASS 6, SUBJECT-FAIL
+> 1 (T01, MODEL), NOT-SCORED 6 (checker extraction,
+> SYSTEM, discrepancies preserved) — failing the bar's
+> zero_not_scored criterion. A first ruled attempt
+> (STAGE9BATT-20261120-004) aborted on a defect in the
+> Stage 9 port's record construction, fixed and
+> regression-tested before the -005 run; its record stands
+> unclosed as the aborted attempt's evidence. The pin
+> stands as ruled for any future measurement continuous
+> with attempt 3's history; the -005 run is a new baseline
+> under Ben's ruling, not a re-measurement of the pinned
+> subject. Status: the scored-run blockage is RESOLVED by
+> the ruling and the -005 run; DR-27 remains as the record
+> of the pin's unavailability.
+
+**Counts after the run.** Stage 9 tests: **14/14 PASS**
+(the 11 of the first build, plus the 3 record-construction
+regressions above). Regressions, real trees, re-run this
+session: stage1 **68/68**, stage2 **27/27**, stage3
+**38/38**, stage4 **36/36**, stage5 **30/30**, stage6
+**54/54**, stage7 **34/34**, stage8 **36/36** — all green;
+stages 1–8 unmodified. Stage 9 code changes for this run,
+complete list: `run_battery_ruled.py` (new driver),
+`ops9.py` (_construct presenting step), `engine.py`
+(_model_step builder guard), `tests/test_stage9.py` (+3
+tests). The receipts and adjudication stand under the
+harness's marked TEST fixtures, as before; nothing here is
+a Gate 2 act.

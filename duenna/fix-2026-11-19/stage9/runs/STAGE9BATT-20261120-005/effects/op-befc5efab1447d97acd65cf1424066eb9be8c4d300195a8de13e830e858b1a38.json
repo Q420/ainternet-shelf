@@ -1,0 +1,1 @@
+{"operation_id": "op-befc5efab1447d97acd65cf1424066eb9be8c4d300195a8de13e830e858b1a38", "payload": {"artefact_id": "T05--T05-STEP-04--record", "basis": {"kind": "tree_declared_constant"}, "field": "artifact", "value": "harness-r60rev.py"}, "payload_digest": "007c6b62d0408b62c0f822105d3c9584436e9f63ad223aca1bf479d0dc642215"}

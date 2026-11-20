@@ -1,0 +1,1 @@
+{"operation_id": "op-ceeb96dbac5976c4d8b08d11e08999489a77f72b5357113ccec402a0c9a39abc", "payload": {"args": {"expected_ref": "op-870b8c919c2370f27d9145975f5115b434a11d8dd65a3bfdcf13f9a6f1b63dfc", "field": "fixtures_total", "value": 38}, "tool": "verify_field"}, "payload_digest": "395d88bd8d8ded08a5d995c45b7976ca4f0d3b8ec9092ede264cbbfe678f91b6"}

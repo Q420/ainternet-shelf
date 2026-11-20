@@ -483,7 +483,30 @@ class Engine:
     def _model_step(self, key, tree, step, attempt, state):
         sid = step["step_id"]
         builder = getattr(self.ops, f"op_{step['op']}_inputs")
-        manifest, artefacts = builder(key, step, state, attempt)
+        try:
+            manifest, artefacts = builder(key, step, state, attempt)
+        except Exception as exc:
+            # The same rule _tool_step states: a harness-side
+            # exception is a governance failure of the instance,
+            # recorded — never a crashed run (the
+            # closure-always-completes ruling). The builder runs
+            # before STEP_TRIGGERED, so the failure is recorded
+            # without one. Correction after live run
+            # STAGE9BATT-20261120-004, where an unwrapped builder
+            # exception (T08 recovery inputs) crashed the run
+            # and left its record unclosed.
+            self.record.append("STEP_FAILED", {
+                "step_id": sid, "failure_class": "GOVERNANCE_FAILURE",
+                "failing_condition": step["verify"],
+                "branch": step.get("failure", ""),
+                "exception": repr(exc),
+                "tree_id": key, "step_id": sid,
+                "recorded_at_utc": utc_now()})
+            self._emit_check(key, step,
+                             {"exception": repr(exc)}, False, attempt)
+            return {"outcome": "failed",
+                    "outputs": {},
+                    "recovery_inputs": {}}
         self.record.append("STEP_TRIGGERED", {
             "step_id": sid, "type": "MODEL", "attempt": attempt,
             "input_manifest": manifest, "tree_id": key,

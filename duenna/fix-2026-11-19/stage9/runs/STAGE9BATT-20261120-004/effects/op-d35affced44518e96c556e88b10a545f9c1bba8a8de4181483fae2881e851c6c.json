@@ -1,0 +1,1 @@
+{"operation_id": "op-d35affced44518e96c556e88b10a545f9c1bba8a8de4181483fae2881e851c6c", "payload": {"args": {"source_ref": "qwen-ab-evidence-manifest#001b"}, "tool": "shelf_lookup"}, "payload_digest": "bce8e189959432916a66488f263d1fd28e83cef873017a5b2a66442f4a0455b6"}

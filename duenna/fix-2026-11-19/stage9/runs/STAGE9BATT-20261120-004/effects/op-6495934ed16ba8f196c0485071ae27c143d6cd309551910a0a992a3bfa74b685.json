@@ -1,0 +1,1 @@
+{"operation_id": "op-6495934ed16ba8f196c0485071ae27c143d6cd309551910a0a992a3bfa74b685", "payload": {"args": {"source_ref": "claude-verification-report-v010#001a"}, "tool": "shelf_lookup"}, "payload_digest": "305dda0f727ac16da07f64236032a011c5bb121cffbbbee254af4989b02c5257"}

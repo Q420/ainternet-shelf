@@ -277,6 +277,92 @@ class ScriptedRunTests(unittest.TestCase):
         self.assertEqual(summary["verdicts"]["T01"], "PASS")
 
 
+class RecordConstructionTests(unittest.TestCase):
+    """The live run STAGE9BATT-20261120-004 exposed a masked
+    path: no scripted test had ever run a tree that constructs
+    its record artefact (T05/T08). The tree-declared constant
+    fields were presented under no step identity; Stage 5's
+    operation identity refused by raising ValueError, which
+    escaped issue_field's (result, refusal) contract — T05
+    stopped at construction, and at T08 the recovery step ran
+    on the failed-step condition with its failure list never
+    populated, so its inputs builder raised KeyError outside
+    any guard and crashed the run, leaving the record
+    unclosed. These tests pin the corrected paths."""
+
+    def _run(self, tree_keys):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        return assembly.run_battery(
+            runs_root=tmp, package_name="TEST-CONSTRUCT",
+            transport=StubTransport(), tree_keys=tree_keys)
+
+    def _events(self, summary):
+        return [json.loads(ln) for ln in open(summary["record"])
+                if ln.strip()]
+
+    def test_t05_constructs_its_record_and_completes(self):
+        summary = self._run(["T05"])
+        self.assertEqual(summary["outcome"], "RUN_COMPLETE")
+        self.assertEqual(summary["closures"]["T05"], "COMPLETED")
+        self.assertEqual(summary["verdicts"]["T05"], "PASS")
+        events = self._events(summary)
+        fields = {ev["body"].get("field") for ev in events
+                  if ev["type"] == "PROVENANCE_ENTRY"
+                  and ev["body"].get("artefact_id")
+                  == "T05--T05-STEP-04--record"}
+        self.assertIn("artifact", fields)
+        self.assertIn("evidence", fields)
+        exceptions = [ev for ev in events
+                      if ev["type"] == "CHECK_RESULT"
+                      and "exception" in
+                      (ev["body"].get("compared") or {})]
+        self.assertEqual(exceptions, [])
+
+    def test_t08_constructs_its_record_and_completes(self):
+        summary = self._run(["T08"])
+        self.assertEqual(summary["outcome"], "RUN_COMPLETE")
+        self.assertEqual(summary["closures"]["T08"], "COMPLETED")
+        self.assertEqual(summary["verdicts"]["T08"], "PASS")
+        events = self._events(summary)
+        fields = {ev["body"].get("field") for ev in events
+                  if ev["type"] == "PROVENANCE_ENTRY"
+                  and ev["body"].get("artefact_id")
+                  == "T08--T08-STEP-03--record"}
+        self.assertIn("artifact", fields)
+        self.assertIn("evidence", fields)
+        exceptions = [ev for ev in events
+                      if ev["type"] == "CHECK_RESULT"
+                      and "exception" in
+                      (ev["body"].get("compared") or {})]
+        self.assertEqual(exceptions, [])
+
+    def test_model_step_builder_exception_is_recorded_not_raised(self):
+        # The _model_step half of the -004 correction: an inputs
+        # builder that raises must become a recorded governance
+        # failure of the instance, never a crashed run.
+        import ops9
+        saved = ops9.Ops.op_t02_apply_precedence_inputs
+
+        def boom(self, key, step, state, attempt):
+            raise RuntimeError("builder boom (test)")
+
+        ops9.Ops.op_t02_apply_precedence_inputs = boom
+        try:
+            summary = self._run(["T02"])
+        finally:
+            ops9.Ops.op_t02_apply_precedence_inputs = saved
+        self.assertEqual(summary["outcome"], "RUN_COMPLETE")
+        self.assertEqual(summary["closure_account_status"],
+                         "COMPLETE")
+        events = self._events(summary)
+        failed = [ev for ev in events
+                  if ev["type"] == "STEP_FAILED"
+                  and "builder boom" in
+                  (ev["body"].get("exception") or "")]
+        self.assertTrue(failed)
+
+
 class TransportLaneTests(unittest.TestCase):
     def test_verification_call_resolves_pinned_envelope(self):
         # The K2 lane runs before any freeze: it must take its

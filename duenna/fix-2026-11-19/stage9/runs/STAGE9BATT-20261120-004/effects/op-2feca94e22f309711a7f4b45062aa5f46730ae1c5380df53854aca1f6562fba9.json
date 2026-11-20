@@ -1,0 +1,1 @@
+{"operation_id": "op-2feca94e22f309711a7f4b45062aa5f46730ae1c5380df53854aca1f6562fba9", "payload": {"args": {"expected_ref": "pilot-manifest:PILOT-DATA-EXPECTED-01", "field": "correction_b", "value": null}, "tool": "verify_field"}, "payload_digest": "e695b2877c38b124523293c126f8f6d17fac1ea74e2dad24b3d716f594555db1"}

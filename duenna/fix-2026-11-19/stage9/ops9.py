@@ -65,10 +65,21 @@ class Ops:
             key, step_id, ADJ_R60, "correction_b")
         return out
 
-    def _construct(self, key, artefact_id):
+    def _construct(self, key, artefact_id, presenting_step):
         """Build the tree's record artefact from provenance
         entries alone (Stage 2). Returns (artefact, None) or
-        (None, refusal)."""
+        (None, refusal).
+
+        The two tree-declared constant fields are presented
+        under the CONSTRUCTING step's identity: a Stage 5
+        operation identity must name something, and the step
+        that constructs the record is the step that in fact
+        presents them (their basis still records them as
+        tree-declared constants, not extractions). Correction
+        after live run STAGE9BATT-20261120-004: the constants
+        were presented under no step (None), the identity
+        refusal escaped as a ValueError, T05 stopped at
+        construction and T08's recovery inputs starved."""
         fields = {rf: ef for rf, ef in FIELDS.items() if ef}
         values, err = self.e.issue_fields(key, artefact_id, fields)
         if err:
@@ -78,7 +89,7 @@ class Ops:
             _, err = self.e.issue_field(
                 key, artefact_id, field, value,
                 basis={"kind": "tree_declared_constant"},
-                presenting_step=None)
+                presenting_step=presenting_step)
             if err:
                 return None, err
         try:
@@ -212,7 +223,8 @@ class Ops:
 
     def op_t05_construct_record(self, key, step, state):
         artefact_id = "T05--T05-STEP-04--record"
-        record_values, err = self._construct(key, artefact_id)
+        record_values, err = self._construct(
+            key, artefact_id, step["step_id"])
         if err:
             return {"check": {"compared": {"refusal": err},
                               "passed": False,
@@ -293,7 +305,8 @@ class Ops:
 
     def op_t08_construct_validate(self, key, step, state):
         artefact_id = "T08--T08-STEP-03--record"
-        record_values, err = self._construct(key, artefact_id)
+        record_values, err = self._construct(
+            key, artefact_id, step["step_id"])
         if err:
             # Correction F-G4-2 (Batch 6 adjudication, 2026-11-15),
             # preserved: populate the recovery step's failure list

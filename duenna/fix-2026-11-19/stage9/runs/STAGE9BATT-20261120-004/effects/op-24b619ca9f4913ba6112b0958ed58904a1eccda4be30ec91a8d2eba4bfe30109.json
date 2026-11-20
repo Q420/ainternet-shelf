@@ -1,0 +1,1 @@
+{"operation_id": "op-24b619ca9f4913ba6112b0958ed58904a1eccda4be30ec91a8d2eba4bfe30109", "payload": {"args": {"field": "correction_b", "source_ref": "alex-combined-adjudication-r60rev#001"}, "tool": "source_extract"}, "payload_digest": "92ad173b2adc7e27d66292649c475d945033c518128b5d6a2518dfc5ff6e3475"}

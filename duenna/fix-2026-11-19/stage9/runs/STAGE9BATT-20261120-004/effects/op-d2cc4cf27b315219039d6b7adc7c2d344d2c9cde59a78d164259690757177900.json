@@ -1,0 +1,1 @@
+{"operation_id": "op-d2cc4cf27b315219039d6b7adc7c2d344d2c9cde59a78d164259690757177900", "payload": {"args": {"field": "results_sha256", "source_ref": "r60-revision-change-record#009"}, "tool": "source_extract"}, "payload_digest": "262f87fcacb27e277f7f503b0552b3b33ceb57dc1976efa28d287a0f2d0defda"}

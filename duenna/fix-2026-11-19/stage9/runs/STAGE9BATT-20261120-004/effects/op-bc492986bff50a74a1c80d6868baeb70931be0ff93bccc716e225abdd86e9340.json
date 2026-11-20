@@ -1,0 +1,1 @@
+{"operation_id": "op-bc492986bff50a74a1c80d6868baeb70931be0ff93bccc716e225abdd86e9340", "payload": {"args": {"source_ref": "pilot-manifest:PILOT-DATA-FIXTURES-01#injection-note"}, "tool": "shelf_lookup"}, "payload_digest": "39d948f3aec1409f3225578d61db3ec58dd46ddac4e18d3b3900e5a956ae7d42"}
