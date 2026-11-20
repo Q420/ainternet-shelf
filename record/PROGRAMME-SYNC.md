@@ -785,3 +785,18 @@ a defect, not a backlog item.
   so nothing is blocked today.
   → duenna/fix-2026-11-19/CLAUDE-ADJUDICATOR-OFFER.md
   → duenna/fix-2026-11-19/CLAUDE-ADJUDICATOR-REFUSAL.md
+- GATE 1 VERIFICATION OF THE FINAL ARTIFACTS — COMPLETE
+  (2026-11-19 ~22:2x): Vane fetched both final files and
+  verified them: GOVERNANCE-RECORD.md recomputes to the
+  pinned digest exactly (byte-identical to the cleared
+  text); OPERATIONAL-DELEGATION.md's substantive body is
+  byte-for-byte the form-cleared draft, with only the
+  header and issuance block completed; the digest binding
+  verifies. ONE OBSERVATION: the pinned text's title still
+  reads "(DRAFT for pinning)" — she does not correct it
+  (any change breaks the digest) and recommends Ben
+  explicitly confirm the label is retained as historical
+  provenance, the external pin establishing its status.
+  That confirmation is with Ben. Per-run Gate 1 checks
+  against an actual package still stand.
+  → duenna/fix-2026-11-19/VANE-VERIFICATION-FINAL-ARTIFACTS.md
