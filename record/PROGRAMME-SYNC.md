@@ -413,3 +413,16 @@ a defect, not a backlog item.
   from pre-update data and are superseded. The two
   premature claims are on the record above, uncorrected
   in place, with this entry as their correction.
+- MAP FRONT PAGE REBUILT (Ben's tap, 2026-11-19 19:30
+  MST): the map now opens on THE JOURNEY — plain words,
+  verdict first: nine stations down one rail (Ben gives
+  the word → frozen → the work runs → the record → checked
+  twice → Remmy packs → Vane verifies, Gate 1 → Claude
+  decides, Gate 2 → the shelf keeps it), one plain line
+  per part, gate chips carrying their real strengths, the
+  bridge and the face in an "around the journey" strip.
+  The diagram, gates and stress views stand behind their
+  tabs, unchanged. The data's header line was also
+  corrected in this round — it still carried the 19:04
+  allocation; it now records the settled division.
+  Current page: duenna-map-v10-journey.html.
