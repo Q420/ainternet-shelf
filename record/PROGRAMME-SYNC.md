@@ -738,3 +738,19 @@ a defect, not a backlog item.
   removed the old bridge; v2 has no Remmy-side yet), and
   reached Remmy because Ben said she had replied.
   → duenna/fix-2026-11-19/VANE-VERIFICATION-CORRECTED-INSTRUMENTS.md
+- GOVERNANCE RECORD PINNED + DELEGATION ISSUED
+  (2026-11-19 22:15 MST): on Ben's tap and typed words
+  ("Pin the record and issue the delegation"). The
+  governance record is pinned by its SHA-256 content
+  digest 43b199a5b58268a59fc81d4ed29124edcf0f8d037db6e212873bf3b2047a1eb8
+  — the digest Vane independently verified; the pinned
+  text is preserved byte-identical at
+  duenna/fix-2026-11-19/GOVERNANCE-RECORD.md. The
+  operational delegation to Claude as Gate 2 adjudicator
+  is ISSUED under that digest, its issuance block
+  completed with Ben's words and the date; preserved at
+  duenna/fix-2026-11-19/OPERATIONAL-DELEGATION.md.
+  Evidence item 8 can now be satisfied for an actual
+  package: Gate 1 verifies the issued instrument's
+  validity and applicability per run. Remaining in the
+  sequence: the adjudicator offer to Claude.
