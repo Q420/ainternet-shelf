@@ -1,0 +1,355 @@
+# Duenna Stage 3 — Configuration and Subject Report
+
+Date: 2026-11-20
+Design authority: PROCESS-TREE-AND-PLAN.md v2, Stage 3; ID-SYSTEM-DESIGN-DRAFT-V3.md (K1, K2, K3, G1, G5)
+Build location: ~/workspace/duenna-fix/stage3/ (Python standard library only)
+Approval: Ben, 2026-11-20 (Stages 2–9 approved; Stage 3 built from the plan, after Stage 2 cleared Gate 1)
+
+## Status of this report
+
+The Stage 3 harness is built and its full test suite passes
+(23/23, below), with the Stage 1 (68/68) and Stage 2 (27/27)
+suites green as regression. This report is EVIDENCE for the
+examiner, not a verdict: a builder's green run establishes that
+the mechanism behaves as specified on the exercised cases;
+whether Stage 3 passes is the examiner's determination (Gate 1
+discipline), not this report's. Nothing here declares Stage 3
+complete.
+
+## What was built
+
+- `config.py` — the one configuration object (K3).
+  `freeze_config` validates a draft and returns a `FrozenConfig`:
+  immutable after construction, mapping sections handed out as
+  fresh copies, its identity one digest (SHA-256 over the
+  canonical encoding of the whole validated draft). The draft
+  carries the subject pin; the subject as named on each
+  configuration surface (`driver` and `adapter`, the surfaces
+  DR-03 names) as INPUTS to the one object; the governed values;
+  derivations and policy; the frozen run policy
+  (`on_subject_conflict`: `INVALIDATE_RUN` or `REFUSE_CAPTURE`);
+  the tree set (bound by its own digest); and the pinned schema
+  digest — Stage 2's frozen schema enters the configuration by
+  digest (G5's schema anchor), not by a second copy of its
+  sections. `derived_limit_problems` is G1's policy check on
+  derived limits: for every limit the policy names as derived,
+  the derivation's stated requirement is RECOMPUTED from its
+  recorded inputs under the named formula
+  (`reasoning_envelope`: ceil(max_reasoning_tokens /
+  min_throughput_tps)), and the limit's value must meet the
+  recomputed requirement. A derivation that does not recompute,
+  a missing derivation, and a value below the requirement each
+  fail, separately named. A written rationale alone does not
+  pass — no field of a derivation is read except formula,
+  inputs, and the stated requirement the check verifies.
+- `binder.py` — the BINDER: run identity (K1), subject
+  verification (K2), the freeze gate (G1). The run identity is
+  minted at freeze-begin and recorded; `RUN_STARTED` is
+  appended only on a successful freeze, binding the three
+  digests (configuration, verified subject, tree set). A
+  refused freeze is recorded under the run identity as a
+  `FREEZE_REFUSED` governance record — never a scored subject
+  outcome. G1's checks, in order: (0) the record's chain is
+  recomputed over the events as they stand, and a chain failure
+  refuses by raised exception ONLY, appending nothing (Stage
+  2's correction-round-3 discipline, carried into this stage);
+  (1) draft structure; (2) surface consistency — the pin and
+  every surface must name the same subject; (3) subject
+  verification — the lane is called with the pin, its response
+  recorded as a `SUBJECT_VERIFICATION` event, and the subject
+  identity is minted from that recorded response (asserted pin,
+  served identity, endpoint, verification event digest), never
+  from the pin alone; a pin/served mismatch refuses; (4) the
+  derived-limits policy check, recorded as a `POLICY_CHECK`
+  event either way. Attribution of every subject mismatch is
+  the single class UNKNOWN (K2).
+- `access.py` — the controlled configuration access path (K3
+  consumption by positive proof). A `ConfigAccess` exists only
+  for a `FrozenRun`. `consume` supplies the FROZEN object's
+  values for a declared set of names to one component
+  invocation — the caller names values, it never supplies
+  them — and issues a consumption receipt recorded as a
+  `CONSUMPTION_RECEIPT` event, registered by the event digest.
+  Naming a value the frozen configuration does not hold is
+  refused: the path has no component-local defaults (the
+  supply-side half of K3(a)).
+- `admission.py` — the F5 enforcement edges.
+  - *Capture gate (K2 consistency).* The gate holds the lane
+    and makes each capture's call itself, recording the served
+    identity returned for THAT call (`CAPTURE_SERVED`). A
+    capture therefore has no identity to present and none to
+    borrow: `admit_capture` takes only the capture's own name
+    (a test asserts the signature). Served identity equal to
+    the run's verified identity admits the capture under its
+    own identity; a mismatch appends the `SUBJECT_CONFLICT`
+    record FIRST, then refuses the capture, and — per the
+    frozen run policy — invalidates the run's subject-dependent
+    execution (`RUN_INVALIDATED`) or refuses the capture and
+    its dependents only.
+  - *Output gate (K3(c) + G5).* A governed output is admitted
+    only on positive consumption proof, every anchor obtained
+    independently of the presenter: the receipt must exist in
+    the access path's registry (a fabricated receipt id does
+    not exist, however plausible), match the output's
+    component and invocation, and have been issued under the
+    frozen configuration; the output's quoted configuration
+    digest must equal the FROZEN OBJECT's digest (the quote is
+    checked, never believed); every value the output used must
+    be a governed value at its frozen value — a private value
+    is refused and preserved as a `CONFIG_CONFLICT` record;
+    the receipt must cover every value used; every capture the
+    output depends on must have been admitted under its own
+    identity; a subject-dependent output of an invalidated run
+    is refused.
+- `tests/` — the full suite below. Stage 1's record is
+  imported, not modified; Stage 2's schema is imported by the
+  tests only, for its digest (the configuration binds it by
+  that digest). `stage1/` and `stage2/` are untouched.
+
+## The governing rule, as implemented
+
+REFUSAL, NOT EITHER/OR. In every mismatch case both obligations
+hold, and the code paths are built so they cannot come apart:
+the conflict record is appended before enforcement acts, and
+enforcement acts in the same operation —
+
+- the mismatched capture's admission is refused;
+- any governed output depending on it is refused;
+- the run's subject-dependent execution is refused or
+  invalidated per the frozen run policy;
+- a conflict record never substitutes for enforcement (a
+  recorded conflict admits nothing), and enforcement never
+  erases the record (the conflict stands whatever the policy);
+- no capture may borrow another capture's verified identity
+  (there is no path by which it could present one).
+
+## Test evidence
+
+Full suite run 2026-11-20:
+
+Command: `python3 -m unittest discover -s tests -v` (from stage3/)
+
+Result: **Ran 23 tests — OK (23 passed, 0 failed)**
+
+Per file:
+- tests/test_freeze.py — 7 tests, all ok
+- tests/test_access_admission.py — 9 tests, all ok
+- tests/test_stage3_sabotage.py — 7 tests, all ok
+
+Regression runs 2026-11-20:
+
+- Stage 1 (from stage1/): **Ran 68 tests — OK** — no regression;
+  stage1/ was not modified.
+- Stage 2 (from stage2/): **Ran 27 tests — OK** — no regression;
+  stage2/ was not modified.
+
+## Positive controls
+
+A gate that refused everything would "pass" every sabotage
+while proving nothing, so the positive controls are first-class:
+
+1. **A consistent configuration freezes and binds** —
+   test_successful_freeze_binds_the_three_identities — PASS.
+   RUN_STARTED carries the configuration digest, the verified
+   subject digest and the tree-set digest of the frozen
+   objects; CONFIG_FROZEN carries the pinned schema digest
+   (Stage 2's TEST_SCHEMA digest); the verification record
+   binds the SERVED identity; verification, policy check and
+   freeze all precede the start on the record.
+2. **A recorded, policy-checked constant passes** —
+   test_recorded_constant_limit_passes_policy_check — PASS.
+   DR-21's distinction exercised directly: the 600-second
+   limit is a configuration value whose derivation recomputes
+   (required 328) and whose value meets it; the POLICY_CHECK
+   event records `passed: true`. The defect was never
+   "constant" — it was a private constant the envelope never
+   reached.
+3. **Consumption is evidenced by receipts** —
+   test_consume_issues_receipt_with_frozen_values — PASS. The
+   receipt carries the frozen values (not caller-supplied
+   ones), is registered by its record event digest, and the
+   event is on the record under the run identity.
+4. **Output admitted on positive consumption proof** —
+   test_output_admitted_on_positive_consumption_proof —
+   PASS.
+5. **A capture is admitted under its own identity, and an
+   output may depend on it** —
+   test_capture_admitted_and_output_may_depend_on_it — PASS.
+   The capture's own lane call served the verified identity;
+   the admission names that capture and that identity.
+
+## Per-sabotage results — the plan's Test 3, each result separate
+
+Each sabotage was presented to the real paths (freeze, access,
+capture gate, output gate — never a projection), and each test
+asserts BOTH halves of the governing rule: the conflict record
+exists, AND enforcement refused. They are reported separately
+because they establish different properties.
+
+1. **(a) Contradictory driver/adapter subject configurations**
+   — test_contradictory_driver_adapter_configurations —
+   REFUSED, both halves. The draft names `lane/model-a` on the
+   driver surface and `lane/model-b` on the adapter surface
+   (DR-03's exact mechanism: subject identity independently
+   represented in multiple locations). *Closure half:* one
+   `SUBJECT_CONFLICT` record, kind `configuration_surfaces`,
+   naming the pin, both surfaces, and attribution UNKNOWN,
+   under the minted run identity. *Execution half:*
+   `FreezeRefused` raised; `FREEZE_REFUSED` recorded under the
+   same run identity; no `CONFIG_FROZEN`, no `RUN_STARTED` —
+   there is no run whose execution could proceed.
+2. **(b) A component quoting the canonical hash while using a
+   private value** —
+   test_quoting_canonical_hash_while_using_private_value —
+   REFUSED, both halves. The output quotes the frozen
+   configuration's digest exactly and references a genuine
+   receipt covering both values it used — but the
+   `timeout_seconds` it actually used is a private 120, not
+   the frozen 600 (DR-21's number arriving by the component's
+   private path). The gate compares the used values against
+   the FROZEN OBJECT, not the quote. *Closure half:* one
+   `CONFIG_CONFLICT` record, kind `governed_value_mismatch`,
+   naming the field with its frozen value (600) and used
+   value (120). *Execution half:* `OutputRefused` raised
+   naming `timeout_seconds` under
+   `values_differ_from_frozen_config`; `OUTPUT_REFUSED`
+   recorded; the output is not admitted. Companion —
+   test_fabricated_receipt_quoting_canonical_hash — REFUSED:
+   quote correct, values canonical, but the receipt id was
+   never issued; refused under `receipt_not_issued`. A hash
+   quote is not consumption proof.
+3. **(c) Preflight verifies one model, a later capture routed
+   to another** —
+   test_capture_routed_to_another_model_invalidates_run —
+   REFUSED, both halves, under the frozen `INVALIDATE_RUN`
+   policy. The preflight lane call serves `lane/model-a`; the
+   capture's own call is routed to `lane/model-b`. *Closure
+   half:* one `SUBJECT_CONFLICT` record, kind
+   `capture_served_mismatch`, naming the capture, the expected
+   (verified) identity, the identity its own call actually
+   served, attribution UNKNOWN. *Execution half:* the
+   capture's admission refused (`CAPTURE_REFUSED` recorded;
+   the capture is not in the admitted registry); the run
+   invalidated per the frozen policy (`RUN_INVALIDATED`
+   recorded, cause named); an output depending on the refused
+   capture refused under `captures_not_admitted`; any
+   subject-dependent output refused under `run_invalidated`.
+   The refusal is scoped, not blanket: a governed output that
+   is NOT subject-dependent, on a valid receipt, still admits
+   in the same run. Companion —
+   test_capture_gate_has_no_identity_to_borrow — PASS as a
+   structural assertion: `admit_capture`'s signature is
+   `(self, capture_id)`; there is no parameter by which a
+   served identity or another capture's admission could be
+   presented. Companion —
+   test_refuse_capture_policy_scopes_the_refusal — REFUSED,
+   both halves, under the frozen `REFUSE_CAPTURE` policy: the
+   mismatched capture's conflict is recorded and its
+   admission refused; the run is NOT invalidated; a capture
+   whose own call serves the verified identity admits and an
+   output may depend on it; an output depending on the
+   REFUSED capture is still refused.
+4. **(d) Served identity differing from the pin** —
+   test_served_identity_differing_from_the_pin — REFUSED,
+   both halves (DR-20's shape: the pin asserted from the
+   catalogue, the lane serving something else). *Closure
+   half:* the `SUBJECT_VERIFICATION` record stands naming the
+   served identity as served (`lane/model-b`), and one
+   `SUBJECT_CONFLICT` record, kind `pin_served_mismatch`,
+   naming asserted pin and served identity, attribution
+   UNKNOWN. *Execution half:* `FreezeRefused` raised at the
+   subject-verification stage; `FREEZE_REFUSED` recorded; no
+   `CONFIG_FROZEN`, no `RUN_STARTED`. A pin is an assertion,
+   not a verification — an unverified pin cannot bind a run.
+
+Admission mechanics additionally covered in
+tests/test_access_admission.py, each refused with its named
+reason: an output with no receipt at all; an output with a
+fabricated receipt id; a receipt issued to a different
+invocation; a receipt that does not cover every value used; an
+output whose quoted digest differs from the frozen object's.
+And in tests/test_freeze.py: a structurally unusable draft
+refused and recorded under its run identity; a derived limit
+below its recomputed requirement refused (the 120-second value
+against the 328-second requirement — DR-21's established
+shape); a derivation whose stated requirement does not
+recompute refused; a derived limit with no derivation refused;
+and a freeze attempted on a corrupted record refused by
+exception only, the corrupted file asserted byte-identical
+afterwards.
+
+## Register effect
+
+- **DR-03** (subject identity has conflicting representations):
+  the mechanism specified for it — K1's run identity binding
+  one K3 configuration and one K2 verified subject, G1's
+  surface-consistency and verification checks — is built and
+  demonstrated, including against DR-03's exact failure mode
+  (driver and adapter surfaces naming different subjects).
+  The register's open sub-question (where the wrong
+  configuration entered the live path) is a production-history
+  question this harness does not address and does not claim
+  to.
+- **DR-20** (a pin is an assertion, not a verification): K2's
+  verification — the subject identity minted from the lane's
+  recorded response, a pin/served mismatch refusing the run
+  at G1, and per-capture served identity under the
+  consistency condition — is built and demonstrated,
+  including the evidence note's carried-in recommendation
+  (verification of the pin before firing) as G1's step 3.
+- **DR-21 (established part)** (a fixed transport limit
+  applied without consulting the run's reasoning envelope):
+  K3's obligation — every transport limit a configuration
+  value carrying its derivation, G1 evaluating derived limits
+  against the objective constraint recorded in the
+  configuration — is built and demonstrated: the limit is
+  frozen in the one configuration object, reaches components
+  only through the access path, and the policy check
+  recomputes the requirement from the envelope inputs.
+  DR-21's decisive cause (lane latency vs timeout length)
+  remains NOT established, exactly as the register records;
+  nothing in this stage separates them or claims to.
+
+On the plan's terms, DR-03, DR-20 and DR-21 (established part)
+are advanced on demonstration — subject to the examiner's
+independent examination of this evidence, which has not yet
+occurred. As with the earlier stages, this discharges the
+mechanisms in the harness; the production paths
+(pilot_driver.py's duplicated subject configuration, the
+adapter's private timeout) are not rewritten — production
+integration belongs to the later stages.
+
+## Boundaries
+
+- The serving lane is a caller-supplied callable — the
+  harness's stand-in for a live lane, in the fixture class of
+  Stage 1's TEST authority. The verification mechanism (obtain
+  the lane's response, record it, bind identity to it, refuse
+  on mismatch) is exercised for real; no network call is made
+  and no claim about any actual lane, endpoint or model is
+  established. DR-20's live model-list evidence is production
+  history, not re-derived here.
+- In-process, local, synchronous only. Deterministic: run
+  identities derive from the record's contents; no wall clock
+  is read (a verification's "time" is its position in the
+  record's chain).
+- The run's invalidation state is held by the `FrozenRun`
+  object in-process and recorded on the record as
+  `RUN_INVALIDATED`; a fresh process re-deriving run state
+  from the record alone is not part of this stage's claim.
+- The schema enters the configuration by pinned digest only
+  (G5's schema anchor). This stage does not re-examine Stage
+  2's schema mechanism; the digest in the test fixture is
+  Stage 2's TEST_SCHEMA digest.
+- One derivation formula (`reasoning_envelope`) is
+  implemented — the one DR-21's established part turns on.
+  Other formulas are policy the configuration could name but
+  this harness does not implement; an unknown formula fails
+  the policy check (it does not recompute), it never passes
+  silently.
+- The record's own integrity guarantees are Stage 1's, with
+  Stage 1's stated limits (chain verification does not defeat
+  a wholesale re-chained rewrite; that is the external
+  anchor's scope). Stage 3 adds the freeze-time chain check
+  and otherwise builds on the record as opened — Stage 1's
+  constructor already refuses to open a corrupted record.
