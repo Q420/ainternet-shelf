@@ -9,8 +9,12 @@ every call), and their single dependency, dynamic_credentials
 (exhibited alongside).
 
 What it does, in order:
-  1. Verifies the exhibited helper's SHA-256 against the pinned
-     table below. Mismatch: refuse to run.
+  1. Verifies the exhibited relay helper's SHA-256 against the
+     pinned table below, AND the SHA-256 of the dependency the
+     helper will actually import (dynamic_credentials.py, sitting
+     beside the helper in relay-helpers/, which is the directory
+     the helper puts first on its import path). Mismatch on
+     either: refuse to run.
   2. Builds the request body from explicit text files named on
      the command line (--system once, --user one or more times)
      plus an optional --params JSON file merged verbatim. No
@@ -40,17 +44,27 @@ from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+HELPERS_DIR = os.path.join(HERE, "relay-helpers")
+
 HELPERS = {
     "nvidia": ("nvidia_api.py",
-               "aa181fe760cf8065edeb7511ffa78c91d8a39d3a0e38d06eed0a508637298f25",
+               "eaff1fb923ee7efd7c386ad7e23b494f6961f8af259be03e1dde3ca127b1c7e3",
                "chat"),
     "groq": ("groq_api.py",
-             "44e87c17c68f47b1b5c5f7d08535fe32745e2cd0f034b93aa49047aa04b3f3c0",
+             "088efd1c59ab1c66ca729da4fa002a9e14d561dfa34601187a539251d6e7bfa4",
              "chat"),
     "gemini": ("gemini_api.py",
-               "b502ab3b37d617e96b08406105d364c779c3e871f7b58d7fe88baf452ba6f1d2",
+               "01e8f4145241b2b5f2a048a640a2ee06d0a28027a2e28805755bf66702bef908",
                "generate"),
 }
+
+# The helpers' sole dependency, pinned identically. The relay
+# helpers import it from their own directory (HELPERS_DIR), which
+# is where this exact file sits; the caller verifies its hash
+# before every invocation, so the dependency actually loaded is
+# the dependency exhibited.
+DEPENDENCY = ("dynamic_credentials.py",
+              "8b1f42e80a76710edf0ff2abf8a51b0cde35b06474af865de108a7ca27d6728d")
 
 
 def sha256_bytes(data):
@@ -116,11 +130,18 @@ def main():
     args = ap.parse_args()
 
     helper_name, pinned_hash, verb = HELPERS[args.provider]
-    helper_path = os.path.join(HERE, helper_name)
+    helper_path = os.path.join(HELPERS_DIR, helper_name)
     actual_hash = sha256_file(helper_path)
     if actual_hash != pinned_hash:
         print(f"REFUSED: helper {helper_name} hash {actual_hash} "
               f"!= pinned {pinned_hash}", file=sys.stderr)
+        return 3
+    dep_name, dep_pinned = DEPENDENCY
+    dep_path = os.path.join(HELPERS_DIR, dep_name)
+    dep_hash = sha256_file(dep_path)
+    if dep_hash != dep_pinned:
+        print(f"REFUSED: dependency {dep_name} hash {dep_hash} "
+              f"!= pinned {dep_pinned}", file=sys.stderr)
         return 3
 
     system_text = read_text(args.system) if args.system else None
@@ -160,6 +181,8 @@ def main():
         "model": args.model,
         "helper": helper_name,
         "helper_sha256_verified": actual_hash,
+        "dependency": dep_name,
+        "dependency_sha256_verified": dep_hash,
         "body_file": os.path.basename(body_file),
         "body_sha256": body_hash,
         "response_file": os.path.basename(resp_file),
