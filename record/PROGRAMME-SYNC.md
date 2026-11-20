@@ -5,7 +5,7 @@ the authoritative documents and copies nothing. Updated on state changes,
 in the same round as the change — never on a timer. A stale sync file is
 a defect, not a backlog item.
 
-## Current state (2026-11-20, ~01:12 MST)
+## Current state (2026-11-20, ~01:33 MST)
 
 - ADJUDICATOR SEQUENCE: **COMPLETE — AUTHORITY PACKAGE PASS.**
   The delegation issued to Alex on 2026-11-19 FAILED Gate 1
@@ -33,6 +33,18 @@ a defect, not a backlog item.
   state, in-window sending/receiving indicators and a
   receiving-side confirmation under the same PB-ID.
   → bridge/pulse-bridge-rebuilt-v1.0.0/
+- DUENNA STAGE 2: **GATE 1 PASS — DR-02 ADVANCED** within the
+  Stage 2 harness (2026-11-20). Four examination rounds: the
+  canonical provenance boundary was made enforced (sole-issuer
+  writer, digest-bound registry), the live chain is verified
+  before its digests are trusted, and a chain-failure refusal
+  writes nothing — the corrupted record stays byte-identical.
+  Evidence boundary preserved in the ruling: the 27/27 and
+  68/68 counts are Remmy's builder-run results; the examiner
+  inspected the implementation and assertions without
+  independently executing either suite. Stage 3 (configuration
+  and subject) now running under Ben's Stages 2–9 approval.
+  → duenna/fix-2026-11-19/stage2/VANE-GATE1-VERDICT-CORRECTION-ROUND-4.md
 - DUENNA STAGE 1: **PASS.** Vane examined the closure harness through
   corrections C1–C6 and the hardening rounds, then independently executed
   the packaged suite himself (13/13 hashes, 68/68 tests, exit 0) and
