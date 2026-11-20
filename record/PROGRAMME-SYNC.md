@@ -248,3 +248,23 @@ a defect, not a backlog item.
 - Examiner's preliminary finding on the adjudicator draft:
   class (1) strong, class (2) partial, class (3) NOT
   established — draft v2 will separate them explicitly.
+- REGISTER EXAMINATION (briefcase-35): itemisation
+  substantially accepted. Amendments made in v2: C-05
+  (demonstrated inspection ≠ established mandatory control),
+  C-10 (the map's inventory is the evidence of absence;
+  Stage 1 and DR-07 are supporting facts, kept distinct),
+  C-13 ADDED — REFLUX admission, the itemisation's one real
+  omission (Remmy's). Examiner's method note adopted: a
+  correction register must not become a machine for
+  manufacturing work; a bounded decision NOT to build is a
+  legitimate correction.
+- ADJUDICATOR PROPOSAL v2 (revised per her examination):
+  G4 separated from outcome adjudication; admissible
+  evidence made explicit incl. the pinned run contract;
+  G6's limits stated; adjudication record contract
+  strengthened; appeal claim withdrawn and replaced with the
+  exact authority boundary; INDETERMINATE settlement
+  defined; the examiner/adjudicator relationship presented
+  as BEN'S DECISION with three named options (combined /
+  separated / reserved to Ben) — including her question:
+  what independently checks the adjudicator's own judgment?

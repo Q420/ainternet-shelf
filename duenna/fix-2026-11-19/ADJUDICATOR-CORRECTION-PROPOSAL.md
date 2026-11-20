@@ -1,104 +1,163 @@
-# SYSTEM CORRECTION PROPOSAL — the production adjudicator
+# SYSTEM CORRECTION PROPOSAL — the production adjudicator (v2)
 
 Drafted by Remmy, 2026-11-19, on Ben's commission ("devise the
-system correction with evidence, not improv"). For Vane's
-examination, then Ben's ruling. This is a proposal: it builds
-nothing, renumbers nothing, and settles nothing by itself.
+system correction with evidence, not improv"). v2 revised per
+the examiner's examination of v1 (briefcase-33 reply): G4
+separated from outcome adjudication; the admissible evidence
+set made explicit, including the pinned run contract; G6's
+limits stated; the adjudication record's contract
+strengthened; the unsupported appeal claim replaced; UNKNOWN
+settlement defined; the examiner/adjudicator relationship
+presented as Ben's decision, not a design conclusion.
+For the examiner's re-examination, then Ben's ruling. This
+proposal builds nothing, renumbers nothing, settles nothing.
 
-## The defect, as the map exposed it
+## The defect, and the evidence kept distinct
 
-The navigable map (content-cleared, briefcase-30) draws one job
-with no owner: **who the production adjudicator is** — the
-authority that finally settles a run's outcome. Every other
-responsibility in the system has a named holder. This one has
-been carried as a qualification since Stage 1 and never ruled.
+The navigable map's responsibility inventory (content-cleared)
+is the evidence that **no named production owner exists for
+final run adjudication**. Two supporting facts, neither of
+which proves that absence alone:
 
-## The evidence
+- Stage 1 (closed, PASS) used TEST-FIXTURE attribution
+  authority. Its PASS covers the closure harness and its
+  stated scope; it does not establish who may adjudicate
+  production runs.
+- Attempt 3's adjudication (performed by Alex) produced DR-07:
+  an adjudication REPORT that misstated a step location. That
+  is evidence that adjudication outputs need independent
+  checking — a reporting defect, independently examinable.
 
-1. **Stage 1 (closed, PASS):** adjudication-relevant authority
-   inside the harness was a TEST FIXTURE. What Stage 1 actually
-   demonstrated is narrower: RECORD's validator produces G4's
-   three independent results, surfaced on the Examiner Surface.
-   Who turns validation into a settled outcome was deliberately
-   not settled — it was fixtured.
-2. **Attempt 3 (the failure that taught us):** adjudication was
-   performed by a seat (Alex) and produced DR-07 — an
-   adjudication that restated a step location inconsistently,
-   caught by no one at the time. G6 (report resolution) exists
-   because of it. An unexamined adjudicator is not a
-   hypothetical failure mode; it is a recorded one.
-3. **The five rulings:** attribution is one fact, identical
-   everywhere it appears; disagreement becomes a recorded
-   discrepancy, both positions preserved. Adjudication is the
-   moment attribution takes its final form — so the
-   adjudicator's identity and authority are load-bearing, not
-   administrative.
-4. **Design v3:** verdicts carry issuance identity (K7) and
-   provenance — DR-23 (a forged verdict accepted without
-   issuance provenance) is the ancestor defect. An adjudication
-   is a verdict about a run; it needs the same provenance
-   discipline as any verdict.
-5. **The map's F5 finding:** governance edges originate from
-   Ben — the only source of permission. Therefore the
-   adjudicator's authority must be a recorded delegation from
-   Ben, and its work must be checkable against pinned evidence,
-   or the adjudicator quietly becomes a second, unexamined
-   source of authority.
-6. **The independence stress point (the map's eleventh):** the
-   second check must not derive from the first. Whoever builds
-   or runs a thing cannot be the one who finally settles it.
+## What the role is
 
-## The proposed correction
+**The adjudicator settles a run's adjudicated outcome against
+its governing contract.** It approves no scope, starts no
+work, authorises no programme change. Ben's authority
+boundary holds: governance originates with Ben (the map's F5
+finding; Design v3's K10 requires adjudicator authority to
+resolve to a pinned governance record, so no component can
+appoint itself).
 
-**The adjudicator is a role, defined by its conditions — not a
-person, and not a seat's habit.**
+**G4 is not the adjudication.** G4 validates three properties
+of the closure record — terminal position, failure-account
+completeness, chain integrity and anchoring. A G4 PASS is not
+a run PASS; a G4 failure is not automatically a model
+failure. The adjudicator preserves G4's three results as
+independent evidence about closure validity and makes the
+substantive outcome decision separately, against the
+contract. Confusing the two is the v1 error this revision
+corrects first.
 
-1. **What it settles:** a run's final outcome — the standing of
-   the closure account and the final form of attribution.
-   Nothing else. It approves no scope, starts no work, and its
-   settlements are about runs, not about the programme.
-2. **What it may rest on:** only the record — G4's three
-   validation results, G6-resolved reports, and the preserved
-   originals. Never its own impressions, never the runner's
-   summary. (Attempt 3's DR-07 is what resting on less produces.)
-3. **What it must produce:** an adjudication record — the
-   outcome, the evidence identities it rests on, and every
-   discrepancy preserved rather than resolved by editing. The
-   adjudication is itself resolvable under G6, like any report.
-4. **Its authority:** delegated by Ben and recorded as a pinned
-   governance artifact (an F5 governance edge). It is delegated
-   authority to SETTLE, exactly as a briefcase carries delegated
-   authority to ACT: the account travels, Ben's approval
-   authority does not. Ben is the appeal of last resort.
-5. **Who may hold it:** the examiner function — independent
-   re-derivation — and never the orchestrator who built or ran
-   the work under judgment. The proposal names the FUNCTION and
-   its conditions so any future seat or agent can be held to
-   them. Who holds it today is Ben's delegation to make; the
-   evidence points at the examiner seat, and this proposal
-   recommends that, openly, as a recommendation.
-6. **The numbering:** the vacancy gets its own register entry
-   under the next free number (proposed DR-26), with the
-   DR-13 collision recorded as a cross-note in both places.
-   Until Ben rules, the map continues to cite no number.
+## The admissible evidence set
 
-## The one genuine fork (for examination and Ben's ruling)
+The adjudicator may rest only on:
 
-How much of adjudication is mechanical? G4's three results can
-be produced mechanically, and a settlement that merely restates
-them could be a function, not a role. But attempt 3's real
-adjudication question — governance failure or model failure —
-took judgment over the whole record. The proposal's position:
-**the settlement is a judgment, the judgment is the role's, and
-the role's discipline is mechanical** (pinned inputs, produced
-record, G6-resolvable). If the examiner's examination finds the
-mechanical reading stronger, the fork is Ben's to settle with
-both readings in front of him.
+1. The immutable run record and its identity.
+2. The pinned run contract — acceptance criteria and pass
+   bar, at their exact version.
+3. The frozen configuration and the verified subject
+   identity.
+4. Preserved original outputs and relevant source artefacts.
+5. G4's three results, retained separately as closure
+   evidence (never merged into the outcome).
+6. G6 findings, where implemented.
+7. Any discrepancies and unresolved evidence gaps, carried
+   as such.
+
+**What G6 can and cannot establish:** G6 resolves report
+references and literal locations against the record and the
+frozen tree set. G6-resolvable does NOT mean substantively
+correct; it does not prove a conclusion follows from its
+evidence, that reasoning is independent, or that authority
+is valid. Nothing in this proposal credits G6 beyond its
+contract.
+
+## The adjudication record
+
+Each adjudication produces an immutable, separately
+identifiable record carrying:
+
+- run identity and pinned criteria identity;
+- adjudicator identity AND the pinned delegation authorising
+  that adjudication;
+- exact evidence identities and references;
+- the adjudicated outcome, and the reasoning connecting the
+  evidence to that outcome;
+- each attribution, with its evidence and its authority;
+- every disagreement, both positions preserved;
+- every unresolved or unknown finding, explicitly retained.
+
+G6 resolution is one property of this record, not its entire
+validation. (K7/DR-23 discipline: verdict issuance identity
+and provenance are necessary. DR-23 is evidence against the
+OLD design — it is not proof the K7 mechanism is
+implemented, and this proposal does not claim it is.)
+
+## Delegation, and the authority boundary stated exactly
+
+The adjudicator's authority is a recorded delegation from
+Ben, identifying its scope, permitted decisions, limits, and
+the exact governance record under which it operates. It is
+never inferred from a seat's identity or from possession of
+a briefcase. Authority to settle a run outcome is a distinct
+grant from authority to act; neither implies the other.
+
+Ben retains the originating governance authority. Any
+challenge or escalation beyond the adjudicator's delegated
+settlement authority returns to Ben under his standing
+authority. **This delegation does not create an independent
+appeal process** — v1's "appeal of last resort" wording
+claimed a mechanism the record does not establish, and is
+withdrawn.
+
+## Settlement under uncertainty
+
+Closure must complete; completion must not manufacture
+certainty. The adjudicator:
+
+- must not turn incomplete evidence into a confident verdict;
+- may settle an outcome as INDETERMINATE where the evidence
+  does not support a stronger conclusion;
+- preserves UNKNOWN attribution as UNKNOWN, and disagreement
+  as disagreement, inside the settlement itself — not as
+  footnotes to a cleaner verdict.
+
+## The open decision — for Ben, not for this design
+
+The role-separation concern is strongly motivated: the party
+producing work must not simply certify its own conclusions.
+But the evidence does NOT establish that the examiner
+function must hold the adjudicator role. Design v3 assigns
+the Examiner Surface independent re-derivation and G6; it
+does not assign final run settlement. Examination produces
+independent evidence; adjudication applies the governing
+criteria and settles the outcome. They might be one function
+or two — and if they are combined, the examiner's own
+question stands open: **what independently checks the
+adjudicator's substantive conclusion?** G6 cannot answer it.
+
+This proposal therefore presents the relationship as Ben's
+architectural ruling, with the options named and none
+smuggled in as proved:
+
+  (a) Examiner and adjudicator combined in one function,
+      with the check on the adjudicator still to be defined.
+  (b) Examiner and adjudicator separated: examination
+      evidence produced independently, settlement made by a
+      distinct holder of Ben's delegation.
+  (c) Settlement reserved to Ben himself, on examination
+      evidence — the ternary's present de facto practice,
+      named as an option rather than assumed as a default.
+
+## The numbering
+
+A fresh register entry for the vacancy under DR-26 (DR-25 is
+the latest numbered defect; the examiner verified), with the
+DR-13 collision cross-noted rather than silently renumbered.
+The register stays untouched until Ben rules.
 
 ## What this proposal is not
 
-Not a build. Stages 2–9 are unchanged and still unapproved
-beyond Stage 1. The register is untouched until Ben rules on
-§6. The map keeps the vacancy lit until the role is filled by
-his delegation — a lit stress point is the honest state, and
-filling it by drafting would be improv.
+Not a build. Stages 2–9 unchanged and unapproved beyond
+Stage 1. The map keeps the vacancy lit until Ben's
+delegation fills it.

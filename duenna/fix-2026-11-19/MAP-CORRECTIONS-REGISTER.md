@@ -1,4 +1,6 @@
-# CORRECTIONS ARISING FROM THE NAVIGABLE MAP — register v1
+# CORRECTIONS ARISING FROM THE NAVIGABLE MAP — register v2
+(v2: amended per the examiner's examination of v1 — C-05 and
+C-10 tightened, C-13 added. briefcase-35.)
 
 Drafted by Remmy, 2026-11-19, on Ben's widened commission:
 the correction work covers ALL things found based on the map,
@@ -61,10 +63,14 @@ Needs: a small design (staleness check), then Ben's tap.
 (2) Case authoring must be checkable for completeness BEFORE
     a run — today's load-bearing check is the examiner's
     inspection (Part 1: four authoring defects caught).
-(3) Inspection is ESTABLISHED and evidenced. A mechanical
-    completeness requirement (e.g. current-conditions as a
-    mandatory case field, from K8's lesson) is NOT ESTABLISHED.
-Needs: case template v2 as examinable paper first.
+(3) Examination of case material has been DEMONSTRATED and
+    has caught real authoring defects (Part 1: four). Its
+    status as a mandatory, consistently applied pre-run
+    control is NOT ESTABLISHED. A mechanical completeness
+    requirement (e.g. current-conditions as a mandatory case
+    field, from K8's lesson) is also NOT ESTABLISHED.
+Needs: case template v2 as examinable paper first — a design,
+not an assumed control.
 
 ## C-06 — The rig caps the evidence (map: s-rig-ceiling)
 (1) K8 replication: both cells capped at L2 by prose-only
@@ -109,9 +115,15 @@ Needs: Stages 2–9 decisions (Ben's); discipline is procedural
 until then, and the map says so.
 
 ## C-10 — The ownerless adjudicator (map: s-adjudicator-vacancy)
-(1) STRONG: the responsibility is missing (Stage 1 fixtured
-    it; the map draws it ownerless; DR-07 shows an unexamined
-    adjudication misstating the record).
+(1) STRONG, with the evidence kept distinct (examiner's
+    sharpening, briefcase-35): the MAP'S RESPONSIBILITY
+    INVENTORY is the evidence that no named production owner
+    exists for final run adjudication. Two supporting facts,
+    neither of which is proof of that absence by itself:
+    Stage 1 used a test-fixture attribution authority (which
+    does not establish production authority), and DR-07 shows
+    an adjudication REPORT that misstated a step location
+    (a reporting defect, independently examinable).
 (2) PARTLY ESTABLISHED: what it settles, what it may rest on,
     and what it must produce are derivable from the rulings,
     K7, G4, and G6 — see the draft proposal
@@ -146,3 +158,29 @@ Needs: Stages; procedural discipline until then.
     beyond Stage 1 is authorised.
 Needs: Ben's stage-by-stage go. The Stage 2 decision has
 been open since 2026-11-19 ~15:16.
+
+## C-13 — REFLUX admission (added on the examiner's finding)
+The omission in v1 was Remmy's: the cleared map's REFLUX flow
+records an outstanding design requirement that is NOT the
+C-04 currency problem. Currency asks whether the record is
+current; REFLUX admission asks whether information has EARNED
+its status as terminal verified knowledge.
+(1) ESTABLISHED as a gap: the map records the requirement
+    (an attested distillation record) as outstanding, not an
+    implemented gate.
+(2) A correction must ensure only appropriately evidenced
+    information receives REFLUX status: source references,
+    output identity, transformation identity, responsible
+    actor, independent fidelity and acceptance evidence, and
+    the distillation/verification evidence preserved (Design
+    v3, Part II). Admission establishes terminal authority
+    WITHIN the system — not external truth, and not a
+    guarantee of source selection.
+(3) NOT ESTABLISHED: any mechanism or component allocation.
+    Design v3's Part II model is a proposal that itself
+    awaits examination and is not load-bearing for the
+    Part I build stages; it must not be marked established
+    merely because the design exists.
+Needs: its own design-and-examination pass, in its turn;
+authority from the applicable approved design and Ben's
+rulings, when he gives them.
