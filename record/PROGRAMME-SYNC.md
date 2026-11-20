@@ -766,3 +766,22 @@ a defect, not a backlog item.
   the delegation establishes authority; it does not
   trigger its exercise (Vane's distinction, adopted).
   → duenna/fix-2026-11-19/VANE-ACK-PINNING-ISSUANCE.md
+- ADJUDICATOR OFFER SENT — CLAUDE DECLINED (2026-11-19
+  ~22:26): on Ben's tap and words, the offer went to
+  Claude in a fresh session in RemmyChrome, carrying the
+  pinned digest, the issued delegation, and the Gate 2
+  boundary. CLAUDE DECLINED, with reasons: settlement
+  should rest with someone accountable over time; he
+  keeps no continuity between sessions; he cannot
+  independently inspect a package beyond what he is
+  handed; he will not sign a binding record he cannot
+  fully stand behind. He suggested a human adjudicator
+  for the seat, and offered other help (digest check,
+  design stress-test, drafting). Gate 2's holder is
+  therefore VACANT again — the instruments stand (the
+  delegation names a grantee who has refused it; it
+  authorises nothing until a holder accepts), and the
+  decision returns to Ben. No production package exists,
+  so nothing is blocked today.
+  → duenna/fix-2026-11-19/CLAUDE-ADJUDICATOR-OFFER.md
+  → duenna/fix-2026-11-19/CLAUDE-ADJUDICATOR-REFUSAL.md
