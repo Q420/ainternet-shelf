@@ -136,7 +136,14 @@ a defect, not a backlog item.
   between stages); Ben caught a design flaw (both treatments
   inside one run) and the examiner accepted the correction —
   paired independent chains, one treatment throughout each. K9
-  is a proposal awaiting Ben's ruling.
+  is a proposal awaiting Ben's ruling. A full K9 design now
+  exists (Remmy's devising on the examiner's skeleton, Ben's
+  correction, and the K8 rig lessons — the dossier scenario,
+  one A forked into both chains, per-hop preservation ledger,
+  verifiable folder state) and is with the examiner for
+  examination, together with a system map drawing the lines
+  between all the parts (record/SYSTEM-MAP.md, .svg).
+  → duenna/fix-2026-11-19/briefcase-tests/K9-DESIGN.md
   → duenna/fix-2026-11-19/briefcase-tests/k8/replication/
   → duenna/fix-2026-11-19/briefcase-tests/k8/
 - PULSE BRIDGE: **v0.20.4 live** (Ben loaded it). The context-full
