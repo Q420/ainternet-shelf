@@ -163,17 +163,31 @@ def main():
     body_hash = sha256_bytes(body_bytes)
 
     started = now()
-    proc = subprocess.run(
-        [sys.executable, helper_path, verb, args.model],
-        input=body_bytes, capture_output=True, timeout=900)
+    timed_out = False
+    try:
+        proc = subprocess.run(
+            [sys.executable, helper_path, verb, args.model],
+            input=body_bytes, capture_output=True, timeout=3600)
+        out_bytes = proc.stdout
+        err_bytes = proc.stderr
+        exit_code = proc.returncode
+    except subprocess.TimeoutExpired as e:
+        # The outer ceiling fired. The attempt is still recorded in
+        # the same structured form, with whatever partial output the
+        # helper produced, so no invocation can vanish from the
+        # record by being killed.
+        timed_out = True
+        out_bytes = e.stdout or b""
+        err_bytes = e.stderr or b""
+        exit_code = None
     finished = now()
     with open(resp_file, "wb") as f:
-        f.write(proc.stdout)
-    resp_hash = sha256_bytes(proc.stdout)
+        f.write(out_bytes)
+    resp_hash = sha256_bytes(out_bytes)
     stderr_file = os.path.join(args.out, f"{args.label}.stderr.txt")
     with open(stderr_file, "wb") as f:
-        f.write(proc.stderr)
-    stderr_hash = sha256_bytes(proc.stderr)
+        f.write(err_bytes)
+    stderr_hash = sha256_bytes(err_bytes)
 
     record = {
         "label": args.label,
@@ -189,15 +203,16 @@ def main():
         "response_sha256": resp_hash,
         "stderr_file": os.path.basename(stderr_file),
         "stderr_sha256": stderr_hash,
-        "provider_response_id": response_id(args.provider, proc.stdout),
-        "helper_exit_code": proc.returncode,
+        "provider_response_id": response_id(args.provider, out_bytes),
+        "helper_exit_code": exit_code,
+        "outer_timeout": timed_out,
         "started_at_utc": started,
         "finished_at_utc": finished,
     }
     with open(record_file, "w", encoding="utf-8") as f:
         json.dump(record, f, indent=1)
     print(json.dumps(record))
-    return 0 if proc.returncode == 0 else 1
+    return 0 if (not timed_out and exit_code == 0) else 1
 
 
 if __name__ == "__main__":
