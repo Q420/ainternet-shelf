@@ -1,0 +1,29 @@
+{
+ "item": "C-D7(iii) actual ground-truth store",
+ "sealed_at_utc": "2026-11-21T16:07:03.082737+00:00",
+ "source_file": "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md",
+ "source_sha256": "53c8d4c51a955e4803ccd0b8d86ece9fdb0cadd1a9e745bc2531daf2393ca252",
+ "extraction": {
+  "annex_a_lines": [
+   293,
+   311
+  ],
+  "annex_c_lines": [
+   539,
+   547
+  ],
+  "method": "heading-boundary byte-exact slices; header lines are mechanical metadata only"
+ },
+ "packet_path": "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+ "packet_bytes": 3553,
+ "packet_sha256": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15",
+ "sealed_store_listing": "total 8\n-rw------- 1 loomgt loomgt  405 Nov 21 15:52 annex-d-sealed-standin.txt\n-rw------- 1 loomgt loomgt 3553 Nov 21 16:07 layer4-packet.txt\n",
+ "sealed_store_sha256sum_as_loomgt": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15  /tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+ "packet_hash_verified_under_sealing_identity": true,
+ "negative_tests": {
+  "loomagent_identity": "uid=1001(loomagent) gid=1001(loomagent) groups=1001(loomagent)",
+  "loomagent_cat_returncode": 1,
+  "loomagent_cat_stderr": "cat: /tmp/loom-trials-runtime/gt-store/layer4-packet.txt: Permission denied"
+ },
+ "standin_preserved": true
+}

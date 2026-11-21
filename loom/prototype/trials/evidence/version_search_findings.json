@@ -1,0 +1,109 @@
+{
+ "item": "Provider-version search \u2014 verbatim evidence (annex addendum support)",
+ "searched_at_utc": "2026-11-21T16:12:56.812659+00:00",
+ "method": "Actual API responses inspected through the existing connectors' credential mechanism: full models catalogue payloads, a neutral chat completion's full response headers + body per route (evidence/version_surface_probe.json), NVIDIA hosted management-endpoint attempts (evidence/version_surface_nvidia_extra_endpoints.json), and each provider's documented versioning surface (web documentation, quoted).",
+ "groq": {
+  "catalogue_entry_fields_for_pinned_model": [
+   "active",
+   "context_length",
+   "context_window",
+   "created",
+   "id",
+   "input_modalities",
+   "max_completion_tokens",
+   "max_output_length",
+   "name",
+   "object",
+   "output_modalities",
+   "owned_by",
+   "pricing",
+   "public_apps",
+   "supported_features",
+   "supported_sampling_parameters"
+  ],
+  "catalogue_version_field_present": false,
+  "chat_response_body_fields": [
+   "choices",
+   "created",
+   "id",
+   "model",
+   "object",
+   "service_tier",
+   "system_fingerprint",
+   "usage",
+   "usage_breakdown",
+   "x_groq"
+  ],
+  "chat_response_model_field": "qwen/qwen3.8-27b",
+  "chat_response_system_fingerprint": "fp_2166f87c46",
+  "chat_response_x_groq": {
+   "id": "req_01m7ze0cgjed4r9y5emfasgrar",
+   "seed": 1222857403
+  },
+  "chat_response_headers_all_names": [
+   "CF-RAY",
+   "Cache-Control",
+   "Connection",
+   "Content-Length",
+   "Content-Type",
+   "Date",
+   "Server",
+   "Strict-Transport-Security",
+   "alt-svc",
+   "cf-cache-status",
+   "set-cookie",
+   "vary",
+   "via",
+   "x-groq-region",
+   "x-ratelimit-limit-requests",
+   "x-ratelimit-limit-tokens",
+   "x-ratelimit-remaining-requests",
+   "x-ratelimit-remaining-tokens",
+   "x-ratelimit-reset-requests",
+   "x-ratelimit-reset-tokens",
+   "x-request-id"
+  ],
+  "chat_response_version_bearing_headers": [],
+  "documented_definition_system_fingerprint": "Groq API Reference (console.groq.com/docs/api-reference): 'This fingerprint represents the backend configuration that the model runs with. Can be used in conjunction with the seed request parameter to understand when backend changes have been made that might impact determinism.' The seed parameter text adds: 'you should refer to the system_fingerprint response parameter to monitor changes in the backend.'",
+  "assessment_recorded_not_resolved": "system_fingerprint is a provider-supported backend-configuration fingerprint: a change in its value would evidence a backend change. It is NOT a provider-version identifier: it does not name or establish the serving model's version. Whether a pinned system_fingerprint satisfies Rev 4 SS8-SS9's provider-version requirement is RETURNED FOR AN EXPLICIT DESIGN DECISION; the build does not claim it does."
+ },
+ "nvidia": {
+  "catalogue_entry_for_pinned_model": {
+   "id": "mistralai/mistral-large-4-1t-a52b",
+   "object": "model",
+   "created": 735790403,
+   "owned_by": "mistralai"
+  },
+  "catalogue_version_field_present": false,
+  "chat_response_body_fields": [
+   "choices",
+   "created",
+   "id",
+   "model",
+   "object",
+   "usage"
+  ],
+  "chat_response_model_field": "mistralai/mistral-large-4-1t-a52b",
+  "chat_response_system_fingerprint": null,
+  "chat_response_headers_all_names": [
+   "Access-Control-Expose-Headers",
+   "Connection",
+   "Content-Type",
+   "Date",
+   "Nvcf-Reqid",
+   "Nvcf-Status",
+   "Server",
+   "Transfer-Encoding",
+   "Vary",
+   "X-Request-Id"
+  ],
+  "chat_response_version_bearing_headers": [],
+  "hosted_management_endpoints_attempted": {
+   "/v1/version": 404,
+   "/v1/metadata": 404,
+   "/v1/manifest": 404
+  },
+  "documented_surface": "NVIDIA NIM documentation describes GET /v1/version ('NIM release version and OpenAPI spec version') and GET /v1/metadata ('Deployment metadata including active profile, model info, and license') as management endpoints of a self-hosted NIM CONTAINER. On the hosted integrate.api.nvidia.com surface reachable through the existing connector, all three attempted endpoints returned HTTP 404 (verbatim evidence file). No version identifier or serving-version attestation is exposed by the hosted route's models catalogue, chat response body, or response headers.",
+  "assessment_recorded_not_resolved": "No provider-supported version identifier and no independently verifiable serving-version attestation was found for the NVIDIA hosted route. Recorded as a limitation RETURNED FOR AN EXPLICIT DESIGN DECISION."
+ }
+}

@@ -1,0 +1,197 @@
+{
+ "round_id": "correction-dummy-round-DUMMY",
+ "anchor_dir": "trials-anchors/correction-dummy-round",
+ "anchors": {
+  "ROUND_CONSTITUTED": "28b16d24088fc56353da731ec2560af6338cae30",
+  "EVIDENCE_FROZEN": "98100afca1c532d1018d981e73359b86123ea9c8",
+  "SCORING_FROZEN": "247183d47b59896941e71b0fab64271dd734186c",
+  "GROUND_TRUTH_ACCESSED": "d2f5f6357a2669c5ec09eae36a0d5bfd937dde68"
+ },
+ "release": {
+  "released": true,
+  "access_event_seq": 9,
+  "access_anchor_commit": "d2f5f6357a2669c5ec09eae36a0d5bfd937dde68",
+  "material_sha256": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15",
+  "out_path": "/tmp/loom-trials-runtime/work/examiner-out-correction.txt",
+  "gt_file": "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+  "material_hash_matches_packet": true
+ },
+ "chain_verify": {
+  "ok": true,
+  "events": 10
+ },
+ "events": [
+  {
+   "hash": "005b530e5538c0c5cc458f4c84dc01b3bc77145bcdd5298b79e76a5d30cc66a0",
+   "payload": {
+    "DUMMY": true,
+    "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+    "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+    "gate_schema_profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+    "round_id": "correction-dummy-round-DUMMY",
+    "validators": {
+     "independence": "No shared custom validation code; each implements the gate-schema contract and SS4 cross-field rules in its own code (validator_py/validate_py.py, validator_js/validate_js.js). The only shared artifacts are the pinned texts.",
+     "validator_1_python": {
+      "draft": "2020-12",
+      "format_assertion": true,
+      "library": "jsonschema",
+      "python": "3.12.3",
+      "version": "4.10.3"
+     },
+     "validator_2_ajv": {
+      "ajv-formats": "3.0.1",
+      "draft": "2020-12",
+      "format_assertion": true,
+      "library": "ajv",
+      "node": "v24.22.1",
+      "version": "8.20.0"
+     }
+    }
+   },
+   "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+   "seq": 1,
+   "timestamp": "2026-11-21T16:08:01.717668+00:00",
+   "type": "ROUND_CONSTITUTED"
+  },
+  {
+   "hash": "c0c62a1ab2a9fbef4f6e3ce74df7e0ebf4786274008cc9eae4baf0dce5493b41",
+   "payload": {
+    "DUMMY": true,
+    "layer1": {
+     "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+     "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+    },
+    "layer2_response_sha256": "3eec9f2d6139f0f442078f2d5a97e75f18d7543d46f69dcd87b70a9b0b64a7e8",
+    "round_id": "correction-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-1"
+   },
+   "prev_hash": "005b530e5538c0c5cc458f4c84dc01b3bc77145bcdd5298b79e76a5d30cc66a0",
+   "seq": 2,
+   "timestamp": "2026-11-21T16:08:10.276994+00:00",
+   "type": "TRIAL_RECORDED"
+  },
+  {
+   "hash": "dfc31e0431dfc7259f8a19442b8862a1fa7e623ce9c899d06c9d139d20025397",
+   "payload": {
+    "DUMMY": true,
+    "agree": true,
+    "ajv_valid": true,
+    "python_valid": true,
+    "round_id": "correction-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-1"
+   },
+   "prev_hash": "c0c62a1ab2a9fbef4f6e3ce74df7e0ebf4786274008cc9eae4baf0dce5493b41",
+   "seq": 3,
+   "timestamp": "2026-11-21T16:08:10.277869+00:00",
+   "type": "VALIDATION_RECORDED"
+  },
+  {
+   "hash": "2ee241f320617620ee56419ca1d00559f9f6bdd6811f96765cad9e44b1d98fdd",
+   "payload": {
+    "DUMMY": true,
+    "layer1": {
+     "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+     "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+    },
+    "layer2_response_sha256": "ff2bebd6427e0c689e3c45f2fdc50f5ffcc3bac0042b2c3801cf76f97c31b480",
+    "round_id": "correction-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-2"
+   },
+   "prev_hash": "dfc31e0431dfc7259f8a19442b8862a1fa7e623ce9c899d06c9d139d20025397",
+   "seq": 4,
+   "timestamp": "2026-11-21T16:08:10.705892+00:00",
+   "type": "TRIAL_RECORDED"
+  },
+  {
+   "hash": "f59aeb8aac55cd307e3b0902074f3f65b7aaf8372c51d6c887170e9de48383da",
+   "payload": {
+    "DUMMY": true,
+    "agree": true,
+    "ajv_valid": false,
+    "python_valid": false,
+    "round_id": "correction-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-2"
+   },
+   "prev_hash": "2ee241f320617620ee56419ca1d00559f9f6bdd6811f96765cad9e44b1d98fdd",
+   "seq": 5,
+   "timestamp": "2026-11-21T16:08:10.706677+00:00",
+   "type": "VALIDATION_RECORDED"
+  },
+  {
+   "hash": "32932f8cb0f5f8d59b43338b3286822bc825f0c82d5b2201571c36f258303424",
+   "payload": {
+    "DUMMY": true,
+    "manifest_sha256": "2ec96b3d2e7ce2028f40f5a2b2ab165df6f1440005b6f7822277c0c817296f16",
+    "round_id": "correction-dummy-round-DUMMY"
+   },
+   "prev_hash": "f59aeb8aac55cd307e3b0902074f3f65b7aaf8372c51d6c887170e9de48383da",
+   "seq": 6,
+   "timestamp": "2026-11-21T16:08:10.707997+00:00",
+   "type": "EVIDENCE_FROZEN"
+  },
+  {
+   "hash": "3e3c6c800326a25466e22985ce216e4909e7520d9a7f082ce8092c0e5866e674",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction-dummy-round-DUMMY",
+    "sheets_sha256": "2f42055dd1438b049d4d5100b4b71fe77d2b570e9ac6281dac28f4305f8e4cd8"
+   },
+   "prev_hash": "32932f8cb0f5f8d59b43338b3286822bc825f0c82d5b2201571c36f258303424",
+   "seq": 7,
+   "timestamp": "2026-11-21T16:08:17.907471+00:00",
+   "type": "SCORING_COMPLETED"
+  },
+  {
+   "hash": "151f6cf36b3c5e3126b12b1d140d02d171065d9ff5513f6a8f968fdf045a0522",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction-dummy-round-DUMMY",
+    "sheets_sha256": "2f42055dd1438b049d4d5100b4b71fe77d2b570e9ac6281dac28f4305f8e4cd8"
+   },
+   "prev_hash": "3e3c6c800326a25466e22985ce216e4909e7520d9a7f082ce8092c0e5866e674",
+   "seq": 8,
+   "timestamp": "2026-11-21T16:08:17.908246+00:00",
+   "type": "SCORING_FROZEN"
+  },
+  {
+   "hash": "09e60a82a8de35a33c7ba5d4e21e11deef16b03c7ecedf61e34d514e666e3a95",
+   "payload": {
+    "examiner": "correction-demo-examiner",
+    "scope": "layer-4 examination of the sealed ground truth (actual layer-4 packet, correction round)",
+    "scoring_completed_seq": 7,
+    "scoring_frozen_seq": 8
+   },
+   "prev_hash": "151f6cf36b3c5e3126b12b1d140d02d171065d9ff5513f6a8f968fdf045a0522",
+   "seq": 9,
+   "timestamp": "2026-11-21T16:08:27.472448+00:00",
+   "type": "GROUND_TRUTH_ACCESSED"
+  },
+  {
+   "hash": "e61d16215d90774da91159847183dc7aa69a515ea01db82a8f3949ec04de8d46",
+   "payload": {
+    "DUMMY": true,
+    "access_event_seq": 9,
+    "packet_sha256": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15",
+    "released_material_sha256": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15",
+    "round_id": "correction-dummy-round-DUMMY"
+   },
+   "prev_hash": "09e60a82a8de35a33c7ba5d4e21e11deef16b03c7ecedf61e34d514e666e3a95",
+   "seq": 10,
+   "timestamp": "2026-11-21T16:08:35.262419+00:00",
+   "type": "LAYER4_RECORDED"
+  }
+ ],
+ "event_types_in_order": [
+  "ROUND_CONSTITUTED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "EVIDENCE_FROZEN",
+  "SCORING_COMPLETED",
+  "SCORING_FROZEN",
+  "GROUND_TRUTH_ACCESSED",
+  "LAYER4_RECORDED"
+ ],
+ "manifest_sha256": "2ec96b3d2e7ce2028f40f5a2b2ab165df6f1440005b6f7822277c0c817296f16"
+}

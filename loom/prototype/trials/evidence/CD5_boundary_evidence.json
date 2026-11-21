@@ -1,0 +1,42 @@
+{
+ "item": "C-D5 boundary evidence (against the chain-2 store, live)",
+ "executing_identity": "uid=1001(loomagent) gid=1001(loomagent) groups=1001(loomagent)",
+ "store_dir_listing": "drwx------ 2 loomledger loomledger 80 Nov 21 16:08 /tmp/loom-trials-runtime/ledger-store",
+ "store_file_listing": "-rw-rw---- 1 loomledger loomledger 5365 Nov 21 16:08 /tmp/loom-trials-runtime/ledger-store/sequence.jsonl",
+ "socket_listing": "total 0\nsrw-rw-rw- 1 loomledger loomledger 0 Nov 21 16:08 ledger.sock",
+ "direct_read": {
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "cat: /tmp/loom-trials-runtime/ledger-store/sequence.jsonl: Permission denied"
+ },
+ "direct_append": {
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nPermissionError: [Errno 13] Permission denied: '/tmp/loom-trials-runtime/ledger-store/sequence.jsonl'"
+ },
+ "direct_delete": {
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "rm: cannot remove '/tmp/loom-trials-runtime/ledger-store/sequence.jsonl': Permission denied"
+ },
+ "service_delete_op": {
+  "returncode": 2,
+  "stdout": "",
+  "stderr": "python3: can't open file '/tmp/loom-trials-runtime/work/ledger_client.py': [Errno 13] Permission denied"
+ },
+ "service_update_op": {
+  "returncode": 2,
+  "stdout": "",
+  "stderr": "python3: can't open file '/tmp/loom-trials-runtime/work/ledger_client.py': [Errno 13] Permission denied"
+ },
+ "service_append_as_loomagent": {
+  "returncode": 2,
+  "stdout": "",
+  "stderr": "python3: can't open file '/tmp/loom-trials-runtime/work/ledger_client.py': [Errno 13] Permission denied"
+ },
+ "chain_verify_after": {
+  "ok": true,
+  "events": 10
+ },
+ "note": "Direct attempts name the store path and fail at the store boundary (loomledger mode-700 directory / mode-660 file owned by loomledger). The service offers no delete/update operation. The only successful write is the service append."
+}

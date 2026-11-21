@@ -1,0 +1,702 @@
+{
+ "groq": {
+  "route": "groq",
+  "model_id": "qwen/qwen3.8-27b",
+  "models_status": 200,
+  "models_headers": {
+   "Date": "Sat, 21 Nov 2026 16:11:07 GMT",
+   "Content-Type": "application/json",
+   "CF-RAY": "a5e0f7ed5e8a7e16-LAX",
+   "Strict-Transport-Security": "max-age=15552000",
+   "Cache-Control": "private, max-age=0, no-store, no-cache, must-revalidate",
+   "Server": "cloudflare",
+   "vary": "Origin",
+   "x-groq-region": "dls",
+   "x-request-id": "req_01m7ze0c3mexkstcmtz7w5x4af",
+   "via": "1.1 google",
+   "alt-svc": "h3=\":443\"; ma=86400",
+   "cf-cache-status": "DYNAMIC",
+   "set-cookie": "__cf_bm=phmBRKqSL05kR74K8GJFk4r2e4git.oKKn8BJbtyIHg-1795277467.737833-1.0.1.1-Mv1zY.qgpRNE9AXgrKOSD_VwE5W8yDokdp6cMDZELpGHdd9xfF494BMHSVhaItk3UHoTj_zskQBA1FFtNSTj581Ncem9qTfbm0f2CE_U2Ridd8r.IFizygMeWBSEEBe0; HttpOnly; SameSite=None; Partitioned; Secure; Path=/; Domain=groq.com; Expires=Sat, 21 Nov 2026 16:41:07 GMT",
+   "Connection": "close",
+   "Transfer-Encoding": "chunked"
+  },
+  "models_body": {
+   "object": "list",
+   "data": [
+    {
+     "model_card": "https://openai.com/index/gpt-oss-model-card",
+     "id": "openai/gpt-oss-20b",
+     "object": "model",
+     "created": 1754407957,
+     "owned_by": "OpenAI",
+     "active": true,
+     "context_window": 131072,
+     "public_apps": null,
+     "max_completion_tokens": 65536,
+     "hugging_face_id": "openai/gpt-oss-20b",
+     "name": "GPT OSS 20B",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 131072,
+     "max_output_length": 65536,
+     "pricing": {
+      "prompt": "0.000000075",
+      "completion": "0.0000003",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.0000000375"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "tools",
+      "json_mode",
+      "structured_outputs",
+      "reasoning"
+     ]
+    },
+    {
+     "id": "allam-2-7b",
+     "object": "model",
+     "created": 1737672203,
+     "owned_by": "SDAIA",
+     "active": true,
+     "context_window": 4096,
+     "public_apps": null,
+     "max_completion_tokens": 4096,
+     "hugging_face_id": "ALLaM-AI/ALLaM-2.0-7B-Instruct",
+     "name": "ALLaM-2-7b",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 4096,
+     "max_output_length": 4096,
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "json_mode"
+     ]
+    },
+    {
+     "model_card": "https://huggingface.co/openai/whisper-large-v3",
+     "id": "whisper-large-v3",
+     "object": "model",
+     "created": 1693721698,
+     "owned_by": "OpenAI",
+     "active": true,
+     "context_window": 448,
+     "public_apps": null,
+     "max_completion_tokens": 448,
+     "hugging_face_id": "openai/whisper-large-v3",
+     "name": "Whisper",
+     "input_modalities": [
+      "audio"
+     ],
+     "output_modalities": [
+      "transcription"
+     ],
+     "context_length": 448,
+     "max_output_length": 448
+    },
+    {
+     "id": "whisper-large-v3-turbo",
+     "object": "model",
+     "created": 1728413088,
+     "owned_by": "OpenAI",
+     "active": true,
+     "context_window": 448,
+     "public_apps": null,
+     "max_completion_tokens": 448,
+     "hugging_face_id": "openai/whisper-large-v3-turbo",
+     "name": "Whisper Large V3 Turbo",
+     "input_modalities": [
+      "audio"
+     ],
+     "output_modalities": [
+      "transcription"
+     ],
+     "context_length": 448,
+     "max_output_length": 448
+    },
+    {
+     "id": "canopylabs/orpheus-v1-english",
+     "object": "model",
+     "created": 1766186316,
+     "owned_by": "Canopy Labs",
+     "active": true,
+     "context_window": 4000,
+     "public_apps": null,
+     "max_completion_tokens": 50000,
+     "name": "Canopy Labs Orpheus V1 English",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "speech"
+     ],
+     "context_length": 4000,
+     "max_output_length": 50000,
+     "pricing": {
+      "prompt": "0.000022",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.000011"
+     }
+    },
+    {
+     "model_card": "openai/gpt-oss-safeguard-20b",
+     "id": "openai/gpt-oss-safeguard-20b",
+     "object": "model",
+     "created": 1761708789,
+     "owned_by": "OpenAI",
+     "active": true,
+     "context_window": 131072,
+     "public_apps": null,
+     "max_completion_tokens": 65536,
+     "hugging_face_id": "openai/gpt-oss-safeguard-20b",
+     "name": "Safety GPT OSS 20B",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 131072,
+     "max_output_length": 65536,
+     "pricing": {
+      "prompt": "0.000000075",
+      "completion": "0.0000003",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.0000000375"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "tools",
+      "json_mode",
+      "structured_outputs",
+      "reasoning"
+     ]
+    },
+    {
+     "id": "qwen/qwen3.8-27b",
+     "object": "model",
+     "created": 1786984846,
+     "owned_by": "Alibaba Cloud",
+     "active": true,
+     "context_window": 131072,
+     "public_apps": null,
+     "max_completion_tokens": 16384,
+     "name": "Qwen/Qwen3.8-27B",
+     "input_modalities": [
+      "text",
+      "image"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 131072,
+     "max_output_length": 16384,
+     "pricing": {
+      "prompt": "0.0000008",
+      "completion": "0.000004",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.0000004"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "tools",
+      "json_mode",
+      "reasoning"
+     ]
+    },
+    {
+     "id": "meta-llama/llama-prompt-guard-2-22m",
+     "object": "model",
+     "created": 1748632101,
+     "owned_by": "Meta",
+     "active": true,
+     "context_window": 512,
+     "public_apps": null,
+     "max_completion_tokens": 512,
+     "name": "Llama Prompt Guard 2 22M",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 512,
+     "max_output_length": 512,
+     "pricing": {
+      "prompt": "0.00000003",
+      "completion": "0.00000003",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.000000015"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ]
+    },
+    {
+     "model_card": "https://openai.com/index/gpt-oss-model-card",
+     "id": "openai/gpt-oss-120b",
+     "object": "model",
+     "created": 1754408224,
+     "owned_by": "OpenAI",
+     "active": true,
+     "context_window": 131072,
+     "public_apps": null,
+     "max_completion_tokens": 65536,
+     "hugging_face_id": "openai/gpt-oss-120b",
+     "name": "GPT OSS 120B",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 131072,
+     "max_output_length": 65536,
+     "pricing": {
+      "prompt": "0.00000015",
+      "completion": "0.0000006",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.000000075"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "tools",
+      "json_mode",
+      "structured_outputs",
+      "reasoning"
+     ]
+    },
+    {
+     "id": "canopylabs/orpheus-arabic-saudi",
+     "object": "model",
+     "created": 1765926439,
+     "owned_by": "Canopy Labs",
+     "active": true,
+     "context_window": 4000,
+     "public_apps": null,
+     "max_completion_tokens": 50000,
+     "name": "Canopy Labs Orpheus Arabic Saudi",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "speech"
+     ],
+     "context_length": 4000,
+     "max_output_length": 50000,
+     "pricing": {
+      "prompt": "0.00004",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.00002"
+     }
+    },
+    {
+     "id": "meta-llama/llama-prompt-guard-2-86m",
+     "object": "model",
+     "created": 1748632165,
+     "owned_by": "Meta",
+     "active": true,
+     "context_window": 512,
+     "public_apps": null,
+     "max_completion_tokens": 512,
+     "name": "Prompt Guard 2 86M",
+     "input_modalities": [
+      "text"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 512,
+     "max_output_length": 512,
+     "pricing": {
+      "prompt": "0.00000004",
+      "completion": "0.00000004",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.00000002"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "json_mode"
+     ]
+    }
+   ]
+  },
+  "chat_status": 200,
+  "chat_headers": {
+   "Date": "Sat, 21 Nov 2026 16:11:08 GMT",
+   "Content-Type": "application/json",
+   "alt-svc": "h3=\":443\"; ma=86400",
+   "CF-RAY": "a5e0f7efede0eb2c-SJC",
+   "Cache-Control": "private, max-age=0, no-store, no-cache, must-revalidate",
+   "Server": "cloudflare",
+   "vary": "Origin",
+   "x-groq-region": "dls",
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7914",
+   "x-ratelimit-reset-requests": "1m26.4s",
+   "x-ratelimit-reset-tokens": "644ms",
+   "x-request-id": "req_01m7ze0cgjed4r9y5emfasgrar",
+   "set-cookie": "__cf_bm=1pc8EdL8Rbl8GgqsWbpRZaP5uHF_Lh2W.IIfKKe1FSA-1795277468.1477349-1.0.1.1-SK1KsQJLs.0EBL1NhnIM.H0nfwa1NqyzQcfgfkhCGv.7_KEyMDneoPh48yrio6XvV.WSQmI.sIP9XzrglieZGgsPECn5w4JT_3vjhkxunIw86kNeMniD2uQKXMdgsvo1; HttpOnly; SameSite=None; Partitioned; Secure; Path=/; Domain=groq.com; Expires=Sat, 21 Nov 2026 16:41:08 GMT",
+   "via": "1.1 google",
+   "Strict-Transport-Security": "max-age=15552000",
+   "cf-cache-status": "DYNAMIC",
+   "Connection": "close",
+   "Content-Length": "582"
+  },
+  "chat_body": {
+   "id": "chatcmpl-e69f5cb0-8242-41c2-b207-ff2bfb1364cc",
+   "object": "chat.completion",
+   "created": 1795277468,
+   "model": "qwen/qwen3.8-27b",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "VERSION-PROBE-OK"
+     },
+     "logprobs": null,
+     "finish_reason": "stop"
+    }
+   ],
+   "usage": {
+    "queue_time": 0.638848975,
+    "prompt_tokens": 22,
+    "prompt_time": 0.001700405,
+    "completion_tokens": 7,
+    "completion_time": 0.032225513,
+    "total_tokens": 29,
+    "total_time": 0.033925918
+   },
+   "usage_breakdown": null,
+   "system_fingerprint": "fp_2166f87c46",
+   "x_groq": {
+    "id": "req_01m7ze0cgjed4r9y5emfasgrar",
+    "seed": 1222857403
+   },
+   "service_tier": "on_demand"
+  }
+ },
+ "nvidia": {
+  "route": "nvidia",
+  "model_id": "mistralai/mistral-large-4-1t-a52b",
+  "models_status": 200,
+  "models_headers": {
+   "Date": "Sat, 21 Nov 2026 16:11:09 GMT",
+   "Content-Type": "application/json",
+   "X-Request-Id": "64f66e10-c70e-4bd4-90c3-1dd7b6e06825",
+   "Vary": "Authorization",
+   "Connection": "close",
+   "Transfer-Encoding": "chunked"
+  },
+  "models_body": {
+   "object": "list",
+   "data": [
+    {
+     "id": "bigcode/starcoder2-15b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "bigcode"
+    },
+    {
+     "id": "fastino/gliner2-pii",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "fastino"
+    },
+    {
+     "id": "google/gemma-3-12b-it",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "google"
+    },
+    {
+     "id": "google/gemma-3-4b-it",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "google"
+    },
+    {
+     "id": "google/gemma-4-31b-it",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "google"
+    },
+    {
+     "id": "meta/muse-glimmer-30b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "meta"
+    },
+    {
+     "id": "minimaxai/minimax-m3.1-flash",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "minimaxai"
+    },
+    {
+     "id": "mistralai/mistral-large-4-1t-a52b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "mistralai"
+    },
+    {
+     "id": "moonshotai/kimi-k3.1-pro",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "moonshotai",
+     "context_window": 1048576,
+     "model_type": "vlm",
+     "supports_structured_output": true,
+     "supports_thinking": true,
+     "supports_tools": true
+    },
+    {
+     "id": "nvidia/ai-synthetic-video-detector",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/cosmos-reason2-8b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/embed-qa-4",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/ising-calibration-1.5-31b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3-embed-1b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3-ultra-550b-a55b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3.5-bolt-e4b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3.5-content-safety",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3.5-embed-1b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3.5-embed-8b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nv-embedqa-mistral-7b-v2",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/nvclip",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "nvidia/riva-translate-4b-instruct-v2",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "nvidia"
+    },
+    {
+     "id": "poolside/laguna-xs-2.1",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "poolside"
+    },
+    {
+     "id": "snowflake/arctic-embed-l",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "snowflake"
+    },
+    {
+     "id": "stepfun-ai/step-5-preview",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "stepfun-ai"
+    },
+    {
+     "id": "z-ai/glm-5.3-flash",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "z-ai"
+    }
+   ]
+  },
+  "chat_status": 200,
+  "chat_headers": {
+   "Date": "Sat, 21 Nov 2026 16:11:28 GMT",
+   "Content-Type": "application/json",
+   "X-Request-Id": "bd5efd79-2a7e-42c9-9be6-7a1e0d68392a",
+   "Vary": "Origin",
+   "Access-Control-Expose-Headers": "nvcf-reqid",
+   "Nvcf-Reqid": "97c94a30-f6c7-4a72-9f73-e54cd912ec2f",
+   "Nvcf-Status": "fulfilled",
+   "Server": "Python/3.12 aiohttp/3.14.5",
+   "Connection": "close",
+   "Transfer-Encoding": "chunked"
+  },
+  "chat_body": {
+   "id": "chatcmpl-4e183ea1-e61b-4c57-bf2d-a4d2e0b3f1dd",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "content": "VERSION-PROBE-OK",
+      "refusal": null,
+      "role": "assistant",
+      "reasoning_content": "The user wants me to reply with exactly \"VERSION-PROBE-OK\". This is a simple instruction. I should output exactly that string with no additional text, formatting, or explanation."
+     },
+     "finish_reason": "stop",
+     "logprobs": null
+    }
+   ],
+   "created": 1795277470,
+   "model": "mistralai/mistral-large-4-1t-a52b",
+   "object": "chat.completion",
+   "usage": {
+    "prompt_tokens": 24,
+    "completion_tokens": 45,
+    "total_tokens": 69,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 40
+    }
+   }
+  }
+ }
+}

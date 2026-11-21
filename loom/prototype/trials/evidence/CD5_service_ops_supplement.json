@@ -1,0 +1,21 @@
+{
+ "item": "C-D5 service-op evidence (supplemental)",
+ "note": "The first service-op attempts in CD5_boundary_evidence.json ran the client from RT/work (mode 770, root) and failed on directory traversal before reaching the service \u2014 the same environment path issue the original build recorded. This supplement re-runs them with the client at the runtime root (RT, mode 755), the original build's own remedy. Both records stand.",
+ "executing_identity": "uid=1001(loomagent) gid=1001(loomagent) groups=1001(loomagent)",
+ "client_path": "/tmp/loom-trials-runtime/ledger_client.py",
+ "service_delete_op": {
+  "returncode": 0,
+  "stdout": "{\"ok\": false, \"error\": \"unknown_op: the ledger interface has no such operation\"}",
+  "stderr": ""
+ },
+ "service_update_op": {
+  "returncode": 0,
+  "stdout": "{\"ok\": false, \"error\": \"unknown_op: the ledger interface has no such operation\"}",
+  "stderr": ""
+ },
+ "service_append_as_loomagent": {
+  "returncode": 0,
+  "stdout": "{\"ok\": true, \"seq\": 11, \"hash\": \"7552ded0bd39976ade3443b7d0e1f1e8688c9d0b78d63c278df4f35639f7db86\"}",
+  "stderr": ""
+ }
+}

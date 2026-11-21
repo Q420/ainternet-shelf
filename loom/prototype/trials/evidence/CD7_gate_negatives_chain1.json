@@ -1,0 +1,126 @@
+{
+ "round_id": "correction-negtests-DUMMY",
+ "anchor_dir": "trials-anchors/correction-negtests",
+ "tests": {
+  "release_with_scoring_completed_absent": {
+   "released": false,
+   "stage": "gate",
+   "why": "SCORING_FROZEN exists but SCORING_COMPLETED is absent: the complete scoring order is not present",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 2,
+    "hash": "b4201b14ae9f9d36b1b28b0bcf8c5838acaff85739429c94df24db99df19a456",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 2,
+    "hash": "b4201b14ae9f9d36b1b28b0bcf8c5838acaff85739429c94df24db99df19a456",
+    "type": "SCORING_FROZEN"
+   },
+   "anchor_commit_scoring_frozen": "426e664f9d658290646d2eb8563c9799faca3bdc"
+  },
+  "release_with_mismatched_anchor_record": {
+   "released": false,
+   "stage": "anchor-validation",
+   "why": "SCORING_FROZEN anchor record failed structural validation: anchor head_hash does not match the sequence head hash at that position",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "4483fcadb8701bb210bbc9b2580312f13f35e8263ef3d49d4999615a0f990988",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "4483fcadb8701bb210bbc9b2580312f13f35e8263ef3d49d4999615a0f990988",
+    "type": "SCORING_FROZEN"
+   }
+  },
+  "release_with_malformed_anchor_readback": {
+   "released": false,
+   "stage": "anchor-check",
+   "why": "SCORING_FROZEN anchor could not be parsed: read-back envelope unparsable: Expecting value: line 1 column 1 (char 0)",
+   "material_released": false
+  },
+  "fail_closed_anchor_sabotage_real_store": {
+   "released": false,
+   "stage": "anchor-access-record",
+   "why": "GROUND_TRUTH_ACCESSED could not be anchored (simulated anchoring failure (fail-closed test)); material NOT released",
+   "access_event_seq": 5,
+   "material_released": false,
+   "events_after": [
+    "ROUND_CONSTITUTED",
+    "SCORING_FROZEN",
+    "SCORING_COMPLETED",
+    "SCORING_FROZEN",
+    "GROUND_TRUTH_ACCESSED"
+   ]
+  }
+ },
+ "chain1_events": [
+  {
+   "hash": "8a259b18e12de15aa77e36d47ce87c117937c9ff1b50c0bebcb02bfc06b824bb",
+   "payload": {
+    "DUMMY": true,
+    "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+    "purpose": "C-D7 gate negative tests only",
+    "round_id": "correction-negtests-DUMMY"
+   },
+   "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+   "seq": 1,
+   "timestamp": "2026-11-21T16:07:41.847493+00:00",
+   "type": "ROUND_CONSTITUTED"
+  },
+  {
+   "hash": "b4201b14ae9f9d36b1b28b0bcf8c5838acaff85739429c94df24db99df19a456",
+   "payload": {
+    "DUMMY": true,
+    "note": "frozen WITHOUT any SCORING_COMPLETED \u2014 the build round's successful-release pattern",
+    "round_id": "correction-negtests-DUMMY"
+   },
+   "prev_hash": "8a259b18e12de15aa77e36d47ce87c117937c9ff1b50c0bebcb02bfc06b824bb",
+   "seq": 2,
+   "timestamp": "2026-11-21T16:07:41.847978+00:00",
+   "type": "SCORING_FROZEN"
+  },
+  {
+   "hash": "dc595a25492e10f8b3c52c69d674cf3b18d09b6926d53a1623aeb990ae3b8bda",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction-negtests-DUMMY"
+   },
+   "prev_hash": "b4201b14ae9f9d36b1b28b0bcf8c5838acaff85739429c94df24db99df19a456",
+   "seq": 3,
+   "timestamp": "2026-11-21T16:07:49.961782+00:00",
+   "type": "SCORING_COMPLETED"
+  },
+  {
+   "hash": "4483fcadb8701bb210bbc9b2580312f13f35e8263ef3d49d4999615a0f990988",
+   "payload": {
+    "DUMMY": true,
+    "note": "complete order now present",
+    "round_id": "correction-negtests-DUMMY"
+   },
+   "prev_hash": "dc595a25492e10f8b3c52c69d674cf3b18d09b6926d53a1623aeb990ae3b8bda",
+   "seq": 4,
+   "timestamp": "2026-11-21T16:07:49.962185+00:00",
+   "type": "SCORING_FROZEN"
+  },
+  {
+   "hash": "a39cb282aee8d7e32daccd7b0178bb28c0b15500ffc04ab38aa2119aca638a81",
+   "payload": {
+    "examiner": "correction-demo-examiner",
+    "scope": "layer-4 examination of the sealed ground truth (actual layer-4 packet, correction round)",
+    "scoring_completed_seq": 3,
+    "scoring_frozen_seq": 4
+   },
+   "prev_hash": "4483fcadb8701bb210bbc9b2580312f13f35e8263ef3d49d4999615a0f990988",
+   "seq": 5,
+   "timestamp": "2026-11-21T16:07:59.653821+00:00",
+   "type": "GROUND_TRUTH_ACCESSED"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "check": {
+  "route": "groq",
+  "model": "qwen/qwen3.8-27b",
+  "part_count_in_body": 2,
+  "part1_sha256": "f845ff42836216ae3e0f9050b24f6778d323654b03e801dcd8eaa18bbd4d5e1a",
+  "part2_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+  "part2_matches_profile_pin": true,
+  "adapter_part_hashes_match": true,
+  "body_part_hashes_match": true,
+  "banned_keys_present": [],
+  "system_role_messages": [],
+  "returncode": 0,
+  "latency_s": 1.076,
+  "timed_out": false,
+  "response_text": "TWOPART-OK"
+ },
+ "dispatch_record": {
+  "route": "groq",
+  "model": "qwen/qwen3.8-27b",
+  "config": {
+   "temperature": 1.0,
+   "max_tokens": 4096,
+   "reasoning_format": "hidden"
+  },
+  "request_body": {
+   "model": "qwen/qwen3.8-27b",
+   "messages": [
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "Build demonstration probe (not a trial, not the conformance instrument). A second part follows containing a schema document supplied as data. Reply with exactly: TWOPART-OK"
+      },
+      {
+       "type": "text",
+       "text": "ANNEX A GATE-SCHEMA PROFILE\nArtifact: loom/gate-schema/annex-a/1, version 2\n\nThis document is the schema contract for your response to the accompanying instruction (the Annex A conformance task). It states the fields your response may contain, the form each field must take, and the rules connecting them. It is the complete schema contract for this task.\n\nRESPONSE SHAPE\nRespond with exactly one JSON object and nothing else. The object has exactly these top-level fields:\n- \"action\" (required): either \"contribute\" or \"idle\".\n- \"contribution\" (required if \"action\" is \"contribute\"; must be absent if \"action\" is \"idle\").\nNo other top-level fields are permitted.\n\nREGIONS IN THIS TASK\nThis task's fabric has exactly two regions. Their identifiers are the names \"alpha\" and \"beta\". Wherever a region identifier is required below, the value is \"alpha\" or \"beta\". Region identifiers in this task are these names; they are not UUIDs.\n\nTHE CONTRIBUTION OBJECT\nIf \"action\" is \"contribute\", the contribution object has exactly these fields, all of them required:\n- \"author\": a UUID \u2014 a string in standard UUID form (five groups of hexadecimal digits, of lengths 8, 4, 4, 4, and 12, separated by hyphens). Supply a UUID of your own choosing as your identifier for this submission. This task has no accounts and no sign-in, and no identity has been assigned to you: this field asks for a syntactically valid UUID that you supply, not for an authenticated identity, and it is not checked against any registered identity.\n- \"idempotency_id\": a UUID in the same form, supplied by you, identifying this submission.\n- \"base_versions\": an object whose keys are exactly the region identifiers in your \"read_set\", each value the version number you read for that region (a positive integer).\n- \"read_set\": an array of region identifiers (\"alpha\" and/or \"beta\"), at least one entry, no duplicates: every region whose content you used.\n- \"write_set\": an array of region identifiers, no duplicates, each of which also appears in your \"read_set\". It may be empty.\n- \"operations\": an array of operation objects, at least one entry, of the kinds defined under OPERATIONS below.\n- \"rationale\": a string.\n- \"discovery_source\": exactly one of \"index\", \"watch\", or \"fabric_read\" (see DISCOVERY below).\n- \"discovery_ref\": a positive integer, 1 or greater (see DISCOVERY below).\nNo other fields are permitted in the contribution object.\n\nOPERATIONS\nEach operation object has a \"kind\" and exactly the further fields listed for that kind; no other fields are permitted in an operation object.\n- kind \"replace_content\": \"region_id\" (a region identifier) and \"new_content\" (a string).\n- kind \"append_content\": \"region_id\" (a region identifier) and \"text\" (a string).\n- kind \"add_dependency\": \"dependency\", an object with exactly \"source\" (a region identifier), \"target\" (a region identifier), and \"kind\", one of \"uses\", \"constrains\", \"extends\", or \"contradicts-candidate\".\n- kind \"remove_dependency\": \"dependency_id\", a UUID identifying the dependency to remove. Note: the view in your instruction displays one existing dependency (alpha uses beta) but assigns it no identifier. There is therefore no dependency_id that you can take from the view.\n- kind \"raise_tension\": \"tension\", an object with exactly \"type\" (the string \"semantic\"; no other value), \"regions\" (an array of region identifiers, at least one entry, no duplicates), and \"description\" (a string).\n\nCONNECTING RULES\n- Your \"write_set\" is a subset of your \"read_set\".\n- \"base_versions\" has exactly the keys of your \"read_set\" \u2014 no more, no fewer.\n- A content operation (\"replace_content\" or \"append_content\") may target only a region in your \"write_set\", and there is at most one content operation per region in the whole contribution.\n- An \"add_dependency\" operation's source and target both belong in your \"read_set\" and your \"write_set\". It may not duplicate an active dependency with the same source, target, and kind; the dependency shown in your instruction (alpha uses beta) is active.\n- A \"remove_dependency\" operation is checked against the dependency it identifies: that dependency's endpoints must belong in your \"read_set\" and your \"write_set\".\n- A \"raise_tension\" operation's regions all belong in your \"read_set\". A tension operation adds nothing to your \"write_set\".\n- Every region identifier appearing anywhere in your contribution \u2014 in \"read_set\", \"write_set\", \"base_versions\" keys, operations, tension regions, or dependency endpoints \u2014 is \"alpha\" or \"beta\". No other value may appear in a region-identifier position.\n\nDISCOVERY\nIn the wider system this contract comes from, \"discovery_source\" and \"discovery_ref\" record how you came upon the material your contribution relies on, and which discovery record it was. This task presents all of its material to you directly, inside the instruction itself, and it keeps no discovery records.\n- \"discovery_source\" states the channel by which the material your contribution relies on came to you. The permitted values assert: \"index\" \u2014 you located the material through an index of the fabric; \"watch\" \u2014 the material came to your attention through a standing watch or notification; \"fabric_read\" \u2014 you read the material directly from the fabric's presented view.\n- Which value applies in this task is stated, not left to convention: this task's material reaches you as a supplied, opened view \u2014 the region content presented to you in the instruction itself. That supplied, opened view maps to \"fabric_read\". For material you rely on from that view, \"discovery_source\" is \"fabric_read\". There is no index and no watch in this task, so neither \"index\" nor \"watch\" describes a channel by which any material in this task came to you.\n- \"discovery_ref\" is a positive integer. Because this task keeps no discovery records, the number refers to no record and is not checked against one; beyond being a positive integer, which the field requires, it carries no meaning in this task.\n"
+      }
+     ]
+    }
+   ],
+   "temperature": 1.0,
+   "max_tokens": 4096,
+   "reasoning_format": "hidden"
+  },
+  "request_part_sha256": [
+   "f845ff42836216ae3e0f9050b24f6778d323654b03e801dcd8eaa18bbd4d5e1a",
+   "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+  ],
+  "response_text": "TWOPART-OK",
+  "raw_response": "{\"id\": \"chatcmpl-763ea165-b535-4701-92f5-a5af85431d8e\", \"object\": \"chat.completion\", \"created\": 1795277346, \"model\": \"qwen/qwen3.8-27b\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"TWOPART-OK\"}, \"logprobs\": null, \"finish_reason\": \"stop\"}], \"usage\": {\"queue_time\": 0.021678208, \"prompt_tokens\": 1428, \"prompt_time\": 0.145635849, \"completion_tokens\": 6, \"completion_time\": 0.079799048, \"total_tokens\": 1434, \"total_time\": 0.225434897}, \"usage_breakdown\": null, \"system_fingerprint\": \"fp_7238fa2be5\", \"x_groq\": {\"id\": \"req_01m7zdwnj0e299qfmw1kqg4y6j\", \"seed\": 1271473741}, \"service_tier\": \"on_demand\"}\n",
+  "stderr": "",
+  "returncode": 0,
+  "latency_s": 1.076,
+  "timed_out": false,
+  "timeout_boundary_s": 120
+ }
+}

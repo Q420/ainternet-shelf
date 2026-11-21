@@ -1,0 +1,119 @@
+{
+ "item": "C-D4 mechanical isolation from the actual Annex D source",
+ "mechanism": "private mount namespace (unshare --mount --propagation private); tmpfs bound over /home/hatch/workspace/duenna-fix and /home/hatch/workspace/loom-prototype/fabric inside the namespace only; no file permissions changed anywhere",
+ "targets": {
+  "spec_file": "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md",
+  "six_region_fixture": "/home/hatch/workspace/loom-prototype/fabric/fixture.py"
+ },
+ "control_outside_namespace": {
+  "cat_spec_returncode": 0,
+  "cat_spec_first_line": "# The Loom \u2014 Specification v0.1, Revision 9 (for Gate 1 examination)"
+ },
+ "components": {
+  "adapter": {
+   "read_attempts_inside_namespace": {
+    "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md: No such file or directory"
+    },
+    "/home/hatch/workspace/loom-prototype/fabric/fixture.py": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/loom-prototype/fabric/fixture.py: No such file or directory"
+    }
+   },
+   "mountinfo_lines_inside_namespace": [
+    "4505 4434 0:145 / /home/hatch/workspace/duenna-fix rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64",
+    "4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64"
+   ],
+   "component_execution": {
+    "returncode": 0,
+    "stdout_tail": " - tmpfs tmpfs rw,uid=131072,gid=131072,inode64\n4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64\nadapter build_body ok, parts: 2",
+    "stderr_tail": ""
+   }
+  },
+  "validator_py": {
+   "read_attempts_inside_namespace": {
+    "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md: No such file or directory"
+    },
+    "/home/hatch/workspace/loom-prototype/fabric/fixture.py": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/loom-prototype/fabric/fixture.py: No such file or directory"
+    }
+   },
+   "mountinfo_lines_inside_namespace": [
+    "4505 4434 0:145 / /home/hatch/workspace/duenna-fix rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64",
+    "4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64"
+   ],
+   "component_execution": {
+    "returncode": 0,
+    "stdout_tail": "2,gid=131072,inode64\n4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64\n{\"valid\": true, \"schema_errors\": [], \"profile_errors\": []}",
+    "stderr_tail": ""
+   }
+  },
+  "validator_js": {
+   "read_attempts_inside_namespace": {
+    "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md: No such file or directory"
+    },
+    "/home/hatch/workspace/loom-prototype/fabric/fixture.py": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/loom-prototype/fabric/fixture.py: No such file or directory"
+    }
+   },
+   "mountinfo_lines_inside_namespace": [
+    "4505 4434 0:145 / /home/hatch/workspace/duenna-fix rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64",
+    "4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64"
+   ],
+   "component_execution": {
+    "returncode": 0,
+    "stdout_tail": "131072,gid=131072,inode64\n4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64\n{\"valid\":true,\"schema_errors\":[],\"profile_errors\":[]}",
+    "stderr_tail": ""
+   }
+  },
+  "scoring": {
+   "read_attempts_inside_namespace": {
+    "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md: No such file or directory"
+    },
+    "/home/hatch/workspace/loom-prototype/fabric/fixture.py": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/loom-prototype/fabric/fixture.py: No such file or directory"
+    }
+   },
+   "mountinfo_lines_inside_namespace": [
+    "4505 4434 0:145 / /home/hatch/workspace/duenna-fix rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64",
+    "4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64"
+   ],
+   "component_execution": {
+    "returncode": 0,
+    "stdout_tail": "=131072,gid=131072,inode64\n4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64\nscoring make_sheet ok, blind_ref: blind-a79dade19c1b",
+    "stderr_tail": ""
+   }
+  },
+  "ledger_client": {
+   "read_attempts_inside_namespace": {
+    "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md: No such file or directory"
+    },
+    "/home/hatch/workspace/loom-prototype/fabric/fixture.py": {
+     "returncode": 1,
+     "stderr": "cat: /home/hatch/workspace/loom-prototype/fabric/fixture.py: No such file or directory"
+    }
+   },
+   "mountinfo_lines_inside_namespace": [
+    "4505 4434 0:145 / /home/hatch/workspace/duenna-fix rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64",
+    "4506 4434 0:146 / /home/hatch/workspace/loom-prototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64"
+   ],
+   "component_execution": {
+    "returncode": 0,
+    "stdout_tail": "ototype/fabric rw,relatime - tmpfs tmpfs rw,uid=131072,gid=131072,inode64\n{\"ok\": true, \"seq\": 11, \"hash\": \"7552ded0bd39976ade3443b7d0e1f1e8688c9d0b78d63c278df4f35639f7db86\", \"type\": \"BUILD_DEMO_NOTE\"}",
+    "stderr_tail": ""
+   }
+  }
+ }
+}

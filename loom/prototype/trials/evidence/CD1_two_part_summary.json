@@ -1,0 +1,34 @@
+{
+ "groq": {
+  "route": "groq",
+  "model": "qwen/qwen3.8-27b",
+  "part_count_in_body": 2,
+  "part1_sha256": "f845ff42836216ae3e0f9050b24f6778d323654b03e801dcd8eaa18bbd4d5e1a",
+  "part2_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+  "part2_matches_profile_pin": true,
+  "adapter_part_hashes_match": true,
+  "body_part_hashes_match": true,
+  "banned_keys_present": [],
+  "system_role_messages": [],
+  "returncode": 0,
+  "latency_s": 1.076,
+  "timed_out": false,
+  "response_text": "TWOPART-OK"
+ },
+ "nvidia": {
+  "route": "nvidia",
+  "model": "mistralai/mistral-large-4-1t-a52b",
+  "part_count_in_body": 2,
+  "part1_sha256": "f845ff42836216ae3e0f9050b24f6778d323654b03e801dcd8eaa18bbd4d5e1a",
+  "part2_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+  "part2_matches_profile_pin": true,
+  "adapter_part_hashes_match": true,
+  "body_part_hashes_match": true,
+  "banned_keys_present": [],
+  "system_role_messages": [],
+  "returncode": 1,
+  "latency_s": 120.678,
+  "timed_out": false,
+  "response_text": null
+ }
+}

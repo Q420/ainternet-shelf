@@ -7,7 +7,10 @@ content-addressed archival anchor, not a trusted timestamp authority."""
 import json, os, subprocess, sys
 
 STAGING = os.path.expanduser("~/workspace/ainternet-shelf")
-REL_DIR = "trials-anchors/build-demo-round"
+# Correction round (2026-11-21): the anchor directory is settable per round via
+# TRIALS_ANCHOR_DIR so a fresh sequence (seq numbers restart at 1) never
+# overwrites a previous round's anchor records. Default unchanged.
+REL_DIR = os.environ.get("TRIALS_ANCHOR_DIR", "trials-anchors/build-demo-round")
 
 def anchor_path(seq, etype):
     return "%s/%04d-%s.json" % (REL_DIR, seq, etype)
