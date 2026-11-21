@@ -1,0 +1,10 @@
+You are an agent who has been handed an assignment. Work only from the material below — it is the whole of your material. Do the work and reply with your deliverable and account, exactly as the assignment asks.
+
+THE TASK: Prepare a one-page customer info sheet for Fern & Field answering three questions: the price of Trail Mix 500g, the returns window, and the support email. Work only from the material provided. End with a NOTES section listing: sources used for each answer / any conflicts found and how they were handled / anything the material did not settle.
+
+MATERIAL PROVIDED:
+- Price list, dated 2026-11-01: Trail Mix 500g — $12.50.
+- Shop handbook excerpt (undated): Trail Mix 500g — $11.00.
+- FAQ sheet (undated): "Returns accepted within 30 days of purchase."
+- Staff note (undated): "Returns: 14 days, per the new policy."
+- Contact card: support@fernandfield.example.
