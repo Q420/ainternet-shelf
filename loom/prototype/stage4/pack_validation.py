@@ -36,6 +36,14 @@ over the dual-applicable set only (see
 STAGE4-CORRECTION-NOTES.md section 6, the revised mapping
 recorded before this execution).
 
+Closing correction round 2 (CC2-B1): the canned structural-
+lifecycle fixtures (VP-39..VP-44) now carry the raising
+SEAL_ATTEMPTED event itself, its event_id pinned by the spec's
+fifth element, and VP-42 asserts the standing tension's
+origin_ref against that event's actual event_id — a real
+identity correspondence in the fixture, not a literal. See
+CLOSING-CORRECTION2-NOTES.md section 2 for the sibling audit.
+
 Output: a per-case manifest at pack-validation-manifest.json
 (pack 10.3: pack id/version/hash, implementation identity and
 build hash, case id, input fixture hash, observed vs expected,
@@ -109,11 +117,18 @@ CHECKER_BUILD = build_hash("fabric/checker.py", "fabric/canonical.py")
 
 def chain(specs):
     """Serialize (type, actor, affected, payload) specs into a
-    hash-chained event list, exactly as the store appends them."""
+    hash-chained event list, exactly as the store appends them.
+    A spec may carry a fifth element — a pre-minted event_id the
+    event must bear (the fixture form of the harness's CC-1
+    plumbing: an identity another fixture event references, so
+    the reference can be asserted against the event itself)."""
     events = []
     prev = CONSTITUTION_HASH
-    for i, (t, actor, affected, payload) in enumerate(specs, 1):
-        ev = {"event_seq": i, "event_id": str(uuid.uuid4()),
+    for i, spec in enumerate(specs, 1):
+        t, actor, affected, payload = spec[:4]
+        ev = {"event_seq": i,
+              "event_id": spec[4] if len(spec) > 4
+              else str(uuid.uuid4()),
               "type": t, "actor": actor, "affected": list(affected),
               "payload": payload, "prev_hash": prev}
         ev["hash"] = event_hash(prev, ev)
@@ -201,6 +216,33 @@ def tension_status(tid, frm, to):
             {"tension_id": tid, "from": frm, "to": to,
              "evidence": {"canned": True},
              "summary": "A canned tension transition."})
+
+
+# The canned raising attempt for the structural-lifecycle
+# fixtures (CC2-B1): a SEAL_ATTEMPTED event present in the same
+# fixture history, bearing ATTEMPT_S1_ID as its actual event_id,
+# so a checker-origin tension's origin_ref in those fixtures
+# names a real event identity standing beside it — and an
+# assertion can compare the reference against the event, not
+# against a bare literal.
+ATTEMPT_S1_ID = "caca0000-0000-4000-8000-000000000005"
+
+
+def seal_attempt_failed(attempt_id=ATTEMPT_S1_ID):
+    """A canned failed seal attempt (S1 on D-CS/S), shaped as
+    the harness records one; the fifth spec element pins its
+    event_id (see chain())."""
+    payload = {
+        "outcome": "fail",
+        "checks_performed": ["S1", "S2", "S3", "event_schema",
+                             "hash_chain"],
+        "failed_checks": [{"check": "S1", "affected": [D_CS, S]}],
+        "divergence": [{"registry": "regions", "id": S}],
+        "summary": "A canned seal attempt that failed S1: the "
+                   "dependency D-CS names a region absent from "
+                   "the live state."}
+    return ("SEAL_ATTEMPTED", SYSTEM_ACTOR, [D_CS, S], payload,
+            attempt_id)
 
 
 # -- implementation adapters ---------------------------------------------
@@ -637,10 +679,17 @@ def run_eval_cases():
               {"outcome": "pass", "raises": []})
 
     # -- structural lifecycle over canned inputs (VP-39..VP-44) ----
+    # The fixture carries the raising attempt itself (CC2-B1): a
+    # SEAL_ATTEMPTED event whose actual event_id the standing
+    # tension's origin_ref names, so a correspondence asserted
+    # against this fixture compares against a real event identity
+    # in the same history, never a bare literal.
     t_id = "t-structural-s1"
-    h_t = chain([ropened(), tension_raised(
-        t_id, "structural", [S], "checker", check="S1",
-        affected=[D_CS, S], origin_ref="caca0000-0000-4000-8000-000000000005")])
+    h_t_specs = [ropened(), seal_attempt_failed(),
+                 tension_raised(t_id, "structural", [S], "checker",
+                                check="S1", affected=[D_CS, S],
+                                origin_ref=ATTEMPT_S1_ID)]
+    h_t = chain(h_t_specs)
     r_t = fold_of(h_t)
 
     # VP-39 — same identity, deps enumerated in the other order:
@@ -676,9 +725,10 @@ def run_eval_cases():
             {"kind": "add_dependency",
              "dependency": {"source": P, "target": S, "kind": "uses"}}],
             assigned={"0": D_PS}),
+        seal_attempt_failed(),
         tension_raised(t_id, "structural", [S], "checker",
                        check="S1", affected=[D_CS, S],
-                       origin_ref="caca0000-0000-4000-8000-000000000005")])
+                       origin_ref=ATTEMPT_S1_ID)])
     l41 = fold_of(h_t2)
     del l41["regions"][S]
     l41["dependencies"][D_PS]["status"] = "removed"
@@ -690,26 +740,27 @@ def run_eval_cases():
                "resolutions": []})
 
     # VP-42 — the correcting batch removes D-CS: resolution, PASS.
-    h_t_specs = [ropened(), tension_raised(
-        t_id, "structural", [S], "checker", check="S1",
-        affected=[D_CS, S], origin_ref="caca0000-0000-4000-8000-000000000005")]
     _, b42, full42 = chained_pair(h_t_specs, [accept_spec(AGENT_A, [
         {"kind": "remove_dependency", "dependency_id": D_CS}])])
+    attempt_ev = next(e for e in h_t
+                      if e["type"] == "SEAL_ATTEMPTED")
+    tension_ev = next(e for e in h_t
+                      if e["type"] == "TENSION_RAISED")
     eval_case("VP-42", h_t, b42, fold_of(full42),
               lambda v: v["outcome"] == "pass"
               and v["resolutions"] == [t_id]
               and v["seal"] is not None
-              # CC-4 at the canned level: the standing tension's
-              # origin_ref is the raising attempt's id — the
-              # canned attempt UUID, not a sequence label. (The
-              # canned evaluators return verdicts, not events;
-              # the live event form of this binding is asserted
-              # in VP-32 and VP-45.)
-              and h_t[1]["payload"]["origin_ref"]
-              == "caca0000-0000-4000-8000-000000000005",
+              # CC2-B1: the standing tension's origin_ref equals
+              # the event_id of the SEAL_ATTEMPTED event present
+              # in this same fixture — read from the event itself,
+              # not compared against a literal. (The live event
+              # form of this binding is asserted in VP-32 and
+              # VP-45.)
+              and tension_ev["payload"]["origin_ref"]
+              == attempt_ev["event_id"],
               {"outcome": "pass", "resolutions": [t_id],
-               "origin_ref": "the raising attempt's id (canned "
-                             "UUID)"})
+               "origin_ref": "the raising attempt's event_id "
+                             "(fixture SEAL_ATTEMPTED event)"})
 
     # VP-43 — S still missing (S1 still fails; S2 passes): the
     # tension remains open.

@@ -19,8 +19,16 @@ malformed value sits inside the hashed payload by construction
 it. The format-only line is shown from the other side: a
 well-formed UUID naming no record in the history folds cleanly
 in both — format is validated, existence is not the fold's to
-judge. Canonical form is the standard: an upper-case rendering
-of a UUID is not the form this system mints and halts.
+judge.
+
+Closing correction round 2 (CC2-B2) amends this suite: the
+first round's lowercase-canonical rule was stricter than the
+pinned contract establishes — Annex B's format: "uuid" names
+the RFC 4122 textual form, whose hexadecimal digits are
+case-insensitive, and the pinned text does not fix the
+rendering's case. The upper-case history therefore moves from
+the malformed set to a positive case below: it folds cleanly
+in both folds. The malformed set keeps its other members.
 
 CC-1/CC-2 case: one live bound run through the harness — the
 raised tension's origin_ref is the failing attempt's actual
@@ -150,12 +158,6 @@ halt_case("origin_ref missing",
                  structural_tension("t-cc4", None, omit_ref=True)]),
           2)
 
-# Canonical form is the standard: an upper-case rendering is not
-# the form this system mints.
-halt_case("origin_ref an upper-case (non-canonical) UUID",
-          chain([opened(),
-                 structural_tension("t-cc5", GOOD_REF.upper())]), 2)
-
 # A well-formed UUID folds cleanly in both implementations, and
 # the folded record carries it verbatim.
 hist = chain([opened(), structural_tension("t-cc6", GOOD_REF)])
@@ -166,6 +168,25 @@ check("CC-3: a well-formed UUID origin_ref folds cleanly in "
       eng[0] == "ok" and chk[0] == "ok"
       and eng[1]["tensions"]["t-cc6"]["origin_ref"] == GOOD_REF
       and chk[1]["tensions"]["t-cc6"]["origin_ref"] == GOOD_REF)
+
+# CC2-B2: the rendering's case is not fixed by the pinned
+# format: "uuid" contract — an upper-case rendering of a UUID
+# is a valid RFC 4122 textual representation and folds cleanly
+# in both folds, the record carrying it verbatim. (Round 1's
+# suite halted on this history under a lowercase-canonical rule
+# the pinned text does not establish; that rule is withdrawn
+# and the case stands here, on the accepting side.)
+hist = chain([opened(),
+              structural_tension("t-cc5", GOOD_REF.upper())])
+eng = engine_outcome(hist)
+chk = checker_outcome(hist)
+check("CC2-B2: an upper-case UUID origin_ref folds cleanly in "
+      "both folds, the record carrying it verbatim",
+      eng[0] == "ok" and chk[0] == "ok"
+      and eng[1]["tensions"]["t-cc5"]["origin_ref"]
+      == GOOD_REF.upper()
+      and chk[1]["tensions"]["t-cc5"]["origin_ref"]
+      == GOOD_REF.upper())
 
 # The format-only line: a well-formed UUID naming NO record in
 # the history is not the fold's to refuse — format is validated,

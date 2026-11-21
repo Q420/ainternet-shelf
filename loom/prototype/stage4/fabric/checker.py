@@ -89,19 +89,29 @@ _EVIDENCE_TYPES = ("DISCOVERY", "CONTRIBUTION_REJECTED",
 
 
 def _is_uuid(value):
-    """Whether value is a UUID in its canonical written form — the
-    form this system mints its identifiers in. The checker's own
-    reading of the section 3 id format (closing correction round,
-    CC-3): the format is what is validated; the existence of the
-    record a well-formed reference names is not the fold's to
-    judge."""
-    if not isinstance(value, str):
+    """Whether value is a UUID in a valid RFC 4122 textual
+    representation: the hyphenated 8-4-4-4-12 layout, hexadecimal
+    digits of either case. The checker's own reading of the
+    section 3 id format (closing correction round, CC-3;
+    correction round 2, CC2-B2): Annex B's format: "uuid" does
+    not confine the rendering to the lowercase canonical form
+    the fabric mints, so an upper- or mixed-case rendering of a
+    UUID is valid, while a non-string, a wrong shape, non-hex
+    digits — and the brace, urn: and bare-32-digit forms
+    uuid.UUID would tolerate — are not the named format. The
+    format is what is validated; the existence of the record a
+    well-formed reference names is not the fold's to judge."""
+    if not isinstance(value, str) or len(value) != 36:
         return False
     try:
         parsed = uuid.UUID(value)
     except (ValueError, AttributeError, TypeError):
         return False
-    return str(parsed) == value
+    digits = parsed.hex
+    layout = (digits[:8] + "-" + digits[8:12] + "-"
+              + digits[12:16] + "-" + digits[16:20] + "-"
+              + digits[20:])
+    return value.lower() == layout
 
 
 def _empty_state():

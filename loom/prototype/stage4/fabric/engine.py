@@ -141,18 +141,31 @@ _FACET_STATUSES = ("open", "unexamined", "claimed", "complete",
 
 
 def _is_uuid(value) -> bool:
-    """True iff value is a well-formed UUID in the canonical string
-    form — the only form any id in this system is minted in
-    (str(uuid.uuid4())). Closing correction round (CC-3): section 3
-    makes origin_ref an id field, so the fold validates its FORMAT.
-    Format is the whole contract here: whether the named record
-    exists is a different question, and no fold rule answers it."""
-    if not isinstance(value, str):
+    """True iff value is a well-formed UUID in an RFC 4122 textual
+    representation: the hyphenated 8-4-4-4-12 form, hexadecimal
+    digits of either case. Closing correction round (CC-3):
+    section 3 makes origin_ref an id field, so the fold validates
+    its FORMAT. Closing correction round 2 (CC2-B2): Annex B
+    types ids as format: "uuid" and the pinned text does not
+    restrict the rendering to the lowercase canonical form — the
+    only form this system MINTS (str(uuid.uuid4())) — so
+    validation accepts any valid textual representation and
+    refuses only malformed values. (uuid.UUID alone would also
+    tolerate braces, a urn: prefix and the bare 32-digit form;
+    the length and layout checks below exclude those — they are
+    not the textual representation the schema names.) Format is
+    the whole contract here: whether the named record exists is
+    a different question, and no fold rule answers it."""
+    if not isinstance(value, str) or len(value) != 36:
         return False
     try:
-        return str(uuid.UUID(value)) == value
+        parsed = uuid.UUID(value)
     except (ValueError, AttributeError, TypeError):
         return False
+    digits = parsed.hex
+    layout = (f"{digits[:8]}-{digits[8:12]}-{digits[12:16]}-"
+              f"{digits[16:20]}-{digits[20:]}")
+    return value.lower() == layout
 
 
 def empty_state() -> dict:
