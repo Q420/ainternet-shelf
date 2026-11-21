@@ -1,0 +1,22 @@
+{
+ "label": "pf6-groq",
+ "provider": "groq",
+ "model": "openai/gpt-oss-120b",
+ "caller": "relay_call.py",
+ "caller_sha256": "54117c63e9c1bd5f82a89a2f432ea94a9f4f7ce9d0652b05837d46393bc36b10",
+ "helper": "groq_api.py",
+ "helper_sha256_verified": "8bed172ffc6017c6a322265ba5e1b7053d2cc4a74018f98ca1956d041b5d2369",
+ "dependency": "dynamic_credentials.py",
+ "dependency_sha256_verified": "8b1f42e80a76710edf0ff2abf8a51b0cde35b06474af865de108a7ca27d6728d",
+ "body_file": "pf6-groq.body.json",
+ "body_sha256": "709db61c72f4797d70f61d81e6a5e269e955f9963d9a5319efafbb600f87aab6",
+ "response_file": "pf6-groq.resp.json",
+ "response_sha256": "9e16539588f64c311489a0c4920a2940c7f29df07e025db7323ae86ebdc06e3f",
+ "stderr_file": "pf6-groq.stderr.txt",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "provider_response_id": "chatcmpl-149423c9-75c2-4151-9075-20aa1f92d0d6",
+ "helper_exit_code": 0,
+ "outer_timeout": false,
+ "started_at_utc": "2026-11-21T01:25:07.759143+00:00",
+ "finished_at_utc": "2026-11-21T01:25:09.190067+00:00"
+}

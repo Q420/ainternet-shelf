@@ -1,0 +1,22 @@
+{
+ "label": "outer-timeout-branch",
+ "provider": "nvidia",
+ "model": "moonshotai/kimi-k3.1-pro",
+ "caller": "relay_call.py",
+ "caller_sha256": "54117c63e9c1bd5f82a89a2f432ea94a9f4f7ce9d0652b05837d46393bc36b10",
+ "helper": "nvidia_api.py",
+ "helper_sha256_verified": "56ca6a4d82fe09b4de7bf96cfa3c3e58c86e849211692705310d6414409f5c7f",
+ "dependency": "dynamic_credentials.py",
+ "dependency_sha256_verified": "8b1f42e80a76710edf0ff2abf8a51b0cde35b06474af865de108a7ca27d6728d",
+ "body_file": "outer-timeout-branch.body.json",
+ "body_sha256": "0647186d3456cc193979c222972e024c5653b4bc910166a79485da074db5f2d8",
+ "response_file": "outer-timeout-branch.resp.json",
+ "response_sha256": "7366fcb8520113dc4f28eb9620dcac02d792dbed50f836530f71a1f96b659c5d",
+ "stderr_file": "outer-timeout-branch.stderr.txt",
+ "stderr_sha256": "81f1d54365486e37c27d6aa425a3e250e4e99264bf9a4ff6baaff355e95dbcdb",
+ "provider_response_id": null,
+ "helper_exit_code": null,
+ "outer_timeout": true,
+ "started_at_utc": "2026-11-21T01:24:00.466874+00:00",
+ "finished_at_utc": "2026-11-21T01:24:00.466919+00:00"
+}

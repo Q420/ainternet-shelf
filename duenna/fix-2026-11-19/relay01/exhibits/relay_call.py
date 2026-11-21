@@ -193,6 +193,8 @@ def main():
         "label": args.label,
         "provider": args.provider,
         "model": args.model,
+        "caller": os.path.basename(os.path.abspath(__file__)),
+        "caller_sha256": sha256_file(os.path.abspath(__file__)),
         "helper": helper_name,
         "helper_sha256_verified": actual_hash,
         "dependency": dep_name,
