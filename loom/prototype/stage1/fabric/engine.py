@@ -3,6 +3,14 @@
 Loom spec v0.1 Rev 9, section 3 (reconstruction contract) and section 2
 invariant 1 (one shared truth).
 
+Stage 2 extension (2026-11-21): the fold now also applies the Stage 2
+event types — DISCOVERY, CONTRIBUTION_ACCEPTED, CONTRIBUTION_REJECTED,
+TENSION_RAISED, BOUNDARY_PROBE — and Engine.commit_events gives the
+harness an atomic append+fold path. Without fold support for these
+types, verified replay would halt on any Stage 2 history and no
+trustworthy state could be derived from it (the C2 defect class, one
+stage up). Stage 1 behaviour for RUN_OPENED histories is unchanged.
+
 Stage 1 correction C2 (Vane's implementation examination, 2026-11-21):
 the first version folded events without verifying the chain, so state
 could be derived from a corrupted history and presented as trustworthy.
@@ -44,9 +52,55 @@ def empty_state() -> dict:
     }
 
 
+def _apply_operations(state: dict, contribution: dict, payload: dict) -> None:
+    """Apply an accepted contribution's operations to state, in place.
+
+    Shared by the fold (CONTRIBUTION_ACCEPTED) and by the harness's
+    structural check, which applies the same operations hypothetically
+    to a copy of the current state (spec section 4, step 3). A region's
+    version advances once per accepted operation touching it — a
+    content operation on it, or a dependency operation having it as an
+    endpoint (section 3: version advances on ANY accepted change
+    touching it). Dependency ids assigned at commit are read from the
+    event payload, so the fold is deterministic from the history alone.
+    A raise_tension operation applies nothing here: its effect is the
+    TENSION_RAISED event that follows the acceptance (the same split
+    section 4 uses for ExaminationReports)."""
+    regions = state["regions"]
+    deps = state["dependencies"]
+    for i, op in enumerate(contribution["operations"]):
+        kind = op["kind"]
+        if kind == "replace_content":
+            region = regions[op["region_id"]]
+            region["content"] = op["new_content"]
+            region["version"] += 1
+        elif kind == "append_content":
+            region = regions[op["region_id"]]
+            region["content"] = region["content"] + op["text"]
+            region["version"] += 1
+        elif kind == "add_dependency":
+            dep_id = payload["assigned_dependency_ids"][str(i)]
+            dep = {
+                "dependency_id": dep_id,
+                "source": op["dependency"]["source"],
+                "target": op["dependency"]["target"],
+                "kind": op["dependency"]["kind"],
+                "status": "active",
+            }
+            deps[dep_id] = dep
+            regions[dep["source"]]["version"] += 1
+            regions[dep["target"]]["version"] += 1
+        elif kind == "remove_dependency":
+            dep = deps[op["dependency_id"]]
+            dep["status"] = "removed"
+            regions[dep["source"]]["version"] += 1
+            regions[dep["target"]]["version"] += 1
+        elif kind == "raise_tension":
+            pass  # effected by the TENSION_RAISED event that follows
+
+
 def apply_event(state: dict, event: dict) -> dict:
-    """Fold one event into the state. Stage 1 knows RUN_OPENED only;
-    later stages register the rest. Unknown types, and a RUN_OPENED
+    """Fold one event into the state. Unknown types, and a RUN_OPENED
     anywhere but sequence 1, halt replay."""
     t = event["type"]
     if t == "RUN_OPENED":
@@ -58,6 +112,30 @@ def apply_event(state: dict, event: dict) -> dict:
             state["regions"][r["region_id"]] = copy.deepcopy(r)
         for d in payload["dependencies"]:
             state["dependencies"][d["dependency_id"]] = copy.deepcopy(d)
+        state["last_seq"] = event["event_seq"]
+        return state
+    if t in ("DISCOVERY", "CONTRIBUTION_REJECTED", "BOUNDARY_PROBE"):
+        # Evidence and outcome records: they change no fabric state.
+        state["last_seq"] = event["event_seq"]
+        return state
+    if t == "CONTRIBUTION_ACCEPTED":
+        payload = event["payload"]
+        _apply_operations(state, payload["contribution"], payload)
+        state["contributions"][payload["contribution_id"]] = copy.deepcopy(
+            payload["contribution"])
+        state["last_seq"] = event["event_seq"]
+        return state
+    if t == "TENSION_RAISED":
+        p = event["payload"]
+        state["tensions"][p["tension_id"]] = {
+            "tension_id": p["tension_id"],
+            "type": p["type"],
+            "regions": list(p["regions"]),
+            "origin": p["origin"],
+            "origin_ref": p["origin_ref"],
+            "description": p["description"],
+            "status": p["status"],
+        }
         state["last_seq"] = event["event_seq"]
         return state
     raise ReplayHalt(event["event_seq"], f"unhandled event type {t}")
@@ -140,3 +218,28 @@ class Engine:
     def replay(self):
         """Rebuild state from the event history alone, verified (s.3)."""
         return verified_fold(self.store.all_events(), CONSTITUTION_HASH)
+
+    def commit_events(self, events_spec) -> list:
+        """Append a group of events atomically and fold them into the
+        live state — the harness's commit path (Stage 2). events_spec
+        is a list of (type, actor, affected, payload). Sequence
+        assignment, state change, and append occur in one store
+        transaction (section 3): on any failure the transaction is
+        rolled back and the live state is not swapped."""
+        new_state = copy.deepcopy(self.state)
+        appended = []
+        last = self.store.last()
+        head = last[1] if last else CONSTITUTION_HASH
+        try:
+            for type_, actor, affected, payload in events_spec:
+                ev = self.store.append(type_, actor, affected, payload,
+                                       prev_hash=head)
+                head = ev["hash"]
+                new_state = apply_event(new_state, ev)
+                appended.append(ev)
+            self.store.commit()
+        except Exception:
+            self.store.rollback()
+            raise
+        self.state = new_state
+        return appended
