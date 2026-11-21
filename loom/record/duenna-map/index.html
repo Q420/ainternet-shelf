@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duenna — the whole system</title>
+<style>
+  :root{
+    --bg:#070b18; --panel:rgba(15,23,42,.82); --panel2:rgba(15,23,42,.65);
+    --line:#334155; --text:#e2e8f0; --muted:#94a3b8; --faint:#64748b;
+    --cyan:#22d3ee; --violet:#a78bfa; --amber:#fbbf24; --red:#f87171; --green:#34d399; --teal:#2dd4bf;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI",Helvetica,Arial,sans-serif;}
+  body{background:
+    radial-gradient(700px 480px at 18% 8%, rgba(124,58,237,.20), transparent 60%),
+    radial-gradient(800px 560px at 85% 90%, rgba(8,145,178,.16), transparent 60%),
+    var(--bg); min-height:100vh;}
+  header{padding:20px 26px 8px;}
+  h1{margin:0;font-size:26px;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .meta{color:var(--faint);font-size:12px;margin-top:2px}
+  nav.tabs{display:flex;gap:8px;padding:14px 26px 0;flex-wrap:wrap;align-items:center}
+  .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    padding:8px 16px;border-radius:999px;font-size:14px}
+  .tab.on{background:linear-gradient(90deg,rgba(34,211,238,.25),rgba(167,139,250,.25));
+    border-color:var(--violet)}
+  .toggle{margin-left:auto;display:flex;gap:14px;color:var(--muted);font-size:13px;align-items:center}
+  .toggle label{cursor:pointer;display:flex;gap:6px;align-items:center}
+  main{padding:16px 26px 30px}
+  .mapwrap{display:flex;gap:16px;align-items:flex-start}
+  .diagram{flex:1 1 auto;min-width:0;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:6px}
+  .detail{flex:0 0 400px;max-width:400px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:18px 20px;position:sticky;top:14px;max-height:calc(100vh - 40px);overflow:auto}
+  @media (max-width:980px){ .mapwrap{flex-direction:column} .detail{flex:none;max-width:none;width:100%;position:static;max-height:none} }
+  .detail h2{margin:0 0 4px;font-size:20px}
+  .detail h3{margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint)}
+  .detail p{margin:6px 0;font-size:14px;line-height:1.5;color:#cbd5e1}
+  .jobline{font-size:16px;color:var(--text);line-height:1.45}
+  .chip{display:inline-block;cursor:pointer;border:1px solid var(--line);border-radius:999px;
+    padding:3px 11px;font-size:12.5px;margin:2px 3px 2px 0;background:rgba(30,41,59,.7);color:var(--text)}
+  .chip:hover{border-color:var(--cyan)}
+  .chip.warn{border-color:rgba(251,191,36,.55)}
+  .rowlink{display:block;cursor:pointer;padding:7px 10px;border:1px solid var(--line);border-radius:9px;
+    margin:5px 0;font-size:13.5px;background:rgba(30,41,59,.45)}
+  .rowlink:hover{border-color:var(--cyan)}
+  .rowlink small{color:var(--muted);display:block;font-size:12px;margin-top:2px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:6px;vertical-align:middle}
+  .b-enforced{background:rgba(52,211,153,.18);color:var(--green);border:1px solid rgba(52,211,153,.5)}
+  .b-procedural{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.5)}
+  .b-designed{background:rgba(148,163,184,.14);color:#cbd5e1;border:1px solid rgba(148,163,184,.5)}
+  .b-built-stage1{background:rgba(45,212,191,.14);color:var(--teal);border:1px solid rgba(45,212,191,.5)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;cursor:pointer}
+  .card:hover{border-color:var(--violet)}
+  .card h3{margin:0 0 6px;font-size:16px;text-transform:none;letter-spacing:0;color:var(--text)}
+  .card p{font-size:13.5px;line-height:1.5;color:#cbd5e1;margin:5px 0}
+  .card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-top:10px}
+  .secttl{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin:20px 0 8px}
+  svg text{user-select:none}
+  .partbox{cursor:pointer}
+  .flowline{cursor:pointer}
+  .hidden{display:none}
+  footer{padding:0 26px 26px;color:var(--faint);font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="ttl"></h1>
+  <div class="sub" id="stl"></div>
+  <div class="meta" id="upd"></div>
+</header>
+<nav class="tabs">
+  <div class="tab" data-view="map">The Map</div>
+  <div class="tab" data-view="gates">Gates <span id="gatecount"></span></div>
+  <div class="tab" data-view="stress">Stress points <span id="stresscount"></span></div>
+  <div class="toggle">
+    <label><input type="checkbox" id="tglFlows" checked> flows</label>
+    <label><input type="checkbox" id="tglStress"> stress layer</label>
+  </div>
+</nav>
+<main>
+  <section id="view-map">
+    <div class="mapwrap">
+      <div class="diagram"><svg id="svg" viewBox="0 0 1400 940" width="100%" role="img"></svg></div>
+      <aside class="detail" id="detail"></aside>
+    </div>
+    <div id="f5strip" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px"></div>
+  </section>
+  <section id="view-gates" class="hidden"></section>
+  <section id="view-stress" class="hidden"></section>
+</main>
+<footer>Prototype — drawn from the settled content register (map-data.json). Content is the record; this page is only its drawing. Approval is retained at the top: everything below it carries state, evidence, or words — never authority.</footer>
+<script>
+const DATA = {"flows": [{"breaks": "If a fragment or a correction is misread as an order, work starts that was never approved. This has happened; the tap rule is the scar tissue.", "carries": "Decisions, approvals, scope — in Ben's own words or his tap.", "from": "ben", "gate": "g-tap", "id": "f-commission", "name": "Commissions & rulings", "to": "remmy"}, {"breaks": "Stacked letters desync the seat. The presend guard checks for an unconsumed reply before any send.", "carries": "Assignments, packages, results — one letter at a time, shelf paths instead of long bodies.", "from": "remmy", "gate": null, "id": "f-letters-out", "name": "Letters out", "to": "bridge"}, {"breaks": "A tab navigating mid-delivery can sever the attempt and wedge the queue — the 2026-11-19 freeze. The watchdog now bounds it and hands Ben the choice.", "carries": "The letter itself, delivered into the seat's window.", "from": "bridge", "gate": "g-watchdog", "id": "f-delivery", "name": "Delivery to the seat (the Vane route)", "to": "vane"}, {"breaks": "The context-full banner can race the end of a reply; the watcher now waits for the response to finish before any rollover click. Capture is not wake — a captured reply nobody reads is a stalled loop.", "carries": "Examinations, verdicts, acknowledgements — routed by the marker, captured to the pool.", "from": "vane", "gate": null, "id": "f-replies", "name": "Replies back", "to": "remmy"}, {"breaks": "If the examiner's commit lands after the orchestrator's grades, the blind protocol is theatre. Order is the substance.", "carries": "Examinations and blind assessments, committed before Remmy's grades move.", "from": "vane", "gate": "g-blind", "id": "f-verdicts", "name": "Verdicts committed", "to": "shelf", "via": [[1245, 200], [1245, 724], [770, 770]]}, {"breaks": "Working from memory instead of the record is how stale facts get carried into new work. The shelf is the source; memory is a cache.", "carries": "The record itself: plans, registers, prior verdicts — read before speaking, before packing, before grading.", "from": "shelf", "gate": "g-currency", "id": "f-curation", "name": "Curation — the record, read", "to": "remmy", "via": [[76, 812], [76, 200]]}, {"breaks": "A stale shelf copy is a defect, not a backlog item: seats read it as the latest word and act on old truth.", "carries": "State changes, registers, the programme sync — written in the same round they happen.", "from": "remmy", "gate": "g-currency", "id": "f-record-write", "name": "Record kept current", "to": "shelf", "via": [[52, 812], [52, 224]]}, {"breaks": "Packing is selection, and selection can omit the one fact that mattered — the K8 case carried the rule but not the current time.", "carries": "Selected record material, packed into a case: state, decisions, evidence boundary, authority, current conditions.", "from": "shelf", "gate": null, "id": "f-packing", "name": "Packing a case", "to": "briefcase", "via": [[435, 410], [435, 795], [560, 790]]}, {"breaks": "Whatever the case gets wrong, the agent inherits — confidently. A case amplifies its authoring errors.", "carries": "The complete handoff continuity for a blind receiving agent. (The agent still receives its task framing and its operating environment — the case is the continuity, not the universe.)", "from": "briefcase", "gate": "g-case-authority", "id": "f-case-out", "name": "The case to the agent", "to": "agents"}, {"breaks": "This is the hop K9 grades. Repacking is where reasons quietly fall out of decisions.", "carries": "The agent's own handoff: what it did, decided, left open — packed by the agent, not repaired by a curator.", "from": "agents", "gate": null, "id": "f-case-next", "name": "The next case, authored", "to": "briefcase", "via": [[430, 470], [430, 560]]}, {"breaks": "A run that ends without closure leaves the record unable to say what happened. Attempts 1 and 2 of the second battery did exactly that.", "carries": "Events, step records, and the closure account — what happened, including what failed and why.", "from": "agents", "gate": "g3", "id": "f-work-record", "name": "Work lands on the record", "to": "d-record"}, {"breaks": "Identity declared in two homes is how a run ends up naming the wrong subject. One minting point is the fix.", "carries": "The frozen configuration, minted identities, provenance bindings — recorded before the run starts.", "from": "d-binder", "gate": "g1", "id": "f-freeze", "name": "Freeze & binding", "to": "d-record"}, {"breaks": "A validation whose anchor came from the component being validated proves nothing. Independence of anchors is the whole game.", "carries": "Recorded entries — the only inputs a verdict may rest on.", "from": "d-record", "gate": null, "id": "f-evaluate", "name": "Evaluation", "to": "d-evaluator"}, {"breaks": "If the Examiner instead consumes the Evaluator's conclusions, the second check is theatre: the appearance of independent verification without the substance, and every downstream verdict inherits the first check's errors under two signatures.", "carries": "Preserved originals from the RECORD, the applicable pinned contract, and the reproduction rules — the Examiner's only derivation inputs.", "from": "d-record", "gate": "g6", "id": "f-examine", "name": "Independent re-derivation", "to": "d-examiner"}, {"breaks": "Admission to the shelf is not proof a distillation is correct; an attested distillation record is required, or the library fills with confident error. The map records this as an outstanding design requirement, not an implemented gate.", "carries": "Distilled, verified results in their terminal form — the information the library keeps.", "from": "d-examiner", "gate": null, "id": "f-reflux", "name": "REFLUX — verified knowledge returns", "to": "shelf"}, {"breaks": "A summary that smooths a disagreement destroys the evidence it claims to carry. Disagreements are recorded, not resolved by editing.", "carries": "Raw outputs, grades, disagreements — preserved verbatim, limits attached.", "from": "tests", "gate": "g-blind", "id": "f-evidence", "name": "Test evidence", "to": "shelf"}, {"breaks": "A rig that lets the orchestrator's context leak in (subagents) qualifies every causal claim its runs produce.", "carries": "The payload — the agent's complete context, nothing inherited, nothing leaked.", "from": "rig", "gate": null, "id": "f-rig", "name": "Isolated runs", "to": "agents", "via": [[1105, 706], [205, 706]]}, {"breaks": "A display fed demo data looks alive while showing nothing. Panels are real or labelled NOT INSTRUMENTED — that rule is the honesty of the face.", "carries": "Gauges, seat state, the operation's current picture.", "from": "shelf", "gate": null, "id": "f-visibility", "name": "The state of the whole, shown", "to": "remarvis"}, {"breaks": "If the face lags the record, Ben rules on yesterday's state.", "carries": "What the human sees of his own operation — so the human in the loop can actually be in the loop.", "from": "remarvis", "gate": null, "id": "f-face", "name": "Ben's window", "to": "ben", "via": [[1332, 812], [1332, 62]]}, {"id": "f-compare", "name": "Findings, for comparison only", "from": "d-evaluator", "to": "d-examiner", "carries": "Evaluator verdicts and findings, admitted only AFTER independent re-derivation, for comparison. Non-authoritative: never a derivation input.", "breaks": "If comparison material arrives before the Examiner's own derivation, it anchors the derivation it was meant only to be compared against.", "gate": null}, {"id": "f-commands", "name": "Taps & commands", "from": "ben", "to": "remarvis", "carries": "Ben's taps, approvals, and controls, entered through the face. Remarvis originates no authority; it is the interface through which Ben exercises his.", "breaks": "If the face ever appeared to originate an approval, the authority line would be broken. (Settled already: verbal approvals do not press approval cards.)", "gate": "g-tap", "via": [[1356, 62], [1356, 300], [1356, 812]]}, {"id": "f-seats-record", "name": "The record, consulted", "from": "shelf", "to": "vane", "carries": "The canonical record, read directly by the examiner: examinations are composed from the shelf itself, not only from what the orchestrator forwards.", "breaks": "If the examiner could only see what the orchestrator selected, examination independence would quietly depend on the orchestrator's selection.", "gate": "g-currency", "via": [[1218, 790], [1218, 232]]}, {"id": "f-contract", "name": "The pinned contract", "from": "d-record", "to": "d-binder", "carries": "The approved contract and pinned artifacts the Binder binds into instances — mechanically, and without discretion.", "breaks": "If the Binder's contract source were its own choosing, binding would become authorship. Its outputs go only to RECORD.", "gate": null}], "gates": [{"checks": "That the change was described in an earlier message AND approved by Ben — a tap on a scope card, or a complete unambiguous order in his words. Corrections, questions, and fragments are never a go.", "holder": "Ben", "id": "g-tap", "kind": "programme", "name": "The Discussion Gate & Tap Rule", "onFail": "The act does not start. If it started anyway, it is recorded as an unauthorised execution, not a misunderstanding.", "strength": "procedural", "weakness": "Procedural, not enforced: it holds because the operator honours it. Its breach history (five in one day, 2026-10-18) is exactly why it exists.", "where": "Between any discussion and any change-making act."}, {"checks": "Target, exact file list, and hashes against the recorded approval. Any mismatch refuses the publish, and a refusal is final for that job.", "holder": "Ben's recorded tap", "id": "g-publish", "kind": "programme", "name": "The Publish Gate", "onFail": "Publish refused.", "strength": "enforced", "weakness": "A raw git push bypasses it — a known, labelled bypass. Using it silently would be a breach.", "where": "On website publishes, via gate.py."}, {"checks": "That the seat's previous reply has been consumed. A blocked check means do not send.", "holder": "Remmy (script-checked)", "id": "g-presend", "kind": "programme", "name": "The Presend Guard", "onFail": "Send blocked until the reply is read.", "strength": "enforced", "weakness": "Covers the window route; bridge-delivered letters rely on the bridge's own queue discipline.", "where": "Before any letter is sent into a seat window — the window route. Bridge-delivered letters follow the bridge's own queue discipline; this guard's coverage is the route it actually checks."}, {"checks": "That the examiner's assessment is committed to the shelf BEFORE the orchestrator's grades are released, and that agents never see the rubric.", "holder": "Vane commits; Remmy holds", "id": "g-blind", "kind": "programme", "name": "The Blind Grading Protocol", "onFail": "Grades are contaminated and the run's comparisons are qualified or void.", "strength": "procedural", "weakness": "Discipline, not machinery — kept by the order of operations and the shelf's commit record.", "where": "On every graded test."}, {"checks": "That the shelf copies (plan, register, sync) are brought current in the same round. A stale copy is a defect.", "holder": "Remmy", "id": "g-currency", "kind": "programme", "name": "Shelf Currency", "onFail": "The gap is named out loud until closed.", "strength": "procedural", "weakness": "One person's discipline is the whole mechanism — see the stress point on the single heartbeat.", "where": "On every state change in the programme."}, {"checks": "That the seat's response has FINISHED — newest turn complete and settled, generation signal quiet — before the watcher clicks New chat.", "holder": "The bridge watcher", "id": "g-rollover", "kind": "bridge", "name": "The Rollover Wait (bridge v0.20.4)", "onFail": "The watcher waits and logs CONTEXT_FULL_WAITING; no click while a response is in flight.", "strength": "enforced", "weakness": "Waits for the finish; it does not itself capture the reply in the click path. Ben ruled the wait; the stronger capture-first form is his to ask for.", "where": "On the context-full transition in a seat window — a specific condition, not a general gate on replies."}, {"checks": "That a delivery attempt has not severed silently — tab navigation mid-delivery, a promise that never settles.", "holder": "Ben decides: push through, or let it go", "id": "g-watchdog", "kind": "bridge", "name": "The Delivering Watchdog (bridge v0.20.5)", "onFail": "The record stops as DELIVERING_STUCK and the panel offers Ben retry or abandon. The queue unwedges either way.", "strength": "enforced", "weakness": "The watchdog lives in the same worker as the pump it watches; a dead worker needs an outside observer.", "where": "On any letter stuck in DELIVERING past 8 minutes."}, {"checks": "That the action sits inside the authority the case carries: what the agent may do, what needs the human, what is forbidden. A commitment inherited from a prior agent is a fact, not permission to make new ones. This is not a single check performed when an agent enters the chain — it is a standing boundary, evaluated at each action as it is taken.", "holder": "Ben's approval, retained at the boundary", "id": "g-case-authority", "kind": "briefcase", "name": "The Case Authority Boundary", "onFail": "The agent stops and returns control to the human. Acting anyway is the K8 failure: yesterday's authority spent on today's decision.", "strength": "procedural", "weakness": "The case carries an ACCOUNT of delegated authority; it cannot create authority, and nothing yet enforces the boundary mechanically.", "where": "At every agent ACTION taken under a case — not at packing, not at reading: at the moment of acting."}, {"checks": "Draft configuration, subject pin, tree set, derived limits, and the required-set authority record — all present and consistent; outputs the frozen configuration and its hash.", "holder": "BINDER", "id": "g1", "kind": "duenna-design", "name": "G1 — Configuration Freeze", "onFail": "Freeze refused and recorded; no RUN_STARTED; never scored as a subject outcome.", "strength": "designed", "weakness": "Designed, not yet built beyond Stage 1's groundwork.", "where": "BINDER, before any run starts — an F5 enforcement edge."}, {"checks": "Three-way equality: artifact fields, provenance entries, frozen schema — names and values.", "holder": "The producing component, checked at F5", "id": "g2", "kind": "duenna-design", "name": "G2 — Construction Close", "onFail": "Construction does not close; the mismatch is recorded with the differing field identities.", "strength": "designed", "weakness": "Stage 2 of the plan; not yet approved to build.", "where": "At the F5 construction-close edge, per artifact. The producing component is responsible for the artifact; the check is independent of that responsibility."}, {"checks": "The operation's recorded state: an operation identity may be applied once; consumption must be provable, not assumed.", "holder": "RECORD / receiver", "id": "g3", "kind": "duenna-design", "name": "G3 — Insertion", "onFail": "Already-satisfied (consumed) or refused, with the recorded state cited.", "strength": "designed", "weakness": "Stage 5 of the plan.", "where": "Per operation, at the insertion boundary — an F5 enforcement edge."}, {"checks": "THREE independent results, never one boolean: (i) the terminal record exists and is correctly positioned; (ii) the failure account is complete, or explicitly incomplete with unknowns; (iii) integrity and external anchoring are valid.", "holder": "RECORD's validator, surfaced on the Examiner Surface", "id": "g4", "kind": "duenna-design", "name": "G4 — Closure Validation", "onFail": "The failing dimension is reported as such; the record stands; the failure is itself recorded.", "strength": "built-stage1", "weakness": "Demonstrated in the Stage 1 harness under controlled termination. Hard kills leave no closure — outside the demonstrated guarantee.", "where": "Per termination. A validation, not a gate on writing: the closure record is always appended."}, {"checks": "That each validation names its anchor and how it was independently obtained — configuration hash from the frozen object, schema digest from the frozen configuration, never from the validated component's own outputs.", "holder": "Each validator", "id": "g5", "kind": "duenna-design", "name": "G5 — Validation Independence", "onFail": "The validation fails by definition.", "strength": "designed", "weakness": "The discipline that keeps the whole examiner story honest; only as strong as its anchors.", "where": "Cross-cutting: on every validator — the Evaluator, the Examiner Surface, and RECORD's closure validator alike. Not a gate on any flow of entries."}, {"checks": "Every event reference and literal location in a report resolves against the record and the frozen tree set, exactly.", "holder": "Examiner Surface", "id": "g6", "kind": "duenna-design", "name": "G6 — Report Resolution", "onFail": "The report is flagged with the conflicting identities. The conflict is a discrepancy — never silently corrected.", "strength": "designed", "weakness": "Born of DR-07: an adjudication that restated a step location inconsistently, and nothing caught it.", "where": "Per report, on the Examiner Surface — an F5 enforcement edge."}], "layers": [{"id": "authority", "name": "Authority", "y": 20}, {"id": "seats", "name": "The seats", "y": 150}, {"id": "machinery", "name": "The machinery", "y": 345}, {"id": "duenna", "name": "Duenna — governance", "y": 540}, {"id": "record", "name": "The record", "y": 760}], "parts": [{"gates": ["g-tap"], "id": "ben", "job": "Ultimate authority. Decides, approves, rules.", "layer": "authority", "name": "BEN", "role": "The human in the loop. Every approval in the system traces back to his word; no case, letter, or record can create or transfer it.", "stresses": [], "w": 190, "x": 700, "y": 62}, {"gates": ["g-tap", "g-presend", "g-currency"], "id": "remmy", "job": "Orchestration and curation.", "layer": "seats", "name": "REMMY", "role": "Orchestrates communication between seats, authors and packs assignments, routes letters through the Pulse Bridge (she orchestrates delivery; the Bridge is the mechanism), verifies before claiming, and maintains the shelf's currency. For Vane she has been the briefcase with a heartbeat — a live curator pointing at the record.", "stresses": ["s-heartbeat", "s-silent-death"], "w": 200, "x": 320, "y": 200}, {"gates": ["g-blind"], "id": "vane", "job": "Independent examination.", "layer": "seats", "name": "VANE", "role": "Examines designs, packages, and results; grades blind and commits her verdicts to the shelf before Remmy's grades move. The programme's second pair of eyes, on purpose not the builder's.", "stresses": ["s-examiner-window"], "w": 200, "x": 800, "y": 200}, {"gates": [], "id": "claude", "job": "Independent review, called per task.", "layer": "seats", "name": "CLAUDE", "role": "An optional reviewer seat — not a permanent stage in any chain. Files his own deliverables on the shelf; merging to main is Remmy's hand.", "stresses": [], "w": 180, "x": 1105, "y": 200}, {"gates": ["g-presend", "g-rollover", "g-watchdog"], "id": "bridge", "job": "Communication transport between seats.", "layer": "machinery", "name": "PULSE BRIDGE", "role": "Carries letters under markers, watches turns, and reports delivery honestly — queued, delivering, acknowledged, stopped. It serves every seat; this map draws the Vane collaboration route, and the other seats ride the same machinery. It carries words, never authority.", "stresses": ["s-bridge-road", "s-silent-death"], "w": 210, "x": 320, "y": 396}, {"gates": [], "id": "briefcase", "job": "Portable work continuity.", "layer": "machinery", "name": "THE BRIEFCASE", "role": "Carries work state — artifacts, decisions and their reasons, reviews, history, live state, delegated authority, current conditions — from one blind agent to the next. Inside the office it is the knowledge half; leaving the building, it is the whole contract. It carries; it does not govern, and its contents are not automatically true.", "stresses": ["s-case-amplifies", "s-heartbeat"], "w": 210, "x": 660, "y": 396}, {"gates": [], "id": "rig", "job": "Run tests honestly.", "layer": "machinery", "name": "THE RIGS", "role": "The execution rigs — Remmy's subagents for smoke tests, the isolated API driver for evidence-grade runs, the battery harness. A rig's limits cap what its results can claim.", "stresses": ["s-rig-ceiling"], "w": 190, "x": 1105, "y": 396}, {"gates": ["g-case-authority"], "id": "agents", "job": "Execute the work, inside the case's authority.", "layer": "duenna", "name": "WORKING AGENTS", "role": "The chain: A establishes, B reviews, C implements, D continues blind. Each authors the next handoff. Blind by design — the case is their only continuity.", "stresses": ["s-case-amplifies"], "w": 200, "x": 205, "y": 596}, {"cluster": "duenna", "gates": ["g3", "g4", "g5"], "id": "d-record", "job": "Preservation and append discipline.", "layer": "duenna", "name": "RECORD", "role": "Owns the event stream, the closure records, and the external anchoring of the hash chain. In the Stage 1 harness, closure always completes and there is no silent closure — demonstrated under controlled termination. Production integration is outstanding: the production system must not inherit that assurance until it is implemented and examined, and hard kills sit outside the demonstrated guarantee.", "stresses": ["s-anchor-limit"], "w": 150, "x": 520, "y": 596}, {"cluster": "duenna", "gates": ["g1"], "id": "d-binder", "job": "Bind inputs to identities before anything runs.", "layer": "duenna", "name": "BINDER", "role": "Freezes the configuration, mints the run identity, binds artifacts to their provenance entries. Runs the freeze gate G1. Its outputs go only to RECORD — and binding a configuration does not by itself establish authority for it.", "stresses": [], "w": 150, "x": 690, "y": 596}, {"cluster": "duenna", "gates": ["g5"], "id": "d-evaluator", "job": "Produce verdicts and findings from recorded entries.", "layer": "duenna", "name": "EVALUATOR", "role": "Consumes the record and produces its OWN evidence — verdicts, attribution, checker findings. It never consumes its own conclusions as inputs.", "stresses": ["s-attribution-unknown"], "w": 150, "x": 860, "y": 596}, {"cluster": "duenna", "gates": ["g4", "g5", "g6"], "id": "d-examiner", "job": "Independently re-derive, and show discrepancies as facts.", "layer": "duenna", "name": "EXAMINER SURFACE", "role": "Re-derives results from preserved originals and pinned contracts — not from the Evaluator's conclusions. Hosts report resolution (G6) and the closure validation display: three independent results, never one boolean.", "stresses": [], "w": 170, "x": 1030, "y": 596}, {"gates": ["g-blind"], "id": "tests", "job": "Earned evidence.", "layer": "record", "name": "THE TESTS", "role": "The ladder, Part 1 (T08–T12), K8, K9, and the battery: how claims get earned. Every test's limits are recorded with its results.", "stresses": ["s-rig-ceiling"], "w": 200, "x": 205, "y": 812}, {"gates": ["g-currency", "g-publish"], "id": "shelf", "job": "The persistent canonical record.", "layer": "record", "name": "THE SHELF — THE LIBRARY", "role": "Source of truth for every seat: research, examinations, registers, rulings. Consulted before work is composed; written in the same round state changes. The collaboration chain is what fills it.", "stresses": ["s-single-record"], "w": 300, "x": 660, "y": 812}, {"gates": [], "id": "remarvis", "job": "Human visibility and control.", "layer": "record", "name": "REMARVIS", "role": "The face: Ben's window into the state of the whole — gauges, seats, the operation — and the surface through which his taps and commands flow back. It shows the work; it is not the work; it originates nothing.", "stresses": [], "w": 190, "x": 1105, "y": 812}], "stresses": [{"evidence": "The entire Vane collaboration ran on Remmy's hand-holding and shelf links — Ben's 'briefcase with a heartbeat'. K9 exists to test how much of that hand the static case can carry.", "id": "s-heartbeat", "issue": "Everything curated flows through one orchestrator who works only inside turns. If she is absent, seats idle, chains stall, and the record's currency waits on her discipline alone.", "mitigation": "The briefcase itself — if the chain tests prove it out. Unproven until K9 runs.", "name": "The curator is a single heartbeat", "where": ["remmy", "briefcase"]}, {"evidence": "2026-11-19, 17:22–17:44: letter briefcase-19 severed mid-delivery during a rollover; the queue froze for ~20 minutes while the letter had actually landed and been answered.", "id": "s-bridge-road", "issue": "The bridge is the only transport between seats. A single wedged delivery blocks every letter behind it, and the panel shows no controls for a letter in flight.", "mitigation": "v0.20.5's watchdog + Ben's push-through / let-go controls. Residual: the watchdog shares a worker with the pump it watches.", "name": "One road between the seats", "where": ["bridge"]}, {"evidence": "Three of Vane's replies were nearly lost to the banner race before Ben ruled the wait (v0.20.4).", "id": "s-examiner-window", "issue": "Examination quality depends on packages reaching one seat whose context window fills and rolls over — mid-examination, if the timing is bad.", "mitigation": "The rollover wait; shelf-first delivery (packages live on the shelf, not only in the window). A second examiner seat (Claude's lane) is Ben's open question.", "name": "One examiner, a rolling window", "where": ["vane"]}, {"evidence": "The shelf manifest still names bridge v0.19.0 while the live bridge is v0.20.5 — a small, live example riding in the record right now.", "id": "s-single-record", "issue": "The shelf is a single repository, and its currency is kept by discipline rather than enforcement. Staleness is invisible until someone acts on old truth.", "mitigation": "The currency rule and the programme sync file. Nothing mechanical yet.", "name": "One copy of the truth", "where": ["shelf"]}, {"evidence": "Coding test: the case never capped the discount percentage, and the briefed build shipped a −$50 total. K8: the case carried the promise rule but not the current time, and B made a promise it had no authority to make.", "id": "s-case-amplifies", "issue": "Agents trust their case. An omission or error in the case doesn't stay a paperwork problem — it becomes confident wrong action downstream, and the case's authority makes it look legitimate.", "mitigation": "The examiner's package inspection before any run (Vane's Part 1 inspection caught four authoring defects). It is load-bearing and human-paced — itself a bottleneck to watch.", "name": "A case amplifies its own errors", "where": ["briefcase", "agents"]}, {"evidence": "K8 replication: both cells capped at L2 by exactly this. Part 1 run 1: subagents inherited the orchestrator's context, qualifying every causal claim.", "id": "s-rig-ceiling", "issue": "When a rig can only collect prose accounts, no grade above 'the agent says it did it' is earnable — the instrument's ceiling becomes the result's ceiling, and can be misread as the agent's failure.", "mitigation": "Adopted requirement: a rig that grades actions must provide mutable, inspectable state and verify resulting changes. Not yet built into a rig.", "name": "The rig caps the evidence", "where": ["rig", "tests"]}, {"evidence": "The waker exhausted its resurrection attempts and stood at gave_up awaiting a human tap Remmy cannot supply. Capture worked while wake was dead: replies sat unread.", "id": "s-silent-death", "issue": "Background machinery — watchers, the wake path, servers — dies on VM replacements without announcing it. A dead watcher looks exactly like a quiet one.", "mitigation": "The standing rule: death is judged by an observer (pid + heartbeat age), never by a state file's self-report. State and heartbeat read together; disagreement is reported as UNKNOWN.", "name": "Machinery dies silently", "where": ["remmy", "bridge"]}, {"evidence": "Recorded as limitation C3 in the Stage 1 examination — deliberately not fixed inside Stage 1's scope, and carried openly in the register.", "id": "s-anchor-limit", "issue": "Stage 1's external anchor detects rewriting of the record alone. A coordinated rewrite of record AND anchor together is not defeated.", "mitigation": "Honesty, for now: the limit is named wherever the PASS is claimed. A stronger anchor is a later stage's design question.", "name": "The anchor's known limit (C3)", "where": ["d-record"]}, {"evidence": "DR-14 to DR-17: four disagreements held as NOT-SCORED, attribution UNKNOWN. The first battery's T06 was the ancestor: a checker regex miss, first read as a model failure.", "id": "s-attribution-unknown", "issue": "When a checker and a subject's raw response disagree, the temptation is to score it as a model failure. Doing so corrupts attribution — the one fact that must be identical everywhere it appears.", "mitigation": "The attribution classes (SYSTEM / MODEL / INPUT / UNKNOWN) and ruling 4: disagreement becomes a recorded discrepancy, both positions preserved.", "name": "UNKNOWN must stay UNKNOWN", "where": ["d-evaluator"]}, {"evidence": "Raised in the Stage 1 qualifications as the test-fixture attribution authority question. Identifier caution (the examiner, 2026-11-19): the merged defect register's DR-13 is a different item (the R65 required-set qualification) — programme usage and the register collide on the number, so this map cites NO register number for the vacancy. It stands as an independent open architectural issue until Ben reconciles the numbering. Numbered DR-26 in the defect register on Ben's ruling (2026-11-19); the DR-13 collision is cross-noted at DR-13.", "id": "s-adjudicator-vacancy", "issue": "Who the production adjudicator IS — the authority that finally settles a run's outcome — has no named owner. The map shows this lit because a responsibility with no owner is precisely what this map exists to catch.", "mitigation": "ALLOCATED on Ben's ruling (2026-11-19): the orchestrator adjudicates, through status gates — package assembled, then independently verified, then decided. The verification gate precedes the decision and cannot be skipped; a decision on an unverified package is not a settlement. Implementation outstanding — the role is allocated, not yet exercised in production.", "name": "An ownerless job: the production adjudicator", "where": ["d-evaluator", "d-examiner"]}, {"id": "s-independence", "name": "The second check that isn't", "issue": "If the Examiner Surface ever derives from the Evaluator's conclusions instead of the preserved originals, the system gains the appearance of independent verification without the substance — and the first check's errors come back wearing two signatures.", "evidence": "This map's first drawing made exactly that error — an Evaluator → Examiner flow carrying verdicts — caught on the examiner's examination of the map itself (2026-11-19). The failure mode is live, not theoretical.", "mitigation": "The architecture's rule, now drawn correctly: originals + pinned contract + reproduction rules are the Examiner's only derivation inputs; Evaluator findings are admitted afterwards, labelled, for comparison only. Guarded by G5, the validation-independence requirement. (G6 checks report references and locations — a different class of defect; it is not credited with this guarantee.)", "where": ["d-evaluator", "d-examiner"]}], "subtitle": "Parts, jobs, flows, gates — and where it could create an issue", "title": "Duenna — the whole system", "updated": "2026-11-19 · adjudicator allocated on Ben's ruling (orchestrator, verification-gated)", "f5": [{"id": "f5-gov", "name": "F5 — Governance edges", "text": "Originate externally, from Ben: the approved artifacts, the pinned contracts, the rulings. This is the only source of permission in the system. Governance edges carry what is approved; they are not drawn as arrows because they are not a flow — they are the standing condition every other edge answers to.", "gates": []}, {"id": "f5-enf", "name": "F5 — Enforcement edges", "text": "Mechanical checks of pinned, approved artifacts at entry and progression points. The enforcement gates live here: G1, G2, G3, G6. (G4 is a validation, not a gate, and G5 is a cross-cutting independence requirement on validators — neither is listed as an enforcement gate, because neither authorizes or refuses a progression.) An enforcement edge invents no permission and holds no discretion: it compares what arrives against what was pinned, and records the result. No gate, evaluator, or examiner creates authority — they only check against it.", "gates": ["g1", "g2", "g3", "g6"]}]};
+const parts = {}, flows = {}, gates = {}, stresses = {};
+DATA.parts.forEach(p=>parts[p.id]=p); DATA.flows.forEach(f=>flows[f.id]=f);
+DATA.gates.forEach(g=>gates[g.id]=g); DATA.stresses.forEach(s=>stresses[s.id]=s);
+const H = 64; // part box height
+let showFlows = true, showStress = false;
+
+document.getElementById('ttl').textContent = DATA.title;
+document.getElementById('stl').textContent = DATA.subtitle;
+document.getElementById('upd').textContent = 'Content settled ' + DATA.updated + ' · ' +
+  DATA.parts.length + ' parts · ' + DATA.flows.length + ' flows · ' +
+  DATA.gates.length + ' gates · ' + DATA.stresses.length + ' stress points';
+document.getElementById('gatecount').textContent = '(' + DATA.gates.length + ')';
+document.getElementById('stresscount').textContent = '(' + DATA.stresses.length + ')';
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function partStresses(pid){ return DATA.stresses.filter(s=>s.where.includes(pid)); }
+function partGates(p){ return (p.gates||[]).map(id=>gates[id]).filter(Boolean); }
+function flowsIn(pid){ return DATA.flows.filter(f=>f.to===pid); }
+function flowsOut(pid){ return DATA.flows.filter(f=>f.from===pid); }
+
+// ---------- SVG ----------
+const svg = document.getElementById('svg');
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+
+function edgePoint(p, tx, ty){
+  const dx = tx-p.x, dy = ty-p.y; if(dx===0&&dy===0) return [p.x,p.y];
+  const hw = p.w/2, hh = H/2; const s = Math.min(
+    dx!==0? hw/Math.abs(dx): Infinity, dy!==0? hh/Math.abs(dy): Infinity);
+  return [p.x+dx*s, p.y+dy*s];
+}
+function wrap2(text, max){
+  const words = text.split(' '); const lines = []; let cur = '';
+  for(const w of words){
+    if((cur+' '+w).trim().length > max && cur){ lines.push(cur); cur = w; if(lines.length===2) break; }
+    else cur = (cur+' '+w).trim();
+  }
+  if(lines.length<2 && cur) lines.push(cur);
+  if(lines.length===2){
+    const used = lines.join(' ').split(' ').length;
+    if(used < words.length) lines[1] = lines[1].replace(/[\s,;:.]+$/,'') + '…';
+  }
+  return lines;
+}
+function renderMap(){
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const defs = el('defs',{},svg);
+  defs.innerHTML = '<linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">'+
+    '<stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>'+
+    '<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+    '<path d="M0 0L10 5L0 10z" fill="#7d8aa5"/></marker>'+
+    '<marker id="arrW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+    '<path d="M0 0L10 5L0 10z" fill="#fbbf24"/></marker>';
+  // layer labels
+  DATA.layers.forEach(L=>{
+    const t = el('text',{x:26,y:L.y+16,fill:'#475569','font-size':13,'letter-spacing':'.14em'},svg);
+    t.textContent = L.name.toUpperCase();
+  });
+  // duenna cluster
+  const cl = DATA.parts.filter(p=>p.cluster==='duenna');
+  if(cl.length){
+    const xs = cl.map(p=>p.x-p.w/2), xe = cl.map(p=>p.x+p.w/2);
+    const ys = cl.map(p=>p.y-H/2), ye = cl.map(p=>p.y+H/2);
+    el('rect',{x:Math.min(...xs)-18,y:Math.min(...ys)-34,width:Math.max(...xe)-Math.min(...xs)+36,
+      height:Math.max(...ye)-Math.min(...ys)+52,rx:14,fill:'rgba(124,58,237,.06)',
+      stroke:'#475569','stroke-dasharray':'6 5'},svg);
+    const t = el('text',{x:Math.min(...xs)-2,y:Math.min(...ys)-14,fill:'#a78bfa','font-size':13,'letter-spacing':'.1em'},svg);
+    t.textContent = 'DUENNA — the four components; the gates live on the F5 edges between them';
+  }
+  // flows
+  if(showFlows){
+    const pairCount = {};
+    DATA.flows.forEach(f=>{
+      const key = [f.from,f.to].sort().join('|'); pairCount[key]=(pairCount[key]||0)+1;
+    });
+    const pairSeen = {};
+    DATA.flows.forEach(f=>{
+      const a = parts[f.from], b = parts[f.to]; if(!a||!b) return;
+      const key = [f.from,f.to].sort().join('|');
+      const n = pairCount[key]; pairSeen[key]=(pairSeen[key]||0)+1;
+      const idx = pairSeen[key]-1;
+      const off = n>1 ? (idx-(n-1)/2)*22 : 0;
+      let pts, labelPt;
+      if(f.via && f.via.length){
+        const start = edgePoint(a, f.via[0][0], f.via[0][1]);
+        const end = edgePoint(b, f.via[f.via.length-1][0], f.via[f.via.length-1][1]);
+        pts = [start, ...f.via, end];
+        // label on the longest segment
+        let best = 0, bl = 0;
+        for(let i=0;i<pts.length-1;i++){
+          const L = Math.hypot(pts[i+1][0]-pts[i][0], pts[i+1][1]-pts[i][1]);
+          if(L>bl){ bl=L; best=i; }
+        }
+        labelPt = [(pts[best][0]+pts[best+1][0])/2, (pts[best][1]+pts[best+1][1])/2];
+      } else {
+        const [x1,y1] = edgePoint(a,b.x,b.y), [x2,y2] = edgePoint(b,a.x,a.y);
+        const mx=(x1+x2)/2, my=(y1+y2)/2;
+        const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+        const ox = -dy/len*off, oy = dx/len*off;
+        const cx = mx+ox*2.2, cy = my+oy*2.2;
+        pts = [[x1,y1],[cx,cy],[x2,y2]];
+        labelPt = [(x1+2*cx+x2)/4, (y1+2*cy+y2)/4];
+        const d = `M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`;
+        const path = el('path',{d,fill:'none',stroke:'#54657f','stroke-width':1.6,
+          'marker-end':'url(#arr)',class:'flowline','data-flow':f.id},svg);
+        el('path',{d,fill:'none',stroke:'transparent','stroke-width':14,class:'flowline','data-flow':f.id},svg)
+          .addEventListener('click',()=>go('flow',f.id));
+        path.addEventListener('click',()=>go('flow',f.id));
+        const t = el('text',{x:labelPt[0],y:labelPt[1]-4,'text-anchor':'middle',fill:'#8fa1ba','font-size':12,class:'flowline','data-flow':f.id},svg);
+        t.textContent = f.name; t.addEventListener('click',()=>go('flow',f.id));
+        return;
+      }
+      const d = pts.map((p,i)=>(i===0?'M':'L')+p[0]+' '+p[1]).join(' ');
+      const path = el('path',{d,fill:'none',stroke:'#54657f','stroke-width':1.6,
+        'marker-end':'url(#arr)',class:'flowline','data-flow':f.id},svg);
+      el('path',{d,fill:'none',stroke:'transparent','stroke-width':14,class:'flowline','data-flow':f.id},svg)
+        .addEventListener('click',()=>go('flow',f.id));
+      path.addEventListener('click',()=>go('flow',f.id));
+      const vert = Math.abs(pts[1][0]-pts[0][0]) < 4 && pts.length>2;
+      let anch = 'middle', lx2 = labelPt[0];
+      if(labelPt[0] > 1150){ anch = 'end'; lx2 = labelPt[0]-8; }
+      else if(vert){ anch = 'start'; lx2 = labelPt[0]+8; }
+      const t = el('text',{x:lx2,y:labelPt[1]-4,'text-anchor':anch,
+        fill:'#8fa1ba','font-size':12,class:'flowline','data-flow':f.id},svg);
+      t.textContent = f.name; t.addEventListener('click',()=>go('flow',f.id));
+    });
+  }
+  // parts
+  DATA.parts.forEach(p=>{
+    const g = el('g',{class:'partbox','data-part':p.id},svg);
+    const stressN = partStresses(p.id).length;
+    el('rect',{x:p.x-p.w/2,y:p.y-H/2,width:p.w,height:H,rx:11,
+      fill:'rgba(15,23,42,.92)',
+      stroke: (showStress&&stressN)? '#fbbf24' : (p.id==='ben'||p.id==='briefcase'||p.id==='shelf')? 'url(#acc)' : '#3b4a63',
+      'stroke-width': (showStress&&stressN)? 2.2 : 1.5},g);
+    const lines = wrap2(p.job, Math.max(16, Math.floor(p.w/6.6)));
+    const t1 = el('text',{x:p.x,y:p.y-(lines.length>1?12:4),'text-anchor':'middle',fill:'#f1f5f9','font-size':14.5,'font-weight':700},g);
+    t1.textContent = p.name;
+    lines.forEach((ln,i)=>{
+      const t2 = el('text',{x:p.x,y:p.y+(lines.length>1?6+i*14:15),'text-anchor':'middle',fill:'#94a3b8','font-size':11},g);
+      t2.textContent = ln;
+    });
+    if(showStress && stressN){
+      const bx = p.x+p.w/2-4, by = p.y-H/2+4;
+      el('polygon',{points:`${bx-11},${by+13} ${bx},${by-4} ${bx+11},${by+13}`,fill:'#fbbf24'},g);
+      const tt = el('text',{x:bx,y:by+10,'text-anchor':'middle',fill:'#070b18','font-size':12,'font-weight':800},g);
+      tt.textContent = '!';
+      const tn = el('text',{x:bx-20,y:by+12,'text-anchor':'end',fill:'#fbbf24','font-size':12,'font-weight':700},g);
+      tn.textContent = stressN;
+    }
+    g.addEventListener('click',()=>go('part',p.id));
+  });
+}
+
+// ---------- detail panel ----------
+const detail = document.getElementById('detail');
+function chip(kind,id,label,warn){ return `<span class="chip${warn?' warn':''}" onclick="go('${kind}','${id}')">${esc(label)}</span>`; }
+function strengthBadge(s){ return `<span class="badge b-${s.replace(' ','-')}">${esc(s.toUpperCase())}</span>`; }
+
+function showOverview(){
+  detail.innerHTML = `<h2>Walk the system</h2>
+    <p class="jobline">Every part below owns one job. Click a part to see its role, what flows through it, the gates it answers to — and what could create an issue there.</p>
+    <h3>How to read it</h3>
+    <p>Lines are flows: what actually travels between parts. Diamonds are not drawn — gates live on the flows and in the Gates view, each labelled with its real strength: <b>enforced</b>, <b>procedural</b>, or <b>designed</b>. Labels are facts here.</p>
+    <p>Turn on the <b>stress layer</b> to light up the ${DATA.stresses.length} known stress points — the single threads, the ownerless job, the places this system has already hurt itself.</p>
+    <h3>The acceptance test</h3>
+    <p>Ben's: we can look at this, point at a spot, and say "hey — this could create an issue." If a spot can't be pointed at, it isn't on the map yet.</p>`;
+}
+function showPart(p){
+  const ins = flowsIn(p.id), outs = flowsOut(p.id), gs = partGates(p), ss = partStresses(p.id);
+  detail.innerHTML = `<h2>${esc(p.name)}</h2>
+    <p class="jobline">${esc(p.job)}</p>
+    <h3>Role</h3><p>${esc(p.role)}</p>
+    ${outs.length? `<h3>Flows out</h3>` + outs.map(f=>`<span class="rowlink" onclick="go('flow','${f.id}')">${esc(f.name)} → ${esc(parts[f.to].name)}<small>${esc(f.carries)}</small></span>`).join('') : ''}
+    ${ins.length? `<h3>Flows in</h3>` + ins.map(f=>`<span class="rowlink" onclick="go('flow','${f.id}')">${esc(parts[f.from].name)} → ${esc(f.name)}<small>${esc(f.carries)}</small></span>`).join('') : ''}
+    ${gs.length? `<h3>Gates</h3>` + gs.map(g=>chip('gate',g.id,g.name)).join('') : ''}
+    ${ss.length? `<h3>Stress points here</h3>` + ss.map(s=>`<span class="rowlink" onclick="go('stress','${s.id}')">⚠ ${esc(s.name)}<small>${esc(s.issue)}</small></span>`).join('') : '<h3>Stress points</h3><p>None recorded at this part.</p>'}
+  `;
+}
+function showFlow(f){
+  const g = f.gate? gates[f.gate] : null;
+  detail.innerHTML = `<h2>${esc(f.name)}</h2>
+    <p class="jobline">${esc(parts[f.from].name)} → ${esc(parts[f.to].name)}</p>
+    <h3>What travels it</h3><p>${esc(f.carries)}</p>
+    <h3>Its gate</h3><p>${g? chip('gate',g.id,g.name)+' '+strengthBadge(g.strength) : 'No gate on this flow — that itself is worth noticing.'}</p>
+    <h3>What breaks it</h3><p>${esc(f.breaks)}</p>
+    <h3>Jump to</h3>${chip('part',f.from,parts[f.from].name)}${chip('part',f.to,parts[f.to].name)}`;
+}
+function showGate(g){
+  detail.innerHTML = `<h2>${esc(g.name)}</h2>
+    <p>${strengthBadge(g.strength)} <span style="color:var(--muted);font-size:13px">${esc(g.kind)}</span></p>
+    <h3>Where it stands</h3><p>${esc(g.where)}</p>
+    <h3>What it checks</h3><p>${esc(g.checks)}</p>
+    <h3>Who holds it</h3><p>${esc(g.holder)}</p>
+    <h3>On failure</h3><p>${esc(g.onFail)}</p>
+    <h3>Known weakness</h3><p>${esc(g.weakness)}</p>`;
+}
+function showStressPoint(s){
+  detail.innerHTML = `<h2>⚠ ${esc(s.name)}</h2>
+    <h3>The issue</h3><p>${esc(s.issue)}</p>
+    <h3>Evidence</h3><p>${esc(s.evidence)}</p>
+    <h3>Mitigation & residual</h3><p>${esc(s.mitigation)}</p>
+    <h3>Where it lives</h3><p>${s.where.map(id=> parts[id]? chip('part',id,parts[id].name) : (flows[id]? chip('flow',id,flows[id].name):'')).join('')}</p>`;
+}
+
+// ---------- gates & stress views ----------
+function renderGates(){
+  const kinds = [...new Set(DATA.gates.map(g=>g.kind))];
+  document.getElementById('view-gates').innerHTML = kinds.map(k=>
+    `<div class="secttl">${esc(k)} gates</div><div class="cards">` +
+    DATA.gates.filter(g=>g.kind===k).map(g=>`<div class="card" onclick="go('gate','${g.id}')">
+      <h3>${esc(g.name)}</h3>${strengthBadge(g.strength)}
+      <div class="lbl">Where</div><p>${esc(g.where)}</p>
+      <div class="lbl">Checks</div><p>${esc(g.checks)}</p>
+      <div class="lbl">Held by</div><p>${esc(g.holder)}</p></div>`).join('') + '</div>'
+  ).join('');
+}
+function renderStress(){
+  document.getElementById('view-stress').innerHTML = '<div class="cards">' +
+    DATA.stresses.map(s=>`<div class="card" onclick="go('stress','${s.id}')">
+      <h3>⚠ ${esc(s.name)}</h3>
+      <div class="lbl">The issue</div><p>${esc(s.issue)}</p>
+      <div class="lbl">Evidence</div><p>${esc(s.evidence)}</p>
+      <div class="lbl">Where</div><p>${s.where.map(id=>parts[id]?parts[id].name:'').filter(Boolean).join(' · ')}</p></div>`).join('') + '</div>';
+}
+
+// ---------- routing ----------
+let view = 'map';
+function setView(v){
+  view = v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.view===v));
+  document.getElementById('view-map').classList.toggle('hidden', v!=='map');
+  document.getElementById('view-gates').classList.toggle('hidden', v!=='gates');
+  document.getElementById('view-stress').classList.toggle('hidden', v!=='stress');
+}
+function go(kind, id){
+  location.hash = '#/'+kind+'/'+id;
+}
+function route(){
+  const m = location.hash.match(/^#\/(part|flow|gate|stress)\/(.+)$/);
+  const v = location.hash.match(/^#\/view\/(gates|stress)$/);
+  if(v){ setView(v[1]); return; }
+  setView('map');
+  if(!m){ showOverview(); return; }
+  const [,kind,id] = m;
+  if(kind==='part'&&parts[id]) showPart(parts[id]);
+  else if(kind==='flow'&&flows[id]) showFlow(flows[id]);
+  else if(kind==='gate'&&gates[id]) showGate(gates[id]);
+  else if(kind==='stress'&&stresses[id]) showStressPoint(stresses[id]);
+  else showOverview();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  if(t.dataset.view==='map'){ location.hash = '#/'; } else { location.hash = '#/view/'+t.dataset.view; }
+}));
+document.getElementById('tglFlows').addEventListener('change',e=>{ showFlows=e.target.checked; renderMap(); });
+document.getElementById('tglStress').addEventListener('change',e=>{ showStress=e.target.checked; renderMap(); });
+function renderF5(){
+  const strip = document.getElementById('f5strip');
+  if(!strip || !DATA.f5) return;
+  strip.innerHTML = DATA.f5.map(e=>`<div class="card" style="cursor:default">
+    <h3>${esc(e.name)}</h3><p>${esc(e.text)}</p>
+    ${e.gates&&e.gates.length? '<div style="margin-top:8px">'+e.gates.map(id=>chip('gate',id,gates[id].name)).join('')+'</div>' : ''}
+  </div>`).join('');
+}
+window.addEventListener('hashchange', route);
+if(location.search.includes('stresslayer')){
+  showStress = true; document.getElementById('tglStress').checked = true;
+}
+renderGates(); renderStress(); renderF5(); renderMap(); route();
+</script>
+</body>
+</html>
