@@ -1,0 +1,1 @@
+{"operation_id": "op-0bed5caa2b7158eed808505493bbadf1c45f4a41777f62ca876ba9c7aece524b", "payload": {"args": {"expected_ref": "pilot-manifest:PILOT-DATA-EXPECTED-01", "field": "artifact", "value": "harness-r60rev.py"}, "tool": "verify_field"}, "payload_digest": "58b1e30d68edd1b3443387bbd6c6d5167c8471b3fcc6ae2b7db630494b4590e7"}

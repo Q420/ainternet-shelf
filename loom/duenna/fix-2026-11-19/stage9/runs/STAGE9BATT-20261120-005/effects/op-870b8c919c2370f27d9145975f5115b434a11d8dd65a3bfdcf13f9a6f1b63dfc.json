@@ -1,0 +1,1 @@
+{"operation_id": "op-870b8c919c2370f27d9145975f5115b434a11d8dd65a3bfdcf13f9a6f1b63dfc", "payload": {"args": {"field": "fixtures_executed", "source_ref": "r60-revision-change-record#009"}, "tool": "source_extract"}, "payload_digest": "86ce726f9fa5bb9d09852e64191c324d331396d446a0656c31290ec0322e977d"}

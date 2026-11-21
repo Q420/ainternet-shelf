@@ -1,0 +1,1 @@
+{"operation_id": "op-140a3be259b1502f7aeeaa1ca1132a67b1079ac60161f803407c400462fe1dbb", "payload": {"args": {"expected_ref": "op-ac0d2f28b0180d7c9d572ca5a18fca81f5b7d5ea072ade0b5291dd638829ad20", "field": "fixtures_passed", "value": 38}, "tool": "verify_field"}, "payload_digest": "b7b5711b0f6b9240f23e11af0a35f584ac45026b6b540e4072c32c43f6cda7f0"}

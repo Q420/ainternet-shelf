@@ -1,0 +1,1 @@
+{"operation_id": "op-54a27894bb8fe30e3c85d428ebbbb9808d628c5f3c7b3692764818490e1dc314", "payload": {"artefact_id": "T05--T05-STEP-04--record", "basis": {"kind": "tree_declared_constant"}, "field": "evidence", "value": ["r60-revision-change-record#009", "alex-combined-adjudication-r60rev#001"]}, "payload_digest": "cf546682d7763ea328ed242081e2e97a1a624378929a654f0135e27e7e2f6443"}

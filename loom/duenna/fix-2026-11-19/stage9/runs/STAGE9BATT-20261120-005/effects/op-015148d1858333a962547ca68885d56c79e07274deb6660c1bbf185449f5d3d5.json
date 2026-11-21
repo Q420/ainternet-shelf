@@ -1,0 +1,1 @@
+{"operation_id": "op-015148d1858333a962547ca68885d56c79e07274deb6660c1bbf185449f5d3d5", "payload": {"args": {"expected_ref": "op-f0bf26f9f9bf436128876d6587b4211acb099d68613389dad8adf971e6e52819", "field": "correction_b", "value": "OPEN"}, "tool": "verify_field"}, "payload_digest": "09d8579b8f0ee83a050e0634d2e52e67d0ff4c1b272044c70eb04ef25bbc7dd4"}
