@@ -16,16 +16,26 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 6. `VANE-FULL-PLAN-REVIEW-2026-11-21.md` — her full review (commissioned by Ben); its version finding was settled by blob comparison — her retrieval had returned Revision 1.
 7. `REMMY-PLAN-REVIEW-NOTES-2026-11-21.md` — Remmy's notes: the verification and the comparison.
 8. `PLAN-REVIEW-COMPARISON-2026-11-21.md` — the two reviews compared; the six consistency corrections agreed.
-9. `COLLABORATION-PLAN-2026-11-21-REV3.md` — **Revision 3: the current plan, submitted to Ben for go / no-go.**
+9. `COLLABORATION-PLAN-2026-11-21-REV3.md` — **Revision 3: the current plan. APPROVED by Ben ("Proceed", 2026-11-21 11:26 MST).**
+10. `DEVELOPMENT-TEMPLATE.md` + `TEMPLATE-ADOPTION.md` — Ben's supplied development template, filed verbatim, and its mapping onto the plan (time frames disregarded at Ben's direction).
+11. `COLLABORATION-REV1.md` / `COLLABORATION-REV2.md` — the design, Revisions 1–2 (preserved).
+12. `VANE-COLLABORATION-EXAMINATION-2026-11-21.md` + `VANE-COLLABORATION-EXAMINATION-FULL-2026-11-21.md` — Vane's design examinations.
+13. `COLLABORATION-REV3.md` — the design, Revision 3 (preserved).
+14. `docs/requirements/SPEC-SHEET-REV1.md` / `SPEC-SHEET-REV2.md` / `SPEC-SHEET-REV3.md` — the spec, Revisions 1–3 (preserved).
+15. `VANE-SPEC-SHEET-EXAMINATION-2026-11-21.md` + `VANE-SPEC-SHEET-REV2-VERDICT-2026-11-21.md` — Vane's spec examinations; the pair supported for Ben's ruling subject to one matrix correction (applied in Rev 3).
+16. `VANE-CANONICAL-FILING-ACCEPTANCE-2026-11-21.md` — Vane's acceptance of this folder as canonical.
+17. `OUTSIDE-REVIEW-2026-11-21.md` — an outside review of the design: sound spine, one structural concern (the examiner as a single point), seven construction seams; recommends a short targeted pass before ruling.
+18. `COLLABORATION-REV4.md` + `docs/requirements/SPEC-SHEET-REV4.md` — **the current design pair**: the targeted pass, with Ben's three rulings (pause scope; identity consequence; gate granularity). With Vane for re-check; then Ben's design ruling. Nothing builds before it.
 
 ## Working rules (Ben, 2026-11-21)
 
 - **Work from this folder.** Remmy and Vane both work from `collaboration-framework/` — documents are written here, examined from here, and committed from here.
 - **Date everything added.** Every file added to this folder carries its date (in the filename or a date line in the document).
+- **Keep this folder updated as we go** (Ben, 2026-11-21 11:57 MST) — this index and the folder's contents are brought current in the same round as any change, never after.
 
 ## Structure (created 2026-11-21, shelf commit 916b3153)
 
-The template layout stands inside this folder: `docs/` (vision.md; requirements/, architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Empty directories hold placeholders until the build opens at plan Stage 2. The SPEC SHEET will live in `docs/requirements/`.
+The template layout stands inside this folder: `docs/` (vision.md; requirements/ — the SPEC SHEET lives here, current Revision 4; architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Empty directories hold placeholders until the build opens at plan Stage 2.
 
 ## Filing note
 
