@@ -1,7 +1,7 @@
-# Examiner Validation Pack — Stage 4, v1
+# Examiner Validation Pack — Stage 4, v2
 
 **Authorship:** Vane (examiner side)  
-**Status:** examiner-authored draft, submitted to Remmy for challenge; not yet pinned for implementation use  
+**Status:** examiner-authored revision 2, incorporating Remmy's challenge; submitted for confirmation; not yet pinned for implementation use  
 **Date:** 2026-11-21  
 **Authority set:** Loom specification v0.1 Rev 9 (blob `6a7e3d54b4b653ed6b8ca76392c59d283d8b2b1a`), Amendment A1 (blob `8af1afb609522b84c0b5f2ebac879059fadad84b`), and Stage 4 Design Brief Rev 2 (shelf head `6aee9455`). Rev 9 and A1 are separate authorities. This pack does not modify either.
 
@@ -248,7 +248,7 @@ Names C, I, S, N, P, O are test aliases only. They are not alternative region id
 
 ### VP-46 — Seal does not change semantic tension status
 **Input:** an open or examined semantic tension exists; all structural checks pass.  
-**Expected:** seal may issue and records the tension as an outstanding semantic question. Tension status is unchanged.
+**Expected:** S1–S3 pass; a seal issues and records the tension as an outstanding semantic question. Tension status is unchanged.
 
 ### VP-47 — Checker cannot raise semantic tension
 **Input:** checker finds a semantic contradiction in content but no structural invariant failure.  
@@ -260,7 +260,7 @@ Names C, I, S, N, P, O are test aliases only. They are not alternative region id
 
 ### VP-49 — Seal cannot certify completion or truth
 **Input:** every structural check passes, but one required facet is unexamined or has an outstanding semantic tension.  
-**Expected:** seal may issue; facet status remains governed only by Rev 9 §5; no completion or semantic truth certification is inferred.
+**Expected:** S1–S3 pass; a seal issues. Facet status remains governed only by Rev 9 §5; no completion or semantic truth certification is inferred.
 
 ## 9. Starvation report vectors
 
@@ -286,7 +286,7 @@ Names C, I, S, N, P, O are test aliases only. They are not alternative region id
 
 ### VP-55 — Run binds the exact examiner pack
 **Input:** each implementation is prepared for pre-open validation and then a run is opened using the agreed authority set and examiner pack.  
-**Expected:** the run record names the exact examiner pack identifier, version, and SHA-256 digest, and binds that exact digest before `RUN_OPENED`. A missing or different digest blocks run opening. The run cannot silently substitute a later pack revision.
+**Expected:** the `RUN_OPENED` payload names the exact examiner pack identifier, version, and SHA-256 digest as part of the run's bound authority set. A missing or different digest blocks run opening. The run cannot silently substitute a later pack revision.
 
 ## 10. Pack execution and reporting contract
 
