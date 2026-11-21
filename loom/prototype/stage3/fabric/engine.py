@@ -36,6 +36,22 @@ change, sparse in the state: a facet with no FACET_STATUS event
 stands at the initial status "open", so the genesis fold — and its
 state hash — is byte-identical to Stage 2's).
 
+Stage 3 corrections round (2026-11-21, B1 of Vane's Stage 3
+implementation examination): the fold no longer merely records the
+transitions it is told happened — it refuses to reconstruct
+transitions the constitution does not permit. TENSION_RAISED now
+enforces the permitted type/origin/initial-status combinations
+(semantic: contribution or examination origin, initially open;
+structural: checker origin, initially open). TENSION_STATUS now
+enforces the type-specific transition table (semantic: open →
+examined, examined → resolved, examined → standing; structural:
+open → resolved only; resolved and standing are terminal for both
+types), in addition to the existing from-status check. FACET_STATUS
+now validates its to-status against the six-status enumeration.
+Each violation halts replay with ReplayHalt at the offending
+sequence, exactly as a from-status mismatch already did: a
+hash-valid but protocol-invalid history yields no state.
+
 Stage 1 correction C2 (Vane's implementation examination, 2026-11-21):
 the first version folded events without verifying the chain, so state
 could be derived from a corrupted history and presented as trustworthy.
@@ -60,6 +76,24 @@ class ReplayHalt(Exception):
         super().__init__(f"replay halted at seq {seq}: {reason}")
         self.seq = seq
         self.reason = reason
+
+
+# The tension lifecycle the fold will reconstruct (Rev 9 sections 3
+# and 4; Stage 3 corrections round, B1). A tension is raised in
+# exactly one permitted combination per type, and moves only along
+# its type's transitions; resolved and standing are terminal.
+_TENSION_RAISED_ORIGINS = {
+    "semantic": ("contribution", "examination"),
+    "structural": ("checker",),
+}
+_TENSION_TRANSITIONS = {
+    "semantic": {("open", "examined"), ("examined", "resolved"),
+                 ("examined", "standing")},
+    "structural": {("open", "resolved")},
+}
+# Section 5's facet status set, in precedence order.
+_FACET_STATUSES = ("open", "unexamined", "claimed", "complete",
+                   "disputed", "stood_down")
 
 
 def empty_state() -> dict:
@@ -170,6 +204,23 @@ def apply_event(state: dict, event: dict) -> dict:
         return state
     if t == "TENSION_RAISED":
         p = event["payload"]
+        origins = _TENSION_RAISED_ORIGINS.get(p["type"])
+        if origins is None:
+            raise ReplayHalt(
+                event["event_seq"],
+                f"TENSION_RAISED names unknown tension type "
+                f"{p['type']!r}")
+        if p["origin"] not in origins:
+            raise ReplayHalt(
+                event["event_seq"],
+                f"TENSION_RAISED for a {p['type']} tension names "
+                f"origin {p['origin']!r}; permitted origins are "
+                f"{', '.join(origins)}")
+        if p["status"] != "open":
+            raise ReplayHalt(
+                event["event_seq"],
+                f"TENSION_RAISED names initial status "
+                f"{p['status']!r}; a tension is raised open")
         state["tensions"][p["tension_id"]] = {
             "tension_id": p["tension_id"],
             "type": p["type"],
@@ -219,6 +270,14 @@ def apply_event(state: dict, event: dict) -> dict:
                 f"TENSION_STATUS for {p['tension_id']} claims "
                 f"from-status {p['from']!r} but the folded status is "
                 f"{tension['status']!r}: an invalid transition")
+        permitted = _TENSION_TRANSITIONS.get(tension["type"], set())
+        if (p["from"], p["to"]) not in permitted:
+            raise ReplayHalt(
+                event["event_seq"],
+                f"TENSION_STATUS for {p['tension_id']} moves a "
+                f"{tension['type']} tension from {p['from']!r} to "
+                f"{p['to']!r}: not a permitted transition for its "
+                f"type (resolved and standing are terminal)")
         tension["status"] = p["to"]
         state["last_seq"] = event["event_seq"]
         return state
@@ -231,6 +290,12 @@ def apply_event(state: dict, event: dict) -> dict:
                 f"FACET_STATUS for {p['region_id']} claims "
                 f"from-status {p['from']!r} but the folded status is "
                 f"{current!r}: an invalid transition")
+        if p["to"] not in _FACET_STATUSES:
+            raise ReplayHalt(
+                event["event_seq"],
+                f"FACET_STATUS for {p['region_id']} names "
+                f"to-status {p['to']!r}; the permitted facet "
+                f"statuses are {', '.join(_FACET_STATUSES)}")
         state["facet_status"][p["region_id"]] = p["to"]
         state["last_seq"] = event["event_seq"]
         return state
