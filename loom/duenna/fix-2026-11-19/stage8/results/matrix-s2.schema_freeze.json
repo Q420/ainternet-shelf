@@ -1,0 +1,19 @@
+{
+ "changed": {},
+ "description": "FrozenSchema seal (stage2/schema.py)",
+ "invalid_reasons": [],
+ "mechanism": "s2.schema_freeze",
+ "patch_problems": [],
+ "run_id": "mech-s2.schema_freeze",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  2
+ ],
+ "valid": true
+}

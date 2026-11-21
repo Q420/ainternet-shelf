@@ -1,0 +1,158 @@
+s1.verify_chain: changed=4 refused=False
+s1.structural_validity: changed=1 refused=False
+s1.terminal_check: changed=6 refused=False
+s1.account_whole: changed=31 refused=False
+s1.account_reconciliation: changed=7 refused=False
+s1.account_schema: changed=8 refused=False
+s1.account_complete_unknowns: changed=1 refused=False
+s1.account_status_incomplete: changed=4 refused=False
+s1.whitespace: changed=7 refused=False
+s1.anchor_comparison: changed=2 refused=False
+s1.anchor_absence: changed=4 refused=False
+s2.verify_all: changed=6 refused=False
+s2.sole_issuer: changed=4 refused=False
+s2.registry_completeness: changed=0 refused=False
+s2.chain_in_verify: changed=2 refused=False
+s2.close_schema: changed=5 refused=False
+s2.close_fieldset: changed=2 refused=False
+s2.close_value: changed=1 refused=False
+s2.build_duplicates: changed=0 refused=False
+s2.close_duplicates: changed=0 refused=False
+s2.entry_validation: changed=1 refused=False
+s2.schema_freeze: changed=0 refused=False
+s2.schema_validation: changed=2 refused=False
+s2.schema_tuples: changed=1 refused=False
+s3.chain_facet: changed=10 refused=False
+s3.terminal_facet: changed=10 refused=False
+s3.freeze_surface: changed=1 refused=False
+s3.freeze_served_pin: changed=1 refused=False
+s3.capture_subject: changed=2 refused=False
+s3.receipt_record_presence: changed=0 refused=False
+s3.receipt_facts: changed=1 refused=False
+s3.receipt_binding: changed=1 refused=False
+s3.receipt_coverage: changed=3 refused=False
+s3.output_not_frozen: changed=0 refused=False
+s3.output_differing: changed=1 refused=False
+s3.output_digest: changed=2 refused=False
+s3.frozenrun_seal: changed=0 refused=False
+s3.policy_recompute: changed=3 refused=False
+s3.consume_unknown: changed=1 refused=False
+s4.identity_check: changed=7 refused=False
+s4.fingerprint_check: changed=4 refused=False
+s4.pinned_hash: changed=5 refused=False
+s4.field_checks: changed=10 refused=False
+s4.seal: changed=1 refused=False
+s4.construction_binding: changed=20 refused=False
+s4.registry_immutable: changed=19 refused=False
+s4.construction_validation: changed=4 refused=False
+s4.run_pin: changed=4 refused=False
+s4.run_input_identity: changed=4 refused=False
+s4.digest_comparison: changed=8 refused=False
+s5.event_recognition: changed=11 refused=False
+s5.payload_binding: changed=2 refused=False
+s5.completed_state: changed=4 refused=False
+s5.applied_effect_divergence: changed=1 refused=False
+s5.effect_recognition: changed=4 refused=False
+s5.operation_seal: changed=1 refused=False
+s5.payload_copy: changed=1 refused=False
+s5.identity_function: changed=5 refused=False
+s5.identity_payload: changed=3 refused=False
+s5.identity_determinism: changed=12 refused=False
+s6.issuance_token: changed=2 refused=False
+s6.point_of_use: changed=4 refused=False
+s6.issuance_record_check: changed=2 refused=False
+s6.resolve_attribution: changed=3 refused=False
+s6.label_conversion: changed=1 refused=False
+s6.vocabulary: changed=1 refused=False
+s6.one_record: changed=1 refused=False
+s6.format_prescribed: changed=5 refused=False
+s6.response_matching: changed=1 refused=False
+s6.schema_binding: changed=3 refused=False
+s6.schema_seal: changed=1 refused=False
+s6.g6_contradiction: changed=2 refused=False
+s6.g6_resolution: changed=0 refused=False
+s6.one_resolution: changed=2 refused=False
+s7.pin_constructor: changed=2 refused=False
+s7.pin_point_of_use: changed=5 refused=False
+s7.authentication: changed=8 refused=False
+s7.digest_comparison: changed=3 refused=False
+s7.issuance_lookup: changed=31 refused=False
+s7.package_lookup: changed=9 refused=False
+s7.issue_once: changed=1 refused=False
+s7.collect_issuance: changed=0 refused=False
+s7.collect_once: changed=1 refused=False
+s7.unrecorded_accounting: changed=1 refused=False
+joint-s1_structural_validity+s1_verify_chain: changed=5 refused=False
+joint-s2_build_duplicates+s2_close_duplicates: changed=1 refused=False
+joint-s3_receipt_coverage+s3_receipt_facts: changed=3 refused=False
+joint-s3_receipt_facts+s3_receipt_record_presence: changed=1 refused=False
+joint-s4_identity_check+s4_pinned_hash: changed=9 refused=False
+joint-s6_format_prescribed+s6_response_matching: changed=5 refused=False
+joint-s6_issuance_token+s6_point_of_use: changed=6 refused=False
+joint-s7_authentication+s7_digest_comparison+s7_package_lookup: changed=17 refused=False
+pairs NOT-EXERCISED: 30
+   test_access_admission.TestAccessAdmission.test_output_with_fabricated_receipt_refused :: s3.receipt_facts
+   test_access_admission.TestAccessAdmission.test_output_with_fabricated_receipt_refused :: s3.receipt_record_presence
+   test_access_admission.TestAccessAdmission.test_output_without_any_receipt_refused :: s3.receipt_record_presence
+   test_attribution.TestLabelConversionRefused.test_label_preserved_as_local_not_attribution :: s6.label_conversion
+   test_attribution.TestPinnedAuthority.test_ledger_requires_the_issued_capability :: s6.point_of_use
+   test_c6_account_schema.TestC6AccountSchema.test_c6_complete_unknowns_wrong_type :: s1.account_schema
+   test_discrepancy.TestAuthorisedResolution.test_resolution_without_authority_refused :: s6.point_of_use
+   test_dispatch.TestRunPaths.test_corrupt_artefact_takes_failure_path :: s4.digest_comparison
+   test_examiner_g6.TestReportResolution.test_flagged_not_corrected :: s6.g6_contradiction
+   test_examiner_g6.TestReportResolution.test_unresolvable_reference_is_an_error_not_a_flag :: s6.g6_resolution
+   test_insertion.TestRePresentation.test_recognition_is_per_identity :: s5.event_recognition
+   test_lifecycle.TestFullLifecycle.test_issuance_never_satisfies_collection_or_verification :: s7.package_lookup
+   test_lifecycle.TestIssuanceAndCollectionRules.test_collect_unissued_refused :: s7.collect_issuance
+   test_recovery.TestPartialInsertion.test_interruption_mid_insertion_then_retry :: s5.effect_recognition
+   test_recovery.TestRestartRecognition.test_partial_insertion_recovered_by_new_process :: s5.effect_recognition
+   test_reproductions.TestFindingsBecomeAttributions.test_t02_finding_recorded_and_attributed :: s6.format_prescribed
+   test_schema.TestFrozenSchema.test_schema_is_frozen_after_construction :: s2.schema_freeze
+   test_schema_contract.TestCausalTableControls.test_agreement :: s6.format_prescribed
+   test_schema_contract.TestCausalTableControls.test_agreement :: s6.response_matching
+   test_schema_contract.TestCausalTableControls.test_checker_defect_on_compliant_response :: s6.format_prescribed
+   test_schema_contract.TestCausalTableControls.test_input_branch :: s6.format_prescribed
+   test_schema_contract.TestCausalTableControls.test_input_branch :: s6.response_matching
+   test_schema_contract.TestCausalTableControls.test_model_branch :: s6.response_matching
+   test_schema_contract.TestPinnedSchemaArtefact.test_checker_binding_comes_from_the_frozen_object :: s6.schema_binding
+   test_stage1_cases.TestStage1Cases.test_case5_missing_failure_account :: s1.account_reconciliation
+   test_stage3_sabotage.TestSabotageB.test_fabricated_receipt_quoting_canonical_hash :: s3.receipt_facts
+   test_stage3_sabotage.TestSabotageB.test_fabricated_receipt_quoting_canonical_hash :: s3.receipt_record_presence
+   test_stage3_sabotage.TestSabotageF.test_frozen_run_cannot_be_rebound :: s3.frozenrun_seal
+   test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests :: s4.identity_check
+   test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests :: s4.pinned_hash
+collateral runs: 23
+  s1.account_schema: 2
+  s1.account_status_incomplete: 2
+  s1.account_whole: 30
+  s1.terminal_check: 2
+  s2.verify_all: 6
+  s3.output_digest: 1
+  s3.receipt_coverage: 1
+  s4.construction_binding: 15
+  s4.digest_comparison: 4
+  s4.pinned_hash: 1
+  s4.registry_immutable: 15
+  s5.effect_recognition: 1
+  s5.event_recognition: 9
+  s5.identity_determinism: 11
+  s5.identity_function: 4
+  s5.identity_payload: 2
+  s6.format_prescribed: 1
+  s6.g6_contradiction: 1
+  s6.one_resolution: 1
+  s6.response_matching: 1
+  s7.authentication: 1
+  s7.issuance_lookup: 30
+  s7.package_lookup: 3
+instrument-interaction runs: 10
+  s4.construction_binding: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.construction_validation: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.digest_comparison: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.field_checks: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.fingerprint_check: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.identity_check: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.pinned_hash: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.registry_immutable: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.run_input_identity: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']
+  s4.run_pin: ['test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i', 'test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k', 'test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone']

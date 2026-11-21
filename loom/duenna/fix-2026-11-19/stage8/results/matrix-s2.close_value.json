@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_stage2_sabotage.TestStage2Sabotages.test_value_mismatch_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "construction_close value facet: closed values must equal entry values (stage2/construction.py, _differing, indent 4)",
+ "invalid_reasons": [],
+ "mechanism": "s2.close_value",
+ "patch_problems": [],
+ "run_id": "mech-s2.close_value",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  2
+ ],
+ "valid": true
+}

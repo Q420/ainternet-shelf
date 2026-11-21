@@ -1,0 +1,50 @@
+{
+ "changed": {
+  "test_record.TestEventRecord.test_deleted_event_detected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_record.TestEventRecord.test_rewritten_middle_event_detected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_edited_middle_event_body_fails_chain_validity": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "invalid_reasons": [],
+ "joint_fixtures": [
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append"
+ ],
+ "joint_targets": [
+  "s1.structural_validity",
+  "s1.verify_chain"
+ ],
+ "patch_problems": [],
+ "run_id": "joint-s1_structural_validity+s1_verify_chain",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  1
+ ],
+ "valid": true
+}

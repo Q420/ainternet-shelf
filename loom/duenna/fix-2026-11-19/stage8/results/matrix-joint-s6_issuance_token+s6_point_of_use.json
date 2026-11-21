@@ -1,0 +1,57 @@
+{
+ "changed": {
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_capability_swapped_onto_ledger_cannot_mint": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_genuine_record_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_impostor_record_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "invalid_reasons": [],
+ "joint_fixtures": [
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint"
+ ],
+ "joint_targets": [
+  "s6.issuance_token",
+  "s6.point_of_use"
+ ],
+ "patch_problems": [],
+ "run_id": "joint-s6_issuance_token+s6_point_of_use",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  6
+ ],
+ "valid": true
+}

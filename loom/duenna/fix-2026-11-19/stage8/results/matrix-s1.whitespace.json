@@ -1,0 +1,55 @@
+{
+ "changed": {
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "ERROR"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "ERROR"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "ERROR"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "validator._has_content: whitespace-only strings name nothing (stage1/validator.py)",
+ "invalid_reasons": [],
+ "mechanism": "s1.whitespace",
+ "patch_problems": [],
+ "run_id": "mech-s1.whitespace",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  1
+ ],
+ "valid": true
+}

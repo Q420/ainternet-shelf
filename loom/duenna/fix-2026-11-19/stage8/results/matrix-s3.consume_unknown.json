@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_access_admission.TestAccessAdmission.test_consume_unknown_governed_value_refused": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "ERROR"
+  }
+ },
+ "description": "consume(): governed values outside the frozen configuration are refused (stage3/access.py)",
+ "invalid_reasons": [],
+ "mechanism": "s3.consume_unknown",
+ "patch_problems": [],
+ "run_id": "mech-s3.consume_unknown",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  3
+ ],
+ "valid": true
+}

@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_access_admission.TestAccessAdmission.test_receipt_for_another_invocation_does_not_admit": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "output gate: recorded receipt component/invocation must match the output's (stage3/admission.py)",
+ "invalid_reasons": [],
+ "mechanism": "s3.receipt_binding",
+ "patch_problems": [],
+ "run_id": "mech-s3.receipt_binding",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  3
+ ],
+ "valid": true
+}

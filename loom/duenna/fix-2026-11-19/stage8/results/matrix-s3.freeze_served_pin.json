@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_stage3_sabotage.TestSabotageD.test_served_identity_differing_from_the_pin": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "freeze served-identity vs pin comparison (stage3/binder.py)",
+ "invalid_reasons": [],
+ "mechanism": "s3.freeze_served_pin",
+ "patch_problems": [],
+ "run_id": "mech-s3.freeze_served_pin",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  3
+ ],
+ "valid": true
+}

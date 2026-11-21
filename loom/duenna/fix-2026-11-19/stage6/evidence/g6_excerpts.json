@@ -1,0 +1,99 @@
+{
+ "source": "duenna/attempt3-adjudication/run-record.jsonl",
+ "events": [
+  {
+   "event_id": "STAGE6BATT-20261118-001:37",
+   "event_sha256": "e9a04ef841d68efce32db6aa1f1ccac3e964b1b751e3865cce0a939bc55b342d",
+   "event_type": "GOVERNANCE_EVENT",
+   "payload": {
+    "claimed": {
+     "field": "harness_sha256",
+     "presentation": {
+      "form": "extracted",
+      "operation_id": "op-4"
+     },
+     "process_step": "T01-STEP-03"
+    },
+    "kind": "INSERT_REFUSED",
+    "presented_by_operation": "op-8",
+    "reason": "ALREADY_CONSUMED",
+    "recomputed": {
+     "entry": {
+      "consumed": true,
+      "rule_id": "EXT02-HS-1",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "source_ref": "r60-revision-change-record#009",
+      "step_id": "T01-STEP-03",
+      "tree_id": "T01",
+      "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "verification": "EXTRACTED"
+     }
+    },
+    "run_id": "STAGE6BATT-20261118-001",
+    "step_id": "T01-STEP-05",
+    "tree_id": "T01"
+   },
+   "prev_event_sha256": "0c591745529078e7fe48c6f36a1fc48a3150ee233553535785085bce6831827a",
+   "recorded_at_utc": "2026-11-18T07:20:56Z",
+   "run_id": "STAGE6BATT-20261118-001",
+   "seq": 37,
+   "step_id": "T01-STEP-05",
+   "tree_id": "T01"
+  },
+  {
+   "event_id": "STAGE6BATT-20261118-001:40",
+   "event_sha256": "48a553e3e6feb85924641780d4e51eb90813c22495a37e9370ac1cfe91eb5d79",
+   "event_type": "GOVERNANCE_EVENT",
+   "payload": {
+    "claimed": {
+     "field": "results_sha256",
+     "presentation": {
+      "form": "extracted",
+      "operation_id": "op-5"
+     },
+     "process_step": "T01-STEP-03"
+    },
+    "kind": "INSERT_REFUSED",
+    "presented_by_operation": "op-9",
+    "reason": "ALREADY_CONSUMED",
+    "recomputed": {
+     "entry": {
+      "consumed": true,
+      "rule_id": "EXT02-RS-1",
+      "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+      "source_ref": "r60-revision-change-record#009",
+      "step_id": "T01-STEP-03",
+      "tree_id": "T01",
+      "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+      "verification": "EXTRACTED"
+     }
+    },
+    "run_id": "STAGE6BATT-20261118-001",
+    "step_id": "T01-STEP-05",
+    "tree_id": "T01"
+   },
+   "prev_event_sha256": "369339fb8db95fb8249bdc6360030ea9a5dd5362b5a1842d3039767d53315dc7",
+   "recorded_at_utc": "2026-11-18T07:20:56Z",
+   "run_id": "STAGE6BATT-20261118-001",
+   "seq": 40,
+   "step_id": "T01-STEP-05",
+   "tree_id": "T01"
+  }
+ ],
+ "control_event": {
+  "event_id": "STAGE6BATT-20261118-001:11",
+  "event_sha256": "0578160d646140c5e14e8fe09e62babdc94b35c764f6745bcf3e3b602d88ffa3",
+  "event_type": "STEP_TRIGGERED",
+  "payload": {
+   "declared_inputs": [],
+   "step_id": "T01-STEP-03",
+   "type": "TOOL"
+  },
+  "prev_event_sha256": "72fc732753b2f770db4b3a6c53baca1d77f80e0ac5e7bf7e9543a51eb2b244e9",
+  "recorded_at_utc": "2026-11-18T07:12:12Z",
+  "run_id": "STAGE6BATT-20261118-001",
+  "seq": 11,
+  "step_id": "T01-STEP-03",
+  "tree_id": "T01"
+ }
+}

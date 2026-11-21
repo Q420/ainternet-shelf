@@ -1,0 +1,19 @@
+{
+ "changed": {},
+ "description": "FrozenRun seal (stage3/binder.py)",
+ "invalid_reasons": [],
+ "mechanism": "s3.frozenrun_seal",
+ "patch_problems": [],
+ "run_id": "mech-s3.frozenrun_seal",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  3
+ ],
+ "valid": true
+}

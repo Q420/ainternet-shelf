@@ -1,0 +1,30 @@
+{
+ "changed": {
+  "test_stage3_sabotage.TestSabotageC.test_capture_routed_to_another_model_invalidates_run": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage3_sabotage.TestSabotageC.test_refuse_capture_policy_scopes_the_refusal": {
+   "baseline": "ok",
+   "stage": 3,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "capture gate served-identity vs expected comparison (stage3/admission.py)",
+ "invalid_reasons": [],
+ "mechanism": "s3.capture_subject",
+ "patch_problems": [],
+ "run_id": "mech-s3.capture_subject",
+ "suite_validations": {
+  "3": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  3
+ ],
+ "valid": true
+}

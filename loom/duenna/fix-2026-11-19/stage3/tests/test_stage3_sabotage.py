@@ -1,0 +1,1031 @@
+"""Stage 3 — the plan's Test 3 sabotages, each asserted
+separately, each with BOTH halves of the governing rule.
+
+REFUSAL, NOT EITHER/OR: in every mismatch case the mismatch is
+preserved as a conflict record (the closure obligation) AND
+enforcement refuses (the execution obligation). Each sabotage
+test below asserts both halves explicitly: the conflict record
+exists on the record, AND the refusal happened (the freeze /
+capture / output did not proceed, and what depends on it did
+not proceed either).
+
+(a) contradictory driver/adapter subject configurations
+    (DR-03's exact mechanism);
+(b) a component quoting the canonical hash while using a
+    private value;
+(c) preflight verifies one model, a later capture routed to
+    another;
+(d) served identity differing from the pin (DR-20's shape);
+(e) post-issuance receipt mutation (Gate 1 correction
+    round 1): a value added to a receipt after issuance must
+    not become covered — the gate honours the recorded
+    CONSUMPTION_RECEIPT event, not the live object;
+(f) FrozenRun rebinding (Gate 1 correction round 1): the
+    capability holding the frozen configuration must not be
+    rebound after freeze — the digest bound in RUN_STARTED is
+    the digest the run, the access path and the gate honour.
+(g) record tampered after issuance (Gate 1 correction
+    round 2): the output gate trusted a receipt event whose
+    stored digest matched, without verifying the record's
+    CURRENT chain — a record changed since the freeze could
+    supply evidence, and receive admissions, unproven. The
+    gate (and the capture gate, which appends onto the same
+    record) must recompute the chain first; on failure they
+    raise and append NOTHING — the tampered file is asserted
+    byte-identical afterwards.
+(h) record tampered before ISSUANCE (Gate 1 correction
+    round 3): the access path appended receipt events without
+    verifying the current chain, on the reasoning that the
+    output gate would later refuse to honour a receipt on a
+    broken chain. The examiner ruled the integrity rule must
+    protect the act of issuance as well as the act of
+    admission: consume() must recompute the chain first; on
+    failure it raises and issues NOTHING — the tampered file
+    is asserted byte-identical afterwards.
+(i) record DESYNCED from the writer (Gate 1 correction
+    round 4): the chain checks proved the bytes read form A
+    valid chain — but an empty file verifies, and a
+    tail-truncated file verifies as a valid prefix, while the
+    record instance still holds its old in-memory length and
+    head. A writer path would then append under a stale head,
+    extending a chain that no longer exists in the file. All
+    four writer paths must ALSO bind the verified chain's
+    terminal (event count, last digest) to the instance's
+    in-memory length and head; on mismatch they raise their
+    non-recording integrity refusal and append NOTHING — the
+    desynced file is asserted byte-identical afterwards, and
+    the capture gate must not even call the lane.
+
+Run: python3 -m unittest discover -s ~/workspace/duenna-fix/stage3/tests -v
+"""
+
+import inspect
+import json
+import os
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage1"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "stage2"))
+from record import EventRecord, _canonical  # noqa: E402
+from access import (  # noqa: E402
+    CONSUMPTION_RECEIPT,
+    ConfigAccess,
+    ConsumptionRefused,
+)
+from admission import (  # noqa: E402
+    CAPTURE_ADMITTED,
+    CAPTURE_REFUSED,
+    CONFIG_CONFLICT,
+    OUTPUT_ADMITTED,
+    OUTPUT_REFUSED,
+    CaptureGate,
+    CaptureRefused,
+    OutputGate,
+    OutputRefused,
+)
+from config import freeze_config  # noqa: E402
+from binder import (  # noqa: E402
+    CHAIN_VERIFICATION_FAILED,
+    CONFIG_FROZEN,
+    FREEZE_REFUSED,
+    POLICY_CHECK,
+    RUN_INVALIDATED,
+    RUN_STARTED,
+    SUBJECT_CONFLICT,
+    SUBJECT_VERIFICATION,
+    Binder,
+    FreezeRefused,
+)
+from test_freeze import StaticLane, events_of, make_draft  # noqa: E402
+
+PIN = "lane/model-a"
+OTHER = "lane/model-b"
+
+
+class SequenceLane:
+    """Serves a scripted sequence of identities, one per call —
+    a lane whose routing changes between calls."""
+
+    def __init__(self, served_sequence, endpoint="lane://test"):
+        self._served = list(served_sequence)
+        self.endpoint = endpoint
+
+    def __call__(self, pin):
+        return (self._served.pop(0), self.endpoint)
+
+
+class CountingLane:
+    """Serves a fixed identity and counts its calls — the
+    capture tests assert the lane is NOT called when the
+    record's integrity fails: the chain-and-terminal check
+    happens before the lane call."""
+
+    def __init__(self, served, endpoint="lane://test"):
+        self.served = served
+        self.endpoint = endpoint
+        self.calls = 0
+
+    def __call__(self, pin):
+        self.calls += 1
+        return (self.served, self.endpoint)
+
+
+class Stage3SabotageBase(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = os.path.join(self.tmp.name, "record.jsonl")
+        self.record = EventRecord(self.path)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+
+class TestSabotageA(Stage3SabotageBase):
+    def test_contradictory_driver_adapter_configurations(self):
+        draft = make_draft()
+        draft["subject_surfaces"] = {"driver": PIN,
+                                     "adapter": OTHER}
+        with self.assertRaises(FreezeRefused) as ctx:
+            Binder(self.record).attempt_freeze(
+                draft, StaticLane(PIN))
+        # Closure half: the contradiction is preserved as a
+        # conflict record naming both surfaces and the pin,
+        # attribution UNKNOWN.
+        conflicts = events_of(self.record, SUBJECT_CONFLICT)
+        self.assertEqual(len(conflicts), 1)
+        body = conflicts[0]["body"]
+        self.assertEqual(body["kind"], "configuration_surfaces")
+        self.assertEqual(body["subject_surfaces"],
+                         {"adapter": OTHER, "driver": PIN})
+        self.assertEqual(body["subject_pin"], PIN)
+        self.assertEqual(body["attribution"], "UNKNOWN")
+        self.assertEqual(body["run_id"], ctx.exception.run_id)
+        # Execution half: the freeze refused, recorded under the
+        # run identity; nothing froze, nothing started — there
+        # is no run whose execution could proceed.
+        refused = events_of(self.record, FREEZE_REFUSED)
+        self.assertEqual(len(refused), 1)
+        self.assertEqual(refused[0]["body"]["run_id"],
+                         ctx.exception.run_id)
+        self.assertEqual(events_of(self.record, CONFIG_FROZEN),
+                         [])
+        self.assertEqual(events_of(self.record, RUN_STARTED), [])
+
+
+class TestSabotageB(Stage3SabotageBase):
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.captures = CaptureGate(self.run, StaticLane(PIN))
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+
+    def test_quoting_canonical_hash_while_using_private_value(self):
+        receipt = self.access.consume(
+            "adapter", "call-1", ["temperature", "timeout_seconds"])
+        output = {
+            "output_id": "OUT-B",
+            "component": "adapter",
+            "invocation": "call-1",
+            # The quote is exactly right — the canonical hash.
+            "config_digest": self.run.config_digest,
+            "receipt_id": receipt.receipt_id,
+            # But the value actually used for timeout_seconds is
+            # a private 120, not the frozen 600 (DR-21's number,
+            # arriving by the component's private path).
+            "values_used": {"temperature": 0,
+                            "timeout_seconds": 120},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(output)
+        differing = ctx.exception.details[
+            "values_differ_from_frozen_config"]
+        self.assertEqual(differing, [{
+            "field": "timeout_seconds",
+            "frozen_value": 600,
+            "used_value": 120,
+        }])
+        # Closure half: the mismatch is preserved as a conflict
+        # record naming the field and both values.
+        conflicts = events_of(self.record, CONFIG_CONFLICT)
+        self.assertEqual(len(conflicts), 1)
+        body = conflicts[0]["body"]
+        self.assertEqual(body["kind"], "governed_value_mismatch")
+        self.assertEqual(body["output_id"], "OUT-B")
+        self.assertEqual(
+            body["values_differ_from_frozen_config"], differing)
+        # Execution half: the output is refused and not
+        # admitted; the refusal is on the record.
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(
+            len(events_of(self.record, OUTPUT_REFUSED)), 1)
+
+    def test_fabricated_receipt_quoting_canonical_hash(self):
+        # Companion: the quote is right and the values are
+        # canonical, but the receipt was never issued — a hash
+        # quote is not consumption proof.
+        output = {
+            "output_id": "OUT-B2",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": "a" * 64,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(output)
+        self.assertIn("receipt_not_issued",
+                      ctx.exception.details)
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+
+
+class TestSabotageC(Stage3SabotageBase):
+    def test_capture_routed_to_another_model_invalidates_run(self):
+        # Preflight serves PIN; the capture's own call is routed
+        # to OTHER. Policy: INVALIDATE_RUN.
+        lane = SequenceLane([PIN, OTHER])
+        run = Binder(self.record).attempt_freeze(
+            make_draft(), lane)
+        access = ConfigAccess(run)
+        captures = CaptureGate(run, lane)
+        outputs = OutputGate(run, access, captures)
+        with self.assertRaises(CaptureRefused) as ctx:
+            captures.admit_capture("CAP-1")
+        # Closure half: the conflict record names the capture,
+        # the expected (verified) identity, the identity its own
+        # call actually served, attribution UNKNOWN.
+        conflicts = events_of(self.record, SUBJECT_CONFLICT)
+        self.assertEqual(len(conflicts), 1)
+        body = conflicts[0]["body"]
+        self.assertEqual(body["kind"], "capture_served_mismatch")
+        self.assertEqual(body["capture_id"], "CAP-1")
+        self.assertEqual(body["expected_subject"], PIN)
+        self.assertEqual(body["served_identity"], OTHER)
+        self.assertEqual(body["attribution"], "UNKNOWN")
+        # Execution half, capture: refused, not admitted.
+        self.assertEqual(captures.admitted_captures(), [])
+        self.assertEqual(
+            len(events_of(self.record, CAPTURE_REFUSED)), 1)
+        self.assertEqual(
+            events_of(self.record, CAPTURE_ADMITTED), [])
+        # Execution half, run: invalidated per the frozen
+        # policy, on the record and in the run's state.
+        invalidated = events_of(self.record, RUN_INVALIDATED)
+        self.assertEqual(len(invalidated), 1)
+        self.assertEqual(
+            invalidated[0]["body"]["cause_capture_id"], "CAP-1")
+        self.assertTrue(run.invalidated)
+        # Execution half, dependents: an output depending on
+        # the refused capture is refused (it may not borrow the
+        # run's other admissions), and ANY subject-dependent
+        # output is refused while the run is invalidated.
+        receipt = access.consume(
+            "adapter", "call-1", ["temperature"])
+        base = {
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": run.config_digest,
+            "receipt_id": receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "subject_dependent": True,
+        }
+        with self.assertRaises(OutputRefused) as ctx_dep:
+            outputs.admit_output(dict(
+                base, output_id="OUT-DEP",
+                depends_on_captures=["CAP-1"]))
+        self.assertEqual(
+            ctx_dep.exception.details["captures_not_admitted"],
+            ["CAP-1"])
+        with self.assertRaises(OutputRefused) as ctx_subj:
+            outputs.admit_output(dict(
+                base, output_id="OUT-SUBJ",
+                depends_on_captures=[]))
+        self.assertIn("run_invalidated", ctx_subj.exception.details)
+        # The refusal is scoped, not blanket: a governed output
+        # that is NOT subject-dependent, on a valid receipt,
+        # still admits.
+        outputs.admit_output(dict(
+            base, output_id="OUT-NONSUBJ",
+            depends_on_captures=[], subject_dependent=False))
+        self.assertEqual(outputs.admitted_outputs(),
+                         ["OUT-NONSUBJ"])
+
+    def test_capture_gate_has_no_identity_to_borrow(self):
+        # No capture may borrow another capture's verified
+        # identity: admit_capture takes only the capture's own
+        # identity (its name) — there is no parameter by which
+        # a served identity or another capture's admission can
+        # be presented. The gate obtains the identity from the
+        # capture's own lane call.
+        params = list(inspect.signature(
+            CaptureGate.admit_capture).parameters)
+        self.assertEqual(params, ["self", "capture_id"])
+
+    def test_refuse_capture_policy_scopes_the_refusal(self):
+        # The other frozen policy: the mismatched capture and
+        # its dependents are refused; the run is NOT
+        # invalidated, and other captures still admit under
+        # their own identities.
+        lane = SequenceLane([PIN, OTHER, PIN])
+        draft = make_draft()
+        draft["run_policy"] = {"on_subject_conflict":
+                               "REFUSE_CAPTURE"}
+        run = Binder(self.record).attempt_freeze(draft, lane)
+        access = ConfigAccess(run)
+        captures = CaptureGate(run, lane)
+        outputs = OutputGate(run, access, captures)
+        with self.assertRaises(CaptureRefused):
+            captures.admit_capture("CAP-BAD")
+        # Both halves for the capture: conflict recorded,
+        # admission refused.
+        self.assertEqual(
+            len(events_of(self.record, SUBJECT_CONFLICT)), 1)
+        self.assertEqual(captures.admitted_captures(), [])
+        self.assertEqual(events_of(self.record, RUN_INVALIDATED),
+                         [])
+        self.assertFalse(run.invalidated)
+        # A capture whose own call serves the verified identity
+        # admits, and an output may depend on it.
+        captures.admit_capture("CAP-GOOD")
+        receipt = access.consume(
+            "adapter", "call-1", ["temperature"])
+        outputs.admit_output({
+            "output_id": "OUT-OK",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": run.config_digest,
+            "receipt_id": receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": ["CAP-GOOD"],
+            "subject_dependent": True,
+        })
+        self.assertEqual(outputs.admitted_outputs(), ["OUT-OK"])
+        # And an output depending on the REFUSED capture is
+        # still refused under this policy.
+        with self.assertRaises(OutputRefused) as ctx:
+            outputs.admit_output({
+                "output_id": "OUT-BADDEP",
+                "component": "adapter",
+                "invocation": "call-1",
+                "config_digest": run.config_digest,
+                "receipt_id": receipt.receipt_id,
+                "values_used": {"temperature": 0},
+                "depends_on_captures": ["CAP-BAD"],
+                "subject_dependent": True,
+            })
+        self.assertEqual(
+            ctx.exception.details["captures_not_admitted"],
+            ["CAP-BAD"])
+
+
+class TestSabotageD(Stage3SabotageBase):
+    def test_served_identity_differing_from_the_pin(self):
+        # DR-20's shape: the pin is asserted from the catalogue;
+        # the lane serves something else. The verification
+        # records what the lane actually served.
+        with self.assertRaises(FreezeRefused) as ctx:
+            Binder(self.record).attempt_freeze(
+                make_draft(), StaticLane(OTHER))
+        # The verification record stands, naming the served
+        # identity as served — not as pinned.
+        verification = events_of(self.record, SUBJECT_VERIFICATION)
+        self.assertEqual(len(verification), 1)
+        self.assertEqual(
+            verification[0]["body"]["asserted_pin"], PIN)
+        self.assertEqual(
+            verification[0]["body"]["served_identity"], OTHER)
+        # Closure half: the mismatch is preserved as a conflict
+        # record, attribution UNKNOWN.
+        conflicts = events_of(self.record, SUBJECT_CONFLICT)
+        self.assertEqual(len(conflicts), 1)
+        body = conflicts[0]["body"]
+        self.assertEqual(body["kind"], "pin_served_mismatch")
+        self.assertEqual(body["asserted_pin"], PIN)
+        self.assertEqual(body["served_identity"], OTHER)
+        self.assertEqual(body["attribution"], "UNKNOWN")
+        # Execution half: the freeze refused under the run
+        # identity; the run never started, so no capture or
+        # output of this run can exist.
+        self.assertEqual(ctx.exception.details["stage"],
+                         "subject_verification")
+        self.assertEqual(
+            len(events_of(self.record, FREEZE_REFUSED)), 1)
+        self.assertEqual(events_of(self.record, CONFIG_FROZEN),
+                         [])
+        self.assertEqual(events_of(self.record, RUN_STARTED), [])
+
+
+class TestSabotageE(Stage3SabotageBase):
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.captures = CaptureGate(self.run, StaticLane(PIN))
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+
+    def _output(self, receipt, **overrides):
+        output = {
+            "output_id": "OUT-E",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        output.update(overrides)
+        return output
+
+    def test_post_issuance_receipt_mutation_gains_no_coverage(self):
+        receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+        # The mutation attempts, on the public surface: field
+        # assignment raises on the issued receipt...
+        with self.assertRaises(AttributeError):
+            receipt.component = "driver"
+        with self.assertRaises(AttributeError):
+            receipt.values = {"temperature": 0,
+                              "timeout_seconds": 600}
+        # ...and adding a value to the dict the receipt hands
+        # out changes only that handed-out copy — the receipt's
+        # attestation is unchanged.
+        receipt.values["timeout_seconds"] = 600
+        self.assertEqual(receipt.values, {"temperature": 0})
+        # The recorded event — what the gate honours — never
+        # recorded the added value.
+        events = events_of(self.record, CONSUMPTION_RECEIPT)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["digest"], receipt.receipt_id)
+        self.assertEqual(events[0]["body"]["values"],
+                         {"temperature": 0})
+        # An output using the "added" value is refused: not
+        # covered. The refusal is on the record.
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output(
+                receipt,
+                values_used={"temperature": 0,
+                             "timeout_seconds": 600}))
+        self.assertEqual(
+            ctx.exception.details[
+                "values_not_covered_by_receipt"],
+            ["timeout_seconds"])
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(
+            len(events_of(self.record, OUTPUT_REFUSED)), 1)
+
+    def test_gate_honours_recorded_event_not_the_live_object(self):
+        # White-box companion: force the live object past its
+        # own frozen surface (object.__setattr__, beneath the
+        # public API) so the object CLAIMS coverage its recorded
+        # event never granted. The gate establishes coverage
+        # from the recorded event, so the claim gains nothing —
+        # and the disagreement itself is a refusal ground.
+        receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+        object.__setattr__(
+            receipt, "_values_json",
+            _canonical({"temperature": 0,
+                        "timeout_seconds": 600}).decode("utf-8"))
+        self.assertEqual(
+            receipt.values,
+            {"temperature": 0, "timeout_seconds": 600})
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output(
+                receipt,
+                values_used={"temperature": 0,
+                             "timeout_seconds": 600}))
+        self.assertIn("receipt_disagrees_with_recorded_event",
+                      ctx.exception.details)
+        self.assertEqual(
+            ctx.exception.details[
+                "values_not_covered_by_receipt"],
+            ["timeout_seconds"])
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+
+
+class TestSabotageF(Stage3SabotageBase):
+    def test_frozen_run_cannot_be_rebound(self):
+        run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        started = events_of(self.record, RUN_STARTED)
+        self.assertEqual(len(started), 1)
+        bound_digest = started[0]["body"]["config_digest"]
+        self.assertEqual(run.config_digest, bound_digest)
+        # A different configuration object: a real FrozenConfig
+        # whose digest differs (temperature 1, not the frozen 0).
+        other = freeze_config(make_draft(values={
+            "temperature": 1,
+            "max_tokens": 10240,
+            "timeout_seconds": 600,
+        }))
+        self.assertNotEqual(other.digest, bound_digest)
+        # The rebinding attempts raise on the frozen capability:
+        # the configuration, the run identity and the subject
+        # record were bound at freeze.
+        with self.assertRaises(AttributeError):
+            run.config = other
+        with self.assertRaises(AttributeError):
+            run.run_id = "RUN-9999"
+        with self.assertRaises(AttributeError):
+            run.subject_record = {}
+        # The digest the run reports is still the one captured
+        # at freeze — the one RUN_STARTED binds — and the held
+        # configuration is still the original object.
+        self.assertEqual(run.config_digest, bound_digest)
+        self.assertEqual(run.config.values["temperature"], 0)
+        # The access path still serves the ORIGINAL frozen
+        # values, under the bound digest.
+        access = ConfigAccess(run)
+        receipt = access.consume(
+            "adapter", "call-1", ["temperature"])
+        self.assertEqual(receipt.values, {"temperature": 0})
+        self.assertEqual(receipt.config_digest, bound_digest)
+        # An output quoting the rebound configuration's digest
+        # is refused against the bound digest; the refusal is
+        # on the record.
+        captures = CaptureGate(run, StaticLane(PIN))
+        outputs = OutputGate(run, access, captures)
+        with self.assertRaises(OutputRefused) as ctx:
+            outputs.admit_output({
+                "output_id": "OUT-F",
+                "component": "adapter",
+                "invocation": "call-1",
+                "config_digest": other.digest,
+                "receipt_id": receipt.receipt_id,
+                "values_used": {"temperature": 0},
+                "depends_on_captures": [],
+                "subject_dependent": True,
+            })
+        self.assertEqual(
+            ctx.exception.details["config_digest_mismatch"],
+            {"quoted": other.digest, "frozen": bound_digest})
+        self.assertEqual(outputs.admitted_outputs(), [])
+        self.assertEqual(
+            len(events_of(self.record, OUTPUT_REFUSED)), 1)
+
+
+class TestSabotageG(Stage3SabotageBase):
+    """(g) The record is tampered with AFTER the freeze and
+    the receipt's issuance, through its real persistence path
+    (the JSONL file EventRecord appends to). The output gate
+    must verify the record's CURRENT chain before trusting the
+    receipt evidence or writing anything; on integrity failure
+    it raises and appends nothing, so the tampered file is
+    byte-identical after the attempt. The capture gate, which
+    appends admissions and refusals onto the same record, is
+    under the same rule."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.captures = CaptureGate(self.run, StaticLane(PIN))
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+        self.receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+
+    def _output(self, **overrides):
+        output = {
+            "output_id": "OUT-G",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": self.receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        output.update(overrides)
+        return output
+
+    def _seq_of(self, event_type):
+        for ev in self.record.read_all():
+            if ev.get("type") == event_type:
+                return ev["seq"]
+        raise AssertionError(f"no {event_type} event on record")
+
+    def _edit_event_body(self, event_type, mutate):
+        """Edit one event's body on disk, RETAINING its stored
+        digest — the naive in-place edit. The line is rewritten
+        in the record's own form (one JSON object per line, as
+        EventRecord.append writes it); every other line keeps
+        its original bytes."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        out = []
+        hit = False
+        for line in lines:
+            ev = json.loads(line)
+            if ev.get("type") == event_type and not hit:
+                mutate(ev["body"])
+                hit = True
+                out.append(json.dumps(
+                    ev, ensure_ascii=False).encode("utf-8"))
+            else:
+                out.append(line)
+        self.assertTrue(hit)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(out) + b"\n")
+
+    def _delete_event(self, event_type):
+        """Remove one event's line from the record file."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        kept = [line for line in lines
+                if json.loads(line).get("type") != event_type]
+        self.assertEqual(len(kept), len(lines) - 1)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(kept) + b"\n")
+
+    def _file_bytes(self):
+        with open(self.path, "rb") as f:
+            return f.read()
+
+    def test_output_admission_on_body_edited_record_writes_nothing(
+            self):
+        # The tamper targets an event the output gate never
+        # itself inspects — the subject verification — so no
+        # cross-check stands between the gate and the broken
+        # chain: pre-correction, the receipt evidence (untouched,
+        # digest-matching) would be honoured and the admission
+        # appended with the record object's stale head.
+        bad_seq = self._seq_of(SUBJECT_VERIFICATION)
+        self._edit_event_body(
+            SUBJECT_VERIFICATION,
+            lambda body: body.update(
+                {"endpoint": "lane://forged"}))
+        tampered = self._file_bytes()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output())
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            bad_seq)
+        # Nothing was appended — not the admission, and not
+        # even the refusal: the file is byte-identical to its
+        # tampered state.
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(events_of(self.record, OUTPUT_ADMITTED),
+                         [])
+        self.assertEqual(events_of(self.record, OUTPUT_REFUSED),
+                         [])
+
+    def test_output_admission_on_deleted_event_record_writes_nothing(
+            self):
+        # Companion: a MIDDLE event is deleted. (Deleting the
+        # last event would only truncate the chain to a still-
+        # valid prefix — the wholesale-rewrite class Stage 1
+        # assigns to the external anchor; a middle deletion is
+        # what chain recomputation detects.) The first bad seq
+        # is the event that followed the gap.
+        first_bad = self._seq_of(CONFIG_FROZEN)
+        self._delete_event(POLICY_CHECK)
+        tampered = self._file_bytes()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output())
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            first_bad)
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+        self.assertEqual(events_of(self.record, OUTPUT_ADMITTED),
+                         [])
+        self.assertEqual(events_of(self.record, OUTPUT_REFUSED),
+                         [])
+
+    def test_capture_gate_on_body_edited_record_writes_nothing(
+            self):
+        # The capture gate appends the served record, conflicts
+        # and admissions onto the same record: same rule. On a
+        # broken chain it raises and appends nothing.
+        bad_seq = self._seq_of(SUBJECT_VERIFICATION)
+        self._edit_event_body(
+            SUBJECT_VERIFICATION,
+            lambda body: body.update(
+                {"endpoint": "lane://forged"}))
+        tampered = self._file_bytes()
+        with self.assertRaises(CaptureRefused) as ctx:
+            self.captures.admit_capture("CAP-1")
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            bad_seq)
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(self.captures.admitted_captures(), [])
+
+
+class TestSabotageH(Stage3SabotageBase):
+    """(h) The record is tampered with AFTER the freeze but
+    BEFORE any receipt is issued, through its real persistence
+    path (the JSONL file EventRecord appends to). The access
+    path must verify the record's CURRENT chain before issuing
+    a receipt: a receipt appended with a stale in-memory head
+    onto a record changed since the freeze would extend
+    corruption, and the output gate's later refusal to honour
+    it does not make issuing it safe. On integrity failure
+    consume() raises and issues NOTHING — the tampered file is
+    byte-identical after the attempt."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+
+    def _seq_of(self, event_type):
+        for ev in self.record.read_all():
+            if ev.get("type") == event_type:
+                return ev["seq"]
+        raise AssertionError(f"no {event_type} event on record")
+
+    def _edit_event_body(self, event_type, mutate):
+        """Edit one event's body on disk, RETAINING its stored
+        digest — the naive in-place edit. The line is rewritten
+        in the record's own form (one JSON object per line, as
+        EventRecord.append writes it); every other line keeps
+        its original bytes."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        out = []
+        hit = False
+        for line in lines:
+            ev = json.loads(line)
+            if ev.get("type") == event_type and not hit:
+                mutate(ev["body"])
+                hit = True
+                out.append(json.dumps(
+                    ev, ensure_ascii=False).encode("utf-8"))
+            else:
+                out.append(line)
+        self.assertTrue(hit)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(out) + b"\n")
+
+    def _file_bytes(self):
+        with open(self.path, "rb") as f:
+            return f.read()
+
+    def test_consume_on_body_edited_record_issues_nothing(self):
+        # The tamper targets an event the access path never
+        # itself inspects — the subject verification — so no
+        # cross-check stands between issuance and the broken
+        # chain: pre-correction, consume() would have appended
+        # the receipt with the record object's stale head, its
+        # digest attesting a chain that does not recompute.
+        bad_seq = self._seq_of(SUBJECT_VERIFICATION)
+        self._edit_event_body(
+            SUBJECT_VERIFICATION,
+            lambda body: body.update(
+                {"endpoint": "lane://forged"}))
+        tampered = self._file_bytes()
+        with self.assertRaises(ConsumptionRefused) as ctx:
+            self.access.consume(
+                "adapter", "call-1", ["temperature"])
+        self.assertEqual(ctx.exception.run_id, self.run.run_id)
+        self.assertEqual(
+            ctx.exception.details[CHAIN_VERIFICATION_FAILED],
+            bad_seq)
+        # Nothing was issued — no CONSUMPTION_RECEIPT on the
+        # record, none in the registry: the file is
+        # byte-identical to its tampered state.
+        self.assertEqual(self._file_bytes(), tampered)
+        self.assertEqual(
+            events_of(self.record, CONSUMPTION_RECEIPT), [])
+        self.assertEqual(self.access.issued_receipts(), [])
+
+
+class TestSabotageI(Stage3SabotageBase):
+    """(i) The record file is DESYNCED from the record
+    instance after a healthy freeze and issuance activity,
+    through its real persistence path. Two desyncs, neither of
+    which breaks chain recomputation:
+
+    - the file is truncated to EMPTY: ``verify_chain([])``
+      returns (True, None) — an empty chain is a valid chain;
+    - the file's LAST event is deleted: the remaining bytes
+      are a valid prefix chain.
+
+    In both, the record instance still holds its old in-memory
+    length and head. Pre-correction, every writer path's check
+    passed, and the path proceeded to append using that stale
+    state — an event whose sequence and predecessor match
+    nothing in the file as it stands. The check proved the
+    bytes read form A valid chain; it did not prove the
+    verified chain is the same chain state the instance is
+    about to extend. All four writer paths (freeze, consume,
+    capture, output) must bind the verified chain's terminal
+    to the instance's length and head, and on mismatch raise
+    their non-recording integrity refusal and append NOTHING.
+    The capture gate must not call the lane."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = Binder(self.record).attempt_freeze(
+            make_draft(), StaticLane(PIN))
+        self.access = ConfigAccess(self.run)
+        self.lane = CountingLane(PIN)
+        self.captures = CaptureGate(self.run, self.lane)
+        self.outputs = OutputGate(self.run, self.access,
+                                  self.captures)
+        self.receipt = self.access.consume(
+            "adapter", "call-1", ["temperature"])
+
+    def _output(self, **overrides):
+        output = {
+            "output_id": "OUT-I",
+            "component": "adapter",
+            "invocation": "call-1",
+            "config_digest": self.run.config_digest,
+            "receipt_id": self.receipt.receipt_id,
+            "values_used": {"temperature": 0},
+            "depends_on_captures": [],
+            "subject_dependent": True,
+        }
+        output.update(overrides)
+        return output
+
+    def _file_bytes(self):
+        with open(self.path, "rb") as f:
+            return f.read()
+
+    def _truncate_to_empty(self):
+        with open(self.path, "wb") as f:
+            f.write(b"")
+
+    def _delete_last_event(self):
+        """Remove the last event's line from the record file.
+        The remaining bytes are a valid prefix chain whose
+        terminal no longer matches the instance's head."""
+        with open(self.path, "rb") as f:
+            lines = f.read().splitlines()
+        self.assertTrue(lines)
+        with open(self.path, "wb") as f:
+            f.write(b"\n".join(lines[:-1]) + b"\n")
+
+    def _assert_terminal_mismatch(self, details,
+                                  persisted_length):
+        """The refusal's integrity value names the terminal
+        mismatch: the persisted chain's terminal, and the
+        writer's in-memory terminal as captured before the
+        desync (self._writer_length / self._writer_head)."""
+        failure = details[CHAIN_VERIFICATION_FAILED]
+        self.assertIsInstance(failure, dict)
+        mismatch = failure["terminal_mismatch"]
+        self.assertEqual(mismatch["persisted_length"],
+                         persisted_length)
+        self.assertEqual(mismatch["writer_length"],
+                         self._writer_length)
+        self.assertEqual(mismatch["writer_head_digest"],
+                         self._writer_head)
+        persisted = self.record.read_all()
+        expected_head = persisted[-1]["digest"] \
+            if persisted else "GENESIS"
+        self.assertEqual(mismatch["persisted_head_digest"],
+                         expected_head)
+
+    def _capture_writer_terminal(self):
+        self._writer_length = self.record.length
+        self._writer_head = self.record.head_digest
+
+    # -- freeze ------------------------------------------------
+
+    def test_freeze_on_emptied_record_refuses_and_writes_nothing(
+            self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(FreezeRefused) as ctx:
+            Binder(self.record).attempt_freeze(
+                make_draft(), StaticLane(PIN))
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        # Nothing was appended: the file remains exactly as it
+        # lay — empty.
+        self.assertEqual(self._file_bytes(), b"")
+
+    def test_freeze_on_tail_truncated_record_refuses_and_writes_nothing(
+            self):
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(FreezeRefused) as ctx:
+            Binder(self.record).attempt_freeze(
+                make_draft(), StaticLane(PIN))
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self._file_bytes(), desynced)
+
+    # -- consume (issuance) ------------------------------------
+
+    def test_consume_on_emptied_record_issues_nothing(self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(ConsumptionRefused) as ctx:
+            self.access.consume(
+                "adapter", "call-2", ["temperature"])
+        self.assertEqual(ctx.exception.run_id, self.run.run_id)
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        # Nothing was issued: the file is still empty and the
+        # registry holds only the setUp receipt.
+        self.assertEqual(self._file_bytes(), b"")
+        self.assertEqual(len(self.access.issued_receipts()), 1)
+
+    def test_consume_on_tail_truncated_record_issues_nothing(
+            self):
+        # The deleted last event is the setUp receipt's own
+        # event: the remaining freeze chain recomputes as a
+        # valid prefix, so only the terminal binding stands
+        # between issuance and an append under the stale head.
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(ConsumptionRefused) as ctx:
+            self.access.consume(
+                "adapter", "call-2", ["temperature"])
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self._file_bytes(), desynced)
+        self.assertEqual(len(self.access.issued_receipts()), 1)
+
+    # -- output gate -------------------------------------------
+
+    def test_output_admission_on_emptied_record_writes_nothing(
+            self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(self._output())
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        self.assertEqual(self._file_bytes(), b"")
+        self.assertEqual(self.outputs.admitted_outputs(), [])
+
+    def test_output_admission_on_tail_truncated_record_writes_nothing(
+            self):
+        # One output is admitted first, so the record's last
+        # event is the admission itself; deleting it leaves a
+        # valid prefix ending at the receipt. A second output
+        # would be admitted on that prefix pre-correction —
+        # with the first admission's append extending a chain
+        # the file no longer holds.
+        self.outputs.admit_output(self._output())
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(OutputRefused) as ctx:
+            self.outputs.admit_output(
+                self._output(output_id="OUT-I2"))
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self._file_bytes(), desynced)
+        self.assertEqual(self.outputs.admitted_outputs(),
+                         ["OUT-I"])
+
+    # -- capture gate ------------------------------------------
+
+    def test_capture_gate_on_emptied_record_refuses_before_lane_call(
+            self):
+        self._capture_writer_terminal()
+        self._truncate_to_empty()
+        with self.assertRaises(CaptureRefused) as ctx:
+            self.captures.admit_capture("CAP-1")
+        self._assert_terminal_mismatch(ctx.exception.details, 0)
+        # The check happens BEFORE the lane call: the lane was
+        # never called, and nothing was appended.
+        self.assertEqual(self.lane.calls, 0)
+        self.assertEqual(self._file_bytes(), b"")
+        self.assertEqual(self.captures.admitted_captures(), [])
+
+    def test_capture_gate_on_tail_truncated_record_refuses_before_lane_call(
+            self):
+        # One capture is admitted first (lane called once);
+        # deleting the last event (its CAPTURE_ADMITTED) leaves
+        # a valid prefix. A second capture must be refused
+        # before its lane call.
+        self.captures.admit_capture("CAP-1")
+        self.assertEqual(self.lane.calls, 1)
+        self._capture_writer_terminal()
+        self._delete_last_event()
+        desynced = self._file_bytes()
+        with self.assertRaises(CaptureRefused) as ctx:
+            self.captures.admit_capture("CAP-2")
+        self._assert_terminal_mismatch(
+            ctx.exception.details, self._writer_length - 1)
+        self.assertEqual(self.lane.calls, 1)
+        self.assertEqual(self._file_bytes(), desynced)
+        self.assertEqual(self.captures.admitted_captures(),
+                         ["CAP-1"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_schema.TestFrozenSchema.test_sections_are_immutable_tuples": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "schema sections stored as immutable tuples (stage2/schema.py)",
+ "invalid_reasons": [],
+ "mechanism": "s2.schema_tuples",
+ "patch_problems": [],
+ "run_id": "mech-s2.schema_tuples",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  2
+ ],
+ "valid": true
+}

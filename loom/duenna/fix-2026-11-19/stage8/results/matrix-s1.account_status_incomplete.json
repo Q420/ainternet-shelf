@@ -1,0 +1,40 @@
+{
+ "changed": {
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_stage1_cases.TestStage1Cases.test_case3_early_stop_closes_with_known_unknown_stated": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  },
+  "test_vane_hardening.TestVaneHardening.test_padded_content_accepted_and_preserved": {
+   "baseline": "ok",
+   "stage": 1,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "INCOMPLETE closure status is reported INCOMPLETE, not PASS (stage1/validator.py)",
+ "invalid_reasons": [],
+ "mechanism": "s1.account_status_incomplete",
+ "patch_problems": [],
+ "run_id": "mech-s1.account_status_incomplete",
+ "suite_validations": {
+  "1": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  1
+ ],
+ "valid": true
+}

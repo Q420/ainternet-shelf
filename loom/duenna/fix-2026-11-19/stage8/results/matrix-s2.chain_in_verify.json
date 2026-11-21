@@ -1,0 +1,30 @@
+{
+ "changed": {
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_companion_deleted_middle_event_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_tampered_body_retained_digest_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "verify() recomputes the record chain before trusting any digest on it (stage2/construction.py)",
+ "invalid_reasons": [],
+ "mechanism": "s2.chain_in_verify",
+ "patch_problems": [],
+ "run_id": "mech-s2.chain_in_verify",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  2
+ ],
+ "valid": true
+}

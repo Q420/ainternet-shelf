@@ -1,0 +1,40 @@
+{
+ "changed": {
+  "test_construction.TestConstruction.test_fresh_writer_over_existing_record_refuses": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage2_sabotage.TestStage2Sabotages.test_malformed_canonical_bodies_controlled_refusal": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage2_sabotage.TestStage2Sabotages.test_mixed_genuine_and_forged_entries_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "ERROR"
+  },
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_g_forged_canonical_events_refused": {
+   "baseline": "ok",
+   "stage": 2,
+   "under_sabotage": "ERROR"
+  }
+ },
+ "description": "verify(): provenance events whose digests the writer never issued are refused (stage2/construction.py)",
+ "invalid_reasons": [],
+ "mechanism": "s2.sole_issuer",
+ "patch_problems": [],
+ "run_id": "mech-s2.sole_issuer",
+ "suite_validations": {
+  "2": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  2
+ ],
+ "valid": true
+}
