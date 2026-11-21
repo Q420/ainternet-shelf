@@ -182,7 +182,14 @@ function retirePair(state, outcomeText, promote = true, hist = null) {
   if (promote && state.bufferId) {
     const bufId = state.bufferId;
     state.bufferId = null;
-    if (pairDetection(state, bufId)) {
+    const bufDet = pairDetection(state, bufId);
+    if (bufDet && bufDet.crusher && bufDet.crusher.state === "ABANDONED") {
+      /* 2026-11-21 FIX: a let-go letter never starts a pair.
+       * Its record stands; the slot simply clears. (Before
+       * this, an abandoned buffered letter was promoted into
+       * a new pair as a dead call.) */
+      pbLog(state, `PAIR: the buffered message was let go by Ben — it does not start a new pair; the slot clears and its record stands`);
+    } else if (bufDet) {
       pbLog(state, `PAIR: the buffered message starts the next pair`);
       startPair(state, bufId);
     } else {
@@ -1224,11 +1231,25 @@ function pbIndicatorFor(state, seat) {
         word: isSender ? "Unverified" : "Receipt unverified",
         detail: isSender ? "To " + peer + " — sent, but unconfirmed; absence not established"
                          : "From " + peer + " — arrived, receipt unverified" });
-    case "STALLED": case "FAILED": case "STOPPED": case "ABANDONED":
+    case "STALLED": case "FAILED": case "STOPPED":
       return Object.assign({}, base, { phase: "stalled",
         word: isSender ? "Stalled" : "Disconnected / unavailable",
         detail: isSender ? "To " + peer + " — delivery not established"
                          : "From " + peer + " — delivery not established" });
+    case "ABANDONED":
+      /* 2026-11-21 FIX: a closed letter is not a connection
+       * state. An abandoned record stands inspectable by
+       * design, so it must never keep the alarm word
+       * ("Stalled / Disconnected") on the panel after the
+       * letter has already been dealt with. */
+      return Object.assign({}, base, { phase: "closed",
+        word: c.abandonedBy === "ben" ? "Let go" : "Not sent",
+        detail: isSender ? "To " + peer + (c.abandonedBy === "ben"
+                            ? " — let go by Ben; closed by hand, not a connection state"
+                            : " — superseded by a newer message; not sent")
+                         : "From " + peer + (c.abandonedBy === "ben"
+                            ? " — let go by Ben; closed by hand, not a connection state"
+                            : " — superseded by a newer message; not sent") });
     default:
       return { active: false, word: "Ready" };
   }
@@ -1763,6 +1784,14 @@ async function pbHandleCommand(msg, sender) {
       c.pausedAt = null; c.pausePending = false;
       pbCrusherTransition(c, "ABANDONED", "let go by Ben from the panel", at);
       pbLog(state, `LET GO ${det.envelope.from} → ${det.envelope.to}: Ben abandoned this letter — recorded as abandoned, never as delivered`);
+      /* 2026-11-21 FIX: a let-go letter also leaves the
+       * ROUTING. If it was waiting in the buffer or in the
+       * pair's pending slot, those slots clear now — the dead
+       * letter can never be promoted into a new pair, and it
+       * can never sit in the buffer vetoing a live reply. Its
+       * record stands (above); only the routing clears. */
+      if (state.bufferId === msg.message_id) state.bufferId = null;
+      if (state.pair && state.pair.pendingReplyId === msg.message_id) state.pair.pendingReplyId = null;
     }
   } else {
     return { ok: false, error: "unknown command" };

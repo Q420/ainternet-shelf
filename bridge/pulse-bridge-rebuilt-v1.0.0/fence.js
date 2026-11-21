@@ -71,8 +71,18 @@ function pbFenceSerialCondition(detections, det, pair, bufferDet) {
   /* Superseded: this letter is its pair's reply, and a NEWER
    * message from the seat it answers is already waiting in
    * the buffer. Ben's case, in his words: a reply to A must
-   * not send once B has arrived — it reconciles instead. */
-  if (pair && pair.replyId && env.message_id === pair.replyId && bufferDet &&
+   * not send once B has arrived — it reconciles instead.
+   * 2026-11-21 FIX: the buffered message must be LIVE. A
+   * buffered letter that is already terminal — above all one
+   * Ben let go by hand — supersedes nothing. (That night a
+   * live reply was abandoned as "superseded" by a buffered
+   * letter Ben had already retired; the dead letter's veto
+   * killed the reply. A terminal letter is out of the count,
+   * exactly as the out-of-order scan below already treats
+   * it.) */
+  const bufLive = !!bufferDet && (!bufferDet.crusher ||
+    !PB_FENCE_TERMINAL.includes(bufferDet.crusher.state));
+  if (pair && pair.replyId && env.message_id === pair.replyId && bufferDet && bufLive &&
       bufferDet.envelope && bufferDet.envelope.from === env.to &&
       bufferDet.serial != null) {
     const callDet = (detections || []).find((d) => d.envelope && d.envelope.message_id === pair.callId);
