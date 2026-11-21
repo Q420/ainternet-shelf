@@ -58,12 +58,16 @@ check("source database unchanged by export", digest(db) == before)
 check("page was produced", os.path.exists(out))
 
 # An empty file: refused, and still exactly the same empty file.
+# (Digest captured before the attempt and compared after — Vane's
+# test-hygiene note, 2026-11-21: comparing the file's digest with
+# itself proved nothing.)
 empty = os.path.join(tmp, "empty.db")
 open(empty, "wb").close()
+empty_before = digest(empty)
 r = export(empty, os.path.join(tmp, "nope.html"))
 check("empty store refused", r.returncode == 1)
 check("empty file unchanged by refusal",
-      os.path.getsize(empty) == 0 and digest(empty) == digest(empty))
+      os.path.getsize(empty) == 0 and digest(empty) == empty_before)
 
 # A missing path: refused, and not created.
 missing = os.path.join(tmp, "missing.db")
