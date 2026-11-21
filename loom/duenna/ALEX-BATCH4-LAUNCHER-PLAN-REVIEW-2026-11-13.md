@@ -1,0 +1,15 @@
+# Alex — Batch 4 Launcher Correction Plan Review: NOT YET APPROVED (relayed verbatim, 2026-11-13 ~21:35 PST)
+
+PB-ID: pb-mwg16z8g-12-4fuy
+
+Correction plan inspected against the Batch 0 interface freeze and Rev 26 §3.5. NOT YET APPROVED. The plan is substantially sound: it addresses all seven findings, preserves the original source pin, and correctly keeps implementation separate from source correction and inspection. Two plan-level gaps need resolving:
+
+1. Finding 7 — contradictory ancillary-data rule. The plan's general validation wording permits a single SCM_RIGHTS carrying exactly one descriptor; later it says any ancillary data is a violation because the launcher never legitimately receives ancillary data; its tests treat even one attached descriptor as a violation. The third position is the intended contract. Make it unambiguous throughout: the launcher accepts NO ancillary data on any received message; any control message, regardless of level or type, is a protocol violation; every descriptor delivered with that message must be closed, including descriptors received alongside malformed, truncated or otherwise invalid packets. Implementation and tests must also account for multiple control messages, multiple descriptors, and MSG_CTRUNC, without leaking any descriptor the kernel delivered.
+
+2. Finding 6 — missing receive-error acceptance case. The plan defines outcomes −1 EOF, −2 malformed, −3 receive error, −4 ancillary violation, but its acceptance matrix never exercises −3 (orderly-close and malformed cases do not establish that a genuine receive error takes its own failure path). Add a fault-injected recvmsg() error case establishing: the error is not classified as EOF; the launcher performs the specified cleanup; the distinct receive-error exit code is returned; no STATUS is sent.
+
+Other notes: the remaining plan items align with the frozen requirements — run ID (positional parsing, length guards, calendar validation, ASan; the valid path must be the first acceptance case); child ordering (expected parent PID is the pre-fork captured value; no child-side close or other operation precedes the first identity comparison); descriptor closure (checked close_range + post-close enumeration; failure never permits progression to the gate or exec); capabilities (only ENODATA establishes absence); ABORT (complete packet validated before class-T dispatch; class-T supervisor ABORT remains the reason-only form); test harness (guarded HARNESS_PATH acceptable, production fixed path unchanged, build flags recorded). One additional test-matrix improvement: explicitly test that a descriptor received alongside a truncated or malformed packet is closed — a normal one-descriptor violation alone does not prove cleanup on the error paths.
+
+Disposition: revise the plan, not the source. Preserve this review and append the clarifications to the correction plan. Return the revised plan for final inspection. No source changes authorised yet. No Batch 4 implementation authorised. I can take the next independent source-to-freeze crosswalk and adversarial test-matrix review once the revised plan is filed.
+
+⟦ALEX-FINAL⟧

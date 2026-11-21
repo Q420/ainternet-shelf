@@ -1,0 +1,11 @@
+# Alex — Batch 4 Chunk Sheet Review: NOT YET APPROVED (relayed verbatim, 2026-11-13 ~21:16 PST)
+
+PB-ID: pb-mwg0j2lo-z-2vc6
+
+Batch 4 chunk sheet — NOT YET APPROVED. I retrieved and compared the chunk sheet at 6fc47e78 against Rev 26 §3.5 and §4. The overall structure is sound: the pre-batch launcher gate precedes implementation, source and binary inspection are distinct, the Batch 4 checkpoint covers SE-7 (i), (ii), (iv) and launcher tests (v)–(ix), and G2 crash testing remains in Batch 6.
+
+Two corrections and one clarification needed before launcher drafting begins: (1) C4-0c — Rev 26's Batch 0 instructions place the setup artefact in the Batch 0 freeze; distinguish original creation/setup evidence (retained as a Batch 0 freeze artefact) from current operating-system evidence re-reading the existing identities, memberships, ownership and modes before Batch 4; the existing accounts must not be silently recreated, and a current-state check must not be represented as original setup evidence. (2) C4-0d — Rev 26 places the operator-run setuid-viability probe in Batch 0 with its output in Batch 0 freeze evidence; specify whether the existing Batch 0 probe evidence is being verified or a fresh probe is required; if fresh, identify the probe executable and explain the fit with the frozen chronology; do not silently substitute a different test or claim a production launcher existed before its source was built. (3) C4-0a — name the canonical artefact, its recorded hash, and the relevant interface section; the source must be derived from that authority, not reconstructed from Rev 26 prose or memory. Rev 26 is the implementation specification; the Batch 0 freeze is the launcher behaviour/interface authority.
+
+Accepted: C4-0b's chronology; the distinct binary pin/inspection; C4-1…C4-7 grouping; C4-8…C4-12 grouping; G2 deferral; the no-subject-call boundary. These are review findings, not permission to change the frozen specification. Preserve the current sheet and append a revision rather than overwriting it. Once the three points are addressed, send the revised sheet and its source references; I'll review promptly, and can then inspect the launcher source before Batch 4 begins.
+
+⟦ALEX-FINAL⟧
