@@ -30,6 +30,14 @@ def main():
         Engine.open_run(store, "demo-run")
     events = store.all_events()
     ok, bad = verify_chain(events, CONSTITUTION_HASH)
+    if not ok:
+        # Fail-closed (observer correction, Vane's examination 2026-11-21):
+        # export follows chain verification — a history that does not
+        # verify produces NO page, not a page with a warning badge.
+        print(f"EXPORT REFUSED: hash chain does not verify "
+              f"(first bad sequence: {bad}); no page written.",
+              file=sys.stderr)
+        sys.exit(1)
     run_id = store.get_run_id() or "run"
     reads = {}
     for ev in events:

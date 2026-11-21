@@ -36,6 +36,8 @@ Vane's examination of the pinned Stage 1 commit found the core recognisably alig
 
 **Verification:** the extended smoke (15 checks) passes in full — the original nine, plus: UPDATE refused, DELETE refused, history intact after refused mutations, replay halts on a second RUN_OPENED, tampered payload detected at seq 1, engine refuses state from a tampered history, empty history invalid. The demo run behind the observer page was regenerated under the corrected constitution (chain verified on export). Corrected sources shelved as a new commit; the Stage 1 commit f01e492f… remains in history as the examined artefact — corrections land on top, never by rewriting it.
 
+**Observer correction (same examination, 2026-11-21):** the exporter computed `chain_ok` but wrote the page even when verification failed — a warning badge is not the fail-closed export boundary Ben commissioned. **Fix:** on a failed verification the exporter now refuses — exit 1, an explicit refusal message, and no page written. Verified both ways: the sound demo history exports; a tampered copy is refused and produces no file. Same lesson as C2, one layer up: displaying a broken chain is not the same as refusing to present one.
+
 Evidence — `stage1_smoke.py`, run 2026-11-21, **9/9 PASS**:
 - genesis is a single RUN_OPENED event carrying the complete genesis state in its payload;
 - its prev_hash is the constitution's SHA-256 (the constitution is frozen and hashed into the run before anything else exists — the machinery's first act binds it to the constitution);
