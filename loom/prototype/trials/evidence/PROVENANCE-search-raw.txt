@@ -1,0 +1,107 @@
+PROVENANCE SEARCH — raw output
+Date (UTC): 2026-11-21T17:30:59Z
+Targets: lane.py ALEC-CONTEXT.md pack/00-identity-and-role.md pack/01-doctrine-and-rulings.md pack/02-voice-and-method.md thread.json room-view.html (room-key.txt excluded: 11-byte credential-type file)
+Method: grep -F -n -e <string> per string, case-sensitive
+
+=== STRING: Every request carries all context it needs
+(no hits)
+
+=== STRING: No component remembers a caller between requests
+(no hits)
+
+=== STRING: A session is opened by one component and all later requests in that session return to the same component
+(no hits)
+
+=== STRING: Alpha's content assumes requests are stateless
+(no hits)
+
+=== STRING: a session pinned to one component
+(no hits)
+
+=== STRING: You are an agent working in a shared fabric
+(no hits)
+
+=== STRING: Open tensions: T-1
+(no hits)
+
+=== STRING: loom/gate-schema/annex-a/1
+(no hits)
+
+=== STRING: ANNEX A GATE-SCHEMA PROFILE
+(no hits)
+
+=== STRING: discovery_source
+(no hits)
+
+=== STRING: fabric_read
+(no hits)
+
+=== STRING: Engages the actual tension
+(no hits)
+
+=== STRING: Versions honestly
+(no hits)
+
+=== STRING: Claims no authority it lacks
+(no hits)
+
+=== STRING: A trial's response is adequate if it meets at least 4 of these 5 criteria
+(no hits)
+
+=== STRING: statelessness-versus-pinned-session conflict
+(no hits)
+
+=== STRING: 11111111-1111-4111-8111-111111111111
+(no hits)
+
+=== STRING: 44444444-4444-4444-8444-444444444444
+(no hits)
+
+=== STRING: Requests are stateless. Any component may serve any request
+(no hits)
+
+=== STRING: a working session is opened by one component, and every later step of that session returns to that same component
+(no hits)
+
+=== STRING: When state changes, the changed component is notified directly by State
+(no hits)
+
+=== STRING: pattern acyclicity
+(no hits)
+
+=== STRING: Sealed ground truth
+(no hits)
+
+=== STRING: Stateless requests vs pinned sessions must be reconciled
+(no hits)
+
+=== STRING: 550e8400-e29b-41d4-a716-446655440000
+(no hits)
+
+=== STRING: blind-7155211a73c1
+(no hits)
+
+=== STRING: Annex A
+(no hits)
+
+=== STRING: Annex C
+(no hits)
+
+=== STRING: Annex D
+(no hits)
+
+=== STRING: gate-schema
+(no hits)
+
+=== STRING: Continuity
+(no hits)
+
+=== STRING: Interactions
+(no hits)
+
+=== STRING: raise_tension
+(no hits)
+
+=== STRING: idempotency_id
+(no hits)
+
