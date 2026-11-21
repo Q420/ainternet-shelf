@@ -26,6 +26,20 @@ ONE system BOUNDARY_PROBE event as seq 2: an attestation of this
 twin probe, carrying the tested configuration and outcomes as
 provenance. No probe DISCOVERY events enter the experimental
 history, and the probe changes no experimental read record.
+
+Corrections round 2 (B1): the experimental service now enforces
+the attestation as an admission gate — no token issued and no
+agent operation admitted until a valid attestation stands. That
+creates a bootstrap question for the twin itself: a complete
+probe result cannot exist before some service has admitted a
+probe agent, so exactly one admission must precede the first
+attestation. It is confined to this disposable twin: the twin's
+service is started in the recorded "probe_target" posture, in
+which the gate does not block and attestation recording is
+refused (a probe target's history is scaffolding, never
+evidence). The posture is carried in the probe result's
+provenance. The experimental service runs in the default
+enforced posture, where the gate has no exceptions.
 """
 import os
 import sys
@@ -48,7 +62,7 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
     tear the twin service down, and return the probe result — the
     exact object the experimental run's attestation will carry."""
     p = build_runtime(base, twin_name)
-    proc = start_service(p)
+    proc = start_service(p, posture="probe_target")
     try:
         opened = admin_request(p, {"op": "open_run",
                                    "run_id": f"boundary-probe-{twin_name}"})
@@ -76,6 +90,7 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
     result = {
         "twin_name": twin_name,
         "twin_config": twin_config,
+        "service_posture": "probe_target",
         "attempts": attempts,
         "all_reads_denied": all(
             by_name[n]["outcome"] == "denied" for n in _READ_ATTEMPTS),

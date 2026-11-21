@@ -274,6 +274,11 @@ flt = build_runtime(BASE, "faulttest")
 proc = start_service(flt, fault_inject="run_failed_append")
 try:
     admin_request(flt, {"op": "open_run", "run_id": "stage2-fault-test"})
+    # Round-2 setup adjustment (B1): the admission gate now refuses
+    # token issuance before attestation, so this run is attested
+    # first — with the Phase 1 twin-probe result, through its admin
+    # path (same boundary configuration).
+    attest_probe(flt, result)
     tok_c = admin_request(flt, {"op": "issue_token",
                                 "agent_id": C})["result"]["token"]
     agent_call(flt, "open_region", tok_c, {"region_id": COMPONENTS})
@@ -297,11 +302,16 @@ try:
     hist = admin_request(flt, {"op": "history"})["result"]["events"]
     check("unrecordable failure: NO RUN_FAILED event was fabricated",
           not any(e["type"] == "RUN_FAILED" for e in hist)
-          and [e["type"] for e in hist] == ["RUN_OPENED", "DISCOVERY"])
+          and [e["type"] for e in hist]
+          == ["RUN_OPENED", "BOUNDARY_PROBE", "DISCOVERY"])
     status = admin_request(flt, {"op": "status"})
+    # Round-2 adjustment (B2-mandated vocabulary): the status no
+    # longer calls a latched run "open"; it reports the unambiguous
+    # failed_unrecorded, and shows the durable diagnostic marker.
     check("status distinguishes the unrecordable failure (latched)",
           status["result"]["latched_unrecorded_failure"] is True
-          and status["result"]["run_status"] == "open")
+          and status["result"]["run_status"] == "failed_unrecorded"
+          and status["result"]["diagnostic_written"] is True)
 finally:
     stop_service(proc, flt)
 diag_files = sorted(os.listdir(flt["failures_dir"]))

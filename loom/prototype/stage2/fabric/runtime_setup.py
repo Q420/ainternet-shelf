@@ -181,14 +181,20 @@ def stat_record(p):
 
 
 # -- service process management --------------------------------------
-def start_service(p, fault_inject=None):
+def start_service(p, fault_inject=None, posture=None):
     """Start the fabric service as loomfab; wait until its admin
-    socket answers. Returns the Popen handle."""
+    socket answers. Returns the Popen handle. fault_inject is a
+    comma-separated set of named faults; posture is the service
+    posture ("probe_target" for the disposable twin's bootstrap —
+    corrections round 2; every other service runs in the default
+    enforced posture)."""
     log_path = os.path.join(p["root"], "service.log")
     env_args = [f"PYTHONPATH={p['code_dir']}",
                 "PYTHONDONTWRITEBYTECODE=1"]
     if fault_inject:
         env_args.append(f"LOOM_FAULT_INJECT={fault_inject}")
+    if posture:
+        env_args.append(f"LOOM_SERVICE_POSTURE={posture}")
     cmd = ["runuser", "-u", SERVICE_USER, "--", "/usr/bin/env",
            *env_args, "python3", "-m", "fabric.service",
            "--runtime-dir", p["root"]]
