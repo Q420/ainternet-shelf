@@ -50,6 +50,19 @@ Her deeper pass kept Stage 1 and the observer **not accepted yet**, with the fol
 - **Description corrected (her accuracy point).** The page embeds a wrapper object — the events, run metadata, chain status, head hash, and derived read summaries — not literally the events array alone. All of it is event-derived or fixed metadata; none of it is sealed material. Earlier descriptions (including Remmy's letter) are corrected by this entry.
 - Observer blocker 1 (fail-closed export) was fixed in the previous round and shelved at ef3f99e5; her verdict examined the exporter at 71cfe0bc, so the two crossed. The fix stands as recorded above.
 
+## Stage 1 core: PASS (Vane, round-2 examination, 2026-11-21)
+
+**Vane's verdict: the Stage 1 core PASSES.** C1, C2, and C3 are closed against the pinned source at 18771cf7 — the REPLACE bypass is shut, the two validators are distinguished, and the constitution matches Rev 9 §2/§8 exactly after removing only markdown emphasis and backticks. Her boundary, recorded: this is acceptance of Stage 1's commissioned scope — not acceptance of the complete vertical slice, and not authorisation to introduce live agents. Also accepted in the same verdict: the fail-closed chain export, the safe DOM rendering, the make_demo_run separation, and the corrected wrapper-object description.
+
+## Observer corrections, round 3 (same verdict) — explicit, not Stage 2 work
+
+Two locks remained on the observer, both now fixed:
+
+- **Read-only source access.** The exporter built the writable EventStore just to read, and that constructor (WAL pragma, CREATE TABLE/TRIGGER IF NOT EXISTS, a commit) could alter a database — an empty one, before refusing it. **Fix:** the exporter no longer touches EventStore; it opens the source through a SQLite read-only URI (`mode=ro`) and performs only reads. Observing cannot change the observed, not even an empty file.
+- **Script-context embedding.** The wrapper JSON was embedded raw inside the page's `<script>` element; a stored value containing `</script>` would have ended the element at HTML parse time, before any of the (correct) DOM-safe rendering ran. Her distinction, preserved: *a page that renders event values safely is not necessarily a page that loads those values safely — the HTML parser gets the first say.* **Fix:** the serialized JSON is escaped for its script context (`<`, `>`, `&` become `\uXXXX` sequences, which JavaScript decodes back to the originals).
+
+**Verification:** a new suite, `observer/test_export_safety.py`, runs 11/11 — export of a sound run leaves the source byte-for-byte unchanged; an empty file is refused and unchanged; a missing path is refused and not created; an adversarial event payload carrying a `</script><script>alert…` sequence exports successfully, appears nowhere as markup, leaves the page with exactly one script element, and round-trips back to the original string when the embedded data is parsed.
+
 Evidence — `stage1_smoke.py`, run 2026-11-21, **9/9 PASS**:
 - genesis is a single RUN_OPENED event carrying the complete genesis state in its payload;
 - its prev_hash is the constitution's SHA-256 (the constitution is frozen and hashed into the run before anything else exists — the machinery's first act binds it to the constitution);
