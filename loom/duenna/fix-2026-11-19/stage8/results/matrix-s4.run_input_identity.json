@@ -1,0 +1,40 @@
+{
+ "changed": {
+  "test_dispatch.TestRunPaths.test_wrong_input_artefact_refused": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "run() refuses an artefact that is not the defined input (stage4/contract.py)",
+ "invalid_reasons": [],
+ "mechanism": "s4.run_input_identity",
+ "patch_problems": [],
+ "run_id": "mech-s4.run_input_identity",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  4
+ ],
+ "valid": true
+}

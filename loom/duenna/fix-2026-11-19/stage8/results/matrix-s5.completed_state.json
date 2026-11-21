@@ -1,0 +1,40 @@
+{
+ "changed": {
+  "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestDivergence.test_consumed_event_without_applied_event_is_not_accepted": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestDivergence.test_consumed_operation_with_missing_effect_is_surfaced": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "present() consumed fast path: the consumption's applied reference must resolve to this operation's applied event AND the effect must still exist (stage5/receiver.py)",
+ "invalid_reasons": [],
+ "mechanism": "s5.completed_state",
+ "patch_problems": [],
+ "run_id": "mech-s5.completed_state",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  5
+ ],
+ "valid": true
+}

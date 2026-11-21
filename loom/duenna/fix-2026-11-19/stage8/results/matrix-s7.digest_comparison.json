@@ -1,0 +1,35 @@
+{
+ "changed": {
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "_state_from: collected content's digest must equal the issuance body's content digest (stage7/receipts.py)",
+ "invalid_reasons": [],
+ "mechanism": "s7.digest_comparison",
+ "patch_problems": [],
+ "run_id": "mech-s7.digest_comparison",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  7
+ ],
+ "valid": true
+}

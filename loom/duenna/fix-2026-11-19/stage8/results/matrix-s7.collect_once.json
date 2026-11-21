@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_second_collection_refused": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "collect_receipt: content already collected cannot be collected again (stage7/receipts.py)",
+ "invalid_reasons": [],
+ "mechanism": "s7.collect_once",
+ "patch_problems": [],
+ "run_id": "mech-s7.collect_once",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  7
+ ],
+ "valid": true
+}

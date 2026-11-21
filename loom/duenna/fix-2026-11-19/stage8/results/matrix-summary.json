@@ -1,0 +1,1824 @@
+{
+ "collateral": {
+  "s1.account_schema": [
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected"
+  ],
+  "s1.account_status_incomplete": [
+   "test_stage1_cases.TestStage1Cases.test_case3_early_stop_closes_with_known_unknown_stated",
+   "test_vane_hardening.TestVaneHardening.test_padded_content_accepted_and_preserved"
+  ],
+  "s1.account_whole": [
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_unknowns_wrong_type",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_complete_still_passes",
+   "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete",
+   "test_stage1_cases.TestStage1Cases.test_case3_early_stop_closes_with_known_unknown_stated",
+   "test_stage1_cases.TestStage1Cases.test_case6_missing_attribution_recorded_as_unknown",
+   "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness",
+   "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account",
+   "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass",
+   "test_validator.TestValidator.test_omitted_failure_fails_account_completeness",
+   "test_validator.TestValidator.test_record_with_no_closure_fails_terminal_record",
+   "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered",
+   "test_vane_hardening.TestVaneHardening.test_padded_content_accepted_and_preserved",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected",
+   "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected",
+   "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record",
+   "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id",
+   "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure",
+   "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution"
+  ],
+  "s1.terminal_check": [
+   "test_validator.TestValidator.test_validator_reads_fresh_from_disk",
+   "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event"
+  ],
+  "s2.verify_all": [
+   "test_construction.TestConstruction.test_fresh_writer_over_existing_record_refuses",
+   "test_stage2_sabotage.TestStage2Sabotages.test_malformed_canonical_bodies_controlled_refusal",
+   "test_stage2_sabotage.TestStage2Sabotages.test_mixed_genuine_and_forged_entries_refused",
+   "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_g_forged_canonical_events_refused",
+   "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_companion_deleted_middle_event_refused",
+   "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_tampered_body_retained_digest_refused"
+  ],
+  "s3.output_digest": [
+   "test_stage3_sabotage.TestSabotageF.test_frozen_run_cannot_be_rebound"
+  ],
+  "s3.receipt_coverage": [
+   "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object"
+  ],
+  "s4.construction_binding": [
+   "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged",
+   "test_instance_binding.TestSealedInstanceBinding.test_healthy_control_canonical_execution_and_validation",
+   "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused",
+   "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests",
+   "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents",
+   "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected",
+   "test_verdict_issuance.TestCrossContractReplay.test_same_contract_control_accepted",
+   "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected",
+   "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected",
+   "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected",
+   "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected",
+   "test_verdict_issuance.TestGenuineAndForged.test_genuine_verdict_accepted_by_its_issuer",
+   "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected",
+   "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason",
+   "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_then_restored_exactly_accepted"
+  ],
+  "s4.digest_comparison": [
+   "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch",
+   "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged",
+   "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused",
+   "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected"
+  ],
+  "s4.pinned_hash": [
+   "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch"
+  ],
+  "s4.registry_immutable": [
+   "test_dispatch.TestRunPaths.test_wrong_digest_no_corrupt_flag_takes_failure_path",
+   "test_instance_binding.TestSealedInstanceBinding.test_healthy_control_canonical_execution_and_validation",
+   "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused",
+   "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests",
+   "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents",
+   "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected",
+   "test_verdict_issuance.TestCrossContractReplay.test_same_contract_control_accepted",
+   "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected",
+   "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected",
+   "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected",
+   "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected",
+   "test_verdict_issuance.TestGenuineAndForged.test_genuine_verdict_accepted_by_its_issuer",
+   "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected",
+   "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason",
+   "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_then_restored_exactly_accepted"
+  ],
+  "s5.effect_recognition": [
+   "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused"
+  ],
+  "s5.event_recognition": [
+   "test_insertion.TestApplication.test_fresh_presentation_applies_once",
+   "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied",
+   "test_insertion.TestDivergence.test_consumed_event_without_applied_event_is_not_accepted",
+   "test_insertion.TestDivergence.test_consumed_operation_with_missing_effect_is_surfaced",
+   "test_insertion.TestDivergence.test_recorded_insertion_with_missing_effect_is_surfaced",
+   "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_applied_event_before_consumption",
+   "test_recovery.TestPartialInsertion.test_interruption_mid_insertion_then_retry",
+   "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart",
+   "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart"
+  ],
+  "s5.identity_determinism": [
+   "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused",
+   "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused",
+   "test_insertion.TestRePresentation.test_reconstructed_operation_is_recognised_not_new",
+   "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload",
+   "test_operations.TestPureConstruction.test_build_touches_no_state",
+   "test_operations.TestPureConstruction.test_reconstruction_after_consumption_is_the_same_operation",
+   "test_operations.TestPureConstruction.test_repeated_builds_are_equal",
+   "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart",
+   "test_recovery.TestRestartRecognition.test_consumed_operation_recognised_after_restart",
+   "test_recovery.TestRestartRecognition.test_partial_insertion_recovered_by_new_process",
+   "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart"
+  ],
+  "s5.identity_function": [
+   "test_insertion.TestApplication.test_unconsumed_operation_is_not_falsely_refused",
+   "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied",
+   "test_recovery.TestRestartRecognition.test_unconsumed_operation_applies_after_restart"
+  ],
+  "s5.identity_payload": [
+   "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused",
+   "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused"
+  ],
+  "s6.format_prescribed": [
+   "test_schema_contract.TestFindingIsRecorded.test_finding_event_on_the_record"
+  ],
+  "s6.g6_contradiction": [
+   "test_examiner_g6.TestReportResolution.test_conflict_becomes_a_discrepancy_preserving_both"
+  ],
+  "s6.one_resolution": [
+   "test_discrepancy.TestIndeterminate.test_indeterminate_is_terminal_for_the_disagreement_only"
+  ],
+  "s6.response_matching": [
+   "test_reproductions.TestT07.test_attribution"
+  ],
+  "s7.authentication": [
+   "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_gap_survives_under_the_genuine_pin"
+  ],
+  "s7.issuance_lookup": [
+   "test_anchor_provenance.TestHealthyControl.test_genuine_anchor_verifies_and_closes_complete",
+   "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_gap_survives_under_the_genuine_pin",
+   "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_append_and_writes_nothing",
+   "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_closure_and_writes_nothing",
+   "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_receipt_account",
+   "test_anchor_provenance.TestSubstitutionAtLifecycle.test_attack_is_coherent_under_attacker_anchor",
+   "test_anchor_provenance.TestSubstitutionAtLifecycle.test_substituted_anchor_refused_at_lifecycle_state",
+   "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin",
+   "test_anchor_provenance.TestSubstitutionAtLifecycle.test_value_identical_forgery_refused",
+   "test_closure_account.TestClosureStatesGapsExactly.test_closure_complete_when_every_receipt_verified",
+   "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+   "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected",
+   "test_closure_account.TestUnrecordedEntries.test_unrecorded_package_entry_named_as_a_gap",
+   "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest",
+   "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified",
+   "test_lifecycle.TestFullLifecycle.test_issuance_never_satisfies_collection_or_verification",
+   "test_lifecycle.TestIssuanceAndCollectionRules.test_reissue_same_commitment_refused",
+   "test_lifecycle.TestIssuanceAndCollectionRules.test_second_collection_refused",
+   "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content",
+   "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection",
+   "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance",
+   "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct",
+   "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate",
+   "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted",
+   "test_lifecycle.TestUnauthenticated.test_tag_absent",
+   "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key",
+   "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record",
+   "test_record_discipline.TestTamperedRecord.test_account_refused_on_body_edited_record",
+   "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record",
+   "test_record_discipline.TestTamperedRecord.test_issuance_refused_on_body_edited_record"
+  ],
+  "s7.package_lookup": [
+   "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified",
+   "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record",
+   "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record"
+  ]
+ },
+ "exercised_by_outcome": {
+  "ERROR": 15,
+  "FAIL": 181
+ },
+ "instrument_interaction": {
+  "s4.construction_binding": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.construction_validation": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.contract_identity": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.digest_comparison": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.field_checks": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.fingerprint_check": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.identity_check": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.pinned_hash": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.registry_immutable": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.run_input_identity": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ],
+  "s4.run_pin": [
+   "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+   "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+   "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+  ]
+ },
+ "invalid_runs": {},
+ "joint_fixtures": {
+  "test_access_admission.TestAccessAdmission.test_output_with_fabricated_receipt_refused": "NOT-EXERCISED",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap": "EXERCISED-JOINT",
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses": "EXERCISED-JOINT",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution": "EXERCISED-JOINT",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy": "EXERCISED-JOINT",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint": "EXERCISED-JOINT",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct": "EXERCISED-JOINT",
+  "test_stage3_sabotage.TestSabotageB.test_fabricated_receipt_quoting_canonical_hash": "NOT-EXERCISED",
+  "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage": "EXERCISED-JOINT",
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append": "EXERCISED-JOINT"
+ },
+ "pair_evidence": {
+  "test_access_admission.TestAccessAdmission.test_consume_unknown_governed_value_refused :: s3.consume_unknown": "ERROR",
+  "test_access_admission.TestAccessAdmission.test_quoted_digest_checked_against_the_frozen_object :: s3.output_digest": "FAIL",
+  "test_access_admission.TestAccessAdmission.test_receipt_for_another_invocation_does_not_admit :: s3.receipt_binding": "FAIL",
+  "test_access_admission.TestAccessAdmission.test_receipt_must_cover_every_value_used :: s3.receipt_coverage": "FAIL",
+  "test_anchor.TestAnchor.test_deleted_anchor_after_closure_yields_not_verified :: s1.anchor_absence": "FAIL",
+  "test_anchor.TestAnchor.test_missing_anchor_yields_not_verified :: s1.anchor_absence": "FAIL",
+  "test_anchor.TestAnchor.test_unreadable_anchor_yields_not_verified :: s1.anchor_absence": "FAIL",
+  "test_anchor.TestAnchor.test_wholesale_rechained_rewrite_caught_by_anchor_mismatch :: s1.anchor_comparison": "FAIL",
+  "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_attacker_values_refused :: s7.pin_constructor": "FAIL",
+  "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_genuine_values_refused :: s7.pin_constructor": "FAIL",
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_append_and_writes_nothing :: s7.pin_point_of_use": "FAIL",
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_closure_and_writes_nothing :: s7.pin_point_of_use": "FAIL",
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_receipt_account :: s7.pin_point_of_use": "FAIL",
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_substituted_anchor_refused_at_lifecycle_state :: s7.pin_point_of_use": "FAIL",
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin :: s7.authentication": "FAIL",
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_value_identical_forgery_refused :: s7.pin_point_of_use": "FAIL",
+  "test_attribution.TestLabelConversionRefused.test_every_conversion_attempt_raises :: s6.label_conversion": "FAIL",
+  "test_attribution.TestOneFailureOneRecord.test_class_outside_vocabulary_refused :: s6.vocabulary": "FAIL",
+  "test_attribution.TestOneFailureOneRecord.test_second_mint_for_one_failure_refused :: s6.one_record": "FAIL",
+  "test_attribution.TestPinnedAuthority.test_mutated_genuine_record_refused :: s6.issuance_record_check": "FAIL",
+  "test_attribution.TestPinnedAuthority.test_self_appointed_record_refused :: s6.issuance_record_check": "FAIL",
+  "test_attribution.TestRecordDiscipline.test_tampered_record_refuses_and_stays_byte_identical :: s3.chain_facet": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns :: s1.account_schema": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns :: s1.account_schema": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns :: s1.account_schema": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority :: s1.account_schema": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_failure_entry_authority :: s1.account_whole": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry :: s1.account_schema": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry :: s1.account_schema": "FAIL",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete :: s1.account_status_incomplete": "FAIL",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap :: s7.authentication": "FAIL",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap :: s7.digest_comparison": "FAIL",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap :: s7.package_lookup": "FAIL",
+  "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected :: s7.package_lookup": "FAIL",
+  "test_closure_account.TestUnrecordedEntries.test_unrecorded_package_entry_named_as_a_gap :: s7.unrecorded_accounting": "FAIL",
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses :: s2.build_duplicates": "FAIL (joint run)",
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses :: s2.close_duplicates": "FAIL (joint run)",
+  "test_construction.TestConstruction.test_fresh_writer_over_existing_record_refuses :: s2.sole_issuer": "ERROR",
+  "test_construction.TestConstruction.test_no_entries_at_all_refuses_and_records_refusal :: s2.close_schema": "FAIL",
+  "test_construction.TestConstruction.test_unencodable_provenance_value_refused_at_entry :: s2.entry_validation": "ERROR",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_capability_swapped_onto_ledger_cannot_mint :: s6.point_of_use": "FAIL",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_genuine_record_refused :: s6.issuance_token": "FAIL",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_impostor_record_refused :: s6.issuance_token": "FAIL",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution :: s6.issuance_token": "FAIL (joint run)",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution :: s6.point_of_use": "FAIL",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy :: s6.issuance_token": "FAIL (joint run)",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy :: s6.point_of_use": "FAIL",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint :: s6.issuance_token": "FAIL (joint run)",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint :: s6.point_of_use": "FAIL",
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_nonexistent_attribution_digest_refused :: s6.resolve_attribution": "FAIL",
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_readback_refuses_an_unresolvable_link :: s6.resolve_attribution": "FAIL",
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_wrong_type_attribution_digest_refused :: s6.resolve_attribution": "FAIL",
+  "test_discrepancy.TestAuthorisedResolution.test_second_resolution_refused :: s6.one_resolution": "FAIL",
+  "test_dispatch.TestProcedureBinding.test_declared_identity_is_the_executed_callable :: s4.construction_binding": "FAIL",
+  "test_dispatch.TestProcedureBinding.test_fictitious_procedure_identity_rejected_at_construction :: s4.construction_validation": "ERROR",
+  "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch :: s4.construction_binding": "FAIL",
+  "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged :: s4.registry_immutable": "FAIL",
+  "test_dispatch.TestRunPaths.test_unpinned_contract_refuses_to_run :: s4.run_pin": "FAIL",
+  "test_dispatch.TestRunPaths.test_wrong_digest_no_corrupt_flag_takes_failure_path :: s4.digest_comparison": "FAIL",
+  "test_dispatch.TestRunPaths.test_wrong_input_artefact_refused :: s4.run_input_identity": "FAIL",
+  "test_examiner_g6.TestReportResolution.test_contradictory_literals_flagged_by_name :: s6.g6_contradiction": "FAIL",
+  "test_freeze.TestFreeze.test_derivation_that_does_not_recompute_refused :: s3.policy_recompute": "FAIL",
+  "test_freeze.TestFreeze.test_derived_limit_below_requirement_refused :: s3.policy_recompute": "FAIL",
+  "test_freeze.TestFreeze.test_derived_limit_without_derivation_refused :: s3.policy_recompute": "FAIL",
+  "test_freeze.TestFreeze.test_freeze_on_corrupted_record_writes_nothing :: s3.chain_facet": "FAIL",
+  "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied :: s5.completed_state": "FAIL",
+  "test_insertion.TestDivergence.test_consumed_event_without_applied_event_is_not_accepted :: s5.completed_state": "FAIL",
+  "test_insertion.TestDivergence.test_consumed_operation_with_missing_effect_is_surfaced :: s5.completed_state": "FAIL",
+  "test_insertion.TestDivergence.test_recorded_insertion_with_missing_effect_is_surfaced :: s5.applied_effect_divergence": "FAIL",
+  "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused :: s5.payload_binding": "FAIL",
+  "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused :: s5.payload_binding": "FAIL",
+  "test_insertion.TestRePresentation.test_consumed_operation_is_already_satisfied :: s5.event_recognition": "FAIL",
+  "test_insertion.TestRePresentation.test_recognition_is_per_identity :: s5.identity_function": "FAIL",
+  "test_insertion.TestRecordDiscipline.test_emptied_record_refuses_by_terminal_binding :: s3.terminal_facet": "FAIL",
+  "test_insertion.TestRecordDiscipline.test_tampered_record_refuses_and_writes_nothing :: s3.chain_facet": "FAIL",
+  "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused :: s4.seal": "FAIL",
+  "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest :: s7.digest_comparison": "FAIL",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_reissue_same_commitment_refused :: s7.issue_once": "FAIL",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_second_collection_refused :: s7.collect_once": "FAIL",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_unrecorded_package_entry_is_not_a_lifecycle_state :: s7.issuance_lookup": "FAIL",
+  "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content :: s7.package_lookup": "FAIL",
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection :: s7.package_lookup": "FAIL",
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance :: s7.package_lookup": "FAIL",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct :: s7.authentication": "FAIL",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct :: s7.digest_comparison": "FAIL",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct :: s7.package_lookup": "FAIL",
+  "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate :: s7.authentication": "FAIL",
+  "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted :: s7.authentication": "FAIL",
+  "test_lifecycle.TestUnauthenticated.test_tag_absent :: s7.authentication": "FAIL",
+  "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key :: s7.authentication": "FAIL",
+  "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload :: s5.identity_payload": "FAIL",
+  "test_operations.TestCanonicalIdentity.test_identity_is_a_function_of_the_triple :: s5.identity_determinism": "FAIL",
+  "test_operations.TestCanonicalIdentity.test_identity_parts_all_bind :: s5.identity_function": "FAIL",
+  "test_operations.TestOperationImmutability.test_attributes_cannot_be_rebound :: s5.operation_seal": "FAIL",
+  "test_operations.TestOperationImmutability.test_payload_cannot_be_mutated_through_the_copy :: s5.payload_copy": "FAIL",
+  "test_record.TestEventRecord.test_deleted_event_detected :: s1.verify_chain": "FAIL",
+  "test_record.TestEventRecord.test_rewritten_middle_event_detected :: s1.verify_chain": "FAIL",
+  "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record :: s3.terminal_facet": "ERROR",
+  "test_record_discipline.TestTamperedRecord.test_account_refused_on_body_edited_record :: s3.chain_facet": "FAIL",
+  "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record :: s3.chain_facet": "FAIL",
+  "test_record_discipline.TestTamperedRecord.test_issuance_refused_on_body_edited_record :: s3.chain_facet": "FAIL",
+  "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_applied_event_before_consumption :: s5.effect_recognition": "FAIL",
+  "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_effect_before_any_recording :: s5.effect_recognition": "FAIL",
+  "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart :: s5.completed_state": "FAIL",
+  "test_recovery.TestRestartRecognition.test_consumed_operation_recognised_after_restart :: s5.event_recognition": "FAIL",
+  "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart :: s5.effect_recognition": "FAIL",
+  "test_reproductions.TestT02.test_attribution :: s6.format_prescribed": "FAIL",
+  "test_reproductions.TestT07.test_attribution :: s6.format_prescribed": "FAIL",
+  "test_reproductions.TestT09.test_attributions :: s6.format_prescribed": "FAIL",
+  "test_schema.TestFrozenSchema.test_duplicate_field_names_refused :: s2.schema_validation": "FAIL",
+  "test_schema.TestFrozenSchema.test_nameless_field_or_version_refused :: s2.schema_validation": "FAIL",
+  "test_schema.TestFrozenSchema.test_sections_are_immutable_tuples :: s2.schema_tuples": "FAIL",
+  "test_schema_contract.TestCausalTableControls.test_agreement :: s6.extraction": "FAIL",
+  "test_schema_contract.TestCausalTableControls.test_checker_defect_on_compliant_response :: s6.format_prescribed_false": "FAIL",
+  "test_schema_contract.TestCausalTableControls.test_input_branch :: s6.input_defect_branch": "FAIL",
+  "test_schema_contract.TestCausalTableControls.test_model_branch :: s6.format_prescribed_false": "FAIL",
+  "test_schema_contract.TestCausalTableControls.test_unknown_branch :: s6.format_prescribed": "FAIL",
+  "test_schema_contract.TestChangedUnderUnchanged.test_checker_changed_schema_unchanged :: s6.schema_binding": "FAIL",
+  "test_schema_contract.TestChangedUnderUnchanged.test_checker_rebound_to_another_schema :: s6.schema_binding": "FAIL",
+  "test_schema_contract.TestChangedUnderUnchanged.test_schema_changed_checker_unchanged :: s6.schema_binding": "FAIL",
+  "test_schema_contract.TestPinnedSchemaArtefact.test_schema_and_contract_are_sealed :: s6.schema_seal": "FAIL",
+  "test_stage1_cases.TestStage1Cases.test_case5_missing_failure_account :: s1.account_whole": "FAIL",
+  "test_stage1_cases.TestStage1Cases.test_case7_rewritten_chain_detected_by_anchor :: s1.anchor_comparison": "FAIL",
+  "test_stage1_cases.TestStage1Cases.test_case8_anchor_unavailable_not_verified_never_passed :: s1.anchor_absence": "FAIL",
+  "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness :: s1.account_reconciliation": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_malformed_canonical_bodies_controlled_refusal :: s2.sole_issuer": "ERROR",
+  "test_stage2_sabotage.TestStage2Sabotages.test_mixed_genuine_and_forged_entries_refused :: s2.sole_issuer": "ERROR",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_a_direct_assignment_refused :: s2.close_fieldset": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_b_fixtures_total_renamed_refused :: s2.close_schema": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_c_dropped_entry_field_retained_refused :: s2.close_fieldset": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_d_extra_entry_outside_schema_refused :: s2.close_schema": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_e_canonical_path_bypassed_refused :: s2.close_schema": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_f_field_absent_from_both_refused :: s2.close_schema": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_g_forged_canonical_events_refused :: s2.sole_issuer": "ERROR",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_companion_deleted_middle_event_refused :: s2.chain_in_verify": "ERROR",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_tampered_body_retained_digest_refused :: s2.chain_in_verify": "FAIL",
+  "test_stage2_sabotage.TestStage2Sabotages.test_value_mismatch_refused :: s2.close_value": "FAIL",
+  "test_stage3_sabotage.TestSabotageA.test_contradictory_driver_adapter_configurations :: s3.freeze_surface": "FAIL",
+  "test_stage3_sabotage.TestSabotageB.test_quoting_canonical_hash_while_using_private_value :: s3.output_differing": "FAIL",
+  "test_stage3_sabotage.TestSabotageC.test_capture_routed_to_another_model_invalidates_run :: s3.capture_subject": "FAIL",
+  "test_stage3_sabotage.TestSabotageC.test_refuse_capture_policy_scopes_the_refusal :: s3.capture_subject": "FAIL",
+  "test_stage3_sabotage.TestSabotageD.test_served_identity_differing_from_the_pin :: s3.freeze_served_pin": "FAIL",
+  "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object :: s3.receipt_facts": "FAIL",
+  "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage :: s3.receipt_coverage": "FAIL",
+  "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage :: s3.receipt_facts": "FAIL (joint run)",
+  "test_stage3_sabotage.TestSabotageG.test_capture_gate_on_body_edited_record_writes_nothing :: s3.chain_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageG.test_output_admission_on_body_edited_record_writes_nothing :: s3.chain_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageG.test_output_admission_on_deleted_event_record_writes_nothing :: s3.chain_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageH.test_consume_on_body_edited_record_issues_nothing :: s3.chain_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_emptied_record_refuses_before_lane_call :: s3.terminal_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_tail_truncated_record_refuses_before_lane_call :: s3.terminal_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_consume_on_emptied_record_issues_nothing :: s3.terminal_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_consume_on_tail_truncated_record_issues_nothing :: s3.terminal_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_freeze_on_emptied_record_refuses_and_writes_nothing :: s3.terminal_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_freeze_on_tail_truncated_record_refuses_and_writes_nothing :: s3.terminal_facet": "FAIL",
+  "test_stage3_sabotage.TestSabotageI.test_output_admission_on_emptied_record_writes_nothing :: s3.terminal_facet": "ERROR",
+  "test_stage3_sabotage.TestSabotageI.test_output_admission_on_tail_truncated_record_writes_nothing :: s3.terminal_facet": "FAIL",
+  "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account :: s1.account_complete_unknowns": "FAIL",
+  "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass :: s1.account_status_incomplete": "FAIL",
+  "test_validator.TestValidator.test_edited_middle_event_body_fails_chain_validity :: s1.verify_chain": "FAIL",
+  "test_validator.TestValidator.test_omitted_failure_fails_account_completeness :: s1.account_reconciliation": "FAIL",
+  "test_validator.TestValidator.test_record_with_no_closure_fails_terminal_record :: s1.terminal_check": "FAIL",
+  "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered :: s1.account_reconciliation": "FAIL",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected :: s1.whitespace": "FAIL",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected :: s1.whitespace": "ERROR",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected :: s1.whitespace": "ERROR",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected :: s1.whitespace": "FAIL",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected :: s1.whitespace": "ERROR",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected :: s1.whitespace": "FAIL",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected :: s1.whitespace": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s1_duplicate_terminal_closure :: s1.terminal_check": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s1b_two_closures_with_event_afterward :: s1.terminal_check": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s1c_closure_followed_by_continuation :: s1.terminal_check": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record :: s1.account_reconciliation": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id :: s1.account_reconciliation": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure :: s1.account_reconciliation": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution :: s1.account_reconciliation": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event :: s1.structural_validity": "FAIL",
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append :: s1.structural_validity": "FAIL (joint run)",
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append :: s1.verify_chain": "FAIL",
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests :: s4.contract_identity": "FAIL",
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents :: s4.contract_identity": "FAIL",
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents :: s4.identity_check": "FAIL",
+  "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected :: s4.identity_check": "FAIL",
+  "test_verdict_issuance.TestFieldChecks.test_altered_implementation_hash_rejected :: s4.pinned_hash": "FAIL",
+  "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected :: s4.field_checks": "FAIL",
+  "test_verdict_issuance.TestFieldChecks.test_missing_implementation_hash_rejected :: s4.field_checks": "ERROR",
+  "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected :: s4.field_checks": "FAIL",
+  "test_verdict_issuance.TestFieldChecks.test_missing_version_rejected :: s4.field_checks": "FAIL",
+  "test_verdict_issuance.TestFieldChecks.test_not_a_verdict_rejected :: s4.field_checks": "ERROR",
+  "test_verdict_issuance.TestFieldChecks.test_procedure_mismatch_rejected :: s4.field_checks": "FAIL",
+  "test_verdict_issuance.TestFieldChecks.test_version_mismatch_rejected :: s4.field_checks": "FAIL",
+  "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected :: s4.identity_check": "FAIL",
+  "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected :: s4.identity_check": "FAIL",
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected :: s4.fingerprint_check": "FAIL",
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason :: s4.fingerprint_check": "FAIL"
+ },
+ "pairs": {
+  "test_access_admission.TestAccessAdmission.test_consume_unknown_governed_value_refused :: s3.consume_unknown": "EXERCISED",
+  "test_access_admission.TestAccessAdmission.test_output_with_fabricated_receipt_refused :: s3.receipt_facts": "NOT-EXERCISED",
+  "test_access_admission.TestAccessAdmission.test_output_with_fabricated_receipt_refused :: s3.receipt_record_presence": "NOT-EXERCISED",
+  "test_access_admission.TestAccessAdmission.test_output_without_any_receipt_refused :: s3.receipt_record_presence": "NOT-EXERCISED",
+  "test_access_admission.TestAccessAdmission.test_quoted_digest_checked_against_the_frozen_object :: s3.output_digest": "EXERCISED",
+  "test_access_admission.TestAccessAdmission.test_receipt_for_another_invocation_does_not_admit :: s3.receipt_binding": "EXERCISED",
+  "test_access_admission.TestAccessAdmission.test_receipt_must_cover_every_value_used :: s3.receipt_coverage": "EXERCISED",
+  "test_anchor.TestAnchor.test_deleted_anchor_after_closure_yields_not_verified :: s1.anchor_absence": "EXERCISED",
+  "test_anchor.TestAnchor.test_missing_anchor_yields_not_verified :: s1.anchor_absence": "EXERCISED",
+  "test_anchor.TestAnchor.test_unreadable_anchor_yields_not_verified :: s1.anchor_absence": "EXERCISED",
+  "test_anchor.TestAnchor.test_wholesale_rechained_rewrite_caught_by_anchor_mismatch :: s1.anchor_comparison": "EXERCISED",
+  "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_attacker_values_refused :: s7.pin_constructor": "EXERCISED",
+  "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_genuine_values_refused :: s7.pin_constructor": "EXERCISED",
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_append_and_writes_nothing :: s7.pin_point_of_use": "EXERCISED",
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_closure_and_writes_nothing :: s7.pin_point_of_use": "EXERCISED",
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_receipt_account :: s7.pin_point_of_use": "EXERCISED",
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_substituted_anchor_refused_at_lifecycle_state :: s7.pin_point_of_use": "EXERCISED",
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin :: s7.authentication": "EXERCISED",
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_value_identical_forgery_refused :: s7.pin_point_of_use": "EXERCISED",
+  "test_attribution.TestLabelConversionRefused.test_every_conversion_attempt_raises :: s6.label_conversion": "EXERCISED",
+  "test_attribution.TestLabelConversionRefused.test_label_preserved_as_local_not_attribution :: s6.label_conversion": "NOT-EXERCISED",
+  "test_attribution.TestOneFailureOneRecord.test_class_outside_vocabulary_refused :: s6.vocabulary": "EXERCISED",
+  "test_attribution.TestOneFailureOneRecord.test_second_mint_for_one_failure_refused :: s6.one_record": "EXERCISED",
+  "test_attribution.TestPinnedAuthority.test_ledger_requires_the_issued_capability :: s6.point_of_use": "NOT-EXERCISED",
+  "test_attribution.TestPinnedAuthority.test_mutated_genuine_record_refused :: s6.issuance_record_check": "EXERCISED",
+  "test_attribution.TestPinnedAuthority.test_self_appointed_record_refused :: s6.issuance_record_check": "EXERCISED",
+  "test_attribution.TestRecordDiscipline.test_tampered_record_refuses_and_stays_byte_identical :: s3.chain_facet": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns :: s1.account_schema": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_unknowns_wrong_type :: s1.account_schema": "NOT-EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns :: s1.account_schema": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns :: s1.account_schema": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority :: s1.account_schema": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_failure_entry_authority :: s1.account_whole": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry :: s1.account_schema": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry :: s1.account_schema": "EXERCISED",
+  "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete :: s1.account_status_incomplete": "EXERCISED",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap :: s7.authentication": "EXERCISED",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap :: s7.digest_comparison": "EXERCISED",
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap :: s7.package_lookup": "EXERCISED",
+  "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected :: s7.package_lookup": "EXERCISED",
+  "test_closure_account.TestUnrecordedEntries.test_unrecorded_package_entry_named_as_a_gap :: s7.unrecorded_accounting": "EXERCISED",
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses :: s2.build_duplicates": "JOINT-ONLY",
+  "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses :: s2.close_duplicates": "JOINT-ONLY",
+  "test_construction.TestConstruction.test_fresh_writer_over_existing_record_refuses :: s2.sole_issuer": "EXERCISED",
+  "test_construction.TestConstruction.test_no_entries_at_all_refuses_and_records_refusal :: s2.close_schema": "EXERCISED",
+  "test_construction.TestConstruction.test_unencodable_provenance_value_refused_at_entry :: s2.entry_validation": "EXERCISED",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_capability_swapped_onto_ledger_cannot_mint :: s6.point_of_use": "EXERCISED",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_genuine_record_refused :: s6.issuance_token": "EXERCISED",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_impostor_record_refused :: s6.issuance_token": "EXERCISED",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution :: s6.issuance_token": "JOINT-ONLY",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution :: s6.point_of_use": "EXERCISED",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy :: s6.issuance_token": "JOINT-ONLY",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy :: s6.point_of_use": "EXERCISED",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint :: s6.issuance_token": "JOINT-ONLY",
+  "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint :: s6.point_of_use": "EXERCISED",
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_nonexistent_attribution_digest_refused :: s6.resolve_attribution": "EXERCISED",
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_readback_refuses_an_unresolvable_link :: s6.resolve_attribution": "EXERCISED",
+  "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_wrong_type_attribution_digest_refused :: s6.resolve_attribution": "EXERCISED",
+  "test_discrepancy.TestAuthorisedResolution.test_resolution_without_authority_refused :: s6.point_of_use": "NOT-EXERCISED",
+  "test_discrepancy.TestAuthorisedResolution.test_second_resolution_refused :: s6.one_resolution": "EXERCISED",
+  "test_dispatch.TestProcedureBinding.test_declared_identity_is_the_executed_callable :: s4.construction_binding": "EXERCISED",
+  "test_dispatch.TestProcedureBinding.test_fictitious_procedure_identity_rejected_at_construction :: s4.construction_validation": "EXERCISED",
+  "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch :: s4.construction_binding": "EXERCISED",
+  "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged :: s4.registry_immutable": "EXERCISED",
+  "test_dispatch.TestRunPaths.test_corrupt_artefact_takes_failure_path :: s4.digest_comparison": "NOT-EXERCISED",
+  "test_dispatch.TestRunPaths.test_unpinned_contract_refuses_to_run :: s4.run_pin": "EXERCISED",
+  "test_dispatch.TestRunPaths.test_wrong_digest_no_corrupt_flag_takes_failure_path :: s4.digest_comparison": "EXERCISED",
+  "test_dispatch.TestRunPaths.test_wrong_input_artefact_refused :: s4.run_input_identity": "EXERCISED",
+  "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i :: s4.construction_binding": "SELF-WITNESSED",
+  "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i :: s4.pinned_hash": "SELF-WITNESSED",
+  "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k :: s4.identity_check": "SELF-WITNESSED",
+  "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone :: s4.fingerprint_check": "SELF-WITNESSED",
+  "test_examiner_g6.TestReportResolution.test_contradictory_literals_flagged_by_name :: s6.g6_contradiction": "EXERCISED",
+  "test_examiner_g6.TestReportResolution.test_unresolvable_reference_is_an_error_not_a_flag :: s6.g6_resolution": "NOT-EXERCISED",
+  "test_freeze.TestFreeze.test_derivation_that_does_not_recompute_refused :: s3.policy_recompute": "EXERCISED",
+  "test_freeze.TestFreeze.test_derived_limit_below_requirement_refused :: s3.policy_recompute": "EXERCISED",
+  "test_freeze.TestFreeze.test_derived_limit_without_derivation_refused :: s3.policy_recompute": "EXERCISED",
+  "test_freeze.TestFreeze.test_freeze_on_corrupted_record_writes_nothing :: s3.chain_facet": "EXERCISED",
+  "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied :: s5.completed_state": "EXERCISED",
+  "test_insertion.TestDivergence.test_consumed_event_without_applied_event_is_not_accepted :: s5.completed_state": "EXERCISED",
+  "test_insertion.TestDivergence.test_consumed_operation_with_missing_effect_is_surfaced :: s5.completed_state": "EXERCISED",
+  "test_insertion.TestDivergence.test_recorded_insertion_with_missing_effect_is_surfaced :: s5.applied_effect_divergence": "EXERCISED",
+  "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused :: s5.payload_binding": "EXERCISED",
+  "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused :: s5.payload_binding": "EXERCISED",
+  "test_insertion.TestRePresentation.test_consumed_operation_is_already_satisfied :: s5.event_recognition": "EXERCISED",
+  "test_insertion.TestRePresentation.test_recognition_is_per_identity :: s5.identity_function": "EXERCISED",
+  "test_insertion.TestRecordDiscipline.test_emptied_record_refuses_by_terminal_binding :: s3.terminal_facet": "EXERCISED",
+  "test_insertion.TestRecordDiscipline.test_tampered_record_refuses_and_writes_nothing :: s3.chain_facet": "EXERCISED",
+  "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused :: s4.seal": "EXERCISED",
+  "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest :: s7.digest_comparison": "EXERCISED",
+  "test_lifecycle.TestFullLifecycle.test_issuance_never_satisfies_collection_or_verification :: s7.package_lookup": "NOT-EXERCISED",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_collect_unissued_refused :: s7.collect_issuance": "NOT-EXERCISED",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_reissue_same_commitment_refused :: s7.issue_once": "EXERCISED",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_second_collection_refused :: s7.collect_once": "EXERCISED",
+  "test_lifecycle.TestIssuanceAndCollectionRules.test_unrecorded_package_entry_is_not_a_lifecycle_state :: s7.issuance_lookup": "EXERCISED",
+  "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content :: s7.package_lookup": "EXERCISED",
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection :: s7.package_lookup": "EXERCISED",
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance :: s7.package_lookup": "EXERCISED",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct :: s7.authentication": "EXERCISED",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct :: s7.digest_comparison": "EXERCISED",
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct :: s7.package_lookup": "EXERCISED",
+  "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate :: s7.authentication": "EXERCISED",
+  "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted :: s7.authentication": "EXERCISED",
+  "test_lifecycle.TestUnauthenticated.test_tag_absent :: s7.authentication": "EXERCISED",
+  "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key :: s7.authentication": "EXERCISED",
+  "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload :: s5.identity_payload": "EXERCISED",
+  "test_operations.TestCanonicalIdentity.test_identity_is_a_function_of_the_triple :: s5.identity_determinism": "EXERCISED",
+  "test_operations.TestCanonicalIdentity.test_identity_parts_all_bind :: s5.identity_function": "EXERCISED",
+  "test_operations.TestOperationImmutability.test_attributes_cannot_be_rebound :: s5.operation_seal": "EXERCISED",
+  "test_operations.TestOperationImmutability.test_payload_cannot_be_mutated_through_the_copy :: s5.payload_copy": "EXERCISED",
+  "test_record.TestEventRecord.test_deleted_event_detected :: s1.verify_chain": "EXERCISED",
+  "test_record.TestEventRecord.test_rewritten_middle_event_detected :: s1.verify_chain": "EXERCISED",
+  "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record :: s3.terminal_facet": "EXERCISED",
+  "test_record_discipline.TestTamperedRecord.test_account_refused_on_body_edited_record :: s3.chain_facet": "EXERCISED",
+  "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record :: s3.chain_facet": "EXERCISED",
+  "test_record_discipline.TestTamperedRecord.test_issuance_refused_on_body_edited_record :: s3.chain_facet": "EXERCISED",
+  "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_applied_event_before_consumption :: s5.effect_recognition": "EXERCISED",
+  "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_effect_before_any_recording :: s5.effect_recognition": "EXERCISED",
+  "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart :: s5.completed_state": "EXERCISED",
+  "test_recovery.TestRestartRecognition.test_consumed_operation_recognised_after_restart :: s5.event_recognition": "EXERCISED",
+  "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart :: s5.effect_recognition": "EXERCISED",
+  "test_reproductions.TestFindingsBecomeAttributions.test_t02_finding_recorded_and_attributed :: s6.format_prescribed": "NOT-EXERCISED",
+  "test_reproductions.TestT02.test_attribution :: s6.format_prescribed": "EXERCISED",
+  "test_reproductions.TestT07.test_attribution :: s6.format_prescribed": "EXERCISED",
+  "test_reproductions.TestT09.test_attributions :: s6.format_prescribed": "EXERCISED",
+  "test_schema.TestFrozenSchema.test_duplicate_field_names_refused :: s2.schema_validation": "EXERCISED",
+  "test_schema.TestFrozenSchema.test_nameless_field_or_version_refused :: s2.schema_validation": "EXERCISED",
+  "test_schema.TestFrozenSchema.test_schema_is_frozen_after_construction :: s2.schema_freeze": "NOT-EXERCISED",
+  "test_schema.TestFrozenSchema.test_sections_are_immutable_tuples :: s2.schema_tuples": "EXERCISED",
+  "test_schema_contract.TestCausalTableControls.test_agreement :: s6.extraction": "EXERCISED",
+  "test_schema_contract.TestCausalTableControls.test_checker_defect_on_compliant_response :: s6.format_prescribed_false": "EXERCISED",
+  "test_schema_contract.TestCausalTableControls.test_input_branch :: s6.input_defect_branch": "EXERCISED",
+  "test_schema_contract.TestCausalTableControls.test_model_branch :: s6.format_prescribed_false": "EXERCISED",
+  "test_schema_contract.TestCausalTableControls.test_unknown_branch :: s6.format_prescribed": "EXERCISED",
+  "test_schema_contract.TestChangedUnderUnchanged.test_checker_changed_schema_unchanged :: s6.schema_binding": "EXERCISED",
+  "test_schema_contract.TestChangedUnderUnchanged.test_checker_rebound_to_another_schema :: s6.schema_binding": "EXERCISED",
+  "test_schema_contract.TestChangedUnderUnchanged.test_schema_changed_checker_unchanged :: s6.schema_binding": "EXERCISED",
+  "test_schema_contract.TestPinnedSchemaArtefact.test_checker_binding_comes_from_the_frozen_object :: s6.schema_binding": "NOT-EXERCISED",
+  "test_schema_contract.TestPinnedSchemaArtefact.test_schema_and_contract_are_sealed :: s6.schema_seal": "EXERCISED",
+  "test_stage1_cases.TestStage1Cases.test_case5_missing_failure_account :: s1.account_whole": "EXERCISED",
+  "test_stage1_cases.TestStage1Cases.test_case7_rewritten_chain_detected_by_anchor :: s1.anchor_comparison": "EXERCISED",
+  "test_stage1_cases.TestStage1Cases.test_case8_anchor_unavailable_not_verified_never_passed :: s1.anchor_absence": "EXERCISED",
+  "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness :: s1.account_reconciliation": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_malformed_canonical_bodies_controlled_refusal :: s2.sole_issuer": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_mixed_genuine_and_forged_entries_refused :: s2.sole_issuer": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_a_direct_assignment_refused :: s2.close_fieldset": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_b_fixtures_total_renamed_refused :: s2.close_schema": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_c_dropped_entry_field_retained_refused :: s2.close_fieldset": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_d_extra_entry_outside_schema_refused :: s2.close_schema": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_e_canonical_path_bypassed_refused :: s2.close_schema": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_f_field_absent_from_both_refused :: s2.close_schema": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_g_forged_canonical_events_refused :: s2.sole_issuer": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_companion_deleted_middle_event_refused :: s2.chain_in_verify": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_tampered_body_retained_digest_refused :: s2.chain_in_verify": "EXERCISED",
+  "test_stage2_sabotage.TestStage2Sabotages.test_value_mismatch_refused :: s2.close_value": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageA.test_contradictory_driver_adapter_configurations :: s3.freeze_surface": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageB.test_fabricated_receipt_quoting_canonical_hash :: s3.receipt_facts": "NOT-EXERCISED",
+  "test_stage3_sabotage.TestSabotageB.test_fabricated_receipt_quoting_canonical_hash :: s3.receipt_record_presence": "NOT-EXERCISED",
+  "test_stage3_sabotage.TestSabotageB.test_quoting_canonical_hash_while_using_private_value :: s3.output_differing": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageC.test_capture_routed_to_another_model_invalidates_run :: s3.capture_subject": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageC.test_refuse_capture_policy_scopes_the_refusal :: s3.capture_subject": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageD.test_served_identity_differing_from_the_pin :: s3.freeze_served_pin": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object :: s3.receipt_facts": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage :: s3.receipt_coverage": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage :: s3.receipt_facts": "JOINT-ONLY",
+  "test_stage3_sabotage.TestSabotageF.test_frozen_run_cannot_be_rebound :: s3.frozenrun_seal": "NOT-EXERCISED",
+  "test_stage3_sabotage.TestSabotageG.test_capture_gate_on_body_edited_record_writes_nothing :: s3.chain_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageG.test_output_admission_on_body_edited_record_writes_nothing :: s3.chain_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageG.test_output_admission_on_deleted_event_record_writes_nothing :: s3.chain_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageH.test_consume_on_body_edited_record_issues_nothing :: s3.chain_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_emptied_record_refuses_before_lane_call :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_tail_truncated_record_refuses_before_lane_call :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_consume_on_emptied_record_issues_nothing :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_consume_on_tail_truncated_record_issues_nothing :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_freeze_on_emptied_record_refuses_and_writes_nothing :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_freeze_on_tail_truncated_record_refuses_and_writes_nothing :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_output_admission_on_emptied_record_writes_nothing :: s3.terminal_facet": "EXERCISED",
+  "test_stage3_sabotage.TestSabotageI.test_output_admission_on_tail_truncated_record_writes_nothing :: s3.terminal_facet": "EXERCISED",
+  "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account :: s1.account_complete_unknowns": "EXERCISED",
+  "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass :: s1.account_status_incomplete": "EXERCISED",
+  "test_validator.TestValidator.test_edited_middle_event_body_fails_chain_validity :: s1.verify_chain": "EXERCISED",
+  "test_validator.TestValidator.test_omitted_failure_fails_account_completeness :: s1.account_reconciliation": "EXERCISED",
+  "test_validator.TestValidator.test_record_with_no_closure_fails_terminal_record :: s1.terminal_check": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered :: s1.account_reconciliation": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected :: s1.whitespace": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s1_duplicate_terminal_closure :: s1.terminal_check": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s1b_two_closures_with_event_afterward :: s1.terminal_check": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s1c_closure_followed_by_continuation :: s1.terminal_check": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record :: s1.account_reconciliation": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id :: s1.account_reconciliation": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure :: s1.account_reconciliation": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution :: s1.account_reconciliation": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event :: s1.structural_validity": "EXERCISED",
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append :: s1.structural_validity": "JOINT-ONLY",
+  "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append :: s1.verify_chain": "EXERCISED",
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests :: s4.contract_identity": "EXERCISED",
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents :: s4.contract_identity": "EXERCISED",
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents :: s4.identity_check": "EXERCISED",
+  "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected :: s4.identity_check": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_altered_implementation_hash_rejected :: s4.pinned_hash": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_missing_implementation_hash_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_missing_version_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_not_a_verdict_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_procedure_mismatch_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestFieldChecks.test_version_mismatch_rejected :: s4.field_checks": "EXERCISED",
+  "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected :: s4.identity_check": "EXERCISED",
+  "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected :: s4.identity_check": "EXERCISED",
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected :: s4.fingerprint_check": "EXERCISED",
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason :: s4.fingerprint_check": "EXERCISED"
+ },
+ "runs": {
+  "joint-s1_structural_validity+s1_verify_chain": {
+   "changed": [
+    "test_record.TestEventRecord.test_deleted_event_detected",
+    "test_record.TestEventRecord.test_rewritten_middle_event_detected",
+    "test_validator.TestValidator.test_edited_middle_event_body_fails_chain_validity",
+    "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event",
+    "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "joint-s2_build_duplicates+s2_close_duplicates": {
+   "changed": [
+    "test_construction.TestConstruction.test_duplicate_entry_for_one_field_refuses"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "joint-s3_receipt_coverage+s3_receipt_facts": {
+   "changed": [
+    "test_access_admission.TestAccessAdmission.test_receipt_must_cover_every_value_used",
+    "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object",
+    "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "joint-s3_receipt_facts+s3_receipt_record_presence": {
+   "changed": [
+    "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "joint-s6_issuance_token+s6_point_of_use": {
+   "changed": [
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_capability_swapped_onto_ledger_cannot_mint",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_genuine_record_refused",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_impostor_record_refused",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "joint-s7_authentication+s7_digest_comparison+s7_package_lookup": {
+   "changed": [
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_gap_survives_under_the_genuine_pin",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin",
+    "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+    "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected",
+    "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest",
+    "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified",
+    "test_lifecycle.TestFullLifecycle.test_issuance_never_satisfies_collection_or_verification",
+    "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content",
+    "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection",
+    "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance",
+    "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct",
+    "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate",
+    "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted",
+    "test_lifecycle.TestUnauthenticated.test_tag_absent",
+    "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key",
+    "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record",
+    "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.account_complete_unknowns": {
+   "changed": [
+    "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.account_reconciliation": {
+   "changed": [
+    "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness",
+    "test_validator.TestValidator.test_omitted_failure_fails_account_completeness",
+    "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered",
+    "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record",
+    "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id",
+    "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure",
+    "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.account_schema": {
+   "changed": [
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.account_status_incomplete": {
+   "changed": [
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete",
+    "test_stage1_cases.TestStage1Cases.test_case3_early_stop_closes_with_known_unknown_stated",
+    "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass",
+    "test_vane_hardening.TestVaneHardening.test_padded_content_accepted_and_preserved"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.account_whole": {
+   "changed": [
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_missing_unknowns",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_complete_unknowns_wrong_type",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_empty_unknowns",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_incomplete_missing_unknowns",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_account_authority",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_missing_failure_entry_authority",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_empty_string_entry",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_unknowns_non_string_entry",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_complete_still_passes",
+    "test_c6_account_schema.TestC6AccountSchema.test_c6_wellformed_incomplete_still_incomplete",
+    "test_stage1_cases.TestStage1Cases.test_case3_early_stop_closes_with_known_unknown_stated",
+    "test_stage1_cases.TestStage1Cases.test_case5_missing_failure_account",
+    "test_stage1_cases.TestStage1Cases.test_case6_missing_attribution_recorded_as_unknown",
+    "test_stage1_cases.TestStage1Cases.test_case9_omitted_known_failure_fails_account_completeness",
+    "test_validator.TestValidator.test_complete_declared_with_unknowns_fails_account",
+    "test_validator.TestValidator.test_early_stop_account_reported_incomplete_not_pass",
+    "test_validator.TestValidator.test_omitted_failure_fails_account_completeness",
+    "test_validator.TestValidator.test_record_with_no_closure_fails_terminal_record",
+    "test_vane_hardening.TestVaneHardening.test_authority_mismatch_is_altered",
+    "test_vane_hardening.TestVaneHardening.test_padded_content_accepted_and_preserved",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected",
+    "test_vane_sabotage.TestVaneSabotage.test_s2_duplicate_failure_id_in_record",
+    "test_vane_sabotage.TestVaneSabotage.test_s3_duplicate_account_failure_id",
+    "test_vane_sabotage.TestVaneSabotage.test_s4_extra_fabricated_account_failure",
+    "test_vane_sabotage.TestVaneSabotage.test_s5_altered_failure_description_or_attribution"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.anchor_absence": {
+   "changed": [
+    "test_anchor.TestAnchor.test_deleted_anchor_after_closure_yields_not_verified",
+    "test_anchor.TestAnchor.test_missing_anchor_yields_not_verified",
+    "test_anchor.TestAnchor.test_unreadable_anchor_yields_not_verified",
+    "test_stage1_cases.TestStage1Cases.test_case8_anchor_unavailable_not_verified_never_passed"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.anchor_comparison": {
+   "changed": [
+    "test_anchor.TestAnchor.test_wholesale_rechained_rewrite_caught_by_anchor_mismatch",
+    "test_stage1_cases.TestStage1Cases.test_case7_rewritten_chain_detected_by_anchor"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.structural_validity": {
+   "changed": [
+    "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.terminal_check": {
+   "changed": [
+    "test_validator.TestValidator.test_record_with_no_closure_fails_terminal_record",
+    "test_validator.TestValidator.test_validator_reads_fresh_from_disk",
+    "test_vane_sabotage.TestVaneSabotage.test_s1_duplicate_terminal_closure",
+    "test_vane_sabotage.TestVaneSabotage.test_s1b_two_closures_with_event_afterward",
+    "test_vane_sabotage.TestVaneSabotage.test_s1c_closure_followed_by_continuation",
+    "test_vane_sabotage.TestVaneSabotage.test_s6_structurally_malformed_event"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.verify_chain": {
+   "changed": [
+    "test_record.TestEventRecord.test_deleted_event_detected",
+    "test_record.TestEventRecord.test_rewritten_middle_event_detected",
+    "test_validator.TestValidator.test_edited_middle_event_body_fails_chain_validity",
+    "test_vane_sabotage.TestVaneSabotage.test_s7_corrupted_record_reopened_for_append"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s1.whitespace": {
+   "changed": [
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_authority_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_description_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_account_failure_id_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_description_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_entry_authority_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_failure_id_rejected",
+    "test_vane_hardening.TestVaneHardening.test_whitespace_only_unknown_rejected"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.build_duplicates": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.chain_in_verify": {
+   "changed": [
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_companion_deleted_middle_event_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_tampered_body_retained_digest_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.close_duplicates": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.close_fieldset": {
+   "changed": [
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_a_direct_assignment_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_c_dropped_entry_field_retained_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.close_schema": {
+   "changed": [
+    "test_construction.TestConstruction.test_no_entries_at_all_refuses_and_records_refusal",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_b_fixtures_total_renamed_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_d_extra_entry_outside_schema_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_e_canonical_path_bypassed_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_f_field_absent_from_both_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.close_value": {
+   "changed": [
+    "test_stage2_sabotage.TestStage2Sabotages.test_value_mismatch_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.entry_validation": {
+   "changed": [
+    "test_construction.TestConstruction.test_unencodable_provenance_value_refused_at_entry"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.registry_completeness": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.schema_freeze": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.schema_tuples": {
+   "changed": [
+    "test_schema.TestFrozenSchema.test_sections_are_immutable_tuples"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.schema_validation": {
+   "changed": [
+    "test_schema.TestFrozenSchema.test_duplicate_field_names_refused",
+    "test_schema.TestFrozenSchema.test_nameless_field_or_version_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.sole_issuer": {
+   "changed": [
+    "test_construction.TestConstruction.test_fresh_writer_over_existing_record_refuses",
+    "test_stage2_sabotage.TestStage2Sabotages.test_malformed_canonical_bodies_controlled_refusal",
+    "test_stage2_sabotage.TestStage2Sabotages.test_mixed_genuine_and_forged_entries_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_g_forged_canonical_events_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s2.verify_all": {
+   "changed": [
+    "test_construction.TestConstruction.test_fresh_writer_over_existing_record_refuses",
+    "test_stage2_sabotage.TestStage2Sabotages.test_malformed_canonical_bodies_controlled_refusal",
+    "test_stage2_sabotage.TestStage2Sabotages.test_mixed_genuine_and_forged_entries_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_g_forged_canonical_events_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_companion_deleted_middle_event_refused",
+    "test_stage2_sabotage.TestStage2Sabotages.test_sabotage_h_tampered_body_retained_digest_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.capture_subject": {
+   "changed": [
+    "test_stage3_sabotage.TestSabotageC.test_capture_routed_to_another_model_invalidates_run",
+    "test_stage3_sabotage.TestSabotageC.test_refuse_capture_policy_scopes_the_refusal"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.chain_facet": {
+   "changed": [
+    "test_attribution.TestRecordDiscipline.test_tampered_record_refuses_and_stays_byte_identical",
+    "test_freeze.TestFreeze.test_freeze_on_corrupted_record_writes_nothing",
+    "test_insertion.TestRecordDiscipline.test_tampered_record_refuses_and_writes_nothing",
+    "test_record_discipline.TestTamperedRecord.test_account_refused_on_body_edited_record",
+    "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record",
+    "test_record_discipline.TestTamperedRecord.test_issuance_refused_on_body_edited_record",
+    "test_stage3_sabotage.TestSabotageG.test_capture_gate_on_body_edited_record_writes_nothing",
+    "test_stage3_sabotage.TestSabotageG.test_output_admission_on_body_edited_record_writes_nothing",
+    "test_stage3_sabotage.TestSabotageG.test_output_admission_on_deleted_event_record_writes_nothing",
+    "test_stage3_sabotage.TestSabotageH.test_consume_on_body_edited_record_issues_nothing"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.consume_unknown": {
+   "changed": [
+    "test_access_admission.TestAccessAdmission.test_consume_unknown_governed_value_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.freeze_served_pin": {
+   "changed": [
+    "test_stage3_sabotage.TestSabotageD.test_served_identity_differing_from_the_pin"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.freeze_surface": {
+   "changed": [
+    "test_stage3_sabotage.TestSabotageA.test_contradictory_driver_adapter_configurations"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.frozenrun_seal": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.output_differing": {
+   "changed": [
+    "test_stage3_sabotage.TestSabotageB.test_quoting_canonical_hash_while_using_private_value"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.output_digest": {
+   "changed": [
+    "test_access_admission.TestAccessAdmission.test_quoted_digest_checked_against_the_frozen_object",
+    "test_stage3_sabotage.TestSabotageF.test_frozen_run_cannot_be_rebound"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.output_not_frozen": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.policy_recompute": {
+   "changed": [
+    "test_freeze.TestFreeze.test_derivation_that_does_not_recompute_refused",
+    "test_freeze.TestFreeze.test_derived_limit_below_requirement_refused",
+    "test_freeze.TestFreeze.test_derived_limit_without_derivation_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.receipt_binding": {
+   "changed": [
+    "test_access_admission.TestAccessAdmission.test_receipt_for_another_invocation_does_not_admit"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.receipt_coverage": {
+   "changed": [
+    "test_access_admission.TestAccessAdmission.test_receipt_must_cover_every_value_used",
+    "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object",
+    "test_stage3_sabotage.TestSabotageE.test_post_issuance_receipt_mutation_gains_no_coverage"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.receipt_facts": {
+   "changed": [
+    "test_stage3_sabotage.TestSabotageE.test_gate_honours_recorded_event_not_the_live_object"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.receipt_record_presence": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s3.terminal_facet": {
+   "changed": [
+    "test_insertion.TestRecordDiscipline.test_emptied_record_refuses_by_terminal_binding",
+    "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record",
+    "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_emptied_record_refuses_before_lane_call",
+    "test_stage3_sabotage.TestSabotageI.test_capture_gate_on_tail_truncated_record_refuses_before_lane_call",
+    "test_stage3_sabotage.TestSabotageI.test_consume_on_emptied_record_issues_nothing",
+    "test_stage3_sabotage.TestSabotageI.test_consume_on_tail_truncated_record_issues_nothing",
+    "test_stage3_sabotage.TestSabotageI.test_freeze_on_emptied_record_refuses_and_writes_nothing",
+    "test_stage3_sabotage.TestSabotageI.test_freeze_on_tail_truncated_record_refuses_and_writes_nothing",
+    "test_stage3_sabotage.TestSabotageI.test_output_admission_on_emptied_record_writes_nothing",
+    "test_stage3_sabotage.TestSabotageI.test_output_admission_on_tail_truncated_record_writes_nothing"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.construction_binding": {
+   "changed": [
+    "test_dispatch.TestProcedureBinding.test_declared_identity_is_the_executed_callable",
+    "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch",
+    "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_instance_binding.TestSealedInstanceBinding.test_healthy_control_canonical_execution_and_validation",
+    "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents",
+    "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected",
+    "test_verdict_issuance.TestCrossContractReplay.test_same_contract_control_accepted",
+    "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_genuine_verdict_accepted_by_its_issuer",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_then_restored_exactly_accepted"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.construction_validation": {
+   "changed": [
+    "test_dispatch.TestProcedureBinding.test_fictitious_procedure_identity_rejected_at_construction",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.contract_identity": {
+   "changed": [
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.digest_comparison": {
+   "changed": [
+    "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch",
+    "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged",
+    "test_dispatch.TestRunPaths.test_wrong_digest_no_corrupt_flag_takes_failure_path",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused",
+    "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.field_checks": {
+   "changed": [
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_missing_implementation_hash_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_missing_version_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_not_a_verdict_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_procedure_mismatch_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_version_mismatch_rejected"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.fingerprint_check": {
+   "changed": [
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.identity_check": {
+   "changed": [
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents",
+    "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.pinned_hash": {
+   "changed": [
+    "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_verdict_issuance.TestFieldChecks.test_altered_implementation_hash_rejected"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.registry_immutable": {
+   "changed": [
+    "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged",
+    "test_dispatch.TestRunPaths.test_wrong_digest_no_corrupt_flag_takes_failure_path",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone",
+    "test_instance_binding.TestSealedInstanceBinding.test_healthy_control_canonical_execution_and_validation",
+    "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests",
+    "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents",
+    "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected",
+    "test_verdict_issuance.TestCrossContractReplay.test_same_contract_control_accepted",
+    "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected",
+    "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected",
+    "test_verdict_issuance.TestGenuineAndForged.test_genuine_verdict_accepted_by_its_issuer",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason",
+    "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_then_restored_exactly_accepted"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.run_input_identity": {
+   "changed": [
+    "test_dispatch.TestRunPaths.test_wrong_input_artefact_refused",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.run_pin": {
+   "changed": [
+    "test_dispatch.TestRunPaths.test_unpinned_contract_refuses_to_run",
+    "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i",
+    "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k",
+    "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s4.seal": {
+   "changed": [
+    "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.applied_effect_divergence": {
+   "changed": [
+    "test_insertion.TestDivergence.test_recorded_insertion_with_missing_effect_is_surfaced"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.completed_state": {
+   "changed": [
+    "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied",
+    "test_insertion.TestDivergence.test_consumed_event_without_applied_event_is_not_accepted",
+    "test_insertion.TestDivergence.test_consumed_operation_with_missing_effect_is_surfaced",
+    "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.effect_recognition": {
+   "changed": [
+    "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused",
+    "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_applied_event_before_consumption",
+    "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_effect_before_any_recording",
+    "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.event_recognition": {
+   "changed": [
+    "test_insertion.TestApplication.test_fresh_presentation_applies_once",
+    "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied",
+    "test_insertion.TestDivergence.test_consumed_event_without_applied_event_is_not_accepted",
+    "test_insertion.TestDivergence.test_consumed_operation_with_missing_effect_is_surfaced",
+    "test_insertion.TestDivergence.test_recorded_insertion_with_missing_effect_is_surfaced",
+    "test_insertion.TestRePresentation.test_consumed_operation_is_already_satisfied",
+    "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_applied_event_before_consumption",
+    "test_recovery.TestPartialInsertion.test_interruption_mid_insertion_then_retry",
+    "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart",
+    "test_recovery.TestRestartRecognition.test_consumed_operation_recognised_after_restart",
+    "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.identity_determinism": {
+   "changed": [
+    "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused",
+    "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused",
+    "test_insertion.TestRePresentation.test_reconstructed_operation_is_recognised_not_new",
+    "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload",
+    "test_operations.TestCanonicalIdentity.test_identity_is_a_function_of_the_triple",
+    "test_operations.TestPureConstruction.test_build_touches_no_state",
+    "test_operations.TestPureConstruction.test_reconstruction_after_consumption_is_the_same_operation",
+    "test_operations.TestPureConstruction.test_repeated_builds_are_equal",
+    "test_recovery.TestRestartRecognition.test_consumed_missing_effect_diverges_after_restart",
+    "test_recovery.TestRestartRecognition.test_consumed_operation_recognised_after_restart",
+    "test_recovery.TestRestartRecognition.test_partial_insertion_recovered_by_new_process",
+    "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.identity_function": {
+   "changed": [
+    "test_insertion.TestApplication.test_unconsumed_operation_is_not_falsely_refused",
+    "test_insertion.TestDivergence.test_consumed_event_citing_another_operations_applied",
+    "test_insertion.TestRePresentation.test_recognition_is_per_identity",
+    "test_operations.TestCanonicalIdentity.test_identity_parts_all_bind",
+    "test_recovery.TestRestartRecognition.test_unconsumed_operation_applies_after_restart"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.identity_payload": {
+   "changed": [
+    "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused",
+    "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused",
+    "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.operation_seal": {
+   "changed": [
+    "test_operations.TestOperationImmutability.test_attributes_cannot_be_rebound"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.payload_binding": {
+   "changed": [
+    "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused",
+    "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s5.payload_copy": {
+   "changed": [
+    "test_operations.TestOperationImmutability.test_payload_cannot_be_mutated_through_the_copy"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.extraction": {
+   "changed": [
+    "test_schema_contract.TestCausalTableControls.test_agreement"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.format_prescribed": {
+   "changed": [
+    "test_reproductions.TestT02.test_attribution",
+    "test_reproductions.TestT07.test_attribution",
+    "test_reproductions.TestT09.test_attributions",
+    "test_schema_contract.TestCausalTableControls.test_unknown_branch",
+    "test_schema_contract.TestFindingIsRecorded.test_finding_event_on_the_record"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.format_prescribed_false": {
+   "changed": [
+    "test_schema_contract.TestCausalTableControls.test_checker_defect_on_compliant_response",
+    "test_schema_contract.TestCausalTableControls.test_model_branch"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.g6_contradiction": {
+   "changed": [
+    "test_examiner_g6.TestReportResolution.test_conflict_becomes_a_discrepancy_preserving_both",
+    "test_examiner_g6.TestReportResolution.test_contradictory_literals_flagged_by_name"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.g6_resolution": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.input_defect_branch": {
+   "changed": [
+    "test_schema_contract.TestCausalTableControls.test_input_branch"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.issuance_record_check": {
+   "changed": [
+    "test_attribution.TestPinnedAuthority.test_mutated_genuine_record_refused",
+    "test_attribution.TestPinnedAuthority.test_self_appointed_record_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.issuance_token": {
+   "changed": [
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_genuine_record_refused",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_direct_construction_from_impostor_record_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.label_conversion": {
+   "changed": [
+    "test_attribution.TestLabelConversionRefused.test_every_conversion_attempt_raises"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.one_record": {
+   "changed": [
+    "test_attribution.TestOneFailureOneRecord.test_second_mint_for_one_failure_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.one_resolution": {
+   "changed": [
+    "test_discrepancy.TestAuthorisedResolution.test_second_resolution_refused",
+    "test_discrepancy.TestIndeterminate.test_indeterminate_is_terminal_for_the_disagreement_only"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.point_of_use": {
+   "changed": [
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_capability_swapped_onto_ledger_cannot_mint",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_mint_attribution",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_cannot_resolve_discrepancy",
+    "test_correction_round_1.TestCapabilityCannotBeSelfIssued.test_forged_capability_carrying_the_pinned_digest_cannot_mint"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.resolve_attribution": {
+   "changed": [
+    "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_nonexistent_attribution_digest_refused",
+    "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_readback_refuses_an_unresolvable_link",
+    "test_correction_round_1.TestDiscrepancyLinkMustResolve.test_wrong_type_attribution_digest_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.response_matching": {
+   "changed": [
+    "test_reproductions.TestT07.test_attribution"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.schema_binding": {
+   "changed": [
+    "test_schema_contract.TestChangedUnderUnchanged.test_checker_changed_schema_unchanged",
+    "test_schema_contract.TestChangedUnderUnchanged.test_checker_rebound_to_another_schema",
+    "test_schema_contract.TestChangedUnderUnchanged.test_schema_changed_checker_unchanged"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.schema_seal": {
+   "changed": [
+    "test_schema_contract.TestPinnedSchemaArtefact.test_schema_and_contract_are_sealed"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s6.vocabulary": {
+   "changed": [
+    "test_attribution.TestOneFailureOneRecord.test_class_outside_vocabulary_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.authentication": {
+   "changed": [
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_gap_survives_under_the_genuine_pin",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin",
+    "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+    "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct",
+    "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate",
+    "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted",
+    "test_lifecycle.TestUnauthenticated.test_tag_absent",
+    "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.collect_issuance": {
+   "changed": [],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.collect_once": {
+   "changed": [
+    "test_lifecycle.TestIssuanceAndCollectionRules.test_second_collection_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.digest_comparison": {
+   "changed": [
+    "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+    "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest",
+    "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.issuance_lookup": {
+   "changed": [
+    "test_anchor_provenance.TestHealthyControl.test_genuine_anchor_verifies_and_closes_complete",
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_gap_survives_under_the_genuine_pin",
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_append_and_writes_nothing",
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_closure_and_writes_nothing",
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_receipt_account",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_attack_is_coherent_under_attacker_anchor",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_substituted_anchor_refused_at_lifecycle_state",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_true_state_under_the_genuine_pin",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_value_identical_forgery_refused",
+    "test_closure_account.TestClosureStatesGapsExactly.test_closure_complete_when_every_receipt_verified",
+    "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+    "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected",
+    "test_closure_account.TestUnrecordedEntries.test_unrecorded_package_entry_named_as_a_gap",
+    "test_lifecycle.TestDigestMismatch.test_content_mismatching_digest",
+    "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified",
+    "test_lifecycle.TestFullLifecycle.test_issuance_never_satisfies_collection_or_verification",
+    "test_lifecycle.TestIssuanceAndCollectionRules.test_reissue_same_commitment_refused",
+    "test_lifecycle.TestIssuanceAndCollectionRules.test_second_collection_refused",
+    "test_lifecycle.TestIssuanceAndCollectionRules.test_unrecorded_package_entry_is_not_a_lifecycle_state",
+    "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content",
+    "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection",
+    "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance",
+    "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct",
+    "test_lifecycle.TestUnauthenticated.test_issued_under_other_terms_does_not_authenticate",
+    "test_lifecycle.TestUnauthenticated.test_package_supplied_anchor_is_not_trusted",
+    "test_lifecycle.TestUnauthenticated.test_tag_absent",
+    "test_lifecycle.TestUnauthenticated.test_tag_forged_under_attacker_key",
+    "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record",
+    "test_record_discipline.TestTamperedRecord.test_account_refused_on_body_edited_record",
+    "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record",
+    "test_record_discipline.TestTamperedRecord.test_issuance_refused_on_body_edited_record"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.issue_once": {
+   "changed": [
+    "test_lifecycle.TestIssuanceAndCollectionRules.test_reissue_same_commitment_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.package_lookup": {
+   "changed": [
+    "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap",
+    "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected",
+    "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified",
+    "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content",
+    "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection",
+    "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance",
+    "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct",
+    "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record",
+    "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.pin_constructor": {
+   "changed": [
+    "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_attacker_values_refused",
+    "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_genuine_values_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.pin_point_of_use": {
+   "changed": [
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_append_and_writes_nothing",
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_closure_and_writes_nothing",
+    "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_receipt_account",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_substituted_anchor_refused_at_lifecycle_state",
+    "test_anchor_provenance.TestSubstitutionAtLifecycle.test_value_identical_forgery_refused"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  },
+  "s7.unrecorded_accounting": {
+   "changed": [
+    "test_closure_account.TestUnrecordedEntries.test_unrecorded_package_entry_named_as_a_gap"
+   ],
+   "invalid_reasons": [],
+   "patch_problems": [],
+   "refused": false,
+   "valid": true
+  }
+ },
+ "witness_anomalies": []
+}

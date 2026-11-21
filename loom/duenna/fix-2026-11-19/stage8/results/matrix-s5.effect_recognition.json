@@ -1,0 +1,40 @@
+{
+ "changed": {
+  "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_applied_event_before_consumption": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestInterruptionBetweenInsertionAndRecording.test_crash_after_effect_before_any_recording": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_recovery.TestRestartRecognition.test_retry_after_crash_and_restart": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "present(): a landed effect with the record behind it is recognised as the single application, not re-applied (stage5/receiver.py)",
+ "invalid_reasons": [],
+ "mechanism": "s5.effect_recognition",
+ "patch_problems": [],
+ "run_id": "mech-s5.effect_recognition",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  5
+ ],
+ "valid": true
+}

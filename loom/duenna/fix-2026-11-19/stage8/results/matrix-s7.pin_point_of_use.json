@@ -1,0 +1,45 @@
+{
+ "changed": {
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_append_and_writes_nothing": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_closure_and_writes_nothing": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor_provenance.TestSubstitutionAtAccountAndClosure.test_substitution_refused_at_receipt_account": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_substituted_anchor_refused_at_lifecycle_state": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor_provenance.TestSubstitutionAtLifecycle.test_value_identical_forgery_refused": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "_require_pinned_anchor: every entry point validates the anchor against the pin (stage7/receipts.py)",
+ "invalid_reasons": [],
+ "mechanism": "s7.pin_point_of_use",
+ "patch_problems": [],
+ "run_id": "mech-s7.pin_point_of_use",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  7
+ ],
+ "valid": true
+}

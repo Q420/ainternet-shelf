@@ -1,0 +1,30 @@
+{
+ "changed": {
+  "test_attribution.TestPinnedAuthority.test_mutated_genuine_record_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  },
+  "test_attribution.TestPinnedAuthority.test_self_appointed_record_refused": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "issue_authority: the presented record must digest to the independently held pin (stage6/authority.py)",
+ "invalid_reasons": [],
+ "mechanism": "s6.issuance_record_check",
+ "patch_problems": [],
+ "run_id": "mech-s6.issuance_record_check",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  6
+ ],
+ "valid": true
+}

@@ -1,0 +1,30 @@
+{
+ "changed": {
+  "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_attacker_values_refused": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_anchor_provenance.TestDirectConstructionRefused.test_direct_construction_from_genuine_values_refused": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "TrustAnchor construction is token-gated to the pinned store (stage7/trust_anchor.py)",
+ "invalid_reasons": [],
+ "mechanism": "s7.pin_constructor",
+ "patch_problems": [],
+ "run_id": "mech-s7.pin_constructor",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  7
+ ],
+ "valid": true
+}

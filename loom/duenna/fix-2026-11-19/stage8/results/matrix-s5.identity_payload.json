@@ -1,0 +1,35 @@
+{
+ "changed": {
+  "test_insertion.TestPayloadBinding.test_changed_payload_in_the_crash_window_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_insertion.TestPayloadBinding.test_changed_payload_under_consumed_identity_is_refused": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  },
+  "test_operations.TestCanonicalIdentity.test_identity_does_not_depend_on_payload": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "operation identity excludes the payload; the sabotage variant folds a payload digest into the operation identity at construction (stage5/operations.py)",
+ "invalid_reasons": [],
+ "mechanism": "s5.identity_payload",
+ "patch_problems": [],
+ "run_id": "mech-s5.identity_payload",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  5
+ ],
+ "valid": true
+}

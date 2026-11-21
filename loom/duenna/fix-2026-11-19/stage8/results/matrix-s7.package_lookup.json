@@ -1,0 +1,65 @@
+{
+ "changed": {
+  "test_closure_account.TestClosureStatesGapsExactly.test_each_deficient_state_named_as_its_exact_gap": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_closure_account.TestDR04Shape.test_dr04_receipts_stated_as_not_collected": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestFullLifecycle.test_full_lifecycle_verified": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestIssuedWithoutContent.test_issued_without_content": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_collection": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestRemovedFromPackage.test_removed_after_issuance": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_lifecycle.TestStatesDistinct.test_all_five_states_are_distinct": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestEmptiedRecord.test_collection_refused_on_emptied_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  },
+  "test_record_discipline.TestTamperedRecord.test_collection_refused_on_body_edited_record": {
+   "baseline": "ok",
+   "stage": 7,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "package read-back: an entry removed from the package reads as absent, and uncollected content reads as no content; the sabotage falsifies ONLY the missing-file return points inside read_entry/read_content, so genuine entries still read back honestly (stage7/package.py)",
+ "invalid_reasons": [],
+ "mechanism": "s7.package_lookup",
+ "patch_problems": [],
+ "run_id": "mech-s7.package_lookup",
+ "suite_validations": {
+  "7": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  7
+ ],
+ "valid": true
+}

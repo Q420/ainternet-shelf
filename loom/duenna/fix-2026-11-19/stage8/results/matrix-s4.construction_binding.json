@@ -1,0 +1,120 @@
+{
+ "changed": {
+  "test_dispatch.TestProcedureBinding.test_declared_identity_is_the_executed_callable": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_dispatch.TestRegistryAttacks.test_module_registry_rebinding_does_not_redirect_dispatch": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_dispatch.TestRegistryAttacks.test_registry_remapping_refused_and_dispatch_unchanged": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_exam_fx_r60i_restored_global_dispatch.TestFXR60iRestoredGlobalDispatchSabotage.test_restoring_global_dispatch_fails_fx_r60i": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_exam_fx_r60k_identity_sabotage.TestFXR60kIdentitySabotage.test_removing_object_identity_fails_fx_r60k": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_exam_fx_r60l_reconfirmation.TestFXR60lReconfirmation.test_removing_fingerprint_check_fails_fx_r60l_alone": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_instance_binding.TestSealedInstanceBinding.test_healthy_control_canonical_execution_and_validation": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_instance_binding.TestSealedInstanceBinding.test_rebinding_instance_procedure_refused": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_different_digests": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestCrossContractReplay.test_a_verdict_rejected_by_b_identical_contents": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestCrossContractReplay.test_byte_identical_copy_rejected": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestCrossContractReplay.test_same_contract_control_accepted": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestFieldChecks.test_input_identity_mismatch_rejected": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestFieldChecks.test_missing_input_identity_rejected": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestGenuineAndForged.test_forged_verdict_with_genuine_pinned_hash_rejected": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestGenuineAndForged.test_forgery_offered_against_failure_path_artefact_rejected": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestGenuineAndForged.test_genuine_verdict_accepted_by_its_issuer": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejected": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_issued_object_rejection_reason": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  },
+  "test_verdict_issuance.TestIssuanceIntegrity.test_mutated_then_restored_exactly_accepted": {
+   "baseline": "ok",
+   "stage": 4,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "CheckerContract binds the procedure callable at construction; later module registry rebinding does not redirect dispatch (stage4/contract.py)",
+ "invalid_reasons": [],
+ "mechanism": "s4.construction_binding",
+ "patch_problems": [],
+ "run_id": "mech-s4.construction_binding",
+ "suite_validations": {
+  "4": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  4
+ ],
+ "valid": true
+}

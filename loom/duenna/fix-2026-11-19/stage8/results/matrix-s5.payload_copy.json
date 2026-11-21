@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_operations.TestOperationImmutability.test_payload_cannot_be_mutated_through_the_copy": {
+   "baseline": "ok",
+   "stage": 5,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "Operation.payload hands out a fresh decoded copy on every access; the sabotage caches and re-hands the same object, so a caller's mutation persists (stage5/operations.py)",
+ "invalid_reasons": [],
+ "mechanism": "s5.payload_copy",
+ "patch_problems": [],
+ "run_id": "mech-s5.payload_copy",
+ "suite_validations": {
+  "5": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  5
+ ],
+ "valid": true
+}

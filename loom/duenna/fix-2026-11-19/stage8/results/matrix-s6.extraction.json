@@ -1,0 +1,25 @@
+{
+ "changed": {
+  "test_schema_contract.TestCausalTableControls.test_agreement": {
+   "baseline": "ok",
+   "stage": 6,
+   "under_sabotage": "FAIL"
+  }
+ },
+ "description": "ResponseContract.extract, regex path: the checker's extraction returns None for every response, whatever it states (stage6/schema_contract.py)",
+ "invalid_reasons": [],
+ "mechanism": "s6.extraction",
+ "patch_problems": [],
+ "run_id": "mech-s6.extraction",
+ "suite_validations": {
+  "6": {
+   "anomalies": [],
+   "returncode": 0,
+   "valid": true
+  }
+ },
+ "suites": [
+  6
+ ],
+ "valid": true
+}
