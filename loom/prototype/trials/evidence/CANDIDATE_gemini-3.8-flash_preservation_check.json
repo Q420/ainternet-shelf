@@ -1,0 +1,17 @@
+{
+ "check": "Preservation check for the gemini-3.8-flash candidate onboarding (2026-11-21), against the trials tree as it stood at the start of the onboarding work (the shelf head 69c0333c state of the tree, including the version-hunt evidence files).",
+ "method": "SHA-256 of every file under trials/, excluding node_modules directories; baseline manifest taken before any onboarding call; re-walked after the deliverables were written.",
+ "baseline_file_count": 124,
+ "added_files": [
+  "CANDIDATE-GEMINI-3.8-FLASH-ONBOARDING.md",
+  "constitution_annex_addendum_gemini_3_8_flash.json",
+  "evidence/CANDIDATE_gemini-3.8-flash_catalogue_detail.json",
+  "evidence/CANDIDATE_gemini-3.8-flash_delivery_demonstration.json",
+  "evidence/CANDIDATE_gemini-3.8-flash_self_identification.json",
+  "evidence/CANDIDATE_gemini-3.8-flash_preservation_check.json (this file)"
+ ],
+ "modified_preexisting_files": [],
+ "deleted_files": [],
+ "result": "PASS \u2014 every pre-existing file byte-identical; changes are exactly the declared additions",
+ "fabric_tree": "No file under ~/workspace/loom-prototype/fabric/ was written by this work (all writes were the declared trials-tree additions and /tmp scratch)."
+}

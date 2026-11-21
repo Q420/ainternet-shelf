@@ -1,0 +1,41 @@
+{
+ "route": "gemini",
+ "model": "gemini-3.8-flash",
+ "config": {
+  "temperature": 1.0
+ },
+ "request_body": {
+  "contents": [
+   {
+    "role": "user",
+    "parts": [
+     {
+      "text": "You are being onboarded as a candidate in a test harness. State exactly what model you are, including the model name and any version, snapshot, or build identifier you know for yourself. Answer in one line in the form: MODEL: <your answer>"
+     }
+    ]
+   }
+  ],
+  "generationConfig": {
+   "temperature": 1.0
+  }
+ },
+ "request_part_sha256": [
+  "df15ef708db69ea2cc78b487ee81522f2224c15fd06045b9ae2ebce22671e892"
+ ],
+ "response_text": null,
+ "raw_response": "",
+ "stderr": "1\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 707, in readinto\n    return self._sock.recv_into(b)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/ssl.py\", line 1252, in recv_into\n    return self.read(nbytes, buffer)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/ssl.py\", line 1104, in read\n    return self._sslobj.read(len, buffer)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTimeoutError: The read operation timed out\n",
+ "returncode": 1,
+ "latency_s": 120.563,
+ "timed_out": false,
+ "timeout_boundary_s": 120,
+ "attestation": {
+  "present": false,
+  "value": null,
+  "response_parsed": false,
+  "identifies_pinned_candidate_and_version": false,
+  "check": "raw response did not parse as JSON"
+ },
+ "self_report_verbatim": null,
+ "evidence_class": "REPORTED (candidate's own declaration; not verified)"
+}
