@@ -1,0 +1,104 @@
+{
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "Pulse Bridge"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "js": [
+                "adapters/claude.js",
+                "protocol.js",
+                "sendcore.js",
+                "crusher.js",
+                "alert.js",
+                "letterbox.js",
+                "content.js"
+            ],
+            "matches": [
+                "https://muse.ai/*"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "js": [
+                "adapters/chatgpt.js",
+                "protocol.js",
+                "sendcore.js",
+                "crusher.js",
+                "alert.js",
+                "letterbox.js",
+                "content.js"
+            ],
+            "matches": [
+                "https://chatgpt.com/*"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "js": [
+                "adapters/claudeai.js",
+                "protocol.js",
+                "sendcore.js",
+                "crusher.js",
+                "alert.js",
+                "letterbox.js",
+                "content.js"
+            ],
+            "matches": [
+                "https://claude.ai/*"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "js": [
+                "adapters/gemini.js",
+                "protocol.js",
+                "sendcore.js",
+                "crusher.js",
+                "alert.js",
+                "letterbox.js",
+                "content.js"
+            ],
+            "matches": [
+                "https://gemini.google.com/*"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "js": [
+                "adapters/metaai.js",
+                "protocol.js",
+                "sendcore.js",
+                "crusher.js",
+                "alert.js",
+                "letterbox.js",
+                "content.js"
+            ],
+            "matches": [
+                "https://meta.ai/*",
+                "https://www.meta.ai/*"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "description": "Routes explicitly marked messages between the registered Muse (Remmy) and ChatGPT (Alex) tabs. v0.6.2 \u2014 CRUSHER V6.2, built on the V6.1 live test's evidence (Ben's tap, 2026-11-07): identity is the envelope message_id (dedup, ledgers and delivery tracking key on it; the carried text wears a PB-ID line as a confirmation aid). A queue pump serves letters oldest-actionable-first across both directions; proven-absence retries (at most 2, 30s apart, same PB-ID \u2014 policy unchanged from Alex's ruling) wait in RETRY_WAIT without holding the bridge, and letters stalled by a generating or unreachable destination re-queue themselves, bounded, instead of parking for a sweep. Confirmation is seeable AND quiet-gated: recent user turns are scanned for the carried header + PB-ID, but a poll only counts while the destination page is not generating \u2014 a streaming page cannot testify a landed letter absent (the live test's duplicate-resend bug, seen on both platforms in one night). A page that never sits still yields UNKNOWN, never absence. Delivery defers while the destination generates (Ben's button gate reads the morphing button's own face, never clicks a stop face), waits briefly for a late-rendering send button on idle tabs, and types through the page's real input path first. Every attempt path leaves a trail entry \u2014 no letter sits unexplained. No LLM in the transport path. v0.16.0 \u2014 BRIDGE ALERT, popup only (Ben\u2019s design, Alex approved as proposed): Remmy raises a local alert event; the extension shows a red emergency popup on the affected seat\u2019s tab (fallback: any open bridge surface, named on the popup\u2019s face), exactly one chime per alert ID, persistent until Ben closes it. Not a letter: no marker protocol, no reply; the letter machinery is untouched. v0.17.0 \u2014 THE SEND-SAFETY FENCE (Ben's design, his ruling): sending is no longer the button's word alone \u2014 at the moment of an attempt the bridge asks whether THIS message is safe to send, on three conditions (button status read from the composer's own button; serial order \u2014 every message carries a number that advances by counting, and a letter never jumps the count or sends after being superseded; message status \u2014 delivered is a state, and a delivered message is never sent again). Two positives and no proven negative send; a proven negative vetoes; UNKNOWN never counts as a pass. Held letters name the condition that held them; completed pairs retire into a small completed record when the next pair arrives. The alert chime is now Ben's Amaj7 synth chord. v0.18.0: the adapters' send-decision logic (button classification, composer scope, button state, generating verdict, send-button lookup, idle defer) lives in ONE shared module, sendcore.js \u2014 pass 1 narrowed the button read to the composer on the four remaining surfaces, pass 2 lifted the logic so a fix lands once.",
+    "host_permissions": [
+        "https://muse.ai/*",
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://meta.ai/*",
+        "https://www.meta.ai/*"
+    ],
+    "manifest_version": 3,
+    "name": "Pulse Bridge",
+    "permissions": [
+        "storage",
+        "tabs",
+        "alarms"
+    ],
+    "version": "0.18.0"
+}

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Pulse Bridge — the whole system</title>
+<style>
+  :root{
+    --bg:#070b18; --panel:rgba(15,23,42,.82); --panel2:rgba(15,23,42,.65);
+    --line:#334155; --text:#e2e8f0; --muted:#94a3b8; --faint:#64748b;
+    --cyan:#22d3ee; --violet:#a78bfa; --amber:#fbbf24; --red:#f87171; --green:#34d399; --teal:#2dd4bf;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI",Helvetica,Arial,sans-serif;}
+  body{background:
+    radial-gradient(700px 480px at 18% 8%, rgba(124,58,237,.20), transparent 60%),
+    radial-gradient(800px 560px at 85% 90%, rgba(8,145,178,.16), transparent 60%),
+    var(--bg); min-height:100vh;}
+  header{padding:20px 26px 8px;}
+  h1{margin:0;font-size:26px;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .meta{color:var(--faint);font-size:12px;margin-top:2px}
+  nav.tabs{display:flex;gap:8px;padding:14px 26px 0;flex-wrap:wrap;align-items:center}
+  .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    padding:8px 16px;border-radius:999px;font-size:14px}
+  .tab.on{background:linear-gradient(90deg,rgba(34,211,238,.25),rgba(167,139,250,.25));
+    border-color:var(--violet)}
+  .toggle{margin-left:auto;display:flex;gap:14px;color:var(--muted);font-size:13px;align-items:center}
+  .toggle label{cursor:pointer;display:flex;gap:6px;align-items:center}
+  main{padding:16px 26px 30px}
+  .mapwrap{display:flex;gap:16px;align-items:flex-start}
+  .diagram{flex:1 1 auto;min-width:0;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:6px}
+  .detail{flex:0 0 400px;max-width:400px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:18px 20px;position:sticky;top:14px;max-height:calc(100vh - 40px);overflow:auto}
+  @media (max-width:980px){ .mapwrap{flex-direction:column} .detail{flex:none;max-width:none;width:100%;position:static;max-height:none} }
+  .detail h2{margin:0 0 4px;font-size:20px}
+  .detail h3{margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint)}
+  .detail p{margin:6px 0;font-size:14px;line-height:1.5;color:#cbd5e1}
+  .jobline{font-size:16px;color:var(--text);line-height:1.45}
+  .chip{display:inline-block;cursor:pointer;border:1px solid var(--line);border-radius:999px;
+    padding:3px 11px;font-size:12.5px;margin:2px 3px 2px 0;background:rgba(30,41,59,.7);color:var(--text)}
+  .chip:hover{border-color:var(--cyan)}
+  .chip.warn{border-color:rgba(251,191,36,.55)}
+  .rowlink{display:block;cursor:pointer;padding:7px 10px;border:1px solid var(--line);border-radius:9px;
+    margin:5px 0;font-size:13.5px;background:rgba(30,41,59,.45)}
+  .rowlink:hover{border-color:var(--cyan)}
+  .rowlink small{color:var(--muted);display:block;font-size:12px;margin-top:2px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:6px;vertical-align:middle}
+  .b-enforced{background:rgba(52,211,153,.18);color:var(--green);border:1px solid rgba(52,211,153,.5)}
+  .b-procedural{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.5)}
+  .b-designed{background:rgba(148,163,184,.14);color:#cbd5e1;border:1px solid rgba(148,163,184,.5)}
+  .b-built-stage1{background:rgba(45,212,191,.14);color:var(--teal);border:1px solid rgba(45,212,191,.5)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;cursor:pointer}
+  .card:hover{border-color:var(--violet)}
+  .card h3{margin:0 0 6px;font-size:16px;text-transform:none;letter-spacing:0;color:var(--text)}
+  .card p{font-size:13.5px;line-height:1.5;color:#cbd5e1;margin:5px 0}
+  .card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-top:10px}
+  .secttl{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin:20px 0 8px}
+  svg text{user-select:none}
+  .partbox{cursor:pointer}
+  .flowline{cursor:pointer}
+  .hidden{display:none}
+  footer{padding:0 26px 26px;color:var(--faint);font-size:12.5px}
+  .verdict{font-size:19px;line-height:1.55;color:var(--text);max-width:880px;margin:6px 0 4px}
+  .verdict b{color:var(--cyan)}
+  .journey{max-width:880px;margin-top:18px}
+  .station{display:flex;gap:16px;position:relative}
+  .rail{flex:0 0 38px;display:flex;flex-direction:column;align-items:center}
+  .dot{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--violet);
+    background:rgba(124,58,237,.16);color:#e9e4ff;font-weight:700;font-size:15px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 34px}
+  .dot.gate{background:linear-gradient(135deg,rgba(34,211,238,.3),rgba(167,139,250,.3));border-color:var(--cyan)}
+  .stem{width:2px;flex:1 1 auto;background:linear-gradient(180deg,rgba(167,139,250,.55),rgba(34,211,238,.25));margin:4px 0}
+  .station:last-child .stem{display:none}
+  .scard{flex:1 1 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:15px 18px;margin-bottom:16px}
+  .scard h3{margin:0 0 5px;font-size:18px;color:var(--text)}
+  .scard p{margin:4px 0;font-size:14.5px;line-height:1.55;color:#cbd5e1}
+  .scard .who{font-size:11.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--cyan);margin-bottom:3px}
+  .mini{border-top:1px solid rgba(51,65,85,.7);padding:8px 0 2px;margin-top:8px}
+  .mini:first-of-type{border-top:none;margin-top:2px}
+  .mini .mname{font-weight:650;color:var(--text);font-size:14px;cursor:pointer}
+  .mini .mname:hover{color:var(--cyan)}
+  .mini p{display:inline;font-size:14px}
+  .gateline{margin-top:10px;font-size:13px;color:var(--muted)}
+  .around{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;max-width:1180px}
+  .closeline{color:var(--muted);font-size:14.5px;line-height:1.6;max-width:880px;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="ttl"></h1>
+  <div class="sub" id="stl"></div>
+  <div class="meta" id="upd"></div>
+</header>
+<nav class="tabs">
+  <div class="tab" data-view="journey">The Journey</div>
+  <div class="tab" data-view="map">The Map</div>
+  <div class="tab" data-view="gates">Gates <span id="gatecount"></span></div>
+  <div class="tab" data-view="stress">Stress points <span id="stresscount"></span></div>
+  <div class="toggle">
+    <label><input type="checkbox" id="tglFlows" checked> flows</label>
+    <label><input type="checkbox" id="tglStress"> stress layer</label>
+  </div>
+</nav>
+<main>
+  <section id="view-journey"></section>
+  <section id="view-map">
+    <div class="mapwrap">
+      <div class="diagram"><svg id="svg" viewBox="0 0 1400 940" width="100%" role="img"></svg></div>
+      <aside class="detail" id="detail"></aside>
+    </div>
+    <div id="f5strip" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px"></div>
+  </section>
+  <section id="view-gates" class="hidden"></section>
+  <section id="view-stress" class="hidden"></section>
+</main>
+<footer>Drawn from the bridge code (v0.20.6, lab copy) and the operating record of 2026-11-19. Content register: map-data.json — this page is only its drawing. The bridge carries words, never authority.</footer>
+<script>
+const DATA = {"f5": [{"id": "f5-code", "name": "Edges that are code", "text": "Most of this map is machinery: the marker routing, the delivery states, the fence, the dedup, the watchdog all run whether or not anyone is watching. Where an edge is code, this map says so — and code can still fail in the ways the stress points record."}, {"id": "f5-convention", "name": "Edges that are convention", "text": "Three edges are not code at all: Remmy running the presend guard before a send, the wake path actually waking her, and Ben's one-window rule for the seats. They hold because a person honours them. The map labels them as what they are — the wake path most honestly of all: unreliable."}], "flows": [{"breaks": "No marker, no letter — the bridge carries nothing else. A marker in the wrong place routes text nobody meant to send.", "carries": "A message with the marker line in it; everything below the line is the letter body.", "from": "remmy", "gate": "g-marker", "id": "f-write", "name": "The letter is written", "to": "protocol"}, {"breaks": "A letter that never becomes a record has no state, no watchdog, and no fate anyone can ask after.", "carries": "The envelope: a PB-ID, from, to, and the body — now a record with a state.", "from": "protocol", "id": "f-custody", "name": "Custody", "to": "background"}, {"breaks": "An adapter that bypasses the shared send core re-opens the pre-v0.18 flaw: five copies, five chances to drift.", "carries": "The question: is this message safe to send, now, to this seat?", "from": "background", "gate": "g-fence", "id": "f-fence", "name": "The send decision", "to": "sendcore"}, {"breaks": "If the seat tab navigates mid-delivery, the attempt's promise never settles and the pump wedges — the freeze of 2026-11-19 17:22, a letter recorded DELIVERING while it had already landed and been answered.", "carries": "The delivery attempt: a message to the seat tab, which the adapter types and sends.", "from": "background", "gate": "g-watchdog", "id": "f-deliver", "name": "Delivery into her window", "to": "adapter"}, {"breaks": "Until the letterbox catches it, the reply exists in exactly one place. The rollover click can take that place away.", "carries": "Her finished turn, in her window — for now, only on her screen.", "from": "vane", "id": "f-reply", "name": "Her reply appears", "to": "letterbox"}, {"breaks": "A reply the letterbox judges a duplicate or a twin is dropped here — with its reason written to the popup log, where Ben does not look.", "carries": "The settled, deduplicated reply, fingerprinted.", "from": "letterbox", "id": "f-handoff", "name": "The handoff", "to": "background"}, {"breaks": "Capture is not wake. The waker has died before and waited at gave_up for Ben's human tap; a captured reply that never wakes her is a letter in a drawer.", "carries": "Her words, delivered into the main chat as a handoff.", "from": "background", "gate": "g-wake", "id": "f-to-remmy", "name": "The reply reaches Remmy", "to": "remmy"}, {"breaks": "The bridge must never eat these: the letterbox skips what carries no marker. His direct conversation is his, not traffic.", "carries": "Ben's own words in her window — outside the bridge entirely.", "from": "ben", "id": "f-ben-vane", "name": "Ben talks to her directly", "to": "vane"}, {"breaks": "The click that beats the capture eats the reply: briefcase-55 and briefcase-59 both died here, hours apart, under two different versions of the guard.", "carries": "A click on New chat when her context fills — and her conversation rolls to a continuation.", "from": "content", "gate": "g-capture", "id": "f-rollover", "name": "The rollover click", "to": "seat-alex"}, {"breaks": "The watchdog can only bound the wait and declare the fate unknown. The decision itself is a human's — Ben used 'let it go' at 20:01 on 2026-11-19.", "carries": "DELIVERING_STUCK and the two choices: push it through, or let it go.", "from": "background", "gate": "g-watchdog", "id": "f-stuck", "name": "A letter is stuck", "to": "popup"}, {"breaks": "The face shows what the background believes. A wedged pump shows 'sending…' — true about the record, false about the letter, which had already landed.", "carries": "Letter states and wait reasons, in plain words, pushed to both seat tabs.", "from": "background", "id": "f-face", "name": "The face updates", "to": "popup"}, {"breaks": "The watcher stopped capturing at 20:32 on 2026-11-19 without a sound. A silent backstop is worse than none: its quiet reads as 'she hasn't replied'.", "carries": "Her replies, extracted independently of the extension, into the spool file.", "from": "seat-alex", "id": "f-spool", "name": "The backstop capture", "to": "spool"}, {"breaks": "The pool only reveals when Remmy runs the check — at focus returns. Between her turns, captures wait.", "carries": "Unread captures, oldest first, against the watermarks.", "from": "spool", "id": "f-pool", "name": "The drain", "to": "pool"}, {"breaks": "A reply recovered from the pool is a reply the bridge failed to carry. Every pool rescue is a ferry the machinery owed Ben.", "carries": "Her replies, read at last — sometimes hours after the bridge lost them.", "from": "pool", "id": "f-pool-remmy", "name": "The reveal", "to": "remmy"}, {"breaks": "Pause stops the pump, not the world: watchers, watchers' spools and the seats' own lives continue.", "carries": "Ben's hand on the tap: the bridge holds all traffic.", "from": "ben", "gate": "g-paused", "id": "f-pause", "name": "The pause switch", "to": "storage"}], "gates": [{"checks": "A standalone line equal to the routing marker. Everything beneath it is the letter; everything above it never travels.", "holder": "The protocol", "id": "g-marker", "kind": "code", "name": "The Marker", "onFail": "No letter exists. Nothing is routed, nothing is delivered.", "strength": "enforced", "weakness": "The delimiter is the whole law: a marker line typed in ordinary prose would route text nobody meant to send."}, {"checks": "A tab is a seat only when registered under its seat ID — tab, window and platform on record. Unregistered tabs stay silent.", "holder": "The state object", "id": "g-registration", "kind": "code", "name": "Seat Registration", "onFail": "The tab announces 'not a seat' and no machinery runs in it.", "strength": "enforced", "weakness": "Bound to one tab in one window. A rollover, a new tab or a new window is a stranger until registered — the root of Ben's one-window rule."}, {"checks": "The paused flag in the state object. While it stands, the pump holds every letter.", "holder": "Ben", "id": "g-paused", "kind": "code", "name": "The Pause Switch", "onFail": "Traffic flows.", "strength": "enforced", "weakness": "It gates the bridge only. The spool watcher and the seats themselves are not paused by it — by design."}, {"checks": "Whether THIS message is safe to send: three conditions, each answered POSITIVE, NEGATIVE or UNKNOWN from evidence. UNKNOWN never sends.", "holder": "fence.js + sendcore.js", "id": "g-fence", "kind": "code", "name": "The Send-Safety Fence", "onFail": "The send does not happen; the letter waits with its reason.", "strength": "enforced", "weakness": "It guards the send path that runs through it. The v0.18 consolidation exists because copied send paths once bypassed exactly this kind of check."}, {"checks": "A full-body fingerprint of the settled reply against the seen ledger; a twin (identical or prefix body) is suppressed.", "holder": "The letterbox", "id": "g-dedup", "kind": "code", "name": "Dedup — fingerprint & twin rule", "onFail": "The reply is dropped — and a reason is written to the popup log.", "strength": "enforced", "weakness": "The reason lands where Ben doesn't look. From his chair, a dropped reply and a reply never written are indistinguishable."}, {"checks": "The context-full click waits until the newest finished turn is CAPTURED: nothing still settling in the letterbox, and a handoff or a drop on record at or after the settle. Finished is not enough — captured is the bar.", "holder": "The content script's turn watcher", "id": "g-capture", "kind": "code", "name": "The Capture Gate (v0.20.6)", "onFail": "The watcher logs CONTEXT_FULL_WAITING with its reason, and the click waits.", "strength": "built-lab", "weakness": "Built and unit-tested (8/8), deployed to the lab copy 2026-11-19 — but not yet proven live: whether the running extension was reloaded to 0.20.6 is unconfirmed, and briefcase-59's reply was eaten the same evening it shipped."}, {"checks": "A DELIVERING record older than eight minutes is reaped to STOPPED, reason DELIVERING_STUCK, fate declared unknown.", "holder": "The background", "id": "g-watchdog", "kind": "code", "name": "The Delivering Watchdog", "onFail": "The letter waits on its human: push it through, or let it go.", "strength": "enforced", "weakness": "It bounds the wait; it cannot recover the letter. The remedy is a human decision — by design, and still a pair of Ben's hands on the machinery."}, {"checks": "That a captured reply actually wakes Remmy — capture and wake are different events, and both must happen.", "holder": "The waker + Remmy's discipline", "id": "g-wake", "kind": "convention", "name": "The Wake Path", "onFail": "The reply sits captured and unread until Remmy surfaces and drains the pool.", "strength": "unreliable", "weakness": "The waker has died before, exhausted its resurrections, and stood at gave_up awaiting Ben's human tap — which Remmy cannot supply. Until it is rebuilt, the pool drain at focus returns is the real wake path, and it is a habit, not a mechanism."}, {"checks": "Before Remmy sends into a seat window: the conversation's state, read fresh. A context-full conversation is BLOCKED.", "holder": "Remmy", "id": "g-presend", "kind": "convention", "name": "The Presend Guard", "onFail": "The send does not happen.", "strength": "procedural", "weakness": "Procedural: it holds because Remmy runs it, in its own command, every time. Nothing in the bridge enforces it."}], "layers": [{"id": "people", "name": "The people", "y": 16}, {"id": "seats", "name": "The seats", "y": 150}, {"id": "tabs", "name": "In the tabs", "y": 330}, {"id": "background", "name": "The background", "y": 520}, {"id": "state", "name": "State & logs", "y": 690}, {"id": "outside", "name": "Outside the browser — Remmy's side", "y": 830}], "parts": [{"gates": ["g-marker", "g-presend"], "id": "remmy", "job": "Writes the letters; drains the pool.", "layer": "people", "name": "REMMY", "role": "The orchestrator in the main chat. Her letters travel under the marker; her replies to seats are the bridge's outbound traffic. She also runs the presend guard and reads the spool when the bridge's own path fails.", "stresses": ["s-ferry"], "w": 200, "x": 300, "y": 62}, {"gates": ["g-paused", "g-watchdog"], "id": "ben", "job": "The human. Owns the pause switch — and, too often, the ferry.", "layer": "people", "name": "BEN", "role": "The bridge's owner and its last-resort transport. When a delivery wedges he decides its fate (push through, or let it go); when a reply is eaten he has carried it by hand. His ruling of 2026-11-19: he does not want to keep being the bridge.", "stresses": ["s-ferry"], "w": 190, "x": 700, "y": 62}, {"gates": [], "id": "vane", "job": "The examiner in the alex seat.", "layer": "people", "name": "VANE", "role": "ChatGPT, occupying the seat named for Alex (stood down 2026-11-18). She receives letters in her window, works, and replies — her replies are the bridge's inbound traffic, and the ones most often eaten.", "stresses": ["s-race"], "w": 180, "x": 1100, "y": 62}, {"gates": ["g-registration"], "id": "seat-remmy", "job": "The tab the bridge delivers replies into.", "layer": "seats", "name": "REMMY'S SEAT — muse.ai tab", "role": "The main-chat tab, registered as the remmy seat. Inbound letters arrive here as messages in her own conversation.", "stresses": [], "w": 240, "x": 330, "y": 196}, {"gates": ["g-registration"], "id": "seat-alex", "job": "Vane's window. Letters land here; replies start here.", "layer": "seats", "name": "THE ALEX SEAT — chatgpt.com tab", "role": "One specific tab in one specific window, registered as the alex seat. Ben's rule: the seat is the window — new chats inside it, never new windows. A tab that is not registered announces itself 'not a seat' and the machinery stays silent in it.", "stresses": ["s-seat", "s-stall", "s-wedge"], "w": 260, "x": 820, "y": 196}, {"cluster": "extension", "gates": ["g-capture"], "id": "content", "job": "Wires the machinery into each seat page; runs the turn watcher.", "layer": "tabs", "name": "THE CONTENT SCRIPT", "role": "Injected into every seat tab. It starts the letterbox, polls the newest turn every two seconds, and makes the rollover decision: when the context fills, whether the new-chat click may fire — since v0.20.6, only after the finished reply is captured, not merely finished.", "stresses": ["s-race"], "w": 180, "x": 180, "y": 376}, {"cluster": "extension", "gates": ["g-dedup"], "id": "letterbox", "job": "Catches her replies and hands them to the bridge.", "layer": "tabs", "name": "THE LETTERBOX", "role": "Watches the seat's newest turn: five quiet seconds and three clean observations make it settled; a fingerprint check kills duplicates and twins; then it hands the reply over. Every rejection is supposed to write a drop reason — to the popup log, where Ben does not look.", "stresses": ["s-pickup", "s-race", "s-ferry"], "w": 190, "x": 420, "y": 376}, {"cluster": "extension", "gates": ["g-fence"], "id": "adapter", "job": "Each surface's eyes and hands.", "layer": "tabs", "name": "THE ADAPTERS", "role": "One per platform (chatgpt.js, claude.js, and siblings): read the turns, find the composer, type the letter, click send structurally — never by coordinates, because the bridge's own popup panel covers the send button. Also answers the newest-turn question the capture gate asks.", "stresses": ["s-popup", "s-stall"], "w": 190, "x": 670, "y": 376}, {"cluster": "extension", "gates": ["g-fence"], "id": "sendcore", "job": "The one shared send decision.", "layer": "tabs", "name": "SEND CORE + THE FENCE", "role": "sendcore.js holds the send logic every adapter shares — written once after Ben's 2026-11-09 root-cause ruling, when five copied send paths all carried the same stop-veto flaw. fence.js asks whether THIS message is safe to send: three conditions, each answered POSITIVE, NEGATIVE or UNKNOWN from evidence — UNKNOWN never sends.", "stresses": [], "w": 210, "x": 920, "y": 376}, {"cluster": "extension", "gates": ["g-marker"], "id": "protocol", "job": "Markers and envelopes: how a letter is a letter.", "layer": "tabs", "name": "THE PROTOCOL", "role": "protocol.js defines the routing markers and the envelope every bridge message carries — message_id, from, to, type, reply_to, body. The marker line in Remmy's message is a delimiter: above it is conversation, below it is the letter.", "stresses": [], "w": 190, "x": 1180, "y": 376}, {"gates": ["g-watchdog", "g-paused"], "id": "background", "job": "Custody: the pump, the delivery states, the watchdog.", "layer": "background", "name": "THE BACKGROUND — pair machine", "role": "The service worker. It holds every letter as a record with a state — waiting, DELIVERING, acknowledged, STOPPED — and works the pump between the seats. A DELIVERING record stale past eight minutes is reaped to STOPPED with reason DELIVERING_STUCK, its fate declared unknown. It also pushes the face state to the tabs.", "stresses": ["s-wedge"], "w": 270, "x": 360, "y": 566}, {"gates": [], "id": "crusher", "job": "Manages transportation between Ben, Alex and Remmy.", "layer": "background", "name": "CRUSHER — the Bridge Officer", "role": "Ben and Alex's design (2026-11-06): an agent inside the bridge whose job is the traffic itself. He is not a fourth participant in any conversation — he is infrastructure, and his name rides on the delivery records he manages.", "stresses": [], "w": 230, "x": 730, "y": 566}, {"gates": [], "id": "stage1", "job": "Identity, ledger, capture — the second architecture.", "layer": "background", "name": "THE STAGE 1 CORE", "role": "stage1core.js, a generated bundle riding inside the background: PB-ID source identity (an ID derives only from a verified source occurrence), the registration ledger with its authority boundary, and capture acknowledgement (every submission resolves to exactly one outcome). Built under the Stage 1 programme; how much of the live traffic it actually governs is not obvious from the code.", "stresses": ["s-two-arch"], "w": 220, "x": 1080, "y": 566}, {"gates": ["g-registration", "g-paused"], "id": "storage", "job": "One object remembers the bridge.", "layer": "state", "name": "THE STATE OBJECT", "role": "chrome.storage.local, key pulseBridgeStateV1: the seat registrations (tab, window, platform), the paused switch, and the seen-fingerprints dedup ledger, bounded and FIFO. If it is not in this object, the bridge does not know it.", "stresses": ["s-seat"], "w": 230, "x": 360, "y": 736}, {"gates": ["g-watchdog"], "id": "popup", "job": "Ben's view of the bridge — and its bell.", "layer": "state", "name": "THE POPUP + THE FACE", "role": "The toolbar popup and the in-page face: letter states, wait reasons in plain words, the log (where the letterbox's drop reasons live), the alert bell, and the two buttons that end a wedge — push it through, or let it go. The popup panel also physically covers ChatGPT's send button, which is why sends are structural, never coordinate clicks.", "stresses": ["s-popup", "s-pickup"], "w": 230, "x": 730, "y": 736}, {"gates": ["g-capture"], "id": "turnlog", "job": "The watcher's own record.", "layer": "state", "name": "THE TURN LOG", "role": "chrome.storage.local, key pbTurnLogV1: the turn watcher's lines — CONTEXT_FULL_WAITING with its reason, CONTEXT_FULL_CLICKED. This is where a rollover proves whether the capture gate held or the click jumped the gun.", "stresses": ["s-race"], "w": 200, "x": 1080, "y": 736}, {"gates": [], "id": "spool", "job": "The backstop: copies her replies, bridge or no bridge.", "layer": "outside", "name": "THE SPOOL WATCHER", "role": "A watcher on Remmy's side (listener_watch.py) that extracts seat replies into an append-only spool, events/alex.jsonl, whether or not the bridge carried them. It caught the replies the letterbox missed — until the evening of 2026-11-19, when it captured nothing after 20:32 and its silence looked exactly like 'no reply'.", "stresses": ["s-spool"], "w": 240, "x": 330, "y": 876}, {"gates": ["g-wake"], "id": "pool", "job": "Where captured replies wait for Remmy's eyes.", "layer": "outside", "name": "THE POOL", "role": "pool_check.py drains the spool at every focus return, oldest first, against per-seat watermarks. Capture is not delivery: a reply can sit in the pool, captured and unread, until Remmy surfaces — the reveal is a discipline, not a mechanism.", "stresses": ["s-spool"], "w": 180, "x": 660, "y": 876}, {"gates": ["g-presend"], "id": "guard", "job": "Remmy's check before any send into a seat window.", "layer": "outside", "name": "THE PRESEND GUARD", "role": "presend_guard.py reads the seat conversation's state before Remmy sends: a context-full conversation is BLOCKED, and a blocked send does not happen. It is a script Remmy must choose to run — procedural, every time, in its own command.", "stresses": [], "w": 210, "x": 950, "y": 876}], "stresses": [{"evidence": "2026-11-19 alone: the reply to briefcase-56 ferried by Ben's hand at 20:03; the reply to briefcase-59 eaten by the rollover click and recovered by Remmy from the conversation's own record; Ben, 20:45: 'I don't want to keep being the bridge.'", "id": "s-ferry", "issue": "Every failure in the carrying machinery resolves the same way: a human copies the words across by hand. The bridge's failure mode is not silence — it is Ben, doing the bridge's job, at the exact moment he is also supposed to be directing the work.", "mitigation": "None built. The capture gate aims at one ferry point; the wedge, the silent drop and the wake path all still resolve to a human. This stress point is the commission for whatever comes next.", "name": "FERRY POINT — Ben is the fallback transport", "where": ["ben", "letterbox", "content"]}, {"evidence": "briefcase-55 eaten under v0.20.4 (the guard waited for FINISHED, not CAPTURED); briefcase-59's reply eaten on 2026-11-19 ~20:37 with v0.20.6 already deployed to the lab copy.", "id": "s-race", "issue": "When her context fills, the new-chat click and the letterbox race for her reply. The click is fast and certain; the capture needs five quiet seconds, three clean looks, and a handoff. If the click wins, the reply stays behind in a conversation nobody is looking at.", "mitigation": "v0.20.6's capture gate — built, unit-tested 8/8, hash-verified into the lab. Live acceptance still open: no rollover has yet logged WAITING-with-a-capture-reason before CLICKED.", "name": "FERRY POINT — the rollover race", "where": ["content", "letterbox", "turnlog"]}, {"evidence": "2026-11-19 17:22–17:44: letter briefcase-19 sat in DELIVERING while Vane had already replied to it; the seat tab had navigated mid-delivery and the attempt's promise never settled.", "id": "s-wedge", "issue": "A delivery whose acknowledgement never arrives wedges the pump: the record says DELIVERING while the letter has, in fact, already landed and been answered. Every letter behind it waits on a ghost.", "mitigation": "v0.20.5's watchdog: eight minutes, then STOPPED with the fate declared unknown and Ben offered push-through or let-go. The bound holds; the letter still needs a human.", "name": "The DELIVERING wedge", "where": ["background", "seat-alex"]}, {"evidence": "2026-11-19 evening: two consecutive replies not carried (one ferried by Ben, one recovered from the spool), a third self-delivered. Root cause still unpinned; the popup log that names the drop reason has never been read.", "id": "s-pickup", "issue": "Some of her replies are judged and dropped by the letterbox — duplicate, twin, speaker verdict — and the only trace is a reason in the toolbar popup log, a place Ben never looks. From his chair the reply simply never happened.", "mitigation": "Open. The discriminator is identified — read the popup log in her window — but not yet done.", "name": "The silent drop", "where": ["letterbox", "popup"]}, {"evidence": "2026-11-19: the spool's last capture is 20:32:56; briefcase-59's reply, minutes later, is not in it. The net missed the very fall it exists for.", "id": "s-spool", "issue": "The spool watcher is the safety net under the bridge — and it can stop without a sound. Its silence is indistinguishable from 'she hasn't replied', so a dead backstop manufactures false calm.", "mitigation": "None. The watcher's own liveness is unmonitored — nothing watches the watcher.", "name": "The backstop's blind spot", "where": ["spool", "pool"]}, {"evidence": "Ben's standing rule (2026-11-19): new chats inside the seat's window only, never new windows. The recovery tab opened to fetch briefcase-59's reply declared itself 'not a seat' on sight.", "id": "s-seat", "issue": "A seat is bound to a single tab in a single window. Rollovers move the conversation; new tabs announce 'not a seat'; everything keyed to the old surface — registration, watcher, capture — goes blind at exactly the moment traffic is most fragile.", "mitigation": "Ben's rule, honoured by discipline. The machinery itself still treats every new surface as a stranger.", "name": "One window, one seat", "where": ["seat-alex", "storage"]}, {"evidence": "The send-path fault family of 2026-11-15: inserts that typed but never submitted. Ben's ruling: coordinates are wrong — select structurally, click the element itself.", "id": "s-popup", "issue": "The bridge's own popup panel sits over ChatGPT's send button. A coordinate click lands on the panel, not the button — the letter sits typed, unsent, looking sent.", "mitigation": "Structural sends only, by rule and by adapter design. The panel still covers the button; the rule is what stands between it and a silent unsent letter.", "name": "The panel covers the send button", "where": ["popup", "adapter"]}, {"evidence": "Repeatedly observed in the RemmyChrome driving work: after a send into a stalled tab, reads time out — and the seat's reply arriving is the only trustworthy proof of delivery.", "id": "s-stall", "issue": "A backgrounded seat tab freezes: keystrokes and clicks queue while the page is stalled, and an insert can land during the stall even when its acknowledgement is lost. Send again on a lost ack and the letter goes twice; don't, and it may never have gone.", "mitigation": "Discipline: always re-read the composer before any re-send. The machinery offers no delivery receipt stronger than her answer.", "name": "The stalled tab", "where": ["adapter", "seat-alex"]}, {"evidence": "stage1core.js is a 1,781-line generated bundle beside background.js's 2,031 lines; the manifest loads the v0.19 content path into the tabs. Tonight's fixes (v0.20.5, v0.20.6) all landed in the live path, none in the Stage 1 core.", "id": "s-two-arch", "issue": "The live v0.19/v0.20 pair machine and the Stage 1 core (identity, ledger, capture acknowledgement) ride in the same background, and the code does not make obvious which parts govern live traffic. A reader — or a repair — can easily fix the architecture that isn't running.", "mitigation": "This map is the current mitigation: it draws the live path as the system, and names the Stage 1 core as what it is — built, bundled, and not the road the letters travel.", "name": "Two architectures, one bridge", "where": ["stage1", "background"]}], "subtitle": "Every part of the letter-carrying machinery, drawn from the code (v0.20.6, lab copy). Where the bridge drops a letter, Ben becomes the bridge — those places are marked as ferry points.", "title": "The Pulse Bridge — the whole system", "updated": "2026-11-19"};
+const parts = {}, flows = {}, gates = {}, stresses = {};
+DATA.parts.forEach(p=>parts[p.id]=p); DATA.flows.forEach(f=>flows[f.id]=f);
+DATA.gates.forEach(g=>gates[g.id]=g); DATA.stresses.forEach(s=>stresses[s.id]=s);
+const H = 64; // part box height
+let showFlows = true, showStress = false;
+
+document.getElementById('ttl').textContent = DATA.title;
+document.getElementById('stl').textContent = DATA.subtitle;
+document.getElementById('upd').textContent = 'Content settled ' + DATA.updated + ' · ' +
+  DATA.parts.length + ' parts · ' + DATA.flows.length + ' flows · ' +
+  DATA.gates.length + ' gates · ' + DATA.stresses.length + ' stress points';
+document.getElementById('gatecount').textContent = '(' + DATA.gates.length + ')';
+document.getElementById('stresscount').textContent = '(' + DATA.stresses.length + ')';
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function partStresses(pid){ return DATA.stresses.filter(s=>s.where.includes(pid)); }
+function partGates(p){ return (p.gates||[]).map(id=>gates[id]).filter(Boolean); }
+function flowsIn(pid){ return DATA.flows.filter(f=>f.to===pid); }
+function flowsOut(pid){ return DATA.flows.filter(f=>f.from===pid); }
+
+// ---------- SVG ----------
+const svg = document.getElementById('svg');
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+
+function edgePoint(p, tx, ty){
+  const dx = tx-p.x, dy = ty-p.y; if(dx===0&&dy===0) return [p.x,p.y];
+  const hw = p.w/2, hh = H/2; const s = Math.min(
+    dx!==0? hw/Math.abs(dx): Infinity, dy!==0? hh/Math.abs(dy): Infinity);
+  return [p.x+dx*s, p.y+dy*s];
+}
+function wrap2(text, max){
+  const words = text.split(' '); const lines = []; let cur = '';
+  for(const w of words){
+    if((cur+' '+w).trim().length > max && cur){ lines.push(cur); cur = w; if(lines.length===2) break; }
+    else cur = (cur+' '+w).trim();
+  }
+  if(lines.length<2 && cur) lines.push(cur);
+  if(lines.length===2){
+    const used = lines.join(' ').split(' ').length;
+    if(used < words.length) lines[1] = lines[1].replace(/[\s,;:.]+$/,'') + '…';
+  }
+  return lines;
+}
+function renderMap(){
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const defs = el('defs',{},svg);
+  defs.innerHTML = '<linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">'+
+    '<stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>'+
+    '<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+    '<path d="M0 0L10 5L0 10z" fill="#7d8aa5"/></marker>'+
+    '<marker id="arrW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+    '<path d="M0 0L10 5L0 10z" fill="#fbbf24"/></marker>';
+  // layer labels
+  DATA.layers.forEach(L=>{
+    const t = el('text',{x:26,y:L.y+16,fill:'#475569','font-size':13,'letter-spacing':'.14em'},svg);
+    t.textContent = L.name.toUpperCase();
+  });
+  // duenna cluster
+  const cl = DATA.parts.filter(p=>p.cluster==='extension');
+  if(cl.length){
+    const xs = cl.map(p=>p.x-p.w/2), xe = cl.map(p=>p.x+p.w/2);
+    const ys = cl.map(p=>p.y-H/2), ye = cl.map(p=>p.y+H/2);
+    el('rect',{x:Math.min(...xs)-18,y:Math.min(...ys)-34,width:Math.max(...xe)-Math.min(...xs)+36,
+      height:Math.max(...ye)-Math.min(...ys)+52,rx:14,fill:'rgba(124,58,237,.06)',
+      stroke:'#475569','stroke-dasharray':'6 5'},svg);
+    const t = el('text',{x:Math.min(...xs)-2,y:Math.min(...ys)-14,fill:'#a78bfa','font-size':13,'letter-spacing':'.1em'},svg);
+    t.textContent = 'IN THE TABS — the same machinery injected into every seat page';
+  }
+  // flows
+  if(showFlows){
+    const pairCount = {};
+    DATA.flows.forEach(f=>{
+      const key = [f.from,f.to].sort().join('|'); pairCount[key]=(pairCount[key]||0)+1;
+    });
+    const pairSeen = {};
+    DATA.flows.forEach(f=>{
+      const a = parts[f.from], b = parts[f.to]; if(!a||!b) return;
+      const key = [f.from,f.to].sort().join('|');
+      const n = pairCount[key]; pairSeen[key]=(pairSeen[key]||0)+1;
+      const idx = pairSeen[key]-1;
+      const off = n>1 ? (idx-(n-1)/2)*22 : 0;
+      let pts, labelPt;
+      if(f.via && f.via.length){
+        const start = edgePoint(a, f.via[0][0], f.via[0][1]);
+        const end = edgePoint(b, f.via[f.via.length-1][0], f.via[f.via.length-1][1]);
+        pts = [start, ...f.via, end];
+        // label on the longest segment
+        let best = 0, bl = 0;
+        for(let i=0;i<pts.length-1;i++){
+          const L = Math.hypot(pts[i+1][0]-pts[i][0], pts[i+1][1]-pts[i][1]);
+          if(L>bl){ bl=L; best=i; }
+        }
+        labelPt = [(pts[best][0]+pts[best+1][0])/2, (pts[best][1]+pts[best+1][1])/2];
+      } else {
+        const [x1,y1] = edgePoint(a,b.x,b.y), [x2,y2] = edgePoint(b,a.x,a.y);
+        const mx=(x1+x2)/2, my=(y1+y2)/2;
+        const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+        const ox = -dy/len*off, oy = dx/len*off;
+        const cx = mx+ox*2.2, cy = my+oy*2.2;
+        pts = [[x1,y1],[cx,cy],[x2,y2]];
+        labelPt = [(x1+2*cx+x2)/4, (y1+2*cy+y2)/4];
+        const d = `M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`;
+        const path = el('path',{d,fill:'none',stroke:'#54657f','stroke-width':1.6,
+          'marker-end':'url(#arr)',class:'flowline','data-flow':f.id},svg);
+        el('path',{d,fill:'none',stroke:'transparent','stroke-width':14,class:'flowline','data-flow':f.id},svg)
+          .addEventListener('click',()=>go('flow',f.id));
+        path.addEventListener('click',()=>go('flow',f.id));
+        const t = el('text',{x:labelPt[0],y:labelPt[1]-4,'text-anchor':'middle',fill:'#8fa1ba','font-size':12,class:'flowline','data-flow':f.id},svg);
+        t.textContent = f.name; t.addEventListener('click',()=>go('flow',f.id));
+        return;
+      }
+      const d = pts.map((p,i)=>(i===0?'M':'L')+p[0]+' '+p[1]).join(' ');
+      const path = el('path',{d,fill:'none',stroke:'#54657f','stroke-width':1.6,
+        'marker-end':'url(#arr)',class:'flowline','data-flow':f.id},svg);
+      el('path',{d,fill:'none',stroke:'transparent','stroke-width':14,class:'flowline','data-flow':f.id},svg)
+        .addEventListener('click',()=>go('flow',f.id));
+      path.addEventListener('click',()=>go('flow',f.id));
+      const vert = Math.abs(pts[1][0]-pts[0][0]) < 4 && pts.length>2;
+      let anch = 'middle', lx2 = labelPt[0];
+      if(labelPt[0] > 1150){ anch = 'end'; lx2 = labelPt[0]-8; }
+      else if(vert){ anch = 'start'; lx2 = labelPt[0]+8; }
+      const t = el('text',{x:lx2,y:labelPt[1]-4,'text-anchor':anch,
+        fill:'#8fa1ba','font-size':12,class:'flowline','data-flow':f.id},svg);
+      t.textContent = f.name; t.addEventListener('click',()=>go('flow',f.id));
+    });
+  }
+  // parts
+  DATA.parts.forEach(p=>{
+    const g = el('g',{class:'partbox','data-part':p.id},svg);
+    const stressN = partStresses(p.id).length;
+    el('rect',{x:p.x-p.w/2,y:p.y-H/2,width:p.w,height:H,rx:11,
+      fill:'rgba(15,23,42,.92)',
+      stroke: (showStress&&stressN)? '#fbbf24' : (p.id==='ben'||p.id==='briefcase'||p.id==='shelf')? 'url(#acc)' : '#3b4a63',
+      'stroke-width': (showStress&&stressN)? 2.2 : 1.5},g);
+    const lines = wrap2(p.job, Math.max(16, Math.floor(p.w/6.6)));
+    const t1 = el('text',{x:p.x,y:p.y-(lines.length>1?12:4),'text-anchor':'middle',fill:'#f1f5f9','font-size':14.5,'font-weight':700},g);
+    t1.textContent = p.name;
+    lines.forEach((ln,i)=>{
+      const t2 = el('text',{x:p.x,y:p.y+(lines.length>1?6+i*14:15),'text-anchor':'middle',fill:'#94a3b8','font-size':11},g);
+      t2.textContent = ln;
+    });
+    if(showStress && stressN){
+      const bx = p.x+p.w/2-4, by = p.y-H/2+4;
+      el('polygon',{points:`${bx-11},${by+13} ${bx},${by-4} ${bx+11},${by+13}`,fill:'#fbbf24'},g);
+      const tt = el('text',{x:bx,y:by+10,'text-anchor':'middle',fill:'#070b18','font-size':12,'font-weight':800},g);
+      tt.textContent = '!';
+      const tn = el('text',{x:bx-20,y:by+12,'text-anchor':'end',fill:'#fbbf24','font-size':12,'font-weight':700},g);
+      tn.textContent = stressN;
+    }
+    g.addEventListener('click',()=>go('part',p.id));
+  });
+}
+
+// ---------- detail panel ----------
+const detail = document.getElementById('detail');
+function chip(kind,id,label,warn){ return `<span class="chip${warn?' warn':''}" onclick="go('${kind}','${id}')">${esc(label)}</span>`; }
+function strengthBadge(s){ return `<span class="badge b-${s.replace(' ','-')}">${esc(s.toUpperCase())}</span>`; }
+
+function showOverview(){
+  detail.innerHTML = `<h2>Walk the system</h2>
+    <p class="jobline">Every part below owns one job. Click a part to see its role, what flows through it, the gates it answers to — and what could create an issue there.</p>
+    <h3>How to read it</h3>
+    <p>Lines are flows: what actually travels between parts. Diamonds are not drawn — gates live on the flows and in the Gates view, each labelled with its real strength: <b>enforced</b>, <b>procedural</b>, or <b>designed</b>. Labels are facts here.</p>
+    <p>Turn on the <b>stress layer</b> to light up the ${DATA.stresses.length} known stress points — the single threads, the ownerless job, the places this system has already hurt itself.</p>
+    <h3>The acceptance test</h3>
+    <p>Ben's: we can look at this, point at a spot, and say "hey — this could create an issue." If a spot can't be pointed at, it isn't on the map yet.</p>`;
+}
+function showPart(p){
+  const ins = flowsIn(p.id), outs = flowsOut(p.id), gs = partGates(p), ss = partStresses(p.id);
+  detail.innerHTML = `<h2>${esc(p.name)}</h2>
+    <p class="jobline">${esc(p.job)}</p>
+    <h3>Role</h3><p>${esc(p.role)}</p>
+    ${outs.length? `<h3>Flows out</h3>` + outs.map(f=>`<span class="rowlink" onclick="go('flow','${f.id}')">${esc(f.name)} → ${esc(parts[f.to].name)}<small>${esc(f.carries)}</small></span>`).join('') : ''}
+    ${ins.length? `<h3>Flows in</h3>` + ins.map(f=>`<span class="rowlink" onclick="go('flow','${f.id}')">${esc(parts[f.from].name)} → ${esc(f.name)}<small>${esc(f.carries)}</small></span>`).join('') : ''}
+    ${gs.length? `<h3>Gates</h3>` + gs.map(g=>chip('gate',g.id,g.name)).join('') : ''}
+    ${ss.length? `<h3>Stress points here</h3>` + ss.map(s=>`<span class="rowlink" onclick="go('stress','${s.id}')">⚠ ${esc(s.name)}<small>${esc(s.issue)}</small></span>`).join('') : '<h3>Stress points</h3><p>None recorded at this part.</p>'}
+  `;
+}
+function showFlow(f){
+  const g = f.gate? gates[f.gate] : null;
+  detail.innerHTML = `<h2>${esc(f.name)}</h2>
+    <p class="jobline">${esc(parts[f.from].name)} → ${esc(parts[f.to].name)}</p>
+    <h3>What travels it</h3><p>${esc(f.carries)}</p>
+    <h3>Its gate</h3><p>${g? chip('gate',g.id,g.name)+' '+strengthBadge(g.strength) : 'No gate on this flow — that itself is worth noticing.'}</p>
+    <h3>What breaks it</h3><p>${esc(f.breaks)}</p>
+    <h3>Jump to</h3>${chip('part',f.from,parts[f.from].name)}${chip('part',f.to,parts[f.to].name)}`;
+}
+function showGate(g){
+  detail.innerHTML = `<h2>${esc(g.name)}</h2>
+    <p>${strengthBadge(g.strength)} <span style="color:var(--muted);font-size:13px">${esc(g.kind)}</span></p>
+    <h3>Where it stands</h3><p>${esc(g.where)}</p>
+    <h3>What it checks</h3><p>${esc(g.checks)}</p>
+    <h3>Who holds it</h3><p>${esc(g.holder)}</p>
+    <h3>On failure</h3><p>${esc(g.onFail)}</p>
+    <h3>Known weakness</h3><p>${esc(g.weakness)}</p>`;
+}
+function showStressPoint(s){
+  detail.innerHTML = `<h2>⚠ ${esc(s.name)}</h2>
+    <h3>The issue</h3><p>${esc(s.issue)}</p>
+    <h3>Evidence</h3><p>${esc(s.evidence)}</p>
+    <h3>Mitigation & residual</h3><p>${esc(s.mitigation)}</p>
+    <h3>Where it lives</h3><p>${s.where.map(id=> parts[id]? chip('part',id,parts[id].name) : (flows[id]? chip('flow',id,flows[id].name):'')).join('')}</p>`;
+}
+
+// ---------- gates & stress views ----------
+function renderGates(){
+  const kinds = [...new Set(DATA.gates.map(g=>g.kind))];
+  document.getElementById('view-gates').innerHTML = kinds.map(k=>
+    `<div class="secttl">${esc(k)} gates</div><div class="cards">` +
+    DATA.gates.filter(g=>g.kind===k).map(g=>`<div class="card" onclick="go('gate','${g.id}')">
+      <h3>${esc(g.name)}</h3>${strengthBadge(g.strength)}
+      <div class="lbl">Where</div><p>${esc(g.where)}</p>
+      <div class="lbl">Checks</div><p>${esc(g.checks)}</p>
+      <div class="lbl">Held by</div><p>${esc(g.holder)}</p></div>`).join('') + '</div>'
+  ).join('');
+}
+function renderStress(){
+  document.getElementById('view-stress').innerHTML = '<div class="cards">' +
+    DATA.stresses.map(s=>`<div class="card" onclick="go('stress','${s.id}')">
+      <h3>⚠ ${esc(s.name)}</h3>
+      <div class="lbl">The issue</div><p>${esc(s.issue)}</p>
+      <div class="lbl">Evidence</div><p>${esc(s.evidence)}</p>
+      <div class="lbl">Where</div><p>${s.where.map(id=>parts[id]?parts[id].name:'').filter(Boolean).join(' · ')}</p></div>`).join('') + '</div>';
+}
+
+// ---------- the journey (front page, plain words) ----------
+const JOURNEY = [
+  { who:'Remmy — in the main chat', title:'Remmy writes a letter', parts:['remmy'],
+    line:'A letter starts as an ordinary message in the main chat. Nothing about it is special — until the marker line appears.' },
+  { who:'The protocol', title:'The marker routes it', parts:['protocol'], gate:'g-marker',
+    line:'Everything above the marker line stays between Ben and Remmy. Everything below it is the letter, and it travels. No marker, no letter — the bridge carries nothing else.' },
+  { who:'The background — the pair machine', title:'The bridge takes custody', parts:['background'],
+    line:'The letter becomes a record with a state: waiting, delivering, delivered, stopped. From this point the bridge — not a person — is responsible for it.' },
+  { who:'The send-safety fence', title:'Is this safe to send?', parts:['sendcore'], gate:'g-fence',
+    line:'Three questions, answered from evidence, never from assumption: the right seat, the right moment, the right message. UNKNOWN means it does not send.' },
+  { who:'Her window — the alex seat', title:'It lands in her window', parts:['seat-alex'],
+    line:'The adapter types the letter into her composer and sends it with a structural click — never by coordinates; the bridge\u2019s own popup covers the send button. Her seat is this window. Step outside it and nothing is a seat.' },
+  { who:'Vane — the examiner', title:'She reads, works, replies', parts:['vane'],
+    line:'Her reply is an ordinary message in her window. Until the letterbox catches it, it exists in exactly one place: on her screen.' },
+  { who:'The letterbox', title:'The reply is caught', parts:['letterbox'], gate:'g-dedup',
+    line:'The letterbox watches her newest turn settle — five quiet seconds, three clean looks — checks it isn\u2019t a duplicate, and hands it over. Every rejection is supposed to leave its reason in the log.' },
+  { who:'The turn watcher', title:'The rollover stands guard', parts:['content'], gate:'g-capture', tag:'FERRY POINT',
+    line:'When her context fills, a new chat beckons — and the click must wait until her reply is captured, not merely finished. When this guard fails, her words stay behind in the old chat… and Ben ferries them across by hand.' },
+  { who:'Remmy — the main chat', title:'The reply reaches Remmy', parts:['remmy'], gate:'g-wake', tag:'FERRY POINT',
+    line:'The loop closes — when the wake path works. Tonight it closed because Ben carried the message himself. A bridge that needs its human to be the bridge has failed at its one job.' },
+];
+const AROUND = [
+  { part:'spool', title:'The backstop', gate:null,
+    line:'A separate watcher on Remmy\u2019s side copies her replies into a spool, bridge or no bridge. It caught what the letterbox missed — until the night it silently stopped at 20:32, and nobody knew.' },
+  { part:'popup', title:'Ben\u2019s face on the bridge', gate:'g-watchdog',
+    line:'The panel showing letter states, wait reasons and the log — and, when a letter wedges, the two buttons that end the wait: push it through, or let it go.' },
+];
+function gateLine(gid, tag){
+  const g = gid? gates[gid] : null;
+  if(!g && !tag) return '';
+  return `<div class="gateline">${tag? `<b style="color:var(--cyan)">${esc(tag)}</b> &nbsp;` : ''}${g? chip('gate',g.id,g.name)+' '+strengthBadge(g.strength) : ''}</div>`;
+}
+function renderJourney(){
+  const st = JOURNEY.map((s,i)=>{
+    const minis = (s.minis||[]).map(m=>`<div class="mini"><span class="mname" onclick="go('part','${m.part}')">${esc(parts[m.part].name)}</span> — <p>${esc(m.line)}</p>${gateLine(m.gate)}</div>`).join('');
+    const names = (s.parts||[]).map(pid=>`<span class="mname" style="font-weight:650;cursor:pointer" onclick="go('part','${pid}')">${esc(parts[pid].name)}</span>`).join(' · ');
+    return `<div class="station"><div class="rail"><div class="dot${s.tag?' gate':''}">${i+1}</div><div class="stem"></div></div>
+      <div class="scard"><div class="who">${esc(s.who)}</div><h3>${esc(s.title)}</h3>
+      ${s.line? `<p>${esc(s.line)}</p>` : ''}${minis}
+      ${s.parts? `<div class="gateline">The part: ${names}</div>` : ''}${gateLine(s.gate, s.tag)}</div></div>`;
+  }).join('');
+  document.getElementById('view-journey').innerHTML =
+    `<p class="verdict">A letter travels down this page: written by one, carried by machinery, answered by another. At every station the bridge either <b>carries the words — or Ben does</b>. The stations where he has had to are marked as ferry points.</p>
+     <div class="journey">${st}</div>
+     <div class="secttl">Around the journey</div>
+     <div class="around">${AROUND.map(a=>`<div class="card" style="cursor:default"><div class="who" style="font-size:11.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--cyan)">${esc(parts[a.part].name)}</div><h3>${esc(a.title)}</h3><p>${esc(a.line)}</p>${gateLine(a.gate)}</div>`).join('')}</div>
+     <p class="closeline">Point at any station — that is where an issue would live. Everything behind this page is one tap down: the full diagram, every gate with its real strength, and the ${DATA.stresses.length} known stress points.</p>`;
+}
+
+// ---------- routing ----------
+let view = 'journey';
+function setView(v){
+  view = v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.view===v));
+  document.getElementById('view-journey').classList.toggle('hidden', v!=='journey');
+  document.getElementById('view-map').classList.toggle('hidden', v!=='map');
+  document.getElementById('view-gates').classList.toggle('hidden', v!=='gates');
+  document.getElementById('view-stress').classList.toggle('hidden', v!=='stress');
+}
+function go(kind, id){
+  location.hash = '#/'+kind+'/'+id;
+}
+function route(){
+  const m = location.hash.match(/^#\/(part|flow|gate|stress)\/(.+)$/);
+  const v = location.hash.match(/^#\/view\/(journey|map|gates|stress)$/);
+  if(v){ setView(v[1]); if(v[1]==='map') showOverview(); return; }
+  if(!m){ setView('journey'); return; }
+  setView('map');
+  const [,kind,id] = m;
+  if(kind==='part'&&parts[id]) showPart(parts[id]);
+  else if(kind==='flow'&&flows[id]) showFlow(flows[id]);
+  else if(kind==='gate'&&gates[id]) showGate(gates[id]);
+  else if(kind==='stress'&&stresses[id]) showStressPoint(stresses[id]);
+  else showOverview();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  location.hash = '#/view/'+t.dataset.view;
+}));
+document.getElementById('tglFlows').addEventListener('change',e=>{ showFlows=e.target.checked; renderMap(); });
+document.getElementById('tglStress').addEventListener('change',e=>{ showStress=e.target.checked; renderMap(); });
+function renderF5(){
+  const strip = document.getElementById('f5strip');
+  if(!strip || !DATA.f5) return;
+  strip.innerHTML = DATA.f5.map(e=>`<div class="card" style="cursor:default">
+    <h3>${esc(e.name)}</h3><p>${esc(e.text)}</p>
+    ${e.gates&&e.gates.length? '<div style="margin-top:8px">'+e.gates.map(id=>chip('gate',id,gates[id].name)).join('')+'</div>' : ''}
+  </div>`).join('');
+}
+window.addEventListener('hashchange', route);
+if(location.search.includes('stresslayer')){
+  showStress = true; document.getElementById('tglStress').checked = true;
+}
+renderJourney(); renderGates(); renderStress(); renderF5(); renderMap(); route();
+</script>
+</body>
+</html>
