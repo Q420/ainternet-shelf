@@ -48,13 +48,13 @@ HELPERS_DIR = os.path.join(HERE, "relay-helpers")
 
 HELPERS = {
     "nvidia": ("nvidia_api.py",
-               "eaff1fb923ee7efd7c386ad7e23b494f6961f8af259be03e1dde3ca127b1c7e3",
+               "56ca6a4d82fe09b4de7bf96cfa3c3e58c86e849211692705310d6414409f5c7f",
                "chat"),
     "groq": ("groq_api.py",
-             "088efd1c59ab1c66ca729da4fa002a9e14d561dfa34601187a539251d6e7bfa4",
+             "8bed172ffc6017c6a322265ba5e1b7053d2cc4a74018f98ca1956d041b5d2369",
              "chat"),
     "gemini": ("gemini_api.py",
-               "01e8f4145241b2b5f2a048a640a2ee06d0a28027a2e28805755bf66702bef908",
+               "c5108982df9ef94bdacd8d7da2d964ccfd3d8b098c24c999e12f52f6c13134f2",
                "generate"),
 }
 
@@ -165,7 +165,7 @@ def main():
     started = now()
     proc = subprocess.run(
         [sys.executable, helper_path, verb, args.model],
-        input=body_bytes, capture_output=True, timeout=600)
+        input=body_bytes, capture_output=True, timeout=900)
     finished = now()
     with open(resp_file, "wb") as f:
         f.write(proc.stdout)

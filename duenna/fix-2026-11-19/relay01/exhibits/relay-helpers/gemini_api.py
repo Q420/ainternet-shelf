@@ -29,7 +29,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def call(request):
     add_surrogate_to_request(request, "custom.gemini", allowed_hosts=[HOST])
     opener = urllib.request.build_opener(NoRedirect())
-    with opener.open(request, timeout=120) as response:
+    with opener.open(request, timeout=600) as response:
         return read_json_response(response)
 
 
