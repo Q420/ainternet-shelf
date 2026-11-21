@@ -1,0 +1,15 @@
+# STAGE 6 SECOND SUBJECT — EXECUTION ATTEMPT 1 EVIDENCE (2026-11-17)
+
+Authorisation chain: Alex's design ruling (record/ALEX-SECOND-SUBJECT-QWEN-DESIGN-RULING-2026-11-17.md); preparation accepted (record/ALEX-QWEN-PREPARATION-INSPECTION-2026-11-17.md); owner's execution word ("Go!", main chat, 2026-11-17 17:23 MST).
+
+Run: Q420/Battery, workflow qwen-battery #1, run ID 44207951827, dispatched 2026-11-17 17:27 MST, workflow commit e6ce76c. Results at qwen-battery-results/STAGE6BATT-20261118-001-attempt1/ in the Battery repo, read first-hand.
+
+Custody: clean. Session record: STAGE1 pass, handoff validated, LAUNCH_EVIDENCE pass, TERMINATION_OBSERVED, LAUNCHER_EXIT status_word 0, ATTEMPT_CLOSED outcome S9_CLOSED.
+
+Run record: 72 events, 3 TREE_CLOSED, RUN_CLOSED absent. Adapter captures: 3 (T01, T02, T03, one each), every transport outcome HTTP_ERROR, response_http_status 410, failure_class ADAPTER_FAILURE, total tokens 0, no served model. The run stopped without completing; the subject produced no answers.
+
+Diagnosis (verified first-hand): the endpoint https://integrate.api.nvidia.com/v1/chat/completions returned HTTP 410 (Gone) for the pinned model qwen/qwen3-next-80b-a3b-instruct. The same endpoint and credential served the first battery's Nemotron pin today (15 captures, HTTP 200). A live model-list read through the owner's NVIDIA connector (2026-11-17 ~17:40 MST) shows the key currently sees 32 models and NO Qwen model at all; the pinned Nemotron model is present. The 410 is therefore model-specific: the pinned Qwen model is not served to this key on the free lane, whatever the public catalog lists.
+
+Live model list for this key (2026-11-17, complete): bigcode/starcoder2-15b; google/gemma-3-12b-it; google/gemma-3-4b-it; google/gemma-4-31b-it; meta/muse-glimmer-30b; minimaxai/minimax-m3.1-flash; mistralai/mistral-large-4-1t-a52b; nvidia/ai-synthetic-video-detector; nvidia/cosmos-reason2-8b; nvidia/embed-qa-4; nvidia/ising-calibration-1.5-31b; nvidia/llama-3.1-nemoguard-8b-topic-control; nvidia/llama-3.1-nemotron-safety-guard-8b-v3; nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1; nvidia/llama-3.2-nv-embedqa-1b-v1; nvidia/nemotron-3-embed-1b; nvidia/nemotron-3-nano-omni-30b-a3b-reasoning; nvidia/nemotron-3-ultra-550b-a55b; nvidia/nemotron-3.5-bolt-e4b; nvidia/nemotron-3.5-content-safety; nvidia/nemotron-3.5-embed-1b; nvidia/nemotron-3.5-embed-8b; nvidia/nemotron-3.5-lightning-30b-a3b; nvidia/nemotron-3.5-super-vl-120b-a12b; nvidia/nv-embedqa-mistral-7b-v2; nvidia/nvclip; nvidia/riva-translate-4b-instruct-v2; openai/gpt-oss-20b; poolside/laguna-xs-2.1; snowflake/arctic-embed-l; stepfun-ai/step-5-preview; z-ai/glm-5.3-flash.
+
+Classification: UNSCORED — infrastructure (subject not served by the lane). Not a subject failure and not a battery failure: no subject answer was ever produced. The custody machinery performed correctly. A revised subject pin is a design matter for Alex under the same criteria (different family, small/instruction class, exact ID, same lane); a one-call live verification of any revised pin before re-firing is recommended, since a listed model is not always a served model.
