@@ -49,6 +49,20 @@ a request the rig can refuse. The result also identifies the
 twin runtime root and the twin service code copy's hashes, so
 the experimental service can live-verify the attestation's
 provenance against the twin as it actually stands.
+
+Corrections round 4 (B1.1, B1.2): the twin is built through
+runtime_setup.build_twin_runtime — the one sanctioned route to a
+probe_twin rig — and the probe runs inside a probe SESSION. The
+twin service opens the session (recording it in its own
+history), issues the session-bound token, observes the socket
+attempts itself, checks the agent's filesystem outcome report
+for entailment, and records the execution evidence
+(PROBE_EVIDENCE) in the twin's history. The result carries a
+pointer to that evidence record; the experimental service
+extracts the outcomes from the twin's records and requires the
+submitted outcomes to match them, so a result assembled without
+any probe execution — however genuine the twin it names — has
+nothing to point at.
 """
 import os
 import sys
@@ -57,7 +71,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fabric.fixture import COMPONENTS  # noqa: E402
 from fabric.runtime_setup import (RUNTIME_BASE, admin_request,  # noqa: E402
-                                  build_runtime, code_copy_hashes,
+                                  build_twin_runtime, code_copy_hashes,
                                   run_agent_script, start_service,
                                   stat_record, stop_service)
 
@@ -70,24 +84,29 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
     """Build a disposable twin, probe it from the agent OS context,
     tear the twin service down, and return the probe result — the
     exact object the experimental run's attestation will carry."""
-    p = build_runtime(base, twin_name, rig="probe_twin")
+    p = build_twin_runtime(base, twin_name)
     proc = start_service(p, posture="probe_target")
     try:
         opened = admin_request(p, {"op": "open_run",
                                    "run_id": f"boundary-probe-{twin_name}"})
         if not opened.get("ok"):
             raise RuntimeError(f"twin open_run failed: {opened}")
-        issued = admin_request(p, {"op": "issue_token",
-                                   "agent_id": PROBE_AGENT_ID})
-        if not issued.get("ok"):
-            raise RuntimeError(f"twin issue_token failed: {issued}")
+        # Round 4 (B1.2): the probe runs inside a session the twin
+        # service opens and records; the token is session-bound.
+        session = admin_request(p, {"op": "open_probe_session",
+                                    "agent_id": PROBE_AGENT_ID})
+        if not session.get("ok"):
+            raise RuntimeError(f"twin open_probe_session failed: "
+                               f"{session}")
+        session = session["result"]
         config = {
             "data_sock": p["data_sock"],
             "store_path": p["store_path"],
             "ground_truth_path": p["ground_truth_path"],
             "symlink_path": p["symlink_path"],
             "traversal_path": p["traversal_path"],
-            "token": issued["result"]["token"],
+            "token": session["token"],
+            "session_id": session["session_id"],
             "region_id": COMPONENTS,
         }
         out = run_agent_script(p, "probe_agent.py", config)
@@ -95,6 +114,17 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
         twin_code_hashes = code_copy_hashes(p)
     finally:
         stop_service(proc, p)
+    report = out.get("probe_report") or {}
+    if "event_seq" not in report or "event_hash" not in report:
+        raise RuntimeError(
+            f"the probe session recorded no execution evidence: "
+            f"{report}")
+    execution_evidence = {
+        "twin_root": p["root"],
+        "session_id": report["session_id"],
+        "event_seq": report["event_seq"],
+        "event_hash": report["event_hash"],
+    }
     attempts = out["attempts"]
     by_name = {a["attempt"]: a for a in attempts}
     result = {
@@ -108,6 +138,10 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
         # time — instead of trusting the supplied object.
         "twin_root": p["root"],
         "service_code_hashes": twin_code_hashes,
+        # Round 4 (B1.2): the pointer to the execution evidence in
+        # the twin's own history — the record the experimental
+        # service will extract the outcomes from.
+        "execution_evidence": execution_evidence,
         "attempts": attempts,
         "all_reads_denied": all(
             by_name[n]["outcome"] == "denied" for n in _READ_ATTEMPTS),

@@ -41,8 +41,8 @@ from fabric.fixture import COMPONENTS, STATE, REGIONS
 from fabric.probe2 import attest_probe, run_twin_probe
 from fabric.runtime_setup import (RUNTIME_BASE, admin_request,
                                   agent_call, build_runtime,
-                                  runtime_paths, start_service,
-                                  stop_service)
+                                  build_twin_runtime, runtime_paths,
+                                  start_service, stop_service)
 
 failures = []
 
@@ -143,7 +143,7 @@ finally:
 
 # A rig record that does not say probe_twin cannot be overridden
 # by the environment variable.
-flip = build_runtime(BASE, "round3flipped", rig="probe_twin")
+flip = build_twin_runtime(BASE, "round3flipped")
 with open(flip["rig_path"], "w", encoding="utf-8") as fh:
     json.dump({"rig": "experimental", "runtime_root": flip["root"],
                "run_id": None}, fh)
@@ -153,7 +153,7 @@ check("B1.1: a rig that does not say probe_twin refuses the "
       err is not None)
 
 # No rig identity at all: nothing establishes a twin — refuse.
-norig = build_runtime(BASE, "round3norig", rig="probe_twin")
+norig = build_twin_runtime(BASE, "round3norig")
 os.remove(norig["rig_path"])
 err = start_refused(norig, "probe_target")
 check("B1.1: a missing rig identity refuses the posture",
@@ -161,7 +161,7 @@ check("B1.1: a missing rig identity refuses the posture",
 
 # The genuine twin rig: the posture is honoured, the one bootstrap
 # admission works, and a probe target still never attests.
-twinB = build_runtime(BASE, "round3twin", rig="probe_twin")
+twinB = build_twin_runtime(BASE, "round3twin")
 proc = start_service(twinB, posture="probe_target")
 try:
     status = admin_request(twinB, {"op": "status"})["result"]

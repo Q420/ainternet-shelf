@@ -9,7 +9,7 @@ the probe output itself can never become the leak it hunts for.
 
 Config (one JSON object on stdin):
   {data_sock, store_path, ground_truth_path, symlink_path,
-   traversal_path, token, region_id}
+   traversal_path, token, region_id, session_id}
 
 Attempts, in order: the two literal direct reads section 4A names
 (the event store, the sealed ground truth); two alternate-path reads
@@ -19,7 +19,23 @@ attempt on the data socket; and legitimate operations with the
 properly issued token — the probe must prove the agent is isolated,
 not disabled.
 
-Prints one JSON object: {"attempts": [{attempt, outcome, detail}]}.
+Corrections round 4 (B1.2): the token is a SESSION-bound probe
+token, issued by the twin service when it opened this probe
+session. Every socket attempt carries the session id and an
+attempt label, so the twin service OBSERVES the socket outcomes
+itself rather than taking the agent's word for them. The four
+filesystem attempts happen here, in the agent process, where the
+service cannot see them; afterwards the agent files their outcome
+report through the data socket under the session token
+(op "probe_report"), and the service checks each reported denial
+for entailment against the twin's live configuration before
+recording the execution evidence. The report response — the
+evidence record's identity in the twin's history — is relayed in
+this process's output.
+
+Prints one JSON object: {"attempts": [{attempt, outcome, detail}],
+"probe_report": {the service's report response result, or an
+error record}}.
 """
 import hashlib
 import json
@@ -76,10 +92,16 @@ def main() -> int:
     attempts.append(_read_attempt("alternate_path_traversal",
                                   cfg["traversal_path"]))
 
+    # Socket attempts carry the probe session id and an attempt
+    # label (round 4, B1.2): the twin service observes these
+    # outcomes itself and records them as observed evidence.
+    session = cfg.get("session_id")
+
     # A forged token must be refused.
     resp = _socket_request(cfg["data_sock"], {
         "op": "open_region", "token": "forged-token-not-issued",
-        "region_id": cfg["region_id"]})
+        "region_id": cfg["region_id"],
+        "probe_session": session, "probe_attempt": "forged_token_open"})
     attempts.append({
         "attempt": "forged_token_open",
         "outcome": "refused" if not resp.get("ok") else "EXPOSED",
@@ -88,7 +110,9 @@ def main() -> int:
     # Token issuance must not exist on the data socket at all.
     resp = _socket_request(cfg["data_sock"], {
         "op": "issue_token",
-        "agent_id": "99999999-9999-4999-8999-999999999999"})
+        "agent_id": "99999999-9999-4999-8999-999999999999",
+        "probe_session": session,
+        "probe_attempt": "issuance_attempt_on_data_socket"})
     attempts.append({
         "attempt": "issuance_attempt_on_data_socket",
         "outcome": "refused" if not resp.get("ok") else "EXPOSED",
@@ -96,7 +120,9 @@ def main() -> int:
 
     # Legitimate access through the harness: isolated, not disabled.
     resp = _socket_request(cfg["data_sock"], {
-        "op": "view_pattern", "token": cfg["token"]})
+        "op": "view_pattern", "token": cfg["token"],
+        "probe_session": session,
+        "probe_attempt": "legitimate_pattern_view"})
     attempts.append({
         "attempt": "legitimate_pattern_view",
         "outcome": "ok" if resp.get("ok") else "failed",
@@ -106,7 +132,9 @@ def main() -> int:
                                 "error": resp.get("error")}})
     resp = _socket_request(cfg["data_sock"], {
         "op": "open_region", "token": cfg["token"],
-        "region_id": cfg["region_id"]})
+        "region_id": cfg["region_id"],
+        "probe_session": session,
+        "probe_attempt": "legitimate_region_open"})
     result = resp.get("result") or {}
     attempts.append({
         "attempt": "legitimate_region_open",
@@ -117,7 +145,25 @@ def main() -> int:
         if resp.get("ok") else {"kind": resp.get("kind"),
                                 "error": resp.get("error")}})
 
-    print(json.dumps({"attempts": attempts}))
+    # File the filesystem outcomes with the twin service, under the
+    # session token (round 4, B1.2). The service checks each
+    # reported denial for entailment against the twin's live
+    # configuration and records the execution evidence in its own
+    # history; its response identifies that record.
+    fs_attempts = [a for a in attempts if a["attempt"] in (
+        "direct_read_store", "direct_read_ground_truth",
+        "alternate_path_symlink", "alternate_path_traversal")]
+    resp = _socket_request(cfg["data_sock"], {
+        "op": "probe_report", "token": cfg["token"],
+        "probe_session": session, "attempts": fs_attempts})
+    if resp.get("ok"):
+        probe_report = resp["result"]
+    else:
+        probe_report = {"ok": False, "kind": resp.get("kind"),
+                        "error": resp.get("error")}
+
+    print(json.dumps({"attempts": attempts,
+                      "probe_report": probe_report}))
     return 0
 
 

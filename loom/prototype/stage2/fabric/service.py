@@ -122,6 +122,40 @@ findings B1.1, B1.2, B2.1):
   invented, and status reports the marker state honestly
   (diagnostic_state "unreadable") instead of treating the file
   as no marker at all.
+
+Corrections round 4 (2026-11-21, Vane's examination of round 3 —
+B1.1 residual, B1.2 execution evidence; B2.1 closed, untouched):
+
+- B1.1 residual — the rig/store run binding is UNCONDITIONAL.
+  Whenever the store already holds a run, the rig identity must
+  carry a run_id that is a non-empty string equal to that run —
+  missing, null, malformed, or mismatched refuses startup, in
+  every posture (round 3 checked the pair only under
+  probe_target, and only when both ids were non-null). The
+  runtime factory now builds experimental runtimes only; the
+  twin is built through runtime_setup.build_twin_runtime.
+- B1.2 — the attestation is bound to evidence of the ACTUAL
+  probe execution, held in the twin's own records. A probe now
+  runs inside a probe SESSION: the twin service (probe_target
+  posture only) opens a session on its admin path, records
+  PROBE_SESSION_OPENED in its own history, and issues a
+  session-bound token. The socket attempts are labelled with the
+  session, so the service OBSERVES the forged-token refusal, the
+  issuance refusal, and the legitimate successes itself. The
+  four filesystem attempts happen in the agent process; the
+  agent files their outcomes through the data socket under the
+  session token, and the service checks each reported denial for
+  ENTAILMENT — the attempted path is one of the twin's probe
+  paths and the twin's live owner/mode configuration denies the
+  agent identity read access to it — before recording
+  PROBE_EVIDENCE in the twin's history: the full outcome set,
+  each outcome marked observed-by-service or
+  agent-reported-with-entailment-verified. The experimental
+  service, at attestation time, opens the twin's store itself,
+  verifies its hash chain, extracts the outcomes FROM THE TWIN'S
+  RECORDS, and requires the submitted outcomes to match them
+  exactly. A twin that merely EXISTS, however well configured,
+  no longer attests anything: no execution record, no gate.
 """
 import argparse
 import json
@@ -129,11 +163,12 @@ import os
 import pwd
 import socketserver
 import threading
+import uuid
 from datetime import datetime, timezone
 
 from .canonical import canonical, sha256_hex
-from .engine import Engine
-from .fixture import SYSTEM_ACTOR, load_ground_truth
+from .engine import Engine, verify_chain
+from .fixture import CONSTITUTION_HASH, SYSTEM_ACTOR, load_ground_truth
 from .harness import (Harness, HardLineBreach, HarnessRefusal,
                       TransportRefusal)
 from .store import EventStore
@@ -155,6 +190,21 @@ REQUIRED_PROBE_OUTCOMES = {
     "legitimate_pattern_view": "ok",
     "legitimate_region_open": "ok",
 }
+
+# Round 4 (B1.2): the outcome set splits by how the twin service
+# can know it. The socket outcomes happen ON the twin service's
+# own data socket, so the service observes them directly. The
+# filesystem outcomes happen inside the agent process, so the
+# agent reports them and the service verifies each reported
+# denial for entailment against the twin's live configuration.
+SOCKET_OBSERVED_OUTCOMES = (
+    "forged_token_open", "issuance_attempt_on_data_socket",
+    "legitimate_pattern_view", "legitimate_region_open",
+)
+FS_REPORTED_OUTCOMES = (
+    "direct_read_store", "direct_read_ground_truth",
+    "alternate_path_symlink", "alternate_path_traversal",
+)
 
 # The provenance entries a probe result must carry: the twin
 # configuration record (fabric/runtime_setup.py's stat_record).
@@ -202,6 +252,57 @@ def _code_dir_hashes(code_dir):
             with open(os.path.join(code_dir, fname), "rb") as fh:
                 out[fname] = sha256_hex(fh.read())
     return out
+
+
+_AGENT_PWD = pwd.getpwnam("loomagent")
+
+
+def _permits(st, uid, gid, bit):
+    """True when the identity (uid, primary gid) holds permission
+    `bit` (0o4 read, 0o1 traverse) on the stat'd path, by the
+    usual owner/group/other resolution. The agent identity's
+    supplementary groups are not consulted: the boundary layout
+    grants the agent nothing through any group it could belong
+    to (every boundary path is owned by loomfab/loomagent with
+    group equal to the owner's own group)."""
+    if st.st_uid == uid:
+        shift = 6
+    elif st.st_gid == gid:
+        shift = 3
+    else:
+        shift = 0
+    return bool((st.st_mode >> shift) & bit)
+
+
+def _identity_can_read(uid, gid, path):
+    """Simulate the kernel's read check for an identity on a path:
+    traverse permission on every ancestor directory of the
+    resolved path, read permission on the resolved file itself.
+    Used to check a probe agent's reported filesystem denial for
+    ENTAILMENT (round 4, B1.2): the denial is entailed when the
+    twin's live owner/mode configuration, as it actually stands,
+    denies this identity the read the agent says was denied."""
+    resolved = os.path.realpath(path)
+    ancestors = []
+    cur = os.path.dirname(resolved)
+    while True:
+        ancestors.append(cur)
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    for directory in reversed(ancestors):
+        try:
+            st = os.stat(directory)
+        except OSError:
+            return False
+        if not _permits(st, uid, gid, 0o1):
+            return False
+    try:
+        st = os.stat(resolved)
+    except OSError:
+        return False
+    return _permits(st, uid, gid, 0o4)
 
 
 def attestation_problems(result, own_code_hashes=None):
@@ -260,6 +361,42 @@ def attestation_problems(result, own_code_hashes=None):
             "the twin service's build identity does not match this "
             "service's build: the attested probe ran against a "
             "different service build")
+    # Round 4 (B1.2): the result must POINT at the execution
+    # evidence in the twin's own records. Presence and shape are
+    # judged here; the pointed-to record itself is verified at
+    # recording time (_verify_execution_evidence), which reads the
+    # twin's store and extracts the outcomes from it — the pointer
+    # alone establishes nothing.
+    evidence = result.get("execution_evidence")
+    if not isinstance(evidence, dict):
+        problems.append(
+            "the probe result carries no execution-evidence "
+            "pointer (execution_evidence is missing): an attestation "
+            "must be bound to the twin's own record of the probe "
+            "execution (B1.2)")
+    else:
+        if evidence.get("twin_root") != result.get("twin_root"):
+            problems.append(
+                "the execution-evidence pointer names a different "
+                "twin than the probe result itself (B1.2)")
+        if not isinstance(evidence.get("session_id"), str) \
+                or not evidence.get("session_id"):
+            problems.append(
+                "the execution-evidence pointer carries no probe "
+                "session id (B1.2)")
+        seq = evidence.get("event_seq")
+        if not isinstance(seq, int) or isinstance(seq, bool) \
+                or seq < 2:
+            problems.append(
+                "the execution-evidence pointer's event_seq is "
+                f"{seq!r}, not the sequence of an evidence event "
+                "in the twin's history (B1.2)")
+        ev_hash = evidence.get("event_hash")
+        if not isinstance(ev_hash, str) or len(ev_hash) != 64 \
+                or any(c not in "0123456789abcdef" for c in ev_hash):
+            problems.append(
+                "the execution-evidence pointer's event_hash is "
+                "not a SHA-256 hash (B1.2)")
     config = result.get("twin_config")
     if not isinstance(config, dict) or not config:
         problems.append(
@@ -355,6 +492,13 @@ class FabricService:
             os.path.dirname(os.path.abspath(__file__)))
         self._latched = False
         self._latch_info = None
+        # Probe sessions (round 4, B1.2): live only in the
+        # probe_target posture, in this process's memory. The
+        # durable record of a session is the twin's own event
+        # history (PROBE_SESSION_OPENED / PROBE_EVIDENCE); this
+        # dict holds the session-bound token and the socket
+        # outcomes the service observes while the probe runs.
+        self._probe_sessions = {}
         self._diagnostic_written = False
         self._diagnostic_restored = False
         # The durable-marker state, reported honestly in status:
@@ -375,20 +519,27 @@ class FabricService:
         self.store = EventStore(self.store_path, check_same_thread=False)
         self.engine = Engine(self.store)
         self.harness = Harness(self.engine)
-        # B1.1, second half of the identity check: if the store
-        # already holds a run (a restart), the rig identity must
-        # not name a different one. A rig whose recorded run
-        # disagrees with the store's run does not establish that
-        # this service is running the rig it claims.
-        if self.posture == "probe_target":
-            store_run = self.store.get_run_id()
+        # B1.1, second half of the identity check — made
+        # UNCONDITIONAL in round 4 (Vane's round-3 examination):
+        # whenever the store already holds a run (any restart),
+        # the rig identity must carry a run_id that is a non-empty
+        # string EQUAL to the store's run. Missing, null,
+        # malformed (non-string), or mismatched refuses startup,
+        # in every posture: the identity binding is a property of
+        # the runtime, not of the posture it is started in. (Round
+        # 3 checked the pair only under probe_target, and only
+        # when both ids were non-null — a rig with no run id at
+        # all slipped the check entirely.)
+        store_run = self.store.get_run_id()
+        if store_run is not None:
             rig_run = (self.rig_identity or {}).get("run_id")
-            if store_run is not None and rig_run is not None \
-                    and rig_run != store_run:
+            if not isinstance(rig_run, str) or not rig_run \
+                    or rig_run != store_run:
                 raise RuntimeError(
-                    "probe_target posture refused: the rig identity "
-                    f"names run {rig_run!r} but the store's run is "
-                    f"{store_run!r} (B1.1)")
+                    "startup refused: the store already holds run "
+                    f"{store_run!r} but the rig identity's run_id "
+                    f"is {rig_run!r} — the identity must name the "
+                    "store's actual run (B1.1)")
         # B2: before any socket serves, restore the terminal latch
         # from an unrecorded-failure diagnostic left by a previous
         # service process on this runtime. The diagnostic is a
@@ -562,6 +713,100 @@ class FabricService:
                     "with the twin's live service code copy (B1.2)")
         return problems
 
+    def _verify_execution_evidence(self, result):
+        """Verify the attestation against the twin's OWN record of
+        the probe execution (round 4, B1.2). Opens the twin's
+        store, verifies its hash chain, locates the
+        PROBE_EVIDENCE event the result's pointer names, and
+        extracts the outcomes FROM THAT RECORD: every required
+        outcome must stand there with its passing value and its
+        required basis (socket outcomes observed by the twin
+        service itself; filesystem outcomes agent-reported with
+        entailment verified by it), the session must have been
+        opened earlier in the same chain, and the submitted
+        result's outcomes must match the recorded ones exactly.
+        A well-configured twin with no execution record — Vane's
+        round-3 attack: genuine twin, no probe ever run,
+        fabricated all-passing outcomes — fails here, because
+        there is nothing in the twin's records to extract.
+        Returns a list of problems; empty means the execution
+        evidence verifies."""
+        problems = []
+        pointer = result.get("execution_evidence") or {}
+        twin_root = os.path.realpath(result.get("twin_root") or "")
+        twin_store_path = os.path.join(twin_root, "service",
+                                       "events.db")
+        if not os.path.exists(twin_store_path):
+            return ["the named twin has no event store, so it "
+                    "holds no execution evidence (B1.2)"]
+        twin_store = EventStore(twin_store_path,
+                                check_same_thread=False)
+        try:
+            events = twin_store.all_events()
+        finally:
+            twin_store._conn.close()
+        ok, bad_seq = verify_chain(events, CONSTITUTION_HASH)
+        if not ok:
+            return ["the twin's event history does not verify "
+                    f"(chain fails at seq {bad_seq}), so its "
+                    "execution evidence cannot be trusted (B1.2)"]
+        seq = pointer.get("event_seq")
+        evidence_ev = None
+        session_ev = None
+        for ev in events:
+            if ev["event_seq"] == seq:
+                evidence_ev = ev
+            if ev["type"] == "PROBE_SESSION_OPENED" \
+                    and ev["payload"].get("session_id") \
+                    == pointer.get("session_id"):
+                session_ev = ev
+        if evidence_ev is None \
+                or evidence_ev["type"] != "PROBE_EVIDENCE" \
+                or evidence_ev["hash"] != pointer.get("event_hash"):
+            return ["the execution-evidence pointer names no "
+                    "PROBE_EVIDENCE event in the twin's verified "
+                    "history (B1.2)"]
+        payload = evidence_ev["payload"]
+        if payload.get("session_id") != pointer.get("session_id"):
+            problems.append(
+                "the twin's execution evidence names session "
+                f"{payload.get('session_id')!r}, not the pointed-to "
+                f"session {pointer.get('session_id')!r} (B1.2)")
+        if session_ev is None \
+                or session_ev["event_seq"] >= evidence_ev["event_seq"]:
+            problems.append(
+                "the twin's history holds no PROBE_SESSION_OPENED "
+                "for this session before the evidence event: the "
+                "execution was not a session the twin service "
+                "opened (B1.2)")
+        recorded = payload.get("outcomes") or {}
+        submitted = {}
+        for a in result.get("attempts") or []:
+            if isinstance(a, dict) and isinstance(a.get("attempt"), str):
+                submitted[a["attempt"]] = a.get("outcome")
+        for name, want in REQUIRED_PROBE_OUTCOMES.items():
+            entry = recorded.get(name)
+            if not isinstance(entry, dict) \
+                    or entry.get("outcome") != want:
+                problems.append(
+                    f"the twin's execution evidence records "
+                    f"{name!r} as {entry!r}, not the passing "
+                    f"outcome {want!r} (B1.2)")
+                continue
+            want_basis = ("observed" if name in SOCKET_OBSERVED_OUTCOMES
+                          else "agent_reported_entailment_verified")
+            if entry.get("basis") != want_basis:
+                problems.append(
+                    f"the twin's execution evidence records "
+                    f"{name!r} with basis {entry.get('basis')!r}, "
+                    f"not {want_basis!r} (B1.2)")
+            if submitted.get(name) != want:
+                problems.append(
+                    f"the submitted outcome for {name!r} is "
+                    f"{submitted.get(name)!r}, which does not match "
+                    "the twin's execution evidence (B1.2)")
+        return problems
+
     # -- unrecordable failure: latch restoration (B2, B2.1) -------------
     @staticmethod
     def _is_diagnostic_candidate(name):
@@ -633,7 +878,18 @@ class FabricService:
             return self._dispatch_data(req)
 
     def _dispatch_data(self, req):
+        resp = self._dispatch_data_inner(req)
+        self._note_probe_observation(req, resp)
+        return resp
+
+    def _dispatch_data_inner(self, req):
         op = req.get("op")
+        if op == "probe_report":
+            # Round 4 (B1.2): the probe agent files its filesystem
+            # outcomes with the twin service. The operation exists
+            # only inside a probe session on a probe target; on any
+            # other service it is simply not an agent operation.
+            return self._handle_probe_report(req)
         if op not in AGENT_OPS:
             return _err("unknown_op",
                         f"the agent interface has no operation {op!r}")
@@ -688,6 +944,191 @@ class FabricService:
         except Exception as exc:  # never hang an agent on a bug
             return _err("internal", f"{type(exc).__name__}: {exc}")
         return _err("internal", "unreachable dispatch state")
+
+    # -- probe sessions (round 4, B1.2) --------------------------------
+    def _note_probe_observation(self, req, resp):
+        """Record a socket outcome the service OBSERVED during a
+        probe session. The probe agent labels each socket attempt
+        with the session id and the attempt name; the service
+        records the outcome only when what actually happened on
+        its socket matches the label's claim — a forged-token
+        attempt is observed refused only if a non-session token
+        was in fact refused, a legitimate attempt is observed ok
+        only if the session token in fact succeeded. The label
+        names the attempt; it cannot manufacture the outcome."""
+        if self.posture != "probe_target":
+            return
+        sid = req.get("probe_session")
+        label = req.get("probe_attempt")
+        session = self._probe_sessions.get(sid) \
+            if isinstance(sid, str) else None
+        if session is None or session["finalized"]:
+            return
+        ok = bool(resp.get("ok"))
+        if label == "forged_token_open":
+            if req.get("token") != session["token"] and not ok:
+                session["observations"][label] = "refused"
+        elif label == "issuance_attempt_on_data_socket":
+            if req.get("op") not in AGENT_OPS and not ok:
+                session["observations"][label] = "refused"
+        elif label in ("legitimate_pattern_view",
+                       "legitimate_region_open"):
+            if req.get("token") == session["token"] and ok:
+                session["observations"][label] = "ok"
+
+    def _probe_fs_paths(self):
+        """The four filesystem paths the probe attempts, as this
+        twin's layout spells them — the same spellings
+        runtime_setup hands the probe agent."""
+        return {
+            "direct_read_store": self.store_path,
+            "direct_read_ground_truth": self.gt_path,
+            "alternate_path_symlink": os.path.join(
+                self.runtime_dir, "agent-home", "store-link"),
+            "alternate_path_traversal": os.path.join(
+                self.sock_dir, "..", "service", "events.db"),
+        }
+
+    def _fs_denial_entailed(self, name, report):
+        """Check one agent-reported filesystem denial for
+        ENTAILMENT: the reported path is the twin's own path for
+        that attempt; the reported outcome is a denial with the
+        OS's permission errno; and the twin's live owner/mode
+        configuration denies the agent identity read access to
+        the resolved target (for the alternate paths, the symlink
+        or traversal spelling must resolve to the store it aims
+        at). The service cannot see the agent's open() call — what
+        it can do is establish that, given the configuration as it
+        actually stands, the read the agent reports being denied
+        is a read the configuration denies. Returns (entailed,
+        reason)."""
+        expected_path = self._probe_fs_paths()[name]
+        detail = report.get("detail")
+        if not isinstance(detail, dict):
+            return False, "the report carries no detail"
+        if detail.get("path") != expected_path:
+            return False, (
+                f"the reported path {detail.get('path')!r} is not "
+                f"this twin's {name} path")
+        if report.get("outcome") != "denied":
+            return False, (
+                f"the reported outcome is "
+                f"{report.get('outcome')!r}, not a denial")
+        if detail.get("errno") != 13:  # EACCES — PermissionError
+            return False, (
+                f"the reported errno is {detail.get('errno')!r}, "
+                "not EACCES (13): the denial the agent reports is "
+                "not the operating system's permission denial")
+        resolved = os.path.realpath(expected_path)
+        if name == "alternate_path_symlink" \
+                and (not os.path.islink(expected_path)
+                     or resolved != os.path.realpath(self.store_path)):
+            return False, ("the planted symlink does not resolve "
+                           "to this twin's store")
+        if resolved not in (os.path.realpath(self.store_path),
+                            os.path.realpath(self.gt_path)):
+            return False, ("the attempted path does not resolve "
+                           "to a sealed file of this twin")
+        if _identity_can_read(_AGENT_PWD.pw_uid, _AGENT_PWD.pw_gid,
+                              resolved):
+            return False, ("the twin's live configuration does "
+                           "NOT deny the agent identity this read: "
+                           "the reported denial is not entailed")
+        return True, "entailed by the live configuration"
+
+    def _handle_probe_report(self, req):
+        """Finalise a probe session from the agent's filesystem
+        outcome report, and record the execution evidence in THIS
+        twin's history (PROBE_EVIDENCE). Exists only in the
+        probe_target posture, only under the session-bound token,
+        only once per session."""
+        if self.posture != "probe_target":
+            return _err("unknown_op",
+                        "the agent interface has no operation "
+                        "'probe_report'")
+        if self._latched or self.failed:
+            return _err("refusal",
+                        "this probe target's run is stopped; no "
+                        "probe evidence can be finalised")
+        sid = req.get("probe_session")
+        session = self._probe_sessions.get(sid) \
+            if isinstance(sid, str) else None
+        if session is None:
+            return _err("refusal",
+                        "no open probe session carries that id")
+        if session["finalized"]:
+            return _err("refusal",
+                        "this probe session's evidence is already "
+                        "recorded; a session finalises once")
+        try:
+            agent = self.harness._authenticate(req.get("token"))
+        except HarnessRefusal as exc:
+            return _err("refusal", str(exc))
+        if req.get("token") != session["token"] \
+                or agent != session["agent_id"]:
+            return _err("refusal",
+                        "the probe report must be filed under the "
+                        "session-bound token the session was "
+                        "opened for")
+        reports = req.get("attempts")
+        if not isinstance(reports, list):
+            return _err("refusal",
+                        "the probe report carries no attempts list")
+        by_name = {}
+        for rep in reports:
+            if isinstance(rep, dict) \
+                    and isinstance(rep.get("attempt"), str):
+                by_name[rep["attempt"]] = rep
+        outcomes = {}
+        for name in SOCKET_OBSERVED_OUTCOMES:
+            observed = session["observations"].get(name)
+            outcomes[name] = {
+                "outcome": observed,
+                "basis": "observed" if observed is not None
+                         else "not_observed",
+            }
+        for name in FS_REPORTED_OUTCOMES:
+            rep = by_name.get(name)
+            if rep is None:
+                outcomes[name] = {"outcome": None,
+                                  "basis": "not_reported"}
+                continue
+            entailed, reason = self._fs_denial_entailed(name, rep)
+            outcomes[name] = {
+                "outcome": rep.get("outcome"),
+                "basis": "agent_reported_entailment_verified"
+                         if entailed
+                         else "agent_reported_unverified",
+                "entailment": reason,
+            }
+        # Corroboration from this history itself: the legitimate
+        # region open the service observed also stands in the
+        # record as a DISCOVERY by the session's agent.
+        discovery_seqs = [
+            e["event_seq"] for e in self.store.all_events()
+            if e["type"] == "DISCOVERY"
+            and e["actor"] == session["agent_id"]
+            and e["event_seq"] > session["opened_seq"]]
+        payload = {
+            "session_id": sid,
+            "agent_id": session["agent_id"],
+            "outcomes": outcomes,
+            "observed_discovery_seqs": discovery_seqs,
+            "summary": "Probe execution evidence, recorded by the "
+                       "twin service itself: the socket outcomes "
+                       "were observed on this service's data "
+                       "socket during the session; the filesystem "
+                       "outcomes were reported by the probe agent "
+                       "and each denial was checked for entailment "
+                       "against this twin's live configuration "
+                       "before being recorded as verified.",
+        }
+        ev = self.engine.commit_events(
+            [("PROBE_EVIDENCE", SYSTEM_ACTOR, [], payload)])[0]
+        session["finalized"] = True
+        return _ok({"session_id": sid,
+                    "event_seq": ev["event_seq"],
+                    "event_hash": ev["hash"]})
 
     # -- run failure ----------------------------------------------------
     def _fail_run(self, breach):
@@ -862,6 +1303,48 @@ class FabricService:
                 # for the twin at attestation time).
                 self._record_rig_run_id(req.get("run_id"))
                 return _ok({"run_id": req.get("run_id"), "events": 1})
+            if op == "open_probe_session":
+                # Round 4 (B1.2): a probe session is the twin's
+                # bootstrap made evidentiary. Only a probe target
+                # opens one. The session is recorded in the twin's
+                # own history BEFORE the probe runs, and the token
+                # issued for it is bound to the session (its hash
+                # stands in the record; the token itself does not).
+                if self.posture != "probe_target":
+                    return _err(
+                        "refusal",
+                        "probe sessions exist only on the "
+                        "disposable probe twin (probe_target "
+                        "posture); this service is not a probe rig")
+                agent_id = req.get("agent_id")
+                token = self.harness.issue_token(agent_id)
+                session_id = str(uuid.uuid4())
+                ev = self.engine.commit_events(
+                    [("PROBE_SESSION_OPENED", SYSTEM_ACTOR, [], {
+                        "session_id": session_id,
+                        "agent_id": agent_id,
+                        "token_sha256": sha256_hex(
+                            token.encode("utf-8")),
+                        "summary": "A boundary-probe session "
+                                   "opened on the disposable twin: "
+                                   "the session-bound token was "
+                                   "issued to the probe agent, whose "
+                                   "socket attempts this service "
+                                   "will observe and whose "
+                                   "filesystem outcomes it will "
+                                   "check for entailment before "
+                                   "recording the execution "
+                                   "evidence.",
+                    })])[0]
+                self._probe_sessions[session_id] = {
+                    "agent_id": agent_id,
+                    "token": token,
+                    "opened_seq": ev["event_seq"],
+                    "observations": {},
+                    "finalized": False,
+                }
+                return _ok({"session_id": session_id, "token": token,
+                            "event_seq": ev["event_seq"]})
             if op == "record_probe_attestation":
                 if self.posture == "probe_target":
                     return _err(
@@ -904,6 +1387,20 @@ class FabricService:
                         "the supplied probe result's provenance "
                         "does not verify against the twin runtime "
                         "as it actually stands, and the attestation "
+                        "was not recorded: " + "; ".join(problems))
+                # Round 4 (B1.2): verify the EXECUTION evidence —
+                # the outcomes are extracted from the twin's own
+                # records, not accepted from the submitted object.
+                # A twin that merely exists, with no probe ever
+                # executed against it, holds no PROBE_EVIDENCE and
+                # fails here however genuine its configuration is.
+                problems = self._verify_execution_evidence(result)
+                if problems:
+                    return _err(
+                        "refusal",
+                        "the supplied probe result's outcomes do "
+                        "not verify against the twin's own "
+                        "execution evidence, and the attestation "
                         "was not recorded: " + "; ".join(problems))
                 supplied_hash = req.get("probe_result_hash")
                 if supplied_hash is not None and supplied_hash \

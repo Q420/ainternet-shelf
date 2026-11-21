@@ -100,16 +100,38 @@ def runtime_paths(base, name):
 
 
 def build_runtime(base, name, rig="experimental"):
-    """Create a fresh runtime layout. Returns the paths dict.
+    """Create a fresh EXPERIMENTAL runtime layout. Returns the
+    paths dict.
 
-    rig (corrections round 3, B1.1) is the runtime's rig identity:
-    "experimental" for every real run's runtime, "probe_twin" only
-    for the disposable boundary-probe twin. It is written into
-    service/rig.json at build time — before any service starts —
-    and the service honours the probe_target posture only when its
-    own runtime's rig identity says probe_twin. The identity is a
-    property of how the runtime was BUILT, not of any environment
-    variable a service is started with."""
+    rig (corrections round 3, B1.1) is the runtime's rig identity,
+    written into service/rig.json at build time — before any
+    service starts. Corrections round 4 (B1.1): this factory builds
+    experimental runtimes ONLY. The probe_twin designation is no
+    longer a free parameter any caller can set for any runtime
+    name: passing rig="probe_twin" here raises, and the disposable
+    boundary-probe twin is built through build_twin_runtime, the
+    one sanctioned route. The distinction is explicit in the build
+    interface, not a caller convention."""
+    if rig != "experimental":
+        raise ValueError(
+            f"build_runtime builds experimental runtimes only "
+            f"(rig={rig!r}); the disposable probe twin is built by "
+            "build_twin_runtime (corrections round 4, B1.1)")
+    return _build_runtime(base, name, "experimental")
+
+
+def build_twin_runtime(base, name="twin"):
+    """Create a fresh DISPOSABLE PROBE-TWIN runtime layout — the
+    only route by which a runtime may carry the probe_twin rig
+    identity (corrections round 4, B1.1). The twin exists to be
+    probed and discarded; no other runtime in the system is built
+    through here."""
+    return _build_runtime(base, name, "probe_twin")
+
+
+def _build_runtime(base, name, rig):
+    """Create a fresh runtime layout with the given rig identity.
+    Returns the paths dict."""
     os.makedirs(base, exist_ok=True)
     # The base must be traversable by both identities regardless of
     # the caller's umask (a 770 base silently walls the service out
