@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Fabric — Observer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #04060c; color: #eaf2ff;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    display: flex; overflow: hidden;
+  }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 16px; border-bottom: 1px solid #1b2745;
+    background: #070b16;
+  }
+  #topbar .title { font-size: 17px; letter-spacing: 3px; color: #9fd8ff; }
+  #topbar .meta { font-size: 12.5px; color: #9fb4d8; }
+  #chainBadge.ok { color: #3dff9e; }
+  #chainBadge.bad { color: #ff5470; }
+  #controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  #controls button, #controls select {
+    background: #101a30; color: #eaf2ff; border: 1px solid #2b3d66;
+    border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+  }
+  #controls button:hover { border-color: #35d3ff; }
+  #stage { position: relative; flex: 1; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 45%, #0a1122 0%, #04060c 65%); }
+  #threads { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #threads line { stroke: #33507e; stroke-width: 1.6; opacity: .75; }
+  #threads line.hot { stroke: #ffc44d; stroke-width: 2.6; opacity: 1; }
+  .orb {
+    position: absolute; transform: translate(-50%, -50%);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    text-align: center; transition: box-shadow .35s, filter .35s;
+  }
+  #remmyOrb {
+    width: 148px; height: 148px; z-index: 5;
+    background: radial-gradient(circle at 38% 34%, #d9c8ff 0%, #9a6bff 34%, #4b2a9e 68%, #1c0f3d 100%);
+    box-shadow: 0 0 55px 12px rgba(154,107,255,.5), 0 0 140px 40px rgba(80,40,180,.28);
+    animation: pulse 3.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 55px 12px rgba(154,107,255,.5), 0 0 140px 40px rgba(80,40,180,.28); }
+    50% { box-shadow: 0 0 75px 20px rgba(154,107,255,.68), 0 0 170px 55px rgba(80,40,180,.36); }
+  }
+  #remmyOrb .who { font-size: 15px; letter-spacing: 3px; color: #fff; text-shadow: 0 1px 8px #000; }
+  .regionOrb {
+    width: 96px; height: 96px; z-index: 4; flex-direction: column; gap: 2px;
+    background: radial-gradient(circle at 38% 34%, #bfe6ff 0%, #35d3ff 36%, #14618a 72%, #082a40 100%);
+    box-shadow: 0 0 26px 6px rgba(53,211,255,.35);
+    color: #04121f;
+  }
+  .regionOrb .rname { font-size: 12.5px; font-weight: 700; letter-spacing: .4px; padding: 0 6px; }
+  .regionOrb .rver { font-size: 11px; font-weight: 600; background: rgba(0,0,0,.35); color: #dff3ff;
+    border-radius: 8px; padding: 1px 7px; }
+  .regionOrb.read { box-shadow: 0 0 48px 16px rgba(53,211,255,.85); filter: brightness(1.35); }
+  .regionOrb.write { box-shadow: 0 0 48px 16px rgba(61,255,158,.8); filter: brightness(1.3); }
+  .regionOrb.tension { box-shadow: 0 0 48px 16px rgba(255,176,46,.85); filter: brightness(1.25) saturate(1.4); }
+  .regionOrb.rejected { box-shadow: 0 0 48px 16px rgba(255,84,112,.85); }
+  .crewOrb {
+    width: 54px; height: 54px; z-index: 3;
+    background: radial-gradient(circle at 38% 34%, #8d99b8 0%, #4a5878 55%, #1a2338 100%);
+    box-shadow: 0 0 14px 3px rgba(140,160,200,.25); opacity: .55;
+    font-size: 10px; letter-spacing: 1px; color: #dfe8fa;
+  }
+  #stageNote {
+    position: absolute; left: 14px; bottom: 12px; font-size: 12.5px; color: #9fb4d8;
+    max-width: 46%;
+  }
+  #rail {
+    width: 332px; border-left: 1px solid #1b2745; background: #060a14;
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  #rail h2 { font-size: 12px; letter-spacing: 2.5px; color: #9fd8ff; padding: 12px 14px 8px; }
+  #ticker { flex: 1; overflow-y: auto; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 7px; }
+  .tick {
+    font-size: 13px; line-height: 1.45; background: #0b1224; border: 1px solid #1b2745;
+    border-left: 3px solid #35d3ff; border-radius: 7px; padding: 7px 9px;
+  }
+  .tick .seq { color: #7e93bd; font-size: 11px; }
+  .tick.good { border-left-color: #3dff9e; }
+  .tick.bad { border-left-color: #ff5470; }
+  .tick.warn { border-left-color: #ffb02e; }
+  .tick.gold { border-left-color: #ffc44d; }
+  #breadth { border-top: 1px solid #1b2745; padding: 10px 14px 14px; }
+  #breadth h3 { font-size: 11px; letter-spacing: 2px; color: #9fd8ff; margin-bottom: 6px; }
+  #breadth .none { font-size: 12.5px; color: #9fb4d8; }
+  .brow { font-size: 12.5px; margin-bottom: 4px; }
+  .brow .bar { display: inline-block; height: 8px; border-radius: 4px; background: #35d3ff;
+    vertical-align: middle; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div id="main">
+  <div id="topbar">
+    <div class="title">THE FABRIC</div>
+    <div class="meta" id="runMeta">run —</div>
+    <div class="meta" id="chainBadge">chain —</div>
+    <div class="meta" id="evCount">event 0 / 0</div>
+    <div id="controls">
+      <button id="playBtn">▶ Play</button>
+      <button id="restartBtn">↺ Restart</button>
+      <select id="speedSel">
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
+    </div>
+  </div>
+  <div id="stage">
+    <svg id="threads"></svg>
+    <div class="orb" id="remmyOrb"><div class="who">REMMY</div></div>
+    <div id="stageNote">The web assembles from the run's own event history. Nothing here is simulated — every glow traces to an event.</div>
+  </div>
+</div>
+<div id="rail">
+  <h2>WHAT'S HAPPENING</h2>
+  <div id="ticker"></div>
+  <div id="breadth">
+    <h3>READ BREADTH — WHO HAS READ WHAT</h3>
+    <div class="none" id="breadthBody">No reads yet. The crew arrives in a later phase — when they do, their reading shows here. An agent that reads everything breaks the design, and you'll see it.</div>
+  </div>
+</div>
+<script>
+const DATA = /*__EVENTS__*/null;
+const stage = document.getElementById('stage');
+const svg = document.getElementById('threads');
+const ticker = document.getElementById('ticker');
+const remmy = document.getElementById('remmyOrb');
+const ANGLES = [-90, -30, 30, 90, 150, -150];
+let regions = new Map();   // id -> {el, angle, version, tensions:Set}
+let edges = [];            // {a, b, line}
+let tensionRegions = new Map(); // tension_id -> [region_id]
+let readsByActor = new Map();
+let idx = 0, playing = false, timer = null;
+
+function stageSize() { return [stage.clientWidth, stage.clientHeight]; }
+function ringPos(angleDeg, frac) {
+  const [w, h] = stageSize();
+  const r = Math.min(w, h) * frac;
+  const a = angleDeg * Math.PI / 180;
+  return [w / 2 + r * Math.cos(a), h / 2 + r * Math.sin(a)];
+}
+function placeCentre() {
+  const [w, h] = stageSize();
+  remmy.style.left = (w / 2) + 'px'; remmy.style.top = (h / 2) + 'px';
+}
+function drawEdges() {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  edges = edges.map(e => {
+    const A = regions.get(e.a), B = regions.get(e.b);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', A.cx); line.setAttribute('y1', A.cy);
+    line.setAttribute('x2', B.cx); line.setAttribute('y2', B.cy);
+    if (e.hot) line.setAttribute('class', 'hot');
+    svg.appendChild(line);
+    return { ...e, line };
+  });
+}
+function layout() {
+  placeCentre();
+  for (const r of regions.values()) {
+    const [x, y] = ringPos(r.angle, 0.36);
+    r.cx = x; r.cy = y; r.el.style.left = x + 'px'; r.el.style.top = y + 'px';
+  }
+  drawEdges();
+}
+function shortActor(a) {
+  if (!a || a.startsWith('00000000')) return 'the engine';
+  return 'agent ' + a.slice(0, 6);
+}
+function regionName(id) {
+  const r = regions.get(id); return r ? r.name : 'a region';
+}
+function tick(html, cls) {
+  const d = document.createElement('div');
+  d.className = 'tick ' + (cls || '');
+  d.innerHTML = html;
+  ticker.prepend(d);
+}
+function flash(id, cls, ms) {
+  const r = regions.get(id); if (!r) return;
+  r.el.classList.add(cls);
+  setTimeout(() => r.el.classList.remove(cls), ms || 1100);
+}
+function refreshTension() {
+  for (const r of regions.values()) {
+    r.el.classList.toggle('tension', r.tensions.size > 0);
+  }
+}
+function noteRead(actor, regionId) {
+  if (!readsByActor.has(actor)) readsByActor.set(actor, new Set());
+  readsByActor.get(actor).add(regionId);
+  const total = regions.size || 6;
+  const body = document.getElementById('breadthBody');
+  body.className = ''; body.innerHTML = '';
+  for (const [a, set] of readsByActor) {
+    const row = document.createElement('div'); row.className = 'brow';
+    const pct = Math.round(100 * set.size / total);
+    row.innerHTML = shortActor(a) + ' — read ' + set.size + ' of ' + total +
+      ' regions <span class="bar" style="width:' + Math.max(10, pct) + 'px"></span>';
+    body.appendChild(row);
+  }
+}
+function buildWeb(payload) {
+  payload.regions.forEach((reg, i) => {
+    const el = document.createElement('div');
+    el.className = 'orb regionOrb';
+    el.innerHTML = '<div class="rname">' + reg.title + '</div>' +
+                   '<div class="rver">v' + reg.version + '</div>';
+    stage.appendChild(el);
+    regions.set(reg.region_id, {
+      el, angle: ANGLES[i % ANGLES.length], name: reg.title,
+      version: reg.version, tensions: new Set(),
+    });
+  });
+  edges = payload.dependencies
+    .filter(d => d.status === 'active')
+    .map(d => ({ a: d.source, b: d.target, hot: false }));
+  layout();
+}
+function applyEvent(ev) {
+  const p = ev.payload || {};
+  const seq = '<span class="seq">#' + ev.event_seq + '</span> ';
+  switch (ev.type) {
+    case 'RUN_OPENED':
+      buildWeb(p);
+      tick(seq + 'The run opens. The constitution is hashed in as the root of the chain, and the six regions take their places.', 'gold');
+      break;
+    case 'DISCOVERY':
+      if (p.region_id) { flash(p.region_id, 'read'); noteRead(ev.actor, p.region_id); }
+      tick(seq + shortActor(ev.actor) + ' read ' + regionName(p.region_id) + '.');
+      break;
+    case 'CONTRIBUTION_ACCEPTED': {
+      const c = p.contribution || p;
+      (c.write_set || []).forEach(id => flash(id, 'write'));
+      (c.read_set || []).forEach(id => { if (!(c.write_set || []).includes(id)) flash(id, 'read'); });
+      (c.operations || []).forEach(op => {
+        if (op.kind === 'replace_content' || op.kind === 'append_content') {
+          const r = regions.get(op.region_id);
+          if (r) { r.version += 1; r.el.querySelector('.rver').textContent = 'v' + r.version; }
+        }
+      });
+      tick(seq + 'A contribution from ' + shortActor(ev.actor) + ' was accepted and committed.', 'good');
+      break;
+    }
+    case 'CONTRIBUTION_REJECTED': {
+      (ev.affected || []).forEach(id => flash(id, 'rejected'));
+      const why = p.outcome ? (' — ' + p.outcome + (p.invariant ? ' (' + p.invariant + ')' : '') + (p.reason ? ' (' + p.reason + ')' : '')) : '';
+      tick(seq + 'A contribution was rejected' + why + '.', 'bad');
+      break;
+    }
+    case 'TENSION_RAISED': {
+      const t = p.tension || p;
+      const regs = t.regions || [];
+      tensionRegions.set(t.tension_id || ev.event_id, regs);
+      regs.forEach(id => { const r = regions.get(id); if (r) r.tensions.add(t.tension_id || ev.event_id); });
+      refreshTension();
+      tick(seq + 'A ' + (t.type || 'semantic') + ' tension was raised over ' +
+           regs.map(regionName).join(' and ') + '.', 'warn');
+      break;
+    }
+    case 'TENSION_STATUS': {
+      const regs = tensionRegions.get(p.tension_id) || [];
+      if (p.to === 'resolved' || p.to === 'standing') {
+        regs.forEach(id => { const r = regions.get(id); if (r) r.tensions.delete(p.tension_id); });
+        refreshTension();
+      }
+      tick(seq + 'A tension is now ' + (p.to || 'updated') + '.', p.to === 'resolved' ? 'good' : 'warn');
+      break;
+    }
+    case 'EXAMINATION_RECORDED':
+      tick(seq + shortActor(ev.actor) + ' reported an examination — ' + (p.outcome || 'recorded') + '.',
+           p.outcome === 'rejected' ? 'bad' : '');
+      break;
+    case 'ASSESSMENT_RECORDED':
+      tick(seq + shortActor(ev.actor) + ' recorded an assessment — ' + (p.outcome || 'recorded') + '.',
+           p.outcome === 'rejected' ? 'bad' : '');
+      break;
+    case 'SEAL_ATTEMPTED':
+      if (p.outcome === 'pass') {
+        for (const r of regions.values()) {
+          r.el.style.boxShadow = '0 0 55px 18px rgba(255,196,77,.9)';
+          setTimeout(() => { r.el.style.boxShadow = ''; }, 1300);
+        }
+        tick(seq + 'A weave seal was attempted — it passed. Structure certified at this point in the history.', 'gold');
+      } else {
+        tick(seq + 'A weave seal was attempted — it failed. The findings are on the record.', 'warn');
+      }
+      break;
+    case 'FACET_STATUS':
+      tick(seq + regionName(p.facet || p.region_id) + ' is now ' + (p.to || p.status) + '.');
+      break;
+    case 'COMPLETION_CLAIMED':
+      tick(seq + shortActor(ev.actor) + ' claimed a facet complete, with evidence bound to it.');
+      break;
+    case 'RUN_CLOSED':
+      tick(seq + 'The run closes. The chain head is anchored outside the fabric.', 'gold');
+      break;
+    default:
+      tick(seq + ev.type.replace(/_/g, ' ').toLowerCase() + '.');
+  }
+  document.getElementById('evCount').textContent =
+    'event ' + ev.event_seq + ' / ' + DATA.events.length;
+}
+function step() {
+  if (idx >= DATA.events.length) { pause(); return; }
+  applyEvent(DATA.events[idx]); idx += 1;
+  if (playing) timer = setTimeout(step, 950 / parseFloat(document.getElementById('speedSel').value));
+}
+function play() {
+  if (playing || !DATA) return;
+  playing = true; document.getElementById('playBtn').textContent = '⏸ Pause'; step();
+}
+function pause() {
+  playing = false; clearTimeout(timer);
+  document.getElementById('playBtn').textContent = '▶ Play';
+}
+function restart() {
+  pause(); idx = 0; readsByActor.clear(); tensionRegions.clear();
+  for (const r of regions.values()) r.el.remove();
+  regions.clear(); edges = []; drawEdges(); ticker.innerHTML = '';
+  const body = document.getElementById('breadthBody');
+  body.className = 'none'; body.textContent = 'No reads yet. The crew arrives in a later phase — when they do, their reading shows here.';
+  document.getElementById('evCount').textContent = 'event 0 / ' + DATA.events.length;
+  play();
+}
+document.getElementById('playBtn').onclick = () => playing ? pause() : play();
+document.getElementById('restartBtn').onclick = restart;
+window.addEventListener('resize', layout);
+
+(function init() {
+  // Crew orbs — parked, dim: the agents are introduced in a later phase.
+  [[58, 'CREW'], [90, 'CREW'], [122, 'CREW']].forEach(([ang]) => {
+    const el = document.createElement('div');
+    el.className = 'orb crewOrb'; el.textContent = 'CREW';
+    el.title = 'The crew arrives in a later phase';
+    stage.appendChild(el);
+    const [x, y] = ringPos(ang, 0.47);
+    el.style.left = x + 'px'; el.style.top = Math.min(y, stage.clientHeight - 40) + 'px';
+  });
+  placeCentre();
+  if (!DATA) { tick('No run data was exported into this page.', 'bad'); return; }
+  document.getElementById('runMeta').textContent =
+    'run ' + DATA.run_id + ' · constitution ' + DATA.constitution_hash.slice(0, 10) + '…';
+  const badge = document.getElementById('chainBadge');
+  if (DATA.chain_ok) { badge.textContent = 'chain verified ✓'; badge.className = 'meta ok'; }
+  else { badge.textContent = 'chain BROKEN at #' + DATA.chain_bad_seq; badge.className = 'meta bad'; }
+  badge.id = 'chainBadge'; badge.classList.add(DATA.chain_ok ? 'ok' : 'bad');
+  document.getElementById('evCount').textContent = 'event 0 / ' + DATA.events.length;
+  setTimeout(play, 700);
+})();
+</script>
+</body>
+</html>

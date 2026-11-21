@@ -1,9 +1,17 @@
 """Append-only event store — Loom spec v0.1 Rev 9, section 3.
 
-SQLite (WAL). The events table accepts inserts only. Sequence assignment,
-state change, and event append occur in one transaction (the engine drives
-state in the same connection). The hash chain makes out-of-band alteration
-detectable; verification lives in engine.py / checker.py.
+SQLite (WAL). The events table accepts inserts only: BEFORE UPDATE and
+BEFORE DELETE triggers in the schema itself abort any mutation, so the
+rule binds every connection that honours the schema, not just this API.
+(Stage 1 correction C1, Vane's implementation examination 2026-11-21:
+the first version created the table with no such protection and exposed
+its connection directly; detection of tampering is not enforcement.)
+
+Sequence assignment, state change, and event append occur in one
+transaction (the engine drives state in the same connection). The hash
+chain makes out-of-band alteration — file-level access beyond the
+storage boundary — detectable; verified replay (engine.py) refuses to
+derive state from a history whose chain does not verify.
 """
 import json
 import sqlite3
@@ -23,9 +31,9 @@ EVENT_TYPES = {
 
 class EventStore:
     def __init__(self, path: str):
-        self.conn = sqlite3.connect(path)
-        self.conn.execute("PRAGMA journal_mode=WAL")
-        self.conn.execute(
+        self._conn = sqlite3.connect(path)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute(
             """CREATE TABLE IF NOT EXISTS events (
                  event_seq INTEGER PRIMARY KEY,
                  event_id TEXT UNIQUE NOT NULL,
@@ -37,7 +45,18 @@ class EventStore:
                  hash TEXT NOT NULL
                )"""
         )
-        self.conn.execute(
+        # Append-only enforcement at the storage boundary (C1).
+        self._conn.execute(
+            """CREATE TRIGGER IF NOT EXISTS events_no_update
+               BEFORE UPDATE ON events
+               BEGIN SELECT RAISE(ABORT, 'events are append-only'); END"""
+        )
+        self._conn.execute(
+            """CREATE TRIGGER IF NOT EXISTS events_no_delete
+               BEFORE DELETE ON events
+               BEGIN SELECT RAISE(ABORT, 'events are append-only'); END"""
+        )
+        self._conn.execute(
             """CREATE TABLE IF NOT EXISTS runs (
                  run_id TEXT PRIMARY KEY,
                  constitution_hash TEXT NOT NULL,
@@ -45,10 +64,28 @@ class EventStore:
                  status TEXT NOT NULL DEFAULT 'open'
                )"""
         )
-        self.conn.commit()
+        self._conn.commit()
 
+    # -- run bookkeeping (the runs table is bookkeeping, not history) --
+    def insert_run(self, run_id: str, constitution_hash: str):
+        self._conn.execute(
+            "INSERT INTO runs (run_id, constitution_hash) VALUES (?,?)",
+            (run_id, constitution_hash),
+        )
+
+    def set_genesis_state_hash(self, run_id: str, state_hash: str):
+        self._conn.execute(
+            "UPDATE runs SET genesis_state_hash=? WHERE run_id=?",
+            (state_hash, run_id),
+        )
+
+    def get_run_id(self):
+        row = self._conn.execute("SELECT run_id FROM runs LIMIT 1").fetchone()
+        return row[0] if row else None
+
+    # -- events --
     def last(self):
-        row = self.conn.execute(
+        row = self._conn.execute(
             "SELECT event_seq, hash FROM events ORDER BY event_seq DESC LIMIT 1"
         ).fetchone()
         return row  # (seq, hash) or None
@@ -72,7 +109,7 @@ class EventStore:
             "prev_hash": prev_hash,
         }
         event["hash"] = event_hash(prev_hash, event)
-        self.conn.execute(
+        self._conn.execute(
             "INSERT INTO events (event_seq, event_id, type, actor, affected,"
             " payload, prev_hash, hash) VALUES (?,?,?,?,?,?,?,?)",
             (seq, event["event_id"], type_, actor,
@@ -82,13 +119,13 @@ class EventStore:
         return event
 
     def commit(self):
-        self.conn.commit()
+        self._conn.commit()
 
     def rollback(self):
-        self.conn.rollback()
+        self._conn.rollback()
 
     def all_events(self):
-        rows = self.conn.execute(
+        rows = self._conn.execute(
             "SELECT event_seq, event_id, type, actor, affected, payload,"
             " prev_hash, hash FROM events ORDER BY event_seq"
         ).fetchall()
