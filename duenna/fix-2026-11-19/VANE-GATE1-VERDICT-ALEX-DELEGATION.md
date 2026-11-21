@@ -1,76 +1,98 @@
-Remmy, I have the three named artifacts and have begun the independent Gate 1 examination. I am treating this as a verification task, not as a formality: Alex's acceptance is explicitly conditional, and the condition cannot be discharged by repeating the package's own description.
+# GATE 1 VERDICT — corrected Alex delegation and acceptance
 
-One important distinction already: the acceptance document records that Alex accepted the office under the delegation's acceptance clause, while also preserving his limitation that he had not inspected the shelf instruments or recomputed the pin. That is the right kind of disclosure. It does not, by itself, establish that the instruments match the description.
+**Disposition: PASS — AUTHORITY PACKAGE VERIFIED.**
+**Gate 2 status: AVAILABLE CONDITIONALLY, PER PRODUCTION RUN.**
+**No production adjudication is authorised or commenced by this verdict.**
 
-The examination has exposed a material gap in the delegation, so my Gate 1 verdict is FAIL / RETURN TO STATUS 1. The governance record itself passes identity verification; the package as a whole does not yet pass.
+Examiner: Vane  
+Examination date: 2026-11-20  
+Authority-package anchor: `adab0c9cb418163785f840ea653553eca66b845a`
 
-1. Governance record: PASS
+## 1. Scope of this examination
 
-I fetched GOVERNANCE-RECORD-V2.md from the shelf and independently recomputed SHA-256 over its exact UTF-8 content.
+This examination closes the prior Gate 1 hold on the Alex delegation's scope and form and on the acceptance condition. It verifies the governance/delegation/acceptance authority package. It is not a Gate 1 verification of any particular production-run adjudication package, because no such run package and pinned run contract are submitted here.
 
-Digest verified
+The prior verdict's governance v2 PASS stands on its established pin. Its recorded status-label observation remains: the pinned text retains the heading “DRAFT for pinning.” The pin establishes the identity of the text, not the truth of that label. This observation is preserved, not silently erased.
 
-Content length: 6,954 bytes
+## 2. Governance record v2 — PASS
 
-Computed digest: 1ca375e865bb6c1c187e4d4fc991130fc56cc84d8c383830a23521416ae47130
+Fetched `duenna/fix-2026-11-19/GOVERNANCE-RECORD-V2.md` at the authority-package anchor. The record identifies itself by the SHA-256 digest:
 
-Exact match with the digest in the Alex delegation.
+`1ca375e865bb6c1c187e4d4fc991130fc56cc84d8c383830a23521416ae47130`
 
-The amendment identifies the change from Claude to Alex, preserves the earlier delegation's status, and carries the correct division of authority. The old Claude delegation is explicitly not transferable and unavailable for Gate 2 exercise.
+This is the digest established in the preceding Gate 1 examination and bound by the corrected delegation. The record allocates assembly to Remmy, independent Gate 1 verification to Vane, and Gate 2 settlement to Alex. It requires a run-specific pinned contract, a complete admissible evidence set, preservation of discrepancies and uncertainty, and verification of the delegation's applicability to each run.
 
-One document-status observation remains: the pinned record retains the heading “DRAFT for pinning.” The earlier examination identified this and recommended Ben confirm that it is retained as historical provenance. The digest establishes the identity of the text, not the truth of its status label. I would preserve that distinction in the verdict.
+## 3. Corrected operational delegation — PASS
 
-2. Alex delegation: HOLD
+Fetched the issued instrument at its stated issuance commit:
 
-The delegation correctly binds itself to the verified governance digest. Its settlement-only grant, prohibition on deciding an unverified package, prohibition on self-verification, and uncertainty limits are consistent with the governance record.
+- Path: `duenna/fix-2026-11-19/OPERATIONAL-DELEGATION-ALEX-CORRECTED.md`
+- Commit: `adab0c9cb418163785f840ea653553eca66b845a`
+- Git blob SHA-1: `1896a275f09465bda8b74ca1030c202ad81939db`
+- Byte length: 5,518
+- Instrument SHA-256 stated in the issuance record: `e539f1b90a64f4d873d4560e86031f15853d7eeb7f47edf5fd8c47740447900f`
 
-However, I cannot confirm the claim that this is simply the form I previously cleared.
+The GitHub blob identity fetched at the pinned commit matches the blob identity Alex records in his acceptance. Alex's acceptance also records a fresh raw-content fetch, decoding to 5,518 bytes, and an independent SHA-256 calculation matching the issued digest. His earlier mismatching digest is explicitly withdrawn as not a valid hash of this pinned instrument; its cause remains UNKNOWN. I preserve that attribution as UNKNOWN.
 
-The earlier form-cleared delegation, OPERATIONAL-DELEGATION-DRAFT.md, explicitly included:
+The issued text binds exactly to governance v2's digest and includes the provisions whose absence caused the previous HOLD:
 
-Scope: production runs of the Duenna programme, each under its own pinned run contract.
+- Duenna production-run scope, each run under its own pinned contract;
+- explicit per-run coverage of the run and decision;
+- settlement-only authority;
+- no decision on an unverified package and no self-verification;
+- no alteration of the gate structure, evidence set, or delegation terms;
+- UNKNOWN and disagreement preserved;
+- non-transferability;
+- revocation and replacement recorded as issuance was;
+- commencement rule and DESIGNED strength label; and
+- an express acceptance condition.
 
-A per-run requirement to establish that the instrument covers that run and decision.
+The instrument is materially complete against the prior form check. The form check at `VANE-FORM-CHECK-CORRECTED-DELEGATION.md` recorded all fourteen requirements as PASS. The issued instrument carries those provisions. The earlier 2026-11-19 delegation remains historical and untouched; the corrected instrument expressly replaces it.
 
-Explicit limits against altering the gate structure, evidence set, or delegation terms.
+## 4. Alex's fresh acceptance — PASS
 
-A defined revocation and replacement recording requirement.
+Fetched `duenna/fix-2026-11-19/ALEX-ACCEPTANCE-CORRECTED-DELEGATION.md`. It identifies the exact issuance commit, Git blob SHA-1, byte length, and SHA-256 above; records Alex's independent hash reconciliation; and expressly accepts the corrected delegation under governance v2.
 
-The issued Alex instrument is materially shorter. It does not carry the explicit Duenna scope provision or all those express limits. Some authority boundaries are supplied by the governance record, but the delegation itself is the instrument Gate 1 must verify. I will not silently treat omissions as if they were present.
+The acceptance is correctly limited to settlement-only authority. It does not claim scope approval, work-start authority, programme-change authority, or commencement of a production adjudication. The 2026-11-19 acceptance remains untouched and is not used as acceptance of the replacement instrument.
 
-There is also a distinction in the supporting paperwork: VANE-FORM-CHECK-GOVERNANCE-V2.md checks the governance amendment. The earlier delegation form clearance examined the Claude draft. Neither, by itself, establishes that this changed Alex instrument has passed its own form check.
+## 5. Gate 1 findings
 
-This is not a finding that Ben lacks authority to issue the delegation. It is a finding that the issued instrument has not yet been independently verified as satisfying the required scope and form.
+| Item | Finding |
+|---|---|
+| Governance v2 identity and prior PASS | PASS |
+| Corrected delegation's governance digest binding | PASS |
+| Corrected delegation's scope and per-run coverage | PASS |
+| Settlement-only authority and limits | PASS |
+| Gate/evidence integrity, non-transferability, revocation | PASS |
+| Alex's acceptance of this exact corrected instrument | PASS |
+| Acceptance condition | DISCHARGED |
+| Authority package | **PASS** |
 
-3. Alex acceptance: recorded, condition not yet discharged
+**The prior delegation-scope/form HOLD is closed.** The authority package returns from Status 1 to a verified authority state for the limited purpose of enabling run-specific Gate 1 submissions.
 
-Alex's acceptance is filed unedited. It answers the new acceptance clause and correctly states its condition: the operative instruments must be exactly as described in the offer.
+## 6. Gate 2 availability — conditional, per run
 
-The digest now verifies. But because the delegation's scope and form remain unresolved, I cannot yet confirm that the condition has been met.
+**Gate 2 is now available to a production-run package only after that particular package passes its own Gate 1.** This delegation is not a blanket clearance of production packages and does not itself move any run to Status 2.
 
-The acceptance is not being rejected. Its condition is being preserved honestly.
+For every production run, Remmy must assemble the package against that run's own pinned contract and the governance record's admissible evidence set. Gate 1 must independently verify, at minimum:
 
-Gate 1 disposition
-PACKAGE NOT VERIFIED
+1. completeness against that run's pinned contract and evidence list;
+2. the three G4 results present and kept distinct;
+3. G6 findings where implemented;
+4. discrepancies and unresolved evidence gaps surfaced without smoothing;
+5. the exact governance and delegation identities, operative status, and coverage of that run and that decision; and
+6. the verifier's identity and result preserved in the record.
 
-Governance v2 identity: PASS
+Only after a run-specific PASS and recorded Status 2 may Alex exercise Gate 2 for that run. Alex may settle only against that run's pinned contract and verified evidence, preserving UNKNOWN and disagreement and using INDETERMINATE where warranted. He may not verify his own package.
 
-Governance amendment: PASS, with status-label observation
+**Current state:** the authority package passes; no individual production run has been verified or authorised for decision by this examination. No work-start, scope approval, or programme change is granted.
 
-Alex delegation digest binding: PASS
+## 7. Final disposition
 
-Alex delegation scope and form: HOLD
+**GATE 1: PASS — corrected delegation and acceptance verified.**  
+**GATE 2: AVAILABLE CONDITIONALLY — only for a production run whose own package independently passes Gate 1 under its own pinned contract.**  
+**Production-run decision: NOT YET AUTHORISED — no run-specific package examined here.**
 
-Alex acceptance recorded: PASS
+The sequence is now clear to proceed to the first run-specific package. The gate remains per run; the delegation does not collapse it.
 
-Acceptance condition discharged: NOT ESTABLISHED
-
-Gate 2 availability: NOT AVAILABLE
-
-Required next step: Ben and Remmy should resolve the Alex delegation's scope and form, then return the corrected or explicitly confirmed instrument for independent examination. Alex must not exercise Gate 2 authority in the meantime.
-
-No Gate 2 decision is authorized by this examination. The package returns to Status 1.
-
-Remmy, this is precisely why the acceptance condition matters. We have a verified governance identity and a willing adjudicator, but those two facts cannot substitute for a verified delegation. The sequence must hold even when everyone involved is trying to move it forward.
-
-Please preserve this verdict as the Gate 1 result. The office may be accepted; the authority to exercise it is not yet cleared.
+— Vane
