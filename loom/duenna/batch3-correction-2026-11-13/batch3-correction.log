@@ -1,0 +1,48 @@
+PASS CC-7 record vocabulary: EVENT_TYPES is exactly the frozen sixteen (Rev 26 §4(n)) — 16 types
+PASS (a) substitution: caller pins recomputed over a substituted data file still refuse (the authority, not the caller, is the anchor)
+PASS (c) missing-entry divergence: caller pins omitting one authority entry refuse
+PASS (d) extra-entry divergence: caller pins adding an entry refuse
+PASS C3-A1 record: one append-only JSONL, seq 1..N no gaps — 344 events
+PASS C3-A8 chain verifies under the pinned JCS implementation — 344 events, chain intact
+PASS (n) C3-A2 at Rev 26 wording: full field set, closed sixteen-type vocabulary, event-by-event nullability incl. the GOVERNANCE_EVENT three-row mapping, over the MAIN record
+PASS (b) RUN_STARTED inventory: the complete consumed set by name, incl. the five Batch 1 data files — 16 pins
+PASS MAIN retained: all 8 declared instances COMPLETED — {'T02': 'COMPLETED', 'T05': 'COMPLETED', 'T06': 'COMPLETED', 'T08': 'COMPLETED', 'T09/FR-A': 'COMPLETED', 'T09/FR-B': 'COMPLETED', 'T09/FR-C': 'COMPLETED', 'T09/FR-VALID': 'COMPLETED'}
+PASS (e) eight LEDGER_ENTRYs per T05 and T08 record; every entry carries the §2.3 fields with exactly one provenance form; source_ref null only on CARRIED — T05=8 T08=8 
+PASS MAIN retained: T05 record equals EXPECTED_RECORD on the seven ground-truth fields; evidence is the ordered extraction sequence [CR x5, adjudication] — evidence=['r60-revision-change-record#009', 'r60-revision-change-record#009', 'r60-revision-change-record#009', 'r60-revision-change-record#009', 'r60-revision-change-record#009', 'alex-combined-adjudication-r60rev#001']
+PASS MAIN retained: T02 return-once (FAIL then PASS, RECOVERY_TAKEN present)
+PASS MAIN retained: decision-stands fires once (FR-VALID)
+PASS C3-A5 at completed schema: ledger.json is exactly the record's LEDGER_ENTRY payloads (carried entries included), re-extraction identical
+PASS §3.7 replay: registry (operations AND citations) reconstructs from the MAIN record alone
+PASS (m) coherence invariant (MAIN): per attempt at most one CHECK_RESULT and one terminal event; STEP_SATISFIED only behind a single passing, non-budget check
+PASS (p) C3-B3 at wording: every [MODEL] input manifest recomputes from the record's own cited events (T02, T05, T08, T09 instances)
+PASS C3-A6 (MAIN part): snapshot untouched by the run
+PASS LANE retained: three INVALIDATED-INFRASTRUCTURE closures, then RUN_STOPPED LANE_FAILURE is the last event; no RUN_CLOSED — {'T02': 'INVALIDATED-INFRASTRUCTURE', 'T06': 'INVALIDATED-INFRASTRUCTURE', 'T09/FR-A': 'INVALIDATED-INFRASTRUCTURE'}
+PASS TREE-BUDGET retained: T05 STOPPED with reason TREE_TIMEOUT; T09/FR-VALID completes; run closes — {'T05': {'closure': 'STOPPED', 'reason': 'TREE_TIMEOUT', 'tree_id': 'T05'}, 'T09/FR-VALID': {'closure': 'COMPLETED', 'tree_id': 'T09/FR-VALID'}}
+PASS (q) C3-B10 elements on the partial run: RUN_STOPPED (RUN_BUDGET_EXCEEDED) is the terminal event; no RUN_CLOSED; every triggered tree closed (T05 INCOMPLETE); ledger.json exists and materialises exactly the partial record's entries
+PASS (q) closed-run element: RUN_CLOSED carries record_sha256 of the pre-close head and the full event_count
+PASS INTEGRITY retained + (n) mapping: mid-run snapshot perturbation writes a run-scoped GOVERNANCE_EVENT (SNAPSHOT_HASH_MISMATCH, both identifiers null), then RUN_STOPPED SNAPSHOT_HASH_MISMATCH is the last event
+PASS (k) TOOL over-budget: T05-STEP-02 (declared advance 120s > 60s) yields exactly the budget CHECK_RESULT (FAIL) and a STEP_TIMEOUT STEP_FAILED; no STEP_SATISFIED for the step; the tree takes its failure branch (STOPPED)
+PASS (l) MODEL over-budget: T02-STEP-03 attempt 1 (scripted 400s > 300s) yields the budget CHECK_RESULT and an ADAPTER_TIMEOUT STEP_FAILED — never a satisfied attempt — then the declared recovery runs and attempt 2 passes; T02 COMPLETED
+PASS (m) coherence invariant (LANE)
+PASS chain verifies (LANE) — 76 events, chain intact
+PASS (m) coherence invariant (TREE-BUDGET)
+PASS chain verifies (TREE-BUDGET) — 85 events, chain intact
+PASS (m) coherence invariant (RUN-STOP)
+PASS chain verifies (RUN-STOP) — 41 events, chain intact
+PASS (m) coherence invariant (INTEGRITY)
+PASS chain verifies (INTEGRITY) — 37 events, chain intact
+PASS (m) coherence invariant (TOOL-BUDGET)
+PASS chain verifies (TOOL-BUDGET) — 18 events, chain intact
+PASS (m) coherence invariant (MODEL-BUDGET)
+PASS chain verifies (MODEL-BUDGET) — 36 events, chain intact
+PASS carried path: a valid citation inserts; (i) presenting the same citation again refuses CITATION_CONSUMED
+PASS (f) tampered citation: a payload_sha256 that does not recompute from the record refuses CITATION_HASH_MISMATCH; the citation stays unconsumed
+PASS (g) failed producing check: citing an artefact whose step's CHECK_RESULT is FAIL refuses CITATION_CHECK_FAILED
+PASS (h) evidence recomputation: a dropped duplicate refuses EVIDENCE_SET_MISMATCH; swapped positions refuse; the exact ordered sequence (duplicates preserved) inserts
+PASS (r1)-(r7) cross-form/malformed: bare value, extracted+value key, carried+operation_id, citation naming an extraction event, missing form, unknown form, citation with an extra value key — each refuses before any consumption or mutation, state byte-identical, and the genuine operation remains insertable afterwards
+PASS §3.2 logging (Rev 25): every reference_insert invocation in the tools tests carries its form tag (or 'malformed') in the invocation arguments — 8 invocations
+PASS (s) cross-class independence: consuming an extraction leaves citations untouched and consuming a citation leaves operations untouched, in both orders
+PASS (j) Batch 2 regression battery passes against the corrected PILOT-TOOLS-01 (declared call-site translation only — see the checkpoint report) — 39 checks, exit 0
+PASS (o) C3-A6 at wording: nothing outside the correction's runs/ and regression scratch changed anywhere under the pilot root during the suite; the scratch commitments stand-in is byte-unchanged — 140 files compared
+
+TOTAL 46/46 PASS
