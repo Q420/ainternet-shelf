@@ -1,0 +1,2793 @@
+{
+  "cases": [
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-01-fold",
+      "diagnostic": "",
+      "expected": {
+        "result": "ok"
+      },
+      "fixture_hash": "6b99ed13f3ca0c1990c7a3dcbd7f177a152f97842d4ee848470550fb60e9a78a",
+      "observed": {
+        "checker": {
+          "result": "ok",
+          "state_hash": "9a7250bde82bfd8bd220b6013f38b4ce289a702fe86119f2723616055c070b1f"
+        },
+        "engine": {
+          "result": "ok",
+          "state_hash": "9a7250bde82bfd8bd220b6013f38b4ce289a702fe86119f2723616055c070b1f"
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-01",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "pass",
+        "seal": "issued"
+      },
+      "fixture_hash": "7d3cf5043539527fa925b95fa074ca0c2cd2011042c7cb09a3642dfa30e93d86",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-02",
+      "diagnostic": "",
+      "expected": {
+        "note": "state identical except last_seq",
+        "result": "ok"
+      },
+      "fixture_hash": "3619c7024708ffa6ce7a27b0cdd9808b5dc772905153d40df4f78fb9eb28748d",
+      "observed": {
+        "checker": {
+          "result": "ok",
+          "state_hash": "3a7858fa006b2c1bd44862b8f2fa49a333aadf1a3503a5422435a47f45a7775a"
+        },
+        "engine": {
+          "result": "ok",
+          "state_hash": "3a7858fa006b2c1bd44862b8f2fa49a333aadf1a3503a5422435a47f45a7775a"
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-04",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "hash_chain_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "b1f1714b82602896b4b2ccaa7eb3f3958d189e9e3dd209e168231fdbe1227b0b",
+      "observed": {
+        "checker": {
+          "reason_class": "hash_chain_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "hash_chain_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-05",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "sequence_invalid",
+        "result": "halt",
+        "seq": 3
+      },
+      "fixture_hash": "a15013b3b89ac8a01900845e4e70330a9a6e986c131fd9a69b8bd3239f9586fa",
+      "observed": {
+        "checker": {
+          "reason_class": "sequence_invalid",
+          "result": "halt",
+          "seq": 3
+        },
+        "engine": {
+          "reason_class": "sequence_invalid",
+          "result": "halt",
+          "seq": 3
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-06",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "7be8b802ba91f4cff76513df0dda8b6a573f4816d8c54f5b860c22b389cd86a6",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-07",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "5ab763fe8bfaff4cf2508b3848ab7c2f554ea9f3aee82ac8dce4cdc902ffb0d2",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-08",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 3
+      },
+      "fixture_hash": "df85d1a4e28939bf4448bc216e189e1b276a713d087dcafc2d117a33531abd40",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 3
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 3
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-09",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 3
+      },
+      "fixture_hash": "2244b982ee1bcfea4c5945b30aaa1ff84079472ca6d88fee5e84041f054c8dee",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 3
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 3
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-10",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "3d27d04e411a7497eee9cbe9ac8085c479554b9b54faa7a384c86b7a4aaacd36",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-11a",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "0fb09f4d8f7f3dedaedf5984f22d8903177b2ea8025499e31c67f0e3ade089bc",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-11b",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "034b0626e81eb5745d33a6087e0c2230d7b35f4c58757292bbc0930a3e2defa5",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-12a",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 3
+      },
+      "fixture_hash": "c5a67a9b24ef830cff6f22f5662f3883dcad0233c58972f662bb7d1b509f1a06",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 3
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 3
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-12b",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 5
+      },
+      "fixture_hash": "eaf1947cdce4f4e9da86a456b63f326278e0b4d5041b8aa7d8f14cbc6223b4ac",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 5
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 5
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-13a",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 3
+      },
+      "fixture_hash": "58dd3f70f4526302bbc2b872aeb0534a6e097f1117c76c31f110ed6339ae5d61",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 3
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 3
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-13b",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 3
+      },
+      "fixture_hash": "50f7b16bc1f6cbc08e93d92dc5a54868068632e31796ca562f340729f8d61637",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 3
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 3
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-13c",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 4
+      },
+      "fixture_hash": "308bd87b6a73b7cdd7766eed29dad958c0cb406200c63fb569cc4f92e9c42917",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 4
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 4
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-14a",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "b00de248b2090fbe2083b19dd8795302c77f8f7fa346711175a1a06d7a968d10",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-14b",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "protocol_transition_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "e38ac79a99c0aa5163e9f9b834f6345cc176d687542a7c5174ff769512b7829d",
+      "observed": {
+        "checker": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "protocol_transition_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-15a",
+      "diagnostic": "",
+      "expected": {
+        "result": "ok"
+      },
+      "fixture_hash": "12fa38ddaf795fc55db62003abb8dfdf3ec3a4ba85f97f06334b552f258ba14e",
+      "observed": {
+        "checker": {
+          "result": "ok",
+          "state_hash": "3a7858fa006b2c1bd44862b8f2fa49a333aadf1a3503a5422435a47f45a7775a"
+        },
+        "engine": {
+          "result": "ok",
+          "state_hash": "3a7858fa006b2c1bd44862b8f2fa49a333aadf1a3503a5422435a47f45a7775a"
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-15b",
+      "diagnostic": "",
+      "expected": {
+        "reason_class": "schema_invalid",
+        "result": "halt",
+        "seq": 2
+      },
+      "fixture_hash": "63b84002fe6a6310a7d60647af500b184d54eab8413c9a7786afc06f36e88c47",
+      "observed": {
+        "checker": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        },
+        "engine": {
+          "reason_class": "schema_invalid",
+          "result": "halt",
+          "seq": 2
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-03",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "refused"
+      },
+      "fixture_hash": "3de7244625af6257ac667c9e256deef85ee446563ea0d536e2e4ff15270001c3",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "refused",
+          "raises": [],
+          "reason": "a staged IDLE event names an actor other than the authenticated submitter; refused at the admission boundary, no event appended",
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "refused",
+          "raises": [],
+          "reason": "a staged IDLE event names an actor other than the authenticated submitter; refused at the admission boundary, no event appended",
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-16",
+      "diagnostic": "",
+      "expected": {
+        "failed_checks": [
+          [
+            "S1",
+            [
+              "00000000-0000-4000-8000-000000000102",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ]
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "7aaa78c838fc08610abd7e368fed8bd6eab15bbacf709b07fe65291a04a0c111",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-17",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "pass"
+      },
+      "fixture_hash": "4895992e1392b2dfc6c8bf5c3c5886201953308e0a90efdc04ac681c742f5693",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-18",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "mismatch"
+      },
+      "fixture_hash": "e39e618c69950b688e23a90ce8ae12764f23608bced31d5ef324e486e4abbf9b",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "11111111-1111-4111-8111-111111111111"
+            ]
+          ],
+          "failed_checks": [],
+          "outcome": "mismatch",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "11111111-1111-4111-8111-111111111111"
+            ]
+          ],
+          "failed_checks": [],
+          "outcome": "mismatch",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-19",
+      "diagnostic": "",
+      "expected": {
+        "note": "endpoints advanced",
+        "outcome": "pass"
+      },
+      "fixture_hash": "e60cc6dbf6914177c380c66c96dc97e984e2d547a064af8cfc47485d08811b77",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "eaf2d3fd-0138-4e99-a58c-64cafc59e72a"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "eaf2d3fd-0138-4e99-a58c-64cafc59e72a"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-20",
+      "diagnostic": "",
+      "expected": {
+        "failed_checks": [
+          [
+            "S3",
+            [
+              "00000000-0000-4000-8000-000000000102",
+              "00000000-0000-4000-8000-000000000202"
+            ]
+          ]
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "aa546346d36681141fc28b99e881b099398a2ea669829afd2846a7952c44174e",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [
+            [
+              "dependencies",
+              "00000000-0000-4000-8000-000000000202"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S3",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "00000000-0000-4000-8000-000000000202"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S3",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "00000000-0000-4000-8000-000000000202"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [
+            [
+              "dependencies",
+              "00000000-0000-4000-8000-000000000202"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S3",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "00000000-0000-4000-8000-000000000202"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S3",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "00000000-0000-4000-8000-000000000202"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-21",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "pass"
+      },
+      "fixture_hash": "533c1fdbadbd0405295bf648e165ce40cf9844b95f535d90bd1a741c7ea938f1",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-24",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "pass",
+        "seal": "issued"
+      },
+      "fixture_hash": "f0f63e5a7a17c2f1b1618ac29b88ea54eed9cf86a6d5c72b5ad0eb6f547f7ae2",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "0ff837d0-e141-4f9c-b7f7-25f1ec6d74f6"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "0ff837d0-e141-4f9c-b7f7-25f1ec6d74f6"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-25",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "refused"
+      },
+      "fixture_hash": "c3343c5e83571cf88d072d315116ea59bef6ecdad92e793298e22638ccc519b7",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "refused",
+          "raises": [],
+          "reason": "staged candidate batch omitted: the attempt position cannot be reconstructed from the committed history alone",
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "refused",
+          "raises": [],
+          "reason": "staged candidate batch omitted: the attempt position cannot be reconstructed from the committed history alone",
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-26",
+      "diagnostic": "",
+      "expected": {
+        "divergence_names": "55555555-5555-4555-8555-555555555555",
+        "outcome": "mismatch"
+      },
+      "fixture_hash": "4be91fdaa7580321d0e3c0e1b00008b4b03998b344de42e4804fceff91d23b23",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "55555555-5555-4555-8555-555555555555"
+            ]
+          ],
+          "failed_checks": [],
+          "outcome": "mismatch",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "55555555-5555-4555-8555-555555555555"
+            ]
+          ],
+          "failed_checks": [],
+          "outcome": "mismatch",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-27",
+      "diagnostic": "",
+      "expected": {
+        "failed_checks": [
+          [
+            "S1",
+            [
+              "00000000-0000-4000-8000-000000000205",
+              "99999999-9999-4999-8999-999999999999"
+            ]
+          ]
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "fb9f6322119c3cb6fcc127c4d6bb256a4f9bd12fcd3034fa2d0b339ff6b64293",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000205",
+                "99999999-9999-4999-8999-999999999999"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000205",
+                "99999999-9999-4999-8999-999999999999"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000205",
+                "99999999-9999-4999-8999-999999999999"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000205",
+                "99999999-9999-4999-8999-999999999999"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-47",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "pass",
+        "raises": []
+      },
+      "fixture_hash": "4895992e1392b2dfc6c8bf5c3c5886201953308e0a90efdc04ac681c742f5693",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-39",
+      "diagnostic": "",
+      "expected": {
+        "attachments": [
+          "t-structural-s1"
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "53a555df79dda4227f0f915f7840021caff1e579c61be4c370f7ede6ae81f59d",
+      "observed": {
+        "checker": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-40",
+      "diagnostic": "",
+      "expected": {
+        "attachments": [
+          "t-structural-s1"
+        ],
+        "outcome": "fail",
+        "raises_include": [
+          [
+            "S1",
+            [
+              "00000000-0000-4000-8000-000000000103",
+              "22222222-2222-4222-8222-222222222222"
+            ]
+          ]
+        ]
+      },
+      "fixture_hash": "8c32adb34d88c0e2800557875d6620d8129e3d9afb210599ddcd055898654439",
+      "observed": {
+        "checker": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "22222222-2222-4222-8222-222222222222"
+            ],
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000101",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000103",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000104",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000101",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000103",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000104",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "22222222-2222-4222-8222-222222222222"
+            ],
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000101",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000103",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000104",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000101",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000103",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ],
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000104",
+                "22222222-2222-4222-8222-222222222222"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-41",
+      "diagnostic": "",
+      "expected": {
+        "attachments": [
+          "t-structural-s1"
+        ],
+        "outcome": "fail",
+        "resolutions": []
+      },
+      "fixture_hash": "51561b24c8045235e60bcca2e9b9152228441492a1fb6b1c7b427d593e5666e4",
+      "observed": {
+        "checker": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "dependencies",
+              "00000000-0000-4000-8000-000000000206"
+            ],
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "dependencies",
+              "00000000-0000-4000-8000-000000000206"
+            ],
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-42",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "pass",
+        "resolutions": [
+          "t-structural-s1"
+        ]
+      },
+      "fixture_hash": "de84dc64289c2f7adc8c6550850aa865c6a9867a56b2a0f852ac78af9825429e",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [
+            "t-structural-s1"
+          ],
+          "seal": {
+            "contributions": [
+              "ccea0baf-342d-45c3-8b85-7a1e37a920d0"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [
+            "t-structural-s1"
+          ],
+          "seal": {
+            "contributions": [
+              "ccea0baf-342d-45c3-8b85-7a1e37a920d0"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-43",
+      "diagnostic": "",
+      "expected": {
+        "attachments": [
+          "t-structural-s1"
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "53a555df79dda4227f0f915f7840021caff1e579c61be4c370f7ede6ae81f59d",
+      "observed": {
+        "checker": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-44",
+      "diagnostic": "",
+      "expected": {
+        "attachments": [
+          "t-structural-s1"
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "5fae9f8addc0eefb8221f92d85cb1bfb79927e5ffd011c4eeb3cd6e98958b954",
+      "observed": {
+        "checker": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [
+            "t-structural-s1"
+          ],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-22",
+      "diagnostic": "",
+      "expected": {
+        "attempts": 0,
+        "outcome": "schema"
+      },
+      "fixture_hash": "473b80182e47c81ad8d62b15c4a36b32ab7d43083f23ede6bb0ff8799116c618",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_REJECTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-23",
+      "diagnostic": "",
+      "expected": {
+        "attempts": 0,
+        "outcome": "stale"
+      },
+      "fixture_hash": "28e343475094c946662a4b35e1b07cd5206f24531ada5367560516b8b68b9f5b",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_REJECTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-28",
+      "diagnostic": "",
+      "expected": {
+        "modules": [
+          "fabric",
+          "fabric.canonical",
+          "fabric.checker"
+        ]
+      },
+      "fixture_hash": "1fdeeb9ab0330fd3fc4dc7c4a7f3bb9ede749321203c2ec3b08e8777b0fcf622",
+      "observed": {
+        "checker": {
+          "modules": [
+            "fabric",
+            "fabric.canonical",
+            "fabric.checker"
+          ],
+          "static_scan_ok": true
+        },
+        "engine": {
+          "modules": [
+            "fabric",
+            "fabric.canonical",
+            "fabric.checker"
+          ],
+          "static_scan_ok": true
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-30",
+      "diagnostic": "",
+      "expected": {
+        "attempts": 1,
+        "outcome": "pass"
+      },
+      "fixture_hash": "b6c5df85a266e9c09e0ecb0fed4d7bdaaf96d4e3a5ab3e6b2512d497934a668d",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-31",
+      "diagnostic": "",
+      "expected": {
+        "attempts": 2,
+        "first_outcome": "fail",
+        "structural_raised": 1
+      },
+      "fixture_hash": "90fca41589e9227bb853a414f00be4c8425080fdf8b3c6256f035c82b4c53161",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_RAISED",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-33",
+      "diagnostic": "",
+      "expected": {
+        "failed_checks": [
+          [
+            "S1",
+            [
+              "00000000-0000-4000-8000-000000000102",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ]
+        ],
+        "outcome": "fail",
+        "seal": "absent"
+      },
+      "fixture_hash": "90fca41589e9227bb853a414f00be4c8425080fdf8b3c6256f035c82b4c53161",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_RAISED",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-32",
+      "diagnostic": "",
+      "expected": {
+        "evidence_seq": "the attempt's",
+        "order": [
+          "SEAL_ATTEMPTED",
+          "TENSION_STATUS"
+        ]
+      },
+      "fixture_hash": "8c22765b5b369199807c7a7afa4b1182548404a5a1950b2f09ad4a2e5d4cb8a6",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_RAISED",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_STATUS"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-45",
+      "diagnostic": "",
+      "expected": {
+        "steps": "1-9 in order"
+      },
+      "fixture_hash": "a04ef28bd0d07d38e0b6aa8d97ed69106788401e02d60c478f0ac2bee56c0453",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_RAISED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_STATUS"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-34",
+      "diagnostic": "",
+      "expected": {
+        "questions": "both, marked",
+        "seal": "issued",
+        "statuses": "unchanged"
+      },
+      "fixture_hash": "006d7d086469e2c6714f59c291370967cfb06f8e70faf73cc3e90347d6cb3c72",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "TENSION_RAISED",
+            "SEAL_ATTEMPTED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "TENSION_RAISED",
+            "SEAL_ATTEMPTED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "ASSESSMENT_RECORDED",
+            "TENSION_STATUS",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-46",
+      "diagnostic": "",
+      "expected": {
+        "seal": "issued",
+        "tension_status": "open"
+      },
+      "fixture_hash": "006d7d086469e2c6714f59c291370967cfb06f8e70faf73cc3e90347d6cb3c72",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "TENSION_RAISED",
+            "SEAL_ATTEMPTED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "TENSION_RAISED",
+            "SEAL_ATTEMPTED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "ASSESSMENT_RECORDED",
+            "TENSION_STATUS",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-36",
+      "diagnostic": "",
+      "expected": {
+        "exception": "CheckerFailure",
+        "history": "unchanged"
+      },
+      "fixture_hash": "518446e88743ba151abe927a68aa4abc75baa940a3f68dbdbf800cf788c391f2",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-37",
+      "diagnostic": "",
+      "expected": {
+        "close_attempts": 1,
+        "then": "RUN_CLOSED"
+      },
+      "fixture_hash": "d46885c002341f50f8b67ad7a81cc58e32d6bc58f383d5d9d86badcdd07b80e3",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "CONTRIBUTION_ACCEPTED",
+            "SEAL_ATTEMPTED",
+            "RUN_CLOSED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-38",
+      "diagnostic": "",
+      "expected": {
+        "close_attempts": 0,
+        "then": "RUN_CLOSED"
+      },
+      "fixture_hash": "339927de692e7751dbacf6cb40fe5f1da4cdcb17e49ffe58dbbedca6a788e90e",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "RUN_CLOSED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-48",
+      "diagnostic": "",
+      "expected": {
+        "outcome": "rejected",
+        "reason": "structural_target"
+      },
+      "fixture_hash": "214685639abda657322368812de3125ec421edd3a1a345911fc54d9583e93275",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED",
+            "TENSION_RAISED",
+            "ASSESSMENT_RECORDED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-49",
+      "diagnostic": "",
+      "expected": {
+        "facet_status": "section-5 derivation only",
+        "seal": "issued"
+      },
+      "fixture_hash": "0679fb739b7ff40372f9f46d0a32855d9471ccd9b9f5e80ed228cb174b5785d2",
+      "observed": {
+        "checker": {
+          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+        },
+        "engine": {
+          "history_types": [
+            "RUN_OPENED",
+            "DISCOVERY",
+            "DISCOVERY",
+            "CONTRIBUTION_ACCEPTED",
+            "FACET_STATUS",
+            "SEAL_ATTEMPTED"
+          ]
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-50",
+      "diagnostic": "",
+      "expected": {
+        "agents": "A, B, C all present"
+      },
+      "fixture_hash": "0b6a653dd11823e00b2d3288b1789f505e4f499d8ac1084e0a53e68a279007da",
+      "observed": {
+        "checker": {
+          "byte_identical": true,
+          "bytes_sha256": "fe5350648331e3108ec47ffbf1f292a41aaa5c539fde9fee0239c17a81a49756"
+        },
+        "engine": {
+          "bytes_sha256": "fe5350648331e3108ec47ffbf1f292a41aaa5c539fde9fee0239c17a81a49756",
+          "report": {
+            "agents": {
+              "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa": {
+                "accepted_commits": 1,
+                "changed_read_diff_sizes": [],
+                "changed_read_diff_unit": "regions",
+                "consecutive_rejections": 0,
+                "max_consecutive_rejections": 0,
+                "progressed_after_first_rejection": false,
+                "rejections_by_outcome": {},
+                "time_to_first_success": 0,
+                "total_rejections": 0,
+                "wakes": 2,
+                "wakes_between_successful_commits": null,
+                "wakes_to_first_success": 1
+              },
+              "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb": {
+                "accepted_commits": 0,
+                "changed_read_diff_sizes": [
+                  0
+                ],
+                "changed_read_diff_unit": "regions",
+                "consecutive_rejections": 2,
+                "max_consecutive_rejections": 2,
+                "progressed_after_first_rejection": false,
+                "rejections_by_outcome": {
+                  "schema": 1,
+                  "stale": 1
+                },
+                "time_to_first_success": null,
+                "total_rejections": 2,
+                "wakes": 2,
+                "wakes_between_successful_commits": null,
+                "wakes_to_first_success": null
+              },
+              "cccccccc-cccc-4ccc-8ccc-cccccccccccc": {
+                "accepted_commits": 0,
+                "changed_read_diff_sizes": [],
+                "changed_read_diff_unit": "regions",
+                "consecutive_rejections": 0,
+                "max_consecutive_rejections": 0,
+                "progressed_after_first_rejection": false,
+                "rejections_by_outcome": {},
+                "time_to_first_success": null,
+                "total_rejections": 0,
+                "wakes": 2,
+                "wakes_between_successful_commits": null,
+                "wakes_to_first_success": null
+              }
+            },
+            "events_considered": 6
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-51",
+      "diagnostic": "",
+      "expected": {
+        "current_run": 1,
+        "max_run": 2
+      },
+      "fixture_hash": "36ed4fe03d354da032958923d117e3484a15632060c490a37dfbb49e63ae7d01",
+      "observed": {
+        "checker": {
+          "byte_identical": true,
+          "bytes_sha256": "a16d86bc94625945179c7e99444e7bee669824e315038305be58b08fcbe27cb3"
+        },
+        "engine": {
+          "bytes_sha256": "a16d86bc94625945179c7e99444e7bee669824e315038305be58b08fcbe27cb3",
+          "report": {
+            "agents": {
+              "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa": {
+                "accepted_commits": 1,
+                "changed_read_diff_sizes": [
+                  0,
+                  0
+                ],
+                "changed_read_diff_unit": "regions",
+                "consecutive_rejections": 1,
+                "max_consecutive_rejections": 2,
+                "progressed_after_first_rejection": true,
+                "rejections_by_outcome": {
+                  "schema": 1,
+                  "stale": 2
+                },
+                "time_to_first_success": 2,
+                "total_rejections": 3,
+                "wakes": 4,
+                "wakes_between_successful_commits": null,
+                "wakes_to_first_success": 3
+              }
+            },
+            "events_considered": 4
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-52",
+      "diagnostic": "",
+      "expected": {
+        "nulls": "present, never omitted, never zero"
+      },
+      "fixture_hash": "33fe22cc8e5cbd6b383c7e30b3a1448237675132c5bf4ce9e8b9347a833ca4d1",
+      "observed": {
+        "checker": {
+          "byte_identical": true,
+          "bytes_sha256": "aab3ca5d00c6cd33c2e8dbf9accc556d3873fada30fe46232a01497ae5526629"
+        },
+        "engine": {
+          "bytes_sha256": "aab3ca5d00c6cd33c2e8dbf9accc556d3873fada30fe46232a01497ae5526629",
+          "report": {
+            "agents": {
+              "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb": {
+                "accepted_commits": 0,
+                "changed_read_diff_sizes": [
+                  0
+                ],
+                "changed_read_diff_unit": "regions",
+                "consecutive_rejections": 2,
+                "max_consecutive_rejections": 2,
+                "progressed_after_first_rejection": false,
+                "rejections_by_outcome": {
+                  "schema": 1,
+                  "stale": 1
+                },
+                "time_to_first_success": null,
+                "total_rejections": 2,
+                "wakes": 3,
+                "wakes_between_successful_commits": null,
+                "wakes_to_first_success": null
+              }
+            },
+            "events_considered": 3
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-53",
+      "diagnostic": "",
+      "expected": {
+        "sizes": [
+          0,
+          1,
+          3
+        ],
+        "unit": "regions"
+      },
+      "fixture_hash": "739c4c65531ed7781705b21be262b7a51b4c3b7a45c5cd0dd35592f54f18faf0",
+      "observed": {
+        "checker": {
+          "byte_identical": true,
+          "bytes_sha256": "b630f79c1e6355043c23ca32c8cb914002ef82445d285237ab82335a0f705304"
+        },
+        "engine": {
+          "bytes_sha256": "b630f79c1e6355043c23ca32c8cb914002ef82445d285237ab82335a0f705304",
+          "report": {
+            "agents": {
+              "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa": {
+                "accepted_commits": 0,
+                "changed_read_diff_sizes": [
+                  0,
+                  1,
+                  3
+                ],
+                "changed_read_diff_unit": "regions",
+                "consecutive_rejections": 3,
+                "max_consecutive_rejections": 3,
+                "progressed_after_first_rejection": false,
+                "rejections_by_outcome": {
+                  "stale": 3
+                },
+                "time_to_first_success": null,
+                "total_rejections": 3,
+                "wakes": 3,
+                "wakes_between_successful_commits": null,
+                "wakes_to_first_success": null
+              }
+            },
+            "events_considered": 3
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-54",
+      "diagnostic": "",
+      "expected": {
+        "bytes": "identical across runs"
+      },
+      "fixture_hash": "37ed8615afde45548ff03ed05a1c10e6d179d4a2dd77d2be65e170b981e6149a",
+      "observed": {
+        "checker": {
+          "sha256": "5624777f7740de543499e5ac82948f90ab46ad5a7b9f6edc77c31c1b1e2f662a"
+        },
+        "engine": {
+          "sha256": "5624777f7740de543499e5ac82948f90ab46ad5a7b9f6edc77c31c1b1e2f662a"
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-55",
+      "diagnostic": "",
+      "expected": {
+        "opening": "blocked on wrong digest",
+        "run_opened_names": "id, version, sha256"
+      },
+      "fixture_hash": "276142f3ac5774b9582fe0419efbdd786b3c8c27c528383446c9b7a05d6a8230",
+      "observed": {
+        "checker": {
+          "match": {
+            "bound_sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+            "expected_sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+            "matches": true
+          },
+          "mismatch": {
+            "bound_sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+            "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "matches": false
+          }
+        },
+        "engine": {
+          "blocked": true,
+          "bound_pack": {
+            "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+            "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+            "version": "v2"
+          }
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
+        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+      },
+      "case": "VP-29",
+      "diagnostic": "",
+      "expected": {
+        "disagreements": []
+      },
+      "fixture_hash": "43647b11b4ab1b719039cde165313f4159dc13ccc7237a27b17704c8a9730625",
+      "observed": {
+        "checker": {
+          "disagreements": []
+        },
+        "engine": {
+          "disagreements": []
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    }
+  ],
+  "pack": {
+    "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+    "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+    "version": "v2"
+  }
+}
