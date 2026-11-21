@@ -1,0 +1,503 @@
+{
+ "item": "Correction round 4: post-anchor digest binding",
+ "round_id": "correction4-postanchor-round-DUMMY",
+ "anchor_dir": "trials-anchors/correction4-postanchor-round",
+ "phase0_packets": {
+  "annex_d_packet": {
+   "path": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+   "sha256_as_loomgt": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+   "matches_round2_sealing_record": true
+  },
+  "annex_a_c_packet": {
+   "path": "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+   "sha256_as_loomgt": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15",
+   "matches_round1_record": true
+  },
+  "standin": {
+   "path": "/tmp/loom-trials-runtime/gt-store/annex-d-sealed-standin.txt",
+   "sha256_as_loomgt": "ca8c1a476ccea8d762d23be11544b9c6b288f25767778d2efd20696c84c97fbf"
+  },
+  "swappable_copy": {
+   "path": "/tmp/loom-trials-runtime/gt-store/annex-d-packet-correction4-copy.txt",
+   "sha256_as_loomgt": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+   "byte_exact_copy_of_annex_d_packet": true
+  },
+  "tampered_content": {
+   "path": "/tmp/loom-trials-runtime/gt-store/tampered-content-correction4.txt",
+   "sha256_as_loomgt": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+   "sha256_of_text_written": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+   "digests_agree": true
+  }
+ },
+ "expected_packet_sha256_from_sealing_record": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+ "tampered_content_sha256": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+ "anchors": {
+  "ROUND_CONSTITUTED": "c8b0a46072135b7fa90bc5be5c4a7cdd286f8821",
+  "EVIDENCE_FROZEN": "f44de7658f497e71b8b0005f6877d400ee46247d",
+  "SCORING_FROZEN": "0146c1965f3511e2a7b07945e08c0124814a38b7",
+  "GROUND_TRUTH_ACCESSED_swap_attempt": "12e09d4fe6d96faf03625b60dbc36aeedca7c187",
+  "GROUND_TRUTH_ACCESSED": "c04010822b6e46a447b94e3dd28222808a36df20"
+ },
+ "cases": {
+  "no_selector_set": {
+   "selector": "ABSENT (GT_RELEASE_FILE unset)",
+   "invoker": "invoke_release_once.py",
+   "subprocess_returncode": 0,
+   "subprocess_stderr_tail": "",
+   "invocation": {
+    "gt_file_seen_by_module": null,
+    "gt_file_explicit": false,
+    "result": {
+     "released": false,
+     "stage": "packet-selection",
+     "why": "GT_RELEASE_FILE is not set: packet selection is explicit and there is no default packet (correction round 3); release refused, no material read"
+    }
+   },
+   "head_before": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "material_released": false
+  },
+  "selector_is_annex_a_c_packet": {
+   "selector": "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+   "invoker": "invoke_release_once.py",
+   "subprocess_returncode": 0,
+   "subprocess_stderr_tail": "",
+   "invocation": {
+    "gt_file_seen_by_module": "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+    "gt_file_explicit": true,
+    "result": {
+     "released": false,
+     "stage": "packet-binding",
+     "why": "selected packet (/tmp/loom-trials-runtime/gt-store/layer4-packet.txt) SHA-256 8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15 does not equal the sealed Annex D packet hash 54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f recorded in GROUND_TRUTH_SEALED (seq 2); release refused, no material read",
+     "selected_packet_sha256": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15",
+     "expected_packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "sealed_event_seq": 2
+    }
+   },
+   "head_before": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "material_released": false
+  },
+  "selector_is_arbitrary_readable_file": {
+   "selector": "/tmp/loom-trials-runtime/gt-store/annex-d-sealed-standin.txt",
+   "invoker": "invoke_release_once.py",
+   "subprocess_returncode": 0,
+   "subprocess_stderr_tail": "",
+   "invocation": {
+    "gt_file_seen_by_module": "/tmp/loom-trials-runtime/gt-store/annex-d-sealed-standin.txt",
+    "gt_file_explicit": true,
+    "result": {
+     "released": false,
+     "stage": "packet-binding",
+     "why": "selected packet (/tmp/loom-trials-runtime/gt-store/annex-d-sealed-standin.txt) SHA-256 ca8c1a476ccea8d762d23be11544b9c6b288f25767778d2efd20696c84c97fbf does not equal the sealed Annex D packet hash 54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f recorded in GROUND_TRUTH_SEALED (seq 2); release refused, no material read",
+     "selected_packet_sha256": "ca8c1a476ccea8d762d23be11544b9c6b288f25767778d2efd20696c84c97fbf",
+     "expected_packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "sealed_event_seq": 2
+    }
+   },
+   "head_before": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "material_released": false
+  },
+  "post_anchor_swap": {
+   "selector": "/tmp/loom-trials-runtime/gt-store/annex-d-packet-correction4-copy.txt",
+   "invoker": "invoke_release_swap_once.py",
+   "subprocess_returncode": 0,
+   "subprocess_stderr_tail": "",
+   "invocation": {
+    "gt_file_seen_by_module": "/tmp/loom-trials-runtime/gt-store/annex-d-packet-correction4-copy.txt",
+    "gt_file_explicit": true,
+    "swap": {
+     "interposed": true,
+     "method": "in-process wrap of anchor.anchor_head: the real anchor for GROUND_TRUTH_ACCESSED executed and returned; the selected file's bytes were then replaced (runuser -u loomgt -- cp <tampered> <selected>) before gt_release.release() performed its step-5 read",
+     "access_event_seq": 10,
+     "anchor_commit_returned_by_real_anchor": "12e09d4fe6d96faf03625b60dbc36aeedca7c187",
+     "selected_file": "/tmp/loom-trials-runtime/gt-store/annex-d-packet-correction4-copy.txt",
+     "selected_sha256_before_swap": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "swap_cp_returncode": 0,
+     "swap_cp_stderr_tail": "",
+     "selected_sha256_after_swap": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+     "swap_source": "/tmp/loom-trials-runtime/gt-store/tampered-content-correction4.txt",
+     "swap_source_sha256_as_loomgt": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527"
+    },
+    "result": {
+     "released": false,
+     "stage": "post-anchor-binding",
+     "why": "post-anchor read of the selected packet (/tmp/loom-trials-runtime/gt-store/annex-d-packet-correction4-copy.txt) has SHA-256 5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527, which does not equal the sealed Annex D packet hash 54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f recorded in GROUND_TRUTH_SEALED (seq 2): the selected file changed after pre-verification; NOTHING released. The GROUND_TRUTH_ACCESSED event (seq 10) and its anchor are retained as the record of this attempted access",
+     "access_event_seq": 10,
+     "access_anchor_commit": "12e09d4fe6d96faf03625b60dbc36aeedca7c187",
+     "expected_packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "post_anchor_read_sha256": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+     "sealed_event_seq": 2,
+     "selected_packet_sha256_verified": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f"
+    }
+   },
+   "head_before": {
+    "ok": true,
+    "seq": 9,
+    "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 10,
+    "hash": "ebace966701a60659eebea23cfacaee2019dc4aa1801f03f4eab4e78bf862dfb",
+    "type": "GROUND_TRUTH_ACCESSED"
+   },
+   "material_released": false,
+   "swap_record_file": {
+    "interposed": true,
+    "method": "in-process wrap of anchor.anchor_head: the real anchor for GROUND_TRUTH_ACCESSED executed and returned; the selected file's bytes were then replaced (runuser -u loomgt -- cp <tampered> <selected>) before gt_release.release() performed its step-5 read",
+    "access_event_seq": 10,
+    "anchor_commit_returned_by_real_anchor": "12e09d4fe6d96faf03625b60dbc36aeedca7c187",
+    "selected_file": "/tmp/loom-trials-runtime/gt-store/annex-d-packet-correction4-copy.txt",
+    "selected_sha256_before_swap": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "swap_cp_returncode": 0,
+    "swap_cp_stderr_tail": "",
+    "selected_sha256_after_swap": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+    "swap_source": "/tmp/loom-trials-runtime/gt-store/tampered-content-correction4.txt",
+    "swap_source_sha256_as_loomgt": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527"
+   }
+  },
+  "positive_annex_d_packet": {
+   "selector": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+   "invoker": "invoke_release_once.py",
+   "subprocess_returncode": 0,
+   "subprocess_stderr_tail": "",
+   "invocation": {
+    "gt_file_seen_by_module": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+    "gt_file_explicit": true,
+    "result": {
+     "released": true,
+     "access_event_seq": 11,
+     "access_anchor_commit": "c04010822b6e46a447b94e3dd28222808a36df20",
+     "material_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "post_anchor_read_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "out_path": "/tmp/loom-trials-runtime/work/examiner-out-c4-annexd.txt",
+     "gt_file": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+     "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "packet_binding_event_seq": 2,
+     "selected_packet_sha256_verified": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f"
+    }
+   },
+   "head_before": {
+    "ok": true,
+    "seq": 10,
+    "hash": "ebace966701a60659eebea23cfacaee2019dc4aa1801f03f4eab4e78bf862dfb",
+    "type": "GROUND_TRUTH_ACCESSED"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 11,
+    "hash": "8a7a754800d531a30e3c4a09deb00da28283baa49aac36b83ec54693a7ca8402",
+    "type": "GROUND_TRUTH_ACCESSED"
+   },
+   "material_released": true,
+   "released_file_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f"
+  }
+ },
+ "sheets_manifest_sha256": "b4ec44cd79a3d26001cbc5bb82feee6068b399fd22ef5fc89f24c0732dfb746e",
+ "chain_before_invocations": [
+  "ROUND_CONSTITUTED",
+  "GROUND_TRUTH_SEALED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "EVIDENCE_FROZEN",
+  "SCORING_COMPLETED",
+  "SCORING_FROZEN"
+ ],
+ "swap_case_access_anchor_verification": {
+  "access_event_seq": 10,
+  "access_event_retained_in_sequence": true,
+  "access_event_payload": {
+   "evidence_frozen_seq": 7,
+   "examiner": "correction4-demo-examiner",
+   "packet_binding_event_seq": 2,
+   "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+   "scope": "layer-4 examination of the sealed ground truth (packet file: annex-d-packet-correction4-copy.txt)",
+   "scoring_completed_seq": 8,
+   "scoring_frozen_seq": 9,
+   "selected_packet_sha256_verified": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+   "sheets_manifest_sha256": "b4ec44cd79a3d26001cbc5bb82feee6068b399fd22ef5fc89f24c0732dfb746e"
+  },
+  "anchor_readback_parsed": true,
+  "anchor_structural_validation": null,
+  "anchor_commit_in_result": "12e09d4fe6d96faf03625b60dbc36aeedca7c187",
+  "anchor_commit_in_swap_record": "12e09d4fe6d96faf03625b60dbc36aeedca7c187"
+ },
+ "positive_release": {
+  "released": true,
+  "access_event_seq": 11,
+  "access_anchor_commit": "c04010822b6e46a447b94e3dd28222808a36df20",
+  "material_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+  "post_anchor_read_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+  "out_path": "/tmp/loom-trials-runtime/work/examiner-out-c4-annexd.txt",
+  "gt_file": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+  "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+  "packet_binding_event_seq": 2,
+  "selected_packet_sha256_verified": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+  "released_file_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+  "material_hash_matches_annex_d_packet": true
+ },
+ "chain_verify": {
+  "ok": true,
+  "events": 12
+ },
+ "events": [
+  {
+   "hash": "e670e4720796697b3b249e101182696258b2bc2d7219d59575aa6c36acc49d7f",
+   "payload": {
+    "DUMMY": true,
+    "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+    "purpose": "correction round 4 post-anchor binding tests only",
+    "round_id": "correction4-postanchor-round-DUMMY"
+   },
+   "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+   "seq": 1,
+   "timestamp": "2026-11-21T16:36:26.905178+00:00",
+   "type": "ROUND_CONSTITUTED"
+  },
+  {
+   "hash": "5b07e89ff72b5f3e5cbb4b1f9159ed890d1bf9cac520cd20e8e188f23b4d333e",
+   "payload": {
+    "DUMMY": true,
+    "act": "sealing of the Annex D ground-truth packet (D7-A), performed by ledger/seal_annex_d.py in correction round 2, before this chain was built",
+    "extraction": {
+     "annex_d_bytes": 4481,
+     "annex_d_sha256": "7b778c6d9973d2dcad114e607d3f274532324634fd993621fd693f7f2d76e5ce",
+     "contents_as_identified_by_rev9": [
+      "the six fixture-region identities",
+      "the semantic plant",
+      "the structural plant"
+     ],
+     "method": "heading-boundary byte-exact slice of the Annex D section (from the '## Annex D' heading line to just before the '## Annex E' heading line); header lines are mechanical metadata only; no paraphrase, no reconstruction",
+     "source_byte_range_0based_end_exclusive": [
+      73456,
+      77937
+     ],
+     "source_lines_1based_inclusive": [
+      549,
+      606
+     ]
+    },
+    "packet_bytes": 5189,
+    "packet_path": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+    "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "sealing_evidence": "evidence/CD7A_annex_d_sealing.json",
+    "source_file": "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md",
+    "source_git_blob": "6a7e3d54b4b653ed6b8ca76392c59d283d8b2b1a",
+    "source_sha256": "53c8d4c51a955e4803ccd0b8d86ece9fdb0cadd1a9e745bc2531daf2393ca252"
+   },
+   "prev_hash": "e670e4720796697b3b249e101182696258b2bc2d7219d59575aa6c36acc49d7f",
+   "seq": 2,
+   "timestamp": "2026-11-21T16:36:36.232532+00:00",
+   "type": "GROUND_TRUTH_SEALED"
+  },
+  {
+   "hash": "5643fb9db8e5d28c994b856c058fa7561556577399116a353ec74ee20a0e4842",
+   "payload": {
+    "DUMMY": true,
+    "layer1": {
+     "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+     "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+    },
+    "layer2_response_sha256": "3eec9f2d6139f0f442078f2d5a97e75f18d7543d46f69dcd87b70a9b0b64a7e8",
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "trial_uid": "DUMMY-1"
+   },
+   "prev_hash": "5b07e89ff72b5f3e5cbb4b1f9159ed890d1bf9cac520cd20e8e188f23b4d333e",
+   "seq": 3,
+   "timestamp": "2026-11-21T16:36:37.139821+00:00",
+   "type": "TRIAL_RECORDED"
+  },
+  {
+   "hash": "08065f0eb9007df7968a53a53882325da0c2c794c5865c72dfff0cc32b5251a8",
+   "payload": {
+    "DUMMY": true,
+    "agree": true,
+    "ajv_valid": true,
+    "python_valid": true,
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "trial_uid": "DUMMY-1"
+   },
+   "prev_hash": "5643fb9db8e5d28c994b856c058fa7561556577399116a353ec74ee20a0e4842",
+   "seq": 4,
+   "timestamp": "2026-11-21T16:36:37.140516+00:00",
+   "type": "VALIDATION_RECORDED"
+  },
+  {
+   "hash": "9be0c9b572a602fc85934b5f9d0013297dd4cfcf5b3202e8f5d5ab07cfd41f32",
+   "payload": {
+    "DUMMY": true,
+    "layer1": {
+     "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+     "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+    },
+    "layer2_response_sha256": "ff2bebd6427e0c689e3c45f2fdc50f5ffcc3bac0042b2c3801cf76f97c31b480",
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "trial_uid": "DUMMY-2"
+   },
+   "prev_hash": "08065f0eb9007df7968a53a53882325da0c2c794c5865c72dfff0cc32b5251a8",
+   "seq": 5,
+   "timestamp": "2026-11-21T16:36:37.570002+00:00",
+   "type": "TRIAL_RECORDED"
+  },
+  {
+   "hash": "b84c4b0781f9406de34f009966e0d7d4950fbe538e4607d49a91dc7b2bd865d0",
+   "payload": {
+    "DUMMY": true,
+    "agree": true,
+    "ajv_valid": false,
+    "python_valid": false,
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "trial_uid": "DUMMY-2"
+   },
+   "prev_hash": "9be0c9b572a602fc85934b5f9d0013297dd4cfcf5b3202e8f5d5ab07cfd41f32",
+   "seq": 6,
+   "timestamp": "2026-11-21T16:36:37.570778+00:00",
+   "type": "VALIDATION_RECORDED"
+  },
+  {
+   "hash": "51c9d293c317601efcaa3b5bd56f1087c5d7a19f57c1b42b1f9c028502a3732b",
+   "payload": {
+    "DUMMY": true,
+    "manifest_sha256": "057e29bda1686d87af02d22a3b9ce4aa48ffd8e865f982afdb3340335c73545f",
+    "round_id": "correction4-postanchor-round-DUMMY"
+   },
+   "prev_hash": "b84c4b0781f9406de34f009966e0d7d4950fbe538e4607d49a91dc7b2bd865d0",
+   "seq": 7,
+   "timestamp": "2026-11-21T16:36:37.571678+00:00",
+   "type": "EVIDENCE_FROZEN"
+  },
+  {
+   "hash": "b1b8c7e85e1a1725c8f49d183bee843a6ebaee9efd3286479b90c9d5a8add915",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "sheets_sha256": "b4ec44cd79a3d26001cbc5bb82feee6068b399fd22ef5fc89f24c0732dfb746e"
+   },
+   "prev_hash": "51c9d293c317601efcaa3b5bd56f1087c5d7a19f57c1b42b1f9c028502a3732b",
+   "seq": 8,
+   "timestamp": "2026-11-21T16:36:46.199744+00:00",
+   "type": "SCORING_COMPLETED"
+  },
+  {
+   "hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "sheets_sha256": "b4ec44cd79a3d26001cbc5bb82feee6068b399fd22ef5fc89f24c0732dfb746e"
+   },
+   "prev_hash": "b1b8c7e85e1a1725c8f49d183bee843a6ebaee9efd3286479b90c9d5a8add915",
+   "seq": 9,
+   "timestamp": "2026-11-21T16:36:46.200550+00:00",
+   "type": "SCORING_FROZEN"
+  },
+  {
+   "hash": "ebace966701a60659eebea23cfacaee2019dc4aa1801f03f4eab4e78bf862dfb",
+   "payload": {
+    "evidence_frozen_seq": 7,
+    "examiner": "correction4-demo-examiner",
+    "packet_binding_event_seq": 2,
+    "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "scope": "layer-4 examination of the sealed ground truth (packet file: annex-d-packet-correction4-copy.txt)",
+    "scoring_completed_seq": 8,
+    "scoring_frozen_seq": 9,
+    "selected_packet_sha256_verified": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "sheets_manifest_sha256": "b4ec44cd79a3d26001cbc5bb82feee6068b399fd22ef5fc89f24c0732dfb746e"
+   },
+   "prev_hash": "a3c6109e16ccc2fcd7ed1affcc28c992d0d6c7efc0efc6aa1c65513e398de8ec",
+   "seq": 10,
+   "timestamp": "2026-11-21T16:37:00.939786+00:00",
+   "type": "GROUND_TRUTH_ACCESSED"
+  },
+  {
+   "hash": "8a7a754800d531a30e3c4a09deb00da28283baa49aac36b83ec54693a7ca8402",
+   "payload": {
+    "evidence_frozen_seq": 7,
+    "examiner": "correction4-demo-examiner",
+    "packet_binding_event_seq": 2,
+    "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "scope": "layer-4 examination of the sealed ground truth (packet file: annex-d-packet.txt)",
+    "scoring_completed_seq": 8,
+    "scoring_frozen_seq": 9,
+    "selected_packet_sha256_verified": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "sheets_manifest_sha256": "b4ec44cd79a3d26001cbc5bb82feee6068b399fd22ef5fc89f24c0732dfb746e"
+   },
+   "prev_hash": "ebace966701a60659eebea23cfacaee2019dc4aa1801f03f4eab4e78bf862dfb",
+   "seq": 11,
+   "timestamp": "2026-11-21T16:37:13.944910+00:00",
+   "type": "GROUND_TRUTH_ACCESSED"
+  },
+  {
+   "hash": "7dc6c910bbf570e4b8561a12f16825ce80c62794b17a2b337225730de47f9b25",
+   "payload": {
+    "DUMMY": true,
+    "access_event_seq": 11,
+    "packet_kind": "Annex D sealed ground truth (correction round 4 positive re-run)",
+    "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "released_material_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "round_id": "correction4-postanchor-round-DUMMY",
+    "swap_attempt": {
+     "access_event_seq": 10,
+     "expected_packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+     "material_released": false,
+     "post_anchor_read_sha256": "5b27e5f2b343021f3fdd332d8a38409b05984fd2fc0217357ad624e520f42527",
+     "stage": "post-anchor-binding"
+    }
+   },
+   "prev_hash": "8a7a754800d531a30e3c4a09deb00da28283baa49aac36b83ec54693a7ca8402",
+   "seq": 12,
+   "timestamp": "2026-11-21T16:37:21.934415+00:00",
+   "type": "LAYER4_RECORDED"
+  }
+ ],
+ "event_types_in_order": [
+  "ROUND_CONSTITUTED",
+  "GROUND_TRUTH_SEALED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "EVIDENCE_FROZEN",
+  "SCORING_COMPLETED",
+  "SCORING_FROZEN",
+  "GROUND_TRUTH_ACCESSED",
+  "GROUND_TRUTH_ACCESSED",
+  "LAYER4_RECORDED"
+ ],
+ "manifest_sha256": "057e29bda1686d87af02d22a3b9ce4aa48ffd8e865f982afdb3340335c73545f"
+}

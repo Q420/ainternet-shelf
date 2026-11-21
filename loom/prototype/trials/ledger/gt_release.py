@@ -25,6 +25,22 @@ recorded in the sequence's GROUND_TRUTH_SEALED event. A readable-but-wrong
 file -- the Annex A/C packet, or any other file -- therefore never
 releases: selection by filename alone is not trusted.
 
+CORRECTION ROUND 4 (2026-11-21, per Vane's correction-3 examination,
+D7-A residual): POST-ANCHOR DIGEST BINDING. Round 3 verified the selected
+packet's digest BEFORE the access append + anchor (step 2.5), but the
+bytes actually released were read afterward (step 5) and written to the
+examiner output without re-checking their digest -- a check/use gap: a
+writable selected file could change between verification and release.
+The final release decision now depends on the digest of the actual bytes
+read AFTER anchoring: step 5 reads the material, step 6 hashes those
+exact bytes and requires equality with the sealed packet hash from
+GROUND_TRUTH_SEALED before anything is written to the examiner output.
+On mismatch nothing is written; the GROUND_TRUTH_ACCESSED event and its
+anchor REMAIN in the record as the accurate account of the attempted
+access (they are not rolled back). Step 2.5's pre-verification is
+unchanged -- this round ADDS the post-anchor binding; it removes and
+weakens nothing, and the D7-B order/binding code paths are untouched.
+
 CORRECTION ROUND 2 (2026-11-21, per Vane's correction examination, D7-B):
 - The gate now verifies the COMPLETE SS13 order in the sequence:
   EVIDENCE_FROZEN -> SCORING_COMPLETED -> SCORING_FROZEN, each present, in
@@ -61,8 +77,15 @@ own access record is secured:
   3. Append GROUND_TRUTH_ACCESSED to the sequence.
   4. Anchor the GROUND_TRUTH_ACCESSED head on the shelf (record checked).
   5. ONLY THEN read the sealed material (as the loomgt identity, the only
-     identity that can read it) and write it to the examiner output path.
+     identity that can read it).
+  6. POST-ANCHOR DIGEST BINDING (correction round 4): hash the exact
+     bytes read at step 5 and require equality with the sealed packet
+     hash from GROUND_TRUTH_SEALED; ONLY after that comparison passes
+     are the bytes written to the examiner output path. On mismatch
+     nothing is written, and the access event + anchor from steps 3-4
+     remain as the record of the attempted access.
 If any of steps 0-4 fails, the material is NOT read and NOT released.
+If step 6 fails, the material was read but is NOT released.
 Set GT_RELEASE_SABOTAGE_ANCHOR=1 to simulate an anchoring failure."""
 import hashlib, json, os, re, subprocess, sys
 
@@ -320,14 +343,37 @@ def release(examiner_id, out_path):
         return {"released": False, "stage": "anchor-access-record",
                 "why": "GROUND_TRUTH_ACCESSED could not be anchored (%s); material NOT released" % e,
                 "access_event_seq": app["seq"]}
-    # step 5: only now is the material read (as loomgt) and released
+    # step 5: only now is the material read (as loomgt)
     out = subprocess.run(["runuser", "-u", "loomgt", "--", "cat", GT_FILE],
                          capture_output=True, text=True)
     if out.returncode != 0:
         return {"released": False, "stage": "read", "why": "sealed read failed: " + out.stderr[-200:]}
+    # step 6 (correction round 4): POST-ANCHOR DIGEST BINDING. The release
+    # decision depends on the digest of the exact bytes just read -- not
+    # on step 2.5's pre-verification alone. If the selected file changed
+    # between pre-verification and this post-anchor read, the digests
+    # differ and NOTHING is written to the examiner output. The access
+    # event (step 3) and its anchor (step 4) are NOT rolled back: they
+    # remain the accurate record of this attempted access.
+    read_sha = hashlib.sha256(out.stdout.encode()).hexdigest()
+    if read_sha != expected_packet_sha:
+        return {"released": False, "stage": "post-anchor-binding",
+                "why": "post-anchor read of the selected packet (%s) has SHA-256 %s, "
+                       "which does not equal the sealed Annex D packet hash %s "
+                       "recorded in GROUND_TRUTH_SEALED (seq %d): the selected file "
+                       "changed after pre-verification; NOTHING released. The "
+                       "GROUND_TRUTH_ACCESSED event (seq %d) and its anchor are "
+                       "retained as the record of this attempted access"
+                       % (GT_FILE, read_sha, expected_packet_sha, binding_seq, app["seq"]),
+                "access_event_seq": app["seq"],
+                "access_anchor_commit": arec.get("anchor_commit"),
+                "expected_packet_sha256": expected_packet_sha,
+                "post_anchor_read_sha256": read_sha,
+                "sealed_event_seq": binding_seq,
+                "selected_packet_sha256_verified": actual_packet_sha}
     with open(out_path, "w") as f: f.write(out.stdout)
     return {"released": True, "access_event_seq": app["seq"], "access_anchor_commit": arec.get("anchor_commit"),
-            "material_sha256": hashlib.sha256(out.stdout.encode()).hexdigest(), "out_path": out_path,
+            "material_sha256": read_sha, "post_anchor_read_sha256": read_sha, "out_path": out_path,
             "gt_file": GT_FILE, "packet_sha256": expected_packet_sha,
             "packet_binding_event_seq": binding_seq,
             "selected_packet_sha256_verified": actual_packet_sha}
