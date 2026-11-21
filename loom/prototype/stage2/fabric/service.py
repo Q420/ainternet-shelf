@@ -156,6 +156,33 @@ B1.1 residual, B1.2 execution evidence; B2.1 closed, untouched):
   RECORDS, and requires the submitted outcomes to match them
   exactly. A twin that merely EXISTS, however well configured,
   no longer attests anything: no execution record, no gate.
+
+Corrections round 5 (2026-11-21, Vane's examination of round 4 —
+B1.2.1, the one remaining blocker; B1.1 and B2.1 closed,
+untouched; B1.2.2's qualification accepted and preserved):
+
+- B1.2.1 — the witness must describe precisely what it
+  witnessed. Round 4's observation logic matched a label to a
+  loose outcome class: any refused request with a non-session
+  token could stand as the forged-token refusal, any refused
+  unknown operation as the issuance refusal, and any successful
+  session-token request as either legitimate outcome. Each
+  observation label is now bound to its EXACT expected request:
+  forged_token_open records only an open_region with a
+  non-session token, refused; issuance_attempt_on_data_socket
+  only an issue_token request, refused (an unknown operation
+  such as "nonsense" no longer satisfies it);
+  legitimate_pattern_view only a view_pattern with the session
+  token, successful; legitimate_region_open only an open_region
+  with the session token AND the probe's expected region,
+  successful. A mislabeled request records nothing: the
+  session's evidence is simply incomplete, and the attestation
+  fails on the missing observed basis exactly as it fails on a
+  missing outcome. The expected region is the fixture's
+  established probe target (fabric.fixture.COMPONENTS — the
+  same constant probe2 hands the probe agent as its region_id),
+  read by the service from the fixture itself, so neither the
+  agent nor the session opener can move the expectation.
 """
 import argparse
 import json
@@ -168,7 +195,8 @@ from datetime import datetime, timezone
 
 from .canonical import canonical, sha256_hex
 from .engine import Engine, verify_chain
-from .fixture import CONSTITUTION_HASH, SYSTEM_ACTOR, load_ground_truth
+from .fixture import (COMPONENTS, CONSTITUTION_HASH, SYSTEM_ACTOR,
+                      load_ground_truth)
 from .harness import (Harness, HardLineBreach, HarnessRefusal,
                       TransportRefusal)
 from .store import EventStore
@@ -205,6 +233,15 @@ FS_REPORTED_OUTCOMES = (
     "direct_read_store", "direct_read_ground_truth",
     "alternate_path_symlink", "alternate_path_traversal",
 )
+
+# Round 5 (B1.2.1): the region the probe's legitimate open must
+# target before the service will record the legitimate_region_open
+# observation. It is the fixture's established probe target — the
+# same COMPONENTS constant probe2 hands the probe agent as its
+# region_id — read by the service from the fixture itself, so the
+# expectation is a property of the boundary fixture: neither the
+# agent's label nor the session opener can move it.
+PROBE_REGION_ID = COMPONENTS
 
 # The provenance entries a probe result must carry: the twin
 # configuration record (fabric/runtime_setup.py's stat_record).
@@ -950,12 +987,30 @@ class FabricService:
         """Record a socket outcome the service OBSERVED during a
         probe session. The probe agent labels each socket attempt
         with the session id and the attempt name; the service
-        records the outcome only when what actually happened on
-        its socket matches the label's claim — a forged-token
-        attempt is observed refused only if a non-session token
-        was in fact refused, a legitimate attempt is observed ok
-        only if the session token in fact succeeded. The label
-        names the attempt; it cannot manufacture the outcome."""
+        records the outcome only when the request that actually
+        arrived on its socket is the EXACT request the label
+        names, with the result that label claims (round 5,
+        B1.2.1: the witness describes precisely what it
+        witnessed):
+
+        - forged_token_open: an open_region carrying a
+          non-session token, refused;
+        - issuance_attempt_on_data_socket: an issue_token
+          request, refused (an unknown operation, however
+          refused, is not an issuance attempt);
+        - legitimate_pattern_view: a view_pattern carrying the
+          session token, successful;
+        - legitimate_region_open: an open_region carrying the
+          session token AND naming the probe's expected region
+          (PROBE_REGION_ID), successful.
+
+        A request that does not match its label's expected pair
+        exactly records nothing — the session's evidence is
+        simply incomplete, and the attestation later fails on
+        the missing observed basis, exactly as it fails on a
+        missing outcome. The label names the attempt; it cannot
+        manufacture the outcome, and it cannot redescribe a
+        different request as the attempt it names."""
         if self.posture != "probe_target":
             return
         sid = req.get("probe_session")
@@ -965,15 +1020,24 @@ class FabricService:
         if session is None or session["finalized"]:
             return
         ok = bool(resp.get("ok"))
+        op = req.get("op")
         if label == "forged_token_open":
-            if req.get("token") != session["token"] and not ok:
+            if op == "open_region" \
+                    and req.get("token") != session["token"] \
+                    and not ok:
                 session["observations"][label] = "refused"
         elif label == "issuance_attempt_on_data_socket":
-            if req.get("op") not in AGENT_OPS and not ok:
+            if op == "issue_token" and not ok:
                 session["observations"][label] = "refused"
-        elif label in ("legitimate_pattern_view",
-                       "legitimate_region_open"):
-            if req.get("token") == session["token"] and ok:
+        elif label == "legitimate_pattern_view":
+            if op == "view_pattern" \
+                    and req.get("token") == session["token"] and ok:
+                session["observations"][label] = "ok"
+        elif label == "legitimate_region_open":
+            if op == "open_region" \
+                    and req.get("token") == session["token"] \
+                    and req.get("region_id") == PROBE_REGION_ID \
+                    and ok:
                 session["observations"][label] = "ok"
 
     def _probe_fs_paths(self):
