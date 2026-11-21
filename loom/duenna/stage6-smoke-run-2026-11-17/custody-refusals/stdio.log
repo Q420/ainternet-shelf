@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/srv/nemotron-pilot/supervisor/pilot_supervisor.py", line 35, in <module>
+    import pilot_jcs  # pinned at Batch 0 (sha256 8a131cfc...)
+    ^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'pilot_jcs'

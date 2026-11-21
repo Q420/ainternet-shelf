@@ -1,0 +1,55 @@
+--- pilot_adapter.py (frozen)
++++ smoke_adapter.py
+@@ -33,9 +33,19 @@
+ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ import pilot_jcs
+ 
+-ADAPTER_ID = "pilot-adapter-stage5/1.0"
++# SMOKE VARIANT: the live credential comes only through the
++# registered connector route (dynamic credential surrogate,
++# swapped for the real key on the approved request to the
++# registered host). No key is stored or read from disk/env.
++sys.path.insert(0, "/opt/muse/skills/custom-connector-setup/bin")
++from dynamic_credentials import add_surrogate_to_request
++
++ADAPTER_ID = "pilot-adapter-stage6-smoke/1.0"
++# SMOKE VARIANT: this copy pins the SMOKE CONFIG (see
++# smoke-adapter-config.json), not the frozen Stage 5 config.
++# The frozen adapter and frozen config are untouched.
+ PINNED_CONFIG_SHA256 = (
+-    "6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb")
++    "ebb83d772a69da867721990917fef2326516fe71ad075b5693bc15e6e2b4f9ed")
+ PRODUCTION_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
+ 
+ _REDACT_PATTERNS = [
+@@ -126,9 +136,13 @@
+             else base_url
+         self.captures_dir = captures_dir
+         os.makedirs(captures_dir, exist_ok=True)
+-        # No proxy honoured, in any mode of this build (§3.7 (a)).
+-        self._opener = urllib.request.build_opener(
+-            urllib.request.ProxyHandler({}))
++        # SMOKE VARIANT: the environment proxy is honoured —
++        # on this host it is the egress + credential-swap route
++        # (probe evidence in the assembly note); no_proxy
++        # bypasses it for loopback, so the double is unaffected.
++        # The frozen build's no-proxy rule (§3.7 (a)) stands
++        # in the frozen adapter.
++        self._opener = urllib.request.build_opener()
+ 
+     # ------------------------------------------------------------
+     def _attempt(self, body_bytes):
+@@ -143,6 +157,13 @@
+         req = urllib.request.Request(
+             self.endpoint, data=body_bytes, method="POST",
+             headers={"Content-Type": "application/json"})
++        # SMOKE VARIANT: attach the connector credential only
++        # for the production host; loopback (double) gets none.
++        if (urlparse(self.endpoint).hostname or "") == \
++                "integrate.api.nvidia.com":
++            add_surrogate_to_request(
++                req, "custom.nvidia",
++                allowed_hosts=["integrate.api.nvidia.com"])
+         try:
+             with self._opener.open(req, timeout=self.timeout_s) as resp:
+                 data = resp.read()

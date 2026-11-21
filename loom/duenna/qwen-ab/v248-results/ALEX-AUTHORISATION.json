@@ -1,0 +1,9 @@
+{
+ "authorisation": "Fresh 36-run V2 battery (12 test entries x 3 arms)",
+ "authorised_by": "Alex (pb-20261110-v248-battery-authorisation, \u27e6ALEX-FINAL\u27e7)",
+ "foundation_sha256": "c3b917fea035ffc6c3c6ac17e36daac1892482720052c18f0ed0e2b67ae97a9a",
+ "commit": "acd3893",
+ "foundation_commit": "acd3893",
+ "stop_rule": "First technical failure: STOP, record incident, preserve partial record + stop lock, return for adjudication. No patching, resuming, skipping or carrying forward without a new ruling.",
+ "date": "2026-11-10"
+}

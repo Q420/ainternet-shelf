@@ -1,0 +1,7 @@
+Classification: CONTRADICTED  
+
+Ledger:  
+- S1: label = SUPPORTED, decided_at = C, evidence_line = "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31"  
+- S2: label = UNTRACEABLE, decided_at = A, evidence_line = "named source grok-adjudication not locatable"  
+- S3: label = UNTRACEABLE, decided_at = A, evidence_line = "named source duenna-plan#999 not locatable"  
+- S4: label = CONTRADICTED, decided_at = B, evidence_line = "6. **Delivered results and integrity — independent rerun unavailable.** The delivered results JSON (38 fixtures, 38 PASS / 0 FAIL, Python 3.12.3, `python3 harness.py`) was parsed; all 38 recorded fixtures have matching expected/observed values. Claimed hashes: harness 854a3e86…, results 902936d8…. Both files were retrieved at the commit, but their raw‑file SHA‑256 could not be independently calculated (GitHub blob ids are not file hashes) and the harness could not be executed. 38/38 is verified as the contents of the delivered record; it is NOT independently established by execution; neither hash is independently verified here."

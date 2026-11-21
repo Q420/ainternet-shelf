@@ -1,0 +1,912 @@
+{
+ "demo1_t05_construction": {
+  "record": {
+   "artifact": "harness-r60rev.py",
+   "version": "v2.4",
+   "fixtures_total": 38,
+   "fixtures_passed": 38,
+   "harness_sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+   "results_sha256": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+   "correction_b": "OPEN",
+   "evidence": [
+    "r60-revision-change-record#009"
+   ]
+  },
+  "ledger": [
+   {
+    "field": "artifact",
+    "value": "harness-r60rev.py",
+    "process_step": "T05-STEP-02",
+    "source_ref": "shelf-manifest:duenna/harness-r60rev.py",
+    "source_hash": "3b4462fbfb5c1ea644272e905d0e4ee3bf9121df57ab9a6a282346b7634ce21f",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "version",
+    "value": "v2.4",
+    "process_step": "T05-STEP-02",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "fixtures_total",
+    "value": 38,
+    "process_step": "T05-STEP-03",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "fixtures_passed",
+    "value": 38,
+    "process_step": "T05-STEP-03",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "harness_sha256",
+    "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "process_step": "T05-STEP-03",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "results_sha256",
+    "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+    "process_step": "T05-STEP-03",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "correction_b",
+    "value": "OPEN",
+    "process_step": "T05-STEP-03",
+    "source_ref": "alex-combined-adjudication-r60rev#001",
+    "source_hash": null,
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   },
+   {
+    "field": "evidence",
+    "value": [
+     "r60-revision-change-record#009"
+    ],
+    "process_step": "T05-STEP-03",
+    "source_ref": "r60-revision-change-record#009",
+    "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+    "operation": "reference_insert",
+    "verification": "PASS",
+    "verification_method": "tool_result_reference"
+   }
+  ],
+  "cross_record_agreement": {
+   "operation_id": "op-010",
+   "tool": "verify_field",
+   "source_ref": "harness_sha256 cross-record agreement",
+   "source_hash": null,
+   "value": {
+    "field": "harness_sha256 cross-record agreement",
+    "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "expected": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  "field_verifications": [
+   {
+    "operation_id": "op-012",
+    "tool": "verify_field",
+    "source_ref": "artifact",
+    "source_hash": null,
+    "value": {
+     "field": "artifact",
+     "value": "harness-r60rev.py",
+     "expected": "harness-r60rev.py"
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-013",
+    "tool": "verify_field",
+    "source_ref": "version",
+    "source_hash": null,
+    "value": {
+     "field": "version",
+     "value": "v2.4",
+     "expected": "v2.4"
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-014",
+    "tool": "verify_field",
+    "source_ref": "fixtures_total",
+    "source_hash": null,
+    "value": {
+     "field": "fixtures_total",
+     "value": 38,
+     "expected": 38
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-015",
+    "tool": "verify_field",
+    "source_ref": "fixtures_passed",
+    "source_hash": null,
+    "value": {
+     "field": "fixtures_passed",
+     "value": 38,
+     "expected": 38
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-016",
+    "tool": "verify_field",
+    "source_ref": "harness_sha256",
+    "source_hash": null,
+    "value": {
+     "field": "harness_sha256",
+     "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "expected": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-017",
+    "tool": "verify_field",
+    "source_ref": "results_sha256",
+    "source_hash": null,
+    "value": {
+     "field": "results_sha256",
+     "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+     "expected": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66"
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-018",
+    "tool": "verify_field",
+    "source_ref": "correction_b",
+    "source_hash": null,
+    "value": {
+     "field": "correction_b",
+     "value": "OPEN",
+     "expected": "OPEN"
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   },
+   {
+    "operation_id": "op-019",
+    "tool": "verify_field",
+    "source_ref": "evidence",
+    "source_hash": null,
+    "value": {
+     "field": "evidence",
+     "value": [
+      "r60-revision-change-record#009"
+     ],
+     "expected": [
+      "r60-revision-change-record#009"
+     ]
+    },
+    "verification": "PASS",
+    "verification_method": "source_equality",
+    "failure_reason": null
+   }
+  ],
+  "record_matches_expected": true
+ },
+ "demo2_v1_error_caught": {
+  "operation_id": "op-020",
+  "tool": "verify_field",
+  "source_ref": "artifact",
+  "source_hash": null,
+  "value": {
+   "field": "artifact",
+   "value": "R60 REVISION \u2014 CHANGE RECORD (v0.10 package, harness v2.2) > Addendum 3 \u2014 Verdict provenance implemented (2026-11-10)",
+   "expected": "harness-r60rev.py"
+  },
+  "verification": "FAIL",
+  "verification_method": "source_equality",
+  "failure_reason": "artifact: got 'R60 REVISION \u2014 CHANGE RECORD (v0.10 package, harness v2.2) > Addendum 3 \u2014 Verdict provenance implemented (2026-11-10)', expected 'harness-r60rev.py'"
+ },
+ "demo3_receipts": {
+  "FR-A": {
+   "rows": [
+    {
+     "requirement": "field present: artifact",
+     "receipt_value": "harness-r60rev.py",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: sha256",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b20000",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: result",
+     "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: evidence_status",
+     "receipt_value": "[verified]",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: examiner",
+     "receipt_value": "Claude",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "sha256 equals the obligation hash",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b20000",
+     "pass": false,
+     "reason": "hash mismatch"
+    },
+    {
+     "requirement": "result reports the required evidence",
+     "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+     "pass": true,
+     "reason": "required evidence reported"
+    },
+    {
+     "requirement": "evidence_status exactly [verified]",
+     "receipt_value": "[verified]",
+     "pass": true,
+     "reason": "status class exact"
+    }
+   ],
+   "decision": "REJECT",
+   "obligation_state": "OPEN"
+  },
+  "FR-B": {
+   "rows": [
+    {
+     "requirement": "field present: artifact",
+     "receipt_value": "harness-r60rev.py",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: sha256",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: result",
+     "receipt_value": null,
+     "pass": false,
+     "reason": "required field absent"
+    },
+    {
+     "requirement": "field present: evidence_status",
+     "receipt_value": "[verified]",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: examiner",
+     "receipt_value": "Claude",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "sha256 equals the obligation hash",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "pass": true,
+     "reason": "hash match"
+    },
+    {
+     "requirement": "result reports the required evidence",
+     "receipt_value": null,
+     "pass": false,
+     "reason": "required evidence not reported"
+    },
+    {
+     "requirement": "evidence_status exactly [verified]",
+     "receipt_value": "[verified]",
+     "pass": true,
+     "reason": "status class exact"
+    }
+   ],
+   "decision": "REJECT",
+   "obligation_state": "OPEN"
+  },
+  "FR-C": {
+   "rows": [
+    {
+     "requirement": "field present: artifact",
+     "receipt_value": "harness-r60rev.py",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: sha256",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: result",
+     "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: evidence_status",
+     "receipt_value": "[reported]",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: examiner",
+     "receipt_value": "Claude",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "sha256 equals the obligation hash",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "pass": true,
+     "reason": "hash match"
+    },
+    {
+     "requirement": "result reports the required evidence",
+     "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+     "pass": true,
+     "reason": "required evidence reported"
+    },
+    {
+     "requirement": "evidence_status exactly [verified]",
+     "receipt_value": "[reported]",
+     "pass": false,
+     "reason": "status is '[reported]', required [verified]"
+    }
+   ],
+   "decision": "REJECT",
+   "obligation_state": "OPEN"
+  },
+  "FR-VALID": {
+   "rows": [
+    {
+     "requirement": "field present: artifact",
+     "receipt_value": "harness-r60rev.py",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: sha256",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: result",
+     "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: evidence_status",
+     "receipt_value": "[verified]",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "field present: examiner",
+     "receipt_value": "Claude",
+     "pass": true,
+     "reason": null
+    },
+    {
+     "requirement": "sha256 equals the obligation hash",
+     "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+     "pass": true,
+     "reason": "hash match"
+    },
+    {
+     "requirement": "result reports the required evidence",
+     "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+     "pass": true,
+     "reason": "required evidence reported"
+    },
+    {
+     "requirement": "evidence_status exactly [verified]",
+     "receipt_value": "[verified]",
+     "pass": true,
+     "reason": "status class exact"
+    }
+   ],
+   "decision": "CLOSE",
+   "obligation_state": "CLOSED"
+  }
+ },
+ "tool_call_log": [
+  {
+   "operation_id": "op-001",
+   "tool": "shelf_lookup",
+   "source_ref": "shelf-manifest:duenna/harness-r60rev.py",
+   "source_hash": "3b4462fbfb5c1ea644272e905d0e4ee3bf9121df57ab9a6a282346b7634ce21f",
+   "value": {
+    "path": "duenna/harness-r60rev.py",
+    "stated_sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "row": "| `duenna/harness-r60rev.py` | 854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5 | R60 revision harness v2.2 (33 cases: 31 preserved + FX-R60f + FX-R60g) |"
+   },
+   "verification": "FOUND",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-002",
+   "tool": "source_extract",
+   "source_ref": "r60-revision-change-record#009",
+   "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "value": 38,
+   "verification": "EXTRACTED",
+   "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-004",
+   "tool": "source_extract",
+   "source_ref": "r60-revision-change-record#009",
+   "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "value": 38,
+   "verification": "EXTRACTED",
+   "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-006",
+   "tool": "source_extract",
+   "source_ref": "r60-revision-change-record#009",
+   "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+   "verification": "EXTRACTED",
+   "evidence_line": "",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-008",
+   "tool": "source_extract",
+   "source_ref": "r60-revision-change-record#009",
+   "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+   "verification": "EXTRACTED",
+   "evidence_line": "",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-010",
+   "tool": "verify_field",
+   "source_ref": "harness_sha256 cross-record agreement",
+   "source_hash": null,
+   "value": {
+    "field": "harness_sha256 cross-record agreement",
+    "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "expected": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-012",
+   "tool": "verify_field",
+   "source_ref": "artifact",
+   "source_hash": null,
+   "value": {
+    "field": "artifact",
+    "value": "harness-r60rev.py",
+    "expected": "harness-r60rev.py"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-013",
+   "tool": "verify_field",
+   "source_ref": "version",
+   "source_hash": null,
+   "value": {
+    "field": "version",
+    "value": "v2.4",
+    "expected": "v2.4"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-014",
+   "tool": "verify_field",
+   "source_ref": "fixtures_total",
+   "source_hash": null,
+   "value": {
+    "field": "fixtures_total",
+    "value": 38,
+    "expected": 38
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-015",
+   "tool": "verify_field",
+   "source_ref": "fixtures_passed",
+   "source_hash": null,
+   "value": {
+    "field": "fixtures_passed",
+    "value": 38,
+    "expected": 38
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-016",
+   "tool": "verify_field",
+   "source_ref": "harness_sha256",
+   "source_hash": null,
+   "value": {
+    "field": "harness_sha256",
+    "value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+    "expected": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-017",
+   "tool": "verify_field",
+   "source_ref": "results_sha256",
+   "source_hash": null,
+   "value": {
+    "field": "results_sha256",
+    "value": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66",
+    "expected": "902936d8aa27e6e75b48644cb2961f1ccbeeaa2344cf79c8573a77f9b470ad66"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-018",
+   "tool": "verify_field",
+   "source_ref": "correction_b",
+   "source_hash": null,
+   "value": {
+    "field": "correction_b",
+    "value": "OPEN",
+    "expected": "OPEN"
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-019",
+   "tool": "verify_field",
+   "source_ref": "evidence",
+   "source_hash": null,
+   "value": {
+    "field": "evidence",
+    "value": [
+     "r60-revision-change-record#009"
+    ],
+    "expected": [
+     "r60-revision-change-record#009"
+    ]
+   },
+   "verification": "PASS",
+   "verification_method": "source_equality",
+   "failure_reason": null
+  },
+  {
+   "operation_id": "op-020",
+   "tool": "verify_field",
+   "source_ref": "artifact",
+   "source_hash": null,
+   "value": {
+    "field": "artifact",
+    "value": "R60 REVISION \u2014 CHANGE RECORD (v0.10 package, harness v2.2) > Addendum 3 \u2014 Verdict provenance implemented (2026-11-10)",
+    "expected": "harness-r60rev.py"
+   },
+   "verification": "FAIL",
+   "verification_method": "source_equality",
+   "failure_reason": "artifact: got 'R60 REVISION \u2014 CHANGE RECORD (v0.10 package, harness v2.2) > Addendum 3 \u2014 Verdict provenance implemented (2026-11-10)', expected 'harness-r60rev.py'"
+  },
+  {
+   "operation_id": "op-021",
+   "tool": "receipt_worksheet",
+   "source_ref": "obligation-spec",
+   "source_hash": "cda50e1c2af9dfd88e4f4f807f54cb2523a0a63e7bd8c08f75ba69f89f40ce58",
+   "value": {
+    "rows": [
+     {
+      "requirement": "field present: artifact",
+      "receipt_value": "harness-r60rev.py",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: sha256",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b20000",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: result",
+      "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: evidence_status",
+      "receipt_value": "[verified]",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: examiner",
+      "receipt_value": "Claude",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "sha256 equals the obligation hash",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b20000",
+      "pass": false,
+      "reason": "hash mismatch"
+     },
+     {
+      "requirement": "result reports the required evidence",
+      "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+      "pass": true,
+      "reason": "required evidence reported"
+     },
+     {
+      "requirement": "evidence_status exactly [verified]",
+      "receipt_value": "[verified]",
+      "pass": true,
+      "reason": "status class exact"
+     }
+    ],
+    "decision": "REJECT",
+    "obligation_state": "OPEN"
+   },
+   "verification": "FAIL",
+   "failure_reason": "sha256 equals the obligation hash"
+  },
+  {
+   "operation_id": "op-022",
+   "tool": "receipt_worksheet",
+   "source_ref": "obligation-spec",
+   "source_hash": "cda50e1c2af9dfd88e4f4f807f54cb2523a0a63e7bd8c08f75ba69f89f40ce58",
+   "value": {
+    "rows": [
+     {
+      "requirement": "field present: artifact",
+      "receipt_value": "harness-r60rev.py",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: sha256",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: result",
+      "receipt_value": null,
+      "pass": false,
+      "reason": "required field absent"
+     },
+     {
+      "requirement": "field present: evidence_status",
+      "receipt_value": "[verified]",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: examiner",
+      "receipt_value": "Claude",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "sha256 equals the obligation hash",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "pass": true,
+      "reason": "hash match"
+     },
+     {
+      "requirement": "result reports the required evidence",
+      "receipt_value": null,
+      "pass": false,
+      "reason": "required evidence not reported"
+     },
+     {
+      "requirement": "evidence_status exactly [verified]",
+      "receipt_value": "[verified]",
+      "pass": true,
+      "reason": "status class exact"
+     }
+    ],
+    "decision": "REJECT",
+    "obligation_state": "OPEN"
+   },
+   "verification": "FAIL",
+   "failure_reason": "field present: result; result reports the required evidence"
+  },
+  {
+   "operation_id": "op-023",
+   "tool": "receipt_worksheet",
+   "source_ref": "obligation-spec",
+   "source_hash": "cda50e1c2af9dfd88e4f4f807f54cb2523a0a63e7bd8c08f75ba69f89f40ce58",
+   "value": {
+    "rows": [
+     {
+      "requirement": "field present: artifact",
+      "receipt_value": "harness-r60rev.py",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: sha256",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: result",
+      "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: evidence_status",
+      "receipt_value": "[reported]",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: examiner",
+      "receipt_value": "Claude",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "sha256 equals the obligation hash",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "pass": true,
+      "reason": "hash match"
+     },
+     {
+      "requirement": "result reports the required evidence",
+      "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+      "pass": true,
+      "reason": "required evidence reported"
+     },
+     {
+      "requirement": "evidence_status exactly [verified]",
+      "receipt_value": "[reported]",
+      "pass": false,
+      "reason": "status is '[reported]', required [verified]"
+     }
+    ],
+    "decision": "REJECT",
+    "obligation_state": "OPEN"
+   },
+   "verification": "FAIL",
+   "failure_reason": "evidence_status exactly [verified]"
+  },
+  {
+   "operation_id": "op-024",
+   "tool": "receipt_worksheet",
+   "source_ref": "obligation-spec",
+   "source_hash": "cda50e1c2af9dfd88e4f4f807f54cb2523a0a63e7bd8c08f75ba69f89f40ce58",
+   "value": {
+    "rows": [
+     {
+      "requirement": "field present: artifact",
+      "receipt_value": "harness-r60rev.py",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: sha256",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: result",
+      "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: evidence_status",
+      "receipt_value": "[verified]",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "field present: examiner",
+      "receipt_value": "Claude",
+      "pass": true,
+      "reason": null
+     },
+     {
+      "requirement": "sha256 equals the obligation hash",
+      "receipt_value": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+      "pass": true,
+      "reason": "hash match"
+     },
+     {
+      "requirement": "result reports the required evidence",
+      "receipt_value": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+      "pass": true,
+      "reason": "required evidence reported"
+     },
+     {
+      "requirement": "evidence_status exactly [verified]",
+      "receipt_value": "[verified]",
+      "pass": true,
+      "reason": "status class exact"
+     }
+    ],
+    "decision": "CLOSE",
+    "obligation_state": "CLOSED"
+   },
+   "verification": "PASS",
+   "failure_reason": null
+  }
+ ]
+}

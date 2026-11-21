@@ -1,0 +1,11 @@
+{"at_utc":"2026-11-17T00:30:38Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":42,"ino":7686,"mode":493,"path":"/srv/nemotron-pilot/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":42,"ino":9223372036854780000,"mode":493,"path":"/usr/bin/python3.12"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"STAGE6SMOKE-20261117-001","seq":1}
+{"at_utc":"2026-11-17T00:30:38Z","kind":"LAUNCHER_SPAWNED","launcher_pid":18253,"run_id":"STAGE6SMOKE-20261117-001","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-17T00:30:38Z","kind":"STATE","run_id":"STAGE6SMOKE-20261117-001","seq":3,"state":"S0"}
+{"at_utc":"2026-11-17T00:30:38Z","expected_supervisor_pid":18252,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"STAGE6SMOKE-20261117-001","seq":4}
+{"ack_code":0,"at_utc":"2026-11-17T00:30:38Z","child_pid":18254,"claimed_start_time":624618,"fdinfo_target":18254,"kind":"HANDOFF_VALIDATION","observed_ppid":18253,"observed_start_time":624618,"readiness":"NOT_OBSERVED","run_id":"STAGE6SMOKE-20261117-001","seq":5}
+{"ack_code":0,"at_utc":"2026-11-17T00:30:38Z","kind":"HANDOFF_ACK_SENT","run_id":"STAGE6SMOKE-20261117-001","seq":6}
+{"at":"2026-11-17T00:30:38Z","at_utc":"2026-11-17T00:30:38Z","child_pid":18254,"kind":"TERMINATION_OBSERVED","run_id":"STAGE6SMOKE-20261117-001","seq":7,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-17T00:30:38Z","class":"F","kind":"ABORT_RECEIVED","reason":5,"reason_name":"SETTLING_FAILED","run_id":"STAGE6SMOKE-20261117-001","seq":8}
+{"at_utc":"2026-11-17T00:30:38Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"STAGE6SMOKE-20261117-001","seq":9,"source":"channel EOF (drained)","state_at_observation":"S4"}
+{"at_utc":"2026-11-17T00:30:38Z","exit_code":7,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":1792,"run_id":"STAGE6SMOKE-20261117-001","seq":10,"signal":null,"signalled":false}
+{"at_utc":"2026-11-17T00:30:38Z","kind":"ATTEMPT_CLOSED","outcome":"SX_ABORT_PRE_RELEASE","run_id":"STAGE6SMOKE-20261117-001","seq":11,"state":"S4"}
