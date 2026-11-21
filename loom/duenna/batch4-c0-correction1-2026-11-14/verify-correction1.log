@@ -1,0 +1,24 @@
+== source pins (room test-src) ==
+3e0482c050ddf263a5b1021d84073259591a00d4193bf84be66beb0ab8771a26  launcher.c
+18f3901bd752641695d34a9dd4ef23510506227946b82dc1b0f8fd004d164e09  unit_test.c
+efde5cd57264d7146c31585a5a41c2934d640f06ca9cf631fcd169a3cad1c77e  test_launcher.py
+2ff77cf281629bce6d8940e6a20973484c83589d2ff92d95238b771cc3106bec  test_harness.c
+== production compile (committed zero-placeholder header, no test defines) ==
+prod compile rc=0
+== hook strings in production object (must be none) ==
+none
+== hook identifiers in test object (control: must be present) ==
+PILOT_HOOK_FAIL_FIONREAD
+PILOT_HOOK_STALL_RECV_MS
+== removed-mechanism tokens in source (must be none) ==
+none
+== classification not produced inside receipt layer ==
+chan_recv body: no classify/CLS_ references
+== test-hook guards ==
+27: * under -DPILOT_TEST_HOOKS (compile-time; the production
+217: * accounting. Compiled only under PILOT_TEST_HOOKS. */
+218:#ifdef PILOT_TEST_HOOKS
+298:#ifdef PILOT_TEST_HOOKS
+717:#ifdef PILOT_TEST_HOOKS
+792:#ifdef PILOT_TEST_HOOKS
+815:#ifdef PILOT_TEST_HOOKS

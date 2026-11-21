@@ -1,0 +1,75 @@
++ B=/srv/nemotron-pilot/batch4
++ mkdir -p /srv/nemotron-pilot/batch4/test /srv/nemotron-pilot/batch4/test-src /srv/nemotron-pilot/batch4/test-results /srv/nemotron-pilot/batch4/test-hooks /srv/nemotron-pilot/batch4/test-logs /srv/nemotron-pilot/test-hooks
++ cp /mnt/c/Users/ben/b4c/launcher.c /mnt/c/Users/ben/b4c/unit_test.c /mnt/c/Users/ben/b4c/test_harness.c /mnt/c/Users/ben/b4c/test_launcher.py /mnt/c/Users/ben/b4c/gen_identity_records.sh /mnt/c/Users/ben/b4c/identity_records.h /srv/nemotron-pilot/batch4/test-src/
++ chown -R pilot-harness:pilot-harness /srv/nemotron-pilot/batch4/test-results
++ chown -R pilot-supervisor:pilot-supervisor /srv/nemotron-pilot/batch4/test-hooks
++ cd /srv/nemotron-pilot/batch4/test-src
++ gcc -std=c11 -O2 -Wall -Wextra -Werror -o /srv/nemotron-pilot/batch4/test/test-harness test_harness.c
++ chmod 755 /srv/nemotron-pilot/batch4/test/test-harness
++ bash gen_identity_records.sh /srv/nemotron-pilot/batch4/test/test-harness /srv/nemotron-pilot/batch4/test/test-harness /srv/nemotron-pilot/batch4/test/identity_records.h
+generated /srv/nemotron-pilot/batch4/test/identity_records.h for /srv/nemotron-pilot/batch4/test/test-harness and /srv/nemotron-pilot/batch4/test/test-harness
++ grep -c '0u, 0u' /srv/nemotron-pilot/batch4/test/identity_records.h
+0
++ true
++ gcc -std=c11 -O2 -Wall -Wextra -Werror -c launcher.c -o /tmp/prod.o
++ cp identity_records.h identity_records.zero.h
++ cp /srv/nemotron-pilot/batch4/test/identity_records.h identity_records.h
++ gcc -std=c11 -O2 -Wall -Wextra -Werror -DPILOT_TEST_HOOKS '-DHARNESS_PATH="/srv/nemotron-pilot/batch4/test/test-harness"' -o /srv/nemotron-pilot/batch4/test/launcher-test launcher.c
++ cp identity_records.zero.h identity_records.h
++ gcc -std=c11 -O1 -g -fsanitize=address,undefined -DPILOT_TEST_HOOKS -o /srv/nemotron-pilot/batch4/test/unit-test unit_test.c
++ /srv/nemotron-pilot/batch4/test/unit-test
+[PASS] runid valid canonical
+[PASS] runid valid battery len 1
+[PASS] runid valid battery len 64, counter 999
+[PASS] runid invalid over-long
+[PASS] runid valid leap date 20280229
+[PASS] runid invalid counter 000
+[PASS] runid invalid counter 2 digits
+[PASS] runid invalid counter 4 digits
+[PASS] runid invalid month 00
+[PASS] runid invalid month 13
+[PASS] runid invalid day 00
+[PASS] runid invalid day 32
+[PASS] runid invalid Feb 29 non-leap 2027
+[PASS] runid invalid Feb 30
+[PASS] runid invalid Apr 31
+[PASS] runid valid Apr 30
+[PASS] runid invalid separator inside date
+[PASS] runid invalid missing separator
+[PASS] runid invalid battery leading dash
+[PASS] runid invalid battery trailing dash
+[PASS] runid invalid battery bad char
+[PASS] runid invalid empty
+[PASS] runid invalid two chars (no OOB)
+[PASS] runid invalid short junk (no OOB)
+[PASS] runid invalid date letters
+[PASS] caps: fixture created
+[PASS] caps: plain file (ENODATA) is empty
+[PASS] caps: nonzero capability set fails
+[PASS] caps: all-zero rev2 set is empty
+[PASS] caps: effective-only set fails
+[PASS] caps: ENOTSUP fails closed
+[PASS] caps: EIO fails closed
+[PASS] caps: missing file fails
+[PASS] C0 classify: clean packet -> PROCEED
+[PASS] C0 classify: zeros + packet -> POISONED
+[PASS] C0 classify: zeros + closure -> CLOSURE
+[PASS] C0 classify: ancillary entry -> VIOLATION
+[PASS] C0 classify: zeros + truncated entry -> VIOLATION
+[PASS] C0 classify: malformed entry -> VIOLATION
+[PASS] C0 classify: error -> ERROR
+[PASS] C0 classify: empty collection -> ERROR (guard)
+[PASS] C0 collect: socketpair 1
+[PASS] C0 collect: packet only -> PROCEED
+[PASS] C0 collect: socketpair 2
+[PASS] C0 collect: zero then packet -> POISONED
+[PASS] C0 collect: socketpair 3
+[PASS] C0 collect: zero then shutdown -> CLOSURE
+[PASS] C0 collect: socketpair 4
+[PASS] C0 collect: zero + head ancillary record -> VIOLATION (NQ4' shape)
+[PASS] C0 collect: peek/receipt descriptors closed (fd count stable)
+[PASS] C0 collect: socketpair 5
+[PASS] C0 collect: zero + zero + ancillary behind -> CLOSURE (ruled residue)
+unit: 52/52 PASS
+UNIT EXIT: 0
++ echo 'UNIT EXIT: 0'

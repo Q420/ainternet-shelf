@@ -1,0 +1,15 @@
+{"at_utc":"2026-11-14T22:02:50Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31642,"mode":493,"path":"/srv/nemotron-pilot/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"B4DT3-20261114-001","seq":1}
+{"at_utc":"2026-11-14T22:02:50Z","kind":"LAUNCHER_SPAWNED","launcher_pid":62553,"run_id":"B4DT3-20261114-001","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-14T22:02:50Z","kind":"STATE","run_id":"B4DT3-20261114-001","seq":3,"state":"S0"}
+{"at_utc":"2026-11-14T22:02:50Z","expected_supervisor_pid":62544,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"B4DT3-20261114-001","seq":4}
+{"ack_code":0,"at_utc":"2026-11-14T22:02:50Z","child_pid":62554,"claimed_start_time":13186243,"fdinfo_target":62554,"kind":"HANDOFF_VALIDATION","observed_ppid":62553,"observed_start_time":13186243,"readiness":"NOT_OBSERVED","run_id":"B4DT3-20261114-001","seq":5}
+{"ack_code":0,"at_utc":"2026-11-14T22:02:50Z","kind":"HANDOFF_ACK_SENT","run_id":"B4DT3-20261114-001","seq":6}
+{"at_utc":"2026-11-14T22:02:50Z","kind":"GATE_READY","run_id":"B4DT3-20261114-001","seq":7}
+{"at_utc":"2026-11-14T22:02:50Z","kind":"DEMO_DELAY","point":"s5","run_id":"B4DT3-20261114-001","seconds":5,"seq":8}
+{"at":"2026-11-14T22:02:50Z","at_utc":"2026-11-14T22:02:50Z","child_pid":62554,"kind":"TERMINATION_OBSERVED","run_id":"B4DT3-20261114-001","seq":9,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-14T22:02:55Z","class":"T","delivered":true,"kind":"ABORT_SENT","reason":2,"reason_name":"CHILD_TERMINATED_PRE_RELEASE","run_id":"B4DT3-20261114-001","seq":10}
+{"at_utc":"2026-11-14T22:02:55Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"B4DT3-20261114-001","seq":11,"source":"channel EOF (drained)","state_at_observation":"S5"}
+{"at_utc":"2026-11-14T22:02:55Z","exit_code":0,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":0,"run_id":"B4DT3-20261114-001","seq":12,"signal":null,"signalled":false}
+{"accepted":true,"at_utc":"2026-11-14T22:02:55Z","bytes":10,"child_pid":62554,"classification":"ACCEPT","decode":{"core_dump":false,"kind":"signalled","signal":9},"kind":"STATUS_RECORD","raw_word":9,"run_id":"B4DT3-20261114-001","seq":13,"word_valid":true}
+{"at_utc":"2026-11-14T22:02:55Z","kind":"CLASS_T_OUTCOME","outcome":"PRE_RELEASE_TERMINATED","run_id":"B4DT3-20261114-001","seq":14}
+{"at_utc":"2026-11-14T22:02:55Z","kind":"ATTEMPT_CLOSED","outcome":"PRE_RELEASE_TERMINATED","run_id":"B4DT3-20261114-001","seq":15,"state":"S5"}

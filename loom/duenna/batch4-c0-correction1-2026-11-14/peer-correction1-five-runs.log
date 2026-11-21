@@ -1,0 +1,155 @@
+=== PEER RUN 1 ===
+[PASS] NQ1 harness never executed
+[PASS] NQ2' LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation
+[PASS] NQ2 harness never executed
+[PASS] NQ2' LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS
+[PASS] NQ2-ACK harness never executed
+[PASS] NQ3' queued descriptor-bearing empty record + shutdown: exit 8, no STATUS/ACTUATED
+[PASS] NQ3' harness never executed
+[PASS] NQ3' queued descriptor not leaked (closed at receipt; pipe at EOF)
+[PASS] NQ4' zero + zero-length fd record + shutdown at Stage 6: exit 8, no STATUS/ACTUATED
+[PASS] NQ4' harness never executed
+[PASS] NQ4' descriptor closed (peek and/or receipt walk)
+[PASS] NQ4' at ACK wait: exit 8, no STATUS
+[PASS] NQ4'-ACK harness never executed
+[PASS] NQ4'-ACK descriptor closed
+[PASS] NQ5' LIMITATION at Stage 6: closure outcome over the residue, STATUS delivered (exit 0, word 71)
+[PASS] NQ5' harness never executed
+[PASS] NQ5' residue drained at teardown, descriptor closed unexamined (drain line)
+[PASS] NQ6' FIONREAD failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' FIONREAD Stage 6: harness never executed
+[PASS] NQ6' FIONREAD failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' FIONREAD ACK: harness never executed
+[PASS] NQ6' PEEK failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' PEEK Stage 6: harness never executed
+[PASS] NQ6' PEEK failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' PEEK ACK: harness never executed
+[PASS] NQ6' FIONREAD failure at LAUNCH_REQUEST: exit 15, nothing forked
+[PASS] NQ6' LAUNCH_REQUEST: harness never executed
+[PASS] D-C1 stall 300 ms at closure check, NQ1 form: still poisoned, exit 8
+[PASS] D-C2 stall 300 ms at receive, NQ2' form: still closure outcome, exit 0
+peer: 108/108 PASS
+=== PEER RUN 2 ===
+[PASS] NQ1 harness never executed
+[PASS] NQ2' LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation
+[PASS] NQ2 harness never executed
+[PASS] NQ2' LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS
+[PASS] NQ2-ACK harness never executed
+[PASS] NQ3' queued descriptor-bearing empty record + shutdown: exit 8, no STATUS/ACTUATED
+[PASS] NQ3' harness never executed
+[PASS] NQ3' queued descriptor not leaked (closed at receipt; pipe at EOF)
+[PASS] NQ4' zero + zero-length fd record + shutdown at Stage 6: exit 8, no STATUS/ACTUATED
+[PASS] NQ4' harness never executed
+[PASS] NQ4' descriptor closed (peek and/or receipt walk)
+[PASS] NQ4' at ACK wait: exit 8, no STATUS
+[PASS] NQ4'-ACK harness never executed
+[PASS] NQ4'-ACK descriptor closed
+[PASS] NQ5' LIMITATION at Stage 6: closure outcome over the residue, STATUS delivered (exit 0, word 71)
+[PASS] NQ5' harness never executed
+[PASS] NQ5' residue drained at teardown, descriptor closed unexamined (drain line)
+[PASS] NQ6' FIONREAD failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' FIONREAD Stage 6: harness never executed
+[PASS] NQ6' FIONREAD failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' FIONREAD ACK: harness never executed
+[PASS] NQ6' PEEK failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' PEEK Stage 6: harness never executed
+[PASS] NQ6' PEEK failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' PEEK ACK: harness never executed
+[PASS] NQ6' FIONREAD failure at LAUNCH_REQUEST: exit 15, nothing forked
+[PASS] NQ6' LAUNCH_REQUEST: harness never executed
+[PASS] D-C1 stall 300 ms at closure check, NQ1 form: still poisoned, exit 8
+[PASS] D-C2 stall 300 ms at receive, NQ2' form: still closure outcome, exit 0
+peer: 108/108 PASS
+=== PEER RUN 3 ===
+[PASS] NQ1 harness never executed
+[PASS] NQ2' LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation
+[PASS] NQ2 harness never executed
+[PASS] NQ2' LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS
+[PASS] NQ2-ACK harness never executed
+[PASS] NQ3' queued descriptor-bearing empty record + shutdown: exit 8, no STATUS/ACTUATED
+[PASS] NQ3' harness never executed
+[PASS] NQ3' queued descriptor not leaked (closed at receipt; pipe at EOF)
+[PASS] NQ4' zero + zero-length fd record + shutdown at Stage 6: exit 8, no STATUS/ACTUATED
+[PASS] NQ4' harness never executed
+[PASS] NQ4' descriptor closed (peek and/or receipt walk)
+[PASS] NQ4' at ACK wait: exit 8, no STATUS
+[PASS] NQ4'-ACK harness never executed
+[PASS] NQ4'-ACK descriptor closed
+[PASS] NQ5' LIMITATION at Stage 6: closure outcome over the residue, STATUS delivered (exit 0, word 71)
+[PASS] NQ5' harness never executed
+[PASS] NQ5' residue drained at teardown, descriptor closed unexamined (drain line)
+[PASS] NQ6' FIONREAD failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' FIONREAD Stage 6: harness never executed
+[PASS] NQ6' FIONREAD failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' FIONREAD ACK: harness never executed
+[PASS] NQ6' PEEK failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' PEEK Stage 6: harness never executed
+[PASS] NQ6' PEEK failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' PEEK ACK: harness never executed
+[PASS] NQ6' FIONREAD failure at LAUNCH_REQUEST: exit 15, nothing forked
+[PASS] NQ6' LAUNCH_REQUEST: harness never executed
+[PASS] D-C1 stall 300 ms at closure check, NQ1 form: still poisoned, exit 8
+[PASS] D-C2 stall 300 ms at receive, NQ2' form: still closure outcome, exit 0
+peer: 108/108 PASS
+=== PEER RUN 4 ===
+[PASS] NQ1 harness never executed
+[PASS] NQ2' LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation
+[PASS] NQ2 harness never executed
+[PASS] NQ2' LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS
+[PASS] NQ2-ACK harness never executed
+[PASS] NQ3' queued descriptor-bearing empty record + shutdown: exit 8, no STATUS/ACTUATED
+[PASS] NQ3' harness never executed
+[PASS] NQ3' queued descriptor not leaked (closed at receipt; pipe at EOF)
+[PASS] NQ4' zero + zero-length fd record + shutdown at Stage 6: exit 8, no STATUS/ACTUATED
+[PASS] NQ4' harness never executed
+[PASS] NQ4' descriptor closed (peek and/or receipt walk)
+[PASS] NQ4' at ACK wait: exit 8, no STATUS
+[PASS] NQ4'-ACK harness never executed
+[PASS] NQ4'-ACK descriptor closed
+[PASS] NQ5' LIMITATION at Stage 6: closure outcome over the residue, STATUS delivered (exit 0, word 71)
+[PASS] NQ5' harness never executed
+[PASS] NQ5' residue drained at teardown, descriptor closed unexamined (drain line)
+[PASS] NQ6' FIONREAD failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' FIONREAD Stage 6: harness never executed
+[PASS] NQ6' FIONREAD failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' FIONREAD ACK: harness never executed
+[PASS] NQ6' PEEK failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' PEEK Stage 6: harness never executed
+[PASS] NQ6' PEEK failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' PEEK ACK: harness never executed
+[PASS] NQ6' FIONREAD failure at LAUNCH_REQUEST: exit 15, nothing forked
+[PASS] NQ6' LAUNCH_REQUEST: harness never executed
+[PASS] D-C1 stall 300 ms at closure check, NQ1 form: still poisoned, exit 8
+[PASS] D-C2 stall 300 ms at receive, NQ2' form: still closure outcome, exit 0
+peer: 108/108 PASS
+=== PEER RUN 5 ===
+[PASS] NQ1 harness never executed
+[PASS] NQ2' LIMITATION at Stage 6: EOF outcome (STATUS, exit 0), no actuation
+[PASS] NQ2 harness never executed
+[PASS] NQ2' LIMITATION at ACK wait: EOF outcome (exit 6), no STATUS
+[PASS] NQ2-ACK harness never executed
+[PASS] NQ3' queued descriptor-bearing empty record + shutdown: exit 8, no STATUS/ACTUATED
+[PASS] NQ3' harness never executed
+[PASS] NQ3' queued descriptor not leaked (closed at receipt; pipe at EOF)
+[PASS] NQ4' zero + zero-length fd record + shutdown at Stage 6: exit 8, no STATUS/ACTUATED
+[PASS] NQ4' harness never executed
+[PASS] NQ4' descriptor closed (peek and/or receipt walk)
+[PASS] NQ4' at ACK wait: exit 8, no STATUS
+[PASS] NQ4'-ACK harness never executed
+[PASS] NQ4'-ACK descriptor closed
+[PASS] NQ5' LIMITATION at Stage 6: closure outcome over the residue, STATUS delivered (exit 0, word 71)
+[PASS] NQ5' harness never executed
+[PASS] NQ5' residue drained at teardown, descriptor closed unexamined (drain line)
+[PASS] NQ6' FIONREAD failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' FIONREAD Stage 6: harness never executed
+[PASS] NQ6' FIONREAD failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' FIONREAD ACK: harness never executed
+[PASS] NQ6' PEEK failure at Stage 6: exit 9, no STATUS
+[PASS] NQ6' PEEK Stage 6: harness never executed
+[PASS] NQ6' PEEK failure at ACK wait: exit 9, no STATUS
+[PASS] NQ6' PEEK ACK: harness never executed
+[PASS] NQ6' FIONREAD failure at LAUNCH_REQUEST: exit 15, nothing forked
+[PASS] NQ6' LAUNCH_REQUEST: harness never executed
+[PASS] D-C1 stall 300 ms at closure check, NQ1 form: still poisoned, exit 8
+[PASS] D-C2 stall 300 ms at receive, NQ2' form: still closure outcome, exit 0
+peer: 108/108 PASS

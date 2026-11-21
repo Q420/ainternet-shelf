@@ -1,0 +1,12 @@
+{"at_utc":"2026-11-14T22:02:19Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31642,"mode":493,"path":"/srv/nemotron-pilot/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"B4DT1-20261114-001","seq":1}
+{"at_utc":"2026-11-14T22:02:19Z","kind":"LAUNCHER_SPAWNED","launcher_pid":62464,"run_id":"B4DT1-20261114-001","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-14T22:02:19Z","kind":"STATE","run_id":"B4DT1-20261114-001","seq":3,"state":"S0"}
+{"at_utc":"2026-11-14T22:02:19Z","expected_supervisor_pid":62444,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"B4DT1-20261114-001","seq":4}
+{"at_utc":"2026-11-14T22:02:19Z","kind":"DEMO_DELAY","point":"handoff","run_id":"B4DT1-20261114-001","seconds":5,"seq":5}
+{"at":"2026-11-14T22:02:24Z","at_utc":"2026-11-14T22:02:24Z","child_pid":62466,"kind":"TERMINATION_OBSERVED","run_id":"B4DT1-20261114-001","seq":6,"source":"pidfd readiness at handoff validation"}
+{"ack_code":3,"at_utc":"2026-11-14T22:02:24Z","child_pid":62466,"claimed_start_time":13183147,"fdinfo_target":62466,"kind":"HANDOFF_VALIDATION","observed_ppid":62464,"observed_start_time":13183147,"readiness":"TERMINATED","run_id":"B4DT1-20261114-001","seq":7}
+{"ack_code":3,"at_utc":"2026-11-14T22:02:24Z","kind":"HANDOFF_ACK_SENT","run_id":"B4DT1-20261114-001","seq":8}
+{"at_utc":"2026-11-14T22:02:24Z","class":"F","decode":{"core_dump":false,"kind":"signalled","signal":9},"kind":"ABORT_RECEIVED","raw_word":9,"reason":3,"reason_name":"CHILD_TERMINATED_AT_HANDOFF","run_id":"B4DT1-20261114-001","seq":9,"word_class":"LAUNCHER-REPORTED","word_valid":true}
+{"at_utc":"2026-11-14T22:02:24Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"B4DT1-20261114-001","seq":10,"source":"channel EOF (drained)","state_at_observation":"S1"}
+{"at_utc":"2026-11-14T22:02:24Z","exit_code":3,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":768,"run_id":"B4DT1-20261114-001","seq":11,"signal":null,"signalled":false}
+{"at_utc":"2026-11-14T22:02:24Z","kind":"ATTEMPT_CLOSED","outcome":"SX_CHILD_TERMINATED_AT_HANDOFF","run_id":"B4DT1-20261114-001","seq":12,"state":"S1"}

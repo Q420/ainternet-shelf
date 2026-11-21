@@ -1,0 +1,21 @@
+{"at_utc":"2026-11-14T21:57:43Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31642,"mode":493,"path":"/srv/nemotron-pilot/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"B4FALSE-20261114-101","seq":1}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"LAUNCHER_SPAWNED","launcher_pid":62294,"run_id":"B4FALSE-20261114-101","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"STATE","run_id":"B4FALSE-20261114-101","seq":3,"state":"S0"}
+{"at_utc":"2026-11-14T21:57:43Z","expected_supervisor_pid":62293,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"B4FALSE-20261114-101","seq":4}
+{"ack_code":0,"at_utc":"2026-11-14T21:57:43Z","child_pid":62295,"claimed_start_time":13155529,"fdinfo_target":62295,"kind":"HANDOFF_VALIDATION","observed_ppid":62294,"observed_start_time":13155529,"readiness":"NOT_OBSERVED","run_id":"B4FALSE-20261114-101","seq":5}
+{"ack_code":0,"at_utc":"2026-11-14T21:57:43Z","kind":"HANDOFF_ACK_SENT","run_id":"B4FALSE-20261114-101","seq":6}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"GATE_READY","run_id":"B4FALSE-20261114-101","seq":7}
+{"at_utc":"2026-11-14T21:57:43Z","comparison":"PASS","failure":null,"kind":"LAUNCH_EVIDENCE","path":"/srv/nemotron-pilot/supervisor/launch-evidence/B4FALSE-20261114-101.launch-evidence.json","run_id":"B4FALSE-20261114-101","seq":8}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"PRE_RELEASE_GUARD","outcome":"NOT_OBSERVED","run_id":"B4FALSE-20261114-101","seq":9}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"RELEASE_SENT","run_id":"B4FALSE-20261114-101","seq":10}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"GATE_ACTUATED","run_id":"B4FALSE-20261114-101","seq":11}
+{"at_utc":"2026-11-14T21:57:43Z","event_sha_match":true,"genesis_in_file":"9146425d1530cc456bade4198293947dfa9d0f7939d9a85e9f2100a7bf7db65e","genesis_match":true,"genesis_recomputed":"9146425d1530cc456bade4198293947dfa9d0f7939d9a85e9f2100a7bf7db65e","kind":"START_SELF_COMPUTATION","run_id":"B4FALSE-20261114-101","seq":12}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"ISSUANCE","receipt_kind":"START","receipt_path":"/srv/nemotron-pilot/commitments/B4FALSE-20261114-101.start.json","receipt_sha256":"86895d587d1d85a57f204cbdfca97ce49d991ae37f50efb8ec82afadec816eb2","run_id":"B4FALSE-20261114-101","seq":13}
+{"at_utc":"2026-11-14T21:57:43Z","exit_code":0,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":0,"run_id":"B4FALSE-20261114-101","seq":14,"signal":null,"signalled":false}
+{"at":"2026-11-14T21:57:43Z","at_utc":"2026-11-14T21:57:43Z","child_pid":62295,"kind":"TERMINATION_OBSERVED","run_id":"B4FALSE-20261114-101","seq":15,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"B4FALSE-20261114-101","seq":16,"source":"channel EOF (drained)","state_at_observation":"S7"}
+{"accepted":true,"at_utc":"2026-11-14T21:57:43Z","bytes":10,"child_pid":62295,"classification":"ACCEPT","decode":{"exit_code":0,"kind":"exited"},"kind":"STATUS_RECORD","raw_word":0,"run_id":"B4FALSE-20261114-101","seq":17,"word_valid":true}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"STATE","run_id":"B4FALSE-20261114-101","seq":18,"state":"S9","terminal_facts":{"pidfd_termination_observed":true,"status_child_pid":62295,"status_word":0}}
+{"at_utc":"2026-11-14T21:57:43Z","kind":"STATUS_ACK_OUTCOME","outcome":"STATUS_ACK_UNDELIVERABLE","run_id":"B4FALSE-20261114-101","seq":19}
+{"at_utc":"2026-11-14T21:57:44Z","kind":"ISSUANCE","receipt_kind":"TERMINAL","receipt_path":"/srv/nemotron-pilot/commitments/B4FALSE-20261114-101.terminal.json","receipt_sha256":"fd37ae8e14211e001e6c97dc26fb880b6339f5f17d016057d29ff37d5c3cc6ad","run_id":"B4FALSE-20261114-101","seq":20}
+{"at_utc":"2026-11-14T21:57:44Z","kind":"ATTEMPT_CLOSED","outcome":"S9_CLOSED","run_id":"B4FALSE-20261114-101","seq":21,"state":"S9"}

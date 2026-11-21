@@ -1,0 +1,8 @@
+9ea9b615a22bc7ea035d375fd3dd17c8fb5c7e8cdc9861a152882e382a637722  /srv/nemotron-pilot/launcher
+367207ff5cb7f3365c1ea6f40b228d58bc1a96bf1ecd36bda946104e10946725  /srv/nemotron-pilot/harness/pilot-harness
+ed3f5c8521159d874fef7cefdf52accca7ef0fcf2c5b29d299ab4996ed1c7216  /srv/nemotron-pilot/harness/pilot_record.py
+8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c  /srv/nemotron-pilot/harness/pilot_jcs.py
+c8a11370d06af5755d1cfa9af62d01065f7b95f926c1bb351bad9466b7dfb5a2  /srv/nemotron-pilot/supervisor/pilot_supervisor.py
+8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c  /srv/nemotron-pilot/supervisor/pilot_jcs.py
+/srv/nemotron-pilot/launcher owner=root group=pilot-supervisor mode=4710 size=31224
+/srv/nemotron-pilot/harness/pilot-harness owner=root group=root mode=755 size=7441

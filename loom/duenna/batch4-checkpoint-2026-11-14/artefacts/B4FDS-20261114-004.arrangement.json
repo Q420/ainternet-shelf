@@ -1,0 +1,8 @@
+{
+ "mode": "hazard",
+ "run_id": "B4FDS-20261114-004",
+ "hazard_path": "/srv/nemotron-pilot/batch4/checkpoint-work/hazard-file.txt",
+ "hazard_sha256_before": "21818782f440bf91975a65fabf3d1d5c4e46f522332fe491a609fd7fb073f959",
+ "hazard_fd": 5,
+ "hazard_fd_mode": "O_WRONLY|O_APPEND"
+}
