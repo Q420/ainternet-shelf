@@ -1,0 +1,19 @@
+{
+ "round": "correction5-binary-round-DUMMY",
+ "DUMMY": true,
+ "dummy_fixtures": true,
+ "prompt_annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+ "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+ "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+ "responses_in_schedule_order": [
+  {
+   "trial_uid": "DUMMY-1",
+   "sha256": "3eec9f2d6139f0f442078f2d5a97e75f18d7543d46f69dcd87b70a9b0b64a7e8"
+  },
+  {
+   "trial_uid": "DUMMY-2",
+   "sha256": "ff2bebd6427e0c689e3c45f2fdc50f5ffcc3bac0042b2c3801cf76f97c31b480"
+  }
+ ],
+ "validator_outputs_sha256": "0c787a0363e179352cb6f5434eb678c50e11771a100c6858725a071dd3052a37"
+}
