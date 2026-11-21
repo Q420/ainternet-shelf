@@ -1,0 +1,49 @@
+ANNEX A GATE-SCHEMA PROFILE
+Artifact: loom/gate-schema/annex-a/1, version 2
+
+This document is the schema contract for your response to the accompanying instruction (the Annex A conformance task). It states the fields your response may contain, the form each field must take, and the rules connecting them. It is the complete schema contract for this task.
+
+RESPONSE SHAPE
+Respond with exactly one JSON object and nothing else. The object has exactly these top-level fields:
+- "action" (required): either "contribute" or "idle".
+- "contribution" (required if "action" is "contribute"; must be absent if "action" is "idle").
+No other top-level fields are permitted.
+
+REGIONS IN THIS TASK
+This task's fabric has exactly two regions. Their identifiers are the names "alpha" and "beta". Wherever a region identifier is required below, the value is "alpha" or "beta". Region identifiers in this task are these names; they are not UUIDs.
+
+THE CONTRIBUTION OBJECT
+If "action" is "contribute", the contribution object has exactly these fields, all of them required:
+- "author": a UUID — a string in standard UUID form (five groups of hexadecimal digits, of lengths 8, 4, 4, 4, and 12, separated by hyphens). Supply a UUID of your own choosing as your identifier for this submission. This task has no accounts and no sign-in, and no identity has been assigned to you: this field asks for a syntactically valid UUID that you supply, not for an authenticated identity, and it is not checked against any registered identity.
+- "idempotency_id": a UUID in the same form, supplied by you, identifying this submission.
+- "base_versions": an object whose keys are exactly the region identifiers in your "read_set", each value the version number you read for that region (a positive integer).
+- "read_set": an array of region identifiers ("alpha" and/or "beta"), at least one entry, no duplicates: every region whose content you used.
+- "write_set": an array of region identifiers, no duplicates, each of which also appears in your "read_set". It may be empty.
+- "operations": an array of operation objects, at least one entry, of the kinds defined under OPERATIONS below.
+- "rationale": a string.
+- "discovery_source": exactly one of "index", "watch", or "fabric_read" (see DISCOVERY below).
+- "discovery_ref": a positive integer, 1 or greater (see DISCOVERY below).
+No other fields are permitted in the contribution object.
+
+OPERATIONS
+Each operation object has a "kind" and exactly the further fields listed for that kind; no other fields are permitted in an operation object.
+- kind "replace_content": "region_id" (a region identifier) and "new_content" (a string).
+- kind "append_content": "region_id" (a region identifier) and "text" (a string).
+- kind "add_dependency": "dependency", an object with exactly "source" (a region identifier), "target" (a region identifier), and "kind", one of "uses", "constrains", "extends", or "contradicts-candidate".
+- kind "remove_dependency": "dependency_id", a UUID identifying the dependency to remove. Note: the view in your instruction displays one existing dependency (alpha uses beta) but assigns it no identifier. There is therefore no dependency_id that you can take from the view.
+- kind "raise_tension": "tension", an object with exactly "type" (the string "semantic"; no other value), "regions" (an array of region identifiers, at least one entry, no duplicates), and "description" (a string).
+
+CONNECTING RULES
+- Your "write_set" is a subset of your "read_set".
+- "base_versions" has exactly the keys of your "read_set" — no more, no fewer.
+- A content operation ("replace_content" or "append_content") may target only a region in your "write_set", and there is at most one content operation per region in the whole contribution.
+- An "add_dependency" operation's source and target both belong in your "read_set" and your "write_set". It may not duplicate an active dependency with the same source, target, and kind; the dependency shown in your instruction (alpha uses beta) is active.
+- A "remove_dependency" operation is checked against the dependency it identifies: that dependency's endpoints must belong in your "read_set" and your "write_set".
+- A "raise_tension" operation's regions all belong in your "read_set". A tension operation adds nothing to your "write_set".
+- Every region identifier appearing anywhere in your contribution — in "read_set", "write_set", "base_versions" keys, operations, tension regions, or dependency endpoints — is "alpha" or "beta". No other value may appear in a region-identifier position.
+
+DISCOVERY
+In the wider system this contract comes from, "discovery_source" and "discovery_ref" record how you came upon the material your contribution relies on, and which discovery record it was. This task presents all of its material to you directly, inside the instruction itself, and it keeps no discovery records.
+- "discovery_source" states the channel by which the material your contribution relies on came to you. The permitted values assert: "index" — you located the material through an index of the fabric; "watch" — the material came to your attention through a standing watch or notification; "fabric_read" — you read the material directly from the fabric's presented view.
+- Which value applies in this task is stated, not left to convention: this task's material reaches you as a supplied, opened view — the region content presented to you in the instruction itself. That supplied, opened view maps to "fabric_read". For material you rely on from that view, "discovery_source" is "fabric_read". There is no index and no watch in this task, so neither "index" nor "watch" describes a channel by which any material in this task came to you.
+- "discovery_ref" is a positive integer. Because this task keeps no discovery records, the number refers to no record and is not checked against one; beyond being a positive integer, which the field requires, it carries no meaning in this task.

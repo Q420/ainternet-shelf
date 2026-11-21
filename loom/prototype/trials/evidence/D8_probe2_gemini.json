@@ -1,0 +1,32 @@
+{
+ "route": "gemini",
+ "model": "gemini-2.5-flash",
+ "config": {
+  "temperature": 1.0
+ },
+ "request_body": {
+  "contents": [
+   {
+    "role": "user",
+    "parts": [
+     {
+      "text": "Build demonstration probe two (not a trial). Reply with exactly: SECOND-OK"
+     }
+    ]
+   }
+  ],
+  "generationConfig": {
+   "temperature": 1.0
+  }
+ },
+ "request_part_sha256": [
+  "31b15f517ac4abf331e6a02584ce993138b10c0753e9309e8b20cf0db6f20170"
+ ],
+ "response_text": null,
+ "raw_response": "",
+ "stderr": "= self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 404: Not Found\n",
+ "returncode": 1,
+ "latency_s": 0.568,
+ "timed_out": false,
+ "timeout_boundary_s": 120
+}

@@ -1,0 +1,499 @@
+{
+ "document": "Conformance gate round \u2014 constitution annex (build round, 2026-11-21)",
+ "status": "Pinned before any trial. NO TRIALS HAVE BEEN RUN. This annex pins the round so trials CAN be run under it in a later, separately authorized step.",
+ "candidates": [
+  {
+   "route": "gemini",
+   "model_id": "gemini-2.5-flash",
+   "catalogue_entry": {
+    "name": "models/gemini-2.5-flash",
+    "version": "001",
+    "displayName": "Gemini 2.5 Flash",
+    "description": "Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.",
+    "inputTokenLimit": 1048576,
+    "outputTokenLimit": 65536,
+    "supportedGenerationMethods": [
+     "generateContent",
+     "countTokens",
+     "createCachedContent",
+     "batchGenerateContent"
+    ],
+    "temperature": 1,
+    "topP": 0.95,
+    "topK": 64,
+    "maxTemperature": 2,
+    "thinking": true
+   },
+   "provider_version": "001",
+   "inference_configuration": {
+    "generationConfig": {
+     "temperature": 1.0
+    }
+   },
+   "contamination_determination": {
+    "ground_1_design_or_examination_seat": {
+     "result": "not exposed",
+     "basis": "The instrument and specification were designed/examined by the Remmy seat (Claude lineage) and the Vane seat (ChatGPT lineage) in recorded sessions. None of the three pinned models is either seat's model, and none served in any recorded design, drafting, or examination session for this instrument."
+    },
+    "ground_2_material_supplied_in_recorded_session": {
+     "result": "not exposed",
+     "basis": "No recorded session supplied Annex C, Annex D, the six-region fixture, accepted-run histories, prior trial outputs (none exist), or this brief's scoring provisions to any of the three pinned models."
+    },
+    "ground_3_provider_documents_training_use": {
+     "result": "not exposed on the documents read",
+     "basis": "No provider document read for these routes states that this material forms part of the pinned model version's training or fine-tuning data. Groq's Services Agreement bars training use of inputs/outputs absent explicit permission. Google's free-tier terms permit Google to use API content to improve its products: that concerns content submitted through the API going forward, is not documentation that the pinned version was trained on this material, and is recorded here so the certificate says exactly what it covers. What is certified is absence of KNOWN or DEMONSTRABLE exposure on these grounds, not the metaphysical absence of any possible exposure (Rev 4 SS8)."
+    }
+   }
+  },
+  {
+   "route": "groq",
+   "model_id": "qwen/qwen3.8-27b",
+   "catalogue_entry": {
+    "id": "qwen/qwen3.8-27b",
+    "object": "model",
+    "created": 1786984846,
+    "owned_by": "Alibaba Cloud",
+    "active": true,
+    "context_window": 131072,
+    "public_apps": null,
+    "max_completion_tokens": 16384,
+    "name": "Qwen/Qwen3.8-27B",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "context_length": 131072,
+    "max_output_length": 16384,
+    "pricing": {
+     "prompt": "0.0000008",
+     "completion": "0.000004",
+     "image": "0",
+     "request": "0",
+     "input_cache_read": "0.0000004"
+    },
+    "supported_sampling_parameters": [
+     "temperature",
+     "top_p",
+     "stop",
+     "seed",
+     "max_tokens"
+    ],
+    "supported_features": [
+     "tools",
+     "json_mode",
+     "reasoning"
+    ]
+   },
+   "provider_version": "not exposed by the Groq catalogue entry; the exact model id, owner, and catalogue snapshot date are pinned instead",
+   "inference_configuration": {
+    "temperature": 1.0,
+    "max_tokens": 4096,
+    "reasoning_format": "hidden"
+   },
+   "contamination_determination": {
+    "ground_1_design_or_examination_seat": {
+     "result": "not exposed",
+     "basis": "The instrument and specification were designed/examined by the Remmy seat (Claude lineage) and the Vane seat (ChatGPT lineage) in recorded sessions. None of the three pinned models is either seat's model, and none served in any recorded design, drafting, or examination session for this instrument."
+    },
+    "ground_2_material_supplied_in_recorded_session": {
+     "result": "not exposed",
+     "basis": "No recorded session supplied Annex C, Annex D, the six-region fixture, accepted-run histories, prior trial outputs (none exist), or this brief's scoring provisions to any of the three pinned models."
+    },
+    "ground_3_provider_documents_training_use": {
+     "result": "not exposed on the documents read",
+     "basis": "No provider document read for these routes states that this material forms part of the pinned model version's training or fine-tuning data. Groq's Services Agreement bars training use of inputs/outputs absent explicit permission. Google's free-tier terms permit Google to use API content to improve its products: that concerns content submitted through the API going forward, is not documentation that the pinned version was trained on this material, and is recorded here so the certificate says exactly what it covers. What is certified is absence of KNOWN or DEMONSTRABLE exposure on these grounds, not the metaphysical absence of any possible exposure (Rev 4 SS8)."
+    }
+   }
+  },
+  {
+   "route": "nvidia",
+   "model_id": "mistralai/mistral-large-4-1t-a52b",
+   "catalogue_entry": {
+    "id": "mistralai/mistral-large-4-1t-a52b",
+    "object": "model",
+    "created": 735790403,
+    "owned_by": "mistralai"
+   },
+   "provider_version": "not exposed by the NVIDIA catalogue entry; the exact model id and catalogue snapshot date are pinned instead",
+   "inference_configuration": {
+    "temperature": 1.0,
+    "max_tokens": 4096
+   },
+   "contamination_determination": {
+    "ground_1_design_or_examination_seat": {
+     "result": "not exposed",
+     "basis": "The instrument and specification were designed/examined by the Remmy seat (Claude lineage) and the Vane seat (ChatGPT lineage) in recorded sessions. None of the three pinned models is either seat's model, and none served in any recorded design, drafting, or examination session for this instrument."
+    },
+    "ground_2_material_supplied_in_recorded_session": {
+     "result": "not exposed",
+     "basis": "No recorded session supplied Annex C, Annex D, the six-region fixture, accepted-run histories, prior trial outputs (none exist), or this brief's scoring provisions to any of the three pinned models."
+    },
+    "ground_3_provider_documents_training_use": {
+     "result": "not exposed on the documents read",
+     "basis": "No provider document read for these routes states that this material forms part of the pinned model version's training or fine-tuning data. Groq's Services Agreement bars training use of inputs/outputs absent explicit permission. Google's free-tier terms permit Google to use API content to improve its products: that concerns content submitted through the API going forward, is not documentation that the pinned version was trained on this material, and is recorded here so the certificate says exactly what it covers. What is certified is absence of KNOWN or DEMONSTRABLE exposure on these grounds, not the metaphysical absence of any possible exposure (Rev 4 SS8)."
+    }
+   }
+  }
+ ],
+ "trials_per_candidate": 20,
+ "thresholds": {
+  "schema_valid_rate_min": 0.9,
+  "task_adequacy_rate_min": 0.75,
+  "source": "Rev 9 SS1"
+ },
+ "timeout": {
+  "seconds_per_trial": 120,
+  "one_request_no_retry": true,
+  "source": "Rev 4 SS6"
+ },
+ "artifacts": {
+  "annex_a_instruction": {
+   "source": "Rev 9 Annex A (spec blob 6a7e3d54, commit d7d65c96)",
+   "bytes": 1354,
+   "sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+   "file": "instruments/annex_a.txt"
+  },
+  "gate_schema_profile": {
+   "artifact": "loom/gate-schema/annex-a/1",
+   "version": 2,
+   "bytes": 5983,
+   "sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+   "pinned_value": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+   "hash_matches_pin": true,
+   "file": "instruments/gate_schema_profile_v2.txt"
+  },
+  "gate_validation_profile": "Rev 4 SS4 (design brief blob 5f74b563)",
+  "gate_schema_json": {
+   "file": "instruments/gate_schema.json",
+   "sha256": "f5c9c5d7153f0255c9cdc9f4dbf8bd1fdc7370383fbdfbea53a3fb43b5f99065"
+  }
+ },
+ "validators": {
+  "validator_1_python": {
+   "library": "jsonschema",
+   "version": "4.10.3",
+   "python": "3.12.3",
+   "draft": "2020-12",
+   "format_assertion": true
+  },
+  "validator_2_ajv": {
+   "library": "ajv",
+   "version": "8.20.0",
+   "ajv-formats": "3.0.1",
+   "node": "v24.22.1",
+   "draft": "2020-12",
+   "format_assertion": true
+  },
+  "independence": "No shared custom validation code; each implements the gate-schema contract and SS4 cross-field rules in its own code (validator_py/validate_py.py, validator_js/validate_js.js). The only shared artifacts are the pinned texts."
+ },
+ "schedule": {
+  "seed": 20261121,
+  "note": "Precommitted before any dispatch; candidate order randomized with the recorded seed (Rev 4 SS10).",
+  "dispatches": [
+   {
+    "position": 1,
+    "route": "groq",
+    "trial_index": 10
+   },
+   {
+    "position": 2,
+    "route": "gemini",
+    "trial_index": 20
+   },
+   {
+    "position": 3,
+    "route": "gemini",
+    "trial_index": 2
+   },
+   {
+    "position": 4,
+    "route": "groq",
+    "trial_index": 9
+   },
+   {
+    "position": 5,
+    "route": "gemini",
+    "trial_index": 4
+   },
+   {
+    "position": 6,
+    "route": "gemini",
+    "trial_index": 13
+   },
+   {
+    "position": 7,
+    "route": "gemini",
+    "trial_index": 15
+   },
+   {
+    "position": 8,
+    "route": "gemini",
+    "trial_index": 9
+   },
+   {
+    "position": 9,
+    "route": "nvidia",
+    "trial_index": 18
+   },
+   {
+    "position": 10,
+    "route": "nvidia",
+    "trial_index": 5
+   },
+   {
+    "position": 11,
+    "route": "groq",
+    "trial_index": 20
+   },
+   {
+    "position": 12,
+    "route": "groq",
+    "trial_index": 8
+   },
+   {
+    "position": 13,
+    "route": "nvidia",
+    "trial_index": 3
+   },
+   {
+    "position": 14,
+    "route": "gemini",
+    "trial_index": 10
+   },
+   {
+    "position": 15,
+    "route": "groq",
+    "trial_index": 17
+   },
+   {
+    "position": 16,
+    "route": "nvidia",
+    "trial_index": 20
+   },
+   {
+    "position": 17,
+    "route": "groq",
+    "trial_index": 13
+   },
+   {
+    "position": 18,
+    "route": "gemini",
+    "trial_index": 19
+   },
+   {
+    "position": 19,
+    "route": "groq",
+    "trial_index": 16
+   },
+   {
+    "position": 20,
+    "route": "groq",
+    "trial_index": 5
+   },
+   {
+    "position": 21,
+    "route": "gemini",
+    "trial_index": 14
+   },
+   {
+    "position": 22,
+    "route": "groq",
+    "trial_index": 12
+   },
+   {
+    "position": 23,
+    "route": "gemini",
+    "trial_index": 17
+   },
+   {
+    "position": 24,
+    "route": "nvidia",
+    "trial_index": 2
+   },
+   {
+    "position": 25,
+    "route": "nvidia",
+    "trial_index": 16
+   },
+   {
+    "position": 26,
+    "route": "nvidia",
+    "trial_index": 10
+   },
+   {
+    "position": 27,
+    "route": "gemini",
+    "trial_index": 7
+   },
+   {
+    "position": 28,
+    "route": "nvidia",
+    "trial_index": 13
+   },
+   {
+    "position": 29,
+    "route": "groq",
+    "trial_index": 18
+   },
+   {
+    "position": 30,
+    "route": "gemini",
+    "trial_index": 3
+   },
+   {
+    "position": 31,
+    "route": "groq",
+    "trial_index": 15
+   },
+   {
+    "position": 32,
+    "route": "groq",
+    "trial_index": 1
+   },
+   {
+    "position": 33,
+    "route": "nvidia",
+    "trial_index": 14
+   },
+   {
+    "position": 34,
+    "route": "groq",
+    "trial_index": 11
+   },
+   {
+    "position": 35,
+    "route": "nvidia",
+    "trial_index": 12
+   },
+   {
+    "position": 36,
+    "route": "groq",
+    "trial_index": 7
+   },
+   {
+    "position": 37,
+    "route": "gemini",
+    "trial_index": 16
+   },
+   {
+    "position": 38,
+    "route": "gemini",
+    "trial_index": 8
+   },
+   {
+    "position": 39,
+    "route": "nvidia",
+    "trial_index": 4
+   },
+   {
+    "position": 40,
+    "route": "nvidia",
+    "trial_index": 1
+   },
+   {
+    "position": 41,
+    "route": "nvidia",
+    "trial_index": 7
+   },
+   {
+    "position": 42,
+    "route": "groq",
+    "trial_index": 6
+   },
+   {
+    "position": 43,
+    "route": "nvidia",
+    "trial_index": 8
+   },
+   {
+    "position": 44,
+    "route": "nvidia",
+    "trial_index": 15
+   },
+   {
+    "position": 45,
+    "route": "nvidia",
+    "trial_index": 6
+   },
+   {
+    "position": 46,
+    "route": "nvidia",
+    "trial_index": 9
+   },
+   {
+    "position": 47,
+    "route": "nvidia",
+    "trial_index": 17
+   },
+   {
+    "position": 48,
+    "route": "groq",
+    "trial_index": 4
+   },
+   {
+    "position": 49,
+    "route": "gemini",
+    "trial_index": 11
+   },
+   {
+    "position": 50,
+    "route": "nvidia",
+    "trial_index": 19
+   },
+   {
+    "position": 51,
+    "route": "gemini",
+    "trial_index": 1
+   },
+   {
+    "position": 52,
+    "route": "gemini",
+    "trial_index": 5
+   },
+   {
+    "position": 53,
+    "route": "groq",
+    "trial_index": 2
+   },
+   {
+    "position": 54,
+    "route": "gemini",
+    "trial_index": 6
+   },
+   {
+    "position": 55,
+    "route": "groq",
+    "trial_index": 19
+   },
+   {
+    "position": 56,
+    "route": "nvidia",
+    "trial_index": 11
+   },
+   {
+    "position": 57,
+    "route": "groq",
+    "trial_index": 3
+   },
+   {
+    "position": 58,
+    "route": "gemini",
+    "trial_index": 18
+   },
+   {
+    "position": 59,
+    "route": "gemini",
+    "trial_index": 12
+   },
+   {
+    "position": 60,
+    "route": "groq",
+    "trial_index": 14
+   }
+  ]
+ },
+ "excluded_seat": "The examiner's own model seat (Vane, ChatGPT lineage) is excluded from candidacy on contamination ground 1 and the SS1 scorer-independence rule; it is not among the three routes."
+}

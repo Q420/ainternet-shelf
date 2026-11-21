@@ -1,0 +1,33 @@
+{
+ "unique_annex_d_shingles": 556,
+ "hits": [
+  {
+   "file": "./evidence/D4_D5_D6_D7_D9_ledger.json",
+   "shingles": [
+    "and no component remembers a caller",
+    "discovery source fabric read discovery ref",
+    "operations kind add dependency dependency source"
+   ]
+  },
+  {
+   "file": "./evidence/dummy_trials/DUMMY-1.response.txt",
+   "shingles": [
+    "discovery source fabric read discovery ref"
+   ]
+  },
+  {
+   "file": "./tests/make_corpus.py",
+   "shingles": [
+    "discovery source fabric read discovery ref"
+   ]
+  },
+  {
+   "file": "./tests/corpus.json",
+   "shingles": [
+    "discovery source fabric read discovery ref",
+    "operations kind add dependency dependency source"
+   ]
+  }
+ ],
+ "note": "First-pass hits were shingles Annex D shares with Annex A/B (it quotes the miniature content and schema field names); this refined scan uses only shingles unique to Annex D."
+}

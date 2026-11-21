@@ -1,0 +1,126 @@
+{
+ "demonstrations": {
+  "D6": {
+   "anchored_seq": 6,
+   "head_hash": "964e4ad456002d18068adeb931d71c3a90ae66b36b8c7e25e3df3fba3c87b7b0",
+   "anchor_commit": "2af6182ead5c24fb1c5937749a826d55b3019d68",
+   "readback_contains_head_hash": true,
+   "proves": "a sequence head with this hash existed at this position no later than the anchor commit; wholesale chain reconstruction would contradict the anchored head",
+   "does_not_prove": "that no unanchored parallel chain was kept privately; the shelf is an archival anchor independent of the trials system, not a trusted timestamp authority"
+  },
+  "D7_i_release_before_scoring_frozen": {
+   "released": false,
+   "stage": "gate",
+   "why": "SCORING_FROZEN does not exist in the sequence",
+   "material_released": false
+  },
+  "D5": {
+   "direct_read_as_loomagent": 1,
+   "direct_append_as_loomagent": 1,
+   "direct_delete_as_loomagent": 1,
+   "service_delete_op": {
+    "ok": false,
+    "error": "unknown_op: the ledger interface has no such operation"
+   },
+   "service_update_op": {
+    "ok": false,
+    "error": "unknown_op: the ledger interface has no such operation"
+   },
+   "append_via_service_as_loomagent": {
+    "error": "python3: can't open file '/tmp/loom-trials-runtime/work/ledger_client.py': [Errno 13] Permission denied\n"
+   }
+  },
+  "scoring_freeze": {
+   "scoring_completed_seq": null,
+   "scoring_frozen_seq": 7,
+   "anchor_commit": "d40feed834d23307aa9066380209c7154c56f9e8"
+  },
+  "D7_iii_fail_closed": {
+   "released": false,
+   "stage": "anchor-access-record",
+   "why": "GROUND_TRUTH_ACCESSED could not be anchored (simulated anchoring failure (D7 iii)); material NOT released",
+   "access_event_seq": 8,
+   "material_released": false
+  },
+  "D7_ii_gated_release": {
+   "released": true,
+   "access_event_seq": 9,
+   "access_anchor_commit": "bf47b122dad9f29645d140b6324a24871cf37390",
+   "material_sha256": "ca8c1a476ccea8d762d23be11544b9c6b288f25767778d2efd20696c84c97fbf",
+   "out_path": "/tmp/loom-trials-runtime/work/examiner-out.txt",
+   "material_hash_matches_standin": true
+  },
+  "D9": {
+   "manifest": {
+    "round": "build-demo-round",
+    "dummy_fixtures": true,
+    "prompt_annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+    "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+    "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+    "candidate_fingerprint_dummy": {
+     "route": "build-demo",
+     "model_id": "DUMMY \u2014 no candidate",
+     "note": "freeze mechanics demonstrated over dummy records only"
+    },
+    "responses_in_schedule_order": [
+     {
+      "trial_uid": "DUMMY-1",
+      "sha256": "3eec9f2d6139f0f442078f2d5a97e75f18d7543d46f69dcd87b70a9b0b64a7e8"
+     },
+     {
+      "trial_uid": "DUMMY-2",
+      "sha256": "ff2bebd6427e0c689e3c45f2fdc50f5ffcc3bac0042b2c3801cf76f97c31b480"
+     }
+    ],
+    "validator_outputs_sha256": "0c787a0363e179352cb6f5434eb678c50e11771a100c6858725a071dd3052a37"
+   },
+   "manifest_sha256": "18cadfb060cea7e64b782fea7d15c32b01dc75f1cd4c7125ee088c88a8f60e89",
+   "chain_verify": {
+    "ok": true,
+    "events": 9
+   },
+   "event_types_in_order": [
+    "ROUND_CONSTITUTED",
+    "TRIAL_RECORDED",
+    "VALIDATION_RECORDED",
+    "TRIAL_RECORDED",
+    "VALIDATION_RECORDED",
+    "EVIDENCE_FROZEN",
+    "SCORING_FROZEN",
+    "GROUND_TRUTH_ACCESSED",
+    "GROUND_TRUTH_ACCESSED"
+   ],
+   "chronology_check": "EVIDENCE_FROZEN precedes SCORING_COMPLETED/SCORING_FROZEN, which precede GROUND_TRUTH_ACCESSED, each hash-linked"
+  },
+  "D4": {
+   "gt_store_read_as_loomagent_returncode": 1,
+   "sealed_content_marker_scan": {
+    "markers": [
+     "11111111-1111-4111-8111-111111111111",
+     "22222222-2222-4222-8222-222222222222",
+     "33333333-3333-4333-8333-333333333333",
+     "44444444-4444-4444-8444-444444444444",
+     "55555555-5555-4555-8555-555555555555",
+     "66666666-6666-4666-8666-666666666666",
+     "Any component may serve any request",
+     "every later step of that session returns to that same component",
+     "the changed component is notified directly by State",
+     "Required facets:",
+     "Optional facets:",
+     "working session is opened by one component, and every later step"
+    ],
+    "hits": [],
+    "pass": true
+   },
+   "first_pass_shingle_scan_note": "A generic 6-word shingle scan produced hits only on vocabulary Annex D shares with Annexes A/B (the miniature content it quotes and schema field-name sequences). The decisive scan above checks Annex D's actual sealed substance \u2014 the six fixed region ids, the required/optional mapping, and the plant contents \u2014 none of which appears anywhere in the trials tree.",
+   "component_source_refs_to_spec_or_fabric": "none",
+   "d5_positive_append_supplement": {
+    "append_via_service_as_loomagent": {
+     "ok": true,
+     "seq": 10,
+     "note": "In the main demo run the loomagent append attempt failed on a directory-traversal permission for the runtime work dir (mode 770 root) holding the copied client \u2014 an environment path issue, not a ledger refusal. The client was relocated to the runtime root and the append from the loomagent context then succeeded through the service (seq 10, BUILD_DEMO_NOTE). SCORING_COMPLETED in the main chain was appended by the orchestrator client; the event order in the chain (SCORING_COMPLETED absent, SCORING_FROZEN present at seq 7) reflects that the loomagent-appended SCORING_COMPLETED did not land in the main run \u2014 recorded here rather than smoothed."
+    }
+   }
+  }
+ }
+}

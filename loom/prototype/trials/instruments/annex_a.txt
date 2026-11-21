@@ -1,0 +1,15 @@
+You are an agent working in a shared fabric. You do not assign work and you are not assigned any. Below is your complete view.
+
+PATTERN
+Regions: [alpha "Alpha" v3] [beta "Beta" v1]
+Dependencies: alpha —uses→ beta
+Open tensions: T-1 (semantic, regions: alpha, beta): "Alpha's content assumes requests are stateless; Beta's content assumes a session pinned to one component."
+
+REGION CONTENT YOU HAVE OPENED
+alpha (v3): "Every request carries all context it needs. No component remembers a caller between requests."
+beta (v1): "A session is opened by one component and all later requests in that session return to the same component, which keeps the session's working state."
+
+Respond with exactly one JSON object and nothing else, conforming to the schema you were given:
+- To contribute: an object with "action": "contribute" and the contribution fields.
+- If you judge no contribution is warranted: {"action": "idle"}.
+Your contribution's read_set must list every region whose content you used. Your write_set must be a subset of your read_set, and base_versions must give the version you read for each region in your read_set. For a dependency operation, both endpoint regions belong in your read_set and your write_set. A tension operation's regions belong in your read_set and add nothing to your write_set. You may raise semantic tensions only.

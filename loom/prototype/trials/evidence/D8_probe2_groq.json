@@ -1,0 +1,36 @@
+{
+ "route": "groq",
+ "model": "qwen/qwen3.8-27b",
+ "config": {
+  "temperature": 1.0,
+  "max_tokens": 4096,
+  "reasoning_format": "hidden"
+ },
+ "request_body": {
+  "model": "qwen/qwen3.8-27b",
+  "messages": [
+   {
+    "role": "user",
+    "content": [
+     {
+      "type": "text",
+      "text": "Build demonstration probe two (not a trial). Reply with exactly: SECOND-OK"
+     }
+    ]
+   }
+  ],
+  "temperature": 1.0,
+  "max_tokens": 4096,
+  "reasoning_format": "hidden"
+ },
+ "request_part_sha256": [
+  "31b15f517ac4abf331e6a02584ce993138b10c0753e9309e8b20cf0db6f20170"
+ ],
+ "response_text": "SECOND-OK",
+ "raw_response": "{\"id\": \"chatcmpl-41952669-a571-4922-abad-ccb6b4e62c05\", \"object\": \"chat.completion\", \"created\": 1795276430, \"model\": \"qwen/qwen3.8-27b\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"SECOND-OK\"}, \"logprobs\": null, \"finish_reason\": \"stop\"}], \"usage\": {\"queue_time\": 0.013316804, \"prompt_tokens\": 28, \"prompt_time\": 2.965e-05, \"completion_tokens\": 4, \"completion_time\": 0.025847319, \"total_tokens\": 32, \"total_time\": 0.025876969}, \"usage_breakdown\": null, \"system_fingerprint\": \"fp_7238fa2be5\", \"x_groq\": {\"id\": \"req_01m7zd0qeke5ftjcnacrmve92r\", \"seed\": 443822815}, \"service_tier\": \"on_demand\"}\n",
+ "stderr": "",
+ "returncode": 0,
+ "latency_s": 0.562,
+ "timed_out": false,
+ "timeout_boundary_s": 120
+}

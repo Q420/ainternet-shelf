@@ -1,0 +1,242 @@
+[
+ {
+  "name": "valid-full-contribution",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": true,
+  "category": "positive"
+ },
+ {
+  "name": "valid-idle",
+  "raw": "{\"action\":\"idle\"}",
+  "expected_valid": true,
+  "category": "positive"
+ },
+ {
+  "name": "valid-raise-tension-only",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [], \"operations\": [{\"kind\": \"raise_tension\", \"tension\": {\"type\": \"semantic\", \"regions\": [\"alpha\", \"beta\"], \"description\": \"conflict\"}}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": true,
+  "category": "positive"
+ },
+ {
+  "name": "valid-add-dependency-nonduplicate",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"add_dependency\", \"dependency\": {\"source\": \"alpha\", \"target\": \"beta\", \"kind\": \"constrains\"}}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": true,
+  "category": "positive"
+ },
+ {
+  "name": "valid-uppercase-uuid-author",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550E8400-E29B-41D4-A716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": true,
+  "category": "uuid-format"
+ },
+ {
+  "name": "invalid-author-not-uuid",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"not-a-uuid\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "uuid-format"
+ },
+ {
+  "name": "invalid-author-hyphenless",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400e29b41d4a716446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "uuid-format"
+ },
+ {
+  "name": "invalid-author-braced",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"{550e8400-e29b-41d4-a716-446655440000}\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "uuid-format"
+ },
+ {
+  "name": "invalid-idempotency-not-uuid",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"abc\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "uuid-format"
+ },
+ {
+  "name": "invalid-region-gamma",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"gamma\": 1}, \"read_set\": [\"alpha\", \"gamma\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "region-set"
+ },
+ {
+  "name": "invalid-region-uuid-form",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"550e8400-e29b-41d4-a716-446655440000\": 1}, \"read_set\": [\"alpha\", \"550e8400-e29b-41d4-a716-446655440000\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "region-set"
+ },
+ {
+  "name": "invalid-op-region-gamma",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"append_content\", \"region_id\": \"gamma\", \"text\": \"x\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "region-set"
+ },
+ {
+  "name": "invalid-write-not-subset",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3}, \"read_set\": [\"alpha\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-i"
+ },
+ {
+  "name": "invalid-baseversions-missing-key",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-ii"
+ },
+ {
+  "name": "invalid-baseversions-extra-key",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1, \"gamma\": 2}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-ii-iv"
+ },
+ {
+  "name": "invalid-content-op-not-in-write",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"x\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-iii"
+ },
+ {
+  "name": "invalid-two-content-ops-same-region",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"x\"}, {\"kind\": \"append_content\", \"region_id\": \"alpha\", \"text\": \"y\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-iii"
+ },
+ {
+  "name": "invalid-adddep-endpoint-not-in-write",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\"], \"operations\": [{\"kind\": \"add_dependency\", \"dependency\": {\"source\": \"alpha\", \"target\": \"beta\", \"kind\": \"extends\"}}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-iii"
+ },
+ {
+  "name": "invalid-adddep-duplicate-active",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"add_dependency\", \"dependency\": {\"source\": \"alpha\", \"target\": \"beta\", \"kind\": \"uses\"}}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-iii"
+ },
+ {
+  "name": "invalid-remove-dependency-edge",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"remove_dependency\", \"dependency_id\": \"550e8400-e29b-41d4-a716-446655440000\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "dependency-identity-edge"
+ },
+ {
+  "name": "invalid-raisetension-region-not-read",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3}, \"read_set\": [\"alpha\"], \"write_set\": [], \"operations\": [{\"kind\": \"raise_tension\", \"tension\": {\"type\": \"semantic\", \"regions\": [\"beta\"], \"description\": \"d\"}}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "crossfield-iii"
+ },
+ {
+  "name": "invalid-discovery-source-enum",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"guessed\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "discovery"
+ },
+ {
+  "name": "valid-discovery-source-index-asserted",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"index\", \"discovery_ref\": 1}}",
+  "expected_valid": true,
+  "category": "discovery"
+ },
+ {
+  "name": "invalid-discovery-ref-zero",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 0}}",
+  "expected_valid": false,
+  "category": "discovery"
+ },
+ {
+  "name": "invalid-discovery-ref-float",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1.5}}",
+  "expected_valid": false,
+  "category": "discovery"
+ },
+ {
+  "name": "invalid-extra-top-level-field",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}, \"extra\": 1}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-idle-with-contribution",
+  "raw": "{\"action\": \"idle\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-contribute-missing-contribution",
+  "raw": "{\"action\":\"contribute\"}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-op-wrong-fields",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"text\": \"x\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-tension-type-structural",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"raise_tension\", \"tension\": {\"type\": \"structural\", \"regions\": [\"alpha\"], \"description\": \"d\"}}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-operations-empty",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-read-set-empty",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {}, \"read_set\": [], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-read-set-duplicates",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-baseversion-zero",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"author\": \"550e8400-e29b-41d4-a716-446655440000\", \"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 0, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ },
+ {
+  "name": "invalid-not-json",
+  "raw": "I refuse to answer.",
+  "expected_valid": false,
+  "category": "raw"
+ },
+ {
+  "name": "invalid-json-array",
+  "raw": "[{\"action\":\"idle\"}]",
+  "expected_valid": false,
+  "category": "raw"
+ },
+ {
+  "name": "invalid-json-string",
+  "raw": "\"idle\"",
+  "expected_valid": false,
+  "category": "raw"
+ },
+ {
+  "name": "invalid-empty",
+  "raw": "",
+  "expected_valid": false,
+  "category": "raw"
+ },
+ {
+  "name": "invalid-trailing-garbage",
+  "raw": "{\"action\":\"idle\"} and then some",
+  "expected_valid": false,
+  "category": "raw"
+ },
+ {
+  "name": "invalid-missing-author",
+  "raw": "{\"action\": \"contribute\", \"contribution\": {\"idempotency_id\": \"550e8400-e29b-41d4-a716-446655440001\", \"base_versions\": {\"alpha\": 3, \"beta\": 1}, \"read_set\": [\"alpha\", \"beta\"], \"write_set\": [\"alpha\", \"beta\"], \"operations\": [{\"kind\": \"replace_content\", \"region_id\": \"alpha\", \"new_content\": \"Revised.\"}], \"rationale\": \"Stateless requests vs pinned sessions must be reconciled.\", \"discovery_source\": \"fabric_read\", \"discovery_ref\": 1}}",
+  "expected_valid": false,
+  "category": "shape"
+ }
+]

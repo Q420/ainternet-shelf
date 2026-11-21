@@ -1,0 +1,20 @@
+{
+  "route": "gemini",
+  "demonstration": "D1 live neutral probe / D8 live clean-context probe",
+  "result": "FAILED at build time — live delivery NOT demonstrated",
+  "attempts": [
+    {"n": 1, "model": "gemini-2.5-flash", "outcome": "HTTP 404 Not Found (adapter probe run, evidence/D1_probe1_gemini.json)"},
+    {"n": 2, "model": "gemini-2.5-flash", "outcome": "HTTP 404 (direct helper call)"},
+    {"n": 3, "model": "gemini-2.5-pro", "outcome": "HTTP error (direct helper call)"},
+    {"n": 4, "model": "gemini-3.8-flash", "outcome": "HTTP 503 Service Unavailable"},
+    {"n": 5, "model": "gemini-2.5-flash-lite", "outcome": "HTTP error (direct helper call)"},
+    {"n": 6, "model": "gemini-2.5-flash", "outcome": "HTTP 404 (retry 1 of 3, spaced)"},
+    {"n": 7, "model": "gemini-2.5-flash", "outcome": "HTTP 404 (retry 2 of 3, spaced)"},
+    {"n": 8, "model": "gemini-2.5-flash", "outcome": "HTTP 404 (retry 3 of 3, spaced)"},
+    {"n": 9, "model": "gemini-3.8-flash", "outcome": "HTTP 503 (retry 1 of 2, spaced)"},
+    {"n": 10, "model": "gemini-3.8-flash", "outcome": "HTTP 503 (retry 2 of 2, spaced)"}
+  ],
+  "catalogue_state": "The route's models list call succeeds and lists all models including the pinned gemini-2.5-flash; generateContent fails endpoint-wide across models (404 for the 2.5 family, 503 for 3.8-flash) at build time. The failure is not specific to the pinned model.",
+  "consequence": "Per Rev 4 SS3/SS16, a route that fails the delivery demonstration is excluded before the first trial unless the demonstration is re-run and passes in a later build step. The Gemini candidate remains pinned in the constitution annex, flagged NOT DEMONSTRATED. No substitute route or weaker delivery was adopted.",
+  "construction_half": "The constructed instrument payload for the Gemini route passes fully: part hashes match the pins, no system instruction, no output-constraint fields, pinned generationConfig present (evidence/D1_constructed_payload_gemini.json)."
+}

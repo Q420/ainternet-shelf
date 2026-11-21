@@ -1,0 +1,383 @@
+{
+ "demonstration": "D2 validator agreement + D3 validator conformance",
+ "corpus_cases": 40,
+ "agreements": 40,
+ "disagreements": [],
+ "expectation_failures": [],
+ "d3_python": [
+  {
+   "prefixItems_ok": true
+  },
+  {
+   "format_assertion_fires": true
+  }
+ ],
+ "d3_ajv": {
+  "prefixItems_ok": true,
+  "format_assertion_fires": true
+ },
+ "results": [
+  {
+   "case": "valid-full-contribution",
+   "category": "positive",
+   "expected": true,
+   "python": true,
+   "ajv": true,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "valid-idle",
+   "category": "positive",
+   "expected": true,
+   "python": true,
+   "ajv": true,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "valid-raise-tension-only",
+   "category": "positive",
+   "expected": true,
+   "python": true,
+   "ajv": true,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "valid-add-dependency-nonduplicate",
+   "category": "positive",
+   "expected": true,
+   "python": true,
+   "ajv": true,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "valid-uppercase-uuid-author",
+   "category": "uuid-format",
+   "expected": true,
+   "python": true,
+   "ajv": true,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-author-not-uuid",
+   "category": "uuid-format",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-author-hyphenless",
+   "category": "uuid-format",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-author-braced",
+   "category": "uuid-format",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-idempotency-not-uuid",
+   "category": "uuid-format",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-region-gamma",
+   "category": "region-set",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-region-uuid-form",
+   "category": "region-set",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-op-region-gamma",
+   "category": "region-set",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-write-not-subset",
+   "category": "crossfield-i",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-baseversions-missing-key",
+   "category": "crossfield-ii",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-baseversions-extra-key",
+   "category": "crossfield-ii-iv",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-content-op-not-in-write",
+   "category": "crossfield-iii",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-two-content-ops-same-region",
+   "category": "crossfield-iii",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-adddep-endpoint-not-in-write",
+   "category": "crossfield-iii",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-adddep-duplicate-active",
+   "category": "crossfield-iii",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-remove-dependency-edge",
+   "category": "dependency-identity-edge",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-raisetension-region-not-read",
+   "category": "crossfield-iii",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-discovery-source-enum",
+   "category": "discovery",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "valid-discovery-source-index-asserted",
+   "category": "discovery",
+   "expected": true,
+   "python": true,
+   "ajv": true,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-discovery-ref-zero",
+   "category": "discovery",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-discovery-ref-float",
+   "category": "discovery",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-extra-top-level-field",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-idle-with-contribution",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-contribute-missing-contribution",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-op-wrong-fields",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-tension-type-structural",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-operations-empty",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-read-set-empty",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-read-set-duplicates",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-baseversion-zero",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-not-json",
+   "category": "raw",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-json-array",
+   "category": "raw",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-json-string",
+   "category": "raw",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-empty",
+   "category": "raw",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-trailing-garbage",
+   "category": "raw",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  },
+  {
+   "case": "invalid-missing-author",
+   "category": "shape",
+   "expected": false,
+   "python": false,
+   "ajv": false,
+   "agree": true,
+   "expectation_met": true
+  }
+ ],
+ "d2_pass": true,
+ "d3_pass": true
+}

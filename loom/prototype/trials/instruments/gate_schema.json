@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$vocabulary": {
+    "https://json-schema.org/draft/2020-12/vocab/core": true,
+    "https://json-schema.org/draft/2020-12/vocab/applicator": true,
+    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    "https://json-schema.org/draft/2020-12/vocab/format-assertion": true
+  },
+  "title": "Annex A gate-schema contract (derived from Annex B.1 per Rev 4 SS3-SS4; region positions take the miniature's symbolic identifiers)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "action"
+  ],
+  "properties": {
+    "action": {
+      "enum": [
+        "contribute",
+        "idle"
+      ]
+    },
+    "contribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "author",
+        "idempotency_id",
+        "base_versions",
+        "read_set",
+        "write_set",
+        "operations",
+        "rationale",
+        "discovery_source",
+        "discovery_ref"
+      ],
+      "properties": {
+        "author": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "idempotency_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "base_versions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "read_set": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "alpha",
+              "beta"
+            ]
+          }
+        },
+        "write_set": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "alpha",
+              "beta"
+            ]
+          }
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "discovery_source": {
+          "enum": [
+            "index",
+            "watch",
+            "fabric_read"
+          ]
+        },
+        "discovery_ref": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "contribute"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "contribution"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "contribution"
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "operation": {
+      "oneOf": [
+        {
+          "title": "replace_content",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "region_id",
+            "new_content"
+          ],
+          "properties": {
+            "kind": {
+              "const": "replace_content"
+            },
+            "region_id": {
+              "type": "string",
+              "enum": [
+                "alpha",
+                "beta"
+              ]
+            },
+            "new_content": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "title": "append_content",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "region_id",
+            "text"
+          ],
+          "properties": {
+            "kind": {
+              "const": "append_content"
+            },
+            "region_id": {
+              "type": "string",
+              "enum": [
+                "alpha",
+                "beta"
+              ]
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "title": "add_dependency",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "dependency"
+          ],
+          "properties": {
+            "kind": {
+              "const": "add_dependency"
+            },
+            "dependency": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "source",
+                "target",
+                "kind"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "alpha",
+                    "beta"
+                  ]
+                },
+                "target": {
+                  "type": "string",
+                  "enum": [
+                    "alpha",
+                    "beta"
+                  ]
+                },
+                "kind": {
+                  "enum": [
+                    "uses",
+                    "constrains",
+                    "extends",
+                    "contradicts-candidate"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "remove_dependency",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "remove_dependency"
+            },
+            "dependency_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        {
+          "title": "raise_tension (semantic only \u2014 agents hold no structural-tension authority)",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "tension"
+          ],
+          "properties": {
+            "kind": {
+              "const": "raise_tension"
+            },
+            "tension": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "regions",
+                "description"
+              ],
+              "properties": {
+                "type": {
+                  "const": "semantic"
+                },
+                "regions": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "alpha",
+                      "beta"
+                    ]
+                  }
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
