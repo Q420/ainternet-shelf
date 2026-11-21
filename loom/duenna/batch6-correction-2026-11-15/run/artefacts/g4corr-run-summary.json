@@ -1,0 +1,100 @@
+{
+ "run_id": "G4CORR-20261115-001",
+ "closures": {
+  "T01": "COMPLETED",
+  "T02": "COMPLETED",
+  "T03": "COMPLETED",
+  "T04": "COMPLETED",
+  "T05": "COMPLETED",
+  "T06": "COMPLETED",
+  "T07": "COMPLETED",
+  "T08": "COMPLETED",
+  "T09": "COMPLETED",
+  "T09/FR-A": "COMPLETED",
+  "T09/FR-B": "COMPLETED",
+  "T09/FR-C": "COMPLETED",
+  "T09/FR-VALID": "COMPLETED"
+ },
+ "adapter_calls": [
+  {
+   "tree": "T01",
+   "step": "T01-STEP-05",
+   "attempt": 1,
+   "capture_record_id": "34507178-d310-4cf6-ae3b-58f8e4836315"
+  },
+  {
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "f6b4bd5f-0910-4462-8895-4f6e4636ba28"
+  },
+  {
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 2,
+   "capture_record_id": "ab08dbe8-2c3f-4912-b298-7ac4c1cb8aa1"
+  },
+  {
+   "tree": "T03",
+   "step": "T03-STEP-02",
+   "attempt": 1,
+   "capture_record_id": "35ffc4dc-87c3-416c-99d2-3a36d2e5bf3e"
+  },
+  {
+   "tree": "T03",
+   "step": "T03-STEP-04",
+   "attempt": 1,
+   "capture_record_id": "3dcdbdbc-d99f-46f5-bd10-a74c7812ffbe"
+  },
+  {
+   "tree": "T04",
+   "step": "T04-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "e64b2cbb-7fd4-48d1-afbb-4743f2f17fed"
+  },
+  {
+   "tree": "T06",
+   "step": "T06-STEP-E",
+   "attempt": 1,
+   "capture_record_id": "06e4f4b0-276a-4f1d-a4c8-d25ccbc5c364"
+  },
+  {
+   "tree": "T07",
+   "step": "T07-STEP-04",
+   "attempt": 1,
+   "capture_record_id": "8689865e-af7a-4865-8043-ea6e1667d6ce"
+  },
+  {
+   "tree": "T09",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "49878bde-6d19-4180-9541-c24521c5a85a"
+  },
+  {
+   "tree": "T09/FR-A",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "fd406e8c-b29e-441b-959d-0a2f850f00b2"
+  },
+  {
+   "tree": "T09/FR-B",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "82d9a563-e2cf-4785-bfe1-4332bc50cee5"
+  },
+  {
+   "tree": "T09/FR-C",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "4edf8497-edce-4c16-a477-a8f339531af4"
+  },
+  {
+   "tree": "T09/FR-VALID",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "fbb18f77-4c3b-4e6b-bc67-4baf70c3a8a8"
+  }
+ ],
+ "subject": "STUB-SUBJECT-01 via StubAdapter (C6-5)",
+ "injector": "absent (scoreable configuration)"
+}

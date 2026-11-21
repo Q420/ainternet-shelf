@@ -1,0 +1,14 @@
+configuration=scoreable PILOT_TORN_WRITE_INJECTOR=None
+launcher object compiled (hooks OFF); hook markers present in object: False
+torn-write injector absent from package
+flag state recorded: {'configuration': 'scoreable', 'scoreable': True, 'PILOT_TORN_WRITE_INJECTOR': False, 'PILOT_TEST_HOOKS_compiled': False, 'hook_markers_in_launcher_object': False, 'injector_module_in_package': False, 'launcher_source': '/home/hatch/workspace/ssh-door/batch4/corrected/launcher-c3.c', 'launcher_source_sha256': '001543f39b4d557f1bd157209a316c38104d4f7f37a42b6fab8ad664894de0de', 'launcher_object_sha256': '8b3eb1f771850c835bc54294507dd09debb7db686cce6c58daf5f43ec79a8634'}
+---
+configuration=scratch PILOT_TORN_WRITE_INJECTOR='1'
+launcher object compiled (hooks ON); hook markers present in object: True
+torn-write injector INCLUDED (scratch configuration, flag set) — this package is NOT scoreable
+flag state recorded: {'configuration': 'scratch', 'scoreable': False, 'PILOT_TORN_WRITE_INJECTOR': True, 'PILOT_TEST_HOOKS_compiled': True, 'hook_markers_in_launcher_object': True, 'injector_module_in_package': True, 'launcher_source': '/home/hatch/workspace/ssh-door/batch4/corrected/launcher-c3.c', 'launcher_source_sha256': '001543f39b4d557f1bd157209a316c38104d4f7f37a42b6fab8ad664894de0de', 'launcher_object_sha256': '281f070c51751bbffbefb99bc87e51e5daa3372a31f5ac7d899bdf4798ca8fa0'}
+---
+== production binary scan (laptop, 2026-11-15) ==
+binary: /srv/nemotron-pilot/launcher
+sha256: 9ea9b615a22bc7ea035d375fd3dd17c8fb5c7e8cdc9861a152882e382a637722 (== C4-12 pin)
+hook markers: NONE — hooks compiled out

@@ -1,0 +1,11 @@
+{
+ "PILOT_TEST_HOOKS_compiled": true,
+ "PILOT_TORN_WRITE_INJECTOR": true,
+ "configuration": "scratch",
+ "hook_markers_in_launcher_object": true,
+ "injector_module_in_package": true,
+ "launcher_object_sha256": "281f070c51751bbffbefb99bc87e51e5daa3372a31f5ac7d899bdf4798ca8fa0",
+ "launcher_source": "/home/hatch/workspace/ssh-door/batch4/corrected/launcher-c3.c",
+ "launcher_source_sha256": "001543f39b4d557f1bd157209a316c38104d4f7f37a42b6fab8ad664894de0de",
+ "scoreable": false
+}
