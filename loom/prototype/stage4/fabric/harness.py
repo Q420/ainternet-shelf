@@ -1294,12 +1294,18 @@ class Harness:
         def apply_hypo(spec):
             nonlocal seq, live
             seq += 1
-            type_, actor, affected, payload = spec
-            staged.append({"event_seq": seq, "event_id": "staged",
+            type_, actor, affected, payload = spec[:4]
+            # A spec may carry a pre-minted event_id (closing
+            # correction round, CC-1): the staged/planned records
+            # then carry the id the committed event will bear.
+            minted = spec[4] if len(spec) > 4 else None
+            staged.append({"event_seq": seq,
+                           "event_id": minted or "staged",
                            "type": type_, "actor": actor,
                            "affected": list(affected),
                            "payload": payload})
-            event = {"event_seq": seq, "event_id": "planned",
+            event = {"event_seq": seq,
+                     "event_id": minted or "planned",
                      "type": type_, "actor": actor,
                      "affected": list(affected),
                      "payload": payload, "prev_hash": "",
@@ -1473,7 +1479,17 @@ class Harness:
             for member in finding["affected"]:
                 if member not in affected:
                     affected.append(member)
-        specs = [("SEAL_ATTEMPTED", SYSTEM_ACTOR, affected, payload)]
+        # Closing correction round (CC-1/CC-2): the attempt's
+        # event_id is minted NOW, before the group commits, and
+        # carried into the store as the SEAL_ATTEMPTED event's
+        # actual id — so the structural events the attempt causes
+        # in the same atomic group can cite the attempt by its id:
+        # a raised tension's origin_ref (an id field, section 3)
+        # and a resolution's evidence both bind the UUID, never a
+        # sequence label.
+        attempt_event_id = str(uuid.uuid4())
+        specs = [("SEAL_ATTEMPTED", SYSTEM_ACTOR, affected, payload,
+                  attempt_event_id)]
         for raise_ in verdict["raises"]:
             names = ", ".join(raise_["affected"])
             specs.append((
@@ -1483,7 +1499,7 @@ class Harness:
                  "type": "structural",
                  "regions": list(raise_["regions"]),
                  "origin": "checker",
-                 "origin_ref": f"seal-attempt:{attempt_seq}",
+                 "origin_ref": attempt_event_id,
                  "description":
                      f"Structural inconsistency found by the "
                      f"independent checker's {raise_['check']} "
@@ -1503,6 +1519,7 @@ class Harness:
                 {"tension_id": resolution["tension_id"],
                  "from": "open", "to": "resolved",
                  "evidence": {
+                     "seal_attempt_event_id": attempt_event_id,
                      "seal_attempt_seq": attempt_seq,
                      "check": resolution["check"],
                      "affected": list(resolution["affected"])},

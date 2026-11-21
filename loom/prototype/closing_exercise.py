@@ -26,8 +26,11 @@ Outputs (in this directory):
   closing-anchor.json              the content-addressed archival
                                    anchor record for the run's tail
 
-Run: python3 closing_exercise.py — prints PASS/FAIL per beat;
-exit status is non-zero on any failure.
+Run: python3 closing_exercise.py [suffix] — prints PASS/FAIL per
+beat; exit status is non-zero on any failure. The optional suffix
+is inserted into the three output filenames (the closing
+correction round re-drives with "-correction", so its artifacts
+land as new files alongside the preserved round's).
 """
 import json
 import os
@@ -138,13 +141,17 @@ try:
           genesis_hash == GENESIS_HASH, genesis_hash[:16] + "…")
     BEATS["open"] = opened["event_seq"]
 
-    # -- Beat 2: the pre-run boundary probe on the twin ---------------
+    # -- Beat 2: the boundary probe attestation -----------------------
+    # The probe itself ran against the disposable twin; its
+    # attestation is recorded in this run at seq 2 — after the run
+    # opened (seq 1) and before agent admission.
     result = run_twin_probe(BASE, "closing-twin")
     att = attest_probe(exp, result)
     hist = history_of(exp)
     probe_ev = hist[1]
     check("beat 2: the twin boundary probe is attested into the "
-          "run at seq 2 (BOUNDARY_PROBE) before any agent operation",
+          "run at seq 2 (BOUNDARY_PROBE), after the run opened "
+          "and before agent admission",
           att.get("ok") is True
           and att["result"]["event_seq"] == 2
           and probe_ev["type"] == "BOUNDARY_PROBE")
@@ -366,13 +373,16 @@ try:
     check("beat 6: A's ordinary Continuity contribution is "
           "accepted (admission reads the authoritative fold); its "
           "seal attempt FAILs S1 on the faulted snapshot and a "
-          "checker-origin structural tension is raised",
+          "checker-origin structural tension is raised, its "
+          "origin_ref the failing attempt's event_id",
           out["outcome"] == "accepted"
           and attempts[-1]["payload"]["outcome"] == "fail"
           and attempts[-1]["payload"]["failed_checks"] == [
               {"check": "S1", "affected": [D_CS, STATE]}]
           and len(raised) == 1
-          and raised[0]["payload"]["origin"] == "checker")
+          and raised[0]["payload"]["origin"] == "checker"
+          and raised[0]["payload"]["origin_ref"]
+          == attempts[-1]["event_id"])
     BEATS["fault_attempt"] = attempts[-1]["event_seq"]
 
     # Repair (I-5): an explicit restart — the service rebuilds its
@@ -407,12 +417,14 @@ try:
     check("beat 6: B's correcting contribution (removing the "
           "dangling dependency) is accepted despite the open "
           "tension; its attempt passes and seals; the tension "
-          "resolves with that attempt as its evidence",
+          "resolves with that attempt's event_id as its evidence",
           out["outcome"] == "accepted"
           and attempts[-1]["payload"]["outcome"] == "pass"
           and "seal" in attempts[-1]["payload"]
           and len(status) == 1
           and status[0]["payload"]["to"] == "resolved"
+          and status[0]["payload"]["evidence"][
+              "seal_attempt_event_id"] == attempts[-1]["event_id"]
           and status[0]["payload"]["evidence"]["seal_attempt_seq"]
           == attempts[-1]["event_seq"])
     BEATS["resolved"] = status[0]["event_seq"] if status else None
@@ -468,7 +480,9 @@ check("beat 10: the starvation report derives over the full "
       f"accepted={{ {', '.join(k[-1] + ':' + str(v['accepted_commits']) for k, v in sorted(agents.items()))} }}")
 
 # -- Exports: history, anchor, narrative --------------------------------
-history_path = os.path.join(ROOT, "closing-lifecycle-history.json")
+SUFFIX = sys.argv[1] if len(sys.argv) > 1 else ""
+history_path = os.path.join(
+    ROOT, f"closing-lifecycle-history{SUFFIX}.json")
 with open(history_path, "w", encoding="utf-8") as fh:
     json.dump({"run_id": RUN_ID, "exported_by": "closing_exercise.py",
                "event_count": len(hist), "events": hist},
@@ -489,7 +503,7 @@ anchor = {
                         "sha256": PACK_SHA256},
     "starvation_report_sha256": sha256_hex(report_bytes(hist)),
 }
-with open(os.path.join(ROOT, "closing-anchor.json"), "w",
+with open(os.path.join(ROOT, f"closing-anchor{SUFFIX}.json"), "w",
           encoding="utf-8") as fh:
     json.dump(anchor, fh, indent=2, sort_keys=True)
 
@@ -539,8 +553,9 @@ lines += ["", f"Final facet accounting (derived): "
           "", "Anchor: " + anchor["anchor_kind"] + ".",
           f"History SHA-256 (canonical events): "
           f"{anchor['history_sha256']}."]
-with open(os.path.join(ROOT, "closing-lifecycle-narrative.md"),
-          "w", encoding="utf-8") as fh:
+with open(os.path.join(
+        ROOT, f"closing-lifecycle-narrative{SUFFIX}.md"),
+        "w", encoding="utf-8") as fh:
     fh.write("\n".join(lines) + "\n")
 
 from collections import Counter

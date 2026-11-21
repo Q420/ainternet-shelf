@@ -2,8 +2,8 @@
   "cases": [
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-01-fold",
       "diagnostic": "",
@@ -12,7 +12,7 @@
       "expected": {
         "result": "ok"
       },
-      "fixture_hash": "9a5ab9e583aed4955320c2ddecd3a0dc98f50557340a83f09c02681786429c7f",
+      "fixture_hash": "e49aaaedc6513d0cec5059b38d105afc327d6fe640b5fb9f597c977592856886",
       "observed": {
         "checker": {
           "result": "ok",
@@ -32,8 +32,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-01",
       "diagnostic": "",
@@ -43,7 +43,7 @@
         "outcome": "pass",
         "seal": "issued"
       },
-      "fixture_hash": "c0f65f186d54052eb22b41ecdbdefc3285bde4713155b22c7bb2a6d2410110d7",
+      "fixture_hash": "d85c781a8514a04ad7e9f72392915994b98ce0b1f672f158663316efdb09efba",
       "observed": {
         "checker": {
           "attachments": [],
@@ -81,8 +81,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-02",
       "diagnostic": "",
@@ -92,7 +92,7 @@
         "note": "state identical except last_seq",
         "result": "ok"
       },
-      "fixture_hash": "00d97f05b2083ae596329f482816d081a359a29cc26c134ec5af1f4ddf5fbf0f",
+      "fixture_hash": "51be9dd9ada518c8bbb2312a8bc565a19e1e75f9aeca42e42d343d93336570f7",
       "observed": {
         "checker": {
           "result": "ok",
@@ -112,8 +112,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-04",
       "diagnostic": "",
@@ -124,7 +124,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "f66e1d3eef176247642cd44997578ffcdfe498b7d581ae2bcca9fe6f7a940674",
+      "fixture_hash": "d886c09c0182b6d5bea678fc1c3dc053e12e8cde8c89cbae6d865acb89921899",
       "observed": {
         "checker": {
           "reason_class": "hash_chain_invalid",
@@ -146,8 +146,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-05",
       "diagnostic": "",
@@ -158,7 +158,7 @@
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "7a8d47c8e7beaf4fb23defd595dc6ad51ac5bbcbb706711ad90c24678f19b593",
+      "fixture_hash": "19aed75f24ec0b63df1c5f3c0d3a130fd458eb4c11d0aedf02924501f9108d9e",
       "observed": {
         "checker": {
           "reason_class": "sequence_invalid",
@@ -180,8 +180,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-06",
       "diagnostic": "",
@@ -192,7 +192,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "15030726cfac1e6fa89395311781aed9a8a8f73e80fe8c2a9ff4fc85223c1802",
+      "fixture_hash": "0d3c17939352949675e56a5c5933cf17382507d9ffa4bd6557b39bb694c41c99",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -214,8 +214,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-07",
       "diagnostic": "",
@@ -226,7 +226,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "544e89e8a50ce406723da94e5ba4e34a5d191a8ab6dff129e8bc4ca1ebe9087c",
+      "fixture_hash": "aa06b1a2e5ca48269f3eb486a34f155c6930fa22fd1ec1a88dc84c965536ee1b",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -248,8 +248,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-08",
       "diagnostic": "",
@@ -260,7 +260,7 @@
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "b5b3b49617b8c217f7db0f9f2695f1be63f16a6137394f7f0202bfa5e260489d",
+      "fixture_hash": "3585905a6483a2e6c5318737503542d6b70147058f067ed86047d09f8e6d3378",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -282,8 +282,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-09",
       "diagnostic": "",
@@ -294,7 +294,7 @@
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "78a2bec26309013ae7f9c6126c4f4850154850b4c681d99833404f953de7a9e6",
+      "fixture_hash": "402c4766c1960e0015245f607b6919d58d44a0ac27dfafd937a011af6509d4a6",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -316,8 +316,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-10",
       "diagnostic": "",
@@ -328,7 +328,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "892587919d9bd06064a3ccd5acbccad5a36932c6a28cef7cb6ad82aa9f428813",
+      "fixture_hash": "2b56058963c692d9f945c861a8c9648d0af9952629fa7ef0ff915146897b5599",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -350,8 +350,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-11a",
       "diagnostic": "",
@@ -362,7 +362,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "c4c6903b5a04c468465fe30b5a231e5ef694555faeac964a78e21855311e9882",
+      "fixture_hash": "35e0d65c21ea56e2e471a3ddd98d4e89f3c13e4a9cd0f56de2a7f5ca7968f0ae",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -384,8 +384,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-11b",
       "diagnostic": "",
@@ -396,7 +396,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "ebe7e5544c743b08084bb985d2fac9e8cf6a20696fecebc6721092bead3ff799",
+      "fixture_hash": "ac0e7812b6634dab1c2876480102207163d94f82d8a3c64f56818e50951aa23c",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -418,8 +418,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-12a",
       "diagnostic": "",
@@ -430,7 +430,7 @@
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "39da4eaac4a98ecef58baa7673b3376220bb4fe609ab2ced6485dc9b614ee36f",
+      "fixture_hash": "aaa5a79cbdd513484d089e095ed12239d8fda21e8d4bb033f0cbb604b0fe897c",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -452,8 +452,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-12b",
       "diagnostic": "",
@@ -464,7 +464,7 @@
         "result": "halt",
         "seq": 5
       },
-      "fixture_hash": "9b33dc79933f309edae31d21135e6339baf1d539ba8ef5512668c85ca955f672",
+      "fixture_hash": "af33d260fe5caf124064fc9ec074bc59eaf505d8a8df092d20c54610157c33f8",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -486,8 +486,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-13a",
       "diagnostic": "",
@@ -498,7 +498,7 @@
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "2b4abf9af59c431ffcac6c3f25dc3d279dd12a8ffb488080af6b0465d1a9f421",
+      "fixture_hash": "553fae2daabf3b6cad7400dedfec5b2abc70d29f4b701387837e986118ee2e9b",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -520,8 +520,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-13b",
       "diagnostic": "",
@@ -532,7 +532,7 @@
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "b1bf4db2ac004193b09345883fd054eb0746d893e146e9e1631716d795428e59",
+      "fixture_hash": "e9a1061740bf46f00ddec8ea5dd1a476c7e67314f67cd845b425a12053d1498a",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -554,8 +554,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-13c",
       "diagnostic": "",
@@ -566,7 +566,7 @@
         "result": "halt",
         "seq": 4
       },
-      "fixture_hash": "1a0f449bd6066ba7c85fc0c4b73e6632ff2db14b87a374f9882824ecd9315222",
+      "fixture_hash": "31d30b39e0a01c33375986cf2f6d8cc594f82fe69192b5bb2925a51ebe336b0a",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -588,8 +588,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-14a",
       "diagnostic": "",
@@ -600,7 +600,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "e9bacb7a3d58d45c047b9357a129164f663c92f2421b733e5fd3472d0c724bbf",
+      "fixture_hash": "b1d4452d6af54c95913f5ee088d55f1f2fc902c2f42abf68d189bcb413842b8d",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -622,8 +622,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-14b",
       "diagnostic": "",
@@ -634,7 +634,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "c8c2c1aea360eb58e5f843d52929225c944a5151a065b427f80d484f437a60f1",
+      "fixture_hash": "d29dfc34a78c9f0474b270791d066d216bf220a40dc253ceffdb1f626ad3f5e9",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -656,8 +656,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-15a",
       "diagnostic": "",
@@ -666,7 +666,7 @@
       "expected": {
         "result": "ok"
       },
-      "fixture_hash": "1cf3f86feb5322f8aa7cd2f244473d49bb9645af5364889b63ad84ae55a44dcc",
+      "fixture_hash": "6cf8694516e75565c371e5c92f6c61b241be0b0568ee6dd266f79b4aa4eed8d8",
       "observed": {
         "checker": {
           "result": "ok",
@@ -686,8 +686,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-15b",
       "diagnostic": "",
@@ -698,7 +698,7 @@
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "4d3b7881b8793fb2d6290cc291a0b066adbadf55d590b5caf96b6bdf96e092bb",
+      "fixture_hash": "c5dad51227c99462c0ba4279f77119dc074f2a0bdec2366df3fce6d069d6ff13",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -720,8 +720,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-03",
       "diagnostic": "",
@@ -730,7 +730,7 @@
       "expected": {
         "outcome": "refused"
       },
-      "fixture_hash": "98b02dbe8c2bed40e6fb0a7abcff1c21ab1ca45be7c2f4b415dd43d653427938",
+      "fixture_hash": "5a6efef27688be2daef8018253b0789d3128f8676911b7926d9f0f8726db7765",
       "observed": {
         "checker": {
           "attachments": [],
@@ -762,8 +762,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-16",
       "diagnostic": "",
@@ -781,7 +781,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "8339c81a8090f606aa39b4431e07814929420d98a5a028b35123237fa64bb57e",
+      "fixture_hash": "7a928bc1198d37267753054b48090414d331de8971e4ba5b6e15e7e264b2607d",
       "observed": {
         "checker": {
           "attachments": [],
@@ -853,8 +853,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-17",
       "diagnostic": "",
@@ -863,7 +863,7 @@
       "expected": {
         "outcome": "pass"
       },
-      "fixture_hash": "1681196d6eca06533c24a3392e06803868f0e82519f6f235c8ee2dbc99bd5e83",
+      "fixture_hash": "568b9261e27e5a376286f6639d497247d188d90781f72b6cf889cb2adb7e8d30",
       "observed": {
         "checker": {
           "attachments": [],
@@ -901,8 +901,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-18",
       "diagnostic": "",
@@ -919,7 +919,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "a0bba178de481676f750f0652b30d2a02ca11d9d19af44bc75c9a004213c4ea8",
+      "fixture_hash": "2d82a34e3df1c73a86da887cedf0ec2616e894c8969912a427eae81ce45136c0",
       "observed": {
         "checker": {
           "attachments": [],
@@ -987,8 +987,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-18-hi",
       "diagnostic": "",
@@ -998,7 +998,7 @@
         "note": "higher-version divergence, no S2 finding",
         "outcome": "mismatch"
       },
-      "fixture_hash": "7bd78a9fe9a61151eb9a841d3440cf23c7b75a8989a6adf4c8bf9ddbea889e93",
+      "fixture_hash": "719d93de86dd7197ad3e4c094cadf76fe2c27867dd52d2d062ba0545bf19113f",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1038,8 +1038,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-18-prec",
       "diagnostic": "",
@@ -1063,7 +1063,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "47c95763c9d51e91a24ba06082a3d5be9349033d5b3b8863f7d9c3521f46696d",
+      "fixture_hash": "b8d3475f71fe4804dd335da380dacb9f477503ac8b2542ee319e2d2baa769098",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1167,8 +1167,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-19",
       "diagnostic": "",
@@ -1178,7 +1178,7 @@
         "note": "endpoints advanced",
         "outcome": "pass"
       },
-      "fixture_hash": "e144cbef9b125b5c652ac8f023c250e2edc285ef4abb834496469ae338591fcf",
+      "fixture_hash": "c4101dffdd95bebade8c89e791007f5c097960e8de9e2e4c809f6d00fd8e7ba1",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1189,7 +1189,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "18e8dcbb-15b7-4fbc-9722-da37f3f283a6"
+              "e3667029-cee1-4099-85e0-878aba60ae55"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1204,7 +1204,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "18e8dcbb-15b7-4fbc-9722-da37f3f283a6"
+              "e3667029-cee1-4099-85e0-878aba60ae55"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1220,8 +1220,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-20",
       "diagnostic": "",
@@ -1239,7 +1239,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "b5e95b36b35e62d4e121c2138e401b4060b51971dadd6146b932c68a0b8eefea",
+      "fixture_hash": "45687f74dbdbc3d97a8d3939088496499e7802a1c943b2f102a099fb5b0d343e",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1311,8 +1311,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-21",
       "diagnostic": "",
@@ -1321,7 +1321,7 @@
       "expected": {
         "outcome": "pass"
       },
-      "fixture_hash": "bd64737d13644436d664469be06395dcb96bcd0e10e22e1316e219bcb134e92a",
+      "fixture_hash": "f464574d0e33b170b8294aa3c180086ba3b8ae72d16bb45557fd3d7d483e1133",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1359,8 +1359,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-24",
       "diagnostic": "",
@@ -1370,7 +1370,7 @@
         "outcome": "pass",
         "seal": "issued"
       },
-      "fixture_hash": "cd17452ed1d4717d5d906e5d1548d24c2efbb84edce1fdeff6ad1c8feebf9938",
+      "fixture_hash": "32e729b89bb2af96cc147c71d9c70b94229f2efedcfb6d50ece725eb2e31318f",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1381,7 +1381,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "763c91eb-b9cc-44cb-91f6-a0507e04e039"
+              "d17b1efd-80da-4804-83d5-72663ec3ffc3"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1396,7 +1396,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "763c91eb-b9cc-44cb-91f6-a0507e04e039"
+              "d17b1efd-80da-4804-83d5-72663ec3ffc3"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1412,8 +1412,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-25",
       "diagnostic": "",
@@ -1422,7 +1422,7 @@
       "expected": {
         "outcome": "refused"
       },
-      "fixture_hash": "3bcca06f320d8242e808be8432403ac1f21ae14f6d35e7d903ea7ffd0cbaf7ac",
+      "fixture_hash": "53ea03818687923c750729ee19fe9e361491ca95d289526729fd4e4d85d4d1b3",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1454,8 +1454,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-26",
       "diagnostic": "",
@@ -1465,7 +1465,7 @@
         "divergence_names": "55555555-5555-4555-8555-555555555555",
         "outcome": "mismatch"
       },
-      "fixture_hash": "ba4cf76c0da2d52c4aca4a500e39dc14b34b59a96094c06fbd0f499bb7268355",
+      "fixture_hash": "6cce1bd9efd1cd254660dbd8a08b9e21f9d4745537b69cce990223e343c9c468",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1505,8 +1505,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-27",
       "diagnostic": "",
@@ -1524,7 +1524,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "6146f423d87a40958c3bf5e397987a1ea117888d2eef0ac119ccb57a84babe1c",
+      "fixture_hash": "feec7663ce8d631859f90ce61a2bf82d31555bae7a800d52c7f112a38471f0e3",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1586,8 +1586,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-47",
       "diagnostic": "",
@@ -1597,7 +1597,7 @@
         "outcome": "pass",
         "raises": []
       },
-      "fixture_hash": "1681196d6eca06533c24a3392e06803868f0e82519f6f235c8ee2dbc99bd5e83",
+      "fixture_hash": "568b9261e27e5a376286f6639d497247d188d90781f72b6cf889cb2adb7e8d30",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1635,8 +1635,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-39",
       "diagnostic": "",
@@ -1648,7 +1648,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "b1896c120980446d85805531a2737b09e49425caaff9ff9860920b1d2eb66b5a",
+      "fixture_hash": "06e158f202a159ee25b2c69e1e78d1fc01b7ba98f4c03083b1e7eb94e3fd7614",
       "observed": {
         "checker": {
           "attachments": [
@@ -1708,8 +1708,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-40",
       "diagnostic": "",
@@ -1730,7 +1730,7 @@
           ]
         ]
       },
-      "fixture_hash": "29426cd9b61a1528d41095579af59d0f2c06bbc7ce70be6cc3c3a0a529964fd6",
+      "fixture_hash": "f06c448ebe8d8019117cf47c13129484f0447969c2cc82a22e9b3d6eef91f3d8",
       "observed": {
         "checker": {
           "attachments": [
@@ -1884,8 +1884,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-41",
       "diagnostic": "",
@@ -1898,7 +1898,7 @@
         "outcome": "fail",
         "resolutions": []
       },
-      "fixture_hash": "26af37977b1d5c7530a06447cc3c59e35c0a5ed2213f2af4a6b2791595164656",
+      "fixture_hash": "f4e01f75c38c94de806419e7262c21db943d7d485dbd29f041bbcabe32be9a71",
       "observed": {
         "checker": {
           "attachments": [
@@ -1966,20 +1966,21 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-42",
       "diagnostic": "",
       "dual_applicable": true,
       "dual_note": "",
       "expected": {
+        "origin_ref": "the raising attempt's id (canned UUID)",
         "outcome": "pass",
         "resolutions": [
           "t-structural-s1"
         ]
       },
-      "fixture_hash": "84e8f048667c16cc9c7f3f7451342c310c7f3ae7fc7993cfb8e996b19a40466e",
+      "fixture_hash": "30cf643373f566690a35d185edea72cde24c807fcf4bfe6f11c9515e7bff3483",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1992,7 +1993,7 @@
           ],
           "seal": {
             "contributions": [
-              "9ed2186c-856d-4aa6-8995-95c8a3c26613"
+              "4394664d-1321-4d58-8b62-d909067879e8"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -2009,7 +2010,7 @@
           ],
           "seal": {
             "contributions": [
-              "9ed2186c-856d-4aa6-8995-95c8a3c26613"
+              "4394664d-1321-4d58-8b62-d909067879e8"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -2025,8 +2026,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-43",
       "diagnostic": "",
@@ -2038,7 +2039,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "b1896c120980446d85805531a2737b09e49425caaff9ff9860920b1d2eb66b5a",
+      "fixture_hash": "06e158f202a159ee25b2c69e1e78d1fc01b7ba98f4c03083b1e7eb94e3fd7614",
       "observed": {
         "checker": {
           "attachments": [
@@ -2098,8 +2099,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-44",
       "diagnostic": "",
@@ -2111,7 +2112,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "73cf7327c3f4864acbb19a002b4cf8209918e65038029c2d802ac3441fe19ce0",
+      "fixture_hash": "3363f72cf38ec3ebe847ec9c4601378d0b58bc6657cb029c55dcff8f3ab2b5eb",
       "observed": {
         "checker": {
           "attachments": [
@@ -2171,8 +2172,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-22",
       "diagnostic": "",
@@ -2182,7 +2183,7 @@
         "attempts": 0,
         "outcome": "schema"
       },
-      "fixture_hash": "550d9e3ed45fcc138e7e3d07ab81d19956290c63d2e0cda76af6be82926af9dc",
+      "fixture_hash": "5cb2bb57d7400d331491a02dfabe74648cee2f221bc5d7d913f3c0f4fc89d2ad",
       "observed": {
         "checker": {
           "note": "no seal attempt is staged for a rejected contribution; there is no (H, B, L) attempt input to evaluate"
@@ -2205,8 +2206,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-23",
       "diagnostic": "",
@@ -2216,7 +2217,7 @@
         "attempts": 0,
         "outcome": "stale"
       },
-      "fixture_hash": "cfa26622c75e87576fdad185ee0a946b534c3818c60dfdcd23d66f72843a1234",
+      "fixture_hash": "2e9cfefcca68eaf83093ba054b32cb6f3956920512fb5e84fbabce9dee0621e1",
       "observed": {
         "checker": {
           "note": "no seal attempt is staged for a rejected contribution; there is no (H, B, L) attempt input to evaluate"
@@ -2239,8 +2240,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-28",
       "diagnostic": "",
@@ -2281,8 +2282,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-30",
       "diagnostic": "",
@@ -2293,7 +2294,7 @@
         "dual_verdicts": "pass, agreeing",
         "outcome": "pass"
       },
-      "fixture_hash": "484c0bbfc146f25fa7c3569273a35fba6f869c6d24c8d195c7308c9ef223aee1",
+      "fixture_hash": "ade9829398be7cf6fee65f439ab2dcc4eaba72fcf45af0627ec27fb325036280",
       "observed": {
         "checker": {
           "attachments": [],
@@ -2304,7 +2305,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "e1913a74-894d-4ee1-b4e2-ce20962c574a"
+              "fda951b0-22bb-4e0d-b246-4989b71d0311"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -2319,7 +2320,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "e1913a74-894d-4ee1-b4e2-ce20962c574a"
+              "fda951b0-22bb-4e0d-b246-4989b71d0311"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -2335,8 +2336,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-31",
       "diagnostic": "",
@@ -2348,7 +2349,7 @@
         "first_outcome": "fail",
         "structural_raised": 1
       },
-      "fixture_hash": "f7410ad2ef136b7be6f705e89d8fd871100b070613c641876031e1df093c2520",
+      "fixture_hash": "d82a73c1720b7ca6524444eade1b4a1e1881703fdd9d6400e4c11768f9f8008f",
       "observed": {
         "checker": [
           {
@@ -2383,7 +2384,7 @@
           },
           {
             "attachments": [
-              "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+              "787a6bd1-0247-4526-a0b6-644471719568"
             ],
             "divergence": [
               [
@@ -2439,7 +2440,7 @@
           },
           {
             "attachments": [
-              "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+              "787a6bd1-0247-4526-a0b6-644471719568"
             ],
             "divergence": [
               [
@@ -2472,8 +2473,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-33",
       "diagnostic": "",
@@ -2493,7 +2494,7 @@
         "outcome": "fail",
         "seal": "absent"
       },
-      "fixture_hash": "063f568aea27a111becc78593d168cb820ba1d8c23fd1dbbf3227a7cbfbd4ddd",
+      "fixture_hash": "8f676dd37f4790df73d0c3a9b7911693e6bdf243b95ddf817f218278bc8e1e0d",
       "observed": {
         "checker": {
           "attachments": [],
@@ -2565,8 +2566,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-32",
       "diagnostic": "",
@@ -2574,13 +2575,13 @@
       "dual_note": "",
       "expected": {
         "dual_verdicts": "pass with the resolution, agreeing",
-        "evidence_seq": "the attempt's",
+        "evidence_event_id": "the attempt's",
         "order": [
           "SEAL_ATTEMPTED",
           "TENSION_STATUS"
         ]
       },
-      "fixture_hash": "bd8154b2bcbfd31f7ccc540e4cafced3ded625f62221ae911892910d50e6b48b",
+      "fixture_hash": "5699902f4f3a0e5a75cb42dae33b77d8548e76c82e4d5ca3a9694ff393771640",
       "observed": {
         "checker": {
           "attachments": [],
@@ -2589,13 +2590,13 @@
           "outcome": "pass",
           "raises": [],
           "resolutions": [
-            "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+            "787a6bd1-0247-4526-a0b6-644471719568"
           ],
           "seal": {
             "contributions": [
-              "378e2a9f-0916-4f4c-bf1c-7c52b7443858",
-              "859fd439-aba1-4e83-ae57-80a28660a42b",
-              "f8a70c21-3102-49dd-972b-a69925e48fde"
+              "52c6d431-bb2a-4732-a5ac-c08d2037cb39",
+              "48b16a81-03c8-4f2e-beca-026cb02aa5d5",
+              "a38fd39c-2d6d-4ef7-911e-a8e863b2fcc8"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -2608,13 +2609,13 @@
           "outcome": "pass",
           "raises": [],
           "resolutions": [
-            "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+            "787a6bd1-0247-4526-a0b6-644471719568"
           ],
           "seal": {
             "contributions": [
-              "378e2a9f-0916-4f4c-bf1c-7c52b7443858",
-              "859fd439-aba1-4e83-ae57-80a28660a42b",
-              "f8a70c21-3102-49dd-972b-a69925e48fde"
+              "52c6d431-bb2a-4732-a5ac-c08d2037cb39",
+              "48b16a81-03c8-4f2e-beca-026cb02aa5d5",
+              "a38fd39c-2d6d-4ef7-911e-a8e863b2fcc8"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -2630,8 +2631,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-45",
       "diagnostic": "",
@@ -2641,7 +2642,7 @@
         "dual_verdicts": "fail(S1), then pass with the resolution, agreeing",
         "steps": "1-9 in order"
       },
-      "fixture_hash": "f6582d1900437c9c0d26530bcb89cd4864ffe099d17065932d9ccf2bd7cc9f46",
+      "fixture_hash": "2490171582f1ebe9edfdaac489d266112fa9a3628f7ede7afcc1e759616f3b5f",
       "observed": {
         "checker": [
           {
@@ -2681,12 +2682,12 @@
             "outcome": "pass",
             "raises": [],
             "resolutions": [
-              "f45fd02b-8875-4aee-b64f-00e060a6e60f"
+              "97851595-f373-4851-a3c8-c6fd99e512bc"
             ],
             "seal": {
               "contributions": [
-                "048f44e9-1592-4eb8-b431-1de2348aabe2",
-                "face47b7-146b-4eb6-82ac-36b31ee1e1f1"
+                "2b5d1ad2-e657-4f87-8cbf-2ec381c44d01",
+                "447ef3f6-c3fd-4280-b32c-464c0b191e8d"
               ],
               "questions": [],
               "semantic_clearance": false
@@ -2731,12 +2732,12 @@
             "outcome": "pass",
             "raises": [],
             "resolutions": [
-              "f45fd02b-8875-4aee-b64f-00e060a6e60f"
+              "97851595-f373-4851-a3c8-c6fd99e512bc"
             ],
             "seal": {
               "contributions": [
-                "048f44e9-1592-4eb8-b431-1de2348aabe2",
-                "face47b7-146b-4eb6-82ac-36b31ee1e1f1"
+                "2b5d1ad2-e657-4f87-8cbf-2ec381c44d01",
+                "447ef3f6-c3fd-4280-b32c-464c0b191e8d"
               ],
               "questions": [],
               "semantic_clearance": false
@@ -2753,8 +2754,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-34",
       "diagnostic": "",
@@ -2766,7 +2767,7 @@
         "seal": "issued",
         "statuses": "unchanged"
       },
-      "fixture_hash": "5ff72c68e07427fa8be283e17e400ae7b055a156d2bf740f2f007836f46d72ee",
+      "fixture_hash": "fcf72b67ba2fe3904b5b4fcbdf29c639e0155c495ff653db52a65ecbf4422ef5",
       "observed": {
         "checker": {
           "attachments": [],
@@ -2777,18 +2778,18 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "13f7c55e-0f30-49a1-a4f3-37ece95f5ee2"
+              "9eb23d5b-9e4a-4e86-afa4-4d859f92658a"
             ],
             "questions": [
               [
-                "b5212fe8-2209-42b0-afe4-cc30086bd062",
+                "86faa757-f90e-419a-9ffd-cedf42ff7795",
                 "examined",
                 [
                   "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
                 ]
               ],
               [
-                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "d3fa7400-761f-4aa9-ab2b-4aa096f7d1e4",
                 "open",
                 "unexamined"
               ]
@@ -2805,18 +2806,18 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "13f7c55e-0f30-49a1-a4f3-37ece95f5ee2"
+              "9eb23d5b-9e4a-4e86-afa4-4d859f92658a"
             ],
             "questions": [
               [
-                "b5212fe8-2209-42b0-afe4-cc30086bd062",
+                "86faa757-f90e-419a-9ffd-cedf42ff7795",
                 "examined",
                 [
                   "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
                 ]
               ],
               [
-                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "d3fa7400-761f-4aa9-ab2b-4aa096f7d1e4",
                 "open",
                 "unexamined"
               ]
@@ -2834,8 +2835,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-46",
       "diagnostic": "",
@@ -2846,7 +2847,7 @@
         "seal": "issued",
         "tension_status": "open"
       },
-      "fixture_hash": "f25f0068ad3802f830bc9003100127c31bedbdebe7f4ea58ba1c07eeb91f1fe9",
+      "fixture_hash": "71066fb93f76fc606265657a716a7392f2942253b3d98864f09db8e7e435e80a",
       "observed": {
         "checker": {
           "attachments": [],
@@ -2857,11 +2858,11 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "7bdf717a-c831-441c-842f-42612f2f85cb"
+              "265a8833-0bb3-46f7-ae0a-a50ea0acf703"
             ],
             "questions": [
               [
-                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "d3fa7400-761f-4aa9-ab2b-4aa096f7d1e4",
                 "open",
                 "unexamined"
               ]
@@ -2878,11 +2879,11 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "7bdf717a-c831-441c-842f-42612f2f85cb"
+              "265a8833-0bb3-46f7-ae0a-a50ea0acf703"
             ],
             "questions": [
               [
-                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "d3fa7400-761f-4aa9-ab2b-4aa096f7d1e4",
                 "open",
                 "unexamined"
               ]
@@ -2900,8 +2901,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-35",
       "diagnostic": "",
@@ -2912,7 +2913,7 @@
         "seal_1_lists": "[cid1]",
         "seal_2_lists": "[cid2]"
       },
-      "fixture_hash": "0936d8c8aec41508b3ff4ddc48b1e4029da4a4a388262de2362093720fe33ce6",
+      "fixture_hash": "66ed5aa453ba2014efe375aae4e85e79c2ee075729008d89577fd5ecd9370e36",
       "observed": {
         "checker": [
           {
@@ -2924,7 +2925,7 @@
             "resolutions": [],
             "seal": {
               "contributions": [
-                "3bd67f2f-fd85-40f9-a14c-391b191a6a24"
+                "3b8df050-e0bb-425c-9347-740fd889cffc"
               ],
               "questions": [],
               "semantic_clearance": false
@@ -2939,7 +2940,7 @@
             "resolutions": [],
             "seal": {
               "contributions": [
-                "16e6c01c-0766-4f14-a27e-d520cef5c93d"
+                "35e7286e-096f-4f9f-ad10-b058991de852"
               ],
               "questions": [],
               "semantic_clearance": false
@@ -2956,7 +2957,7 @@
             "resolutions": [],
             "seal": {
               "contributions": [
-                "3bd67f2f-fd85-40f9-a14c-391b191a6a24"
+                "3b8df050-e0bb-425c-9347-740fd889cffc"
               ],
               "questions": [],
               "semantic_clearance": false
@@ -2971,7 +2972,7 @@
             "resolutions": [],
             "seal": {
               "contributions": [
-                "16e6c01c-0766-4f14-a27e-d520cef5c93d"
+                "35e7286e-096f-4f9f-ad10-b058991de852"
               ],
               "questions": [],
               "semantic_clearance": false
@@ -2988,8 +2989,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-36",
       "diagnostic": "",
@@ -3000,7 +3001,7 @@
         "exception": "CheckerFailure",
         "history": "unchanged"
       },
-      "fixture_hash": "a6ca47fd7d23c3fb01351d21012d6d77c0702052942b209cc2a9a1c81c21b8df",
+      "fixture_hash": "c6dee22a8bab630f85b1bbf5c112307f88590b88928dd5378456fa8b40b41a37",
       "observed": {
         "checker": {
           "attachments": [],
@@ -3011,7 +3012,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "d5af1a17-6241-4144-984b-ac76dd992e58"
+              "a675f26a-de86-499e-9bfb-148430a4200e"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3026,7 +3027,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "d5af1a17-6241-4144-984b-ac76dd992e58"
+              "a675f26a-de86-499e-9bfb-148430a4200e"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3042,8 +3043,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-37",
       "diagnostic": "",
@@ -3054,7 +3055,7 @@
         "dual_verdicts": "pass on (H, B=[], L), agreeing",
         "then": "RUN_CLOSED"
       },
-      "fixture_hash": "69004ea819cfd73b04d942d42c2ca5142fe3ed6c770aa5406bb4a5a7573de267",
+      "fixture_hash": "f9874e6103f6582654f1ba264724f115f0dadd3c4b91e2e905c7c22310f19f78",
       "observed": {
         "checker": {
           "attachments": [],
@@ -3065,7 +3066,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "0cfa15b4-3d9a-4552-9778-e87ab19cd5d4"
+              "4e254cad-cccf-473f-88f3-7010a47e4554"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3080,7 +3081,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "0cfa15b4-3d9a-4552-9778-e87ab19cd5d4"
+              "4e254cad-cccf-473f-88f3-7010a47e4554"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3096,8 +3097,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-38",
       "diagnostic": "",
@@ -3108,7 +3109,7 @@
         "dual_verdicts": "the final commit's attempt: pass, agreeing; no second attempt was evaluated at close",
         "then": "RUN_CLOSED"
       },
-      "fixture_hash": "12c029f6e5b5a849019e0ea9f1c831c1ff0d0ef1e56ec01c35a40e2f79996f0f",
+      "fixture_hash": "c901005d474b9f1159046b34ce280f55ce720b59095b2fa22d1354db2988d1c5",
       "observed": {
         "checker": {
           "attachments": [],
@@ -3119,7 +3120,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "5efbf276-d4fb-4239-a544-c8c978b5b0c5"
+              "5d08a2e5-22a4-4da4-8bbe-2beed141dd24"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3134,7 +3135,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "5efbf276-d4fb-4239-a544-c8c978b5b0c5"
+              "5d08a2e5-22a4-4da4-8bbe-2beed141dd24"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3150,8 +3151,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-48",
       "diagnostic": "",
@@ -3162,7 +3163,7 @@
         "outcome": "rejected",
         "reason": "structural_target"
       },
-      "fixture_hash": "e60aebdee5c9c2fba9615cda1f54bdb16fd932513f082f37675adce7069c36c5",
+      "fixture_hash": "49f22fa5f7a14cd4b931a00671a5feb62b4dcfa307ffe908352f0a4d54d4651b",
       "observed": {
         "checker": {
           "attachments": [],
@@ -3234,8 +3235,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-49",
       "diagnostic": "",
@@ -3246,7 +3247,7 @@
         "facet_status": "section-5 derivation only",
         "seal": "issued"
       },
-      "fixture_hash": "4d7957913da77be9536411394431e25aecbc8d9eb13eb727662f681ab1f70704",
+      "fixture_hash": "96ba8fad980e7895b88a026fa87d5d0c763e3a8d3637979f8b02d633445eed11",
       "observed": {
         "checker": {
           "attachments": [],
@@ -3257,7 +3258,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "344d7d9b-106c-4874-907c-c3337ee2194f"
+              "1c34e0bf-a220-4c91-a74d-24631357694b"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3272,7 +3273,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "344d7d9b-106c-4874-907c-c3337ee2194f"
+              "1c34e0bf-a220-4c91-a74d-24631357694b"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -3288,8 +3289,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-50",
       "diagnostic": "",
@@ -3298,7 +3299,7 @@
       "expected": {
         "agents": "A, B, C all present"
       },
-      "fixture_hash": "177e22cd91b19e33fdf1ce344e802653aad45d8a1d77b14cc5941c2ebc2e4503",
+      "fixture_hash": "c4764bc70b46652e658755f95329057a088a708194a0a8f23b1830e8a874f298",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -3369,8 +3370,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-51",
       "diagnostic": "",
@@ -3380,7 +3381,7 @@
         "current_run": 1,
         "max_run": 2
       },
-      "fixture_hash": "93a08b9e6e92c870f754918145fc430b53fbcec07c43d48cd84b8933f2301c54",
+      "fixture_hash": "0c732e522c4385b05397ffae7a41703c239583d37d156f561536bca60f3d5569",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -3424,8 +3425,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-52",
       "diagnostic": "",
@@ -3434,7 +3435,7 @@
       "expected": {
         "nulls": "present, never omitted, never zero"
       },
-      "fixture_hash": "f382854c2654bb7ca5d34d0fab67aeb448368b5cfae2ce1ab3c151fa6f999c5c",
+      "fixture_hash": "2e9d48aa9d351690b074d67d07e69ae216eb8a9e16a49905cb721dbfaef1a48f",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -3477,8 +3478,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-53",
       "diagnostic": "",
@@ -3492,7 +3493,7 @@
         ],
         "unit": "regions"
       },
-      "fixture_hash": "f66273edea408d598183c0eef5632a2b9c36120ab4f1c031f0a01c930fd0f7e6",
+      "fixture_hash": "b453f17c9288c647094216171c8b9ab70fa69c12dfbf9f6b2282b0295bb7be39",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -3536,8 +3537,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-54",
       "diagnostic": "",
@@ -3546,7 +3547,7 @@
       "expected": {
         "bytes": "identical across runs"
       },
-      "fixture_hash": "ffa623d81ac800442394a969b69705ff39a492f4f910b792db1f6ecb7e8f578d",
+      "fixture_hash": "0bbc46f7cf9dce9b59ce9b17436c28764098d9d7f9d25744be48ebd5547760d0",
       "observed": {
         "checker": {
           "sha256": "5624777f7740de543499e5ac82948f90ab46ad5a7b9f6edc77c31c1b1e2f662a"
@@ -3564,8 +3565,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-55",
       "diagnostic": "",
@@ -3575,7 +3576,7 @@
         "opening": "blocked on wrong digest",
         "run_opened_names": "id, version, sha256"
       },
-      "fixture_hash": "420797e7e420fbf65276218519d78bac0dc6342ed6079fe2492fbb61c191ebe4",
+      "fixture_hash": "fcc2753fb421964a43b54eac412a4b9952bd927bef60fa86f1f2685f4eed4a1a",
       "observed": {
         "checker": {
           "match": {
@@ -3607,8 +3608,8 @@
     },
     {
       "builds": {
-        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
-        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+        "checker": "38cd263aad334a66f06de888c63fd3c4a256c7c87a85fc9aa980a253d0c8e23e",
+        "engine": "f030d813f5fd2d01deaaa0f789601a1e87c77a927d735d5e44e0fd75f87ed997"
       },
       "case": "VP-29",
       "diagnostic": "",

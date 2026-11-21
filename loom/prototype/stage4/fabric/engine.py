@@ -102,6 +102,7 @@ a system that refuses to derive authoritative state from one; Rev 9
 requires both.
 """
 import copy
+import uuid
 
 from .canonical import canonical, sha256_hex, event_hash
 from .fixture import CONSTITUTION_HASH, SYSTEM_ACTOR, genesis_payload
@@ -137,6 +138,21 @@ _TENSION_TRANSITIONS = {
 # Section 5's facet status set, in precedence order.
 _FACET_STATUSES = ("open", "unexamined", "claimed", "complete",
                    "disputed", "stood_down")
+
+
+def _is_uuid(value) -> bool:
+    """True iff value is a well-formed UUID in the canonical string
+    form — the only form any id in this system is minted in
+    (str(uuid.uuid4())). Closing correction round (CC-3): section 3
+    makes origin_ref an id field, so the fold validates its FORMAT.
+    Format is the whole contract here: whether the named record
+    exists is a different question, and no fold rule answers it."""
+    if not isinstance(value, str):
+        return False
+    try:
+        return str(uuid.UUID(value)) == value
+    except (ValueError, AttributeError, TypeError):
+        return False
 
 
 def empty_state() -> dict:
@@ -315,6 +331,20 @@ def _apply_event(state: dict, event: dict) -> dict:
                 "protocol_transition_invalid"
                 if p["status"] in ("examined", "resolved", "standing")
                 else "schema_invalid")
+        # Closing correction round (CC-3): origin_ref is an id
+        # field (section 3) — a value that is not a well-formed
+        # UUID fails the event's schema, however valid the hash
+        # chain is, because the malformed value sits inside the
+        # hashed payload. Checked after the type/origin/status
+        # rules so every previously pinned halt still fires on its
+        # own field first.
+        if not _is_uuid(p.get("origin_ref")):
+            raise ReplayHalt(
+                event["event_seq"],
+                f"TENSION_RAISED carries origin_ref "
+                f"{p.get('origin_ref')!r}, which is not a UUID: "
+                f"the event fails its schema",
+                "schema_invalid")
         record = {
             "tension_id": p["tension_id"],
             "type": p["type"],
@@ -564,9 +594,18 @@ class Engine:
         last = self.store.last()
         head = last[1] if last else CONSTITUTION_HASH
         try:
-            for type_, actor, affected, payload in events_spec:
+            for spec in events_spec:
+                type_, actor, affected, payload = spec[:4]
+                # Closing correction round (CC-1/CC-2): a spec may
+                # carry a fifth element — an event_id the producer
+                # minted before commit, so events built in the same
+                # atomic group can cite the event that caused them
+                # (a structural tension's origin_ref, a resolution's
+                # evidence) by its actual id. Without it the store
+                # mints the id as before.
+                event_id = spec[4] if len(spec) > 4 else None
                 ev = self.store.append(type_, actor, affected, payload,
-                                       prev_hash=head)
+                                       prev_hash=head, event_id=event_id)
                 head = ev["hash"]
                 # Stage 4 correction round 2 (C2-B2): the live
                 # state is a CACHE of the fold, and a corrupted

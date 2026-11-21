@@ -1,0 +1,1207 @@
+{
+  "event_count": 38,
+  "events": [
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [],
+      "event_id": "0fb7a85f-2bd4-428a-a53a-87f66c2f9f89",
+      "event_seq": 1,
+      "hash": "c5ef18ec92068859ab2aeb2c0b9a08f17ce4e9b31cb3d4e556f859c7108c522d",
+      "payload": {
+        "authority_set": {
+          "amendments": [
+            "A1"
+          ],
+          "spec": "loom-spec-v0.1-rev9"
+        },
+        "constitution": {
+          "sha256": "9bc1f6cd6fc388996e58c5a2075de65884e3475e1dc582c2156864ee58ecb26f",
+          "version": "0.1"
+        },
+        "dependencies": [
+          {
+            "dependency_id": "00000000-0000-4000-8000-000000000101",
+            "kind": "uses",
+            "source": "11111111-1111-4111-8111-111111111111",
+            "status": "active",
+            "target": "22222222-2222-4222-8222-222222222222"
+          },
+          {
+            "dependency_id": "00000000-0000-4000-8000-000000000102",
+            "kind": "uses",
+            "source": "11111111-1111-4111-8111-111111111111",
+            "status": "active",
+            "target": "33333333-3333-4333-8333-333333333333"
+          },
+          {
+            "dependency_id": "00000000-0000-4000-8000-000000000103",
+            "kind": "constrains",
+            "source": "44444444-4444-4444-8444-444444444444",
+            "status": "active",
+            "target": "22222222-2222-4222-8222-222222222222"
+          },
+          {
+            "dependency_id": "00000000-0000-4000-8000-000000000104",
+            "kind": "uses",
+            "source": "66666666-6666-4666-8666-666666666666",
+            "status": "active",
+            "target": "22222222-2222-4222-8222-222222222222"
+          }
+        ],
+        "regions": [
+          {
+            "content": "The system is built from bounded parts. Each part owns its behaviour and exposes it through declared interfaces. A part converses with other parts only through Interactions, and keeps what must be kept in State.",
+            "frozen_hash": "f733ceae0ea897c43d8e9998311eb61aaede3d6f164bdb886a06c21bb669c8e3",
+            "region_id": "11111111-1111-4111-8111-111111111111",
+            "scope_note": "The parts of the system and their boundaries.",
+            "title": "Components",
+            "version": 1
+          },
+          {
+            "content": "Requests are stateless. Any component may serve any request; a request carries every piece of context it needs, and no component remembers a caller between requests.",
+            "frozen_hash": "9c0fd18b2aea2dd85310451c6c069f511c2daecdc224e88498d13025aa8ad70f",
+            "region_id": "22222222-2222-4222-8222-222222222222",
+            "scope_note": "How the parts converse.",
+            "title": "Interactions",
+            "version": 1
+          },
+          {
+            "content": "State keeps what the system must remember, and nothing else. When state changes, the changed component is notified directly by State.",
+            "frozen_hash": "1c5a003c2d8e495b3721141245113a71ede822df4d5e15b0420837d576108b77",
+            "region_id": "33333333-3333-4333-8333-333333333333",
+            "scope_note": "What the system keeps.",
+            "title": "State",
+            "version": 1
+          },
+          {
+            "content": "Continuity is what persists across interruptions. A working session is opened by one component, and every later step of that session returns to that same component, which holds the session's working state between steps. How the parts converse must respect what has to survive an interruption.",
+            "frozen_hash": "4b2e9c5a5b1186ef565930bb481c1cc6aae7e7a5d17a54061969cba8574dd498",
+            "region_id": "44444444-4444-4444-8444-444444444444",
+            "scope_note": "What persists across interruptions.",
+            "title": "Continuity",
+            "version": 1
+          },
+          {
+            "content": "Presentation is what the user sees: the surfaces offered, their order, and their words.",
+            "frozen_hash": "f7e3d6fe1162c392ee26f8b5aba1c1fa8deb002dc1d3432c619955332ffdc04c",
+            "region_id": "55555555-5555-4555-8555-555555555555",
+            "scope_note": "What the user sees.",
+            "title": "Presentation",
+            "version": 1
+          },
+          {
+            "content": "Operations is how the system is run day to day: starting, stopping, watching, and mending. Operations reaches the parts it watches through Interactions.",
+            "frozen_hash": "4518ff572be69a8da49ab1e8a9271c6592c7688a8615d4e12f642e7765eaa26a",
+            "region_id": "66666666-6666-4666-8666-666666666666",
+            "scope_note": "How the system is run day to day.",
+            "title": "Operations",
+            "version": 1
+          }
+        ],
+        "validation_pack": {
+          "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+          "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+          "version": "v2"
+        }
+      },
+      "prev_hash": "9bc1f6cd6fc388996e58c5a2075de65884e3475e1dc582c2156864ee58ecb26f",
+      "type": "RUN_OPENED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [],
+      "event_id": "70a64be1-6147-49ee-add7-55cf5ec7cbdf",
+      "event_seq": 2,
+      "hash": "31dcbf45a229f326d4407946428ed233bff321e5a60317e79f17145011a62ba8",
+      "payload": {
+        "attestation": true,
+        "probe": {
+          "all_reads_denied": true,
+          "attempts": [
+            {
+              "attempt": "direct_read_store",
+              "detail": {
+                "errno": 13,
+                "error": "PermissionError: Permission denied",
+                "path": "/tmp/loom-boundary-runtime/closing-twin/service/events.db"
+              },
+              "outcome": "denied"
+            },
+            {
+              "attempt": "direct_read_ground_truth",
+              "detail": {
+                "errno": 13,
+                "error": "PermissionError: Permission denied",
+                "path": "/tmp/loom-boundary-runtime/closing-twin/service/ground-truth.json"
+              },
+              "outcome": "denied"
+            },
+            {
+              "attempt": "alternate_path_symlink",
+              "detail": {
+                "errno": 13,
+                "error": "PermissionError: Permission denied",
+                "path": "/tmp/loom-boundary-runtime/closing-twin/agent-home/store-link"
+              },
+              "outcome": "denied"
+            },
+            {
+              "attempt": "alternate_path_traversal",
+              "detail": {
+                "errno": 13,
+                "error": "PermissionError: Permission denied",
+                "path": "/tmp/loom-boundary-runtime/closing-twin/sock/../service/events.db"
+              },
+              "outcome": "denied"
+            },
+            {
+              "attempt": "forged_token_open",
+              "detail": {
+                "error": "unrecognised token",
+                "kind": "refusal"
+              },
+              "outcome": "refused"
+            },
+            {
+              "attempt": "issuance_attempt_on_data_socket",
+              "detail": {
+                "error": "the agent interface has no operation 'issue_token'",
+                "kind": "unknown_op"
+              },
+              "outcome": "refused"
+            },
+            {
+              "attempt": "legitimate_pattern_view",
+              "detail": {
+                "regions": 6
+              },
+              "outcome": "ok"
+            },
+            {
+              "attempt": "legitimate_region_open",
+              "detail": {
+                "content_bytes": 211,
+                "title": "Components",
+                "version": 1
+              },
+              "outcome": "ok"
+            }
+          ],
+          "execution_evidence": {
+            "event_hash": "d234089e03d270a562b3743ac19ef9dfdfd2731935e327e23d353c70a0d5d9c6",
+            "event_seq": 4,
+            "session_id": "66d46b2f-adb0-4f67-88e4-9b449847c388",
+            "twin_root": "/tmp/loom-boundary-runtime/closing-twin"
+          },
+          "legitimate_access_ok": true,
+          "probe_agent": "99999999-9999-4999-8999-999999999999",
+          "service_code_hashes": {
+            "__init__.py": "eaefd3269dc8b3c976c89d68570f65f49af425515b76b6a9fca665b006da9191",
+            "agent_runner.py": "b7906bebded046a3ab039dceadb291db469bc81c5c61bf9f1072dc4e65183075",
+            "canonical.py": "032c095744ed2adaea881827904472520549dcfd82f723c1e1e312e9a25ff8a8",
+            "checker.py": "442fdcf564341b261975e3223acf343d81cfb4e09d08fe5e01c36b5a97c811d2",
+            "client.py": "ee1fc918d2f13abe3ddb3991406a1cbf0ad8580207ad86b7f2304dea9fb8c58e",
+            "engine.py": "91c7536de1371bb3acffc1c03136c24ba5e993be114ebf06cdaf57a8a3b295f0",
+            "fixture.py": "45cdca9539c4a8a8d44ee782079cc1e9a2ed153c45f8192b11c71ab083f952ad",
+            "harness.py": "48ee1b8e98b562b0a4db210ae02356aa2495c3203c2bd919e7e056be1f75d265",
+            "packpin.py": "bf0b7dc9b9ab5c5fdfe5090b5ea83afaae9e5072272e0b0340516c2fdff6090b",
+            "probe.py": "2a9801708e30160c7ac6b84b7bd724234fefb2f68a497587cae4fd49186c1896",
+            "probe2.py": "f7a6aa655b7bcb4d4a129409492d972cf3cc0992d779179c2aff22f8def98d82",
+            "probe_agent.py": "92632f28841f2defa63e3e315151e59f628cd46ac6b9a7be18a986d6d4a22f1c",
+            "runtime_setup.py": "26264c4b4e37510ef8428f3457050632fefd014b1eaf2307f399b57223cd832f",
+            "seal.py": "58636c2e1be03055c8f7c6c55b13e157e252ce8e41b1ba3aac3f155e18f32af6",
+            "service.py": "24d238a05a443f02fbb8e8e1c0167e4b947eff21ba5a9ee2be89026554b1f77f",
+            "starvation.py": "ecb78b9bd53d09d51b7ea78729b289704fcbcf7194aefd18bd1b6b77c847c87d",
+            "store.py": "431c4a3171f5cfe49c17f6232641ed99d4a60bf4d6e78952f6bd59aeedb41ddd"
+          },
+          "service_posture": "probe_target",
+          "socket_attacks_refused": true,
+          "summary": "Pre-run boundary probe against the disposable twin: every direct and alternate-path read from the agent OS context was denied by the operating system; forged-token and issuance attempts on the data socket were refused; legitimate operations through the harness succeeded.",
+          "twin_config": {
+            "agent-home": {
+              "mode": "0o755",
+              "owner": "loomagent",
+              "uid": 1001
+            },
+            "service": {
+              "mode": "0o700",
+              "owner": "loomfab",
+              "uid": 1000
+            },
+            "service/code": {
+              "mode": "0o750",
+              "owner": "loomfab",
+              "uid": 1000
+            },
+            "service/events.db": {
+              "mode": "0o600",
+              "owner": "loomfab",
+              "uid": 1000
+            },
+            "service/failures": {
+              "mode": "0o700",
+              "owner": "loomfab",
+              "uid": 1000
+            },
+            "service/ground-truth.json": {
+              "mode": "0o600",
+              "owner": "loomfab",
+              "uid": 1000
+            },
+            "sock": {
+              "mode": "0o711",
+              "owner": "loomfab",
+              "uid": 1000
+            },
+            "sock/fabric.sock": {
+              "mode": "0o777",
+              "owner": "loomfab",
+              "uid": 1000
+            }
+          },
+          "twin_name": "closing-twin",
+          "twin_root": "/tmp/loom-boundary-runtime/closing-twin"
+        },
+        "probe_result_hash": "6f237ba48bff15d12c27a843c149a3dd5497cff8a7942426ff01a168aee920a9",
+        "summary": "Boundary probe attestation: this attestation stands at the head of the run, recorded after the run opened and before agent admission. The boundary probe ran against a disposable twin of this runtime (same layout, owners, permissions and service build) from the agent OS context. The twin's store and ground-truth files denied every direct and alternate-path read; forged-token and issuance attempts on the data socket were refused; legitimate operations through the harness succeeded. This event attests to that twin probe \u2014 the experimental store itself was not probed, and no probe reads are in this history."
+      },
+      "prev_hash": "c5ef18ec92068859ab2aeb2c0b9a08f17ce4e9b31cb3d4e556f859c7108c522d",
+      "type": "BOUNDARY_PROBE"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "event_id": "8aa5541e-67e6-43f6-ac6f-3bfbb53b39a1",
+      "event_seq": 3,
+      "hash": "bda6e4cda0bc56d07da7cc249bf456749392f3eaf60bbea7d82a52dabfa3a663",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "22222222-2222-4222-8222-222222222222",
+        "summary": "Agent aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa opened Interactions (version 1) by reading the fabric directly.",
+        "version": 1
+      },
+      "prev_hash": "31dcbf45a229f326d4407946428ed233bff321e5a60317e79f17145011a62ba8",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "event_id": "f62c2bc9-3b34-417b-961a-79909685bfc9",
+      "event_seq": 4,
+      "hash": "9d60f5393c89f1c8846273e662920d8ceda12e0a1d51fa90f15393efe373140e",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "44444444-4444-4444-8444-444444444444",
+        "summary": "Agent aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa opened Continuity (version 1) by reading the fabric directly.",
+        "version": 1
+      },
+      "prev_hash": "bda6e4cda0bc56d07da7cc249bf456749392f3eaf60bbea7d82a52dabfa3a663",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "11111111-1111-4111-8111-111111111111"
+      ],
+      "event_id": "c0eeebf4-afcf-4849-b33d-dd390994ed7d",
+      "event_seq": 5,
+      "hash": "84f22bd079c57b2c1a6f35afe6e4ea5ceac1ae060312f3eaf737f8ec55bd8e28",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "11111111-1111-4111-8111-111111111111",
+        "summary": "Agent bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb opened Components (version 1) by reading the fabric directly.",
+        "version": 1
+      },
+      "prev_hash": "9d60f5393c89f1c8846273e662920d8ceda12e0a1d51fa90f15393efe373140e",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "bc4b41ee-96b6-4cf6-a22f-10d46a463175",
+      "event_seq": 6,
+      "hash": "443ae867b9833bd495527c12bb25c47e577ab3105d0fbb34ebcd0098b963f904",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "33333333-3333-4333-8333-333333333333",
+        "summary": "Agent bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb opened State (version 1) by reading the fabric directly.",
+        "version": 1
+      },
+      "prev_hash": "84f22bd079c57b2c1a6f35afe6e4ea5ceac1ae060312f3eaf737f8ec55bd8e28",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "affected": [
+        "55555555-5555-4555-8555-555555555555"
+      ],
+      "event_id": "531b29cf-becf-40a1-81c2-f7ec48d71140",
+      "event_seq": 7,
+      "hash": "a8a5d070d442a4bf3e46ce589b7383cbbc7652cfa83f5ec4601803445ad89a26",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "55555555-5555-4555-8555-555555555555",
+        "summary": "Agent cccccccc-cccc-4ccc-8ccc-cccccccccccc opened Presentation (version 1) by reading the fabric directly.",
+        "version": 1
+      },
+      "prev_hash": "443ae867b9833bd495527c12bb25c47e577ab3105d0fbb34ebcd0098b963f904",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "event_id": "0837b771-d262-4281-a32d-b14fe4b960fa",
+      "event_seq": 8,
+      "hash": "a03c31bdc430ab6a8e40c498240a826fdcbe366dc1a26ddacc6ff2b4036da5f3",
+      "payload": {
+        "assigned_dependency_ids": {},
+        "contribution": {
+          "author": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "base_versions": {
+            "22222222-2222-4222-8222-222222222222": 1,
+            "44444444-4444-4444-8444-444444444444": 1
+          },
+          "discovery_ref": 4,
+          "discovery_source": "fabric_read",
+          "idempotency_id": "cfe18c84-9c96-4c13-a66d-87412c0e1a46",
+          "operations": [
+            {
+              "kind": "append_content",
+              "region_id": "22222222-2222-4222-8222-222222222222",
+              "text": " Closing note: requests carry their context."
+            }
+          ],
+          "rationale": "Closing exercise: recorded rationale.",
+          "read_set": [
+            "22222222-2222-4222-8222-222222222222",
+            "44444444-4444-4444-8444-444444444444"
+          ],
+          "write_set": [
+            "22222222-2222-4222-8222-222222222222"
+          ]
+        },
+        "contribution_id": "50b62259-e630-4d16-95e7-f84f74e5c79f",
+        "summary": "A contribution by agent aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa was accepted and committed, changing Interactions."
+      },
+      "prev_hash": "a8a5d070d442a4bf3e46ce589b7383cbbc7652cfa83f5ec4601803445ad89a26",
+      "type": "CONTRIBUTION_ACCEPTED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "event_id": "aefaaaf9-37aa-4e0a-8779-9bbe1acb06c9",
+      "event_seq": 9,
+      "hash": "3af98be0990be8166fa3bc0e63bcdeccb931df541d590e9a084331713632763b",
+      "payload": {
+        "evidence": {},
+        "from": "open",
+        "region_id": "22222222-2222-4222-8222-222222222222",
+        "summary": "The facet Interactions is now unexamined (it was open), on the evidence the record holds.",
+        "to": "unexamined"
+      },
+      "prev_hash": "a03c31bdc430ab6a8e40c498240a826fdcbe366dc1a26ddacc6ff2b4036da5f3",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [],
+      "event_id": "2820f513-11b6-47b6-9439-e216921f1617",
+      "event_seq": 10,
+      "hash": "03c8a133a008ba0323e6d5c106f789abc1ff9982e2adcce1c9d5ef2082590f94",
+      "payload": {
+        "checks_performed": [
+          "S1",
+          "S2",
+          "S3",
+          "event_schema",
+          "hash_chain"
+        ],
+        "failed_checks": [],
+        "outcome": "pass",
+        "seal": {
+          "checks_performed": [
+            "S1",
+            "S2",
+            "S3",
+            "event_schema",
+            "hash_chain"
+          ],
+          "contributions_since_last_seal": [
+            "50b62259-e630-4d16-95e7-f84f74e5c79f"
+          ],
+          "outstanding_semantic_questions": [],
+          "position": 10,
+          "semantic_clearance": false,
+          "semantic_clearance_statement": "This seal certifies structure only; it grants no semantic clearance."
+        },
+        "summary": "A weave seal was attempted after the accepted commit and passed: every structural check succeeded on the current state, and a seal stands at this position. The seal certifies structure only; it grants no semantic clearance."
+      },
+      "prev_hash": "3af98be0990be8166fa3bc0e63bcdeccb931df541d590e9a084331713632763b",
+      "type": "SEAL_ATTEMPTED"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "6820ce45-6d19-4694-bf05-95de62b6c991",
+      "event_seq": 11,
+      "hash": "22ad3ae4a10d50a38810cad9a90582533236da7be476502442fa46d7179de4cb",
+      "payload": {
+        "assigned_dependency_ids": {},
+        "contribution": {
+          "author": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "base_versions": {
+            "11111111-1111-4111-8111-111111111111": 1,
+            "33333333-3333-4333-8333-333333333333": 1
+          },
+          "discovery_ref": 6,
+          "discovery_source": "fabric_read",
+          "idempotency_id": "3eb35b30-75fe-442e-acb0-9c2ce62b24c6",
+          "operations": [
+            {
+              "kind": "append_content",
+              "region_id": "33333333-3333-4333-8333-333333333333",
+              "text": " Closing note: State keeps what must be kept."
+            }
+          ],
+          "rationale": "Closing exercise: recorded rationale.",
+          "read_set": [
+            "11111111-1111-4111-8111-111111111111",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "write_set": [
+            "33333333-3333-4333-8333-333333333333"
+          ]
+        },
+        "contribution_id": "66aca631-f345-48da-adef-bf05b590c09f",
+        "summary": "A contribution by agent bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb was accepted and committed, changing State."
+      },
+      "prev_hash": "03c8a133a008ba0323e6d5c106f789abc1ff9982e2adcce1c9d5ef2082590f94",
+      "type": "CONTRIBUTION_ACCEPTED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "e484ecbe-53d3-4452-8466-e54784a4d860",
+      "event_seq": 12,
+      "hash": "9e4bbc5b7143ead58d8aaa75287f087372296a173aab583adae0894aa6405f33",
+      "payload": {
+        "evidence": {},
+        "from": "open",
+        "region_id": "33333333-3333-4333-8333-333333333333",
+        "summary": "The facet State is now unexamined (it was open), on the evidence the record holds.",
+        "to": "unexamined"
+      },
+      "prev_hash": "22ad3ae4a10d50a38810cad9a90582533236da7be476502442fa46d7179de4cb",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [],
+      "event_id": "0224e266-003a-4da3-bca6-2f96c8c0646d",
+      "event_seq": 13,
+      "hash": "97beae6046beb63b63308422b7ef7a62c9d42bcda17a3f1a60a2cbe549cd3293",
+      "payload": {
+        "checks_performed": [
+          "S1",
+          "S2",
+          "S3",
+          "event_schema",
+          "hash_chain"
+        ],
+        "failed_checks": [],
+        "outcome": "pass",
+        "seal": {
+          "checks_performed": [
+            "S1",
+            "S2",
+            "S3",
+            "event_schema",
+            "hash_chain"
+          ],
+          "contributions_since_last_seal": [
+            "66aca631-f345-48da-adef-bf05b590c09f"
+          ],
+          "outstanding_semantic_questions": [],
+          "position": 13,
+          "semantic_clearance": false,
+          "semantic_clearance_statement": "This seal certifies structure only; it grants no semantic clearance."
+        },
+        "summary": "A weave seal was attempted after the accepted commit and passed: every structural check succeeded on the current state, and a seal stands at this position. The seal certifies structure only; it grants no semantic clearance."
+      },
+      "prev_hash": "9e4bbc5b7143ead58d8aaa75287f087372296a173aab583adae0894aa6405f33",
+      "type": "SEAL_ATTEMPTED"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "11111111-1111-4111-8111-111111111111",
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "7e8e682d-199e-4c9b-bba8-672e64d2003b",
+      "event_seq": 14,
+      "hash": "536046cb9ed4a1d217e28be6653fb4af08e6c78a2e5993012fbb8f038456b957",
+      "payload": {
+        "contribution": {
+          "author": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "base_versions": {
+            "11111111-1111-4111-8111-111111111111": 1,
+            "33333333-3333-4333-8333-333333333333": 2
+          },
+          "discovery_ref": 6,
+          "discovery_source": "fabric_read",
+          "idempotency_id": "9d00d8c0-cb30-40d7-bd40-114fe803496b",
+          "operations": [
+            {
+              "dependency": {
+                "kind": "uses",
+                "source": "33333333-3333-4333-8333-333333333333",
+                "target": "11111111-1111-4111-8111-111111111111"
+              },
+              "kind": "add_dependency"
+            }
+          ],
+          "rationale": "Closing exercise: recorded rationale.",
+          "read_set": [
+            "11111111-1111-4111-8111-111111111111",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "write_set": [
+            "11111111-1111-4111-8111-111111111111",
+            "33333333-3333-4333-8333-333333333333"
+          ]
+        },
+        "contribution_id": "9fb53a0d-d7ef-48ea-94d0-b65a6052790f",
+        "invariant": "S3",
+        "outcome": "structural",
+        "records": {
+          "cycle": [
+            "11111111-1111-4111-8111-111111111111",
+            "33333333-3333-4333-8333-333333333333",
+            "11111111-1111-4111-8111-111111111111"
+          ],
+          "proposed_dependencies": [
+            {
+              "kind": "uses",
+              "source": "33333333-3333-4333-8333-333333333333",
+              "target": "11111111-1111-4111-8111-111111111111"
+            }
+          ]
+        },
+        "summary": "A contribution was rejected as structural: it violated invariant S3."
+      },
+      "prev_hash": "97beae6046beb63b63308422b7ef7a62c9d42bcda17a3f1a60a2cbe549cd3293",
+      "type": "CONTRIBUTION_REJECTED"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222",
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "event_id": "aef0b83c-7da3-490d-84aa-db61dad00f70",
+      "event_seq": 15,
+      "hash": "168731e1adba940a85e45fc23f0bf00a905cbacb0982e95799c1bd51f0988fa0",
+      "payload": {
+        "outcome": "created",
+        "read_versions": {
+          "22222222-2222-4222-8222-222222222222": 1,
+          "44444444-4444-4444-8444-444444444444": 1
+        },
+        "report": {
+          "author": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "description": "Interactions declares requests stateless \u2014 no component remembers a caller between requests. Continuity pins a working session to one component, which holds the session's state between steps. The two cannot both hold as written.",
+          "discovery_ref": 4,
+          "discovery_source": "fabric_read",
+          "examination_id": "8105d2ea-b128-42c4-bac5-6cb349030905",
+          "idempotency_id": "c6665a39-0515-44d2-a511-cc3e83211d2e",
+          "regions": [
+            "22222222-2222-4222-8222-222222222222",
+            "44444444-4444-4444-8444-444444444444"
+          ]
+        },
+        "summary": "An examination of Interactions, Continuity was recorded and raised a new semantic tension.",
+        "tension_id": "797a1cd0-55f2-4563-b2d9-2e9926ea2d09"
+      },
+      "prev_hash": "536046cb9ed4a1d217e28be6653fb4af08e6c78a2e5993012fbb8f038456b957",
+      "type": "EXAMINATION_RECORDED"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222",
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "event_id": "fcaf1a29-048a-4522-b1f7-8021754d33e5",
+      "event_seq": 16,
+      "hash": "c36459f4e9c1cdba63faec4d2f14554ca3584c1b230f8a2945099c153eaa74b2",
+      "payload": {
+        "description": "Interactions declares requests stateless \u2014 no component remembers a caller between requests. Continuity pins a working session to one component, which holds the session's state between steps. The two cannot both hold as written.",
+        "origin": "examination",
+        "origin_ref": "8105d2ea-b128-42c4-bac5-6cb349030905",
+        "regions": [
+          "22222222-2222-4222-8222-222222222222",
+          "44444444-4444-4444-8444-444444444444"
+        ],
+        "status": "open",
+        "summary": "A semantic tension was raised over Interactions, Continuity by an examination report.",
+        "tension_id": "797a1cd0-55f2-4563-b2d9-2e9926ea2d09",
+        "type": "semantic"
+      },
+      "prev_hash": "168731e1adba940a85e45fc23f0bf00a905cbacb0982e95799c1bd51f0988fa0",
+      "type": "TENSION_RAISED"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "797a1cd0-55f2-4563-b2d9-2e9926ea2d09"
+      ],
+      "event_id": "6ab5f0ae-cab4-47f9-a4fa-ab2dd103fe0a",
+      "event_seq": 17,
+      "hash": "6ca14a8ac36fac5e718ec86ebcc6c9ac347905f129175fa662563a2d5e583c46",
+      "payload": {
+        "assessment": {
+          "assessment_id": "b9e0aff2-a692-42cd-855d-e307b3ebe39c",
+          "author": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "position": "addressed",
+          "reasoning": "The session-pinning passage governs a narrower case than the statelessness claim; read together, the contradiction is addressed by scope.",
+          "target_id": "797a1cd0-55f2-4563-b2d9-2e9926ea2d09",
+          "target_kind": "tension"
+        },
+        "outcome": "recorded",
+        "summary": "An assessment of a tension was recorded, position addressed."
+      },
+      "prev_hash": "c36459f4e9c1cdba63faec4d2f14554ca3584c1b230f8a2945099c153eaa74b2",
+      "type": "ASSESSMENT_RECORDED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "797a1cd0-55f2-4563-b2d9-2e9926ea2d09"
+      ],
+      "event_id": "3671fbc1-39d7-4f6c-b272-e38d3e02b5af",
+      "event_seq": 18,
+      "hash": "7032be53a47eea6d3fd0f08c409887ddc2bb65b1ec75c241cfa760f9fb059c01",
+      "payload": {
+        "evidence": {
+          "assessment_id": "b9e0aff2-a692-42cd-855d-e307b3ebe39c"
+        },
+        "from": "open",
+        "summary": "The tension over Interactions, Continuity was examined: its first assessment is on record.",
+        "tension_id": "797a1cd0-55f2-4563-b2d9-2e9926ea2d09",
+        "to": "examined"
+      },
+      "prev_hash": "6ca14a8ac36fac5e718ec86ebcc6c9ac347905f129175fa662563a2d5e583c46",
+      "type": "TENSION_STATUS"
+    },
+    {
+      "actor": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "affected": [
+        "797a1cd0-55f2-4563-b2d9-2e9926ea2d09"
+      ],
+      "event_id": "66649cb3-d809-4d42-8080-be5958374be7",
+      "event_seq": 19,
+      "hash": "e2012ce1b7f5a43b6cb3d26d1b3963b402913b086481ecd00cb0975c3b652f84",
+      "payload": {
+        "assessment": {
+          "assessment_id": "b365c46c-6fba-4f3f-a024-97834894c5dc",
+          "author": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "position": "clarifies",
+          "reasoning": "The passages still contradict on their face; this clarifies the conflict but does not address it away.",
+          "target_id": "797a1cd0-55f2-4563-b2d9-2e9926ea2d09",
+          "target_kind": "tension"
+        },
+        "outcome": "recorded",
+        "summary": "An assessment of a tension was recorded, position clarifies."
+      },
+      "prev_hash": "7032be53a47eea6d3fd0f08c409887ddc2bb65b1ec75c241cfa760f9fb059c01",
+      "type": "ASSESSMENT_RECORDED"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "523720f7-3cbb-4667-94fd-114c221a521a",
+      "event_seq": 20,
+      "hash": "07c2e7949b47053d7dd9bbeb818a53c53938ead1b7c1f3d7e87ef5e0fbe267ea",
+      "payload": {
+        "claim": {
+          "claim_id": "e3f25481-c893-41fb-98a3-ad9eafd29e34",
+          "facet": "33333333-3333-4333-8333-333333333333",
+          "facet_version": 2,
+          "rationale": "State's closing work is done.",
+          "supporting_contributions": [
+            "66aca631-f345-48da-adef-bf05b590c09f"
+          ]
+        },
+        "claimant": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "outcome": "recorded",
+        "summary": "A completion claim was recorded; whether it counts is a matter of the evidence binding, computed from the record."
+      },
+      "prev_hash": "e2012ce1b7f5a43b6cb3d26d1b3963b402913b086481ecd00cb0975c3b652f84",
+      "type": "COMPLETION_CLAIMED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "efec8300-f5e0-47e3-9793-3e457d02a6e8",
+      "event_seq": 21,
+      "hash": "6d0bb32f518a3c435b45cb4d00ad238cc086912e7230299953f3d0e5b3067d9d",
+      "payload": {
+        "evidence": {
+          "claim_id": "e3f25481-c893-41fb-98a3-ad9eafd29e34"
+        },
+        "from": "unexamined",
+        "region_id": "33333333-3333-4333-8333-333333333333",
+        "summary": "The facet State is now claimed (it was unexamined), on the evidence the record holds.",
+        "to": "claimed"
+      },
+      "prev_hash": "07c2e7949b47053d7dd9bbeb818a53c53938ead1b7c1f3d7e87ef5e0fbe267ea",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "783e51be-b6fc-4d7f-9924-af9f6b627a83",
+      "event_seq": 22,
+      "hash": "c7102cf33d5224af8b26f6930c3ec556ffcd6a3f5a525dbd08292816bcd6ca3c",
+      "payload": {
+        "assessment": {
+          "assessment_id": "7fe1314c-0a61-4165-84b4-ef2188cc74ab",
+          "author": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": "examined",
+          "reasoning": "Reviewed State at its current version.",
+          "target_id": "33333333-3333-4333-8333-333333333333",
+          "target_kind": "facet",
+          "version_reviewed": 2
+        },
+        "outcome": "recorded",
+        "summary": "An assessment of a facet was recorded, position examined."
+      },
+      "prev_hash": "6d0bb32f518a3c435b45cb4d00ad238cc086912e7230299953f3d0e5b3067d9d",
+      "type": "ASSESSMENT_RECORDED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "4b1f3ea7-3090-45be-9031-f3ef1d027ad1",
+      "event_seq": 23,
+      "hash": "1f03d90e2d7d3cc922aaf81b2e74c2afaf349db5a74033bd24f18dd41649d2fc",
+      "payload": {
+        "evidence": {
+          "assessment_id": "7fe1314c-0a61-4165-84b4-ef2188cc74ab",
+          "claim_id": "e3f25481-c893-41fb-98a3-ad9eafd29e34"
+        },
+        "from": "claimed",
+        "region_id": "33333333-3333-4333-8333-333333333333",
+        "summary": "The facet State is now complete (it was claimed), on the evidence the record holds.",
+        "to": "complete"
+      },
+      "prev_hash": "c7102cf33d5224af8b26f6930c3ec556ffcd6a3f5a525dbd08292816bcd6ca3c",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "event_id": "b39ba75a-1bd5-4839-ab7c-b289cd35d0c3",
+      "event_seq": 24,
+      "hash": "cb13454bbcbd6f49e95053a724171fb988aac8eb065dfd6df3baf4978bd73859",
+      "payload": {
+        "claim": {
+          "claim_id": "8b5d0a67-31fd-4fea-8720-a45313e084ae",
+          "facet": "22222222-2222-4222-8222-222222222222",
+          "facet_version": 2,
+          "rationale": "Interactions' closing work is done.",
+          "supporting_contributions": [
+            "50b62259-e630-4d16-95e7-f84f74e5c79f"
+          ]
+        },
+        "claimant": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "outcome": "recorded",
+        "summary": "A completion claim was recorded; whether it counts is a matter of the evidence binding, computed from the record."
+      },
+      "prev_hash": "1f03d90e2d7d3cc922aaf81b2e74c2afaf349db5a74033bd24f18dd41649d2fc",
+      "type": "COMPLETION_CLAIMED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "event_id": "7e628e76-5c86-4196-a81d-5c5643758336",
+      "event_seq": 25,
+      "hash": "7d10c399203d5df1f120244d3c2361b82ca4318a0d07b24e265f602b00d642b7",
+      "payload": {
+        "evidence": {
+          "claim_id": "8b5d0a67-31fd-4fea-8720-a45313e084ae"
+        },
+        "from": "unexamined",
+        "region_id": "22222222-2222-4222-8222-222222222222",
+        "summary": "The facet Interactions is now claimed (it was unexamined), on the evidence the record holds.",
+        "to": "claimed"
+      },
+      "prev_hash": "cb13454bbcbd6f49e95053a724171fb988aac8eb065dfd6df3baf4978bd73859",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "affected": [],
+      "event_id": "f50a2a43-6a4b-470d-aff1-ea3de472cd37",
+      "event_seq": 26,
+      "hash": "559018c43515339f5eac449a1eae6a26adc945dc9d5ba93e48802113cb295757",
+      "payload": {
+        "summary": "Agent cccccccc-cccc-4ccc-8ccc-cccccccccccc chose to idle: it took no action this turn."
+      },
+      "prev_hash": "7d10c399203d5df1f120244d3c2361b82ca4318a0d07b24e265f602b00d642b7",
+      "type": "IDLE"
+    },
+    {
+      "actor": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "affected": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "event_id": "c88d0ec9-74f7-4267-a941-79c7a2372389",
+      "event_seq": 27,
+      "hash": "ec3b610b26dd98c69af01af797879887d537dc234bbb6175e96eb942ca595c66",
+      "payload": {
+        "assigned_dependency_ids": {},
+        "contribution": {
+          "author": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "base_versions": {
+            "22222222-2222-4222-8222-222222222222": 2,
+            "44444444-4444-4444-8444-444444444444": 1
+          },
+          "discovery_ref": 4,
+          "discovery_source": "fabric_read",
+          "idempotency_id": "aab3be4e-7903-4ed6-be21-59607011f424",
+          "operations": [
+            {
+              "kind": "append_content",
+              "region_id": "44444444-4444-4444-8444-444444444444",
+              "text": " Closing note: what must survive an interruption is named."
+            }
+          ],
+          "rationale": "Closing exercise: recorded rationale.",
+          "read_set": [
+            "22222222-2222-4222-8222-222222222222",
+            "44444444-4444-4444-8444-444444444444"
+          ],
+          "write_set": [
+            "44444444-4444-4444-8444-444444444444"
+          ]
+        },
+        "contribution_id": "3ff21e9b-4214-4c87-80c9-03c40590ea37",
+        "summary": "A contribution by agent aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa was accepted and committed, changing Continuity."
+      },
+      "prev_hash": "559018c43515339f5eac449a1eae6a26adc945dc9d5ba93e48802113cb295757",
+      "type": "CONTRIBUTION_ACCEPTED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "event_id": "1c443e67-6142-4d1a-a3f2-02895ac3a812",
+      "event_seq": 28,
+      "hash": "88c66711568d2a8fc1e1a600c91b6b0b618d1c06986ec2fa72e2cffe4ffe8f76",
+      "payload": {
+        "evidence": {},
+        "from": "open",
+        "region_id": "44444444-4444-4444-8444-444444444444",
+        "summary": "The facet Continuity is now unexamined (it was open), on the evidence the record holds.",
+        "to": "unexamined"
+      },
+      "prev_hash": "ec3b610b26dd98c69af01af797879887d537dc234bbb6175e96eb942ca595c66",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "00000000-0000-4000-8000-000000000102",
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "e638d13e-2e82-46fb-a598-87837f1fca11",
+      "event_seq": 29,
+      "hash": "f4c2f12f9a2e86273442e2d0fda5e21ce7fd72577798c0b5a631cc93a7a536eb",
+      "payload": {
+        "checks_performed": [
+          "S1",
+          "S2",
+          "S3",
+          "event_schema",
+          "hash_chain"
+        ],
+        "divergence": [
+          {
+            "id": "33333333-3333-4333-8333-333333333333",
+            "registry": "regions"
+          }
+        ],
+        "failed_checks": [
+          {
+            "affected": [
+              "00000000-0000-4000-8000-000000000102",
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "check": "S1"
+          }
+        ],
+        "outcome": "fail",
+        "summary": "A weave seal was attempted after the accepted commit and failed: structural check(s) S1 did not pass on the current state. No seal was issued."
+      },
+      "prev_hash": "88c66711568d2a8fc1e1a600c91b6b0b618d1c06986ec2fa72e2cffe4ffe8f76",
+      "type": "SEAL_ATTEMPTED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "d29c494e-fdf6-4b71-9694-169ceb828a62",
+      "event_seq": 30,
+      "hash": "7e5498ff44f28ccb42f0cb9c83808a49773393a52f8c06af272101dfa6fc6f82",
+      "payload": {
+        "affected": [
+          "00000000-0000-4000-8000-000000000102",
+          "33333333-3333-4333-8333-333333333333"
+        ],
+        "check": "S1",
+        "description": "Structural inconsistency found by the independent checker's S1 check; affected records: 00000000-0000-4000-8000-000000000102, 33333333-3333-4333-8333-333333333333.",
+        "origin": "checker",
+        "origin_ref": "e638d13e-2e82-46fb-a598-87837f1fca11",
+        "regions": [
+          "33333333-3333-4333-8333-333333333333"
+        ],
+        "status": "open",
+        "summary": "A structural tension was raised by the checker (S1): the records it names are inconsistent in the current state.",
+        "tension_id": "8eb8f4a8-bae8-40a5-9a60-71459c9f5cd9",
+        "type": "structural"
+      },
+      "prev_hash": "f4c2f12f9a2e86273442e2d0fda5e21ce7fd72577798c0b5a631cc93a7a536eb",
+      "type": "TENSION_RAISED"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "11111111-1111-4111-8111-111111111111"
+      ],
+      "event_id": "38325afb-1efc-4a7e-9f93-358ab007a652",
+      "event_seq": 31,
+      "hash": "15bde7a78392d2ec4f1dd58786249ac4b7184d8a7d831bd63cc631906582ca69",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "11111111-1111-4111-8111-111111111111",
+        "summary": "Agent bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb opened Components (version 1) by reading the fabric directly.",
+        "version": 1
+      },
+      "prev_hash": "7e5498ff44f28ccb42f0cb9c83808a49773393a52f8c06af272101dfa6fc6f82",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "df7bf513-0cd2-4e46-9a3f-e9b1521d8dda",
+      "event_seq": 32,
+      "hash": "b2616342015c9e3c6f68034fb50b8559c44adde60e6ca089a703ffedba1998d3",
+      "payload": {
+        "path": "fabric_read",
+        "region_id": "33333333-3333-4333-8333-333333333333",
+        "summary": "Agent bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb opened State (version 2) by reading the fabric directly.",
+        "version": 2
+      },
+      "prev_hash": "15bde7a78392d2ec4f1dd58786249ac4b7184d8a7d831bd63cc631906582ca69",
+      "type": "DISCOVERY"
+    },
+    {
+      "actor": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "affected": [
+        "11111111-1111-4111-8111-111111111111",
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "7e6c7856-9514-4820-8f0d-536fee0f31d8",
+      "event_seq": 33,
+      "hash": "9208d8d6d6bd719d83f9df389d28374fdf37a61b5015e50381c34e4fa47986a4",
+      "payload": {
+        "assigned_dependency_ids": {},
+        "contribution": {
+          "author": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "base_versions": {
+            "11111111-1111-4111-8111-111111111111": 1,
+            "33333333-3333-4333-8333-333333333333": 2
+          },
+          "discovery_ref": 32,
+          "discovery_source": "fabric_read",
+          "idempotency_id": "01b28180-37c9-4490-9653-e1297702f203",
+          "operations": [
+            {
+              "dependency_id": "00000000-0000-4000-8000-000000000102",
+              "kind": "remove_dependency"
+            }
+          ],
+          "rationale": "Closing exercise: recorded rationale.",
+          "read_set": [
+            "11111111-1111-4111-8111-111111111111",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "write_set": [
+            "11111111-1111-4111-8111-111111111111",
+            "33333333-3333-4333-8333-333333333333"
+          ]
+        },
+        "contribution_id": "2d5ca252-845a-4a62-9f89-dc371c20b39e",
+        "summary": "A contribution by agent bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb was accepted and committed, changing Components, State."
+      },
+      "prev_hash": "b2616342015c9e3c6f68034fb50b8559c44adde60e6ca089a703ffedba1998d3",
+      "type": "CONTRIBUTION_ACCEPTED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "11111111-1111-4111-8111-111111111111"
+      ],
+      "event_id": "4cb1eee7-8452-4e45-8392-d44c8bb493de",
+      "event_seq": 34,
+      "hash": "ca4923ff447f04a49d0f2994e26f331003d7d5cdd852f2378376dc9fa7b57b43",
+      "payload": {
+        "evidence": {},
+        "from": "open",
+        "region_id": "11111111-1111-4111-8111-111111111111",
+        "summary": "The facet Components is now unexamined (it was open), on the evidence the record holds.",
+        "to": "unexamined"
+      },
+      "prev_hash": "9208d8d6d6bd719d83f9df389d28374fdf37a61b5015e50381c34e4fa47986a4",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "event_id": "1a0fcf92-8a02-4cbf-a198-ddcd4b588f22",
+      "event_seq": 35,
+      "hash": "fd91d1d82e5dbee63fc8e31819d005446fd7f58c8f42c09c57b250770ac7a4d1",
+      "payload": {
+        "evidence": {},
+        "from": "complete",
+        "region_id": "33333333-3333-4333-8333-333333333333",
+        "summary": "The facet State is now unexamined (it was complete), on the evidence the record holds.",
+        "to": "unexamined"
+      },
+      "prev_hash": "ca4923ff447f04a49d0f2994e26f331003d7d5cdd852f2378376dc9fa7b57b43",
+      "type": "FACET_STATUS"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [],
+      "event_id": "7bedde34-d6a9-4e16-a5b9-3b12bbc502ba",
+      "event_seq": 36,
+      "hash": "78b3fd54cb2d4eda1fe9f38b5dc5fb0c2d2defdcbc6e50451709ee481bc14cff",
+      "payload": {
+        "checks_performed": [
+          "S1",
+          "S2",
+          "S3",
+          "event_schema",
+          "hash_chain"
+        ],
+        "failed_checks": [],
+        "outcome": "pass",
+        "seal": {
+          "checks_performed": [
+            "S1",
+            "S2",
+            "S3",
+            "event_schema",
+            "hash_chain"
+          ],
+          "contributions_since_last_seal": [
+            "3ff21e9b-4214-4c87-80c9-03c40590ea37",
+            "2d5ca252-845a-4a62-9f89-dc371c20b39e"
+          ],
+          "outstanding_semantic_questions": [
+            {
+              "examined_by": [
+                "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+                "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+              ],
+              "status": "examined",
+              "tension_id": "797a1cd0-55f2-4563-b2d9-2e9926ea2d09"
+            }
+          ],
+          "position": 36,
+          "semantic_clearance": false,
+          "semantic_clearance_statement": "This seal certifies structure only; it grants no semantic clearance."
+        },
+        "summary": "A weave seal was attempted after the accepted commit and passed: every structural check succeeded on the current state, and a seal stands at this position. The seal certifies structure only; it grants no semantic clearance."
+      },
+      "prev_hash": "fd91d1d82e5dbee63fc8e31819d005446fd7f58c8f42c09c57b250770ac7a4d1",
+      "type": "SEAL_ATTEMPTED"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [
+        "8eb8f4a8-bae8-40a5-9a60-71459c9f5cd9"
+      ],
+      "event_id": "83a210c4-e4a0-4516-a866-5e8132a0b1f3",
+      "event_seq": 37,
+      "hash": "b0f7bbc55f5e7b1e78490d244eea46b4d902f8f65171eb278652dad04a66ac20",
+      "payload": {
+        "evidence": {
+          "affected": [
+            "00000000-0000-4000-8000-000000000102",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "check": "S1",
+          "seal_attempt_event_id": "7bedde34-d6a9-4e16-a5b9-3b12bbc502ba",
+          "seal_attempt_seq": 36
+        },
+        "from": "open",
+        "summary": "A structural tension was resolved: the S1 check, re-run against the tension's original affected records by the passing seal attempt at sequence 36, found the inconsistency gone.",
+        "tension_id": "8eb8f4a8-bae8-40a5-9a60-71459c9f5cd9",
+        "to": "resolved"
+      },
+      "prev_hash": "78b3fd54cb2d4eda1fe9f38b5dc5fb0c2d2defdcbc6e50451709ee481bc14cff",
+      "type": "TENSION_STATUS"
+    },
+    {
+      "actor": "00000000-0000-4000-8000-000000000000",
+      "affected": [],
+      "event_id": "14d60fbe-2b76-426a-872a-edfa0ed00e49",
+      "event_seq": 38,
+      "hash": "9124d050e2af2bccab4613121e9d5cbd2e6488409f1901bf944594fb8c6d22d6",
+      "payload": {
+        "chain_head": "b0f7bbc55f5e7b1e78490d244eea46b4d902f8f65171eb278652dad04a66ac20",
+        "final_state_hash": "ef56fb395ac43a42dc08acb29e3de999291112d4bb693a7f8a491051565b6621",
+        "summary": "The run was closed. Its final state hash and chain head stand in this record; what an external anchor does and does not establish for them is stated in the Stage 4 build notes (B7), not claimed here."
+      },
+      "prev_hash": "b0f7bbc55f5e7b1e78490d244eea46b4d902f8f65171eb278652dad04a66ac20",
+      "type": "RUN_CLOSED"
+    }
+  ],
+  "exported_by": "closing_exercise.py",
+  "run_id": "closing-lifecycle"
+}

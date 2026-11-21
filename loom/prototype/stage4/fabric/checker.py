@@ -55,6 +55,7 @@ import copy
 import json
 import sqlite3
 import sys
+import uuid
 
 from fabric.canonical import canonical, sha256_hex, event_hash
 
@@ -85,6 +86,22 @@ _FACET_STATUSES = ("open", "unexamined", "claimed", "complete",
 _EVIDENCE_TYPES = ("DISCOVERY", "CONTRIBUTION_REJECTED",
                    "BOUNDARY_PROBE", "IDLE", "PROBE_SESSION_OPENED",
                    "PROBE_EVIDENCE", "SEAL_ATTEMPTED")
+
+
+def _is_uuid(value):
+    """Whether value is a UUID in its canonical written form — the
+    form this system mints its identifiers in. The checker's own
+    reading of the section 3 id format (closing correction round,
+    CC-3): the format is what is validated; the existence of the
+    record a well-formed reference names is not the fold's to
+    judge."""
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = uuid.UUID(value)
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return str(parsed) == value
 
 
 def _empty_state():
@@ -208,6 +225,17 @@ def _apply(state, event):
                 else "schema_invalid",
                 f"TENSION_RAISED names initial status "
                 f"{p['status']!r}; a tension is raised open")
+        # Closing correction round (CC-3): origin_ref is an id
+        # field, and an id is a UUID. A reference in any other
+        # shape — a sequence label, a bare word, a non-string —
+        # fails the event's schema at this sequence, whatever the
+        # hash chain says. Placed after the type/origin/status
+        # rules, matching the order the pinned taxonomy expects.
+        if not _is_uuid(p.get("origin_ref")):
+            raise _Halt(seq, "schema_invalid",
+                        f"TENSION_RAISED carries origin_ref "
+                        f"{p.get('origin_ref')!r}, which is not "
+                        f"a UUID: the event fails its schema")
         record = {
             "tension_id": p["tension_id"],
             "type": p["type"],

@@ -137,9 +137,14 @@ class EventStore:
         return row  # (seq, hash) or None
 
     def append(self, type_: str, actor: str, affected: list, payload: dict,
-               prev_hash: str) -> dict:
+               prev_hash: str, event_id: str = None) -> dict:
         """Append one event; caller owns the surrounding transaction via
-        commit() so the state change and the append are atomic."""
+        commit() so the state change and the append are atomic. The
+        event_id is minted here unless the caller supplies one
+        (closing correction round, CC-1: the harness pre-mints a
+        seal attempt's id so the structural events the attempt
+        causes, committed in the same atomic group, can cite the
+        attempt by its actual id)."""
         assert type_ in EVENT_TYPES, f"unknown event type {type_}"
         last = self.last()
         seq = 1 if last is None else last[0] + 1
@@ -147,7 +152,8 @@ class EventStore:
             assert prev_hash == last[1], "prev_hash does not match chain head"
         event = {
             "event_seq": seq,
-            "event_id": str(uuid.uuid4()),
+            "event_id": event_id if event_id is not None
+                        else str(uuid.uuid4()),
             "type": type_,
             "actor": actor,
             "affected": list(affected),

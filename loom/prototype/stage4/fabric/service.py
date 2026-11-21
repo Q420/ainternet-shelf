@@ -1680,9 +1680,11 @@ class FabricService:
                     "attestation": True,
                     "probe": result,
                     "probe_result_hash": sha256_hex(canonical(result)),
-                    "summary": "Boundary probe attestation: before "
-                               "this run opened, the pre-run "
-                               "boundary probe ran against a "
+                    "summary": "Boundary probe attestation: this "
+                               "attestation stands at the head of "
+                               "the run, recorded after the run "
+                               "opened and before agent admission. "
+                               "The boundary probe ran against a "
                                "disposable twin of this runtime (same "
                                "layout, owners, permissions and "
                                "service build) from the agent OS "

@@ -193,10 +193,13 @@ check("TV-1", "the accepted commit fires a SEAL_ATTEMPTED "
           {"check": "S1", "affected": [D_CS, STATE]}]
       and "seal" not in attempts[0]["payload"])
 check("TV-1", "a structural tension is raised (origin checker, "
-      "status open, identity = (S1, that dependency))",
+      "status open, identity = (S1, that dependency)); its "
+      "origin_ref is the triggering attempt's event_id",
       len(raised) == 1 and raised[0]["payload"]["origin"] == "checker"
       and raised[0]["payload"]["check"] == "S1"
       and raised[0]["payload"]["affected"] == [D_CS, STATE]
+      and raised[0]["payload"]["origin_ref"]
+      == attempts[0]["event_id"]
       and eng.state["tensions"][tid1]["status"] == "open")
 out = repair_and_correct(store, eng, h, tid1)
 attempts = events_of(store, "SEAL_ATTEMPTED")
@@ -211,6 +214,8 @@ check("TV-1", "the correcting contribution is accepted despite "
 check("TV-1", "the structural tension resolves with the passing "
       "attempt's event id as its evidence",
       len(status) == 1 and status[0]["payload"]["to"] == "resolved"
+      and status[0]["payload"]["evidence"]["seal_attempt_event_id"]
+      == attempts[-1]["event_id"]
       and status[0]["payload"]["evidence"]["seal_attempt_seq"]
       == attempts[-1]["event_seq"]
       and eng.state["tensions"][tid1]["status"] == "resolved")
@@ -371,10 +376,13 @@ check("TV-6", "both further attempts fail on the same check and "
               for a in attempts[1:]))
 check("TV-6", "exactly one structural tension with that identity "
       "exists throughout; no duplicate TENSION_RAISED; the later "
-      "attempts record their findings against the standing tension",
+      "attempts record their findings against the standing tension; "
+      "the tension's origin_ref is the raising attempt's event_id",
       len([e for e in events_of(store, "TENSION_RAISED")
            if e["payload"].get("type") == "structural"]) == 1
       and eng.state["tensions"][tid6]["status"] == "open"
+      and eng.state["tensions"][tid6]["origin_ref"]
+      == attempts[0]["event_id"]
       and all(a["payload"].get("findings_attached") == [tid6]
               for a in attempts[1:]))
 
@@ -600,12 +608,14 @@ attempts = events_of(store, "SEAL_ATTEMPTED")
 status = [e for e in events_of(store, "TENSION_STATUS")
           if e["payload"]["tension_id"] == tid13]
 check("TV-13", "the correcting contribution's passing attempt "
-      "resolves S with that attempt as its evidence — the "
-      "attempted assessment plays no part",
+      "resolves S with that attempt's event_id as its evidence — "
+      "the attempted assessment plays no part",
       out["outcome"] == "accepted"
       and attempts[-1]["payload"]["outcome"] == "pass"
       and len(status) == 1
       and status[0]["payload"]["to"] == "resolved"
+      and status[0]["payload"]["evidence"]["seal_attempt_event_id"]
+      == attempts[-1]["event_id"]
       and status[0]["payload"]["evidence"]["seal_attempt_seq"]
       == attempts[-1]["event_seq"])
 

@@ -178,7 +178,13 @@ def accept_spec(author, ops, assigned=None, cid=None):
 
 
 def tension_raised(tid, ttype, regions, origin, status="open",
-                   check=None, affected=None, origin_ref="canned"):
+                   check=None, affected=None,
+                   origin_ref="caca0000-0000-4000-8000-000000000004"):
+    # The default origin_ref is a canned UUID (closing correction
+    # round, CC-4 fixture rule): origin_ref is an id field, and a
+    # fixture representing a valid history must carry one in UUID
+    # form — the folds now halt schema_invalid on any other shape
+    # (CC-3).
     payload = {"tension_id": tid, "type": ttype, "regions": regions,
                "origin": origin, "origin_ref": origin_ref,
                "description": "Canned pack fixture tension.",
@@ -634,7 +640,7 @@ def run_eval_cases():
     t_id = "t-structural-s1"
     h_t = chain([ropened(), tension_raised(
         t_id, "structural", [S], "checker", check="S1",
-        affected=[D_CS, S], origin_ref="seal-attempt:0")])
+        affected=[D_CS, S], origin_ref="caca0000-0000-4000-8000-000000000005")])
     r_t = fold_of(h_t)
 
     # VP-39 — same identity, deps enumerated in the other order:
@@ -672,7 +678,7 @@ def run_eval_cases():
             assigned={"0": D_PS}),
         tension_raised(t_id, "structural", [S], "checker",
                        check="S1", affected=[D_CS, S],
-                       origin_ref="seal-attempt:0")])
+                       origin_ref="caca0000-0000-4000-8000-000000000005")])
     l41 = fold_of(h_t2)
     del l41["regions"][S]
     l41["dependencies"][D_PS]["status"] = "removed"
@@ -686,14 +692,24 @@ def run_eval_cases():
     # VP-42 — the correcting batch removes D-CS: resolution, PASS.
     h_t_specs = [ropened(), tension_raised(
         t_id, "structural", [S], "checker", check="S1",
-        affected=[D_CS, S], origin_ref="seal-attempt:0")]
+        affected=[D_CS, S], origin_ref="caca0000-0000-4000-8000-000000000005")]
     _, b42, full42 = chained_pair(h_t_specs, [accept_spec(AGENT_A, [
         {"kind": "remove_dependency", "dependency_id": D_CS}])])
     eval_case("VP-42", h_t, b42, fold_of(full42),
               lambda v: v["outcome"] == "pass"
               and v["resolutions"] == [t_id]
-              and v["seal"] is not None,
-              {"outcome": "pass", "resolutions": [t_id]})
+              and v["seal"] is not None
+              # CC-4 at the canned level: the standing tension's
+              # origin_ref is the raising attempt's id — the
+              # canned attempt UUID, not a sequence label. (The
+              # canned evaluators return verdicts, not events;
+              # the live event form of this binding is asserted
+              # in VP-32 and VP-45.)
+              and h_t[1]["payload"]["origin_ref"]
+              == "caca0000-0000-4000-8000-000000000005",
+              {"outcome": "pass", "resolutions": [t_id],
+               "origin_ref": "the raising attempt's id (canned "
+                             "UUID)"})
 
     # VP-43 — S still missing (S1 still fails; S2 passes): the
     # tension remains open.
@@ -915,7 +931,10 @@ def run_live_cases():
               if e["payload"].get("type") == "structural"]
     first = attempts[0]["payload"] if attempts else {}
     ok31 = out["outcome"] == "accepted" and len(attempts) == 1 \
-        and first.get("outcome") == "fail" and len(raised) == 1
+        and first.get("outcome") == "fail" and len(raised) == 1 \
+        and raised[0]["payload"]["origin_ref"] \
+        == attempts[0]["event_id"]  # CC-1: the raised tension's
+        # origin_ref is the triggering attempt's actual event_id
     out2 = h.submit(tok, contrib(
         AGENT_A, str(uuid.uuid4()), versions(eng, I, P), [I, P], [P],
         [{"kind": "append_content", "region_id": P,
@@ -956,7 +975,8 @@ def run_live_cases():
 
     # VP-32 — continuation of the VP-31 run: repair (I-5) and the
     # correcting contribution; the group ends SEAL_ATTEMPTED then
-    # TENSION_STATUS with the attempt's seq in the evidence.
+    # TENSION_STATUS with the passing attempt's event_id as the
+    # resolution evidence (CC-2; the seq remains as diagnostic).
     eng.state = verified_fold(store.all_events(), CONSTITUTION_HASH)
     tok2 = h.issue_token(AGENT_B)
     ref2 = open_regions(h, store, tok2, C, S)
@@ -971,12 +991,14 @@ def run_live_cases():
             "SEAL_ATTEMPTED", "TENSION_STATUS"] \
         and tail[0]["payload"]["outcome"] == "pass" \
         and tail[1]["payload"]["to"] == "resolved" \
+        and tail[1]["payload"]["evidence"][
+            "seal_attempt_event_id"] == tail[0]["event_id"] \
         and tail[1]["payload"]["evidence"]["seal_attempt_seq"] \
         == tail[0]["event_seq"]
     t32 = raised[0]["payload"]["tension_id"] if raised else None
     dual_attempt_record(
         "VP-32", {"order": ["SEAL_ATTEMPTED", "TENSION_STATUS"],
-                  "evidence_seq": "the attempt's",
+                  "evidence_event_id": "the attempt's",
                   "dual_verdicts": "pass with the resolution, "
                                    "agreeing"},
         captured[2:3],
@@ -1012,7 +1034,9 @@ def run_live_cases():
                      {"check": "S1", "affected": [D_CS, S]}]
                  and "seal" not in attempts[-1]["payload"]
                  and len(raised) == 1
-                 and raised[0]["payload"]["origin"] == "checker")  # (3)
+                 and raised[0]["payload"]["origin"] == "checker"
+                 and raised[0]["payload"]["origin_ref"]
+                 == attempts[-1]["event_id"])  # (3) CC-1 binding
     t_id45 = raised[0]["payload"]["tension_id"] if raised else None
     steps.append(eng.state["tensions"][t_id45]["status"] == "open"
                  if t_id45 else False)  # (4) open, not blocking
@@ -1032,6 +1056,8 @@ def run_live_cases():
               if e["payload"]["tension_id"] == t_id45]
     steps.append(bool(status)
                  and status[-1]["payload"]["to"] == "resolved"
+                 and status[-1]["payload"]["evidence"]
+                 ["seal_attempt_event_id"] == attempts[-1]["event_id"]
                  and status[-1]["payload"]["evidence"]
                  ["seal_attempt_seq"] == attempts[-1]["event_seq"])  # (8)
     tail = store.all_events()[-2:]
