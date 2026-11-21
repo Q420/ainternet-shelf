@@ -1,0 +1,15 @@
+{
+ "non_loopback_refused": {
+  "raised": "Stage 5 isolation: non-loopback base URL refused: http://10.0.0.9:9999/v1"
+ },
+ "proxy_ignored": {
+  "proxy_env_set_to": "http://10.255.255.1:8080",
+  "capture": "53b05142-bf19-4057-95b1-d2348840ef39",
+  "failure_class": "ADAPTER_FAILURE",
+  "failure_detail": "served model id 'STUB-SUBJECT-01' != pinned 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning' (identity mismatch)",
+  "attempt_http_status": [
+   200
+  ],
+  "served_model": "STUB-SUBJECT-01"
+ }
+}

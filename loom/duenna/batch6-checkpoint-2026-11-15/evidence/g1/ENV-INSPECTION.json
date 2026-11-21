@@ -1,0 +1,13 @@
+{
+ "captured_at_utc": "2026-11-15T08:21:34Z",
+ "links": "lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>",
+ "routes_v4": "",
+ "routes_v6": "",
+ "addrs": "lo               UNKNOWN        127.0.0.1/8 ::1/128",
+ "resolv_conf": "# Managed by spawnd. Static runtime-cell /etc/resolv.conf, rendered from\n# install-time constants and bind-mounted read-only into the cell (and privsep\n# workers). The cell gateway addresses are static render constants, so this\n# content is stable across boots; nspawn is configured with ResolvConf=off so it\n# does not manage this file.\nnameserver 198.19.0.1\nnameserver fd8b:4f84:7d32:99::1\noptions edns0 trust-ad",
+ "proxy_env_present": {},
+ "credential_env_var_names_present": [],
+ "external_tcp_1_1_1_1_443": "blocked: OSError: [Errno 101] Network is unreachable",
+ "dns_example_com": "blocked: gaierror: [Errno -3] Temporary failure in name resolution",
+ "proxy_env_during_adapter_check": "http://10.255.255.1:8080 (set by the runner for check B only)"
+}

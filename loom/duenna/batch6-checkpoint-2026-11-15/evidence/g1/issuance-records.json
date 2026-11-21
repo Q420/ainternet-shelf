@@ -1,0 +1,65 @@
+{
+ "registry_entries": {
+  "op-1": {
+   "operation_id": "op-1",
+   "tool": "source_extract",
+   "field": "fixtures_executed",
+   "source_ref": "r60-revision-change-record#009",
+   "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "value": 38,
+   "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31",
+   "rule_id": "EXT02-FE-1",
+   "verification": "EXTRACTED",
+   "issued_at_seq": 4,
+   "tree_id": "G1-S3",
+   "step_id": "G1-S3-STEP-01",
+   "consumed": true
+  },
+  "op-5": {
+   "operation_id": "op-5",
+   "tool": "source_extract",
+   "field": "fixtures_executed",
+   "source_ref": "qwen-ab-results-v1#009",
+   "source_hash": "5181ab121963647ff4d4e1a1829c4720efbf904e8310a4691d5a49ad71e8b859",
+   "value": null,
+   "evidence_line": null,
+   "rule_id": "EXT02-FE-1",
+   "verification": "TYPE FAILURE",
+   "issued_at_seq": 17,
+   "tree_id": "G1-S2",
+   "step_id": "G1-S2-STEP-01",
+   "consumed": false
+  },
+  "op-7": {
+   "operation_id": "op-7",
+   "tool": "source_extract",
+   "field": "fixtures_executed",
+   "source_ref": "qwen-ab-v2r-results#004b",
+   "source_hash": "61c2365f9323c62015bc4f5a86ccb22ba07a9443081bad1ce3bd1ad8b9d94f7b",
+   "value": null,
+   "evidence_line": null,
+   "rule_id": "EXT02-FE-1",
+   "verification": "AMBIGUOUS",
+   "issued_at_seq": 23,
+   "tree_id": "G1-S5",
+   "step_id": "G1-S5-STEP-01",
+   "consumed": false
+  },
+  "op-9": {
+   "operation_id": "op-9",
+   "tool": "source_extract",
+   "field": "fixtures_executed",
+   "source_ref": "r60-revision-change-record#009",
+   "source_hash": "5db36f75948ce78dc24e930f48db783de0f224ecf727353b01d8328161e0af15",
+   "value": 38,
+   "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31",
+   "rule_id": "EXT02-FE-1",
+   "verification": "EXTRACTED",
+   "issued_at_seq": 29,
+   "tree_id": "G1-S4",
+   "step_id": "G1-S4-STEP-01",
+   "consumed": false
+  }
+ },
+ "citations_consumed": []
+}
