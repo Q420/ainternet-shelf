@@ -1,0 +1,15 @@
+{
+  "anchor_kind": "content-addressed archival anchor \u2014 produced by the closing exercise script from the service's own exported history; an archival record of the run's tail, NOT an independently trusted attestation",
+  "chain_head_at_close": "dcb39010da8531af4a1ce79096e462df6d5ed9cab3891d65756d2c9aadc022ca",
+  "closing_event_hash": "18e763e9bfb6fad8171b1a02fc2d56aca6265e40c5b45d72227e66f400dec4e3",
+  "event_count": 38,
+  "genesis_state_hash": "9a7250bde82bfd8bd220b6013f38b4ce289a702fe86119f2723616055c070b1f",
+  "history_sha256": "4e2aa66d020b75f75b9b3e8a4209a00c1d7770b3635cfb9cb3934c0df00123bf",
+  "run_id": "closing-lifecycle",
+  "starvation_report_sha256": "1e732a1ddfd47989dce171ddbe2c28ac71d2a144804aadf031d3002c70514857",
+  "validation_pack": {
+    "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+    "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+    "version": "v2"
+  }
+}
