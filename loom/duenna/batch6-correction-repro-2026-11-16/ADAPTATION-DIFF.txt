@@ -1,0 +1,131 @@
+Adaptation diffs for the Step 3 reproduction package (2026-11-16).
+Originals: the correction round's scripts as run on the builder's
+machine (preserved locally; test_g4corr.py also shelved, unadapted,
+at duenna/batch6-correction-2026-11-15/suites/test_g4corr.py).
+Only the path-resolution block differs in each script.
+
+--- original/reexamine_g4corr.py
++++ shelf/reexamine_g4corr.py
+@@ -22,23 +22,41 @@
+ import hashlib, json, sys, tempfile
+ from pathlib import Path
+ 
+-H = Path.home()
+-B6 = H / "workspace/ssh-door/batch6/build"
+-CORR = H / "workspace/ssh-door/batch6/correction"
+-RUN = (H / "workspace/ssh-door/batch6/scratch/g4corr/runs"
+-       "/G4CORR-20261115-001")
+-COMMITS = H / "workspace/ssh-door/batch6/scratch/g4corr/commitments"
+-STACK = CORR / "stack"
++# --- Shelf-relative paths (Step 3 reproduction adaptation, 2026-11-16) ---
++# The original of this script resolved every input from
++# ~/workspace/ssh-door/... on the builder's machine, so it could not be
++# re-run from the Shelf (Claude's formal-inspection defect 2). ONLY this
++# block differs from the original; the full diff is filed beside this
++# script as ADAPTATION-DIFF.txt. Roots default to the standard shelf
++# layout (this package sits in duenna/ beside the bundles it reads) and
++# can be overridden by environment variables. Preserved artefacts are
++# read, never modified: the examination output goes to OUTDIR.
++import os
++_HERE = Path(__file__).resolve().parent
++_SHELF = _HERE.parent
++BUNDLE = Path(os.environ.get(
++    "G4CORR_BUNDLE", _SHELF / "batch6-correction-2026-11-15"))
++CKPT = Path(os.environ.get(
++    "G4CORR_CHECKPOINT", _SHELF / "batch6-checkpoint-2026-11-15"))
++OUTDIR = Path(os.environ.get("G4CORR_OUT", _HERE / "out"))
++B6 = CKPT / "package" / "examiner"
++CORR = BUNDLE
++RUN = BUNDLE / "run"
++COMMITS = BUNDLE / "commitments"
++STACK = BUNDLE / "stack"
+ TOOLS_DIR = STACK / "work"
+ SNAP = STACK / "snapshot"
+ DATA = STACK / "data"
+ RULES = DATA / "EXTRACTOR-RULES-02.json"
+-AUTH02 = B6 / "PILOT-PIN-AUTHORITY-02.json"
+-FZMAN = H / "workspace/ssh-door/freeze-manifest.sha256"
+-STACKMAN = CORR / "G4CORR-STACK-MANIFEST.sha256"
+-STUB_CFG_PATH = STACK / "work/stub_run_config.json"
+-TREES_PATH = STACK / "work/pilot_trees.json"
+-OUT = CORR / "g4corr-examination-02.json"
++AUTH02 = CKPT / "package" / "calibration" / "PILOT-PIN-AUTHORITY-02.json"
++FZMAN = CKPT / "evidence" / "g4" / "freeze-manifest.sha256"
++STACKMAN = Path(os.environ.get(
++    "G4CORR_STACKMAN",
++    _SHELF / "batch6-correction-evidence-2026-11-15"
++    / "G4CORR-STACK-MANIFEST.sha256"))
++STUB_CFG_PATH = STACK / "work" / "stub_run_config.json"
++TREES_PATH = STACK / "work" / "pilot_trees.json"
++OUT = OUTDIR / "g4corr-examination-02.json"
+ 
+ sys.path.insert(0, str(B6))
+ sys.path.insert(0, str(TOOLS_DIR))
+@@ -124,7 +142,7 @@
+     trees_doc = json.loads(TREES_PATH.read_text())
+     out["step6"] = step6_reconstruct(events, trees_doc)
+ 
+-    OUT.write_text(json.dumps(out, indent=1) + "\n")
++    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(out, indent=1) + "\n")
+     print("wrote", OUT)
+     print("step2:", json.dumps(out["step2"])[:300])
+     print("step3 divergence:", out["step3"].get("divergence"),
+
+--- original/test_g4corr.py
++++ shelf/test_g4corr.py
+@@ -14,24 +14,42 @@
+ import hashlib, json, sys, tempfile
+ from pathlib import Path
+ 
+-H = Path.home()
+-B6 = H / "workspace/ssh-door/batch6/build"
+-CORR = H / "workspace/ssh-door/batch6/correction"
+-RUN = (H / "workspace/ssh-door/batch6/scratch/g4corr/runs"
+-       "/G4CORR-20261115-001")
+-COMMITS = H / "workspace/ssh-door/batch6/scratch/g4corr/commitments"
+-STACK = CORR / "stack"
++# --- Shelf-relative paths (Step 3 reproduction adaptation, 2026-11-16) ---
++# The original of this script resolved every input from
++# ~/workspace/ssh-door/... on the builder's machine, so it could not be
++# re-run from the Shelf (Claude's formal-inspection defect 2). ONLY this
++# block differs from the original; the full diff is filed beside this
++# script as ADAPTATION-DIFF.txt. Roots default to the standard shelf
++# layout (this package sits in duenna/ beside the bundles it reads) and
++# can be overridden by environment variables. Preserved artefacts are
++# read, never modified: the examination output goes to OUTDIR.
++import os
++_HERE = Path(__file__).resolve().parent
++_SHELF = _HERE.parent
++BUNDLE = Path(os.environ.get(
++    "G4CORR_BUNDLE", _SHELF / "batch6-correction-2026-11-15"))
++CKPT = Path(os.environ.get(
++    "G4CORR_CHECKPOINT", _SHELF / "batch6-checkpoint-2026-11-15"))
++OUTDIR = Path(os.environ.get("G4CORR_OUT", _HERE / "out"))
++B6 = CKPT / "package" / "examiner"
++CORR = BUNDLE
++RUN = BUNDLE / "run"
++COMMITS = BUNDLE / "commitments"
++STACK = BUNDLE / "stack"
+ TOOLS_DIR = STACK / "work"
+ SNAP = STACK / "snapshot"
+ DATA = STACK / "data"
+ RULES = DATA / "EXTRACTOR-RULES-02.json"
+-AUTH02 = B6 / "PILOT-PIN-AUTHORITY-02.json"
+-FZMAN = H / "workspace/ssh-door/freeze-manifest.sha256"
+-STACKMAN = CORR / "G4CORR-STACK-MANIFEST.sha256"
++AUTH02 = CKPT / "package" / "calibration" / "PILOT-PIN-AUTHORITY-02.json"
++FZMAN = CKPT / "evidence" / "g4" / "freeze-manifest.sha256"
++STACKMAN = Path(os.environ.get(
++    "G4CORR_STACKMAN",
++    _SHELF / "batch6-correction-evidence-2026-11-15"
++    / "G4CORR-STACK-MANIFEST.sha256"))
++STUB_CFG_PATH = STACK / "work" / "stub_run_config.json"
++TREES_PATH = STACK / "work" / "pilot_trees.json"
+ EXAM_DIR = B6
+ DRIVER_DIR = STACK / "work"
+-STUB_CFG_PATH = STACK / "work/stub_run_config.json"
+-TREES_PATH = STACK / "work/pilot_trees.json"
+ sys.path.insert(0, str(EXAM_DIR))
+ sys.path.insert(0, str(TOOLS_DIR))
+ sys.path.insert(0, str(DRIVER_DIR))

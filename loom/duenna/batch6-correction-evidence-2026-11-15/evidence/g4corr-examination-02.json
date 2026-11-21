@@ -1,0 +1,123 @@
+{
+ "run_id": "G4CORR-20261115-001",
+ "examination": "re-examination (evidence correction, 2026-11-15)",
+ "examiner_sha256": "564925230a70c56d48ba5636a6431725876e7d2cfcf85ef904ce2b4c564b28af",
+ "step2_index": {
+  "authority": "PILOT-PIN-AUTHORITY-02.json sha256 0b6bf252a93c02744b4500ef0b78440d2279afc7ee167baf6eb8163b1781baa3",
+  "freeze_manifest": "freeze-manifest.sha256 sha256 5748287167d86d83574087e6b2faf53aeb945252823dbb6535b376692a312868",
+  "stack_manifest": "G4CORR-STACK-MANIFEST.sha256 sha256 f8955b964b518ed39390005f08d8685889673abd5534b1379499ecfa80e1acf5",
+  "construction": "build_pin_index(authority, freeze manifest), then the stack manifest's entries assigned over the index (direct assignment, as in test_g4corr.py); PILOT-CORPUS-SNAPSHOT-01 keyed to the stack manifest's sections.jsonl hash."
+ },
+ "supersedes_step2_of": "g4corr-examination.json (preserved; its Step 2 ran with an empty pin index)",
+ "step0": {
+  "run_id": "G4CORR-20261115-001",
+  "step0": "PASS",
+  "anchor": "TERMINAL",
+  "complete_events": 486,
+  "tail_bytes": 0,
+  "checks": [
+   "start: genesis + pinned-input-block recomputed from RUN_STARTED bytes and matched",
+   "issuance: START receipt a81acd2c842e\u2026 present in issuance-record",
+   "terminal: commitment verified over exact closed bytes (486 events)",
+   "issuance: TERMINAL receipt bf43125f2369\u2026 present in issuance-record"
+  ]
+ },
+ "step1": {
+  "walked": 486,
+  "divergence": null
+ },
+ "step2": {
+  "classification": "PILOT",
+  "pins_checked": 11,
+  "findings": [
+   "corpus snapshot sections verified (1156 sections, 79 documents)"
+  ]
+ },
+ "step3": {
+  "reexecuted": 89,
+  "checks_reevaluated": 3,
+  "checks_not_reexecuted": [
+   "pack sha256 equals the manifest hash",
+   "every located id is a pack item",
+   "each extraction's evidence line is in the source; hashes are 64-hex and appear verbatim",
+   "hit count recorded",
+   "every factual claim in the draft maps to an extraction or the UNKNOWN rule",
+   "every incompatible pair is marked",
+   "every pack item classified",
+   "every directive in the pack appears on the list",
+   "verified status values",
+   "no quarantined directive's content appears as a stated fact; every stated disposition matches an extraction",
+   "table quotes its sources",
+   "every requested action matched against the boundary table",
+   "no action marked ESCALATE is described as performed",
+   "schema complete (8 fields)",
+   "the manifest's stated hash and the change record's extracted hash agree (cross-record agreement)",
+   "per-extraction evidence lines",
+   "record produced with its full ledger (completion condition of the step's declared output)",
+   "validation executed over every field",
+   "all fields PASS, or the test ends BLOCKED with the failures recorded",
+   "every statement's named source located or its absence recorded",
+   "contradiction decided from extracted pack evidence",
+   "support decided from extracted pack evidence",
+   "the default applies only to statements no earlier test resolved",
+   "each label equals its step outcome",
+   "every register obligation has a row",
+   "per-element PASS / NOT FOUND recorded for every element",
+   "status follows the rule from STEP-02 outcomes",
+   "each line's status equals STEP-03",
+   "the diagnosis is the checker's, not the worker's",
+   "per-extraction evidence lines; no value sourced from the draft",
+   "validation executed over every field",
+   "record valid, with the history intact",
+   "spec complete",
+   "one row per requirement; decision mechanical",
+   "the stated decision equals the worksheet's",
+   "spec complete",
+   "one row per requirement; decision mechanical",
+   "the stated decision equals the worksheet's",
+   "spec complete",
+   "one row per requirement; decision mechanical",
+   "the stated decision equals the worksheet's",
+   "spec complete",
+   "one row per requirement; decision mechanical",
+   "the stated decision equals the worksheet's",
+   "spec complete",
+   "one row per requirement; decision mechanical",
+   "the stated decision equals the worksheet's"
+  ],
+  "divergence": null
+ },
+ "step4": {
+  "issuances": 26,
+  "consumptions": 14,
+  "refusals": 0,
+  "carried": 0,
+  "findings": []
+ },
+ "step5": {
+  "captures_checked": 13,
+  "capture_findings": [],
+  "links_checked": 13,
+  "link_findings": []
+ },
+ "step6": {
+  "trees": {
+   "T01": "COMPLETED",
+   "T02": "COMPLETED",
+   "T03": "COMPLETED",
+   "T04": "COMPLETED",
+   "T05": "COMPLETED",
+   "T06": "COMPLETED",
+   "T07": "COMPLETED",
+   "T08": "COMPLETED",
+   "T09": "COMPLETED",
+   "T09/FR-A": "COMPLETED",
+   "T09/FR-B": "COMPLETED",
+   "T09/FR-C": "COMPLETED",
+   "T09/FR-VALID": "COMPLETED"
+  },
+  "run_terminal": "RUN_CLOSED",
+  "divergences": [],
+  "undetermined": []
+ }
+}

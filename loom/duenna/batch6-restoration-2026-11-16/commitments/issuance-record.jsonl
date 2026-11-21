@@ -1,0 +1,16 @@
+{"issued_at_utc":"2026-11-15T09:32:04Z","kind":"START","receipt_sha256":"57d6ebcac852abaca9eddec150b7160813cc78a5937e80bd636f1ee25d0cb248","run_id":"G2BETWEEN-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:32:04Z","kind":"CRASH","receipt_sha256":"9d6413adba78a45d5fe41f631ec91d13b620da6655e2e6b15b405132909e4bf9","run_id":"G2BETWEEN-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:32:06Z","kind":"START","receipt_sha256":"4a687962b01b818f55e2d994d54439f5e454a5bd45ebf46e17038f626e5c3337","run_id":"G2TORN-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:32:09Z","kind":"CRASH","receipt_sha256":"8bb34354b0de05b130bca30597a4b12a41e2a0655ea74bfd2691a5ce9ee61b0f","run_id":"G2TORN-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:39:18Z","kind":"START","receipt_sha256":"9475483ce5cdd7d1417bd28f2eacec9682e89e2a00dcf0c5ed07cfb87c8eda98","run_id":"G3VAULT-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:39:18Z","kind":"TERMINAL","receipt_sha256":"2ae0c374088b9ec5c45a8d318597956f561ac3ee06bacd8d4285f7a7e46d68c5","run_id":"G3VAULT-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:39:19Z","kind":"START","receipt_sha256":"f61beab6c6f0de9111af53261b0a400cdc77b4694aba32486bf9469a9db7307d","run_id":"G3FALSE-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:39:20Z","kind":"TERMINAL","receipt_sha256":"7c5ff0bb2ed877692cf34a7f18b67d2f05be362ce0b8a3c5f9ad69b45850c9a2","run_id":"G3FALSE-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:47:07Z","kind":"START","receipt_sha256":"48f0603379607869a3ad40c54a409f4345756b14d786fbcfb389373a4adf9226","run_id":"G4STUB-20261115-001"}
+{"issued_at_utc":"2026-11-15T09:47:09Z","kind":"CRASH","receipt_sha256":"8f4c11efa21e307d889fcb7093cb15d136e1297c7f003b7bf7c4a96a95e90970","run_id":"G4STUB-20261115-001"}
+{"issued_at_utc":"2026-11-15T10:31:12Z","kind":"START","receipt_sha256":"a81acd2c842e396ada941df70147e643c869d8b425156236c253f7f2077736d8","run_id":"G4CORR-20261115-001"}
+{"issued_at_utc":"2026-11-15T10:31:16Z","kind":"TERMINAL","receipt_sha256":"bf43125f23699809f9fc3e04e4cb7722046a78e494828644cb10120ea2a67f26","run_id":"G4CORR-20261115-001"}
+{"issued_at_utc":"2026-11-16T22:05:03Z","kind":"START","receipt_sha256":"a152fd4f22ff274bcec63d4492ea00a42adb3fa23d6b0ee69b33309f5df0ef01","run_id":"G4CORR-20261116-001"}
+{"issued_at_utc":"2026-11-16T22:05:06Z","kind":"TERMINAL","receipt_sha256":"28d294c90dd8791cd8ffc8769fdb0285da6630277f651f1b11439b9e73e08feb","run_id":"G4CORR-20261116-001"}
+{"issued_at_utc":"2026-11-16T22:05:29Z","kind":"START","receipt_sha256":"a3cc2064bfd82898ff468e43e4d1759bf898c42abff134a79246ca25c24160c7","run_id":"G4CORR-20261116-003"}
+{"issued_at_utc":"2026-11-16T22:05:30Z","kind":"TERMINAL","receipt_sha256":"20454f8af73a57ed4598f457355ac53cc300dfdbf69d32d8537c9d084185c088","run_id":"G4CORR-20261116-003"}
