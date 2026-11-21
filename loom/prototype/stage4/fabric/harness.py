@@ -82,8 +82,8 @@ from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.validators import RefResolver
 
 from .canonical import canonical, sha256_hex
-from .engine import (_apply_operations, apply_event, empty_state,
-                     state_hash, verified_fold)
+from .engine import (ReplayHalt, _apply_operations, apply_event,
+                     empty_state, state_hash, verified_fold)
 from .fixture import (CONSTITUTION_HASH, SEALED_REQUIRED_FACETS,
                       SYSTEM_ACTOR)
 from .packpin import binding_is_stage4
@@ -525,7 +525,8 @@ class Harness:
         if dep_endpoints is None:
             dep_endpoints = {
                 d_id: (d["source"], d["target"])
-                for d_id, d in self._engine.state["dependencies"].items()}
+                for d_id, d in
+                self._authoritative_state()["dependencies"].items()}
         touched = set()
         for i, op in enumerate(contribution["operations"]):
             kind = op["kind"]
@@ -719,8 +720,11 @@ class Harness:
     def run_failed(self) -> bool:
         """True once the folded state carries a RUN_FAILED. The
         failed state is derived from the history, so a harness built
-        over a failed run's store is born refusing."""
-        return self._engine.state.get("run_status") == "failed"
+        over a failed run's store is born refusing. Correction
+        round 2 (C2-B2): the status is read from the authoritative
+        fold, like every other non-snapshot consumer — never from
+        the operational live view the fault hook corrupts."""
+        return self._authoritative_state().get("run_status") == "failed"
 
     def _require_open(self):
         """Terminal enforcement: a failed run admits no further
@@ -738,7 +742,7 @@ class Harness:
         versions, last-changed-by. Never content."""
         self._authenticate(token)
         self._require_open()
-        st = self._engine.state
+        st = self._authoritative_state()
         return {
             "regions": [
                 {"region_id": rid,
@@ -769,7 +773,7 @@ class Harness:
             {"path": "index", "region_id": None, "version": None,
              "summary": f"Agent {agent} consulted the index."})])[0]
         self._note_event(ev)
-        st = self._engine.state
+        st = self._authoritative_state()
         recent = self._engine.store.all_events()[-10:]
         return {
             "open_tensions": [
@@ -790,7 +794,7 @@ class Harness:
         a refused opening serves nothing and records no read."""
         agent = self._authenticate(token)
         self._require_open()
-        st = self._engine.state
+        st = self._authoritative_state()
         if region_id not in st["regions"]:
             raise HarnessRefusal(f"no such region: {region_id}")
         read = self.read_record.setdefault(agent, {})
@@ -816,9 +820,13 @@ class Harness:
                 "content": region["content"], "version": region["version"]}
 
     def read_breadth(self, agent_id: str) -> float:
-        """RB_i from the harness record (section 6)."""
+        """RB_i from the harness record (section 6). Correction
+        round 2 (C2-B2): the region total is the authoritative
+        fold's — a fault that drops a region from the live view
+        does not shrink the fabric an agent's breadth is measured
+        against."""
         self._require_open()
-        total = len(self._engine.state["regions"]) or 6
+        total = len(self._authoritative_state()["regions"]) or 6
         return len(self.read_record.get(agent_id, {})) / total
 
     # -- the contribution protocol (section 4) -----------------------
@@ -1176,7 +1184,10 @@ class Harness:
         return None
 
     def _commit(self, agent, contribution, contribution_id):
-        st = self._engine.state
+        # Correction round 2 (C2-B2): the acceptance summary's
+        # titles and the planning entry's sequence come from the
+        # authoritative fold, not the live view.
+        st = self._authoritative_state()
         assigned_deps = {}
         tension_specs = []
         for i, op in enumerate(contribution["operations"]):
@@ -1243,7 +1254,9 @@ class Harness:
         the primary outcome event(s), then the derived transitions
         the protocols warrant, evaluated against the state the
         primary events produce. Planning runs against a deep copy
-        of the live state (the fold applied hypothetically); the
+        of the authoritative fold (correction round 2, C2-B2 —
+        the round-1 form planned against the live state; the
+        paragraph below states the two-hypothetical split); the
         real commit is a single engine transaction, so no partially
         recorded action can survive. Derived transitions are
         emitted deterministically: tension transitions by tension
@@ -1256,26 +1269,53 @@ class Harness:
         evaluated by the independent checker process over the
         staged group BEFORE anything commits (Brief Rev 2, B3);
         its verdict decides the recorded outcome. A checker
-        failure raises CheckerFailure and nothing commits."""
-        hypo = copy.deepcopy(self._engine.state)
+        failure raises CheckerFailure and nothing commits.
+
+        Correction round 2 (C2-B2): TWO hypotheticals are carried.
+        The PLANNING hypothetical — the state the derived
+        evaluation runs against — is a deep copy of the
+        authoritative fold: commit planning never consumes the
+        possibly corrupted live view. The LIVE hypothetical —
+        the operational live state with the same staged specs
+        applied — is the snapshot source, the one consumer the
+        live view still feeds: the seal attempt judges L, fault
+        and all. A spec the corrupted live view cannot fold
+        (an operation touching the dropped region) leaves the
+        live hypothetical at its pre-spec value for that spec;
+        on an unfaulted run the guard never fires and the live
+        hypothetical is exactly the post-batch live state."""
+        hypo = copy.deepcopy(self._authoritative_state())
+        live = copy.deepcopy(self._engine.state)
         seq = hypo["last_seq"]
         trigger = dict(trigger)
         trigger["pending_seq"] = seq + 1
         staged = []
 
         def apply_hypo(spec):
-            nonlocal seq
+            nonlocal seq, live
             seq += 1
             type_, actor, affected, payload = spec
             staged.append({"event_seq": seq, "event_id": "staged",
                            "type": type_, "actor": actor,
                            "affected": list(affected),
                            "payload": payload})
-            apply_event(hypo, {"event_seq": seq, "event_id": "planned",
-                               "type": type_, "actor": actor,
-                               "affected": list(affected),
-                               "payload": payload, "prev_hash": "",
-                               "hash": ""})
+            event = {"event_seq": seq, "event_id": "planned",
+                     "type": type_, "actor": actor,
+                     "affected": list(affected),
+                     "payload": payload, "prev_hash": "",
+                     "hash": ""}
+            apply_event(hypo, event)
+            try:
+                candidate = copy.deepcopy(live)
+                apply_event(candidate, event)
+                live = candidate
+            except ReplayHalt:
+                # The corrupted live view cannot fold this spec
+                # (it names state the fault dropped). The snapshot
+                # keeps the pre-spec live view for this spec: the
+                # divergence the checker must judge is preserved,
+                # never papered over by the planning state.
+                pass
 
         for spec in primary_specs:
             apply_hypo(spec)
@@ -1289,7 +1329,7 @@ class Harness:
         specs = list(primary_specs) + derived
         if seal:
             attempt_specs = self._seal_step(
-                list(staged), copy.deepcopy(hypo), seq + 1,
+                list(staged), copy.deepcopy(live), seq + 1,
                 seal_actor)
             for spec in attempt_specs:
                 apply_hypo(spec)
@@ -1495,16 +1535,22 @@ class Harness:
                 elif ev["type"] == "SEAL_ATTEMPTED":
                     last_attempt = ev["event_seq"]
             if last_accept > last_attempt:
+                # The close attempt's snapshot is the live view —
+                # the one consumer it feeds (correction round 2,
+                # C2-B2 boundary statement). Its position and the
+                # recorded final hash come from the authoritative
+                # fold.
                 snapshot = copy.deepcopy(self._engine.state)
                 specs = self._seal_step(
-                    [], snapshot, self._engine.state["last_seq"] + 1,
+                    [], snapshot,
+                    self._authoritative_state()["last_seq"] + 1,
                     None)
                 appended = self._engine.commit_events(specs)
                 for ev in appended:
                     self._note_event(ev)
         head = self._engine.store.last()
         payload = {
-            "final_state_hash": state_hash(self._engine.state),
+            "final_state_hash": state_hash(self._authoritative_state()),
             "chain_head": head[1] if head else None,
             "summary": "The run was closed. Its final state hash "
                        "and chain head stand in this record; what "
@@ -1842,7 +1888,11 @@ class Harness:
                        key=lambda e: list(e.absolute_path))]
 
     def _ladder_referential(self, kind, document, ctx):
-        st = self._engine.state
+        # Correction round 2 (C2-B2): the Stage 3 ladder's
+        # referential reads consume the authoritative fold, never
+        # the live view — a target the fault dropped from the live
+        # view still resolves, because the history still holds it.
+        st = self._authoritative_state()
         if kind == "assessment":
             if document["target_kind"] == "tension":
                 target = st["tensions"].get(document["target_id"])
@@ -1895,7 +1945,10 @@ class Harness:
         return None  # claims: no authority check beyond the token
 
     def _ladder_state(self, kind, agent, document, ctx):
-        st = self._engine.state
+        # Correction round 2 (C2-B2): the ladder's state reads
+        # (facet versions, superseded assessments) likewise read
+        # the authoritative fold.
+        st = self._authoritative_state()
         if kind == "assessment":
             if document["target_kind"] == "facet" \
                     and document["version_reviewed"] \
@@ -1973,7 +2026,7 @@ class Harness:
                     "event_seq": ev["event_seq"]}
         ctx = result
         snapshot = ctx["read_versions"]
-        st = self._engine.state
+        st = self._authoritative_state()
         region_set = set(report["regions"])
         # The multi-match duplicate rule (section 4): an identical
         # region set against one or more NON-TERMINAL semantic

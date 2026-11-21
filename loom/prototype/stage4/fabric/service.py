@@ -210,6 +210,27 @@ the per-run token, from which all authorship derives. A request
 line that is not a JSON object is a transport refusal at the
 socket, before any dispatch. Nothing about the gate, the probe
 sessions, or the attestation machinery changes.
+
+Stage 4 correction round 2 (2026-11-21, Vane's correction-round
+examination — B2, B3 not closed):
+
+- B2 — this service's `failed` property derives from the event
+  history itself (a RUN_FAILED event stands in it), not from
+  the operational live view. The harness-side half of the
+  boundary — every agent-facing read, admission, commit
+  planning, and the Stage 3 ladder reading the authoritative
+  fold, with the live view feeding only the seal-attempt
+  snapshot — lives in fabric/harness.py and is stated in
+  STAGE4-CORRECTION2-NOTES.md section 1.
+- B3 — the legacy unbound opening is GONE from this dispatch.
+  Correction round 1 left it as a separately named admin op
+  whose test-only status rested on a comment; a normal admin
+  client could still invoke it. It now exists only in
+  driver-side test support (fabric/runtime_setup.py's legacy
+  constructor, reached through that module's admin_request
+  helper), which this service never imports or dispatches. An
+  admin request naming it here is an unknown operation, and no
+  run opens.
 """
 import argparse
 import json
@@ -630,7 +651,13 @@ class FabricService:
     # -- run state ---------------------------------------------------
     @property
     def failed(self):
-        return self.engine.state.get("run_status") == "failed"
+        # Correction round 2 (C2-B2): the failed state is derived
+        # from the history itself — a RUN_FAILED event stands in
+        # it (the fold sets run_status "failed" from exactly that
+        # event and never clears it) — never from the operational
+        # live view the fault hook corrupts.
+        return any(ev["type"] == "RUN_FAILED"
+                   for ev in self.store.all_events())
 
     # -- the admission gate (B1) --------------------------------------
     def _attested(self):
@@ -1467,10 +1494,12 @@ class FabricService:
                 # nothing. A request naming a different pack
                 # digest is refused before anything is appended —
                 # a wrong digest blocks the opening. Unbound
-                # opening survives only on the explicitly isolated
-                # legacy path below (open_run_legacy_unbound),
-                # which exists for pre-Stage-4 regression setups
-                # and is not an option of this op.
+                # opening is NOT a service operation at all
+                # (Stage 4 correction round 2, C2-B3): it lives
+                # only in driver-side test support
+                # (fabric/runtime_setup.py's legacy constructor),
+                # which this service never imports or dispatches.
+                # There is no legacy branch in this dispatch.
                 supplied = req.get("pack_sha256")
                 if supplied is not None and supplied != PACK_SHA256:
                     return _err(
@@ -1495,35 +1524,6 @@ class FabricService:
                 # for the twin at attestation time).
                 self._record_rig_run_id(req.get("run_id"))
                 return _ok({"run_id": req.get("run_id"), "events": 1})
-            if op == "open_run_legacy_unbound":
-                # ISOLATED TEST/REGRESSION PATH (Stage 4
-                # correction round, C-B3) — NOT part of the Stage
-                # 4 service's ordinary request surface, and not an
-                # option of open_run above: this op exists solely
-                # so pre-Stage-4 regression setups that predate the
-                # binding can still construct historical unbound
-                # runs. It opens with NO Stage 4 binding: the run
-                # it opens is governed by the authority its own
-                # RUN_OPENED names (Rev 9 alone), and no seal
-                # attempt ever fires on it. A Stage 4 run is never
-                # opened here; the correction round's negative test
-                # proves the ordinary path cannot be made to
-                # produce what this op produces.
-                if self.store.all_events():
-                    return _err("refusal",
-                                "the store already holds a run")
-                try:
-                    self.engine = Engine.open_run(
-                        self.store, req.get("run_id"),
-                        binding=None)
-                except ValueError as exc:
-                    return _err("refusal", str(exc))
-                self.harness = Harness(self.engine)
-                if "checker_failure" in self.fault_inject:
-                    self.harness.checker_command = ["/bin/false"]
-                self._record_rig_run_id(req.get("run_id"))
-                return _ok({"run_id": req.get("run_id"), "events": 1,
-                            "legacy_unbound": True})
             if op == "close_run":
                 # Stage 4: the close-time seal attempt (when one is
                 # due) and RUN_CLOSED, under the harness's close

@@ -568,7 +568,25 @@ class Engine:
                 ev = self.store.append(type_, actor, affected, payload,
                                        prev_hash=head)
                 head = ev["hash"]
-                new_state = apply_event(new_state, ev)
+                # Stage 4 correction round 2 (C2-B2): the live
+                # state is a CACHE of the fold, and a corrupted
+                # cache (the TV-1 fault: a dropped region record)
+                # cannot fold an event that touches the dropped
+                # state — a FACET_STATUS for the dropped region,
+                # say. Such an event is nevertheless valid: the
+                # harness validated and planned it against the
+                # authoritative fold before committing. The cache
+                # therefore keeps its pre-event value for that
+                # event instead of vetoing the commit; the history
+                # is the truth, the corruption persists in the
+                # cache exactly as it stood, and the I-5 rebuild
+                # (verified replay) is what heals it. On any
+                # unfaulted history the guard never fires and this
+                # path is the original append+fold, byte for byte.
+                try:
+                    new_state = apply_event(new_state, ev)
+                except ReplayHalt:
+                    pass
                 appended.append(ev)
             self.store.commit()
         except Exception:
