@@ -1,0 +1,15 @@
+{
+ "label": "pf2-gemini",
+ "provider": "gemini",
+ "model": "gemini-3.8-flash",
+ "helper": "gemini_api.py",
+ "helper_sha256_verified": "b502ab3b37d617e96b08406105d364c779c3e871f7b58d7fe88baf452ba6f1d2",
+ "body_file": "pf2-gemini.body.json",
+ "body_sha256": "b50b5ee2b67ccead275c1a16ea77a3ec113161182994febdf748a1eb5c743435",
+ "response_file": "pf2-gemini.resp.json",
+ "response_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "provider_response_id": null,
+ "helper_exit_code": 1,
+ "started_at_utc": "2026-11-20T22:54:57.252037+00:00",
+ "finished_at_utc": "2026-11-20T22:55:00.586862+00:00"
+}

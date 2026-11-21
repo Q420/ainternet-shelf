@@ -1,0 +1,19 @@
+{
+ "label": "pf4-nvidia",
+ "provider": "nvidia",
+ "model": "moonshotai/kimi-k3.1-pro",
+ "helper": "nvidia_api.py",
+ "helper_sha256_verified": "56ca6a4d82fe09b4de7bf96cfa3c3e58c86e849211692705310d6414409f5c7f",
+ "dependency": "dynamic_credentials.py",
+ "dependency_sha256_verified": "8b1f42e80a76710edf0ff2abf8a51b0cde35b06474af865de108a7ca27d6728d",
+ "body_file": "pf4-nvidia.body.json",
+ "body_sha256": "bbb6ea2a8f0d59aa0a70c09da98a065439de3c14f8a0e36f540189a2493f6063",
+ "response_file": "pf4-nvidia.resp.json",
+ "response_sha256": "a26316684dc020ffec9a49a943930c35b3848f7d391580bf80da5931606a8315",
+ "stderr_file": "pf4-nvidia.stderr.txt",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "provider_response_id": "chatcmpl-f8cd8e78-f3db-44bf-b8d3-33948006fc49",
+ "helper_exit_code": 0,
+ "started_at_utc": "2026-11-21T01:14:22.933608+00:00",
+ "finished_at_utc": "2026-11-21T01:14:53.682560+00:00"
+}

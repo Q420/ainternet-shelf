@@ -1,0 +1,1 @@
+{"model":"qwen/qwen3.8-27b","messages":[{"role":"user","content":"Say exactly: PREFLIGHT OK"}],"max_tokens":16,"reasoning_format":"hidden"}

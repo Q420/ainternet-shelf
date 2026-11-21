@@ -1,0 +1,15 @@
+{
+ "label": "pf2-groq",
+ "provider": "groq",
+ "model": "qwen/qwen3.8-27b",
+ "helper": "groq_api.py",
+ "helper_sha256_verified": "44e87c17c68f47b1b5c5f7d08535fe32745e2cd0f034b93aa49047aa04b3f3c0",
+ "body_file": "pf2-groq.body.json",
+ "body_sha256": "ecf6ad54528b91ca2cef562ac14557b9ec8ec8bba2c5a19a075f5ace83538e16",
+ "response_file": "pf2-groq.resp.json",
+ "response_sha256": "b6d40eeebe445c08d8a620e17867d1f75700c90bc50e6e4d3671e67476520a66",
+ "provider_response_id": "chatcmpl-e06f7c48-047c-4d89-b907-3d0669e265d1",
+ "helper_exit_code": 0,
+ "started_at_utc": "2026-11-20T22:54:56.630499+00:00",
+ "finished_at_utc": "2026-11-20T22:54:57.193558+00:00"
+}
