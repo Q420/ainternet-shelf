@@ -69,13 +69,21 @@ twin_pre = build_runtime(BASE, "twin")  # probe2 rebuilds it; layout first
 exp_map = stat_record(exp)
 twin_map = stat_record(twin_pre)
 evidence["experimental_layout"] = exp_map
+# Round-3 adjustment (B1.2): stat_record entries gained the owner
+# uid alongside the owner name, so attestation validation can check
+# the recorded owner identity numerically. The three exact-equality
+# checks below (and the twin events.db check in Phase 1) therefore
+# expect the uid as an ADDED conjunct — no conjunct removed or
+# loosened.
 check("service directory is loomfab-only (700)",
-      exp_map["service"] == {"owner": "loomfab", "mode": "0o700"})
+      exp_map["service"] == {"owner": "loomfab", "uid": 1000,
+                             "mode": "0o700"})
 check("ground-truth file is loomfab 600",
       exp_map["service/ground-truth.json"]
-      == {"owner": "loomfab", "mode": "0o600"})
+      == {"owner": "loomfab", "uid": 1000, "mode": "0o600"})
 check("socket directory is traverse-only (711)",
-      exp_map["sock"] == {"owner": "loomfab", "mode": "0o711"})
+      exp_map["sock"] == {"owner": "loomfab", "uid": 1000,
+                          "mode": "0o711"})
 check("agent home belongs to loomagent",
       exp_map["agent-home"]["owner"] == "loomagent")
 check("twin layout equals experimental layout (owners + modes)",
@@ -116,6 +124,7 @@ check("probe verdicts: reads denied, attacks refused, legitimate ok",
 twin_cfg = result["twin_config"]
 check("twin store file was loomfab 600 during the probe",
       twin_cfg["service/events.db"] == {"owner": "loomfab",
+                                        "uid": 1000,
                                         "mode": "0o600"})
 check("twin config matches experimental layout on shared entries",
       all(twin_cfg[k] == exp_map[k] for k in exp_map))

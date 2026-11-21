@@ -13,6 +13,13 @@ Layout of one runtime (name = "experimental", "twin", ...):
                           the fabric package (hashes verified against
                           the tree by the corrections tests)
         events.db         created by the service; loomfab, 600
+        rig.json          loomfab, 600 — the runtime's rig identity
+                          (corrections round 3, B1.1): which rig this
+                          runtime IS ("experimental" or "probe_twin"),
+                          its root, and (once opened) its run id. The
+                          service reads its own rig identity at
+                          startup; the probe_target posture is
+                          honoured only on a probe-twin rig.
         ground-truth.json loomfab, 600 — the sealed material as a file
         admin.sock        operator socket; inside the 700 directory,
                           reachable only by loomfab and root
@@ -79,6 +86,7 @@ def runtime_paths(base, name):
         "service_dir": service,
         "code_dir": os.path.join(service, "code"),
         "store_path": os.path.join(service, "events.db"),
+        "rig_path": os.path.join(service, "rig.json"),
         "ground_truth_path": os.path.join(service, "ground-truth.json"),
         "failures_dir": os.path.join(service, "failures"),
         "admin_sock": os.path.join(service, "admin.sock"),
@@ -91,8 +99,17 @@ def runtime_paths(base, name):
     }
 
 
-def build_runtime(base, name):
-    """Create a fresh runtime layout. Returns the paths dict."""
+def build_runtime(base, name, rig="experimental"):
+    """Create a fresh runtime layout. Returns the paths dict.
+
+    rig (corrections round 3, B1.1) is the runtime's rig identity:
+    "experimental" for every real run's runtime, "probe_twin" only
+    for the disposable boundary-probe twin. It is written into
+    service/rig.json at build time — before any service starts —
+    and the service honours the probe_target posture only when its
+    own runtime's rig identity says probe_twin. The identity is a
+    property of how the runtime was BUILT, not of any environment
+    variable a service is started with."""
     os.makedirs(base, exist_ok=True)
     # The base must be traversable by both identities regardless of
     # the caller's umask (a 770 base silently walls the service out
@@ -115,6 +132,12 @@ def build_runtime(base, name):
     # The sealed ground truth, as a service-side file.
     with open(p["ground_truth_path"], "wb") as fh:
         fh.write(canonical(ground_truth_document()))
+    # The rig identity record (B1.1): written at build time, before
+    # the service starts. run_id is filled in by the service itself
+    # when it opens the run (the store's run does not exist yet).
+    with open(p["rig_path"], "w", encoding="utf-8") as fh:
+        json.dump({"rig": rig, "runtime_root": p["root"],
+                   "run_id": None}, fh, indent=2, sort_keys=True)
     # Agent-side code: copies the agent identity can read and run.
     for fname in AGENT_FILES:
         shutil.copyfile(os.path.join(TREE_FABRIC, fname),
@@ -126,6 +149,7 @@ def build_runtime(base, name):
     _own(p["service_dir"], SERVICE_USER, 0o700)
     _own(p["failures_dir"], SERVICE_USER, 0o700)
     _own(p["ground_truth_path"], SERVICE_USER, 0o600)
+    _own(p["rig_path"], SERVICE_USER, 0o600)
     for dirpath, _dirnames, filenames in os.walk(p["code_dir"]):
         _own(dirpath, SERVICE_USER, 0o750)
         for fname in filenames:
@@ -158,8 +182,11 @@ def tree_hashes():
 
 
 def stat_record(p):
-    """{relative path: {owner, mode}} for the runtime's boundary
-    surface — the equivalence evidence Vane's conditions require."""
+    """{relative path: {owner, uid, mode}} for the runtime's boundary
+    surface — the equivalence evidence Vane's conditions require.
+    The uid is recorded alongside the owner name (round 3, B1.2) so
+    attestation validation can check the recorded owner identity
+    numerically, not only by name."""
     entries = {
         "service": p["service_dir"],
         "service/ground-truth.json": p["ground_truth_path"],
@@ -176,6 +203,7 @@ def stat_record(p):
     for rel, path in entries.items():
         st = os.stat(path)
         out[rel] = {"owner": pwd.getpwuid(st.st_uid).pw_name,
+                    "uid": st.st_uid,
                     "mode": oct(st.st_mode & 0o7777)}
     return out
 

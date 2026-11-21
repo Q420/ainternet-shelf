@@ -40,6 +40,15 @@ refused (a probe target's history is scaffolding, never
 evidence). The posture is carried in the probe result's
 provenance. The experimental service runs in the default
 enforced posture, where the gate has no exceptions.
+
+Corrections round 3 (B1.1, B1.2): the twin is now BUILT as a
+probe-twin rig (runtime_setup's rig identity record), and the
+twin's service honours the probe_target posture only because its
+own runtime's rig identity says so — the environment variable is
+a request the rig can refuse. The result also identifies the
+twin runtime root and the twin service code copy's hashes, so
+the experimental service can live-verify the attestation's
+provenance against the twin as it actually stands.
 """
 import os
 import sys
@@ -48,9 +57,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fabric.fixture import COMPONENTS  # noqa: E402
 from fabric.runtime_setup import (RUNTIME_BASE, admin_request,  # noqa: E402
-                                  build_runtime, run_agent_script,
-                                  start_service, stat_record,
-                                  stop_service)
+                                  build_runtime, code_copy_hashes,
+                                  run_agent_script, start_service,
+                                  stat_record, stop_service)
 
 PROBE_AGENT_ID = "99999999-9999-4999-8999-999999999999"
 _READ_ATTEMPTS = ("direct_read_store", "direct_read_ground_truth",
@@ -61,7 +70,7 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
     """Build a disposable twin, probe it from the agent OS context,
     tear the twin service down, and return the probe result — the
     exact object the experimental run's attestation will carry."""
-    p = build_runtime(base, twin_name)
+    p = build_runtime(base, twin_name, rig="probe_twin")
     proc = start_service(p, posture="probe_target")
     try:
         opened = admin_request(p, {"op": "open_run",
@@ -83,6 +92,7 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
         }
         out = run_agent_script(p, "probe_agent.py", config)
         twin_config = stat_record(p)
+        twin_code_hashes = code_copy_hashes(p)
     finally:
         stop_service(proc, p)
     attempts = out["attempts"]
@@ -91,6 +101,13 @@ def run_twin_probe(base=RUNTIME_BASE, twin_name="twin"):
         "twin_name": twin_name,
         "twin_config": twin_config,
         "service_posture": "probe_target",
+        # Round 3 (B1.2): the attestation identifies the twin
+        # runtime itself and the twin service's build, so the
+        # experimental service can verify the claim against the
+        # filesystem as it actually stands — live at attestation
+        # time — instead of trusting the supplied object.
+        "twin_root": p["root"],
+        "service_code_hashes": twin_code_hashes,
         "attempts": attempts,
         "all_reads_denied": all(
             by_name[n]["outcome"] == "denied" for n in _READ_ATTEMPTS),
