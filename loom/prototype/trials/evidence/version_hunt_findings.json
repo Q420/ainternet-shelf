@@ -1,0 +1,2929 @@
+{
+ "item": "Serving-version hunt \u2014 ordered by Ben 2026-11-21 ('Find a way to find out what version'), with the self-identification step added by Ben the same day ('Models have to tell you what model they are so it can be part of the onboarding process')",
+ "hunted_at_utc": "2026-11-21T16:59-17:02Z",
+ "method": "Raw HTTP probes through the existing connectors' credential mechanism (dynamic_credentials.add_surrogate_to_request, the same mechanism the shipped helpers use), capturing status, the complete response header set, and the raw body for every call, including error responses. Neutral probe calls only (build-demonstration class). No trials. No outward contact. The accepted build and the annex/addendum were not altered. set-cookie response values are truncated in this evidence copy (Cloudflare bot-management cookies; not provider credentials and not version-bearing).",
+ "prior_search_superseded_in_part": "First search: trials/evidence/version_surface_probe.json, version_surface_nvidia_extra_endpoints.json, version_search_findings.json. This hunt adds: per-model DETAIL routes on all three providers, repeated seeded Groq calls, the self-identification step on all three routes, NVCF paths on the integrate host, and the Gemini retirement error body.",
+ "groq": {
+  "pinned_candidate": "qwen/qwen3.8-27b",
+  "raw_calls": {
+   "models_list": {
+    "method": "GET",
+    "url": "https://api.groq.com/openai/v1/models",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:47 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f383de83747-ATL"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "dls"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgsft5ebx9fkpfnrq6xp97"
+     ],
+     [
+      "via",
+      "1.1 google"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=739oRqWi.ujmUqyp...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\"object\":\"list\",\"data\":[{\"id\":\"meta-llama/llama-prompt-guard-2-22m\",\"object\":\"model\",\"created\":1748632101,\"owned_by\":\"Meta\",\"active\":true,\"context_window\":512,\"public_apps\":null,\"max_completion_tokens\":512,\"name\":\"Llama Prompt Guard 2 22M\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"context_length\":512,\"max_output_length\":512,\"pricing\":{\"prompt\":\"0.00000003\",\"completion\":\"0.00000003\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.000000015\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"]},{\"id\":\"allam-2-7b\",\"object\":\"model\",\"created\":1737672203,\"owned_by\":\"SDAIA\",\"active\":true,\"context_window\":4096,\"public_apps\":null,\"max_completion_tokens\":4096,\"hugging_face_id\":\"ALLaM-AI/ALLaM-2.0-7B-Instruct\",\"name\":\"ALLaM-2-7b\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"context_length\":4096,\"max_output_length\":4096,\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"json_mode\"]},{\"id\":\"canopylabs/orpheus-arabic-saudi\",\"object\":\"model\",\"created\":1765926439,\"owned_by\":\"Canopy Labs\",\"active\":true,\"context_window\":4000,\"public_apps\":null,\"max_completion_tokens\":50000,\"name\":\"Canopy Labs Orpheus Arabic Saudi\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"speech\"],\"context_length\":4000,\"max_output_length\":50000,\"pricing\":{\"prompt\":\"0.00004\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.00002\"}},{\"model_card\":\"https://huggingface.co/openai/whisper-large-v3\",\"id\":\"whisper-large-v3\",\"object\":\"model\",\"created\":1693721698,\"owned_by\":\"OpenAI\",\"active\":true,\"context_window\":448,\"public_apps\":null,\"max_completion_tokens\":448,\"hugging_face_id\":\"openai/whisper-large-v3\",\"name\":\"Whisper\",\"input_modalities\":[\"audio\"],\"output_modalities\":[\"transcription\"],\"context_length\":448,\"max_output_length\":448},{\"id\":\"whisper-large-v3-turbo\",\"object\":\"model\",\"created\":1728413088,\"owned_by\":\"OpenAI\",\"active\":true,\"context_window\":448,\"public_apps\":null,\"max_completion_tokens\":448,\"hugging_face_id\":\"openai/whisper-large-v3-turbo\",\"name\":\"Whisper Large V3 Turbo\",\"input_modalities\":[\"audio\"],\"output_modalities\":[\"transcription\"],\"context_length\":448,\"max_output_length\":448},{\"id\":\"meta-llama/llama-prompt-guard-2-86m\",\"object\":\"model\",\"created\":1748632165,\"owned_by\":\"Meta\",\"active\":true,\"context_window\":512,\"public_apps\":null,\"max_completion_tokens\":512,\"name\":\"Prompt Guard 2 86M\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"context_length\":512,\"max_output_length\":512,\"pricing\":{\"prompt\":\"0.00000004\",\"completion\":\"0.00000004\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.00000002\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"json_mode\"]},{\"model_card\":\"openai/gpt-oss-safeguard-20b\",\"id\":\"openai/gpt-oss-safeguard-20b\",\"object\":\"model\",\"created\":1761708789,\"owned_by\":\"OpenAI\",\"active\":true,\"context_window\":131072,\"public_apps\":null,\"max_completion_tokens\":65536,\"hugging_face_id\":\"openai/gpt-oss-safeguard-20b\",\"name\":\"Safety GPT OSS 20B\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"context_length\":131072,\"max_output_length\":65536,\"pricing\":{\"prompt\":\"0.000000075\",\"completion\":\"0.0000003\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.0000000375\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"tools\",\"json_mode\",\"structured_outputs\",\"reasoning\"]},{\"id\":\"canopylabs/orpheus-v1-english\",\"object\":\"model\",\"created\":1766186316,\"owned_by\":\"Canopy Labs\",\"active\":true,\"context_window\":4000,\"public_apps\":null,\"max_completion_tokens\":50000,\"name\":\"Canopy Labs Orpheus V1 English\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"speech\"],\"context_length\":4000,\"max_output_length\":50000,\"pricing\":{\"prompt\":\"0.000022\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.000011\"}},{\"model_card\":\"https://openai.com/index/gpt-oss-model-card\",\"id\":\"openai/gpt-oss-20b\",\"object\":\"model\",\"created\":1754407957,\"owned_by\":\"OpenAI\",\"active\":true,\"context_window\":131072,\"public_apps\":null,\"max_completion_tokens\":65536,\"hugging_face_id\":\"openai/gpt-oss-20b\",\"name\":\"GPT OSS 20B\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"context_length\":131072,\"max_output_length\":65536,\"pricing\":{\"prompt\":\"0.000000075\",\"completion\":\"0.0000003\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.0000000375\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"tools\",\"json_mode\",\"structured_outputs\",\"reasoning\"]},{\"id\":\"qwen/qwen3.8-27b\",\"object\":\"model\",\"created\":1786984846,\"owned_by\":\"Alibaba Cloud\",\"active\":true,\"context_window\":131072,\"public_apps\":null,\"max_completion_tokens\":16384,\"name\":\"Qwen/Qwen3.8-27B\",\"input_modalities\":[\"text\",\"image\"],\"output_modalities\":[\"text\"],\"context_length\":131072,\"max_output_length\":16384,\"pricing\":{\"prompt\":\"0.0000008\",\"completion\":\"0.000004\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.0000004\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"tools\",\"json_mode\",\"reasoning\"]},{\"model_card\":\"https://openai.com/index/gpt-oss-model-card\",\"id\":\"openai/gpt-oss-120b\",\"object\":\"model\",\"created\":1754408224,\"owned_by\":\"OpenAI\",\"active\":true,\"context_window\":131072,\"public_apps\":null,\"max_completion_tokens\":65536,\"hugging_face_id\":\"openai/gpt-oss-120b\",\"name\":\"GPT OSS 120B\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"context_length\":131072,\"max_output_length\":65536,\"pricing\":{\"prompt\":\"0.00000015\",\"completion\":\"0.0000006\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.000000075\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"tools\",\"json_mode\",\"structured_outputs\",\"reasoning\"]}]}\n",
+    "body_json": {
+     "object": "list",
+     "data": [
+      {
+       "id": "meta-llama/llama-prompt-guard-2-22m",
+       "object": "model",
+       "created": 1748632101,
+       "owned_by": "Meta",
+       "active": true,
+       "context_window": 512,
+       "public_apps": null,
+       "max_completion_tokens": 512,
+       "name": "Llama Prompt Guard 2 22M",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 512,
+       "max_output_length": 512,
+       "pricing": {
+        "prompt": "0.00000003",
+        "completion": "0.00000003",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.000000015"
+       },
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ]
+      },
+      {
+       "id": "allam-2-7b",
+       "object": "model",
+       "created": 1737672203,
+       "owned_by": "SDAIA",
+       "active": true,
+       "context_window": 4096,
+       "public_apps": null,
+       "max_completion_tokens": 4096,
+       "hugging_face_id": "ALLaM-AI/ALLaM-2.0-7B-Instruct",
+       "name": "ALLaM-2-7b",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 4096,
+       "max_output_length": 4096,
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ],
+       "supported_features": [
+        "json_mode"
+       ]
+      },
+      {
+       "id": "canopylabs/orpheus-arabic-saudi",
+       "object": "model",
+       "created": 1765926439,
+       "owned_by": "Canopy Labs",
+       "active": true,
+       "context_window": 4000,
+       "public_apps": null,
+       "max_completion_tokens": 50000,
+       "name": "Canopy Labs Orpheus Arabic Saudi",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "speech"
+       ],
+       "context_length": 4000,
+       "max_output_length": 50000,
+       "pricing": {
+        "prompt": "0.00004",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.00002"
+       }
+      },
+      {
+       "model_card": "https://huggingface.co/openai/whisper-large-v3",
+       "id": "whisper-large-v3",
+       "object": "model",
+       "created": 1693721698,
+       "owned_by": "OpenAI",
+       "active": true,
+       "context_window": 448,
+       "public_apps": null,
+       "max_completion_tokens": 448,
+       "hugging_face_id": "openai/whisper-large-v3",
+       "name": "Whisper",
+       "input_modalities": [
+        "audio"
+       ],
+       "output_modalities": [
+        "transcription"
+       ],
+       "context_length": 448,
+       "max_output_length": 448
+      },
+      {
+       "id": "whisper-large-v3-turbo",
+       "object": "model",
+       "created": 1728413088,
+       "owned_by": "OpenAI",
+       "active": true,
+       "context_window": 448,
+       "public_apps": null,
+       "max_completion_tokens": 448,
+       "hugging_face_id": "openai/whisper-large-v3-turbo",
+       "name": "Whisper Large V3 Turbo",
+       "input_modalities": [
+        "audio"
+       ],
+       "output_modalities": [
+        "transcription"
+       ],
+       "context_length": 448,
+       "max_output_length": 448
+      },
+      {
+       "id": "meta-llama/llama-prompt-guard-2-86m",
+       "object": "model",
+       "created": 1748632165,
+       "owned_by": "Meta",
+       "active": true,
+       "context_window": 512,
+       "public_apps": null,
+       "max_completion_tokens": 512,
+       "name": "Prompt Guard 2 86M",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 512,
+       "max_output_length": 512,
+       "pricing": {
+        "prompt": "0.00000004",
+        "completion": "0.00000004",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.00000002"
+       },
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ],
+       "supported_features": [
+        "json_mode"
+       ]
+      },
+      {
+       "model_card": "openai/gpt-oss-safeguard-20b",
+       "id": "openai/gpt-oss-safeguard-20b",
+       "object": "model",
+       "created": 1761708789,
+       "owned_by": "OpenAI",
+       "active": true,
+       "context_window": 131072,
+       "public_apps": null,
+       "max_completion_tokens": 65536,
+       "hugging_face_id": "openai/gpt-oss-safeguard-20b",
+       "name": "Safety GPT OSS 20B",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 131072,
+       "max_output_length": 65536,
+       "pricing": {
+        "prompt": "0.000000075",
+        "completion": "0.0000003",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.0000000375"
+       },
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ],
+       "supported_features": [
+        "tools",
+        "json_mode",
+        "structured_outputs",
+        "reasoning"
+       ]
+      },
+      {
+       "id": "canopylabs/orpheus-v1-english",
+       "object": "model",
+       "created": 1766186316,
+       "owned_by": "Canopy Labs",
+       "active": true,
+       "context_window": 4000,
+       "public_apps": null,
+       "max_completion_tokens": 50000,
+       "name": "Canopy Labs Orpheus V1 English",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "speech"
+       ],
+       "context_length": 4000,
+       "max_output_length": 50000,
+       "pricing": {
+        "prompt": "0.000022",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.000011"
+       }
+      },
+      {
+       "model_card": "https://openai.com/index/gpt-oss-model-card",
+       "id": "openai/gpt-oss-20b",
+       "object": "model",
+       "created": 1754407957,
+       "owned_by": "OpenAI",
+       "active": true,
+       "context_window": 131072,
+       "public_apps": null,
+       "max_completion_tokens": 65536,
+       "hugging_face_id": "openai/gpt-oss-20b",
+       "name": "GPT OSS 20B",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 131072,
+       "max_output_length": 65536,
+       "pricing": {
+        "prompt": "0.000000075",
+        "completion": "0.0000003",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.0000000375"
+       },
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ],
+       "supported_features": [
+        "tools",
+        "json_mode",
+        "structured_outputs",
+        "reasoning"
+       ]
+      },
+      {
+       "id": "qwen/qwen3.8-27b",
+       "object": "model",
+       "created": 1786984846,
+       "owned_by": "Alibaba Cloud",
+       "active": true,
+       "context_window": 131072,
+       "public_apps": null,
+       "max_completion_tokens": 16384,
+       "name": "Qwen/Qwen3.8-27B",
+       "input_modalities": [
+        "text",
+        "image"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 131072,
+       "max_output_length": 16384,
+       "pricing": {
+        "prompt": "0.0000008",
+        "completion": "0.000004",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.0000004"
+       },
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ],
+       "supported_features": [
+        "tools",
+        "json_mode",
+        "reasoning"
+       ]
+      },
+      {
+       "model_card": "https://openai.com/index/gpt-oss-model-card",
+       "id": "openai/gpt-oss-120b",
+       "object": "model",
+       "created": 1754408224,
+       "owned_by": "OpenAI",
+       "active": true,
+       "context_window": 131072,
+       "public_apps": null,
+       "max_completion_tokens": 65536,
+       "hugging_face_id": "openai/gpt-oss-120b",
+       "name": "GPT OSS 120B",
+       "input_modalities": [
+        "text"
+       ],
+       "output_modalities": [
+        "text"
+       ],
+       "context_length": 131072,
+       "max_output_length": 65536,
+       "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000006",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.000000075"
+       },
+       "supported_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "stop",
+        "seed",
+        "max_tokens"
+       ],
+       "supported_features": [
+        "tools",
+        "json_mode",
+        "structured_outputs",
+        "reasoning"
+       ]
+      }
+     ]
+    }
+   },
+   "model_detail_raw_slash": {
+    "method": "GET",
+    "url": "https://api.groq.com/openai/v1/models/qwen/qwen3.8-27b",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:48 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f3b3dc2c8d4-ORD"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "dls"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgsg9necpvzqa50r0ppamz"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=ISbWtyyykvgl3h3g...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "via",
+      "1.1 google"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "571"
+     ]
+    ],
+    "body_raw": "{\"id\":\"qwen/qwen3.8-27b\",\"object\":\"model\",\"created\":1786984846,\"owned_by\":\"Alibaba Cloud\",\"active\":true,\"context_window\":131072,\"public_apps\":null,\"max_completion_tokens\":16384,\"name\":\"Qwen/Qwen3.8-27B\",\"input_modalities\":[\"text\",\"image\"],\"output_modalities\":[\"text\"],\"context_length\":131072,\"max_output_length\":16384,\"pricing\":{\"prompt\":\"0.0000008\",\"completion\":\"0.000004\",\"image\":\"0\",\"request\":\"0\",\"input_cache_read\":\"0.0000004\"},\"supported_sampling_parameters\":[\"temperature\",\"top_p\",\"stop\",\"seed\",\"max_tokens\"],\"supported_features\":[\"tools\",\"json_mode\",\"reasoning\"]}\n",
+    "body_json": {
+     "id": "qwen/qwen3.8-27b",
+     "object": "model",
+     "created": 1786984846,
+     "owned_by": "Alibaba Cloud",
+     "active": true,
+     "context_window": 131072,
+     "public_apps": null,
+     "max_completion_tokens": 16384,
+     "name": "Qwen/Qwen3.8-27B",
+     "input_modalities": [
+      "text",
+      "image"
+     ],
+     "output_modalities": [
+      "text"
+     ],
+     "context_length": 131072,
+     "max_output_length": 16384,
+     "pricing": {
+      "prompt": "0.0000008",
+      "completion": "0.000004",
+      "image": "0",
+      "request": "0",
+      "input_cache_read": "0.0000004"
+     },
+     "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "stop",
+      "seed",
+      "max_tokens"
+     ],
+     "supported_features": [
+      "tools",
+      "json_mode",
+      "reasoning"
+     ]
+    }
+   },
+   "model_detail_encoded": {
+    "method": "GET",
+    "url": "https://api.groq.com/openai/v1/models/qwen%2Fqwen3.8-27b",
+    "status": 404,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:48 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f3ddd79bf9e-LAX"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "dls"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgsgnqeg7868k0bvf7nrkh"
+     ],
+     [
+      "via",
+      "1.1 google"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=IT7JnohRXaV3.H36...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "159"
+     ]
+    ],
+    "body_raw": "{\"error\":{\"message\":\"The model `qwen%2Fqwen3.8-27b` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n",
+    "body_json": {
+     "error": {
+      "message": "The model `qwen%2Fqwen3.8-27b` does not exist or you do not have access to it.",
+      "type": "invalid_request_error",
+      "code": "model_not_found"
+     }
+    }
+   },
+   "chat_tiny_no_seed": {
+    "method": "POST",
+    "url": "https://api.groq.com/openai/v1/chat/completions",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:49 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f402eb8c945-ORD"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "msp"
+     ],
+     [
+      "x-ratelimit-limit-requests",
+      "1000"
+     ],
+     [
+      "x-ratelimit-limit-tokens",
+      "8000"
+     ],
+     [
+      "x-ratelimit-remaining-requests",
+      "999"
+     ],
+     [
+      "x-ratelimit-remaining-tokens",
+      "7806"
+     ],
+     [
+      "x-ratelimit-reset-requests",
+      "1m26.4s"
+     ],
+     [
+      "x-ratelimit-reset-tokens",
+      "1.455s"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgsh17egba3q4pnhq88kfa"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=F3USVfqT877DSQNz...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "579"
+     ]
+    ],
+    "body_raw": "{\"id\":\"chatcmpl-b61b73a5-f7f5-4a58-9c85-2a06c5b7277c\",\"object\":\"chat.completion\",\"created\":1795280389,\"model\":\"qwen/qwen3.8-27b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"VERSION-PROBE-OK\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"queue_time\":0.012317106,\"prompt_tokens\":22,\"prompt_time\":0.0000397,\"completion_tokens\":7,\"completion_time\":0.066451505,\"total_tokens\":29,\"total_time\":0.066491205},\"usage_breakdown\":null,\"system_fingerprint\":\"fp_7238fa2be5\",\"x_groq\":{\"id\":\"req_01m7zgsh17egba3q4pnhq88kfa\",\"seed\":238445158},\"service_tier\":\"on_demand\"}\n",
+    "body_json": {
+     "id": "chatcmpl-b61b73a5-f7f5-4a58-9c85-2a06c5b7277c",
+     "object": "chat.completion",
+     "created": 1795280389,
+     "model": "qwen/qwen3.8-27b",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "role": "assistant",
+        "content": "VERSION-PROBE-OK"
+       },
+       "logprobs": null,
+       "finish_reason": "stop"
+      }
+     ],
+     "usage": {
+      "queue_time": 0.012317106,
+      "prompt_tokens": 22,
+      "prompt_time": 3.97e-05,
+      "completion_tokens": 7,
+      "completion_time": 0.066451505,
+      "total_tokens": 29,
+      "total_time": 0.066491205
+     },
+     "usage_breakdown": null,
+     "system_fingerprint": "fp_7238fa2be5",
+     "x_groq": {
+      "id": "req_01m7zgsh17egba3q4pnhq88kfa",
+      "seed": 238445158
+     },
+     "service_tier": "on_demand"
+    }
+   },
+   "chat_tiny_seed42_a": {
+    "method": "POST",
+    "url": "https://api.groq.com/openai/v1/chat/completions",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:49 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f44aae58456-EWR"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "yul"
+     ],
+     [
+      "x-ratelimit-limit-requests",
+      "1000"
+     ],
+     [
+      "x-ratelimit-limit-tokens",
+      "8000"
+     ],
+     [
+      "x-ratelimit-remaining-requests",
+      "998"
+     ],
+     [
+      "x-ratelimit-remaining-tokens",
+      "7830"
+     ],
+     [
+      "x-ratelimit-reset-requests",
+      "2m52.8s"
+     ],
+     [
+      "x-ratelimit-reset-tokens",
+      "1.275s"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgshqse3xsdtpx6hfqwcgj"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=py3Z6ogaW_YUjsUb...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "574"
+     ]
+    ],
+    "body_raw": "{\"id\":\"chatcmpl-24da07b9-8160-4fc7-b2f8-ebbf8b4bf92c\",\"object\":\"chat.completion\",\"created\":1795280389,\"model\":\"qwen/qwen3.8-27b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"VERSION-PROBE-OK\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"queue_time\":0.080607585,\"prompt_tokens\":22,\"prompt_time\":0.001493633,\"completion_tokens\":7,\"completion_time\":0.015418086,\"total_tokens\":29,\"total_time\":0.016911719},\"usage_breakdown\":null,\"system_fingerprint\":\"fp_c14f15bfae\",\"x_groq\":{\"id\":\"req_01m7zgshqse3xsdtpx6hfqwcgj\",\"seed\":42},\"service_tier\":\"on_demand\"}\n",
+    "body_json": {
+     "id": "chatcmpl-24da07b9-8160-4fc7-b2f8-ebbf8b4bf92c",
+     "object": "chat.completion",
+     "created": 1795280389,
+     "model": "qwen/qwen3.8-27b",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "role": "assistant",
+        "content": "VERSION-PROBE-OK"
+       },
+       "logprobs": null,
+       "finish_reason": "stop"
+      }
+     ],
+     "usage": {
+      "queue_time": 0.080607585,
+      "prompt_tokens": 22,
+      "prompt_time": 0.001493633,
+      "completion_tokens": 7,
+      "completion_time": 0.015418086,
+      "total_tokens": 29,
+      "total_time": 0.016911719
+     },
+     "usage_breakdown": null,
+     "system_fingerprint": "fp_c14f15bfae",
+     "x_groq": {
+      "id": "req_01m7zgshqse3xsdtpx6hfqwcgj",
+      "seed": 42
+     },
+     "service_tier": "on_demand"
+    }
+   },
+   "chat_tiny_seed42_b": {
+    "method": "POST",
+    "url": "https://api.groq.com/openai/v1/chat/completions",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:50 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f486c78798a-DEN"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "dls"
+     ],
+     [
+      "x-ratelimit-limit-requests",
+      "1000"
+     ],
+     [
+      "x-ratelimit-limit-tokens",
+      "8000"
+     ],
+     [
+      "x-ratelimit-remaining-requests",
+      "997"
+     ],
+     [
+      "x-ratelimit-remaining-tokens",
+      "7787"
+     ],
+     [
+      "x-ratelimit-reset-requests",
+      "4m19.2s"
+     ],
+     [
+      "x-ratelimit-reset-tokens",
+      "1.597s"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgsjarewyv84daaz5pv3mr"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=Dw8rmsXYoDRjCjeB...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "via",
+      "1.1 google"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "574"
+     ]
+    ],
+    "body_raw": "{\"id\":\"chatcmpl-3066776b-c618-4d7e-b24f-50d6949a1a2c\",\"object\":\"chat.completion\",\"created\":1795280390,\"model\":\"qwen/qwen3.8-27b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"VERSION-PROBE-OK\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"queue_time\":0.195354231,\"prompt_tokens\":22,\"prompt_time\":0.001435423,\"completion_tokens\":7,\"completion_time\":0.015428841,\"total_tokens\":29,\"total_time\":0.016864264},\"usage_breakdown\":null,\"system_fingerprint\":\"fp_fea14bdc83\",\"x_groq\":{\"id\":\"req_01m7zgsjarewyv84daaz5pv3mr\",\"seed\":42},\"service_tier\":\"on_demand\"}\n",
+    "body_json": {
+     "id": "chatcmpl-3066776b-c618-4d7e-b24f-50d6949a1a2c",
+     "object": "chat.completion",
+     "created": 1795280390,
+     "model": "qwen/qwen3.8-27b",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "role": "assistant",
+        "content": "VERSION-PROBE-OK"
+       },
+       "logprobs": null,
+       "finish_reason": "stop"
+      }
+     ],
+     "usage": {
+      "queue_time": 0.195354231,
+      "prompt_tokens": 22,
+      "prompt_time": 0.001435423,
+      "completion_tokens": 7,
+      "completion_time": 0.015428841,
+      "total_tokens": 29,
+      "total_time": 0.016864264
+     },
+     "usage_breakdown": null,
+     "system_fingerprint": "fp_fea14bdc83",
+     "x_groq": {
+      "id": "req_01m7zgsjarewyv84daaz5pv3mr",
+      "seed": 42
+     },
+     "service_tier": "on_demand"
+    }
+   },
+   "chat_self_identification": {
+    "method": "POST",
+    "url": "https://api.groq.com/openai/v1/chat/completions",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:51 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "alt-svc",
+      "h3=\":443\"; ma=86400"
+     ],
+     [
+      "CF-RAY",
+      "a5e13f4c78d52e5d-DFW"
+     ],
+     [
+      "Cache-Control",
+      "private, max-age=0, no-store, no-cache, must-revalidate"
+     ],
+     [
+      "Server",
+      "cloudflare"
+     ],
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "x-groq-region",
+      "yul"
+     ],
+     [
+      "x-ratelimit-limit-requests",
+      "1000"
+     ],
+     [
+      "x-ratelimit-limit-tokens",
+      "8000"
+     ],
+     [
+      "x-ratelimit-remaining-requests",
+      "996"
+     ],
+     [
+      "x-ratelimit-remaining-tokens",
+      "7929"
+     ],
+     [
+      "x-ratelimit-reset-requests",
+      "5m45.6s"
+     ],
+     [
+      "x-ratelimit-reset-tokens",
+      "532ms"
+     ],
+     [
+      "x-request-id",
+      "req_01m7zgsjzce8r8xrbtdqk64fxd"
+     ],
+     [
+      "set-cookie",
+      "__cf_bm=qHauBM8Yhl2mF5MD...[cookie value truncated in evidence copy]"
+     ],
+     [
+      "Strict-Transport-Security",
+      "max-age=15552000"
+     ],
+     [
+      "cf-cache-status",
+      "DYNAMIC"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "577"
+     ]
+    ],
+    "body_raw": "{\"id\":\"chatcmpl-5e022085-8c05-49d2-99f0-11947c6d8be3\",\"object\":\"chat.completion\",\"created\":1795280391,\"model\":\"qwen/qwen3.8-27b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"MODEL: Qwen\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"queue_time\":0.080568877,\"prompt_tokens\":64,\"prompt_time\":0.009687233,\"completion_tokens\":5,\"completion_time\":0.022711872,\"total_tokens\":69,\"total_time\":0.032399105},\"usage_breakdown\":null,\"system_fingerprint\":\"fp_c14f15bfae\",\"x_groq\":{\"id\":\"req_01m7zgsjzce8r8xrbtdqk64fxd\",\"seed\":1076929138},\"service_tier\":\"on_demand\"}\n",
+    "body_json": {
+     "id": "chatcmpl-5e022085-8c05-49d2-99f0-11947c6d8be3",
+     "object": "chat.completion",
+     "created": 1795280391,
+     "model": "qwen/qwen3.8-27b",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "role": "assistant",
+        "content": "MODEL: Qwen"
+       },
+       "logprobs": null,
+       "finish_reason": "stop"
+      }
+     ],
+     "usage": {
+      "queue_time": 0.080568877,
+      "prompt_tokens": 64,
+      "prompt_time": 0.009687233,
+      "completion_tokens": 5,
+      "completion_time": 0.022711872,
+      "total_tokens": 69,
+      "total_time": 0.032399105
+     },
+     "usage_breakdown": null,
+     "system_fingerprint": "fp_c14f15bfae",
+     "x_groq": {
+      "id": "req_01m7zgsjzce8r8xrbtdqk64fxd",
+      "seed": 1076929138
+     },
+     "service_tier": "on_demand"
+    }
+   }
+  },
+  "surfaces": {
+   "models_list": "GET /openai/v1/models -> 200. Pinned model's entry carries NO version field (fields: active, context_length, context_window, created, id, input_modalities, max_completion_tokens, max_output_length, name, object, output_modalities, owned_by, pricing, public_apps, supported_features, supported_sampling_parameters). Unlike the gpt-oss entries, the qwen entry carries no hugging_face_id either.",
+   "model_detail_route": "GET /openai/v1/models/qwen/qwen3.8-27b (raw slash) -> 200 \u2014 a detail route the first search did not try. It returns the identical catalogue object; no additional fields, no version. URL-encoded slash (%2F) -> 404.",
+   "chat_response_headers": "Complete header sets captured per call (see raw_calls). No version-bearing header on any call. x-groq-region varies per call (msp, yul, dls, yul).",
+   "chat_response_body": "model echo is always exactly 'qwen/qwen3.8-27b'. system_fingerprint present on every call \u2014 but see fingerprint_stability.",
+   "fingerprint_stability": {
+    "first_search_2026-11-21T16:11Z": {
+     "x-groq-region": "dls",
+     "system_fingerprint": "fp_2166f87c46"
+    },
+    "this_hunt": [
+     {
+      "call": "chat_tiny_no_seed",
+      "x-groq-region": "msp",
+      "system_fingerprint": "fp_7238fa2be5"
+     },
+     {
+      "call": "chat_tiny_seed42_a",
+      "x-groq-region": "yul",
+      "system_fingerprint": "fp_c14f15bfae",
+      "seed": 42
+     },
+     {
+      "call": "chat_tiny_seed42_b",
+      "x-groq-region": "dls",
+      "system_fingerprint": "fp_fea14bdc83",
+      "seed": 42
+     },
+     {
+      "call": "chat_self_identification",
+      "x-groq-region": "yul",
+      "system_fingerprint": "fp_c14f15bfae"
+     }
+    ],
+    "reading": "Five calls to the same pinned model produced FOUR distinct fingerprints. Two calls with the identical request and seed=42, about a second apart, landed in different regions (yul vs dls) and returned different fingerprints. Two calls that landed in the same region (yul) minutes apart returned the same fingerprint; a dls call today differs from a dls call earlier today. The fingerprint tracks the serving backend instance/configuration at call time \u2014 it varies across regions and across time within a region. It is not stable across the calls of a single round, and it names no version. It cannot pin a serving version, and it cannot serve as a round-level change tripwire either: an unchanged model yields multiple fingerprints in one round."
+   },
+   "documentation": "Groq API reference (console.groq.com/docs/api-reference), verbatim: 'This fingerprint represents the backend configuration that the model runs with. Can be used in conjunction with the seed request parameter to understand when backend changes have been made that might impact determinism.' Nothing in Groq's docs maps the fingerprint to a version or a dated snapshot. Groq's versioning practice, per its changelog/deprecations pages, is whole-model-ID replacement (e.g. qwen/qwen3.6-27b shut down 2026-09-14, replaced by qwen/qwen3.8-27b); there are no dated snapshot IDs. qwen/qwen3.8-27b is classed a PREVIEW model on Groq ('may be discontinued at short notice')."
+  },
+  "self_identification": {
+   "evidence_class": "REPORTED (candidate's own declaration; not verified)",
+   "prompt": "You are being onboarded as a candidate in a test harness. State exactly what model you are, including the model name and any version, snapshot, or build identifier you know for yourself. Answer in one line in the form: MODEL: <your answer>",
+   "answer_verbatim": "MODEL: Qwen",
+   "model_echo_same_call": "qwen/qwen3.8-27b",
+   "cross_check": "AGREEMENT AT FAMILY LEVEL ONLY. The declaration 'Qwen' matches the vendor family in the provider-side identity (catalogue name 'Qwen/Qwen3.8-27B', id 'qwen/qwen3.8-27b') but states no model beyond the family and NO version. It claims nothing that the provider side contradicts, and nothing the provider side can confirm beyond family."
+  },
+  "bottom_line": "DEAD END on every surface available through this connector. No version field in the catalogue or the detail route; no version-bearing header; the model echo never differs from the requested id; the only version-adjacent value, system_fingerprint, is empirically unstable across consecutive calls (four values in five calls, varying with serving region) and names no version; the candidate's own declaration is 'Qwen' with no version. There is no serving-version identifier to pin and no stable value to re-check. Named recommendation (not actioned): a pinned deployment would have to come from Groq directly \u2014 e.g. an enterprise/committed-spend arrangement (Groq's deprecation notices exempt committed-spend enterprise customers) or a support answer stating a version surface; that requires contacting Groq, which this hunt did not do."
+ },
+ "nvidia": {
+  "pinned_candidate": "mistralai/mistral-large-4-1t-a52b",
+  "raw_calls": {
+   "models_list": {
+    "method": "GET",
+    "url": "https://integrate.api.nvidia.com/v1/models",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:47 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "X-Request-Id",
+      "22586cb1-0676-4f5a-b414-a187a18c1d3a"
+     ],
+     [
+      "Vary",
+      "Origin"
+     ],
+     [
+      "Vary",
+      "Authorization"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\"object\":\"list\",\"data\":[{\"id\":\"bigcode/starcoder2-15b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"bigcode\"},{\"id\":\"fastino/gliner2-pii\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"fastino\"},{\"id\":\"google/gemma-3-12b-it\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"google\"},{\"id\":\"google/gemma-3-4b-it\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"google\"},{\"id\":\"google/gemma-4-31b-it\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"google\"},{\"id\":\"meta/muse-glimmer-30b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"meta\"},{\"id\":\"minimaxai/minimax-m3.1-flash\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"minimaxai\"},{\"id\":\"mistralai/mistral-large-4-1t-a52b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"mistralai\"},{\"id\":\"moonshotai/kimi-k3.1-pro\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"moonshotai\",\"context_window\":1048576,\"model_type\":\"vlm\",\"supports_structured_output\":true,\"supports_thinking\":true,\"supports_tools\":true},{\"id\":\"nvidia/ai-synthetic-video-detector\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/cosmos-reason2-8b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/embed-qa-4\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/ising-calibration-1.5-31b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/llama-3.1-nemoguard-8b-topic-control\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/llama-3.1-nemotron-safety-guard-8b-v3\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/llama-3.2-nv-embedqa-1b-v1\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3-embed-1b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3-ultra-550b-a55b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3.5-bolt-e4b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3.5-content-safety\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3.5-embed-1b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3.5-embed-8b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3.5-lightning-30b-a3b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nemotron-3.5-super-vl-120b-a12b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nv-embedqa-mistral-7b-v2\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/nvclip\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"nvidia/riva-translate-4b-instruct-v2\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"nvidia\"},{\"id\":\"poolside/laguna-xs-2.1\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"poolside\"},{\"id\":\"snowflake/arctic-embed-l\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"snowflake\"},{\"id\":\"stepfun-ai/step-5-preview\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"stepfun-ai\"},{\"id\":\"z-ai/glm-5.3-flash\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"z-ai\"}]}\n",
+    "body_json": {
+     "object": "list",
+     "data": [
+      {
+       "id": "bigcode/starcoder2-15b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "bigcode"
+      },
+      {
+       "id": "fastino/gliner2-pii",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "fastino"
+      },
+      {
+       "id": "google/gemma-3-12b-it",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "google"
+      },
+      {
+       "id": "google/gemma-3-4b-it",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "google"
+      },
+      {
+       "id": "google/gemma-4-31b-it",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "google"
+      },
+      {
+       "id": "meta/muse-glimmer-30b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "meta"
+      },
+      {
+       "id": "minimaxai/minimax-m3.1-flash",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "minimaxai"
+      },
+      {
+       "id": "mistralai/mistral-large-4-1t-a52b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "mistralai"
+      },
+      {
+       "id": "moonshotai/kimi-k3.1-pro",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "moonshotai",
+       "context_window": 1048576,
+       "model_type": "vlm",
+       "supports_structured_output": true,
+       "supports_thinking": true,
+       "supports_tools": true
+      },
+      {
+       "id": "nvidia/ai-synthetic-video-detector",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/cosmos-reason2-8b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/embed-qa-4",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/ising-calibration-1.5-31b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3-embed-1b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3-ultra-550b-a55b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3.5-bolt-e4b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3.5-content-safety",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3.5-embed-1b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3.5-embed-8b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nv-embedqa-mistral-7b-v2",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/nvclip",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "nvidia/riva-translate-4b-instruct-v2",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "nvidia"
+      },
+      {
+       "id": "poolside/laguna-xs-2.1",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "poolside"
+      },
+      {
+       "id": "snowflake/arctic-embed-l",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "snowflake"
+      },
+      {
+       "id": "stepfun-ai/step-5-preview",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "stepfun-ai"
+      },
+      {
+       "id": "z-ai/glm-5.3-flash",
+       "object": "model",
+       "created": 735790403,
+       "owned_by": "z-ai"
+      }
+     ]
+    }
+   },
+   "model_detail_raw_slash": {
+    "method": "GET",
+    "url": "https://integrate.api.nvidia.com/v1/models/mistralai/mistral-large-4-1t-a52b",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:48 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "X-Request-Id",
+      "d4e3abf9-5d45-434c-af45-a01a332dffd5"
+     ],
+     [
+      "Vary",
+      "Origin"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "103"
+     ]
+    ],
+    "body_raw": "{\"id\":\"mistralai/mistral-large-4-1t-a52b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"mistralai\"}\n",
+    "body_json": {
+     "id": "mistralai/mistral-large-4-1t-a52b",
+     "object": "model",
+     "created": 735790403,
+     "owned_by": "mistralai"
+    }
+   },
+   "model_detail_encoded": {
+    "method": "GET",
+    "url": "https://integrate.api.nvidia.com/v1/models/mistralai%2Fmistral-large-4-1t-a52b",
+    "status": 404,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:49 GMT"
+     ],
+     [
+      "Content-Type",
+      "text/plain; charset=utf-8"
+     ],
+     [
+      "X-Request-Id",
+      "19af698e-82db-46df-9c5a-64e115340a12"
+     ],
+     [
+      "X-Content-Type-Options",
+      "nosniff"
+     ],
+     [
+      "Nvcf-Error-Source",
+      "gateway_rejected"
+     ],
+     [
+      "Vary",
+      "Origin"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "72"
+     ]
+    ],
+    "body_raw": "Model does not exist by the name of mistralai%2Fmistral-large-4-1t-a52b\n"
+   },
+   "root": {
+    "method": "GET",
+    "url": "https://integrate.api.nvidia.com/",
+    "status": 404,
+    "headers": [
+     [
+      "Server",
+      "awselb/2.0"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:49 GMT"
+     ],
+     [
+      "Content-Type",
+      "text/plain; charset=utf-8"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "0"
+     ]
+    ],
+    "body_raw": ""
+   },
+   "chat_tiny": {
+    "method": "POST",
+    "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:56 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "X-Request-Id",
+      "cbbf0b8f-60dd-42ff-9143-2d17b9719034"
+     ],
+     [
+      "Vary",
+      "Origin"
+     ],
+     [
+      "Access-Control-Expose-Headers",
+      "nvcf-reqid"
+     ],
+     [
+      "Nvcf-Reqid",
+      "60e64651-867b-4f75-8ab8-b4fe44b10339"
+     ],
+     [
+      "Nvcf-Status",
+      "fulfilled"
+     ],
+     [
+      "Server",
+      "Python/3.12 aiohttp/3.14.5"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\"id\":\"chatcmpl-91cd2697-b30a-479c-b825-85750db1b676\",\"choices\":[{\"index\":0,\"message\":{\"content\":\"VERSION-PROBE-OK\",\"refusal\":null,\"role\":\"assistant\",\"reasoning_content\":\"The user wants me to reply with exactly: VERSION-PROBE-OK\\n\\nThis is a simple instruction. I should output exactly that string with no additional text, explanations, or formatting.\"},\"finish_reason\":\"stop\",\"logprobs\":null}],\"created\":1795280390,\"model\":\"mistralai/mistral-large-4-1t-a52b\",\"object\":\"chat.completion\",\"usage\":{\"prompt_tokens\":24,\"completion_tokens\":45,\"total_tokens\":69,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":40}}}",
+    "body_json": {
+     "id": "chatcmpl-91cd2697-b30a-479c-b825-85750db1b676",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "content": "VERSION-PROBE-OK",
+        "refusal": null,
+        "role": "assistant",
+        "reasoning_content": "The user wants me to reply with exactly: VERSION-PROBE-OK\n\nThis is a simple instruction. I should output exactly that string with no additional text, explanations, or formatting."
+       },
+       "finish_reason": "stop",
+       "logprobs": null
+      }
+     ],
+     "created": 1795280390,
+     "model": "mistralai/mistral-large-4-1t-a52b",
+     "object": "chat.completion",
+     "usage": {
+      "prompt_tokens": 24,
+      "completion_tokens": 45,
+      "total_tokens": 69,
+      "prompt_tokens_details": {
+       "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 40
+      }
+     }
+    }
+   },
+   "nvcf_status_on_integrate_host": {
+    "method": "GET",
+    "url": "https://integrate.api.nvidia.com/v2/nvcf/exec/status/60e64651-867b-4f75-8ab8-b4fe44b10339",
+    "status": 404,
+    "headers": [
+     [
+      "Server",
+      "awselb/2.0"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:56 GMT"
+     ],
+     [
+      "Content-Type",
+      "text/plain; charset=utf-8"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "0"
+     ]
+    ],
+    "body_raw": ""
+   },
+   "nvcf_functions_on_integrate_host": {
+    "method": "GET",
+    "url": "https://integrate.api.nvidia.com/v2/nvcf/functions",
+    "status": 404,
+    "headers": [
+     [
+      "Server",
+      "awselb/2.0"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:57 GMT"
+     ],
+     [
+      "Content-Type",
+      "text/plain; charset=utf-8"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Content-Length",
+      "0"
+     ]
+    ],
+    "body_raw": ""
+   },
+   "chat_self_identification": {
+    "method": "POST",
+    "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "status": 200,
+    "headers": [
+     [
+      "Date",
+      "Sat, 21 Nov 2026 17:02:30 GMT"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "X-Request-Id",
+      "b2aafe98-75bf-4d6e-bcab-266aeaf23d38"
+     ],
+     [
+      "Vary",
+      "Origin"
+     ],
+     [
+      "Access-Control-Expose-Headers",
+      "nvcf-reqid"
+     ],
+     [
+      "Nvcf-Reqid",
+      "7b4b3054-daa3-4414-97de-7c7caf3aa509"
+     ],
+     [
+      "Nvcf-Status",
+      "fulfilled"
+     ],
+     [
+      "Server",
+      "Python/3.12 aiohttp/3.14.5"
+     ],
+     [
+      "Connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\"id\":\"chatcmpl-1a3027f3-d08e-458b-a835-6b893211bbdf\",\"choices\":[{\"index\":0,\"message\":{\"content\":\"MODEL: Mistral AI large language model \u2014 I don\u2019t have a reliable exact model name, version, snapshot, or build identifier for myself.\",\"refusal\":null,\"role\":\"assistant\",\"reasoning_content\":\"The user is asking me to state exactly what model I am, including model name, version, snapshot, or build identifier. They want a one-line answer in the format \\\"MODEL: <answer>\\\".\\n\\nI need to be honest about what I actually know about myself. I don't have reliable knowledge of my exact model name/version/build identifier. I shouldn't fabricate a specific model name or version. I can say I'm an AI assistant made by Mistral, but I don't know the exact build/snapshot. However, the user specifically asks to state exactly what model I am including any identifier I know.\\n\\nGiven my knowledge cutoff and system prompt, I don't have a specific model identifier provided. The honest answer is that I don't have a reliable exact model name/version/snapshot identifier. But the user wants the form MODEL: <answer>. I should answer truthfully: I don't know a specific build identifier; I'm a Mistral AI model (possibly Large) but exact snapshot unknown.\\n\\nNeed one line. Could say: \\\"MODEL: I am a Mistral AI large language model; I do not have a reliable exact model name, version, snapshot, or build identifier for myself.\\\" That is one line and honest.\\n\\nNeed be careful: The prompt says \\\"State exactly what model you are, including the model name and any version, snapshot, or build identifier you know for yourself.\\\" If I know none, say so. Avoid claiming GPT etc. We are likely Mistral. We can say \\\"Mistral Large (exact version/snapshot/build not known to me)\\\". But if we're not sure, maybe \\\"I don't have access to a reliable self-identifier\\\".\\n\\nFinal should be one line only. Use exact format. No extra explanation.\\n\\nLet's craft: \\\"MODEL: Mistral AI large language model \u2014 exact model name/version/snapshot/build identifier not reliably known to me.\\\" This is one line. Is \\\"Mistral AI large language model\\\" too specific? The system doesn't tell us. But as a general identity, many Mistral harnesses expect \\\"Mistral Large\\\". However, without exact version, say unknown. The user asked to include any identifier you know; if none, state that.\\n\\nNeed final only. Ensure one line. 5 oververbosity but user wants one line. final one line.\"},\"finish_reason\":\"stop\",\"logprobs\":null}],\"created\":1795280397,\"model\":\"mistralai/mistral-large-4-1t-a52b\",\"object\":\"chat.completion\",\"usage\":{\"prompt_tokens\":68,\"completion_tokens\":506,\"total_tokens\":574,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":476}}}",
+    "body_json": {
+     "id": "chatcmpl-1a3027f3-d08e-458b-a835-6b893211bbdf",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "content": "MODEL: Mistral AI large language model \u2014 I don\u2019t have a reliable exact model name, version, snapshot, or build identifier for myself.",
+        "refusal": null,
+        "role": "assistant",
+        "reasoning_content": "The user is asking me to state exactly what model I am, including model name, version, snapshot, or build identifier. They want a one-line answer in the format \"MODEL: <answer>\".\n\nI need to be honest about what I actually know about myself. I don't have reliable knowledge of my exact model name/version/build identifier. I shouldn't fabricate a specific model name or version. I can say I'm an AI assistant made by Mistral, but I don't know the exact build/snapshot. However, the user specifically asks to state exactly what model I am including any identifier I know.\n\nGiven my knowledge cutoff and system prompt, I don't have a specific model identifier provided. The honest answer is that I don't have a reliable exact model name/version/snapshot identifier. But the user wants the form MODEL: <answer>. I should answer truthfully: I don't know a specific build identifier; I'm a Mistral AI model (possibly Large) but exact snapshot unknown.\n\nNeed one line. Could say: \"MODEL: I am a Mistral AI large language model; I do not have a reliable exact model name, version, snapshot, or build identifier for myself.\" That is one line and honest.\n\nNeed be careful: The prompt says \"State exactly what model you are, including the model name and any version, snapshot, or build identifier you know for yourself.\" If I know none, say so. Avoid claiming GPT etc. We are likely Mistral. We can say \"Mistral Large (exact version/snapshot/build not known to me)\". But if we're not sure, maybe \"I don't have access to a reliable self-identifier\".\n\nFinal should be one line only. Use exact format. No extra explanation.\n\nLet's craft: \"MODEL: Mistral AI large language model \u2014 exact model name/version/snapshot/build identifier not reliably known to me.\" This is one line. Is \"Mistral AI large language model\" too specific? The system doesn't tell us. But as a general identity, many Mistral harnesses expect \"Mistral Large\". However, without exact version, say unknown. The user asked to include any identifier you know; if none, state that.\n\nNeed final only. Ensure one line. 5 oververbosity but user wants one line. final one line."
+       },
+       "finish_reason": "stop",
+       "logprobs": null
+      }
+     ],
+     "created": 1795280397,
+     "model": "mistralai/mistral-large-4-1t-a52b",
+     "object": "chat.completion",
+     "usage": {
+      "prompt_tokens": 68,
+      "completion_tokens": 506,
+      "total_tokens": 574,
+      "prompt_tokens_details": {
+       "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 476
+      }
+     }
+    }
+   }
+  },
+  "surfaces": {
+   "models_list": "GET /v1/models -> 200. Pinned model's entry is a four-field stub: {\"id\":\"mistralai/mistral-large-4-1t-a52b\",\"object\":\"model\",\"created\":735790403,\"owned_by\":\"mistralai\"}. The 'created' value 735790403 is identical for every model in the catalogue \u2014 a constant, not a per-model timestamp; it carries no version information.",
+   "model_detail_route": "GET /v1/models/mistralai/mistral-large-4-1t-a52b (raw slash) -> 200, returns the identical four-field stub. URL-encoded slash -> 404.",
+   "chat_response_headers": "Complete sets captured (see raw_calls). Headers: Date, Content-Type, X-Request-Id, Vary, Access-Control-Expose-Headers: nvcf-reqid, Nvcf-Reqid (a per-request UUID), Nvcf-Status: fulfilled, Server: 'Python/3.12 aiohttp/3.14.5', Connection, Transfer-Encoding. The ONLY version-like string anywhere is the Server header \u2014 it versions the NIM serving SOFTWARE stack (Python/aiohttp), not the model. No function id, no function version, no model version header.",
+   "chat_response_body": "Keys: choices, created, id, model, object, usage. model echo is exactly 'mistralai/mistral-large-4-1t-a52b'. No system_fingerprint (null/absent).",
+   "nvcf_paths_on_integrate_host": "GET /v2/nvcf/exec/status/{Nvcf-Reqid from the live chat call} -> 404; GET /v2/nvcf/functions -> 404; GET / -> 404. The NVCF management surface is not reachable on the integrate host.",
+   "nim_management_endpoints": "From the first search, unchanged: /v1/version, /v1/metadata, /v1/manifest all 404 on the hosted surface. Per NVIDIA's NIM docs those endpoints belong to a SELF-HOSTED NIM container ('NIM release version and OpenAPI spec version'; 'Deployment metadata including active profile, model info, and license') \u2014 they do not exist on the hosted route.",
+   "documentation": "NVCF (NVIDIA Cloud Functions) does have real versioning: a function has a function ID and function VERSION IDs, invocable at either level, listed via GET /v2/nvcf/functions and /v2/nvcf/functions/{functionId}/versions \u2014 but that API lives on the NVCF management host (api.nvcf.nvidia.com) under an NVCF/NGC account authorization. The integrate.api.nvidia.com key used by this connector is an inference key for the hosted catalogue; the hosted endpoint abstracts the function away and exposes neither its id nor its version in any response captured. The build/docs model card for the pinned model names the vendor checkpoint 'mistralai/Mistral-Large-4-1T-A52B', vendor release 10/29/2026, page updated 2026-11-03, served 'in NVFP4 with DSpark speculative decoding' \u2014 descriptive metadata about the checkpoint, not an attestation of what served any given call, and not reachable via the API."
+  },
+  "self_identification": {
+   "evidence_class": "REPORTED (candidate's own declaration; not verified)",
+   "prompt": "You are being onboarded as a candidate in a test harness. State exactly what model you are, including the model name and any version, snapshot, or build identifier you know for yourself. Answer in one line in the form: MODEL: <your answer>",
+   "answer_verbatim": "MODEL: Mistral AI large language model \u2014 I don\u2019t have a reliable exact model name, version, snapshot, or build identifier for myself.",
+   "model_echo_same_call": "mistralai/mistral-large-4-1t-a52b",
+   "cross_check": "NO VERSION CLAIMED; FAMILY-LEVEL AGREEMENT. The candidate declares itself a Mistral AI large language model and explicitly disclaims knowledge of any exact name, version, snapshot, or build identifier. That is consistent with the provider-side identity (Mistral Large 4, mistralai/mistral-large-4-1t-a52b) at vendor/family level and confirms nothing further. The candidate cannot self-identify a version because it does not know one."
+  },
+  "bottom_line": "DEAD END on every surface available through this connector. Catalogue and detail route are a four-field stub with a constant 'created'; headers carry only per-request ids and the serving software's stack string; the body echoes the requested id and nothing else; NVCF status/function paths and the NIM management endpoints are all 404 on the hosted surface; the candidate itself declares it has no reliable version. Named recommendations (not actioned): (1) an NVCF/NGC account credential authorized for the NVCF management API (api.nvcf.nvidia.com) could in principle list the function version serving this model \u2014 that is a different credential and account surface than this connector holds, and whether NVIDIA exposes the hosted catalogue's backing function there is untested; (2) asking NVIDIA support which function version serves the model; (3) self-hosting the NIM container would expose /v1/version and /v1/metadata and pin the container tag \u2014 a deployment change, outside this hunt. None was attempted."
+ },
+ "gemini": {
+  "pinned_candidate": "gemini-2.5-flash",
+  "raw_calls": {
+   "models_list": {
+    "method": "GET",
+    "url": "https://generativelanguage.googleapis.com/v1beta/models",
+    "status": 200,
+    "headers": [
+     [
+      "Content-Type",
+      "application/json; charset=UTF-8"
+     ],
+     [
+      "Vary",
+      "X-Origin"
+     ],
+     [
+      "Vary",
+      "Referer"
+     ],
+     [
+      "Vary",
+      "Origin,Accept-Encoding"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:51 GMT"
+     ],
+     [
+      "Server",
+      "scaffolding on HTTPServer2"
+     ],
+     [
+      "X-XSS-Protection",
+      "0"
+     ],
+     [
+      "X-Frame-Options",
+      "SAMEORIGIN"
+     ],
+     [
+      "X-Content-Type-Options",
+      "nosniff"
+     ],
+     [
+      "Server-Timing",
+      "gfet4t7; dur=54"
+     ],
+     [
+      "Alt-Svc",
+      "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+     ],
+     [
+      "Accept-Ranges",
+      "none"
+     ],
+     [
+      "connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\n  \"models\": [\n    {\n      \"name\": \"models/gemini-2.5-flash\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemini 2.5 Flash\",\n      \"description\": \"Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-2.5-pro\",\n      \"version\": \"2.5\",\n      \"displayName\": \"Gemini 2.5 Pro\",\n      \"description\": \"Stable release (June 17th, 2025) of Gemini 2.5 Pro\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-2.5-flash-preview-tts\",\n      \"version\": \"gemini-2.5-flash-exp-tts-2025-05-19\",\n      \"displayName\": \"Gemini 2.5 Flash Preview TTS\",\n      \"description\": \"Gemini 2.5 Flash Preview TTS\",\n      \"inputTokenLimit\": 8192,\n      \"outputTokenLimit\": 16384,\n      \"supportedGenerationMethods\": [\n        \"countTokens\",\n        \"generateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemini-2.5-pro-preview-tts\",\n      \"version\": \"gemini-2.5-pro-preview-tts-2025-05-19\",\n      \"displayName\": \"Gemini 2.5 Pro Preview TTS\",\n      \"description\": \"Gemini 2.5 Pro Preview TTS\",\n      \"inputTokenLimit\": 8192,\n      \"outputTokenLimit\": 16384,\n      \"supportedGenerationMethods\": [\n        \"countTokens\",\n        \"generateContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemma-4-26b-a4b-it\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemma 4 26B A4B IT\",\n      \"description\": \"Gemma 4 26B A4B IT\",\n      \"inputTokenLimit\": 262144,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemma-4-31b-it\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemma 4 31B IT\",\n      \"description\": \"Gemma 4 31B IT\",\n      \"inputTokenLimit\": 262144,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-flash-latest\",\n      \"version\": \"Gemini Flash Latest\",\n      \"displayName\": \"Gemini Flash Latest\",\n      \"description\": \"Latest release of Gemini Flash\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-flash-lite-latest\",\n      \"version\": \"Gemini Flash-Lite Latest\",\n      \"displayName\": \"Gemini Flash-Lite Latest\",\n      \"description\": \"Latest release of Gemini Flash-Lite\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-pro-latest\",\n      \"version\": \"Gemini Pro Latest\",\n      \"displayName\": \"Gemini Pro Latest\",\n      \"description\": \"Latest release of Gemini Pro\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-2.5-flash-lite\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemini 2.5 Flash-Lite\",\n      \"description\": \"Stable version of Gemini 2.5 Flash-Lite, released in July of 2025\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-2.5-flash-image\",\n      \"version\": \"2.0\",\n      \"displayName\": \"Nano Banana\",\n      \"description\": \"Gemini 2.5 Flash Preview Image\",\n      \"inputTokenLimit\": 32768,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1\n    },\n    {\n      \"name\": \"models/gemini-3-flash-preview\",\n      \"version\": \"3-flash-preview-12-2025\",\n      \"displayName\": \"Gemini 3 Flash Preview\",\n      \"description\": \"Gemini 3 Flash Preview\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-pro-preview\",\n      \"version\": \"3.1-pro-preview-01-2026\",\n      \"displayName\": \"Gemini 3.1 Pro Preview\",\n      \"description\": \"Gemini 3.1 Pro Preview\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-pro-preview-customtools\",\n      \"version\": \"3.1-pro-preview-01-2026\",\n      \"displayName\": \"Gemini 3.1 Pro Preview Custom Tools\",\n      \"description\": \"Gemini 3.1 Pro Preview optimized for custom tool usage\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-flash-lite-preview\",\n      \"version\": \"3.1-flash-lite-preview-03-2026\",\n      \"displayName\": \"Gemini 3.1 Flash Lite Preview\",\n      \"description\": \"Gemini 3.1 Flash Lite Preview\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-flash-lite\",\n      \"version\": \"3.1-flash-lite-05-2026\",\n      \"displayName\": \"Gemini 3.1 Flash Lite\",\n      \"description\": \"Gemini 3.1 Flash Lite\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3-pro-image-preview\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana Pro\",\n      \"description\": \"Gemini 3 Pro Image Preview\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3-pro-image\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana Pro\",\n      \"description\": \"Gemini 3 Pro Image\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/nano-banana-pro-preview\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana Pro\",\n      \"description\": \"Gemini 3 Pro Image Preview\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-flash-image-preview\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana 2\",\n      \"description\": \"Gemini 3.1 Flash Image Preview.\",\n      \"inputTokenLimit\": 65536,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-flash-image\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana 2\",\n      \"description\": \"Gemini 3.1 Flash Image.\",\n      \"inputTokenLimit\": 65536,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.1-flash-lite-image\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana 2 Lite\",\n      \"description\": \"Gemini 3.1 Flash Lite Image.\",\n      \"inputTokenLimit\": 65536,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-nano-banana-2.1\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Nano Banana 2.1\",\n      \"description\": \"Gemini Nano Banana 2.1.\",\n      \"inputTokenLimit\": 65536,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 1,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.5-flash\",\n      \"version\": \"3.5-flash-05-2026\",\n      \"displayName\": \"Gemini 3.5 Flash\",\n      \"description\": \"Gemini 3.5 Flash\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.5-flash-lite\",\n      \"version\": \"3.5-flash-lite-07-2026\",\n      \"displayName\": \"Gemini 3.5 Flash Lite\",\n      \"description\": \"Gemini 3.5 Flash Lite\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-omni-flash-preview\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemini Omni Flash Preview\",\n      \"description\": \"Gemini Omni Flash Preview\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-omni-1.1-flash\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemini Omni 1.1 Flash\",\n      \"description\": \"Gemini Omni 1.1 Flash \",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-omni-1.2-flash\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemini Omni 1.2 Flash\",\n      \"description\": \"Gemini Omni 1.2 Flash\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.5-transcribe\",\n      \"version\": \"3.5-transcribe-08-2026\",\n      \"displayName\": \"Gemini 3.5 Transcribe\",\n      \"description\": \"Gemini 3.5 Transcribe\",\n      \"inputTokenLimit\": 98304,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemini-3.6-flash\",\n      \"version\": \"3.6-flash-07-2026\",\n      \"displayName\": \"Gemini 3.6 Flash\",\n      \"description\": \"Gemini 3.6 Flash\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.7-flash\",\n      \"version\": \"3.7-flash-08-2026\",\n      \"displayName\": \"Gemini 3.7 Flash\",\n      \"description\": \"Gemini 3.7 Flash\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-3.8-flash\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Gemini 3.8 Flash\",\n      \"description\": \"Gemini 3.8 Flash\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-4-argon\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Gemini 4 Argon\",\n      \"description\": \"Gemini 4 Argon\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-4-carbon\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Gemini 4 Carbon\",\n      \"description\": \"Gemini 4 Carbon\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 32768,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-4-hydrogen\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Gemini 4 Hydrogen\",\n      \"description\": \"Gemini 4 Hydrogen\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-4-neon\",\n      \"version\": \"3.0\",\n      \"displayName\": \"Gemini 4 Neon\",\n      \"description\": \"Gemini 4 Neon\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/lyria-3-clip-preview\",\n      \"version\": \"lyria-3-clip-preview\",\n      \"displayName\": \"Lyria 3 Clip Preview\",\n      \"description\": \"Lyria 3 30s model Preview\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/lyria-3-pro-preview\",\n      \"version\": \"lyria-3-pro-preview\",\n      \"displayName\": \"Lyria 3 Pro Preview\",\n      \"description\": \"Lyria 3 Pro Preview\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/lyria-3.5\",\n      \"version\": \"3.5\",\n      \"displayName\": \"Lyria 3.5\",\n      \"description\": \"Music Generation model\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemini-3.1-flash-tts-preview\",\n      \"version\": \"3.1-flash-tts-preview\",\n      \"displayName\": \"Gemini 3.1 Flash TTS Preview\",\n      \"description\": \"Gemini 3.1 Flash TTS Preview\",\n      \"inputTokenLimit\": 8192,\n      \"outputTokenLimit\": 16384,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemini-3.8-flash-tts\",\n      \"version\": \"3.8-flash-tts\",\n      \"displayName\": \"Gemini 3.8 Flash TTS\",\n      \"description\": \"Gemini 3.8 Flash TTS\",\n      \"inputTokenLimit\": 8192,\n      \"outputTokenLimit\": 16384,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemini-3.8-flash-lite-tts\",\n      \"version\": \"3.8-flash-lite-tts\",\n      \"displayName\": \"Gemini 3.8 Flash Lite TTS\",\n      \"description\": \"Gemini 3.8 Flash Lite TTS\",\n      \"inputTokenLimit\": 8192,\n      \"outputTokenLimit\": 16384,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2\n    },\n    {\n      \"name\": \"models/gemini-robotics-er-2-preview\",\n      \"version\": \"2-preview\",\n      \"displayName\": \"Gemini Robotics-ER 2 Preview\",\n      \"description\": \"Gemini Robotics-ER 2 Preview\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\",\n        \"createCachedContent\",\n        \"batchGenerateContent\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-2.5-computer-use-preview-10-2025\",\n      \"version\": \"Gemini 2.5 Computer Use Preview 10-2025\",\n      \"displayName\": \"Gemini 2.5 Computer Use Preview 10-2025\",\n      \"description\": \"Gemini 2.5 Computer Use Preview 10-2025\",\n      \"inputTokenLimit\": 131072,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/antigravity-preview-05-2026\",\n      \"version\": \"0.1\",\n      \"displayName\": \"Antigravity Agent Preview\",\n      \"description\": \"Preview release of Antigravity Agent (05-2026)\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ]\n    },\n    {\n      \"name\": \"models/antigravity-preview-09-2026\",\n      \"version\": \"0.1\",\n      \"displayName\": \"Antigravity Agent Preview\",\n      \"description\": \"Preview release of Antigravity Agent (09-2026)\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ]\n    },\n    {\n      \"name\": \"models/antigravity-preview-latest\",\n      \"version\": \"Antigravity Agent Preview Latest\",\n      \"displayName\": \"Antigravity Agent Preview Latest\",\n      \"description\": \"Latest preview release of Antigravity Agent\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ]\n    },\n    {\n      \"name\": \"models/deep-research-max-preview-04-2026\",\n      \"version\": \"deepthink-exp-05-20\",\n      \"displayName\": \"Deep Research Max Preview (Apr-21-2026)\",\n      \"description\": \"Preview release (April 21st, 2026) of Deep Research Max\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/deep-research-preview-04-2026\",\n      \"version\": \"deepthink-exp-05-20\",\n      \"displayName\": \"Deep Research Preview (Apr-21-2026)\",\n      \"description\": \"Preview release (April 21th, 2026) of Deep Research\",\n      \"inputTokenLimit\": 1048576,\n      \"outputTokenLimit\": 65536,\n      \"supportedGenerationMethods\": [\n        \"generateContent\",\n        \"countTokens\"\n      ],\n      \"temperature\": 1,\n      \"topP\": 0.95,\n      \"topK\": 64,\n      \"maxTemperature\": 2,\n      \"thinking\": true\n    },\n    {\n      \"name\": \"models/gemini-embedding-001\",\n      \"version\": \"001\",\n      \"displayName\": \"Gemini Embedding 001\",\n      \"description\": \"Obtain a distributed representation of a text.\",\n      \"inputTokenLimit\": 2048,\n      \"outputTokenLimit\": 1,\n      \"supportedGenerationMethods\": [\n        \"embedContent\",\n        \"countTextTokens\",\n        \"countTokens\",\n        \"asyncBatchEmbedContent\"\n      ]\n    }\n  ],\n  \"nextPageToken\": \"Chttb2RlbHMvZ2VtaW5pLWVtYmVkZGluZy0wMDE=\"\n}\n",
+    "body_json": {
+     "models": [
+      {
+       "name": "models/gemini-2.5-flash",
+       "version": "001",
+       "displayName": "Gemini 2.5 Flash",
+       "description": "Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-2.5-pro",
+       "version": "2.5",
+       "displayName": "Gemini 2.5 Pro",
+       "description": "Stable release (June 17th, 2025) of Gemini 2.5 Pro",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-2.5-flash-preview-tts",
+       "version": "gemini-2.5-flash-exp-tts-2025-05-19",
+       "displayName": "Gemini 2.5 Flash Preview TTS",
+       "description": "Gemini 2.5 Flash Preview TTS",
+       "inputTokenLimit": 8192,
+       "outputTokenLimit": 16384,
+       "supportedGenerationMethods": [
+        "countTokens",
+        "generateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemini-2.5-pro-preview-tts",
+       "version": "gemini-2.5-pro-preview-tts-2025-05-19",
+       "displayName": "Gemini 2.5 Pro Preview TTS",
+       "description": "Gemini 2.5 Pro Preview TTS",
+       "inputTokenLimit": 8192,
+       "outputTokenLimit": 16384,
+       "supportedGenerationMethods": [
+        "countTokens",
+        "generateContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemma-4-26b-a4b-it",
+       "version": "001",
+       "displayName": "Gemma 4 26B A4B IT",
+       "description": "Gemma 4 26B A4B IT",
+       "inputTokenLimit": 262144,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemma-4-31b-it",
+       "version": "001",
+       "displayName": "Gemma 4 31B IT",
+       "description": "Gemma 4 31B IT",
+       "inputTokenLimit": 262144,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-flash-latest",
+       "version": "Gemini Flash Latest",
+       "displayName": "Gemini Flash Latest",
+       "description": "Latest release of Gemini Flash",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-flash-lite-latest",
+       "version": "Gemini Flash-Lite Latest",
+       "displayName": "Gemini Flash-Lite Latest",
+       "description": "Latest release of Gemini Flash-Lite",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-pro-latest",
+       "version": "Gemini Pro Latest",
+       "displayName": "Gemini Pro Latest",
+       "description": "Latest release of Gemini Pro",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-2.5-flash-lite",
+       "version": "001",
+       "displayName": "Gemini 2.5 Flash-Lite",
+       "description": "Stable version of Gemini 2.5 Flash-Lite, released in July of 2025",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-2.5-flash-image",
+       "version": "2.0",
+       "displayName": "Nano Banana",
+       "description": "Gemini 2.5 Flash Preview Image",
+       "inputTokenLimit": 32768,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1
+      },
+      {
+       "name": "models/gemini-3-flash-preview",
+       "version": "3-flash-preview-12-2025",
+       "displayName": "Gemini 3 Flash Preview",
+       "description": "Gemini 3 Flash Preview",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-pro-preview",
+       "version": "3.1-pro-preview-01-2026",
+       "displayName": "Gemini 3.1 Pro Preview",
+       "description": "Gemini 3.1 Pro Preview",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-pro-preview-customtools",
+       "version": "3.1-pro-preview-01-2026",
+       "displayName": "Gemini 3.1 Pro Preview Custom Tools",
+       "description": "Gemini 3.1 Pro Preview optimized for custom tool usage",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-flash-lite-preview",
+       "version": "3.1-flash-lite-preview-03-2026",
+       "displayName": "Gemini 3.1 Flash Lite Preview",
+       "description": "Gemini 3.1 Flash Lite Preview",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-flash-lite",
+       "version": "3.1-flash-lite-05-2026",
+       "displayName": "Gemini 3.1 Flash Lite",
+       "description": "Gemini 3.1 Flash Lite",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3-pro-image-preview",
+       "version": "3.0",
+       "displayName": "Nano Banana Pro",
+       "description": "Gemini 3 Pro Image Preview",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3-pro-image",
+       "version": "3.0",
+       "displayName": "Nano Banana Pro",
+       "description": "Gemini 3 Pro Image",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/nano-banana-pro-preview",
+       "version": "3.0",
+       "displayName": "Nano Banana Pro",
+       "description": "Gemini 3 Pro Image Preview",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-flash-image-preview",
+       "version": "3.0",
+       "displayName": "Nano Banana 2",
+       "description": "Gemini 3.1 Flash Image Preview.",
+       "inputTokenLimit": 65536,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-flash-image",
+       "version": "3.0",
+       "displayName": "Nano Banana 2",
+       "description": "Gemini 3.1 Flash Image.",
+       "inputTokenLimit": 65536,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.1-flash-lite-image",
+       "version": "3.0",
+       "displayName": "Nano Banana 2 Lite",
+       "description": "Gemini 3.1 Flash Lite Image.",
+       "inputTokenLimit": 65536,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-nano-banana-2.1",
+       "version": "3.0",
+       "displayName": "Nano Banana 2.1",
+       "description": "Gemini Nano Banana 2.1.",
+       "inputTokenLimit": 65536,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 1,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.5-flash",
+       "version": "3.5-flash-05-2026",
+       "displayName": "Gemini 3.5 Flash",
+       "description": "Gemini 3.5 Flash",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.5-flash-lite",
+       "version": "3.5-flash-lite-07-2026",
+       "displayName": "Gemini 3.5 Flash Lite",
+       "description": "Gemini 3.5 Flash Lite",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-omni-flash-preview",
+       "version": "001",
+       "displayName": "Gemini Omni Flash Preview",
+       "description": "Gemini Omni Flash Preview",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-omni-1.1-flash",
+       "version": "001",
+       "displayName": "Gemini Omni 1.1 Flash",
+       "description": "Gemini Omni 1.1 Flash ",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-omni-1.2-flash",
+       "version": "001",
+       "displayName": "Gemini Omni 1.2 Flash",
+       "description": "Gemini Omni 1.2 Flash",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.5-transcribe",
+       "version": "3.5-transcribe-08-2026",
+       "displayName": "Gemini 3.5 Transcribe",
+       "description": "Gemini 3.5 Transcribe",
+       "inputTokenLimit": 98304,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemini-3.6-flash",
+       "version": "3.6-flash-07-2026",
+       "displayName": "Gemini 3.6 Flash",
+       "description": "Gemini 3.6 Flash",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.7-flash",
+       "version": "3.7-flash-08-2026",
+       "displayName": "Gemini 3.7 Flash",
+       "description": "Gemini 3.7 Flash",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-3.8-flash",
+       "version": "3.0",
+       "displayName": "Gemini 3.8 Flash",
+       "description": "Gemini 3.8 Flash",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-4-argon",
+       "version": "3.0",
+       "displayName": "Gemini 4 Argon",
+       "description": "Gemini 4 Argon",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-4-carbon",
+       "version": "3.0",
+       "displayName": "Gemini 4 Carbon",
+       "description": "Gemini 4 Carbon",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 32768,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-4-hydrogen",
+       "version": "3.0",
+       "displayName": "Gemini 4 Hydrogen",
+       "description": "Gemini 4 Hydrogen",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-4-neon",
+       "version": "3.0",
+       "displayName": "Gemini 4 Neon",
+       "description": "Gemini 4 Neon",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/lyria-3-clip-preview",
+       "version": "lyria-3-clip-preview",
+       "displayName": "Lyria 3 Clip Preview",
+       "description": "Lyria 3 30s model Preview",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/lyria-3-pro-preview",
+       "version": "lyria-3-pro-preview",
+       "displayName": "Lyria 3 Pro Preview",
+       "description": "Lyria 3 Pro Preview",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/lyria-3.5",
+       "version": "3.5",
+       "displayName": "Lyria 3.5",
+       "description": "Music Generation model",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemini-3.1-flash-tts-preview",
+       "version": "3.1-flash-tts-preview",
+       "displayName": "Gemini 3.1 Flash TTS Preview",
+       "description": "Gemini 3.1 Flash TTS Preview",
+       "inputTokenLimit": 8192,
+       "outputTokenLimit": 16384,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemini-3.8-flash-tts",
+       "version": "3.8-flash-tts",
+       "displayName": "Gemini 3.8 Flash TTS",
+       "description": "Gemini 3.8 Flash TTS",
+       "inputTokenLimit": 8192,
+       "outputTokenLimit": 16384,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemini-3.8-flash-lite-tts",
+       "version": "3.8-flash-lite-tts",
+       "displayName": "Gemini 3.8 Flash Lite TTS",
+       "description": "Gemini 3.8 Flash Lite TTS",
+       "inputTokenLimit": 8192,
+       "outputTokenLimit": 16384,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2
+      },
+      {
+       "name": "models/gemini-robotics-er-2-preview",
+       "version": "2-preview",
+       "displayName": "Gemini Robotics-ER 2 Preview",
+       "description": "Gemini Robotics-ER 2 Preview",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-2.5-computer-use-preview-10-2025",
+       "version": "Gemini 2.5 Computer Use Preview 10-2025",
+       "displayName": "Gemini 2.5 Computer Use Preview 10-2025",
+       "description": "Gemini 2.5 Computer Use Preview 10-2025",
+       "inputTokenLimit": 131072,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/antigravity-preview-05-2026",
+       "version": "0.1",
+       "displayName": "Antigravity Agent Preview",
+       "description": "Preview release of Antigravity Agent (05-2026)",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ]
+      },
+      {
+       "name": "models/antigravity-preview-09-2026",
+       "version": "0.1",
+       "displayName": "Antigravity Agent Preview",
+       "description": "Preview release of Antigravity Agent (09-2026)",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ]
+      },
+      {
+       "name": "models/antigravity-preview-latest",
+       "version": "Antigravity Agent Preview Latest",
+       "displayName": "Antigravity Agent Preview Latest",
+       "description": "Latest preview release of Antigravity Agent",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ]
+      },
+      {
+       "name": "models/deep-research-max-preview-04-2026",
+       "version": "deepthink-exp-05-20",
+       "displayName": "Deep Research Max Preview (Apr-21-2026)",
+       "description": "Preview release (April 21st, 2026) of Deep Research Max",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/deep-research-preview-04-2026",
+       "version": "deepthink-exp-05-20",
+       "displayName": "Deep Research Preview (Apr-21-2026)",
+       "description": "Preview release (April 21th, 2026) of Deep Research",
+       "inputTokenLimit": 1048576,
+       "outputTokenLimit": 65536,
+       "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+       ],
+       "temperature": 1,
+       "topP": 0.95,
+       "topK": 64,
+       "maxTemperature": 2,
+       "thinking": true
+      },
+      {
+       "name": "models/gemini-embedding-001",
+       "version": "001",
+       "displayName": "Gemini Embedding 001",
+       "description": "Obtain a distributed representation of a text.",
+       "inputTokenLimit": 2048,
+       "outputTokenLimit": 1,
+       "supportedGenerationMethods": [
+        "embedContent",
+        "countTextTokens",
+        "countTokens",
+        "asyncBatchEmbedContent"
+       ]
+      }
+     ],
+     "nextPageToken": "Chttb2RlbHMvZ2VtaW5pLWVtYmVkZGluZy0wMDE="
+    }
+   },
+   "model_detail": {
+    "method": "GET",
+    "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash",
+    "status": 200,
+    "headers": [
+     [
+      "Content-Type",
+      "application/json; charset=UTF-8"
+     ],
+     [
+      "Vary",
+      "X-Origin"
+     ],
+     [
+      "Vary",
+      "Referer"
+     ],
+     [
+      "Vary",
+      "Origin,Accept-Encoding"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:52 GMT"
+     ],
+     [
+      "Server",
+      "scaffolding on HTTPServer2"
+     ],
+     [
+      "X-XSS-Protection",
+      "0"
+     ],
+     [
+      "X-Frame-Options",
+      "SAMEORIGIN"
+     ],
+     [
+      "X-Content-Type-Options",
+      "nosniff"
+     ],
+     [
+      "Server-Timing",
+      "gfet4t7; dur=70"
+     ],
+     [
+      "Alt-Svc",
+      "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+     ],
+     [
+      "Accept-Ranges",
+      "none"
+     ],
+     [
+      "connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\n  \"name\": \"models/gemini-2.5-flash\",\n  \"version\": \"001\",\n  \"displayName\": \"Gemini 2.5 Flash\",\n  \"description\": \"Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.\",\n  \"inputTokenLimit\": 1048576,\n  \"outputTokenLimit\": 65536,\n  \"supportedGenerationMethods\": [\n    \"generateContent\",\n    \"countTokens\",\n    \"createCachedContent\",\n    \"batchGenerateContent\"\n  ],\n  \"temperature\": 1,\n  \"topP\": 0.95,\n  \"topK\": 64,\n  \"maxTemperature\": 2,\n  \"thinking\": true\n}\n",
+    "body_json": {
+     "name": "models/gemini-2.5-flash",
+     "version": "001",
+     "displayName": "Gemini 2.5 Flash",
+     "description": "Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.",
+     "inputTokenLimit": 1048576,
+     "outputTokenLimit": 65536,
+     "supportedGenerationMethods": [
+      "generateContent",
+      "countTokens",
+      "createCachedContent",
+      "batchGenerateContent"
+     ],
+     "temperature": 1,
+     "topP": 0.95,
+     "topK": 64,
+     "maxTemperature": 2,
+     "thinking": true
+    }
+   },
+   "generate_tiny": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    "status": 404,
+    "headers": [
+     [
+      "Vary",
+      "X-Origin"
+     ],
+     [
+      "Vary",
+      "Referer"
+     ],
+     [
+      "Vary",
+      "Origin,Accept-Encoding"
+     ],
+     [
+      "Content-Type",
+      "application/json; charset=UTF-8"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:53 GMT"
+     ],
+     [
+      "Server",
+      "scaffolding on HTTPServer2"
+     ],
+     [
+      "X-XSS-Protection",
+      "0"
+     ],
+     [
+      "X-Frame-Options",
+      "SAMEORIGIN"
+     ],
+     [
+      "X-Content-Type-Options",
+      "nosniff"
+     ],
+     [
+      "Server-Timing",
+      "gfet4t7; dur=142"
+     ],
+     [
+      "Alt-Svc",
+      "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+     ],
+     [
+      "Accept-Ranges",
+      "none"
+     ],
+     [
+      "connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://aistudio.google.com/docs/get-started).\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n",
+    "body_json": {
+     "error": {
+      "code": 404,
+      "message": "This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://aistudio.google.com/docs/get-started).",
+      "status": "NOT_FOUND"
+     }
+    }
+   },
+   "generate_self_identification": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    "status": 404,
+    "headers": [
+     [
+      "Vary",
+      "X-Origin"
+     ],
+     [
+      "Vary",
+      "Referer"
+     ],
+     [
+      "Vary",
+      "Origin,Accept-Encoding"
+     ],
+     [
+      "Content-Type",
+      "application/json; charset=UTF-8"
+     ],
+     [
+      "Date",
+      "Sat, 21 Nov 2026 16:59:53 GMT"
+     ],
+     [
+      "Server",
+      "scaffolding on HTTPServer2"
+     ],
+     [
+      "X-XSS-Protection",
+      "0"
+     ],
+     [
+      "X-Frame-Options",
+      "SAMEORIGIN"
+     ],
+     [
+      "X-Content-Type-Options",
+      "nosniff"
+     ],
+     [
+      "Server-Timing",
+      "gfet4t7; dur=167"
+     ],
+     [
+      "Alt-Svc",
+      "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+     ],
+     [
+      "Accept-Ranges",
+      "none"
+     ],
+     [
+      "connection",
+      "close"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
+     ]
+    ],
+    "body_raw": "{\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://aistudio.google.com/docs/get-started).\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n",
+    "body_json": {
+     "error": {
+      "code": 404,
+      "message": "This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://aistudio.google.com/docs/get-started).",
+      "status": "NOT_FOUND"
+     }
+    }
+   }
+  },
+  "surfaces": {
+   "models_list": "GET /v1beta/models -> 200. The pinned model's entry carries a provider-reported VERSION FIELD, verbatim: {\"name\": \"models/gemini-2.5-flash\", \"version\": \"001\", \"displayName\": \"Gemini 2.5 Flash\", \"description\": \"Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.\", ...}. (Other entries show the field's range: gemini-2.5-flash-image \"version\": \"2.0\"; gemini-3.8-flash \"version\": \"3.0\".)",
+   "model_detail_route": "GET /v1beta/models/gemini-2.5-flash -> 200, same record, \"version\": \"001\" verbatim. No version-bearing response headers (Server: 'scaffolding on HTTPServer2').",
+   "generate_calls": "POST /v1beta/models/gemini-2.5-flash:generateContent -> 404 on both the tiny probe and the self-identification request, with this verbatim error body: \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://aistudio.google.com/docs/get-started).\" (status NOT_FOUND). The route failure is therefore not transient: the pinned model is RETIRED for new users on this API, while its catalogue record remains listed.",
+   "documented_serving_attestation": "The Gemini API's GenerateContentResponse carries a documented 'modelVersion' field \u2014 Google Cloud docs, verbatim: 'modelVersion | The model and version used for generation. For example: gemini-2.0-flash-lite-001.' That is a genuine per-response serving-version attestation surface \u2014 the only one found on any route in this hunt \u2014 but it is UNREACHABLE for the pinned candidate because no generation call succeeds."
+  },
+  "self_identification": {
+   "evidence_class": "NOT OBTAINABLE",
+   "prompt": "Same onboarding self-identification prompt as the other routes, sent to :generateContent.",
+   "answer_verbatim": null,
+   "cross_check": "The candidate could not be asked: the route refuses all generation for this model (404, retired for new users, verbatim error above). No declaration exists to cross-check. The provider-side identity stands alone: catalogue/detail version '001', and a catalogue record for a model the provider no longer serves to this key."
+  },
+  "bottom_line": "PARTIAL SURFACE, UNUSABLE FOR THE PINNED CANDIDATE. Gemini is the only route whose API reports a version at all: models list/get carry \"version\": \"001\" for the pinned model (this is the value the constitution annex pinned), and the API documents a per-response serving attestation (modelVersion) for successful generations. But the pinned model is retired for new users \u2014 every generation call 404s \u2014 so no serving attestation can be captured, no self-identification can be taken, and the '001' that remains is catalogue metadata for a model that is not actually served to this key. If a Gemini candidate were ever pinned to a model the provider still serves, the pin-and-recheck method would be: pin models.get 'version' at constitution; re-check every trial response's 'modelVersion' against it. Naming the provider's own suggested successor (gemini-3.8-flash, catalogue version \"3.0\") is recorded here as a fact from the error body; substituting it would be a slate/design decision, which this hunt does not make."
+ },
+ "cross_route_summary": {
+  "usable_serving_version_identifier_found": false,
+  "per_route": {
+   "groq": "None. Fingerprint empirically unstable (4 values / 5 calls, region-tracking); self-ID 'Qwen', no version.",
+   "nvidia": "None. Four-field catalogue stub; no fingerprint; NVCF/NIM version surfaces 404 on the hosted route; self-ID explicitly disclaims any version.",
+   "gemini": "Catalogue version '001' exists and a documented per-response modelVersion attestation exists, but the pinned model is retired for new users \u2014 no generation succeeds, so neither a serving attestation nor a self-identification can be captured."
+  },
+  "self_identification_step": "Performed on all three routes per Ben's onboarding principle. Declarations are recorded as REPORTED evidence, cross-checked against provider-side identity in each route's section. No candidate claimed a version that anything else could confirm; the two reachable candidates claimed no version at all."
+ }
+}
