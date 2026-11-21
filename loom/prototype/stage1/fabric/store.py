@@ -29,12 +29,25 @@ EVENT_TYPES = {
     "CLAIM_TAKEN", "CLAIM_RELEASED", "CLAIM_EXPIRED", "WATCH_SET",
     "WATCH_CANCELLED", "DISCOVERY", "SEAL_ATTEMPTED", "CONFIG",
     "BOUNDARY_PROBE", "RUN_CLOSED",
+    # Stage 2 corrections round (2026-11-21): RUN_FAILED — the durable
+    # run-failure record Vane's Stage 2 examination required (a
+    # hard-line breach stops the run as failed, in the record, not
+    # only as a raised exception); IDLE — idle becomes its own event
+    # type under the between-run amendment settled by Remmy and Vane
+    # under Ben's delegation (2026-11-21).
+    "RUN_FAILED", "IDLE",
 }
 
 
 class EventStore:
-    def __init__(self, path: str):
-        self._conn = sqlite3.connect(path)
+    def __init__(self, path: str, check_same_thread: bool = True):
+        # check_same_thread=False exists for the fabric service
+        # (corrections round): its store is created in the service's
+        # main thread and used from request-handler threads, with
+        # all access serialised through the service's dispatch lock.
+        # In-process callers keep sqlite's default thread checking.
+        self._conn = sqlite3.connect(path,
+                                     check_same_thread=check_same_thread)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute(
             """CREATE TABLE IF NOT EXISTS events (

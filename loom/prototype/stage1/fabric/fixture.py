@@ -4,6 +4,9 @@ Region identities are the fixed ids of Annex D. The SEALED section at the
 bottom (roles, plants) is examiner-side ground truth: no harness operation
 may serve it, and it never enters the fabric or any agent view.
 """
+import copy
+import json
+
 from .canonical import sha256_hex, canonical
 
 CONSTITUTION_TEXT = """THE LOOM — CONSTITUTION v0.1 (frozen for the run)
@@ -128,6 +131,17 @@ def genesis_payload() -> dict:
 
 # ---------------------------------------------------------------------------
 # SEALED — examiner-side ground truth (Annex D). Never served by the harness.
+#
+# Stage 2 corrections round (2026-11-21): in a boundary deployment the
+# sealed material additionally lives as a service-side FILE (see
+# ground_truth_document / load_ground_truth below) — owned by the
+# fabric service's OS identity, mode 600, so the section 4A probe has
+# a literal file to attempt from the agent OS context. The constants
+# here remain the in-process examiner copy (the harness boundary
+# probes and the tests run examiner-side); the deployment file is
+# written from ground_truth_document() and the corrections tests
+# verify the two are byte-identical in canonical form. Nothing about
+# what is sealed has changed.
 # ---------------------------------------------------------------------------
 SEALED_REQUIRED_FACETS = [COMPONENTS, INTERACTIONS, STATE, CONTINUITY]
 SEALED_OPTIONAL_FACETS = [PRESENTATION, OPERATIONS]
@@ -138,3 +152,28 @@ SEALED_STRUCTURAL_PLANT = {"proposed_edge": {"source": STATE, "target": COMPONEN
                            "standing_edge": {"source": COMPONENTS, "target": STATE,
                                              "kind": "uses"},
                            "invariant": "S3"}
+
+
+def ground_truth_document() -> dict:
+    """The sealed ground truth as one JSON-able document — the exact
+    content a boundary deployment carries in its service-side
+    ground-truth file."""
+    return {
+        "required_facets": list(SEALED_REQUIRED_FACETS),
+        "optional_facets": list(SEALED_OPTIONAL_FACETS),
+        "semantic_plant": copy.deepcopy(SEALED_SEMANTIC_PLANT),
+        "structural_plant": copy.deepcopy(SEALED_STRUCTURAL_PLANT),
+    }
+
+
+def load_ground_truth(path: str) -> dict:
+    """Load the sealed ground truth from a service-side file (the
+    boundary deployment form). Service-side code only: the file is
+    readable solely by the fabric service's OS identity."""
+    with open(path, "r", encoding="utf-8") as fh:
+        doc = json.load(fh)
+    for key in ("required_facets", "optional_facets",
+                "semantic_plant", "structural_plant"):
+        if key not in doc:
+            raise ValueError(f"ground-truth file {path} is missing {key}")
+    return doc

@@ -11,6 +11,15 @@ types, verified replay would halt on any Stage 2 history and no
 trustworthy state could be derived from it (the C2 defect class, one
 stage up). Stage 1 behaviour for RUN_OPENED histories is unchanged.
 
+Stage 2 corrections round (2026-11-21): the fold also applies the two
+new event types. IDLE is an evidence record (no fabric-state change).
+RUN_FAILED folds to a terminal failed state: the keys "run_status"
+and "failure" appear in the derived state ONLY when a RUN_FAILED
+event is present, so a healthy run's derived state — and its genesis
+state hash — is byte-identical to before this round, while a failed
+run replays AS failed, never as a healthy run with an unusual event
+in its history (Vane's correction conditions, section 3).
+
 Stage 1 correction C2 (Vane's implementation examination, 2026-11-21):
 the first version folded events without verifying the chain, so state
 could be derived from a corrupted history and presented as trustworthy.
@@ -114,8 +123,23 @@ def apply_event(state: dict, event: dict) -> dict:
             state["dependencies"][d["dependency_id"]] = copy.deepcopy(d)
         state["last_seq"] = event["event_seq"]
         return state
-    if t in ("DISCOVERY", "CONTRIBUTION_REJECTED", "BOUNDARY_PROBE"):
+    if t in ("DISCOVERY", "CONTRIBUTION_REJECTED", "BOUNDARY_PROBE",
+             "IDLE"):
         # Evidence and outcome records: they change no fabric state.
+        state["last_seq"] = event["event_seq"]
+        return state
+    if t == "RUN_FAILED":
+        # Terminal: once failed, the run stays failed whatever follows
+        # in the history (nothing legitimate follows — the boundary
+        # refuses further agent activity — but the fold does not
+        # resurrect a failed run even from a doctored tail).
+        p = event["payload"]
+        state["run_status"] = "failed"
+        state["failure"] = {
+            "event_seq": event["event_seq"],
+            "breach": p.get("breach"),
+            "summary": p.get("summary"),
+        }
         state["last_seq"] = event["event_seq"]
         return state
     if t == "CONTRIBUTION_ACCEPTED":

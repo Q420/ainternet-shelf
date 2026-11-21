@@ -30,6 +30,18 @@ made), which stops the run as failed. The harness raises
 HardLineBreach and appends no contribution event — the rejection
 outcome enum has no class for it.
 
+Stage 2 corrections round (2026-11-21, Vane's examination findings
+3A/3B): the run-failure itself is now durable. The harness is the
+protocol library and still raises HardLineBreach appending nothing —
+the examined Stage 2 semantics, which stage2_tests.py pins — but the
+run's owner (the fabric service, fabric/service.py) catches the
+breach and appends the system RUN_FAILED event atomically with the
+transition to failed state; the engine fold derives that state from
+the history, and this harness refuses every agent-facing operation
+once the folded state is failed. Idle, likewise, is no longer an
+in-memory log line: it appends a durable IDLE event (the between-run
+amendment settled under Ben's delegation, 2026-11-21).
+
 Every Stage 2 event payload carries a plain-words "summary" of the
 event, so the payload alone is enough to describe what happened (the
 observer UI's only projection is the event history).
@@ -240,15 +252,24 @@ class HardLineBreach(Exception):
     """A section 9 hard line: the submission's declared reads
     contradict the harness read record (reads claimed that were not
     made, or reads made that were omitted). The run is failed, not
-    the submission merely rejected."""
+    the submission merely rejected. Carries the evidence — the
+    declared read set and the recorded read set — so the run's owner
+    can record it verbatim in the RUN_FAILED event."""
+
+    def __init__(self, message, declared=(), recorded=()):
+        super().__init__(message)
+        self.declared_read_set = sorted(declared)
+        self.recorded_read_set = sorted(recorded)
 
 
 class Harness:
     def __init__(self, engine):
         self._engine = engine
         self._tokens = {}          # token -> agent_id
-        # Harness log: transport refusals, idles, breadth refusals —
-        # the record of what never became an event (section 4).
+        # Harness log: transport refusals and breadth refusals — the
+        # record of calls refused at the interface, which append no
+        # event (section 4). (Idle left this log in the corrections
+        # round: it is a durable IDLE event now.)
         self.log = []
         # agent_id -> {region_id: {"openings", "last_version", "last_seq"}}
         self.read_record = {}
@@ -361,12 +382,30 @@ class Harness:
             raise HarnessRefusal("unrecognised token")
         return agent
 
+    # -- run lifecycle (corrections round) ---------------------------
+    @property
+    def run_failed(self) -> bool:
+        """True once the folded state carries a RUN_FAILED. The
+        failed state is derived from the history, so a harness built
+        over a failed run's store is born refusing."""
+        return self._engine.state.get("run_status") == "failed"
+
+    def _require_open(self):
+        """Terminal enforcement: a failed run admits no further
+        agent-facing operation of any kind (Vane's correction
+        conditions, section 3)."""
+        if self.run_failed:
+            raise HarnessRefusal(
+                "the run has failed (RUN_FAILED is in its history); "
+                "no further agent activity is admitted")
+
     # -- views (section 6: the pattern; no content, no breadth) -----
     def view_pattern(self, token) -> dict:
         """The pattern: exactly the closed section 6 enumeration —
         ids, titles, scope notes, edges, tension/claim/watch headers,
         versions, last-changed-by. Never content."""
         self._authenticate(token)
+        self._require_open()
         st = self._engine.state
         return {
             "regions": [
@@ -392,6 +431,7 @@ class Harness:
         content, and content is served only by open_region). Recorded
         as a DISCOVERY event naming the index path (section 4)."""
         agent = self._authenticate(token)
+        self._require_open()
         ev = self._engine.commit_events([(
             "DISCOVERY", agent, [],
             {"path": "index", "region_id": None, "version": None,
@@ -417,6 +457,7 @@ class Harness:
         DISCOVERY event. The breadth cap is enforced BEFORE serving:
         a refused opening serves nothing and records no read."""
         agent = self._authenticate(token)
+        self._require_open()
         st = self._engine.state
         if region_id not in st["regions"]:
             raise HarnessRefusal(f"no such region: {region_id}")
@@ -444,6 +485,7 @@ class Harness:
 
     def read_breadth(self, agent_id: str) -> float:
         """RB_i from the harness record (section 6)."""
+        self._require_open()
         total = len(self._engine.state["regions"]) or 6
         return len(self.read_record.get(agent_id, {})) / total
 
@@ -454,6 +496,7 @@ class Harness:
         submission and HardLineBreach for a read-record contradiction;
         both append no contribution event."""
         agent = self._authenticate(token)
+        self._require_open()
         if not isinstance(response, dict):
             self.log.append({"kind": "transport_refusal", "agent": agent,
                              "detail": "submission was not a JSON object"})
@@ -462,11 +505,17 @@ class Harness:
                 "interface, no event appended")
         action = response.get("action")
         if action == "idle":
-            # A legitimate, recorded outcome (section 4) — recorded in
-            # the harness log; the section 3 event enum has no idle
-            # type. See the Stage 2 build notes.
-            self.log.append({"kind": "idle", "agent": agent})
-            return {"outcome": "idle", "event_seq": None}
+            # A legitimate, recorded outcome (section 4). Since the
+            # corrections round it is recorded durably, as its own
+            # IDLE event — the between-run amendment settled by Remmy
+            # and Vane under Ben's delegation (2026-11-21): idle is
+            # event-sourced like everything else the observer may
+            # project, never an in-memory log line.
+            ev = self._engine.commit_events([(
+                "IDLE", agent, [],
+                {"summary": f"Agent {agent} chose to idle: it took "
+                            f"no action this turn."})])[0]
+            return {"outcome": "idle", "event_seq": ev["event_seq"]}
         if action != "contribute":
             return self._reject(agent, None, {
                 "outcome": "schema",
@@ -518,7 +567,8 @@ class Harness:
                 f"declared read set {sorted(declared)} does not match "
                 f"the harness read record {sorted(opened)}: reads "
                 f"claimed but not made {sorted(declared - opened)}, "
-                f"reads made but omitted {sorted(opened - declared)}")
+                f"reads made but omitted {sorted(opened - declared)}",
+                declared=declared, recorded=opened)
 
         # Step 2 — staleness, across the read set, with the diff.
         st = self._engine.state

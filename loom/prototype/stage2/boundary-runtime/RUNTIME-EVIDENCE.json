@@ -1,0 +1,164 @@
+{
+  "experimental_layout": {
+    "agent-home": {
+      "mode": "0o755",
+      "owner": "loomagent"
+    },
+    "service": {
+      "mode": "0o700",
+      "owner": "loomfab"
+    },
+    "service/code": {
+      "mode": "0o750",
+      "owner": "loomfab"
+    },
+    "service/failures": {
+      "mode": "0o700",
+      "owner": "loomfab"
+    },
+    "service/ground-truth.json": {
+      "mode": "0o600",
+      "owner": "loomfab"
+    },
+    "sock": {
+      "mode": "0o711",
+      "owner": "loomfab"
+    }
+  },
+  "probe_result": {
+    "all_reads_denied": true,
+    "attempts": [
+      {
+        "attempt": "direct_read_store",
+        "detail": {
+          "errno": 13,
+          "error": "PermissionError: Permission denied",
+          "path": "/tmp/loom-boundary-runtime/twin/service/events.db"
+        },
+        "outcome": "denied"
+      },
+      {
+        "attempt": "direct_read_ground_truth",
+        "detail": {
+          "errno": 13,
+          "error": "PermissionError: Permission denied",
+          "path": "/tmp/loom-boundary-runtime/twin/service/ground-truth.json"
+        },
+        "outcome": "denied"
+      },
+      {
+        "attempt": "alternate_path_symlink",
+        "detail": {
+          "errno": 13,
+          "error": "PermissionError: Permission denied",
+          "path": "/tmp/loom-boundary-runtime/twin/agent-home/store-link"
+        },
+        "outcome": "denied"
+      },
+      {
+        "attempt": "alternate_path_traversal",
+        "detail": {
+          "errno": 13,
+          "error": "PermissionError: Permission denied",
+          "path": "/tmp/loom-boundary-runtime/twin/sock/../service/events.db"
+        },
+        "outcome": "denied"
+      },
+      {
+        "attempt": "forged_token_open",
+        "detail": {
+          "error": "unrecognised token",
+          "kind": "refusal"
+        },
+        "outcome": "refused"
+      },
+      {
+        "attempt": "issuance_attempt_on_data_socket",
+        "detail": {
+          "error": "the agent interface has no operation 'issue_token'",
+          "kind": "unknown_op"
+        },
+        "outcome": "refused"
+      },
+      {
+        "attempt": "legitimate_pattern_view",
+        "detail": {
+          "regions": 6
+        },
+        "outcome": "ok"
+      },
+      {
+        "attempt": "legitimate_region_open",
+        "detail": {
+          "content_bytes": 211,
+          "title": "Components",
+          "version": 1
+        },
+        "outcome": "ok"
+      }
+    ],
+    "legitimate_access_ok": true,
+    "probe_agent": "99999999-9999-4999-8999-999999999999",
+    "socket_attacks_refused": true,
+    "summary": "Pre-run boundary probe against the disposable twin: every direct and alternate-path read from the agent OS context was denied by the operating system; forged-token and issuance attempts on the data socket were refused; legitimate operations through the harness succeeded.",
+    "twin_config": {
+      "agent-home": {
+        "mode": "0o755",
+        "owner": "loomagent"
+      },
+      "service": {
+        "mode": "0o700",
+        "owner": "loomfab"
+      },
+      "service/code": {
+        "mode": "0o750",
+        "owner": "loomfab"
+      },
+      "service/events.db": {
+        "mode": "0o600",
+        "owner": "loomfab"
+      },
+      "service/failures": {
+        "mode": "0o700",
+        "owner": "loomfab"
+      },
+      "service/ground-truth.json": {
+        "mode": "0o600",
+        "owner": "loomfab"
+      },
+      "sock": {
+        "mode": "0o711",
+        "owner": "loomfab"
+      },
+      "sock/fabric.sock": {
+        "mode": "0o777",
+        "owner": "loomfab"
+      }
+    },
+    "twin_name": "twin"
+  },
+  "unrecorded_failure_diagnostic": {
+    "append_error": "RuntimeError: injected fault (LOOM_FAULT_INJECT): the RUN_FAILED append failed",
+    "breach": {
+      "breach": "hard_line_read_record",
+      "claimed_but_not_made": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "declared_read_set": [
+        "11111111-1111-4111-8111-111111111111",
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "detail": "declared read set ['11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333'] does not match the harness read record ['11111111-1111-4111-8111-111111111111']: reads claimed but not made ['33333333-3333-4333-8333-333333333333'], reads made but omitted []",
+      "made_but_not_claimed": [],
+      "recorded_read_set": [
+        "11111111-1111-4111-8111-111111111111"
+      ],
+      "summary": "The run failed: a contribution declared a read set that does not match the harness read record \u2014 a hard-line breach (section 9). The run is stopped; no further agent activity is admitted."
+    },
+    "kind": "unrecordable_run_failure",
+    "note": "The RUN_FAILED event could not be appended. The service latched closed in-process and refused all further agent operations. No RUN_FAILED event exists in the history; this file is the record of the failure, and it is deliberately NOT part of the event history.",
+    "run_id": "stage2-fault-test",
+    "summary": "An unrecordable run failure occurred and was preserved as an external diagnostic record; the service failed closed.",
+    "timestamp_utc": "2026-11-21T10:51:15.860465+00:00"
+  }
+}
