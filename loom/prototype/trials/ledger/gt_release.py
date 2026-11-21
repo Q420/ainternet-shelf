@@ -10,16 +10,31 @@ CORRECTION ROUND (2026-11-21, per Vane's trials-build examination):
   accepts it: the shelf read-back is parsed, and the anchor record's fields
   (seq, type, head_hash, path, anchor) must match the sequence event. A
   malformed or mismatched anchor record REFUSES release.
-- The sealed material is the ACTUAL layer-4 packet (assembled mechanically
-  from the pinned Rev 9 authorities and sealed under the loomgt identity by
-  ledger/seal_ground_truth.py), not the build round's stand-in. The stand-in
-  file and its evidence remain preserved as build history.
-  GT_RELEASE_FILE overrides the packet path (used by negative tests only to
-  point at a nonexistent file; the release order is unchanged).
+
+CORRECTION ROUND 2 (2026-11-21, per Vane's correction examination, D7-B):
+- The gate now verifies the COMPLETE SS13 order in the sequence:
+  EVIDENCE_FROZEN -> SCORING_COMPLETED -> SCORING_FROZEN, each present, in
+  that relative order. Raw evidence must be frozen before any scoring
+  begins; the round-1 gate did not enforce EVIDENCE_FROZEN's position.
+- It also verifies the MANIFEST BINDING: SCORING_COMPLETED and
+  SCORING_FROZEN must bind the SAME non-empty completed-scoring-sheets
+  manifest hash (a well-formed SHA-256 in the recorded binding field).
+  Two correctly ordered event names referring to different scoring
+  artifacts no longer pass. Absent, out-of-order, or inconsistently bound
+  sequences REFUSE, with the reason recorded in the result.
+
+Sealed packets (D7-A): GT_RELEASE_FILE selects the sealed packet the
+release operates on. The default path is the correction round 1 packet
+(gt-store/layer4-packet.txt), which contains Annex A + Annex C extracts --
+preserved build history, NOT the sealed ground truth. The actual sealed
+ground truth is the Annex D packet (gt-store/annex-d-packet.txt), sealed
+under the loomgt identity by ledger/seal_annex_d.py; the correction
+round 2 demonstrations set GT_RELEASE_FILE to that packet. The build
+round's stand-in file and its evidence remain preserved as build history.
 
 Order of operations — the release path cannot hand over material before its
 own access record is secured:
-  1. Verify the complete scoring order exists in the ledger sequence.
+  1. Verify the complete scoring order + manifest binding in the sequence.
   2. Verify + structurally validate the SCORING_FROZEN shelf anchor.
   3. Append GROUND_TRUTH_ACCESSED to the sequence.
   4. Anchor the GROUND_TRUTH_ACCESSED head on the shelf (record checked).
@@ -27,7 +42,7 @@ own access record is secured:
      identity that can read it) and write it to the examiner output path.
 If any of steps 1-4 fails, the material is NOT read and NOT released.
 Set GT_RELEASE_SABOTAGE_ANCHOR=1 to simulate an anchoring failure."""
-import hashlib, json, os, subprocess, sys
+import hashlib, json, os, re, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ledger_client import call as ledger_call
@@ -81,27 +96,98 @@ def validate_anchor_record(rec, event):
         return "anchor repository %r is not Q420/ainternet-shelf" % rec.get("anchor")
     return None
 
+# The completed-scoring-sheets manifest hash is recorded in the scoring
+# events' payloads under the first of these fields present (the ledger's
+# recorded convention is "sheets_sha256", as in the correction round 1
+# dummy lifecycle). The binding value must be a well-formed SHA-256.
+MANIFEST_KEYS = ("sheets_sha256", "sheets_manifest_sha256",
+                 "completed_sheets_manifest_sha256")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+def manifest_binding(event):
+    """Returns (value, status, detail): status is "ok", "missing" (no
+    binding field in the payload), or "malformed" (field present but the
+    value is empty, not a string, or not a well-formed SHA-256)."""
+    payload = event.get("payload") or {}
+    for key in MANIFEST_KEYS:
+        if key in payload:
+            v = payload[key]
+            if not isinstance(v, str) or not v:
+                return None, "malformed", ("field %r is present but its value is "
+                                            "empty or not a string" % key)
+            if not _SHA256_RE.match(v):
+                return None, "malformed", ("field %r value is not a well-formed "
+                                            "SHA-256 hash" % key)
+            return v, "ok", key
+    return None, "missing", "no completed-scoring-sheets manifest hash field in the payload"
+
 def find_scoring_order(events):
-    """Returns (completed_event, frozen_event, why). The complete order is:
-    a SCORING_COMPLETED, then a SCORING_FROZEN strictly after it."""
-    completed = None
+    """Returns (evidence_frozen, completed, frozen, manifest_sha256, why).
+
+    The complete SS13 order, verified in full:
+      EVIDENCE_FROZEN -> SCORING_COMPLETED -> SCORING_FROZEN
+    each present, in that relative order, AND the SCORING_COMPLETED and
+    SCORING_FROZEN of the accepted triple bind the same non-empty
+    completed-scoring-sheets manifest hash. On any failure the event
+    triple is (None, None, None, None) and why names the defect."""
+    by_type = {}
     for e in events:
-        if e["type"] == "SCORING_COMPLETED" and completed is None:
-            completed = e
-        if e["type"] == "SCORING_FROZEN" and completed is not None and e["seq"] > completed["seq"]:
-            return completed, e, None
-    types = [e["type"] for e in events]
-    if "SCORING_FROZEN" in types and "SCORING_COMPLETED" not in types:
-        return None, None, ("SCORING_FROZEN exists but SCORING_COMPLETED is absent: "
-                            "the complete scoring order is not present")
-    if completed is None:
-        return None, None, "SCORING_COMPLETED does not exist in the sequence"
-    return None, None, "no SCORING_FROZEN exists after SCORING_COMPLETED"
+        by_type.setdefault(e["type"], []).append(e)
+    frozen_evs = by_type.get("EVIDENCE_FROZEN", [])
+    completed_evs = by_type.get("SCORING_COMPLETED", [])
+    scoring_frozen_evs = by_type.get("SCORING_FROZEN", [])
+    if not frozen_evs:
+        return None, None, None, None, (
+            "EVIDENCE_FROZEN is absent from the sequence: raw evidence must "
+            "be frozen before any scoring begins (SS13 order not present)")
+    if not completed_evs:
+        return None, None, None, None, (
+            "SCORING_COMPLETED is absent from the sequence: the complete "
+            "scoring order is not present")
+    if not scoring_frozen_evs:
+        return None, None, None, None, (
+            "SCORING_FROZEN is absent from the sequence: the complete "
+            "scoring order is not present")
+    ef = frozen_evs[0]
+    completed_after = [e for e in completed_evs if e["seq"] > ef["seq"]]
+    if not completed_after:
+        return None, None, None, None, (
+            "EVIDENCE_FROZEN (seq %d) does not precede SCORING_COMPLETED "
+            "(earliest at seq %d): the complete SS13 order is not present"
+            % (ef["seq"], completed_evs[0]["seq"]))
+    binding_failure = None
+    for sc in completed_after:
+        sc_val, sc_status, sc_detail = manifest_binding(sc)
+        for sf in scoring_frozen_evs:
+            if sf["seq"] <= sc["seq"]:
+                continue
+            sf_val, sf_status, sf_detail = manifest_binding(sf)
+            if sc_status == "ok" and sf_status == "ok" and sc_val == sf_val:
+                return ef, sc, sf, sc_val, None
+            if binding_failure is None:
+                if sc_status != "ok":
+                    binding_failure = (
+                        "SCORING_COMPLETED (seq %d) manifest binding is %s: %s"
+                        % (sc["seq"], sc_status, sc_detail))
+                elif sf_status != "ok":
+                    binding_failure = (
+                        "SCORING_FROZEN (seq %d) manifest binding is %s: %s"
+                        % (sf["seq"], sf_status, sf_detail))
+                else:
+                    binding_failure = (
+                        "mismatched completed-scoring-sheets manifest hashes: "
+                        "SCORING_COMPLETED (seq %d) binds %s but SCORING_FROZEN "
+                        "(seq %d) binds %s" % (sc["seq"], sc_val, sf["seq"], sf_val))
+    if binding_failure is not None:
+        return None, None, None, None, binding_failure
+    return None, None, None, None, (
+        "no SCORING_FROZEN exists after a SCORING_COMPLETED that follows "
+        "EVIDENCE_FROZEN (seq %d)" % ef["seq"])
 
 def release(examiner_id, out_path):
     events = ledger_call({"op": "list"})["events"]
-    # step 1: the complete scoring order must be present
-    completed, frozen, why = find_scoring_order(events)
+    # step 1: the complete scoring order + manifest binding must verify
+    ef, completed, frozen, manifest_sha, why = find_scoring_order(events)
     if frozen is None:
         return {"released": False, "stage": "gate", "why": why}
     # step 2: the SCORING_FROZEN anchor must be present AND structurally valid
@@ -119,9 +205,11 @@ def release(examiner_id, out_path):
     ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
     app = ledger_call({"op": "append", "type": "GROUND_TRUTH_ACCESSED",
                        "payload": {"examiner": examiner_id,
-                                   "scope": "layer-4 examination of the sealed ground truth (actual layer-4 packet, correction round)",
+                                   "scope": "layer-4 examination of the sealed ground truth (packet file: %s)" % os.path.basename(GT_FILE),
+                                   "evidence_frozen_seq": ef["seq"],
                                    "scoring_completed_seq": completed["seq"],
-                                   "scoring_frozen_seq": frozen["seq"]},
+                                   "scoring_frozen_seq": frozen["seq"],
+                                   "sheets_manifest_sha256": manifest_sha},
                        "timestamp": ts, "genesis_prev": ""})
     if not app.get("ok"):
         return {"released": False, "stage": "append", "why": "GROUND_TRUTH_ACCESSED append failed: %s" % app}

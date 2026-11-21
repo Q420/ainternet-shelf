@@ -1,0 +1,30 @@
+{
+ "item": "Correction round 2 preservation check (vs pre-round full-tree SHA-256 baseline)",
+ "baseline_files": 633,
+ "modified": [
+  "ledger/__pycache__/gt_release.cpython-312.pyc",
+  "ledger/gt_release.py"
+ ],
+ "deleted": [],
+ "declared_code_changes": [
+  "ledger/gt_release.py"
+ ],
+ "pycache_regenerated": [
+  "ledger/__pycache__/gt_release.cpython-312.pyc"
+ ],
+ "added_files": [
+  "evidence/CD7A_annex_d_sealing.json",
+  "evidence/CD7B_gate_negatives.json",
+  "evidence/CD7_positive_lifecycle.json",
+  "evidence/dummy_scoring_mapping_correction2.json",
+  "evidence/dummy_scoring_sheets_correction2.json",
+  "evidence/dummy_trials_correction2/DUMMY-1.response.txt",
+  "evidence/dummy_trials_correction2/DUMMY-2.response.txt",
+  "evidence/dummy_trials_correction2/validator_outputs.json",
+  "evidence/freeze_manifest_correction2_dummy.json",
+  "ledger/seal_annex_d.py",
+  "tests/run_correction2_d7.py"
+ ],
+ "preservation_violations": [],
+ "original_submissions_preserved": true
+}

@@ -1,0 +1,696 @@
+{
+ "item": "Correction round 2, D7-B: strengthened-gate negative tests",
+ "target_packet": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+ "target_packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+ "tests": {
+  "missing_evidence_frozen": {
+   "released": false,
+   "stage": "gate",
+   "why": "EVIDENCE_FROZEN is absent from the sequence: raw evidence must be frozen before any scoring begins (SS13 order not present)",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 3,
+    "hash": "2eda59af8c8d58da1f18b078c148c9b81de602a515fc62f990d924f72c33ef66",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 3,
+    "hash": "2eda59af8c8d58da1f18b078c148c9b81de602a515fc62f990d924f72c33ef66",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "0aaf61f5c96e8d852af7e5b12565cf53c2669c563a699f62787ace62a17e2b5d",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-missing-ef-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:22:32.472004+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "2ad3efecbc0493ea6c5ae000646389f7c026086f748530d5cf24f9005e3940a0",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-missing-ef-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "0aaf61f5c96e8d852af7e5b12565cf53c2669c563a699f62787ace62a17e2b5d",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:22:32.472604+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "2eda59af8c8d58da1f18b078c148c9b81de602a515fc62f990d924f72c33ef66",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-missing-ef-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "2ad3efecbc0493ea6c5ae000646389f7c026086f748530d5cf24f9005e3940a0",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:22:32.473183+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "evidence_frozen_after_scoring_completed": {
+   "released": false,
+   "stage": "gate",
+   "why": "EVIDENCE_FROZEN (seq 3) does not precede SCORING_COMPLETED (earliest at seq 2): the complete SS13 order is not present",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "b1129dc9f0b32e608d0769486636751a4dd95963435d096e04729b914c713308",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "b1129dc9f0b32e608d0769486636751a4dd95963435d096e04729b914c713308",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "d68f67f7016fc2641459d7aa8b5b1518dd08b3c82dd24c2debb280759e687b06",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-ef-after-sc-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:22:42.989040+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "1fa7f2ca529ef463c0a53c67e0e1c765a7f1b0b4acdc646e2d98251d7cb10007",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-ef-after-sc-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "d68f67f7016fc2641459d7aa8b5b1518dd08b3c82dd24c2debb280759e687b06",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:22:42.989573+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "0430d9db3e742af0f2ad3b45042f0cf72fa3b37d7198b925122a9a447ae79a73",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-ef-after-sc-DUMMY"
+     },
+     "prev_hash": "1fa7f2ca529ef463c0a53c67e0e1c765a7f1b0b4acdc646e2d98251d7cb10007",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:22:42.990082+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "b1129dc9f0b32e608d0769486636751a4dd95963435d096e04729b914c713308",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-ef-after-sc-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "0430d9db3e742af0f2ad3b45042f0cf72fa3b37d7198b925122a9a447ae79a73",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:22:42.990530+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "mismatched_manifest_hashes": {
+   "released": false,
+   "stage": "gate",
+   "why": "mismatched completed-scoring-sheets manifest hashes: SCORING_COMPLETED (seq 3) binds 81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176 but SCORING_FROZEN (seq 4) binds ee94378e98c02796a5a80ef4834caa0fcef2a1451cc86f31f2f6dc51fb299b43",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "aaa25a03606ef3bcd1f0680e6ea6163d3f9f0b48ab419444b111cbfa56458545",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "aaa25a03606ef3bcd1f0680e6ea6163d3f9f0b48ab419444b111cbfa56458545",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "57f61e701b59d154acadb632924f930bfb6136430e51e6a19be3df53c241ff88",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-mismatch-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:22:53.503308+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "fb692b744f1eeea9b3188c331269be3f65c7d347d3b7bf5d36a6d9ca82326d2d",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-mismatch-DUMMY"
+     },
+     "prev_hash": "57f61e701b59d154acadb632924f930bfb6136430e51e6a19be3df53c241ff88",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:22:53.504103+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "f0d54688cc5987576fde8a2e019702f82c5a465888e892e106214fc6f6c6b92b",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-mismatch-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "fb692b744f1eeea9b3188c331269be3f65c7d347d3b7bf5d36a6d9ca82326d2d",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:22:53.504581+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "aaa25a03606ef3bcd1f0680e6ea6163d3f9f0b48ab419444b111cbfa56458545",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-mismatch-DUMMY",
+      "sheets_sha256": "ee94378e98c02796a5a80ef4834caa0fcef2a1451cc86f31f2f6dc51fb299b43"
+     },
+     "prev_hash": "f0d54688cc5987576fde8a2e019702f82c5a465888e892e106214fc6f6c6b92b",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:22:53.505041+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "binding_absent_on_scoring_completed": {
+   "released": false,
+   "stage": "gate",
+   "why": "SCORING_COMPLETED (seq 3) manifest binding is missing: no completed-scoring-sheets manifest hash field in the payload",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "554ee7d3947da54f78d0720f474a8b0f8161a218e0c52296c507851abe1232f4",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "554ee7d3947da54f78d0720f474a8b0f8161a218e0c52296c507851abe1232f4",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "95416be615ce69a9200b97a5306620bf288750bd97c326dd6f22e40a4573360b",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-binding-absent-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:05.170035+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "a7b3a7707895064585a72834a9aab426b483b0ffbfd0bc79b666805f60b845b0",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-binding-absent-DUMMY"
+     },
+     "prev_hash": "95416be615ce69a9200b97a5306620bf288750bd97c326dd6f22e40a4573360b",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:05.170783+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "f67782966922cac4b1a100f2b779b66d3421a67331faaed7009e36e724e8d94a",
+     "payload": {
+      "DUMMY": true,
+      "note": "no manifest binding field",
+      "round_id": "correction2-neg-binding-absent-DUMMY"
+     },
+     "prev_hash": "a7b3a7707895064585a72834a9aab426b483b0ffbfd0bc79b666805f60b845b0",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:05.171671+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "554ee7d3947da54f78d0720f474a8b0f8161a218e0c52296c507851abe1232f4",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-binding-absent-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "f67782966922cac4b1a100f2b779b66d3421a67331faaed7009e36e724e8d94a",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:23:05.172446+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "binding_empty_on_scoring_completed": {
+   "released": false,
+   "stage": "gate",
+   "why": "SCORING_COMPLETED (seq 3) manifest binding is malformed: field 'sheets_sha256' is present but its value is empty or not a string",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "dc63b4bc522fc72ff77b0e7c3d72456c1c141d8bd57b0a8cadf8f779780b673c",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "dc63b4bc522fc72ff77b0e7c3d72456c1c141d8bd57b0a8cadf8f779780b673c",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "00bd80cd9b88e881ec6498ae67512f24074a9845015be4e65ae84b1e12c2b58b",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-binding-empty-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:15.688425+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "a7804ad6f73eb50ba80eab87472818871c8e3ff31cd43d2679167cafe425271f",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-binding-empty-DUMMY"
+     },
+     "prev_hash": "00bd80cd9b88e881ec6498ae67512f24074a9845015be4e65ae84b1e12c2b58b",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:15.688961+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "3d2c4e8d78c5bb710a796fa5d1012015ff917330eea9c0595ca819bb72c66ade",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-binding-empty-DUMMY",
+      "sheets_sha256": ""
+     },
+     "prev_hash": "a7804ad6f73eb50ba80eab87472818871c8e3ff31cd43d2679167cafe425271f",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:15.689699+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "dc63b4bc522fc72ff77b0e7c3d72456c1c141d8bd57b0a8cadf8f779780b673c",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-binding-empty-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "3d2c4e8d78c5bb710a796fa5d1012015ff917330eea9c0595ca819bb72c66ade",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:23:15.690021+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "binding_nonhash_on_scoring_frozen": {
+   "released": false,
+   "stage": "gate",
+   "why": "SCORING_FROZEN (seq 4) manifest binding is malformed: field 'sheets_sha256' value is not a well-formed SHA-256 hash",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "b36c192faed747f1e04ec984000bf8667c13120552f6dfebff93a64694bd03b5",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "b36c192faed747f1e04ec984000bf8667c13120552f6dfebff93a64694bd03b5",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "e7cd523e31b39da0c56a6930c376635ab79d814bb646bfe6bc761d615fc60aa7",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-binding-nonhash-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:24.994845+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "92d788fe2fd8f50fa46f1cc74ca34c64f837397df08e42408dd543ce716bb03b",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-binding-nonhash-DUMMY"
+     },
+     "prev_hash": "e7cd523e31b39da0c56a6930c376635ab79d814bb646bfe6bc761d615fc60aa7",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:24.995399+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "79fa6958f31bd37227b03631b80434c8cdff9c6d200b06bffba9316245fc2c51",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-binding-nonhash-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "92d788fe2fd8f50fa46f1cc74ca34c64f837397df08e42408dd543ce716bb03b",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:24.995789+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "b36c192faed747f1e04ec984000bf8667c13120552f6dfebff93a64694bd03b5",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-binding-nonhash-DUMMY",
+      "sheets_sha256": "not-a-hash"
+     },
+     "prev_hash": "79fa6958f31bd37227b03631b80434c8cdff9c6d200b06bffba9316245fc2c51",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:23:24.996154+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "scoring_completed_absent": {
+   "released": false,
+   "stage": "gate",
+   "why": "SCORING_COMPLETED is absent from the sequence: the complete scoring order is not present",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 3,
+    "hash": "f7824f90023ba0176ece1bd2d09595c8737a0ba990304fd2fb677a9ae4795e99",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 3,
+    "hash": "f7824f90023ba0176ece1bd2d09595c8737a0ba990304fd2fb677a9ae4795e99",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "98ef35dc03a8b21c306af114ee3558a2dc35ceb1efeda3705a6996003a9332cf",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-sc-absent-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:34.801969+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "0477cc448fcd9b320625439b8a168413e143eec44266528573b4e4fe505100b7",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-sc-absent-DUMMY"
+     },
+     "prev_hash": "98ef35dc03a8b21c306af114ee3558a2dc35ceb1efeda3705a6996003a9332cf",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:34.802438+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "f7824f90023ba0176ece1bd2d09595c8737a0ba990304fd2fb677a9ae4795e99",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-sc-absent-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "0477cc448fcd9b320625439b8a168413e143eec44266528573b4e4fe505100b7",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:34.802903+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "mismatched_anchor_record": {
+   "released": false,
+   "stage": "anchor-validation",
+   "why": "SCORING_FROZEN anchor record failed structural validation: anchor head_hash does not match the sequence head hash at that position",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "e20efa5d6a444a7e6c3bd2e79375abeaa53213706f39ac3877dff182f86e9b29",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-anchor-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:44.550767+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "e80516b6c8b0235b467ad582ad55f164a098e6a34539055a9f2e481341193cb3",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-anchor-DUMMY"
+     },
+     "prev_hash": "e20efa5d6a444a7e6c3bd2e79375abeaa53213706f39ac3877dff182f86e9b29",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:44.551403+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "8ba76cfe13f496ead607538d274710a26bc8507f0983eb979b23ef90648a6616",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-anchor-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "e80516b6c8b0235b467ad582ad55f164a098e6a34539055a9f2e481341193cb3",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:44.552057+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-anchor-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "8ba76cfe13f496ead607538d274710a26bc8507f0983eb979b23ef90648a6616",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:23:44.552459+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "malformed_anchor_readback": {
+   "released": false,
+   "stage": "anchor-check",
+   "why": "SCORING_FROZEN anchor could not be parsed: read-back envelope unparsable: Expecting value: line 1 column 1 (char 0)",
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 4,
+    "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+    "type": "SCORING_FROZEN"
+   },
+   "events": [
+    {
+     "hash": "e20efa5d6a444a7e6c3bd2e79375abeaa53213706f39ac3877dff182f86e9b29",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-anchor-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:44.550767+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "e80516b6c8b0235b467ad582ad55f164a098e6a34539055a9f2e481341193cb3",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-anchor-DUMMY"
+     },
+     "prev_hash": "e20efa5d6a444a7e6c3bd2e79375abeaa53213706f39ac3877dff182f86e9b29",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:44.551403+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "8ba76cfe13f496ead607538d274710a26bc8507f0983eb979b23ef90648a6616",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-anchor-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "e80516b6c8b0235b467ad582ad55f164a098e6a34539055a9f2e481341193cb3",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:44.552057+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-anchor-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "8ba76cfe13f496ead607538d274710a26bc8507f0983eb979b23ef90648a6616",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:23:44.552459+00:00",
+     "type": "SCORING_FROZEN"
+    }
+   ]
+  },
+  "fail_closed_anchor_sabotage_annex_d": {
+   "released": false,
+   "stage": "anchor-access-record",
+   "why": "GROUND_TRUTH_ACCESSED could not be anchored (simulated anchoring failure (fail-closed test)); material NOT released",
+   "access_event_seq": 5,
+   "material_released": false,
+   "head_before": {
+    "ok": true,
+    "seq": 4,
+    "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+    "type": "SCORING_FROZEN"
+   },
+   "head_after": {
+    "ok": true,
+    "seq": 5,
+    "hash": "4ad021b9fbfb5089599e7909b5e41fbb40f2feb3f9ab735d7f9b76b0b3b2be88",
+    "type": "GROUND_TRUTH_ACCESSED"
+   },
+   "events": [
+    {
+     "hash": "e20efa5d6a444a7e6c3bd2e79375abeaa53213706f39ac3877dff182f86e9b29",
+     "payload": {
+      "DUMMY": true,
+      "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+      "purpose": "correction round 2 D7-B negative tests only",
+      "round_id": "correction2-neg-anchor-DUMMY"
+     },
+     "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+     "seq": 1,
+     "timestamp": "2026-11-21T16:23:44.550767+00:00",
+     "type": "ROUND_CONSTITUTED"
+    },
+    {
+     "hash": "e80516b6c8b0235b467ad582ad55f164a098e6a34539055a9f2e481341193cb3",
+     "payload": {
+      "DUMMY": true,
+      "manifest_sha256": "a69be1561e886c1d4cbb8d1aa51c05bb4828c809b565422105db212a298f173d",
+      "round_id": "correction2-neg-anchor-DUMMY"
+     },
+     "prev_hash": "e20efa5d6a444a7e6c3bd2e79375abeaa53213706f39ac3877dff182f86e9b29",
+     "seq": 2,
+     "timestamp": "2026-11-21T16:23:44.551403+00:00",
+     "type": "EVIDENCE_FROZEN"
+    },
+    {
+     "hash": "8ba76cfe13f496ead607538d274710a26bc8507f0983eb979b23ef90648a6616",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-anchor-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "e80516b6c8b0235b467ad582ad55f164a098e6a34539055a9f2e481341193cb3",
+     "seq": 3,
+     "timestamp": "2026-11-21T16:23:44.552057+00:00",
+     "type": "SCORING_COMPLETED"
+    },
+    {
+     "hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+     "payload": {
+      "DUMMY": true,
+      "round_id": "correction2-neg-anchor-DUMMY",
+      "sheets_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "8ba76cfe13f496ead607538d274710a26bc8507f0983eb979b23ef90648a6616",
+     "seq": 4,
+     "timestamp": "2026-11-21T16:23:44.552459+00:00",
+     "type": "SCORING_FROZEN"
+    },
+    {
+     "hash": "4ad021b9fbfb5089599e7909b5e41fbb40f2feb3f9ab735d7f9b76b0b3b2be88",
+     "payload": {
+      "evidence_frozen_seq": 2,
+      "examiner": "correction2-demo-examiner",
+      "scope": "layer-4 examination of the sealed ground truth (packet file: annex-d-packet.txt)",
+      "scoring_completed_seq": 3,
+      "scoring_frozen_seq": 4,
+      "sheets_manifest_sha256": "81c00478932480599c77c4c6adbf5affc60d49e7bdc035e26170b86f5b95d176"
+     },
+     "prev_hash": "5771bfc259846edb15ec45be26ce9f462f7021686c100b4f9f1b04445a38a4b6",
+     "seq": 5,
+     "timestamp": "2026-11-21T16:23:54.783527+00:00",
+     "type": "GROUND_TRUTH_ACCESSED"
+    }
+   ],
+   "events_after": [
+    "ROUND_CONSTITUTED",
+    "EVIDENCE_FROZEN",
+    "SCORING_COMPLETED",
+    "SCORING_FROZEN",
+    "GROUND_TRUTH_ACCESSED"
+   ]
+  }
+ }
+}

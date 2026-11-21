@@ -1,0 +1,52 @@
+{
+ "item": "Correction round 2, D7-A: Annex D sealed ground truth",
+ "sealed_at_utc": "2026-11-21T16:22:30.405687+00:00",
+ "source_file": "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md",
+ "source_sha256": "53c8d4c51a955e4803ccd0b8d86ece9fdb0cadd1a9e745bc2531daf2393ca252",
+ "source_git_blob": "6a7e3d54b4b653ed6b8ca76392c59d283d8b2b1a",
+ "source_blob_matches_pin": true,
+ "extraction": {
+  "method": "heading-boundary byte-exact slice of the Annex D section (from the '## Annex D' heading line to just before the '## Annex E' heading line); header lines are mechanical metadata only; no paraphrase, no reconstruction",
+  "source_lines_1based_inclusive": [
+   549,
+   606
+  ],
+  "source_byte_range_0based_end_exclusive": [
+   73456,
+   77937
+  ],
+  "annex_d_bytes": 4481,
+  "annex_d_sha256": "7b778c6d9973d2dcad114e607d3f274532324634fd993621fd693f7f2d76e5ce",
+  "contents_as_identified_by_rev9": [
+   "the six fixture-region identities",
+   "the semantic plant",
+   "the structural plant"
+  ]
+ },
+ "packet_path": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+ "packet_bytes": 5189,
+ "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+ "sealed_store_listing": "total 16\n-rw------- 1 loomgt loomgt 5189 Nov 21 16:22 annex-d-packet.txt\n-rw------- 1 loomgt loomgt  405 Nov 21 15:52 annex-d-sealed-standin.txt\n-rw------- 1 loomgt loomgt 3553 Nov 21 16:07 layer4-packet.txt\n",
+ "sealed_store_sha256sum_as_loomgt": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f  /tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+ "packet_hash_verified_under_sealing_identity": true,
+ "denial_tests": {
+  "loomagent": {
+   "identity": "uid=1001(loomagent) gid=1001(loomagent) groups=1001(loomagent)",
+   "cat_returncode": 1,
+   "cat_stderr": "cat: /tmp/loom-trials-runtime/gt-store/annex-d-packet.txt: Permission denied"
+  },
+  "loomledger": {
+   "identity": "uid=1002(loomledger) gid=1002(loomledger) groups=1002(loomledger)",
+   "cat_returncode": 1,
+   "cat_stderr": "cat: /tmp/loom-trials-runtime/gt-store/annex-d-packet.txt: Permission denied"
+  }
+ },
+ "round1_annex_a_c_packet_preserved": {
+  "path": "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+  "sha256sum_as_loomgt_before": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15  /tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+  "sha256sum_as_loomgt_after": "8bb7c08ade85f2c46233cdcf3998e7ad043c93764ef1d48637ac0e493aa26c15  /tmp/loom-trials-runtime/gt-store/layer4-packet.txt",
+  "unchanged": true,
+  "note": "The round-1 packet contains Annex A + Annex C extracts. It is preserved unchanged as submitted evidence. It is NOT the Annex D packet and is not described as such."
+ },
+ "standin_preserved": true
+}

@@ -1,0 +1,241 @@
+{
+ "round_id": "correction2-dummy-round-DUMMY",
+ "anchor_dir": "trials-anchors/correction2-dummy-round",
+ "anchors": {
+  "ROUND_CONSTITUTED": "37c67668c481795682214fe8084a853aed80ae0d",
+  "EVIDENCE_FROZEN": "0994b53395fc3b8142564cb8b237947e86ae4beb",
+  "SCORING_FROZEN": "a02843e59ef1f565f46971e6c9ac12ea977db967",
+  "GROUND_TRUTH_ACCESSED": "f5e710b661675897ffad583a32e5d07b1c0c7e09"
+ },
+ "target_packet": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+ "target_packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+ "sheets_manifest_sha256": "b9035f7ec0d9e1da5f0354c511fe903a122f05a224cacf635e08591a2680ae3b",
+ "release": {
+  "released": true,
+  "access_event_seq": 10,
+  "access_anchor_commit": "f5e710b661675897ffad583a32e5d07b1c0c7e09",
+  "material_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+  "out_path": "/tmp/loom-trials-runtime/work/examiner-out-correction2.txt",
+  "gt_file": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+  "material_hash_matches_annex_d_packet": true
+ },
+ "chain_verify": {
+  "ok": true,
+  "events": 11
+ },
+ "events": [
+  {
+   "hash": "99580fe2c52c4bd21fcc9e1c402df9e5684cd07867bf252ede4c9eacb59bd40c",
+   "payload": {
+    "DUMMY": true,
+    "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+    "constitution_annex_sha256": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+    "gate_schema_profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef",
+    "round_id": "correction2-dummy-round-DUMMY",
+    "validators": {
+     "independence": "No shared custom validation code; each implements the gate-schema contract and SS4 cross-field rules in its own code (validator_py/validate_py.py, validator_js/validate_js.js). The only shared artifacts are the pinned texts.",
+     "validator_1_python": {
+      "draft": "2020-12",
+      "format_assertion": true,
+      "library": "jsonschema",
+      "python": "3.12.3",
+      "version": "4.10.3"
+     },
+     "validator_2_ajv": {
+      "ajv-formats": "3.0.1",
+      "draft": "2020-12",
+      "format_assertion": true,
+      "library": "ajv",
+      "node": "v24.22.1",
+      "version": "8.20.0"
+     }
+    }
+   },
+   "prev_hash": "1eddc9d9f2368aa7c2768e2bcab88e36af2e37a967da23b309acc30a8fefdf9a",
+   "seq": 1,
+   "timestamp": "2026-11-21T16:23:56.859901+00:00",
+   "type": "ROUND_CONSTITUTED"
+  },
+  {
+   "hash": "67a70eeff18a4ad971cc563bc24dca6e6cdb6ec3b164fd44e863c9f42a1e58fc",
+   "payload": {
+    "DUMMY": true,
+    "act": "sealing of the Annex D ground-truth packet (D7-A), performed by ledger/seal_annex_d.py before this chain was built",
+    "extraction": {
+     "annex_d_bytes": 4481,
+     "annex_d_sha256": "7b778c6d9973d2dcad114e607d3f274532324634fd993621fd693f7f2d76e5ce",
+     "contents_as_identified_by_rev9": [
+      "the six fixture-region identities",
+      "the semantic plant",
+      "the structural plant"
+     ],
+     "method": "heading-boundary byte-exact slice of the Annex D section (from the '## Annex D' heading line to just before the '## Annex E' heading line); header lines are mechanical metadata only; no paraphrase, no reconstruction",
+     "source_byte_range_0based_end_exclusive": [
+      73456,
+      77937
+     ],
+     "source_lines_1based_inclusive": [
+      549,
+      606
+     ]
+    },
+    "packet_bytes": 5189,
+    "packet_path": "/tmp/loom-trials-runtime/gt-store/annex-d-packet.txt",
+    "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "round_id": "correction2-dummy-round-DUMMY",
+    "sealing_evidence": "evidence/CD7A_annex_d_sealing.json",
+    "source_file": "/home/hatch/workspace/duenna-fix/LOOM-SPEC-V0.1-REV9-DRAFT-2026-11-21.md",
+    "source_git_blob": "6a7e3d54b4b653ed6b8ca76392c59d283d8b2b1a",
+    "source_sha256": "53c8d4c51a955e4803ccd0b8d86ece9fdb0cadd1a9e745bc2531daf2393ca252"
+   },
+   "prev_hash": "99580fe2c52c4bd21fcc9e1c402df9e5684cd07867bf252ede4c9eacb59bd40c",
+   "seq": 2,
+   "timestamp": "2026-11-21T16:24:04.368244+00:00",
+   "type": "GROUND_TRUTH_SEALED"
+  },
+  {
+   "hash": "04f46d01ce06c4e76b2dd57cf3f6523f303eaea902fc24984620845f71781388",
+   "payload": {
+    "DUMMY": true,
+    "layer1": {
+     "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+     "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+    },
+    "layer2_response_sha256": "3eec9f2d6139f0f442078f2d5a97e75f18d7543d46f69dcd87b70a9b0b64a7e8",
+    "round_id": "correction2-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-1"
+   },
+   "prev_hash": "67a70eeff18a4ad971cc563bc24dca6e6cdb6ec3b164fd44e863c9f42a1e58fc",
+   "seq": 3,
+   "timestamp": "2026-11-21T16:24:05.138016+00:00",
+   "type": "TRIAL_RECORDED"
+  },
+  {
+   "hash": "1d186416ea5e12d6d5d00d656258991e5a089d859a013776c72448dcd2f22b71",
+   "payload": {
+    "DUMMY": true,
+    "agree": true,
+    "ajv_valid": true,
+    "python_valid": true,
+    "round_id": "correction2-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-1"
+   },
+   "prev_hash": "04f46d01ce06c4e76b2dd57cf3f6523f303eaea902fc24984620845f71781388",
+   "seq": 4,
+   "timestamp": "2026-11-21T16:24:05.138815+00:00",
+   "type": "VALIDATION_RECORDED"
+  },
+  {
+   "hash": "492f1a435179375698b244a70e064a9cc9e4e40244b057487ce22b24b9bbda26",
+   "payload": {
+    "DUMMY": true,
+    "layer1": {
+     "annex_a_sha256": "25ab2d6296bfaad316b55e653c905b57a553072867058b5bd12bdbbdb0f029e6",
+     "profile_sha256": "bdb0ad70cd40c0ed61a0f05b2e2c66a87021df28c4f5b81e2c7400d5d25231ef"
+    },
+    "layer2_response_sha256": "ff2bebd6427e0c689e3c45f2fdc50f5ffcc3bac0042b2c3801cf76f97c31b480",
+    "round_id": "correction2-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-2"
+   },
+   "prev_hash": "1d186416ea5e12d6d5d00d656258991e5a089d859a013776c72448dcd2f22b71",
+   "seq": 5,
+   "timestamp": "2026-11-21T16:24:05.567057+00:00",
+   "type": "TRIAL_RECORDED"
+  },
+  {
+   "hash": "5349585bbc633868f9fde9203bdc2bf9af852c421d93ee9221d87dd61276b99d",
+   "payload": {
+    "DUMMY": true,
+    "agree": true,
+    "ajv_valid": false,
+    "python_valid": false,
+    "round_id": "correction2-dummy-round-DUMMY",
+    "trial_uid": "DUMMY-2"
+   },
+   "prev_hash": "492f1a435179375698b244a70e064a9cc9e4e40244b057487ce22b24b9bbda26",
+   "seq": 6,
+   "timestamp": "2026-11-21T16:24:05.567960+00:00",
+   "type": "VALIDATION_RECORDED"
+  },
+  {
+   "hash": "889374245897c87e540a55c3fff7616b80f90bd25ba5177290e1f89cb8d2f123",
+   "payload": {
+    "DUMMY": true,
+    "manifest_sha256": "08b1f82dcd0ad96f78aa170e1b9a9a2d159f6cd4c46ec620560198c1764fc8e9",
+    "round_id": "correction2-dummy-round-DUMMY"
+   },
+   "prev_hash": "5349585bbc633868f9fde9203bdc2bf9af852c421d93ee9221d87dd61276b99d",
+   "seq": 7,
+   "timestamp": "2026-11-21T16:24:05.568975+00:00",
+   "type": "EVIDENCE_FROZEN"
+  },
+  {
+   "hash": "bb2ac71e5872d79b8282ea90f06c32ab1b6f5e82bedf1c9fa4ee4c14b8c7f24a",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction2-dummy-round-DUMMY",
+    "sheets_sha256": "b9035f7ec0d9e1da5f0354c511fe903a122f05a224cacf635e08591a2680ae3b"
+   },
+   "prev_hash": "889374245897c87e540a55c3fff7616b80f90bd25ba5177290e1f89cb8d2f123",
+   "seq": 8,
+   "timestamp": "2026-11-21T16:24:12.831955+00:00",
+   "type": "SCORING_COMPLETED"
+  },
+  {
+   "hash": "222e98c7e6a0084f4c0a9fa7a439671f66900602c16b8e5e75148a854fc9af99",
+   "payload": {
+    "DUMMY": true,
+    "round_id": "correction2-dummy-round-DUMMY",
+    "sheets_sha256": "b9035f7ec0d9e1da5f0354c511fe903a122f05a224cacf635e08591a2680ae3b"
+   },
+   "prev_hash": "bb2ac71e5872d79b8282ea90f06c32ab1b6f5e82bedf1c9fa4ee4c14b8c7f24a",
+   "seq": 9,
+   "timestamp": "2026-11-21T16:24:12.832696+00:00",
+   "type": "SCORING_FROZEN"
+  },
+  {
+   "hash": "2c8c29efb7da37fb2a49ac026cf21ff63149a4010cb4eb12cecda7d8ad0bc7eb",
+   "payload": {
+    "evidence_frozen_seq": 7,
+    "examiner": "correction2-demo-examiner",
+    "scope": "layer-4 examination of the sealed ground truth (packet file: annex-d-packet.txt)",
+    "scoring_completed_seq": 8,
+    "scoring_frozen_seq": 9,
+    "sheets_manifest_sha256": "b9035f7ec0d9e1da5f0354c511fe903a122f05a224cacf635e08591a2680ae3b"
+   },
+   "prev_hash": "222e98c7e6a0084f4c0a9fa7a439671f66900602c16b8e5e75148a854fc9af99",
+   "seq": 10,
+   "timestamp": "2026-11-21T16:24:24.382623+00:00",
+   "type": "GROUND_TRUTH_ACCESSED"
+  },
+  {
+   "hash": "e90d95e1edd3f0a97384b44f7aab4f8a7668c78249f2bab6563b50a294295edd",
+   "payload": {
+    "DUMMY": true,
+    "access_event_seq": 10,
+    "packet_kind": "Annex D sealed ground truth (correction round 2, D7-A)",
+    "packet_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "released_material_sha256": "54a70da4b02f578a88a406df2b1b8a14c244125d2a50bfd9e4172dde23aae40f",
+    "round_id": "correction2-dummy-round-DUMMY"
+   },
+   "prev_hash": "2c8c29efb7da37fb2a49ac026cf21ff63149a4010cb4eb12cecda7d8ad0bc7eb",
+   "seq": 11,
+   "timestamp": "2026-11-21T16:24:31.575290+00:00",
+   "type": "LAYER4_RECORDED"
+  }
+ ],
+ "event_types_in_order": [
+  "ROUND_CONSTITUTED",
+  "GROUND_TRUTH_SEALED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "TRIAL_RECORDED",
+  "VALIDATION_RECORDED",
+  "EVIDENCE_FROZEN",
+  "SCORING_COMPLETED",
+  "SCORING_FROZEN",
+  "GROUND_TRUTH_ACCESSED",
+  "LAYER4_RECORDED"
+ ],
+ "manifest_sha256": "08b1f82dcd0ad96f78aa170e1b9a9a2d159f6cd4c46ec620560198c1764fc8e9"
+}
