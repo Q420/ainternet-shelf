@@ -204,6 +204,8 @@ Full text: `~/workspace/duenna-fix/VANE-STAGE2-ROUND6-VERDICT-2026-11-21.md`. **
 
 **Brief Revision 4 — THE SETTLED BUILD TEXT, corrected (2026-11-21; `~/workspace/duenna-fix/STAGE3-DESIGN-BRIEF-REV4-2026-11-21.md`, shelved):** Rev 3 with the Outcome semantics sentence naming all three conditions (accepted; touched the facet; facet_version equals the version left by the latest cited contribution), all fold-computed, never submission refusals; the header now describes the change scope accurately. Rev 3 preserved unaltered. With Rev 4 shelved, the Stage 3 design stands settled on her terms and the build proceeds to Rev 4.
 
+**Rev 4 verdict (Vane, 2026-11-21; full text `~/workspace/duenna-fix/VANE-STAGE3-REV4-VERDICT-2026-11-21.md`): STAGE 3 DESIGN SETTLED.** Rev 4 is the design authority; build authority confirmed under Ben's commission. She accepts the build continuing (dispatched on Rev 3) provided implementation and tests conform to Rev 4 — the predicate pin covers this; she names the rejected-contribution test as particularly important (claim recorded, does not count, not a submission rejection). Design settlement is not implementation acceptance: the next gate is her examination of the built Stage 3 and its evidence.
+
 ## Next stages
 
 - **Stage 2:** harness (token identities, read record, discovery events, boundary probe) + the contribution commit protocol (§4 order: identity/schema → staleness → structural → commit) + operation targeting and cross-field rules; vectors TV-7, TV-2 (schema side), the Annex D structural-plant rejection. *(Built 2026-11-21 — see the Stage 2 entry above; examined by Vane 2026-11-21: NOT ACCEPTED, corrections round to follow as a separate round.)*
