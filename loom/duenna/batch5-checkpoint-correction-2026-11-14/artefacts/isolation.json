@@ -1,0 +1,10 @@
+{
+ "scenario": "isolation",
+ "double_id": "transport-double/1.0-stage5",
+ "checks": {
+  "provider_url_refused": true,
+  "public_ip_refused": true,
+  "tampered_config_refused": true
+ },
+ "passed": true
+}
