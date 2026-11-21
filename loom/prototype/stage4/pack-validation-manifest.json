@@ -2,15 +2,17 @@
   "cases": [
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-01-fold",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "result": "ok"
       },
-      "fixture_hash": "6b99ed13f3ca0c1990c7a3dcbd7f177a152f97842d4ee848470550fb60e9a78a",
+      "fixture_hash": "9a5ab9e583aed4955320c2ddecd3a0dc98f50557340a83f09c02681786429c7f",
       "observed": {
         "checker": {
           "result": "ok",
@@ -30,16 +32,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-01",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "pass",
         "seal": "issued"
       },
-      "fixture_hash": "7d3cf5043539527fa925b95fa074ca0c2cd2011042c7cb09a3642dfa30e93d86",
+      "fixture_hash": "c0f65f186d54052eb22b41ecdbdefc3285bde4713155b22c7bb2a6d2410110d7",
       "observed": {
         "checker": {
           "attachments": [],
@@ -77,16 +81,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-02",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "note": "state identical except last_seq",
         "result": "ok"
       },
-      "fixture_hash": "3619c7024708ffa6ce7a27b0cdd9808b5dc772905153d40df4f78fb9eb28748d",
+      "fixture_hash": "00d97f05b2083ae596329f482816d081a359a29cc26c134ec5af1f4ddf5fbf0f",
       "observed": {
         "checker": {
           "result": "ok",
@@ -106,17 +112,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-04",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "hash_chain_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "b1f1714b82602896b4b2ccaa7eb3f3958d189e9e3dd209e168231fdbe1227b0b",
+      "fixture_hash": "f66e1d3eef176247642cd44997578ffcdfe498b7d581ae2bcca9fe6f7a940674",
       "observed": {
         "checker": {
           "reason_class": "hash_chain_invalid",
@@ -138,17 +146,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-05",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "sequence_invalid",
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "a15013b3b89ac8a01900845e4e70330a9a6e986c131fd9a69b8bd3239f9586fa",
+      "fixture_hash": "7a8d47c8e7beaf4fb23defd595dc6ad51ac5bbcbb706711ad90c24678f19b593",
       "observed": {
         "checker": {
           "reason_class": "sequence_invalid",
@@ -170,17 +180,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-06",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "7be8b802ba91f4cff76513df0dda8b6a573f4816d8c54f5b860c22b389cd86a6",
+      "fixture_hash": "15030726cfac1e6fa89395311781aed9a8a8f73e80fe8c2a9ff4fc85223c1802",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -202,17 +214,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-07",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "5ab763fe8bfaff4cf2508b3848ab7c2f554ea9f3aee82ac8dce4cdc902ffb0d2",
+      "fixture_hash": "544e89e8a50ce406723da94e5ba4e34a5d191a8ab6dff129e8bc4ca1ebe9087c",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -234,17 +248,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-08",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "df85d1a4e28939bf4448bc216e189e1b276a713d087dcafc2d117a33531abd40",
+      "fixture_hash": "b5b3b49617b8c217f7db0f9f2695f1be63f16a6137394f7f0202bfa5e260489d",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -266,17 +282,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-09",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "2244b982ee1bcfea4c5945b30aaa1ff84079472ca6d88fee5e84041f054c8dee",
+      "fixture_hash": "78a2bec26309013ae7f9c6126c4f4850154850b4c681d99833404f953de7a9e6",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -298,17 +316,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-10",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "3d27d04e411a7497eee9cbe9ac8085c479554b9b54faa7a384c86b7a4aaacd36",
+      "fixture_hash": "892587919d9bd06064a3ccd5acbccad5a36932c6a28cef7cb6ad82aa9f428813",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -330,17 +350,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-11a",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "0fb09f4d8f7f3dedaedf5984f22d8903177b2ea8025499e31c67f0e3ade089bc",
+      "fixture_hash": "c4c6903b5a04c468465fe30b5a231e5ef694555faeac964a78e21855311e9882",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -362,17 +384,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-11b",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "034b0626e81eb5745d33a6087e0c2230d7b35f4c58757292bbc0930a3e2defa5",
+      "fixture_hash": "ebe7e5544c743b08084bb985d2fac9e8cf6a20696fecebc6721092bead3ff799",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -394,17 +418,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-12a",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "c5a67a9b24ef830cff6f22f5662f3883dcad0233c58972f662bb7d1b509f1a06",
+      "fixture_hash": "39da4eaac4a98ecef58baa7673b3376220bb4fe609ab2ced6485dc9b614ee36f",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -426,17 +452,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-12b",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 5
       },
-      "fixture_hash": "eaf1947cdce4f4e9da86a456b63f326278e0b4d5041b8aa7d8f14cbc6223b4ac",
+      "fixture_hash": "9b33dc79933f309edae31d21135e6339baf1d539ba8ef5512668c85ca955f672",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -458,17 +486,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-13a",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "58dd3f70f4526302bbc2b872aeb0534a6e097f1117c76c31f110ed6339ae5d61",
+      "fixture_hash": "2b4abf9af59c431ffcac6c3f25dc3d279dd12a8ffb488080af6b0465d1a9f421",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -490,17 +520,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-13b",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 3
       },
-      "fixture_hash": "50f7b16bc1f6cbc08e93d92dc5a54868068632e31796ca562f340729f8d61637",
+      "fixture_hash": "b1bf4db2ac004193b09345883fd054eb0746d893e146e9e1631716d795428e59",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -522,17 +554,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-13c",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 4
       },
-      "fixture_hash": "308bd87b6a73b7cdd7766eed29dad958c0cb406200c63fb569cc4f92e9c42917",
+      "fixture_hash": "1a0f449bd6066ba7c85fc0c4b73e6632ff2db14b87a374f9882824ecd9315222",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -554,17 +588,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-14a",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "b00de248b2090fbe2083b19dd8795302c77f8f7fa346711175a1a06d7a968d10",
+      "fixture_hash": "e9bacb7a3d58d45c047b9357a129164f663c92f2421b733e5fd3472d0c724bbf",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -586,17 +622,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-14b",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "protocol_transition_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "e38ac79a99c0aa5163e9f9b834f6345cc176d687542a7c5174ff769512b7829d",
+      "fixture_hash": "c8c2c1aea360eb58e5f843d52929225c944a5151a065b427f80d484f437a60f1",
       "observed": {
         "checker": {
           "reason_class": "protocol_transition_invalid",
@@ -618,15 +656,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-15a",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "result": "ok"
       },
-      "fixture_hash": "12fa38ddaf795fc55db62003abb8dfdf3ec3a4ba85f97f06334b552f258ba14e",
+      "fixture_hash": "1cf3f86feb5322f8aa7cd2f244473d49bb9645af5364889b63ad84ae55a44dcc",
       "observed": {
         "checker": {
           "result": "ok",
@@ -646,17 +686,19 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-15b",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "reason_class": "schema_invalid",
         "result": "halt",
         "seq": 2
       },
-      "fixture_hash": "63b84002fe6a6310a7d60647af500b184d54eab8413c9a7786afc06f36e88c47",
+      "fixture_hash": "4d3b7881b8793fb2d6290cc291a0b066adbadf55d590b5caf96b6bdf96e092bb",
       "observed": {
         "checker": {
           "reason_class": "schema_invalid",
@@ -678,15 +720,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-03",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "refused"
       },
-      "fixture_hash": "3de7244625af6257ac667c9e256deef85ee446563ea0d536e2e4ff15270001c3",
+      "fixture_hash": "98b02dbe8c2bed40e6fb0a7abcff1c21ab1ca45be7c2f4b415dd43d653427938",
       "observed": {
         "checker": {
           "attachments": [],
@@ -718,11 +762,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-16",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "failed_checks": [
           [
@@ -735,7 +781,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "7aaa78c838fc08610abd7e368fed8bd6eab15bbacf709b07fe65291a04a0c111",
+      "fixture_hash": "8339c81a8090f606aa39b4431e07814929420d98a5a028b35123237fa64bb57e",
       "observed": {
         "checker": {
           "attachments": [],
@@ -807,15 +853,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-17",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "pass"
       },
-      "fixture_hash": "4895992e1392b2dfc6c8bf5c3c5886201953308e0a90efdc04ac681c742f5693",
+      "fixture_hash": "1681196d6eca06533c24a3392e06803868f0e82519f6f235c8ee2dbc99bd5e83",
       "observed": {
         "checker": {
           "attachments": [],
@@ -853,15 +901,104 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-18",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "failed_checks": [
+          [
+            "S2",
+            [
+              "11111111-1111-4111-8111-111111111111"
+            ]
+          ]
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "a0bba178de481676f750f0652b30d2a02ca11d9d19af44bc75c9a004213c4ea8",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "11111111-1111-4111-8111-111111111111"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "11111111-1111-4111-8111-111111111111"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+      },
+      "case": "VP-18-hi",
+      "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
+      "expected": {
+        "note": "higher-version divergence, no S2 finding",
         "outcome": "mismatch"
       },
-      "fixture_hash": "e39e618c69950b688e23a90ce8ae12764f23608bced31d5ef324e486e4abbf9b",
+      "fixture_hash": "7bd78a9fe9a61151eb9a841d3440cf23c7b75a8989a6adf4c8bf9ddbea889e93",
       "observed": {
         "checker": {
           "attachments": [],
@@ -901,16 +1038,147 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+      },
+      "case": "VP-18-prec",
+      "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
+      "expected": {
+        "failed_checks": [
+          [
+            "S1",
+            [
+              "00000000-0000-4000-8000-000000000102",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          [
+            "S2",
+            [
+              "11111111-1111-4111-8111-111111111111"
+            ]
+          ]
+        ],
+        "outcome": "fail"
+      },
+      "fixture_hash": "47c95763c9d51e91a24ba06082a3d5be9349033d5b3b8863f7d9c3521f46696d",
+      "observed": {
+        "checker": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "11111111-1111-4111-8111-111111111111"
+            ],
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        },
+        "engine": {
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "11111111-1111-4111-8111-111111111111"
+            ],
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            [
+              "S2",
+              [
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
+        }
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-19",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "note": "endpoints advanced",
         "outcome": "pass"
       },
-      "fixture_hash": "e60cc6dbf6914177c380c66c96dc97e984e2d547a064af8cfc47485d08811b77",
+      "fixture_hash": "e144cbef9b125b5c652ac8f023c250e2edc285ef4abb834496469ae338591fcf",
       "observed": {
         "checker": {
           "attachments": [],
@@ -921,7 +1189,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "eaf2d3fd-0138-4e99-a58c-64cafc59e72a"
+              "18e8dcbb-15b7-4fbc-9722-da37f3f283a6"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -936,7 +1204,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "eaf2d3fd-0138-4e99-a58c-64cafc59e72a"
+              "18e8dcbb-15b7-4fbc-9722-da37f3f283a6"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -952,11 +1220,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-20",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "failed_checks": [
           [
@@ -969,7 +1239,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "aa546346d36681141fc28b99e881b099398a2ea669829afd2846a7952c44174e",
+      "fixture_hash": "b5e95b36b35e62d4e121c2138e401b4060b51971dadd6146b932c68a0b8eefea",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1041,15 +1311,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-21",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "pass"
       },
-      "fixture_hash": "533c1fdbadbd0405295bf648e165ce40cf9844b95f535d90bd1a741c7ea938f1",
+      "fixture_hash": "bd64737d13644436d664469be06395dcb96bcd0e10e22e1316e219bcb134e92a",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1087,16 +1359,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-24",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "pass",
         "seal": "issued"
       },
-      "fixture_hash": "f0f63e5a7a17c2f1b1618ac29b88ea54eed9cf86a6d5c72b5ad0eb6f547f7ae2",
+      "fixture_hash": "cd17452ed1d4717d5d906e5d1548d24c2efbb84edce1fdeff6ad1c8feebf9938",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1107,7 +1381,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "0ff837d0-e141-4f9c-b7f7-25f1ec6d74f6"
+              "763c91eb-b9cc-44cb-91f6-a0507e04e039"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1122,7 +1396,7 @@
           "resolutions": [],
           "seal": {
             "contributions": [
-              "0ff837d0-e141-4f9c-b7f7-25f1ec6d74f6"
+              "763c91eb-b9cc-44cb-91f6-a0507e04e039"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1138,15 +1412,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-25",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "refused"
       },
-      "fixture_hash": "c3343c5e83571cf88d072d315116ea59bef6ecdad92e793298e22638ccc519b7",
+      "fixture_hash": "3bcca06f320d8242e808be8432403ac1f21ae14f6d35e7d903ea7ffd0cbaf7ac",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1178,16 +1454,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-26",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "divergence_names": "55555555-5555-4555-8555-555555555555",
         "outcome": "mismatch"
       },
-      "fixture_hash": "4be91fdaa7580321d0e3c0e1b00008b4b03998b344de42e4804fceff91d23b23",
+      "fixture_hash": "ba4cf76c0da2d52c4aca4a500e39dc14b34b59a96094c06fbd0f499bb7268355",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1227,11 +1505,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-27",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "failed_checks": [
           [
@@ -1244,7 +1524,7 @@
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "fb9f6322119c3cb6fcc127c4d6bb256a4f9bd12fcd3034fa2d0b339ff6b64293",
+      "fixture_hash": "6146f423d87a40958c3bf5e397987a1ea117888d2eef0ac119ccb57a84babe1c",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1306,16 +1586,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-47",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "pass",
         "raises": []
       },
-      "fixture_hash": "4895992e1392b2dfc6c8bf5c3c5886201953308e0a90efdc04ac681c742f5693",
+      "fixture_hash": "1681196d6eca06533c24a3392e06803868f0e82519f6f235c8ee2dbc99bd5e83",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1353,18 +1635,20 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-39",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attachments": [
           "t-structural-s1"
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "53a555df79dda4227f0f915f7840021caff1e579c61be4c370f7ede6ae81f59d",
+      "fixture_hash": "b1896c120980446d85805531a2737b09e49425caaff9ff9860920b1d2eb66b5a",
       "observed": {
         "checker": {
           "attachments": [
@@ -1424,11 +1708,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-40",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attachments": [
           "t-structural-s1"
@@ -1444,7 +1730,7 @@
           ]
         ]
       },
-      "fixture_hash": "8c32adb34d88c0e2800557875d6620d8129e3d9afb210599ddcd055898654439",
+      "fixture_hash": "29426cd9b61a1528d41095579af59d0f2c06bbc7ce70be6cc3c3a0a529964fd6",
       "observed": {
         "checker": {
           "attachments": [
@@ -1598,11 +1884,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-41",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attachments": [
           "t-structural-s1"
@@ -1610,7 +1898,7 @@
         "outcome": "fail",
         "resolutions": []
       },
-      "fixture_hash": "51561b24c8045235e60bcca2e9b9152228441492a1fb6b1c7b427d593e5666e4",
+      "fixture_hash": "26af37977b1d5c7530a06447cc3c59e35c0a5ed2213f2af4a6b2791595164656",
       "observed": {
         "checker": {
           "attachments": [
@@ -1678,18 +1966,20 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-42",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "outcome": "pass",
         "resolutions": [
           "t-structural-s1"
         ]
       },
-      "fixture_hash": "de84dc64289c2f7adc8c6550850aa865c6a9867a56b2a0f852ac78af9825429e",
+      "fixture_hash": "84e8f048667c16cc9c7f3f7451342c310c7f3ae7fc7993cfb8e996b19a40466e",
       "observed": {
         "checker": {
           "attachments": [],
@@ -1702,7 +1992,7 @@
           ],
           "seal": {
             "contributions": [
-              "ccea0baf-342d-45c3-8b85-7a1e37a920d0"
+              "9ed2186c-856d-4aa6-8995-95c8a3c26613"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1719,7 +2009,7 @@
           ],
           "seal": {
             "contributions": [
-              "ccea0baf-342d-45c3-8b85-7a1e37a920d0"
+              "9ed2186c-856d-4aa6-8995-95c8a3c26613"
             ],
             "questions": [],
             "semantic_clearance": false
@@ -1735,18 +2025,20 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-43",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attachments": [
           "t-structural-s1"
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "53a555df79dda4227f0f915f7840021caff1e579c61be4c370f7ede6ae81f59d",
+      "fixture_hash": "b1896c120980446d85805531a2737b09e49425caaff9ff9860920b1d2eb66b5a",
       "observed": {
         "checker": {
           "attachments": [
@@ -1806,18 +2098,20 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-44",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attachments": [
           "t-structural-s1"
         ],
         "outcome": "fail"
       },
-      "fixture_hash": "5fae9f8addc0eefb8221f92d85cb1bfb79927e5ffd011c4eeb3cd6e98958b954",
+      "fixture_hash": "73cf7327c3f4864acbb19a002b4cf8209918e65038029c2d802ac3441fe19ce0",
       "observed": {
         "checker": {
           "attachments": [
@@ -1877,19 +2171,21 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-22",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "no attempt is staged for a rejected contribution; the case's subject is the seal-trigger contract on the live path",
       "expected": {
         "attempts": 0,
         "outcome": "schema"
       },
-      "fixture_hash": "473b80182e47c81ad8d62b15c4a36b32ab7d43083f23ede6bb0ff8799116c618",
+      "fixture_hash": "550d9e3ed45fcc138e7e3d07ab81d19956290c63d2e0cda76af6be82926af9dc",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "note": "no seal attempt is staged for a rejected contribution; there is no (H, B, L) attempt input to evaluate"
         },
         "engine": {
           "history_types": [
@@ -1909,19 +2205,21 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-23",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "no attempt is staged for a rejected contribution; the case's subject is the seal-trigger contract on the live path",
       "expected": {
         "attempts": 0,
         "outcome": "stale"
       },
-      "fixture_hash": "28e343475094c946662a4b35e1b07cd5206f24531ada5367560516b8b68b9f5b",
+      "fixture_hash": "cfa26622c75e87576fdad185ee0a946b534c3818c60dfdcd23d66f72843a1234",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "note": "no seal attempt is staged for a rejected contribution; there is no (H, B, L) attempt input to evaluate"
         },
         "engine": {
           "history_types": [
@@ -1941,11 +2239,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-28",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "single-subject case: the audit examines the checker alone (I-13, accepted at examination); the two columns carry the one audit result, not two verdicts",
       "expected": {
         "modules": [
           "fabric",
@@ -1981,29 +2281,49 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-30",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attempts": 1,
+        "dual_verdicts": "pass, agreeing",
         "outcome": "pass"
       },
-      "fixture_hash": "b6c5df85a266e9c09e0ecb0fed4d7bdaaf96d4e3a5ab3e6b2512d497934a668d",
+      "fixture_hash": "484c0bbfc146f25fa7c3569273a35fba6f869c6d24c8d195c7308c9ef223aee1",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "e1913a74-894d-4ee1-b4e2-ce20962c574a"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "e1913a74-894d-4ee1-b4e2-ce20962c574a"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2015,35 +2335,133 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-31",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "attempts": 2,
+        "dual_verdicts": "fail(S1), then fail(S1) attached, agreeing",
         "first_outcome": "fail",
         "structural_raised": 1
       },
-      "fixture_hash": "90fca41589e9227bb853a414f00be4c8425080fdf8b3c6256f035c82b4c53161",
+      "fixture_hash": "f7410ad2ef136b7be6f705e89d8fd871100b070613c641876031e1df093c2520",
       "observed": {
-        "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
-        },
-        "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_RAISED",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED"
-          ]
-        }
+        "checker": [
+          {
+            "attachments": [],
+            "divergence": [
+              [
+                "regions",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            "failed_checks": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "outcome": "fail",
+            "raises": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "resolutions": [],
+            "seal": null
+          },
+          {
+            "attachments": [
+              "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+            ],
+            "divergence": [
+              [
+                "regions",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            "failed_checks": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "outcome": "fail",
+            "raises": [],
+            "resolutions": [],
+            "seal": null
+          }
+        ],
+        "engine": [
+          {
+            "attachments": [],
+            "divergence": [
+              [
+                "regions",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            "failed_checks": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "outcome": "fail",
+            "raises": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "resolutions": [],
+            "seal": null
+          },
+          {
+            "attachments": [
+              "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+            ],
+            "divergence": [
+              [
+                "regions",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            "failed_checks": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "outcome": "fail",
+            "raises": [],
+            "resolutions": [],
+            "seal": null
+          }
+        ]
       },
       "pack": {
         "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
@@ -2054,12 +2472,15 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-33",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "fail(S1), agreeing",
         "failed_checks": [
           [
             "S1",
@@ -2072,24 +2493,67 @@
         "outcome": "fail",
         "seal": "absent"
       },
-      "fixture_hash": "90fca41589e9227bb853a414f00be4c8425080fdf8b3c6256f035c82b4c53161",
+      "fixture_hash": "063f568aea27a111becc78593d168cb820ba1d8c23fd1dbbf3227a7cbfbd4ddd",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_RAISED",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED"
-          ]
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
         }
       },
       "pack": {
@@ -2101,43 +2565,60 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-32",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "pass with the resolution, agreeing",
         "evidence_seq": "the attempt's",
         "order": [
           "SEAL_ATTEMPTED",
           "TENSION_STATUS"
         ]
       },
-      "fixture_hash": "8c22765b5b369199807c7a7afa4b1182548404a5a1950b2f09ad4a2e5d4cb8a6",
+      "fixture_hash": "bd8154b2bcbfd31f7ccc540e4cafced3ded625f62221ae911892910d50e6b48b",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [
+            "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+          ],
+          "seal": {
+            "contributions": [
+              "378e2a9f-0916-4f4c-bf1c-7c52b7443858",
+              "859fd439-aba1-4e83-ae57-80a28660a42b",
+              "f8a70c21-3102-49dd-972b-a69925e48fde"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_RAISED",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_STATUS"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [
+            "17d6d268-8ad9-45a3-a584-69bef5ea7e90"
+          ],
+          "seal": {
+            "contributions": [
+              "378e2a9f-0916-4f4c-bf1c-7c52b7443858",
+              "859fd439-aba1-4e83-ae57-80a28660a42b",
+              "f8a70c21-3102-49dd-972b-a69925e48fde"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2149,37 +2630,119 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-45",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "fail(S1), then pass with the resolution, agreeing",
         "steps": "1-9 in order"
       },
-      "fixture_hash": "a04ef28bd0d07d38e0b6aa8d97ed69106788401e02d60c478f0ac2bee56c0453",
+      "fixture_hash": "f6582d1900437c9c0d26530bcb89cd4864ffe099d17065932d9ccf2bd7cc9f46",
       "observed": {
-        "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
-        },
-        "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_RAISED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_STATUS"
-          ]
-        }
+        "checker": [
+          {
+            "attachments": [],
+            "divergence": [
+              [
+                "regions",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            "failed_checks": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "outcome": "fail",
+            "raises": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "resolutions": [],
+            "seal": null
+          },
+          {
+            "attachments": [],
+            "divergence": [],
+            "failed_checks": [],
+            "outcome": "pass",
+            "raises": [],
+            "resolutions": [
+              "f45fd02b-8875-4aee-b64f-00e060a6e60f"
+            ],
+            "seal": {
+              "contributions": [
+                "048f44e9-1592-4eb8-b431-1de2348aabe2",
+                "face47b7-146b-4eb6-82ac-36b31ee1e1f1"
+              ],
+              "questions": [],
+              "semantic_clearance": false
+            }
+          }
+        ],
+        "engine": [
+          {
+            "attachments": [],
+            "divergence": [
+              [
+                "regions",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ],
+            "failed_checks": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "outcome": "fail",
+            "raises": [
+              [
+                "S1",
+                [
+                  "00000000-0000-4000-8000-000000000102",
+                  "33333333-3333-4333-8333-333333333333"
+                ]
+              ]
+            ],
+            "resolutions": [],
+            "seal": null
+          },
+          {
+            "attachments": [],
+            "divergence": [],
+            "failed_checks": [],
+            "outcome": "pass",
+            "raises": [],
+            "resolutions": [
+              "f45fd02b-8875-4aee-b64f-00e060a6e60f"
+            ],
+            "seal": {
+              "contributions": [
+                "048f44e9-1592-4eb8-b431-1de2348aabe2",
+                "face47b7-146b-4eb6-82ac-36b31ee1e1f1"
+              ],
+              "questions": [],
+              "semantic_clearance": false
+            }
+          }
+        ]
       },
       "pack": {
         "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
@@ -2190,42 +2753,76 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-34",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "pass; the seal lists both questions with the same marks, agreeing",
         "questions": "both, marked",
         "seal": "issued",
         "statuses": "unchanged"
       },
-      "fixture_hash": "006d7d086469e2c6714f59c291370967cfb06f8e70faf73cc3e90347d6cb3c72",
+      "fixture_hash": "5ff72c68e07427fa8be283e17e400ae7b055a156d2bf740f2f007836f46d72ee",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "13f7c55e-0f30-49a1-a4f3-37ece95f5ee2"
+            ],
+            "questions": [
+              [
+                "b5212fe8-2209-42b0-afe4-cc30086bd062",
+                "examined",
+                [
+                  "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+                ]
+              ],
+              [
+                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "open",
+                "unexamined"
+              ]
+            ],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "TENSION_RAISED",
-            "SEAL_ATTEMPTED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "TENSION_RAISED",
-            "SEAL_ATTEMPTED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "ASSESSMENT_RECORDED",
-            "TENSION_STATUS",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "13f7c55e-0f30-49a1-a4f3-37ece95f5ee2"
+            ],
+            "questions": [
+              [
+                "b5212fe8-2209-42b0-afe4-cc30086bd062",
+                "examined",
+                [
+                  "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+                ]
+              ],
+              [
+                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "open",
+                "unexamined"
+              ]
+            ],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2237,41 +2834,61 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-46",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "pass; the first seal lists T1 open, agreeing",
         "seal": "issued",
         "tension_status": "open"
       },
-      "fixture_hash": "006d7d086469e2c6714f59c291370967cfb06f8e70faf73cc3e90347d6cb3c72",
+      "fixture_hash": "f25f0068ad3802f830bc9003100127c31bedbdebe7f4ea58ba1c07eeb91f1fe9",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "7bdf717a-c831-441c-842f-42612f2f85cb"
+            ],
+            "questions": [
+              [
+                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "open",
+                "unexamined"
+              ]
+            ],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "TENSION_RAISED",
-            "SEAL_ATTEMPTED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "TENSION_RAISED",
-            "SEAL_ATTEMPTED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "ASSESSMENT_RECORDED",
-            "TENSION_STATUS",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "7bdf717a-c831-441c-842f-42612f2f85cb"
+            ],
+            "questions": [
+              [
+                "dd7d0e95-1884-46e8-915b-9759b7c1d9f2",
+                "open",
+                "unexamined"
+              ]
+            ],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2283,26 +2900,137 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
+      },
+      "case": "VP-35",
+      "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
+      "expected": {
+        "dual_verdicts": "pass with the same lists, agreeing",
+        "seal_1_lists": "[cid1]",
+        "seal_2_lists": "[cid2]"
+      },
+      "fixture_hash": "0936d8c8aec41508b3ff4ddc48b1e4029da4a4a388262de2362093720fe33ce6",
+      "observed": {
+        "checker": [
+          {
+            "attachments": [],
+            "divergence": [],
+            "failed_checks": [],
+            "outcome": "pass",
+            "raises": [],
+            "resolutions": [],
+            "seal": {
+              "contributions": [
+                "3bd67f2f-fd85-40f9-a14c-391b191a6a24"
+              ],
+              "questions": [],
+              "semantic_clearance": false
+            }
+          },
+          {
+            "attachments": [],
+            "divergence": [],
+            "failed_checks": [],
+            "outcome": "pass",
+            "raises": [],
+            "resolutions": [],
+            "seal": {
+              "contributions": [
+                "16e6c01c-0766-4f14-a27e-d520cef5c93d"
+              ],
+              "questions": [],
+              "semantic_clearance": false
+            }
+          }
+        ],
+        "engine": [
+          {
+            "attachments": [],
+            "divergence": [],
+            "failed_checks": [],
+            "outcome": "pass",
+            "raises": [],
+            "resolutions": [],
+            "seal": {
+              "contributions": [
+                "3bd67f2f-fd85-40f9-a14c-391b191a6a24"
+              ],
+              "questions": [],
+              "semantic_clearance": false
+            }
+          },
+          {
+            "attachments": [],
+            "divergence": [],
+            "failed_checks": [],
+            "outcome": "pass",
+            "raises": [],
+            "resolutions": [],
+            "seal": {
+              "contributions": [
+                "16e6c01c-0766-4f14-a27e-d520cef5c93d"
+              ],
+              "questions": [],
+              "semantic_clearance": false
+            }
+          }
+        ]
+      },
+      "pack": {
+        "id": "VANE-STAGE4-EXAMINER-VALIDATION-PACK",
+        "sha256": "cce27ee70d6041955364169a6b46f59fe98153f2fe2a30dc315ce0a015eead71",
+        "version": "v2"
+      },
+      "result": "pass"
+    },
+    {
+      "builds": {
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-36",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "the doomed attempt's inputs, evaluated by both evaluators in working form: agreeing",
         "exception": "CheckerFailure",
         "history": "unchanged"
       },
-      "fixture_hash": "518446e88743ba151abe927a68aa4abc75baa940a3f68dbdbf800cf788c391f2",
+      "fixture_hash": "a6ca47fd7d23c3fb01351d21012d6d77c0702052942b209cc2a9a1c81c21b8df",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "d5af1a17-6241-4144-984b-ac76dd992e58"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "d5af1a17-6241-4144-984b-ac76dd992e58"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2314,27 +3042,49 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-37",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "close_attempts": 1,
+        "dual_verdicts": "pass on (H, B=[], L), agreeing",
         "then": "RUN_CLOSED"
       },
-      "fixture_hash": "d46885c002341f50f8b67ad7a81cc58e32d6bc58f383d5d9d86badcdd07b80e3",
+      "fixture_hash": "69004ea819cfd73b04d942d42c2ca5142fe3ed6c770aa5406bb4a5a7573de267",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "0cfa15b4-3d9a-4552-9778-e87ab19cd5d4"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "CONTRIBUTION_ACCEPTED",
-            "SEAL_ATTEMPTED",
-            "RUN_CLOSED"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "0cfa15b4-3d9a-4552-9778-e87ab19cd5d4"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2346,30 +3096,49 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-38",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
         "close_attempts": 0,
+        "dual_verdicts": "the final commit's attempt: pass, agreeing; no second attempt was evaluated at close",
         "then": "RUN_CLOSED"
       },
-      "fixture_hash": "339927de692e7751dbacf6cb40fe5f1da4cdcb17e49ffe58dbbedca6a788e90e",
+      "fixture_hash": "12c029f6e5b5a849019e0ea9f1c831c1ff0d0ef1e56ec01c35a40e2f79996f0f",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "5efbf276-d4fb-4239-a544-c8c978b5b0c5"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "RUN_CLOSED"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "5efbf276-d4fb-4239-a544-c8c978b5b0c5"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2381,33 +3150,79 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-48",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "the faulted attempt: fail(S1) with the raise, agreeing",
         "outcome": "rejected",
         "reason": "structural_target"
       },
-      "fixture_hash": "214685639abda657322368812de3125ec421edd3a1a345911fc54d9583e93275",
+      "fixture_hash": "e60aebdee5c9c2fba9615cda1f54bdb16fd932513f082f37675adce7069c36c5",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED",
-            "TENSION_RAISED",
-            "ASSESSMENT_RECORDED"
-          ]
+          "attachments": [],
+          "divergence": [
+            [
+              "regions",
+              "33333333-3333-4333-8333-333333333333"
+            ]
+          ],
+          "failed_checks": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "outcome": "fail",
+          "raises": [
+            [
+              "S1",
+              [
+                "00000000-0000-4000-8000-000000000102",
+                "33333333-3333-4333-8333-333333333333"
+              ]
+            ]
+          ],
+          "resolutions": [],
+          "seal": null
         }
       },
       "pack": {
@@ -2419,29 +3234,49 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-49",
       "diagnostic": "",
+      "dual_applicable": true,
+      "dual_note": "",
       "expected": {
+        "dual_verdicts": "pass, agreeing",
         "facet_status": "section-5 derivation only",
         "seal": "issued"
       },
-      "fixture_hash": "0679fb739b7ff40372f9f46d0a32855d9471ccd9b9f5e80ed228cb174b5785d2",
+      "fixture_hash": "4d7957913da77be9536411394431e25aecbc8d9eb13eb727662f681ab1f70704",
       "observed": {
         "checker": {
-          "note": "live path: SEAL_ATTEMPTED outcomes in the recorded history are the checker process's verdicts, recorded verbatim by the harness"
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "344d7d9b-106c-4874-907c-c3337ee2194f"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         },
         "engine": {
-          "history_types": [
-            "RUN_OPENED",
-            "DISCOVERY",
-            "DISCOVERY",
-            "CONTRIBUTION_ACCEPTED",
-            "FACET_STATUS",
-            "SEAL_ATTEMPTED"
-          ]
+          "attachments": [],
+          "divergence": [],
+          "failed_checks": [],
+          "outcome": "pass",
+          "raises": [],
+          "resolutions": [],
+          "seal": {
+            "contributions": [
+              "344d7d9b-106c-4874-907c-c3337ee2194f"
+            ],
+            "questions": [],
+            "semantic_clearance": false
+          }
         }
       },
       "pack": {
@@ -2453,15 +3288,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-50",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "the starvation report is one derived-report implementation by design (I-12, accepted at examination); the agreement property is byte-identity of the module API and its standalone CLI over the same input, asserted inside the case",
       "expected": {
         "agents": "A, B, C all present"
       },
-      "fixture_hash": "0b6a653dd11823e00b2d3288b1789f505e4f499d8ac1084e0a53e68a279007da",
+      "fixture_hash": "177e22cd91b19e33fdf1ce344e802653aad45d8a1d77b14cc5941c2ebc2e4503",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -2532,16 +3369,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-51",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "the starvation report is one derived-report implementation by design (I-12, accepted at examination); the agreement property is byte-identity of the module API and its standalone CLI over the same input, asserted inside the case",
       "expected": {
         "current_run": 1,
         "max_run": 2
       },
-      "fixture_hash": "36ed4fe03d354da032958923d117e3484a15632060c490a37dfbb49e63ae7d01",
+      "fixture_hash": "93a08b9e6e92c870f754918145fc430b53fbcec07c43d48cd84b8933f2301c54",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -2585,15 +3424,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-52",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "the starvation report is one derived-report implementation by design (I-12, accepted at examination); the agreement property is byte-identity of the module API and its standalone CLI over the same input, asserted inside the case",
       "expected": {
         "nulls": "present, never omitted, never zero"
       },
-      "fixture_hash": "33fe22cc8e5cbd6b383c7e30b3a1448237675132c5bf4ce9e8b9347a833ca4d1",
+      "fixture_hash": "f382854c2654bb7ca5d34d0fab67aeb448368b5cfae2ce1ab3c151fa6f999c5c",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -2636,11 +3477,13 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-53",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "the starvation report is one derived-report implementation by design (I-12, accepted at examination); the agreement property is byte-identity of the module API and its standalone CLI over the same input, asserted inside the case",
       "expected": {
         "sizes": [
           0,
@@ -2649,7 +3492,7 @@
         ],
         "unit": "regions"
       },
-      "fixture_hash": "739c4c65531ed7781705b21be262b7a51b4c3b7a45c5cd0dd35592f54f18faf0",
+      "fixture_hash": "f66273edea408d598183c0eef5632a2b9c36120ab4f1c031f0a01c930fd0f7e6",
       "observed": {
         "checker": {
           "byte_identical": true,
@@ -2693,15 +3536,17 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-54",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "the starvation report is one derived-report implementation by design (I-12, accepted at examination); the case IS the byte-identity property across the module API and its standalone CLI",
       "expected": {
         "bytes": "identical across runs"
       },
-      "fixture_hash": "37ed8615afde45548ff03ed05a1c10e6d179d4a2dd77d2be65e170b981e6149a",
+      "fixture_hash": "ffa623d81ac800442394a969b69705ff39a492f4f910b792db1f6ecb7e8f578d",
       "observed": {
         "checker": {
           "sha256": "5624777f7740de543499e5ac82948f90ab46ad5a7b9f6edc77c31c1b1e2f662a"
@@ -2719,16 +3564,18 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-55",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "the binding contract, not an attempt case: the engine side is exercised at opening (digest guard) and the checker side in fold mode (bound-digest report); the cross-side property \u2014 both honour the one pinned digest \u2014 is asserted inside the case",
       "expected": {
         "opening": "blocked on wrong digest",
         "run_opened_names": "id, version, sha256"
       },
-      "fixture_hash": "276142f3ac5774b9582fe0419efbdd786b3c8c27c528383446c9b7a05d6a8230",
+      "fixture_hash": "420797e7e420fbf65276218519d78bac0dc6342ed6079fe2492fbb61c191ebe4",
       "observed": {
         "checker": {
           "match": {
@@ -2760,21 +3607,171 @@
     },
     {
       "builds": {
-        "checker": "091bc2e859da205dea8d3c3a6b7474cc4f2c2c3f5bb6356bf0e6f9f2ac65f9cf",
-        "engine": "14b189065e95d9bc829e9ec63cb08ab1544122a76e2127801909289cfd834ddf"
+        "checker": "6a91c76c2cd338f1e008441ec8ae91ee6dae5b607293d18967c3a18d868bdaa1",
+        "engine": "8498fdca8f2e13d4b48256cb054e2b7495d43a902c4ae1356802b810b201f612"
       },
       "case": "VP-29",
       "diagnostic": "",
+      "dual_applicable": false,
+      "dual_note": "VP-29 is the agreement computation itself, not a case it compares",
       "expected": {
-        "disagreements": []
+        "compared": "the full dual-applicable set",
+        "disagreements": [],
+        "exclusions_named": [
+          "VP-22",
+          "VP-23",
+          "VP-28",
+          "VP-50",
+          "VP-51",
+          "VP-52",
+          "VP-53",
+          "VP-54",
+          "VP-55"
+        ]
       },
-      "fixture_hash": "43647b11b4ab1b719039cde165313f4159dc13ccc7237a27b17704c8a9730625",
+      "fixture_hash": "2e3bc09190368c9e1058fb643bc8ce8e0268991c8c6ed9e475f2bac2b1649d7d",
       "observed": {
         "checker": {
-          "disagreements": []
+          "compared": [
+            "VP-01-fold",
+            "VP-01",
+            "VP-02",
+            "VP-04",
+            "VP-05",
+            "VP-06",
+            "VP-07",
+            "VP-08",
+            "VP-09",
+            "VP-10",
+            "VP-11a",
+            "VP-11b",
+            "VP-12a",
+            "VP-12b",
+            "VP-13a",
+            "VP-13b",
+            "VP-13c",
+            "VP-14a",
+            "VP-14b",
+            "VP-15a",
+            "VP-15b",
+            "VP-03",
+            "VP-16",
+            "VP-17",
+            "VP-18",
+            "VP-18-hi",
+            "VP-18-prec",
+            "VP-19",
+            "VP-20",
+            "VP-21",
+            "VP-24",
+            "VP-25",
+            "VP-26",
+            "VP-27",
+            "VP-47",
+            "VP-39",
+            "VP-40",
+            "VP-41",
+            "VP-42",
+            "VP-43",
+            "VP-44",
+            "VP-30",
+            "VP-31",
+            "VP-33",
+            "VP-32",
+            "VP-45",
+            "VP-34",
+            "VP-46",
+            "VP-35",
+            "VP-36",
+            "VP-37",
+            "VP-38",
+            "VP-48",
+            "VP-49"
+          ],
+          "disagreements": [],
+          "excluded": [
+            "VP-22",
+            "VP-23",
+            "VP-28",
+            "VP-50",
+            "VP-51",
+            "VP-52",
+            "VP-53",
+            "VP-54",
+            "VP-55"
+          ],
+          "unmarked": []
         },
         "engine": {
-          "disagreements": []
+          "compared": [
+            "VP-01-fold",
+            "VP-01",
+            "VP-02",
+            "VP-04",
+            "VP-05",
+            "VP-06",
+            "VP-07",
+            "VP-08",
+            "VP-09",
+            "VP-10",
+            "VP-11a",
+            "VP-11b",
+            "VP-12a",
+            "VP-12b",
+            "VP-13a",
+            "VP-13b",
+            "VP-13c",
+            "VP-14a",
+            "VP-14b",
+            "VP-15a",
+            "VP-15b",
+            "VP-03",
+            "VP-16",
+            "VP-17",
+            "VP-18",
+            "VP-18-hi",
+            "VP-18-prec",
+            "VP-19",
+            "VP-20",
+            "VP-21",
+            "VP-24",
+            "VP-25",
+            "VP-26",
+            "VP-27",
+            "VP-47",
+            "VP-39",
+            "VP-40",
+            "VP-41",
+            "VP-42",
+            "VP-43",
+            "VP-44",
+            "VP-30",
+            "VP-31",
+            "VP-33",
+            "VP-32",
+            "VP-45",
+            "VP-34",
+            "VP-46",
+            "VP-35",
+            "VP-36",
+            "VP-37",
+            "VP-38",
+            "VP-48",
+            "VP-49"
+          ],
+          "disagreements": [],
+          "excluded": [
+            "VP-22",
+            "VP-23",
+            "VP-28",
+            "VP-50",
+            "VP-51",
+            "VP-52",
+            "VP-53",
+            "VP-54",
+            "VP-55"
+          ],
+          "unmarked": []
         }
       },
       "pack": {

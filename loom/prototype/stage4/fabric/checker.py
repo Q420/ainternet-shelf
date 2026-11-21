@@ -419,22 +419,24 @@ def _s1_findings(state):
     return out
 
 
-def _s2_findings(before, replay):
-    """S2 — version monotonicity, in its seal form: the
-    staged-transition property (build notes I-3). Folding the
-    staged batch over the committed history must not decrease any
-    region's version. A live snapshot whose version merely
-    differs from replay — with no staged regression — is
-    divergence, which the C1 rule handles as MISMATCH, not an S2
-    failure (pack section 2; VP-18, VP-47). The fold's operations
-    only ever advance versions, so this check cannot fire on a
-    foldable history in this build; it runs identically in both
-    implementations and would fire on such a transition."""
+def _s2_findings(replay, live):
+    """S2 — version monotonicity, judged on the live snapshot
+    (Stage 4 correction round, C-B1: the examiner's settled S2
+    ruling, superseding build-notes interpretation I-3). Replay
+    of the accepted history plus the staged batch fixes each
+    region's established version R_r at the seal position; the
+    snapshot carries L_r. The check fails exactly when L_r < R_r
+    and names that one region. It is one-sided: L_r above R_r is
+    unexplained divergence (MISMATCH under the C1 precedence
+    unless some check fails on L), not a monotonicity failure.
+    A region replay establishes but the snapshot lacks produces
+    no S2 finding here — absence is for S1 (when a dependency
+    dangles on it) and for the divergence report."""
     out = []
-    for rid in sorted(before["regions"]):
-        after = replay["regions"].get(rid)
-        if after is not None and after["version"] \
-                < before["regions"][rid]["version"]:
+    for rid in sorted(replay["regions"]):
+        snap = live["regions"].get(rid)
+        if snap is not None and snap["version"] \
+                < replay["regions"][rid]["version"]:
             out.append({"check": "S2", "affected": [rid]})
     return out
 
@@ -489,10 +491,13 @@ def _s3_findings(state):
     return [{"check": "S3", "affected": sorted(cycle)}]
 
 
-def _inconsistency_absent(check, affected, live):
+def _inconsistency_absent(check, affected, live, replay=None):
     """Re-run one tension's own check against its original
     affected set (B6): True only when the particular inconsistency
-    the tension represents no longer exists in the live state."""
+    the tension represents no longer exists in the live state.
+    The S2 re-run compares against the version replay establishes
+    at this attempt, so the caller supplies the replay state
+    (correction round, C-B1)."""
     if check == "S1":
         deps = [a for a in affected if a in live["dependencies"]]
         if not deps:
@@ -504,15 +509,21 @@ def _inconsistency_absent(check, affected, live):
                  if a != dep["dependency_id"]]
         return all(a in live["regions"] for a in named)
     if check == "S2":
-        # Defensive only: S2 tensions are unreachable in this
-        # build (the fold cannot regress a version — I-3), so no
-        # live path exercises this branch. Presence of the region
-        # is the weakest honest reading of "the regression is
-        # gone"; the branch is recorded here rather than silently
-        # omitted.
+        # The named regression stands unless the snapshot's
+        # version for the region has caught up with the version
+        # replay establishes at this attempt. A region missing
+        # from the snapshot proves nothing about the regression;
+        # the tension stays open.
         rid = affected[0]
         region = live["regions"].get(rid)
-        return region is not None
+        if region is None:
+            return False
+        floor = 0
+        if replay is not None:
+            established = replay["regions"].get(rid)
+            if established is not None:
+                floor = established["version"]
+        return region["version"] >= floor
     if check == "S3":
         subset = {d: live["dependencies"][d] for d in affected
                   if d in live["dependencies"]}
@@ -620,7 +631,7 @@ def evaluate(history, staged_batch, snapshot, constitution_hash,
                            "reason": halt.reason}
         return verdict
     live = snapshot
-    findings = (_s1_findings(live) + _s2_findings(before, replay)
+    findings = (_s1_findings(live) + _s2_findings(replay, live)
                 + _s3_findings(live))
     verdict["failed_checks"] = findings
     verdict["divergence"] = _divergence(live, replay)
@@ -649,7 +660,8 @@ def evaluate(history, staged_batch, snapshot, constitution_hash,
     for tid, t in open_structural.items():
         if tid in attached:
             continue
-        if _inconsistency_absent(t["check"], t["affected"], live):
+        if _inconsistency_absent(t["check"], t["affected"], live,
+                                 replay):
             verdict["resolutions"].append({
                 "tension_id": tid, "check": t["check"],
                 "affected": list(t["affected"])})

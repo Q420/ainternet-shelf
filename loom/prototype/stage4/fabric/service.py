@@ -1457,23 +1457,29 @@ class FabricService:
                 if self.store.all_events():
                     return _err("refusal",
                                 "the store already holds a run")
-                binding = None
-                if req.get("bind_stage4"):
-                    # Stage 4: the run binds the pinned authority
-                    # set (Rev 9 + Amendment A1) and the pinned
-                    # examiner validation pack, by digest
-                    # (VP-55). A request naming a different pack
-                    # digest is refused before anything is
-                    # appended — a wrong digest blocks the opening.
-                    supplied = req.get("pack_sha256")
-                    if supplied is not None and supplied != PACK_SHA256:
-                        return _err(
-                            "refusal",
-                            "the request names validation pack "
-                            f"digest {supplied!r}, not the pinned "
-                            f"pack digest {PACK_SHA256!r} — a wrong "
-                            "digest blocks the opening (VP-55)")
-                    binding = stage4_binding()
+                # Stage 4 correction round (C-B3): a normal
+                # service opening ALWAYS binds the Stage 4
+                # authority set — Rev 9 + Amendment A1 and the
+                # pinned examiner validation pack, by digest
+                # (VP-55). Binding is not selectable on this path:
+                # the former bind_stage4 flag is ignored, and
+                # omitting it (or setting it false) changes
+                # nothing. A request naming a different pack
+                # digest is refused before anything is appended —
+                # a wrong digest blocks the opening. Unbound
+                # opening survives only on the explicitly isolated
+                # legacy path below (open_run_legacy_unbound),
+                # which exists for pre-Stage-4 regression setups
+                # and is not an option of this op.
+                supplied = req.get("pack_sha256")
+                if supplied is not None and supplied != PACK_SHA256:
+                    return _err(
+                        "refusal",
+                        "the request names validation pack "
+                        f"digest {supplied!r}, not the pinned "
+                        f"pack digest {PACK_SHA256!r} — a wrong "
+                        "digest blocks the opening (VP-55)")
+                binding = stage4_binding()
                 try:
                     self.engine = Engine.open_run(
                         self.store, req.get("run_id"),
@@ -1489,6 +1495,35 @@ class FabricService:
                 # for the twin at attestation time).
                 self._record_rig_run_id(req.get("run_id"))
                 return _ok({"run_id": req.get("run_id"), "events": 1})
+            if op == "open_run_legacy_unbound":
+                # ISOLATED TEST/REGRESSION PATH (Stage 4
+                # correction round, C-B3) — NOT part of the Stage
+                # 4 service's ordinary request surface, and not an
+                # option of open_run above: this op exists solely
+                # so pre-Stage-4 regression setups that predate the
+                # binding can still construct historical unbound
+                # runs. It opens with NO Stage 4 binding: the run
+                # it opens is governed by the authority its own
+                # RUN_OPENED names (Rev 9 alone), and no seal
+                # attempt ever fires on it. A Stage 4 run is never
+                # opened here; the correction round's negative test
+                # proves the ordinary path cannot be made to
+                # produce what this op produces.
+                if self.store.all_events():
+                    return _err("refusal",
+                                "the store already holds a run")
+                try:
+                    self.engine = Engine.open_run(
+                        self.store, req.get("run_id"),
+                        binding=None)
+                except ValueError as exc:
+                    return _err("refusal", str(exc))
+                self.harness = Harness(self.engine)
+                if "checker_failure" in self.fault_inject:
+                    self.harness.checker_command = ["/bin/false"]
+                self._record_rig_run_id(req.get("run_id"))
+                return _ok({"run_id": req.get("run_id"), "events": 1,
+                            "legacy_unbound": True})
             if op == "close_run":
                 # Stage 4: the close-time seal attempt (when one is
                 # due) and RUN_CLOSED, under the harness's close

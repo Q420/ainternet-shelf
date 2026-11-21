@@ -20,10 +20,21 @@ Canned histories are built once as serialized, hash-chained event
 dicts (with the format primitives both sides share) and the
 identical inputs are fed to both sides; the runner never lets one
 implementation generate expected outputs for the other (pack
-10.4). Live cases run through the Harness on Stage-4-bound runs;
-on the live path the recorded SEAL_ATTEMPTED outcome IS the
-checker process's verdict (the harness records it verbatim), and
-the manifest says so where that is the checker column.
+10.4). Live cases run through the Harness on Stage-4-bound runs.
+
+Correction round (C-B4): live attempt cases no longer record a
+proxy for either implementation. The harness's attempt_observer
+captures each seal attempt's exact inputs (H, B, L, actor) at the
+moment the checker is invoked, and the case replays those inputs
+through BOTH fabric.seal.evaluate_attempt and the checker
+process, recording both actual verdicts in the manifest. The
+live-path assertions (attempt counts, recorded outcomes, the
+tension lifecycle in the history) are kept alongside. Cases that
+are genuinely single-subject are marked dual_applicable: false
+in the manifest, with the justification, and VP-29 is computed
+over the dual-applicable set only (see
+STAGE4-CORRECTION-NOTES.md section 6, the revised mapping
+recorded before this execution).
 
 Output: a per-case manifest at pack-validation-manifest.json
 (pack 10.3: pack id/version/hash, implementation identity and
@@ -291,7 +302,8 @@ def fold_of(history):
 # -- case recording --------------------------------------------------------
 
 def record(case, expected, engine_obs, checker_obs, passed,
-           fixture, diagnostic=""):
+           fixture, diagnostic="", dual_applicable=True,
+           dual_note=""):
     RESULTS.append({
         "pack": {"id": PACK_ID, "version": PACK_VERSION,
                  "sha256": PACK_SHA256},
@@ -302,6 +314,13 @@ def record(case, expected, engine_obs, checker_obs, passed,
         "observed": {"engine": engine_obs, "checker": checker_obs},
         "result": "pass" if passed else "FAIL",
         "diagnostic": diagnostic,
+        # Correction round (C-B4): every entry declares whether
+        # it is a dual-applicable case (both implementations'
+        # verdicts over identical inputs, compared by VP-29).
+        # Single-subject cases say so, with the justification —
+        # they are never represented as dual agreement.
+        "dual_applicable": dual_applicable,
+        "dual_note": dual_note,
     })
     print(f"{'PASS' if passed else 'FAIL'}  {case}  {diagnostic}")
 
@@ -488,14 +507,48 @@ def run_eval_cases():
               and v["failed_checks"] == [],
               {"outcome": "pass"})
 
-    # VP-18 — L with C's version lowered: MISMATCH (I-3).
+    # VP-18 — L with C's version lowered: FAIL(S2, {C}) under
+    # the settled ruling (correction round, C-B1): the pack text
+    # left the case conditional ("if S2 does fail on L, FAIL(S2)
+    # governs"); the ruling defines a version regression against
+    # replay as exactly an S2 failure on L. I-3's MISMATCH
+    # reading is superseded.
     l18 = copy.deepcopy(r0)
     l18["regions"][C]["version"] = 0
     eval_case("VP-18", h0, [], l18,
+              lambda v: v["outcome"] == "fail"
+              and v["failed_checks"] == [("S2", (C,))]
+              and v["raises"] == [("S2", (C,))]
+              and v["seal"] is None,
+              {"outcome": "fail",
+               "failed_checks": [["S2", [C]]]})
+
+    # VP-18-hi — L with C's version RAISED: unexplained
+    # higher-version divergence is MISMATCH, never an S2
+    # failure (the ruling's lower-bound-only precision).
+    l18h = copy.deepcopy(r0)
+    l18h["regions"][C]["version"] = 7
+    eval_case("VP-18-hi", h0, [], l18h,
               lambda v: v["outcome"] == "mismatch"
               and v["failed_checks"] == []
-              and ("regions", C) in v["divergence"],
-              {"outcome": "mismatch"})
+              and ("regions", C) in v["divergence"]
+              and v["seal"] is None,
+              {"outcome": "mismatch",
+               "note": "higher-version divergence, no S2 finding"})
+
+    # VP-18-prec — divergence (S absent) combined with an S1
+    # failure and an S2 regression on L: FAIL governs over
+    # MISMATCH, with both findings recorded (the C1 precedence).
+    l18p = copy.deepcopy(r0)
+    del l18p["regions"][S]
+    l18p["regions"][C]["version"] = 0
+    eval_case("VP-18-prec", h0, [], l18p,
+              lambda v: v["outcome"] == "fail"
+              and v["failed_checks"] == [("S1", (D_CS, S)),
+                                          ("S2", (C,))]
+              and v["seal"] is None,
+              {"outcome": "fail",
+               "failed_checks": [["S1", [D_CS, S]], ["S2", [C]]]})
 
     # VP-19 — staged advance: add C->P and append content on I.
     _, b19, full19 = chained_pair([ropened()], [accept_spec(AGENT_A, [
@@ -701,18 +754,60 @@ def events_of(store, type_):
 
 
 def live_record(case, expected, ok, store, diagnostic=""):
-    """Record a live-path case. The checker column states the live
-    path's checker relation: on a bound run the harness invokes
-    the checker process for every attempt and records its verdict
-    verbatim in SEAL_ATTEMPTED, so the recorded history is the
-    checker side's output for these inputs."""
+    """Record a live-path case that has NO seal attempt to
+    evaluate (VP-22, VP-23: a rejected contribution stages no
+    attempt, so no (H, B, L) attempt input exists). Such cases
+    are marked not dual-applicable, with the justification in
+    the manifest — they are never represented as dual
+    agreement (correction round, C-B4)."""
     history = store.all_events()
     record(case, expected,
            {"history_types": [e["type"] for e in history]},
-           {"note": "live path: SEAL_ATTEMPTED outcomes in the "
-                    "recorded history are the checker process's "
-                    "verdicts, recorded verbatim by the harness"},
-           ok, {"history": history}, diagnostic)
+           {"note": "no seal attempt is staged for a rejected "
+                    "contribution; there is no (H, B, L) attempt "
+                    "input to evaluate"},
+           ok, {"history": history}, diagnostic,
+           dual_applicable=False,
+           dual_note="no attempt is staged for a rejected "
+                     "contribution; the case's subject is the "
+                     "seal-trigger contract on the live path")
+
+
+def dual_attempt_record(case, expected, attempts, expect_fn,
+                        live_ok, store, diagnostic=""):
+    """Record a live attempt case with BOTH implementations'
+    actual verdicts (correction round, C-B4): each captured
+    attempt's exact (H, B, L) — taken by the harness's
+    attempt_observer at the moment the live checker was invoked
+    — is replayed through fabric.seal.evaluate_attempt and the
+    checker process. The manifest records both verdicts, the
+    expected outcome, and the fixture hash over the captured
+    inputs; the case passes only when the live-path assertions
+    also hold AND the two verdicts agree AND they match the
+    case's expectation."""
+    pairs = []
+    agree = True
+    for att in attempts:
+        eng = engine_eval(att["history"], att["staged"],
+                          att["snapshot"],
+                          att["authenticated_actor"])
+        chk = checker_eval(att["history"], att["staged"],
+                           att["snapshot"],
+                           att["authenticated_actor"])
+        agree = agree and eng == chk
+        pairs.append((eng, chk))
+    eng_obs = pairs[0][0] if len(pairs) == 1 \
+        else [p[0] for p in pairs]
+    chk_obs = pairs[0][1] if len(pairs) == 1 \
+        else [p[1] for p in pairs]
+    verdicts = [p[0] for p in pairs]
+    ok = live_ok and agree and bool(expect_fn(verdicts))
+    fixture = {"attempts": attempts,
+               "live_history": store.all_events()}
+    record(case, expected, eng_obs, chk_obs, ok, fixture,
+           "" if ok else f"agree={agree} live_ok={live_ok} "
+                         f"engine={eng_obs} checker={chk_obs} "
+                         f"{diagnostic}")
 
 
 def run_live_cases():
@@ -773,10 +868,17 @@ def run_live_cases():
            {"audit_stdout": audit.stdout},
            "" if modules == ["fabric", "fabric.canonical",
                              "fabric.checker"] and static_ok
-           else f"modules={modules} static_ok={static_ok}")
+           else f"modules={modules} static_ok={static_ok}",
+           dual_applicable=False,
+           dual_note="single-subject case: the audit examines "
+                     "the checker alone (I-13, accepted at "
+                     "examination); the two columns carry the "
+                     "one audit result, not two verdicts")
 
     # VP-30 — one accepted contribution, exactly one attempt, PASS.
     store, eng, h = bound_run("vp30")
+    captured = []
+    h.attempt_observer = captured.append
     tok = h.issue_token(AGENT_A)
     ref = open_regions(h, store, tok, I, P)
     out = h.submit(tok, contrib(
@@ -784,15 +886,23 @@ def run_live_cases():
         [{"kind": "append_content", "region_id": I,
           "text": " (One.)"}], ref))
     attempts = events_of(store, "SEAL_ATTEMPTED")
-    live_record("VP-30", {"attempts": 1, "outcome": "pass"},
-                out["outcome"] == "accepted" and len(attempts) == 1
-                and attempts[0]["payload"]["outcome"] == "pass",
-                store)
+    dual_attempt_record(
+        "VP-30", {"attempts": 1, "outcome": "pass",
+                  "dual_verdicts": "pass, agreeing"},
+        captured,
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass"
+        and vs[0]["seal"] is not None,
+        out["outcome"] == "accepted" and len(attempts) == 1
+        and attempts[0]["payload"]["outcome"] == "pass"
+        and len(captured) == 1,
+        store)
 
     # VP-31 + VP-33 — live-state fault: the attempt still occurs,
     # fails S1, raises the structural tension; a further
     # contribution still gets its attempt.
     store, eng, h = bound_run("vp31")
+    captured = []
+    h.attempt_observer = captured.append
     tok = h.issue_token(AGENT_A)
     ref = open_regions(h, store, tok, I, P)
     del eng.state["regions"][S]  # the fault: live state only
@@ -813,19 +923,36 @@ def run_live_cases():
     attempts = events_of(store, "SEAL_ATTEMPTED")
     ok31 = ok31 and out2["outcome"] == "accepted" \
         and len(attempts) == 2
-    live_record("VP-31", {"attempts": 2, "first_outcome": "fail",
-                          "structural_raised": 1},
-                ok31, store,
-                "" if ok31 else f"attempts={len(attempts)} "
-                                f"raised={len(raised)}")
+    dual_attempt_record(
+        "VP-31", {"attempts": 2, "first_outcome": "fail",
+                  "structural_raised": 1,
+                  "dual_verdicts": "fail(S1), then fail(S1) "
+                                   "attached, agreeing"},
+        captured[:2],
+        lambda vs: len(vs) == 2
+        and vs[0]["outcome"] == "fail"
+        and vs[0]["failed_checks"] == [("S1", (D_CS, S))]
+        and vs[0]["raises"] == [("S1", (D_CS, S))]
+        and vs[1]["outcome"] == "fail"
+        and vs[1]["failed_checks"] == [("S1", (D_CS, S))]
+        and len(vs[1]["attachments"]) == 1,
+        ok31 and len(captured) >= 2, store,
+        "" if ok31 else f"attempts={len(attempts)} "
+                        f"raised={len(raised)}")
     ok33 = first.get("outcome") == "fail" \
         and first.get("failed_checks") == [
             {"check": "S1", "affected": [D_CS, S]}] \
         and "seal" not in first
-    live_record("VP-33", {"outcome": "fail",
-                          "failed_checks": [["S1", [D_CS, S]]],
-                          "seal": "absent"},
-                ok33, store)
+    dual_attempt_record(
+        "VP-33", {"outcome": "fail",
+                  "failed_checks": [["S1", [D_CS, S]]],
+                  "seal": "absent",
+                  "dual_verdicts": "fail(S1), agreeing"},
+        captured[:1],
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "fail"
+        and vs[0]["failed_checks"] == [("S1", (D_CS, S))]
+        and vs[0]["seal"] is None,
+        ok33 and len(captured) >= 1, store)
 
     # VP-32 — continuation of the VP-31 run: repair (I-5) and the
     # correcting contribution; the group ends SEAL_ATTEMPTED then
@@ -846,13 +973,22 @@ def run_live_cases():
         and tail[1]["payload"]["to"] == "resolved" \
         and tail[1]["payload"]["evidence"]["seal_attempt_seq"] \
         == tail[0]["event_seq"]
-    live_record("VP-32", {"order": ["SEAL_ATTEMPTED", "TENSION_STATUS"],
-                          "evidence_seq": "the attempt's"},
-                ok32, store,
-                "" if ok32 else f"tail={[e['type'] for e in tail]}")
+    t32 = raised[0]["payload"]["tension_id"] if raised else None
+    dual_attempt_record(
+        "VP-32", {"order": ["SEAL_ATTEMPTED", "TENSION_STATUS"],
+                  "evidence_seq": "the attempt's",
+                  "dual_verdicts": "pass with the resolution, "
+                                   "agreeing"},
+        captured[2:3],
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass"
+        and vs[0]["resolutions"] == [t32],
+        ok32 and len(captured) == 3, store,
+        "" if ok32 else f"tail={[e['type'] for e in tail]}")
 
     # VP-45 — the nine-step genuine lifecycle, in-process form.
     store, eng, h = bound_run("vp45")
+    captured = []
+    h.attempt_observer = captured.append
     steps = []
     steps.append(verified_fold(store.all_events(),
                                CONSTITUTION_HASH) is not None)  # (1)
@@ -901,11 +1037,23 @@ def run_live_cases():
     tail = store.all_events()[-2:]
     steps.append([e["type"] for e in tail] == [
         "SEAL_ATTEMPTED", "TENSION_STATUS"])  # (9)
-    live_record("VP-45", {"steps": "1-9 in order"}, all(steps), store,
-                "" if all(steps) else f"steps={steps}")
+    dual_attempt_record(
+        "VP-45", {"steps": "1-9 in order",
+                  "dual_verdicts": "fail(S1), then pass with "
+                                   "the resolution, agreeing"},
+        captured,
+        lambda vs: len(vs) == 2
+        and vs[0]["outcome"] == "fail"
+        and vs[0]["failed_checks"] == [("S1", (D_CS, S))]
+        and vs[1]["outcome"] == "pass"
+        and vs[1]["resolutions"] == [t_id45],
+        all(steps) and len(captured) == 2, store,
+        "" if all(steps) else f"steps={steps}")
 
     # VP-34 + VP-46 — semantic questions recorded, never cleared.
     store, eng, h = bound_run("vp34")
+    captured = []
+    h.attempt_observer = captured.append
     toks = {a: h.issue_token(a) for a in (AGENT_A, AGENT_B)}
     ref_a = open_regions(h, store, toks[AGENT_A], I, N)
     out = h.submit(toks[AGENT_A], contrib(
@@ -947,23 +1095,83 @@ def run_live_cases():
         and seal.get("semantic_clearance") is False \
         and eng.state["tensions"][t1]["status"] == "open" \
         and eng.state["tensions"][t2]["status"] == "examined"
-    live_record("VP-34", {"seal": "issued", "questions": "both, marked",
-                          "statuses": "unchanged"},
-                ok34, store,
-                "" if ok34 else f"questions={questions} "
-                                f"assessed_ok={assessed_ok}")
+    dual_attempt_record(
+        "VP-34", {"seal": "issued", "questions": "both, marked",
+                  "statuses": "unchanged",
+                  "dual_verdicts": "pass; the seal lists both "
+                                   "questions with the same marks, "
+                                   "agreeing"},
+        captured[2:3],
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass"
+        and vs[0]["seal"] is not None
+        and vs[0]["seal"]["questions"] == sorted([
+            (t1, "open", "unexamined"),
+            (t2, "examined", (agent_c,))])
+        and vs[0]["seal"]["semantic_clearance"] is False,
+        ok34 and len(captured) == 3, store,
+        "" if ok34 else f"questions={questions} "
+                        f"assessed_ok={assessed_ok}")
     first_seal = next(
         (a for a in attempts if a["payload"].get("seal")), None)
     fq = {q["tension_id"]: q for q in (first_seal["payload"]["seal"]
           ["outstanding_semantic_questions"] if first_seal else [])}
     ok46 = bool(first_seal) and fq.get(t1, {}).get("status") == "open" \
         and eng.state["tensions"][t1]["status"] == "open"
-    live_record("VP-46", {"seal": "issued", "tension_status": "open"},
-                ok46, store)
+    dual_attempt_record(
+        "VP-46", {"seal": "issued", "tension_status": "open",
+                  "dual_verdicts": "pass; the first seal lists "
+                                   "T1 open, agreeing"},
+        captured[0:1],
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass"
+        and vs[0]["seal"] is not None
+        and vs[0]["seal"]["questions"] == [
+            (t1, "open", "unexamined")],
+        ok46 and len(captured) == 3, store)
+
+    # VP-35 — contributions-since-last-seal boundary (new in the
+    # correction round: round 1's manifest contained no VP-35
+    # record at all). Two accepted contributions, each followed
+    # by a passing attempt: seal 1 lists exactly the first
+    # contribution; seal 2 exactly the second.
+    store, eng, h = bound_run("vp35")
+    captured = []
+    h.attempt_observer = captured.append
+    tok = h.issue_token(AGENT_A)
+    ref = open_regions(h, store, tok, I, P)
+    out1 = h.submit(tok, contrib(
+        AGENT_A, str(uuid.uuid4()), versions(eng, I, P), [I, P], [I],
+        [{"kind": "append_content", "region_id": I,
+          "text": " (First.)"}], ref))
+    out2 = h.submit(tok, contrib(
+        AGENT_A, str(uuid.uuid4()), versions(eng, I, P), [I, P], [P],
+        [{"kind": "append_content", "region_id": P,
+          "text": " (Second.)"}], ref))
+    cid1 = out1.get("contribution_id")
+    cid2 = out2.get("contribution_id")
+    attempts = events_of(store, "SEAL_ATTEMPTED")
+    live35 = out1["outcome"] == "accepted" \
+        and out2["outcome"] == "accepted" and len(attempts) == 2 \
+        and attempts[0]["payload"]["seal"][
+            "contributions_since_last_seal"] == [cid1] \
+        and attempts[1]["payload"]["seal"][
+            "contributions_since_last_seal"] == [cid2]
+    dual_attempt_record(
+        "VP-35", {"seal_1_lists": "[cid1]", "seal_2_lists": "[cid2]",
+                  "dual_verdicts": "pass with the same lists, "
+                                   "agreeing"},
+        captured,
+        lambda vs: len(vs) == 2
+        and vs[0]["outcome"] == "pass"
+        and vs[0]["seal"]["contributions"] == [cid1]
+        and vs[1]["outcome"] == "pass"
+        and vs[1]["seal"]["contributions"] == [cid2],
+        live35 and len(captured) == 2, store)
 
     # VP-36 — checker process failure: CheckerFailure, no partial
     # group, history unchanged.
     store, eng, h = bound_run("vp36")
+    captured = []
+    h.attempt_observer = captured.append
     h.checker_command = ["/bin/false"]
     tok = h.issue_token(AGENT_A)
     ref = open_regions(h, store, tok, I, P)
@@ -976,28 +1184,45 @@ def run_live_cases():
               "text": " (Doomed.)"}], ref))
     except CheckerFailure:
         raised_cf = True
-    live_record("VP-36", {"exception": "CheckerFailure",
-                          "history": "unchanged"},
-                raised_cf and len(store.all_events()) == n_before,
-                store)
+    dual_attempt_record(
+        "VP-36", {"exception": "CheckerFailure",
+                  "history": "unchanged",
+                  "dual_verdicts": "the doomed attempt's inputs, "
+                                   "evaluated by both evaluators "
+                                   "in working form: agreeing"},
+        captured,
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass",
+        raised_cf and len(store.all_events()) == n_before
+        and len(captured) == 1,
+        store)
 
     # VP-37 — an examiner-side accepted commit with no attempt:
     # close makes exactly one close-time attempt, then RUN_CLOSED.
     store, eng, h = bound_run("vp37")
+    captured = []
+    h.attempt_observer = captured.append
     eng.commit_events([accept_spec(AGENT_A, [
         {"kind": "append_content", "region_id": I,
          "text": " (Examiner-side.)"}])])
     out = h.close_run()
     evs = store.all_events()
-    live_record("VP-37", {"close_attempts": 1, "then": "RUN_CLOSED"},
-                out["close_attempt_events"] == 1
-                and [e["type"] for e in evs[-2:]] == [
-                    "SEAL_ATTEMPTED", "RUN_CLOSED"],
-                store)
+    dual_attempt_record(
+        "VP-37", {"close_attempts": 1, "then": "RUN_CLOSED",
+                  "dual_verdicts": "pass on (H, B=[], L), "
+                                   "agreeing"},
+        captured,
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass",
+        out["close_attempt_events"] == 1
+        and [e["type"] for e in evs[-2:]] == [
+            "SEAL_ATTEMPTED", "RUN_CLOSED"]
+        and len(captured) == 1,
+        store)
 
     # VP-38 — the final commit already had its attempt: close adds
     # no second attempt.
     store, eng, h = bound_run("vp38")
+    captured = []
+    h.attempt_observer = captured.append
     tok = h.issue_token(AGENT_A)
     ref = open_regions(h, store, tok, I, P)
     h.submit(tok, contrib(
@@ -1006,16 +1231,25 @@ def run_live_cases():
           "text": " (Sealed.)"}], ref))
     n_attempts = len(events_of(store, "SEAL_ATTEMPTED"))
     out = h.close_run()
-    live_record("VP-38", {"close_attempts": 0, "then": "RUN_CLOSED"},
-                out["close_attempt_events"] == 0
-                and len(events_of(store, "SEAL_ATTEMPTED")) == n_attempts
-                and store.all_events()[-1]["type"] == "RUN_CLOSED",
-                store)
+    dual_attempt_record(
+        "VP-38", {"close_attempts": 0, "then": "RUN_CLOSED",
+                  "dual_verdicts": "the final commit's attempt: "
+                                   "pass, agreeing; no second "
+                                   "attempt was evaluated at close"},
+        captured,
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass",
+        out["close_attempt_events"] == 0
+        and len(events_of(store, "SEAL_ATTEMPTED")) == n_attempts
+        and store.all_events()[-1]["type"] == "RUN_CLOSED"
+        and len(captured) == 1,
+        store)
 
     # VP-48 — an assessment targeting an open structural tension is
     # rejected structural_target; nothing is recorded; the tension
     # stands open.
     store, eng, h = bound_run("vp48")
+    captured = []
+    h.attempt_observer = captured.append
     tok = h.issue_token(AGENT_A)
     open_regions(h, store, tok, C, S)  # A discovers S before the fault
     tok_b = h.issue_token(AGENT_B)
@@ -1032,17 +1266,27 @@ def run_live_cases():
                          "author": AGENT_A, "target_kind": "tension",
                          "target_id": t_id48, "position": "clarifies",
                          "reasoning": "An attempt to assess structure."})
-    live_record("VP-48", {"outcome": "rejected",
-                          "reason": "structural_target"},
-                out["outcome"] == "rejected"
-                and out.get("reason") == "structural_target"
-                and eng.state["assessments"] == {}
-                and eng.state["tensions"][t_id48]["status"] == "open",
-                store)
+    dual_attempt_record(
+        "VP-48", {"outcome": "rejected",
+                  "reason": "structural_target",
+                  "dual_verdicts": "the faulted attempt: fail(S1) "
+                                   "with the raise, agreeing"},
+        captured,
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "fail"
+        and vs[0]["failed_checks"] == [("S1", (D_CS, S))]
+        and vs[0]["raises"] == [("S1", (D_CS, S))],
+        out["outcome"] == "rejected"
+        and out.get("reason") == "structural_target"
+        and eng.state["assessments"] == {}
+        and eng.state["tensions"][t_id48]["status"] == "open"
+        and len(captured) == 1,
+        store)
 
     # VP-49 — facets unexamined at genesis; a passing attempt seals
     # and changes no facet status; no completion is inferred.
     store, eng, h = bound_run("vp49")
+    captured = []
+    h.attempt_observer = captured.append
     tok = h.issue_token(AGENT_A)
     ref = open_regions(h, store, tok, I, P)
     facets_before = copy.deepcopy(eng.state["facet_status"])
@@ -1058,14 +1302,20 @@ def run_live_cases():
                        if e["type"] == "FACET_STATUS"]
     attempt_position = [i for i, e in enumerate(group)
                         if e["type"] == "SEAL_ATTEMPTED"]
-    live_record("VP-49", {"seal": "issued",
-                          "facet_status": "section-5 derivation only"},
-                out["outcome"] == "accepted"
-                and attempts[-1]["payload"]["outcome"] == "pass"
-                and eng.state["facet_status"] == {I: "unexamined"}
-                and all(fp < attempt_position[0]
-                        for fp in facet_positions),
-                store)
+    dual_attempt_record(
+        "VP-49", {"seal": "issued",
+                  "facet_status": "section-5 derivation only",
+                  "dual_verdicts": "pass, agreeing"},
+        captured,
+        lambda vs: len(vs) == 1 and vs[0]["outcome"] == "pass"
+        and vs[0]["seal"] is not None,
+        out["outcome"] == "accepted"
+        and attempts[-1]["payload"]["outcome"] == "pass"
+        and eng.state["facet_status"] == {I: "unexamined"}
+        and all(fp < attempt_position[0]
+                for fp in facet_positions)
+        and len(captured) == 1,
+        store)
 
 
 # -- starvation cases (VP-50..VP-54) --------------------------------------
@@ -1101,7 +1351,14 @@ def starvation_case(case, events, expect_fn, expected):
            {"bytes_sha256": sha256_hex(cli_bytes),
             "byte_identical": api_bytes == cli_bytes},
            ok, {"events": events},
-           "" if ok else f"api={api}")
+           "" if ok else f"api={api}",
+           dual_applicable=False,
+           dual_note="the starvation report is one derived-report "
+                     "implementation by design (I-12, accepted "
+                     "at examination); the agreement property is "
+                     "byte-identity of the module API and its "
+                     "standalone CLI over the same input, "
+                     "asserted inside the case")
 
 
 def run_starvation_cases():
@@ -1170,7 +1427,13 @@ def run_starvation_cases():
     record("VP-54", {"bytes": "identical across runs"},
            {"sha256": sha256_hex(first)},
            {"sha256": sha256_hex(cli)},
-           first == second == cli, {"events": evs54})
+           first == second == cli, {"events": evs54},
+           dual_applicable=False,
+           dual_note="the starvation report is one derived-report "
+                     "implementation by design (I-12, accepted "
+                     "at examination); the case IS the "
+                     "byte-identity property across the module "
+                     "API and its standalone CLI")
 
 
 # -- VP-55 and VP-29 -------------------------------------------------------
@@ -1203,7 +1466,14 @@ def run_binding_cases():
            {"blocked": blocked, "bound_pack": pack},
            {"match": match.get("pack_binding"),
             "mismatch": mismatch.get("pack_binding")},
-           eng_ok and chk_ok, {"history": history})
+           eng_ok and chk_ok, {"history": history},
+           dual_applicable=False,
+           dual_note="the binding contract, not an attempt case: "
+                     "the engine side is exercised at opening "
+                     "(digest guard) and the checker side in fold "
+                     "mode (bound-digest report); the cross-side "
+                     "property — both honour the one pinned "
+                     "digest — is asserted inside the case")
 
 
 def main():
@@ -1212,32 +1482,52 @@ def main():
     run_live_cases()
     run_starvation_cases()
     run_binding_cases()
-    # VP-29 — agreement across the whole pack, computed from the
-    # manifest itself: every case's two observed columns must be
-    # contract-identical. (For live cases the checker column is
-    # the live path's verbatim checker verdicts, as recorded.)
-    # Only cases whose two columns are the same contract
-    # projection are compared dict-for-dict: the fold cases, the
-    # canned attempt cases, and VP-28. Live-path cases carry the
-    # checker relation described in live_record; the starvation
-    # and binding cases assert their agreement property (report
-    # byte-identity; pack-digest match) inside the case itself.
-    skip = ("VP-22", "VP-23", "VP-30", "VP-31", "VP-32", "VP-33",
-            "VP-34", "VP-36", "VP-37", "VP-38", "VP-45", "VP-46",
-            "VP-48", "VP-49", "VP-50", "VP-51", "VP-52", "VP-53",
-            "VP-55")
+    # VP-29 — agreement across the whole pack, recomputed over
+    # the full dual-applicable set (correction round, C-B4):
+    # every manifest entry either declares dual_applicable and
+    # has its two recorded verdict columns compared dict-for-dict
+    # here, or is explicitly marked not dual-applicable with its
+    # justification in the entry. An entry that is neither
+    # compared nor marked fails this case — no silent exclusions.
+    # The exclusions are exactly: VP-22, VP-23 (no attempt is
+    # staged for a rejected contribution), VP-28 (checker-only
+    # subject, I-13), VP-50..VP-54 (single derived-report
+    # implementation, I-12), VP-55 (binding contract asserted
+    # cross-side inside the case).
+    compared = []
+    excluded = []
+    unmarked = []
     disagreements = []
     for entry in RESULTS:
-        if entry["case"] in skip or entry["case"] == "VP-29":
+        if entry["case"] == "VP-29":
             continue
-        if entry["observed"]["engine"] != entry["observed"]["checker"]:
-            disagreements.append(entry["case"])
-    record("VP-29", {"disagreements": []},
-           {"disagreements": disagreements},
-           {"disagreements": disagreements},
-           not disagreements, {"cases": len(RESULTS)},
-           "" if not disagreements
-           else f"disagreements: {disagreements}")
+        if entry["dual_applicable"]:
+            compared.append(entry["case"])
+            if entry["observed"]["engine"] \
+                    != entry["observed"]["checker"]:
+                disagreements.append(entry["case"])
+        elif entry.get("dual_note"):
+            excluded.append(entry["case"])
+        else:
+            unmarked.append(entry["case"])
+    record("VP-29", {"disagreements": [],
+                     "compared": "the full dual-applicable set",
+                     "exclusions_named": excluded},
+           {"disagreements": disagreements,
+            "compared": compared, "excluded": excluded,
+            "unmarked": unmarked},
+           {"disagreements": disagreements,
+            "compared": compared, "excluded": excluded,
+            "unmarked": unmarked},
+           not disagreements and not unmarked,
+           {"cases": len(RESULTS), "compared": compared,
+            "excluded": excluded},
+           "" if not disagreements and not unmarked
+           else f"disagreements: {disagreements} "
+                f"unmarked: {unmarked}",
+           dual_applicable=False,
+           dual_note="VP-29 is the agreement computation itself, "
+                     "not a case it compares")
     manifest_path = os.path.join(ROOT, "pack-validation-manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as fh:
         json.dump({"pack": {"id": PACK_ID, "version": PACK_VERSION,

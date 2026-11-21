@@ -82,7 +82,8 @@ from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.validators import RefResolver
 
 from .canonical import canonical, sha256_hex
-from .engine import _apply_operations, apply_event, state_hash
+from .engine import (_apply_operations, apply_event, empty_state,
+                     state_hash, verified_fold)
 from .fixture import (CONSTITUTION_HASH, SEALED_REQUIRED_FACETS,
                       SYSTEM_ACTOR)
 from .packpin import binding_is_stage4
@@ -443,6 +444,16 @@ class Harness:
         # is injected.
         self.checker_command = None
         self._bound_cache = None   # Stage 4 binding, once read
+        # Stage 4 correction round (C-B4): an optional observer the
+        # pack harness installs to capture each seal attempt's
+        # exact inputs (committed history, staged batch, snapshot,
+        # authenticated actor) at the moment the checker is
+        # invoked, so the same (H, B, L) can be replayed through
+        # both evaluators. Behaviour-neutral when unset (None).
+        self.attempt_observer = None
+        # Correction round (C-B2): memo for the authoritative
+        # history-derived fold, keyed by the history's head hash.
+        self._auth_state_cache = None
         self._tokens = {}          # token -> agent_id
         # Harness log: transport refusals and breadth refusals — the
         # record of calls refused at the interface, which append no
@@ -900,7 +911,10 @@ class Harness:
                 declared=declared, recorded=opened)
 
         # Step 2 — staleness, across the read set, with the diff.
-        st = self._engine.state
+        # Correction round (C-B2): staleness reads the
+        # authoritative fold, never the possibly corrupted live
+        # view; the changed-by record is history-derived as well.
+        st = self._authoritative_state()
         diff = []
         for rid in contribution["read_set"]:
             expected = contribution["base_versions"][rid]
@@ -959,7 +973,13 @@ class Harness:
         if errors:
             return errors
         # Envelope is valid; contribution is a dict with typed fields.
-        st = self._engine.state
+        # Correction round (C-B2): the cross-field rules are part
+        # of admission — the frozen region set and the dependency
+        # records they read come from the authoritative fold, so a
+        # contribution may lawfully mention a region the live view
+        # has lost to a fault (the round-1 notes' I-5 observation
+        # described the pre-correction behaviour).
+        st = self._authoritative_state()
         frozen = set(st["regions"])
         read_set = contribution["read_set"]
         write_set = contribution["write_set"]
@@ -1060,25 +1080,54 @@ class Harness:
                 f"event with that sequence naming this agent")
         return errors
 
+    def _authoritative_state(self):
+        """The authoritative state: the verified fold of the
+        committed history, and nothing else (Stage 4 correction
+        round, C-B2). Admission validation — the schema's frozen
+        region set, staleness, and the structural check — reads
+        THIS state, never the engine's operational live state.
+        The two coincide on every unfaulted run; they part only
+        when a fault has corrupted the live derived state (the
+        TV-1 injection), and in that case the fold is the state
+        the history actually establishes, while the corrupted
+        live state is exactly the snapshot L the seal regime
+        judges. Memoised on the history's head hash: any commit
+        moves the head and the fold is recomputed."""
+        events = self._engine.store.all_events()
+        if not events:
+            return empty_state()
+        head = events[-1]["hash"]
+        cache = self._auth_state_cache
+        if cache is not None and cache[0] == head:
+            return cache[1]
+        state = verified_fold(events, CONSTITUTION_HASH)
+        self._auth_state_cache = (head, state)
+        return state
+
     def _structural_violation(self, contribution):
         """Apply the operations hypothetically to current state and
         test S1, S2, S3 in the closed set's order (S4 is schema-level
         and was settled in step 1). Returns (invariant, records,
         affected) or None.
 
-        Stage 4 attribution (build notes, deviations): the S1 and
-        S3 scans judge the violations THIS contribution introduces
-        — the dependencies it adds and the cycles its additions
-        close. A pre-existing inconsistency in the live state is
-        not attributed to an innocent submission: it is the seal
-        regime's to catch (section 7), and if admission rejected
-        every contribution while such a fault stood, no seal
-        attempt could ever evaluate the state and TV-1's lifecycle
-        would be unreachable on the live path. On every history
-        the earlier stages produce — the live state consistent
-        until this contribution acts — the attributed and
-        whole-state scans decide identically."""
-        st = self._engine.state
+        Stage 4 correction round (C-B2): the whole-state scans of
+        the accepted Stage 2 implementation (artifact dbdf1769)
+        are RESTORED — the hypothetical post-contribution state is
+        checked whole for S1 and S3, with no introduced-only
+        narrowing. The Stage 4 build round's attribution narrowing
+        (recorded as a deviation in the round-1 build notes) was
+        rejected at examination: Rev 9 section 4 tests the
+        hypothetical state whole, and a contribution may not be
+        accepted into a state that still violates S1 or S3. The
+        TV-1 problem the narrowing solved is solved instead by
+        the choice of state: the check runs against the
+        AUTHORITATIVE, history-derived fold (see
+        _authoritative_state), which the TV-1 fault — a corruption
+        of the live snapshot view only — never touches. A
+        violation standing in the authoritative state itself
+        (e.g. asserted at genesis) blocks every non-fixing
+        contribution and admits the one that fixes it."""
+        st = self._authoritative_state()
         # S1 premise: retiring a dependency that is not active.
         for op in contribution["operations"]:
             if op["kind"] == "remove_dependency":
@@ -1094,36 +1143,26 @@ class Harness:
             for i, op in enumerate(contribution["operations"])
             if op["kind"] == "add_dependency"}}
         _apply_operations(hypo, contribution, dummy)
-        added_ids = set(dummy["assigned_dependency_ids"].values())
-        # S1 — dependency integrity of the dependencies this
-        # contribution adds.
-        for dep_id in added_ids:
-            dep = hypo["dependencies"][dep_id]
-            if dep["source"] not in hypo["regions"] \
-                    or dep["target"] not in hypo["regions"]:
+        # S1 — dependency integrity.
+        for dep in hypo["dependencies"].values():
+            if dep["status"] == "active" and (
+                    dep["source"] not in hypo["regions"]
+                    or dep["target"] not in hypo["regions"]):
                 return ("S1",
-                        {"dependency_id": dep_id},
-                        [dep_id, dep["source"], dep["target"]])
+                        {"dependency_id": dep["dependency_id"]},
+                        [dep["dependency_id"], dep["source"],
+                         dep["target"]])
         # S2 — version monotonicity.
         for rid, region in hypo["regions"].items():
             if region["version"] < st["regions"][rid]["version"]:
                 return ("S2", {"region_id": rid}, [rid])
-        # S3 — pattern acyclicity over uses/constrains/extends: a
-        # violation only when the cycle runs through a dependency
-        # this contribution adds (a cycle already standing in the
-        # live state is the seal's finding, not this submission's).
-        def pattern_graph(exclude=frozenset()):
-            graph = {}
-            for dep in hypo["dependencies"].values():
-                if dep["status"] == "active" \
-                        and dep["kind"] in _PATTERN_KINDS \
-                        and dep["dependency_id"] not in exclude:
-                    graph.setdefault(dep["source"], []).append(
-                        dep["target"])
-            return graph
-
-        cycle = _find_cycle(pattern_graph())
-        if cycle and not _find_cycle(pattern_graph(added_ids)):
+        # S3 — pattern acyclicity over uses/constrains/extends.
+        graph = {}
+        for dep in hypo["dependencies"].values():
+            if dep["status"] == "active" and dep["kind"] in _PATTERN_KINDS:
+                graph.setdefault(dep["source"], []).append(dep["target"])
+        cycle = _find_cycle(graph)
+        if cycle:
             proposed = [op["dependency"]
                         for op in contribution["operations"]
                         if op["kind"] == "add_dependency"]
@@ -1335,6 +1374,20 @@ class Harness:
         structural TENSION_RAISED / TENSION_STATUS events the
         attempt causes (B3 order). The checker's verdict decides
         the recorded outcome."""
+        if self.attempt_observer is not None:
+            # Correction round (C-B4): capture the attempt's exact
+            # inputs — the committed history as it stands before
+            # this group, the staged batch, the snapshot, and the
+            # authenticated actor — before the checker is invoked,
+            # so the pack harness can replay the identical
+            # (H, B, L) through both evaluators.
+            self.attempt_observer({
+                "history": copy.deepcopy(
+                    self._engine.store.all_events()),
+                "staged": copy.deepcopy(staged),
+                "snapshot": copy.deepcopy(snapshot),
+                "authenticated_actor": authenticated_actor,
+                "attempt_seq": attempt_seq})
         verdict = self._invoke_checker(staged, snapshot,
                                        authenticated_actor)
         outcome = verdict["outcome"]
