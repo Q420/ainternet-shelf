@@ -1,0 +1,21 @@
+{"at_utc":"2026-11-14T21:55:38Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":true,"identity_harness_observed":{"dev":2096,"ino":31596,"mode":493,"path":"/srv/nemotron-pilot/batch4/sup-test/harness/pilot-harness"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":true,"run_id":"B4FALSE-20261114-001","seq":1}
+{"at_utc":"2026-11-14T21:55:38Z","kind":"LAUNCHER_SPAWNED","launcher_pid":62119,"run_id":"B4FALSE-20261114-001","seq":2,"status_writer_self_audit":"CLEAN"}
+{"at_utc":"2026-11-14T21:55:38Z","kind":"STATE","run_id":"B4FALSE-20261114-001","seq":3,"state":"S0"}
+{"at_utc":"2026-11-14T21:55:38Z","expected_supervisor_pid":62118,"kind":"LAUNCH_REQUEST_SENT","ok":true,"run_id":"B4FALSE-20261114-001","seq":4}
+{"ack_code":0,"at_utc":"2026-11-14T21:55:38Z","child_pid":62120,"claimed_start_time":13143087,"fdinfo_target":62120,"kind":"HANDOFF_VALIDATION","observed_ppid":62119,"observed_start_time":13143087,"readiness":"NOT_OBSERVED","run_id":"B4FALSE-20261114-001","seq":5}
+{"ack_code":0,"at_utc":"2026-11-14T21:55:38Z","kind":"HANDOFF_ACK_SENT","run_id":"B4FALSE-20261114-001","seq":6}
+{"at_utc":"2026-11-14T21:55:38Z","kind":"GATE_READY","run_id":"B4FALSE-20261114-001","seq":7}
+{"at_utc":"2026-11-14T21:55:38Z","comparison":"PASS","failure":null,"kind":"LAUNCH_EVIDENCE","path":"/srv/nemotron-pilot/batch4/sup-test/evidence/B4FALSE-20261114-001.launch-evidence.json","run_id":"B4FALSE-20261114-001","seq":8}
+{"at_utc":"2026-11-14T21:55:38Z","kind":"PRE_RELEASE_GUARD","outcome":"NOT_OBSERVED","run_id":"B4FALSE-20261114-001","seq":9}
+{"at_utc":"2026-11-14T21:55:38Z","kind":"RELEASE_SENT","run_id":"B4FALSE-20261114-001","seq":10}
+{"at_utc":"2026-11-14T21:55:38Z","kind":"GATE_ACTUATED","run_id":"B4FALSE-20261114-001","seq":11}
+{"at_utc":"2026-11-14T21:55:39Z","event_sha_match":true,"genesis_in_file":"9146425d1530cc456bade4198293947dfa9d0f7939d9a85e9f2100a7bf7db65e","genesis_match":true,"genesis_recomputed":"9146425d1530cc456bade4198293947dfa9d0f7939d9a85e9f2100a7bf7db65e","kind":"START_SELF_COMPUTATION","run_id":"B4FALSE-20261114-001","seq":12}
+{"at_utc":"2026-11-14T21:55:39Z","kind":"ISSUANCE","receipt_kind":"START","receipt_path":"/srv/nemotron-pilot/batch4/sup-test/commitments/B4FALSE-20261114-001.start.json","receipt_sha256":"f1e84a8db34eece1bf3316abad1a49f8ae73d2aef505956e3be1ea0a40e6e99f","run_id":"B4FALSE-20261114-001","seq":13}
+{"at_utc":"2026-11-14T21:55:39Z","exit_code":0,"exited":true,"kind":"LAUNCHER_EXIT","raw_wait_status":0,"run_id":"B4FALSE-20261114-001","seq":14,"signal":null,"signalled":false}
+{"at":"2026-11-14T21:55:39Z","at_utc":"2026-11-14T21:55:39Z","child_pid":62120,"kind":"TERMINATION_OBSERVED","run_id":"B4FALSE-20261114-001","seq":15,"source":"pidfd (supervisor-observed)"}
+{"at_utc":"2026-11-14T21:55:39Z","kind":"LAUNCHER_EXIT_OBSERVED","run_id":"B4FALSE-20261114-001","seq":16,"source":"channel EOF (drained)","state_at_observation":"S7"}
+{"accepted":true,"at_utc":"2026-11-14T21:55:39Z","bytes":10,"child_pid":62120,"classification":"ACCEPT","decode":{"exit_code":0,"kind":"exited"},"kind":"STATUS_RECORD","raw_word":0,"run_id":"B4FALSE-20261114-001","seq":17,"word_valid":true}
+{"at_utc":"2026-11-14T21:55:39Z","kind":"STATE","run_id":"B4FALSE-20261114-001","seq":18,"state":"S9","terminal_facts":{"pidfd_termination_observed":true,"status_child_pid":62120,"status_word":0}}
+{"at_utc":"2026-11-14T21:55:39Z","kind":"STATUS_ACK_OUTCOME","outcome":"STATUS_ACK_UNDELIVERABLE","run_id":"B4FALSE-20261114-001","seq":19}
+{"at_utc":"2026-11-14T21:55:39Z","kind":"ISSUANCE","receipt_kind":"TERMINAL","receipt_path":"/srv/nemotron-pilot/batch4/sup-test/commitments/B4FALSE-20261114-001.terminal.json","receipt_sha256":"096c1ee24a643732e67302ee98448147d4fe054cbe954ce5c4754f9eefa07809","run_id":"B4FALSE-20261114-001","seq":20}
+{"at_utc":"2026-11-14T21:55:39Z","kind":"ATTEMPT_CLOSED","outcome":"S9_CLOSED","run_id":"B4FALSE-20261114-001","seq":21,"state":"S9"}

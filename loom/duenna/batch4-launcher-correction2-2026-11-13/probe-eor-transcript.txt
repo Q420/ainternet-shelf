@@ -1,0 +1,27 @@
+Probe: probe_eor.py (AF_UNIX SOCK_SEQPACKET socketpair, Python recvmsg),
+run in the pilot room, kernel 6.18.58.1-microsoft-standard-WSL2,
+2026-11-13. Verbatim output:
+
+S1 empty record, then peek, then recv, then peek
+  S1 peek -> n=0 flags=-
+  S1 recv -> n=0 flags=-
+  S1 peek -> TimeoutError timed out
+S2 shutdown, then recv, then peek
+  S2 recv -> n=0 flags=-
+  S2 peek -> n=0 flags=-
+S3 empty record then shutdown: recv, peek
+  S3 recv -> n=0 flags=-
+  S3 peek -> n=0 flags=-
+S4 two empty records: recv, recv, peek
+  S4 recv -> n=0 flags=-
+  S4 recv -> n=0 flags=-
+  S4 peek -> TimeoutError timed out
+S5 data record: recv flags
+  S5 recv -> n=2 flags=-
+S6 nothing sent: peek
+  S6 peek -> TimeoutError timed out
+
+Key fact: MSG_EOR (and every other flag) is clear in EVERY
+receive — including an ordinary 2-byte record (S5). The
+AF_UNIX SOCK_SEQPACKET receive path on this kernel does
+not surface MSG_EOR at all.

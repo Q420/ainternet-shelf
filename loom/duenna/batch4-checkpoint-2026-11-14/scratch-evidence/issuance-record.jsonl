@@ -1,0 +1,6 @@
+{"issued_at_utc":"2026-11-14T21:55:24Z","kind":"START","receipt_sha256":"02438a9c5b0b77d42aad5d481912d3c2fb3bdd4a135331ae58559ba4b010a12c","run_id":"B4-20261114-001"}
+{"issued_at_utc":"2026-11-14T21:55:24Z","kind":"TERMINAL","receipt_sha256":"f3633b56de715be9f503c08bbca8ad527114962e28bc61e399f1c7a87d81977e","run_id":"B4-20261114-001"}
+{"issued_at_utc":"2026-11-14T21:55:35Z","kind":"START","receipt_sha256":"73d34c28c600524be24f5f1dbb26a5eee598a8f46f06536f4b1c69fab6b51405","run_id":"B4CRASH-20261114-001"}
+{"issued_at_utc":"2026-11-14T21:55:35Z","kind":"CRASH","receipt_sha256":"39cb42aba9c9f2c6be3c28fac7dacaa2f0ba0fd7dcd47405d22fe1639e837053","run_id":"B4CRASH-20261114-001"}
+{"issued_at_utc":"2026-11-14T21:55:39Z","kind":"START","receipt_sha256":"f1e84a8db34eece1bf3316abad1a49f8ae73d2aef505956e3be1ea0a40e6e99f","run_id":"B4FALSE-20261114-001"}
+{"issued_at_utc":"2026-11-14T21:55:39Z","kind":"TERMINAL","receipt_sha256":"096c1ee24a643732e67302ee98448147d4fe054cbe954ce5c4754f9eefa07809","run_id":"B4FALSE-20261114-001"}

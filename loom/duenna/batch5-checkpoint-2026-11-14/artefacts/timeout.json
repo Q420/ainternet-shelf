@@ -1,0 +1,24 @@
+{
+ "scenario": "timeout",
+ "double_id": "transport-double/1.0-stage5",
+ "adapter_id": "pilot-adapter-stage5/1.0",
+ "capture_id": "ff955068-a152-4642-bb7e-edd703691fda",
+ "capture_file": "captures/timeout/ff955068-a152-4642-bb7e-edd703691fda.json",
+ "checks": {
+  "field_count_30": true,
+  "record_sha256_recomputes": true,
+  "request_sha256_recomputes": true,
+  "attempt_body_hashes_recompute": true,
+  "config_digest_pinned": true,
+  "envelope_matches_config": true,
+  "wire_envelope_matches_config": true,
+  "wire_messages_unmodified": true,
+  "two_attempts": true,
+  "both_timeout_class": true,
+  "transport_timeout": true,
+  "adapter_failure": true,
+  "no_response_fields": true,
+  "raw_output_null": true
+ },
+ "passed": true
+}

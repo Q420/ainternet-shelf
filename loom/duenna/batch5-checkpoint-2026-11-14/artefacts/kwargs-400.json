@@ -1,0 +1,23 @@
+{
+ "scenario": "kwargs-400",
+ "double_id": "transport-double/1.0-stage5",
+ "adapter_id": "pilot-adapter-stage5/1.0",
+ "capture_id": "91d6c224-9ec0-4fa4-b8fc-ed2da5612054",
+ "capture_file": "captures/kwargs-400/91d6c224-9ec0-4fa4-b8fc-ed2da5612054.json",
+ "checks": {
+  "field_count_30": true,
+  "record_sha256_recomputes": true,
+  "request_sha256_recomputes": true,
+  "response_sha256_recomputes": true,
+  "attempt_body_hashes_recompute": true,
+  "config_digest_pinned": true,
+  "envelope_matches_config": true,
+  "wire_envelope_matches_config": true,
+  "wire_messages_unmodified": true,
+  "exactly_one_attempt": true,
+  "adapter_failure": true,
+  "detail_names_field": true,
+  "raw_output_null": true
+ },
+ "passed": true
+}

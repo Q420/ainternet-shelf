@@ -1,0 +1,22 @@
+{
+ "scenario": "notfound-404",
+ "double_id": "transport-double/1.0-stage5",
+ "adapter_id": "pilot-adapter-stage5/1.0",
+ "capture_id": "2bb2410b-506d-4655-b084-f7475e80cbf2",
+ "capture_file": "captures/notfound-404/2bb2410b-506d-4655-b084-f7475e80cbf2.json",
+ "checks": {
+  "field_count_30": true,
+  "record_sha256_recomputes": true,
+  "request_sha256_recomputes": true,
+  "response_sha256_recomputes": true,
+  "attempt_body_hashes_recompute": true,
+  "config_digest_pinned": true,
+  "envelope_matches_config": true,
+  "wire_envelope_matches_config": true,
+  "wire_messages_unmodified": true,
+  "exactly_one_attempt": true,
+  "adapter_failure": true,
+  "raw_output_null": true
+ },
+ "passed": true
+}

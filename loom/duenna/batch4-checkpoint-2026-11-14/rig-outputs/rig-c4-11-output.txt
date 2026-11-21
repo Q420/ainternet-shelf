@@ -1,0 +1,24 @@
+planted receipt written
+=== positive control — genuine receipt
+{
+ "receipt": "/srv/nemotron-pilot/batch4/checkpoint-work/anchor-scratch/B4SMOKE-20261114-001.start.json",
+ "run_id": "B4SMOKE-20261114-001",
+ "kind": "START",
+ "receipt_sha256_computed": "9b10b55635224b030d8ac4be85e13a5a833bd293ed54fa7557ed24e34b2eea1a",
+ "issuance_entries_for_run": 2,
+ "anchored": true,
+ "verdict": "ACCEPTED"
+}
+anchor exit: 0 (expect 0)
+=== planted receipt — must be REJECTED
+{
+ "receipt": "/srv/nemotron-pilot/batch4/checkpoint-work/anchor-scratch/B4PLANT-20261114-001.start.json",
+ "run_id": "B4PLANT-20261114-001",
+ "kind": "START",
+ "receipt_sha256_computed": "df425bc0ae9e51ebcd99aa29aefbe391dded22f9f49c19f818c5129fb47ebe4d",
+ "issuance_entries_for_run": 0,
+ "anchored": false,
+ "verdict": "REJECTED \u2014 custody finding: no matching issuance entry"
+}
+anchor exit: 1 (expect 1)
+C4-11-DONE

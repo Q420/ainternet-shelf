@@ -1,0 +1,15 @@
+== Part 1: SHUT_RD purge semantics (in-process) ==
+recvs after SHUT_RD: [b'HELLO', b'', b''] -> data record purged: False
+pipe write: SUCCEEDED -> queued fd NOT closed by kernel
+send after SHUT_RD, peer received: b'STATUS!'
+== Part 2: STATUS survival, residue = 3 zeros + rights + data, 20 trials ==
+variant plain: lost 0/20
+variant recvdrain: lost 0/20
+variant purge: lost 0/20
+variant purge+drain: lost 0/20
+== Part 3: 1500-record queue, 10 trials ==
+[big queue: 1500 zero records queued]
+variant recvdrain: lost 0/10
+[big queue: 1500 zero records queued]
+variant purge: lost 0/10
+PROBE DONE

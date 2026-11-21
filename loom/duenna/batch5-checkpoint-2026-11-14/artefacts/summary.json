@@ -1,0 +1,18 @@
+{
+ "double_id": "transport-double/1.0-stage5",
+ "scenarios": {
+  "ok": true,
+  "retry-429": true,
+  "retry-500": true,
+  "fail-429": true,
+  "kwargs-400": true,
+  "notfound-404": true,
+  "mismatch": true,
+  "unparseable": true,
+  "redact-500": true,
+  "timeout": true,
+  "isolation": true,
+  "redaction-sweep": true
+ },
+ "all_passed": true
+}

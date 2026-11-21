@@ -1,0 +1,40 @@
+== T1 [Z, Z, P(5 bytes), shutdown] ==
+  before any recv: FIONREAD=5 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#1: n=0 flags=0
+  after recv#1: FIONREAD=5 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#2: n=0 flags=0
+  after recv#2: FIONREAD=5 PEEK=5 POLL=POLLIN|POLLRDHUP
+  recv#3: n=5 flags=0
+  after recv#3: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#4: n=0 flags=0
+  after recv#4: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+
+== T2 [Z, Z, shutdown] ==
+  before any recv: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#1: n=0 flags=0
+  after recv#1: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#2: n=0 flags=0
+  after recv#2: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#3: n=0 flags=0
+  after recv#3: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+
+== T3 [P(5 bytes)] open ==
+  before any recv: FIONREAD=5 PEEK=5 POLL=POLLIN
+  recv#1: n=5 flags=0
+  after recv#1: FIONREAD=0 PEEK=EAGAIN POLL=none
+  recv#2: EAGAIN
+
+== T4 [Z, P(5 bytes), shutdown] ==
+  before any recv: FIONREAD=5 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#1: n=0 flags=0
+  after recv#1: FIONREAD=5 PEEK=5 POLL=POLLIN|POLLRDHUP
+  recv#2: n=5 flags=0
+  after recv#2: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#3: n=0 flags=0
+  after recv#3: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+
+== T5 [shutdown only] ==
+  before any recv: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+  recv#1: n=0 flags=0
+  after recv#1: FIONREAD=0 PEEK=0 POLL=POLLIN|POLLRDHUP
+

@@ -1,0 +1,60 @@
+BENCH3 on kernel 6.18.58.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Tue Oct 27 00:24:11 UTC 2026 x86_64
+SANITY: pipe/empty/open must be 10 VALID
+  sanity: {'VALID': 10}
+shape             peer    cand   results
+empty             open    pipe   {'VALID': 10}
+empty             open    pair   {'VALID': 10}
+empty             closed  pipe   {'VALID': 10}
+empty             closed  pair   {'VALID': 10}
+one-zero          open    pipe   {'VALID': 10}
+one-zero          open    pair   {'VALID': 10}
+one-zero          closed  pipe   {'VALID': 10}
+one-zero          closed  pair   {'VALID': 10}
+two-zeros         open    pipe   {'VALID': 10}
+two-zeros         open    pair   {'VALID': 10}
+two-zeros         closed  pipe   {'VALID': 10}
+two-zeros         closed  pair   {'VALID': 10}
+three-zeros       open    pipe   {'VALID': 10}
+three-zeros       open    pair   {'VALID': 10}
+three-zeros       closed  pipe   {'VALID': 10}
+three-zeros       closed  pair   {'VALID': 10}
+five-zeros        open    pipe   {'VALID': 10}
+five-zeros        open    pair   {'VALID': 10}
+five-zeros        closed  pipe   {'VALID': 10}
+five-zeros        closed  pair   {'VALID': 10}
+anc-one           open    pipe   {'VALID': 10}
+anc-one           open    pair   {'VALID': 10}
+anc-one           closed  pipe   {'VALID': 10}
+anc-one           closed  pair   {'VALID': 10}
+anc-three         open    pipe   {'VALID': 10}
+anc-three         open    pair   {'VALID': 10}
+anc-three         closed  pipe   {'VALID': 10}
+anc-three         closed  pair   {'VALID': 10}
+data-one          open    pipe   {'VALID': 10}
+data-one          open    pair   {'VALID': 10}
+data-one          closed  pipe   {'VALID': 10}
+data-one          closed  pair   {'VALID': 10}
+nq5               open    pipe   {'VALID': 10}
+nq5               open    pair   {'VALID': 10}
+nq5               closed  pipe   {'VALID': 10}
+nq5               closed  pair   {'VALID': 10}
+mixed-data-last   open    pipe   {'VALID': 10}
+mixed-data-last   open    pair   {'VALID': 10}
+mixed-data-last   closed  pipe   {'VALID': 10}
+mixed-data-last   closed  pair   {'VALID': 10}
+trailing-zeros    open    pipe   {'VALID': 10}
+trailing-zeros    open    pair   {'VALID': 10}
+trailing-zeros    closed  pipe   {'VALID': 10}
+trailing-zeros    closed  pair   {'VALID': 10}
+queue-1500        open    pipe   {'VALID': 10}
+queue-1500        open    pair   {'VALID': 10}
+queue-1500        closed  pipe   {'VALID': 10}
+queue-1500        closed  pair   {'VALID': 10}
+VIOLATION + FAILURE CASES
+V1-prevention empty         pair   {'EPIPE-AT-PEER+VALID': 10}
+V2-audit      empty         pair   {'VIOLATION-DETECTED': 10}
+V1-prevention three-zeros   pair   {'EPIPE-AT-PEER+VALID': 10}
+V2-audit      three-zeros   pair   {'VIOLATION-DETECTED': 10}
+writer-failure empty         pipe   {'WRITEFAIL-EXPLICIT': 10}
+parent fd count before=6 after=6
+BENCH3 DONE

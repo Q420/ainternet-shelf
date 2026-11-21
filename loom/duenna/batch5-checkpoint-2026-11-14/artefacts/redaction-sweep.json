@@ -1,0 +1,8 @@
+{
+ "scenario": "redaction-sweep",
+ "double_id": "transport-double/1.0-stage5",
+ "checks": {
+  "no_credential_material_in_any_capture": true
+ },
+ "passed": true
+}

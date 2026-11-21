@@ -1,0 +1,20 @@
+generated /srv/nemotron-pilot/batch4/ix-test/build/identity_records.h for /srv/nemotron-pilot/batch4/ix-test/genuine/pilot-harness and /usr/bin/python3.14
+freeze record: {'harness': {'path': '/srv/nemotron-pilot/batch4/ix-test/link/pilot-harness', 'resolved': '/srv/nemotron-pilot/batch4/ix-test/genuine/pilot-harness', 'dev': 2096, 'ino': 31863, 'mode': 493}, 'interpreter': {'path': '/usr/bin/python3', 'resolved': '/usr/bin/python3.14', 'dev': 2096, 'ino': 11194, 'mode': 493}}
+=== (ix)(b) REDIRECTION — symlink repointed after the freeze
+total 12
+drwxr-xr-x  2 root root 4096 Nov 14 15:07 .
+drwxr-xr-x 11 root root 4096 Nov 14 15:07 ..
+lrwxrwxrwx  1 root root   60 Nov 14 15:07 pilot-harness -> /srv/nemotron-pilot/batch4/ix-test/subst/pilot-harness-plain
+supervisor exit: 2
+{"at_utc":"2026-11-14T22:07:40Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":false,"identity_harness_observed":{"dev":2096,"ino":31866,"mode":493,"path":"/srv/nemotron-pilot/batch4/ix-test/subst/pilot-harness-plain"},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":false,"run_id":"B4IXB-20261114-001","seq":1}
+{"at_utc":"2026-11-14T22:07:40Z","kind":"ATTEMPT_CLOSED","outcome":"STAGE1_REFUSAL","run_id":"B4IXB-20261114-001","seq":2}
+=== (ix)(c) path-component audit — production tree
+all_ok: True
+=== (ix)(c) defective scratch tree — must be FLAGGED
+all_ok: False | flagged: [{'component': '//srv/nemotron-pilot/batch4/ix-test/defective', 'owner': 'pilot-harness', 'mode': '0o775'}]
+=== (ix)(a) SUBSTITUTION — setuid copy replaces the genuine object
+/srv/nemotron-pilot/batch4/ix-test/genuine/pilot-harness root:root 4755
+supervisor exit: 2
+{"at_utc":"2026-11-14T22:07:42Z","checks":{"commitments_custody":true,"fd0_devnull":true,"fd1_append_log":true,"fd2_same_log":true,"identity_harness":false,"identity_harness_observed_raw":{"dev":2096,"ino":31879,"mode":2541,"setgid":false,"setuid":true},"identity_interpreter":true,"identity_interpreter_observed":{"dev":2096,"ino":11194,"mode":493,"path":"/usr/bin/python3.14"},"no_writable_commitments_fd":true},"kind":"STAGE1_CHECKS","passed":false,"run_id":"B4IXA-20261114-001","seq":1}
+{"at_utc":"2026-11-14T22:07:42Z","kind":"ATTEMPT_CLOSED","outcome":"STAGE1_REFUSAL","run_id":"B4IXA-20261114-001","seq":2}
+IX-DONE

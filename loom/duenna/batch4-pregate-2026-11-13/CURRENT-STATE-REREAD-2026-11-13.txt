@@ -1,0 +1,10 @@
+== current-state re-read 2026-11-14T06:23:25Z (Batch 4, NOT original setup evidence) ==
+uid=999(pilot-supervisor) gid=986(pilot-supervisor) groups=986(pilot-supervisor)
+uid=997(pilot-harness) gid=985(pilot-harness) groups=985(pilot-harness)
+pilot-supervisor:x:986:
+pilot-harness:x:985:
+/srv/nemotron-pilot/commitments owner=pilot-supervisor(999) group=pilot-supervisor(986) mode=700
+/srv/nemotron-pilot/runs owner=pilot-harness(997) group=pilot-harness(985) mode=755
+/srv/nemotron-pilot owner=root(0) group=root(0) mode=755
+6.18.58.1-microsoft-standard-WSL2
+systemd

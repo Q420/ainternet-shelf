@@ -1,0 +1,44 @@
+kernel: 6.18.58.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Tue Oct 27 00:24:11 UTC 2026
+machine: x86_64
+
+== baseline: empty socket, peer open ==
+rmem_alloc=0 optlen=36 meminfo=[0, 212992, 0, 212992, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+== empty CLOSED socket: phantom EOF, then accounting ==
+phantom recv -> b''
+rmem_alloc after phantom = 0 (must be 0)
+
+== plain zeros: accounting after EACH receive ==
+  queued 5: rmem_alloc=0
+  after recv 1 (b''): rmem_alloc=0
+  after recv 2 (b''): rmem_alloc=0
+  after recv 3 (b''): rmem_alloc=0
+  after recv 4 (b''): rmem_alloc=0
+  after recv 5 (b''): rmem_alloc=0
+  after phantom: rmem_alloc=0
+
+== ancillary zero: accounting + descriptor ==
+  queued anc-zero: rmem_alloc=0
+  received: data=b'' fds=[6]
+  after consume+close: rmem_alloc=0
+
+== mixed: data + trailing zeros, accounting each step ==
+  queued [data,Z,Z,Z]: rmem_alloc=0
+  after recv 1 (b'XYZ'): rmem_alloc=0
+  after recv 2 (b''): rmem_alloc=0
+  after recv 3 (b''): rmem_alloc=0
+  after recv 4 (b''): rmem_alloc=0
+
+== 1500 zeros: sampled accounting ==
+  queued 1500: rmem_alloc=0
+  after 500 consumed: rmem_alloc=0
+  after 1000 consumed: rmem_alloc=0
+  after 1499 consumed: rmem_alloc=0
+  after 1500 consumed: rmem_alloc=0
+
+== failure + short-buffer behaviour ==
+  short buffer (1 word): rc=0 errno=0 optlen=4 vals=[0]
+  bad optname 9999: rc=-1 errno=92 (ENOPROTOOPT=92)
+  8-word buffer: rc=0 errno=92 optlen=32 rmem=0
+
+PROBE DONE

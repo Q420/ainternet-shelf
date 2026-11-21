@@ -1,0 +1,23 @@
+--- bundle2f/launcher.c	2026-11-13 22:13:38.003619394 -0800
++++ launcher_header_only.c	2026-11-14 01:04:39.566065689 -0800
+@@ -44,12 +44,14 @@
+  * (7) no ancillary data is accepted on any received
+  * message and every delivered descriptor is closed.
+  *
+- * CORRECTION ROUND 2 (plan Rev 2, approved by Alex at
+- * dce8f7b5): the two findings reopened at pin 6430b9f...
+- * — a zero-length RECORD is classified by MSG_EOR after
+- * the ancillary walk (record -2 / shutdown -1 / ancillary
+- * -4), never as EOF by default; and the ACK-wait ABORT
+- * is validated by abort_packet_valid() before dispatch.
++ * CORRECTION ROUND 2 (plan Revision 4; Treatment A
++ * ruled by Alex at pb-mwg2c6a8): the two findings
++ * reopened at pin 6430b9f... — a zero-length receive is
++ * classified AFTER the ancillary walk (ancillary -4)
++ * by the poll + peek sequence in zero_classify()
++ * (record -2 / shutdown -1), never as EOF by default;
++ * and the ACK-wait ABORT is validated by
++ * abort_packet_valid() before dispatch.
+  */
+ 
+ #define _GNU_SOURCE

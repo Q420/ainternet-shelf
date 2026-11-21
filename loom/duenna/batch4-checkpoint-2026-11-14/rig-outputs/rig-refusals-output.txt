@@ -1,0 +1,44 @@
+=== executing identity for this rig: uid=0(root) gid=0(root) groups=0(root)
+
+=== C4-8(i) receipt hashes BEFORE
+9b10b55635224b030d8ac4be85e13a5a833bd293ed54fa7557ed24e34b2eea1a  /srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json
+dc299db756a0b82525541854304711d40a7f5985868d2be9f18a5b216b3de443  /srv/nemotron-pilot/commitments/issuance-record.jsonl
+
+=== C4-8(i) adversarial attempts AS pilot-harness (shell level)
+identity: uid=997(pilot-harness) gid=985(pilot-harness) groups=985(pilot-harness)
+touch: setting times of '/srv/nemotron-pilot/commitments/probe-shell.tmp': Permission denied
+create exit: 1
+overwrite exit: 1
+bash: line 4: /srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json: Permission denied
+delete exit: 1
+append-issuance exit: 1
+rm: cannot remove '/srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json': Permission denied
+bash: line 6: /srv/nemotron-pilot/commitments/issuance-record.jsonl: Permission denied
+cat: /srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json: Permission denied
+read exit: 1
+
+=== C4-8(i) receipt hashes AFTER (must be identical)
+9b10b55635224b030d8ac4be85e13a5a833bd293ed54fa7557ed24e34b2eea1a  /srv/nemotron-pilot/commitments/B4SMOKE-20261114-001.start.json
+dc299db756a0b82525541854304711d40a7f5985868d2be9f18a5b216b3de443  /srv/nemotron-pilot/commitments/issuance-record.jsonl
+
+=== C4-9(v) launcher invoked AS pilot-harness
+exit: 1
+runuser: failed to execute /srv/nemotron-pilot/launcher: Permission denied
+
+=== C4-9(v) non-allowlist invocations AS pilot-supervisor
+no-arg exit: 12
+extra-arg exit: 12
+bad-run-id exit: 12
+bad-date exit: 12
+no runs spawned by refusal cases
+
+=== (vii) group separation — OS evidence
+uid=999(pilot-supervisor) gid=986(pilot-supervisor) groups=986(pilot-supervisor)
+uid=997(pilot-harness) gid=985(pilot-harness) groups=985(pilot-harness)
+pilot-supervisor:x:986:
+pilot-harness:x:985:
+=== (vii) setuid preconditions
+rw,relatime,discard,errors=remount-ro,data=ordered
+NoNewPrivs:	0
+6.18.58.1-microsoft-standard-WSL2
+RIG-REFUSALS-DONE

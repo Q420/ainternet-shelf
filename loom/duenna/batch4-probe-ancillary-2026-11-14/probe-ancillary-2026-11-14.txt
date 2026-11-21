@@ -1,0 +1,46 @@
+python 3.14.4
+kernel Linux 6.18.58.1-microsoft-standard-WSL2 x86_64
+
+== A [Z+rights] channel OPEN ==
+  sendmsg zero+rights returned: None
+  after send: FIONREAD=0 POLL=POLLIN PEEK=n=0 anc=[SCM_RIGHTS[8]] flags=0
+  recv#1: n=0 anc=[SCM_RIGHTS[9]] flags=0
+  received fd 9 readable: b'K'
+
+== B [Z, Z+rights, shutdown] ==
+  before any recv: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+  recv#1: n=0 anc=[no-ancillary] flags=0
+  after recv#1: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[SCM_RIGHTS[9]] flags=0
+  recv#2: n=0 anc=[SCM_RIGHTS[11]] flags=0
+    (delivered fd 11 closed by receiver)
+  after recv#2: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+  recv#3: n=0 anc=[no-ancillary] flags=0
+  after recv#3: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+
+== C [Z, Z, Z+rights, shutdown] ==
+  before any recv: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+  recv#1: n=0 anc=[no-ancillary] flags=0
+  after recv#1: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+  recv#2: n=0 anc=[no-ancillary] flags=0
+  after recv#2: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[SCM_RIGHTS[11]] flags=0
+  recv#3: n=0 anc=[SCM_RIGHTS[12]] flags=0
+    (delivered fd 12 closed by receiver)
+  after recv#3: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+  recv#4: n=0 anc=[no-ancillary] flags=0
+  after recv#4: FIONREAD=0 POLL=POLLIN|POLLRDHUP PEEK=n=0 anc=[no-ancillary] flags=0
+
+== D peek on [Z+rights], channel OPEN ==
+  fd_count before peeks: 13
+  peek#1: n=0 anc=[SCM_RIGHTS[12]] flags=0
+  peek#2: n=0 anc=[SCM_RIGHTS[13]] flags=0
+  fd_count after peeks: 15 (peek installs nothing if unchanged)
+  recv after peeks: n=0 anc=[SCM_RIGHTS[14]] flags=0
+  fd_count after recv: 16 (rises by 1 if the fd was delivered exactly once, at recv)
+  received fd 14 readable: b'K'
+
+== E empty queue: peek / nonblocking recv ==
+  peer OPEN:     PEEK=EAGAIN  RECV=EAGAIN  POLL=none
+  peer SHUTDOWN: PEEK=n=0 anc=[no-ancillary] flags=0  RECV=n=0 anc=[no-ancillary] flags=0  POLL=POLLIN|POLLRDHUP
+  again:         PEEK=n=0 anc=[no-ancillary] flags=0  RECV=n=0 anc=[no-ancillary] flags=0  POLL=POLLIN|POLLRDHUP
+
+probe complete
