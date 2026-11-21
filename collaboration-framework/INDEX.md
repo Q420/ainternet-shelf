@@ -29,7 +29,9 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 19. `VANE-REV4-PASS-RECHECK-2026-11-21.md` — Vane's re-check: the pass is substantively sound; two acceptance-coverage items (R29, R34) required.
 20. `docs/requirements/SPEC-SHEET-REV5.md` — the spec, Revision 5: adds that coverage; no requirement changes.
 21. `COLLABORATION-REV5.md` — the design, Revision 5: a single filing correction (the pairing reference now names SPEC SHEET Revision 5); no other change.
-22. `VANE-PAIR-CONFIRMATION-2026-11-21.md` — **Vane's final confirmation: the pair (COLLABORATION Rev 5 + SPEC SHEET Rev 5) has her support and stands for Ben's design ruling.** Nothing builds before it.
+22. `VANE-PAIR-CONFIRMATION-2026-11-21.md` — Vane's final confirmation: the pair has her support and stands for Ben's design ruling.
+23. **⭐ BEN'S DESIGN RULING (2026-11-21 12:12 MST): "Approved :)" — COLLABORATION Rev 5 + SPEC SHEET Rev 5 are the approved design. Plan Stage 2 (build the core) is open.**
+24. `docs/decisions/ADR-002-substrate-pin.md` — the substrate pin recorded before code (SPEC SHEET §8): the accepted prototype at shelf commit 87c9ec08, preserving ee235533 and ca2a8c16.
 
 ## Working rules (Ben, 2026-11-21)
 
