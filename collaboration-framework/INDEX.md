@@ -18,6 +18,15 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 8. `PLAN-REVIEW-COMPARISON-2026-11-21.md` — the two reviews compared; the six consistency corrections agreed.
 9. `COLLABORATION-PLAN-2026-11-21-REV3.md` — **Revision 3: the current plan, submitted to Ben for go / no-go.**
 
+## Working rules (Ben, 2026-11-21)
+
+- **Work from this folder.** Remmy and Vane both work from `collaboration-framework/` — documents are written here, examined from here, and committed from here.
+- **Date everything added.** Every file added to this folder carries its date (in the filename or a date line in the document).
+
+## Structure (created 2026-11-21, shelf commit 916b3153)
+
+The template layout stands inside this folder: `docs/` (vision.md; requirements/, architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Empty directories hold placeholders until the build opens at plan Stage 2. The SPEC SHEET will live in `docs/requirements/`.
+
 ## Filing note
 
 These documents were first filed under `duenna/fix-2026-11-19/` on 2026-11-21 before Ben directed the new folder; copies remain there in that folder's history. **This folder is the canonical home from 2026-11-21 forward.** The project's working name is descriptive only — the system's name is Ben's open decision.
