@@ -1,0 +1,15 @@
+{
+  "details": {
+    "conflict": {
+      "asserted_pin": "openai/gpt-oss-20b",
+      "attribution": "UNKNOWN",
+      "kind": "pin_served_mismatch",
+      "run_id": "RUN-0001",
+      "served_identity": null
+    },
+    "stage": "subject_verification"
+  },
+  "outcome": "FREEZE_REFUSED",
+  "record": "/home/hatch/workspace/duenna-fix/stage9/runs/STAGE9BATT-20261120-003/record.jsonl",
+  "run_package": "STAGE9BATT-20261120-003"
+}

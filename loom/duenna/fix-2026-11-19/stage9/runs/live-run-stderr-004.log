@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/home/hatch/workspace/duenna-fix/stage9/run_battery_ruled.py", line 215, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/run_battery_ruled.py", line 198, in main
+    summary = assembly.run_battery(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/assembly.py", line 378, in run_battery
+    closures = engine.run(tree_keys)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/engine.py", line 222, in run
+    self._run_tree(key)
+  File "/home/hatch/workspace/duenna-fix/stage9/engine.py", line 272, in _run_tree
+    outcome = self._run_step(key, tree, step, state)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/engine.py", line 360, in _run_step
+    res = self._model_step(key, tree, step, attempt, state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/engine.py", line 486, in _model_step
+    manifest, artefacts = builder(key, step, state, attempt)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/ops9.py", line 322, in op_t08_recovery_inputs
+    "failed_checks": state["field_failures"]["T08-STEP-03"],
+                     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+KeyError: 'T08-STEP-03'

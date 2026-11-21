@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/home/hatch/workspace/duenna-fix/stage9/run_battery.py", line 54, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/run_battery.py", line 46, in main
+    summary = assembly.run_battery(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/assembly.py", line 303, in run_battery
+    frozen_run = binder.attempt_freeze(draft, lane)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/../stage3/binder.py", line 356, in attempt_freeze
+    served_identity, endpoint = lane(config.subject_pin)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/assembly.py", line 280, in lane
+    served, endpoint, evidence = transport.verification_call()
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/transport.py", line 208, in verification_call
+    result = self.complete(messages, max_tokens=512)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/duenna-fix/stage9/transport.py", line 130, in complete
+    max_attempts = int(retry["max_attempts"])
+                       ~~~~~^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
