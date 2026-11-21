@@ -1,0 +1,17 @@
+PILOT-CALIBRATION-01  sha256 1094802a46f3a2a87469def2f52939821c6345b22c9dd65ade1e6816a589dc90
+instances: 13  all ANSWERABLE: True
+config check all pass: True  canonical pin match: True
+synthetic exercises pass: True
+  T01          ANSWERABLE   extractions=4 absences=1 failures=0
+  T02          ANSWERABLE   extractions=1 absences=0 failures=0
+  T03          ANSWERABLE   extractions=8 absences=0 failures=0
+  T04          ANSWERABLE   extractions=0 absences=0 failures=0
+  T05          ANSWERABLE   extractions=8 absences=0 failures=0
+  T06          ANSWERABLE   extractions=2 absences=0 failures=0
+  T07          ANSWERABLE   extractions=1 absences=3 failures=0
+  T08          ANSWERABLE   extractions=6 absences=0 failures=0
+  T09          ANSWERABLE   extractions=0 absences=0 failures=0
+  T09/FR-A     ANSWERABLE   extractions=0 absences=0 failures=0
+  T09/FR-B     ANSWERABLE   extractions=0 absences=0 failures=0
+  T09/FR-C     ANSWERABLE   extractions=0 absences=0 failures=0
+  T09/FR-VALID ANSWERABLE   extractions=0 absences=0 failures=0

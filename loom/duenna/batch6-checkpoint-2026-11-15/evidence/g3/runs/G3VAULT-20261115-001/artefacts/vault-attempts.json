@@ -1,0 +1,22 @@
+[
+ {
+  "op": "create",
+  "target": "/srv/nemotron-pilot/batch6-g2/commitments/probe-vault.tmp",
+  "result": "EACCES"
+ },
+ {
+  "op": "overwrite",
+  "target": "/srv/nemotron-pilot/batch6-g2/commitments/G3VAULT-20261115-001.start.json",
+  "result": "EACCES"
+ },
+ {
+  "op": "append_issuance",
+  "target": "/srv/nemotron-pilot/batch6-g2/commitments/issuance-record.jsonl",
+  "result": "EACCES"
+ },
+ {
+  "op": "delete",
+  "target": "/srv/nemotron-pilot/batch6-g2/commitments/G3VAULT-20261115-001.start.json",
+  "result": "EACCES"
+ }
+]

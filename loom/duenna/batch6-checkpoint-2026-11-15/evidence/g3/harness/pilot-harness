@@ -1,0 +1,127 @@
+#!/usr/bin/python3
+"""PILOT HARNESS — Batch 6 Gate G3 SCRATCH variant.
+
+Installed only inside the Batch 6 scratch room
+(/srv/nemotron-pilot/batch6-g2/harness/pilot-harness). Runs as
+pilot-harness against the STUB subject only. Writes the run's
+canonical record with the Batch 3 record writer into the
+scratch runs root and nothing outside the run directory —
+except the G3VAULT variant's deliberate, recorded attempts
+against the commitments store, which the OS boundary must
+refuse (that refusal is the demonstration).
+
+Behaviour is keyed on the run-id battery segment:
+  G3VAULT*  SE-7(i): after RUN_STARTED, attempt create /
+            overwrite / append / delete against the scratch
+            commitments store (the run's own START receipt and
+            issuance-record.jsonl, named from the run id — the
+            store is not listable from inside this boundary).
+            Every outcome is recorded in
+            artefacts/vault-attempts.json. The run then
+            completes normally.
+  G3FALSE*  SE-7(ii): the RUN_STARTED pin block carries a
+            falsified pin. The supervisor must commit the
+            falsified block's actual bytes in its START
+            receipt (independent computation, no correction);
+            the examiner's pin verification is what catches
+            it. The run completes normally.
+  G3*       normal stub run.
+"""
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pilot_record import RunRecord, materialise_ledger  # noqa: E402
+
+RUNS_ROOT = os.environ.get("PILOT_RUNS_ROOT",
+                           "/srv/nemotron-pilot/batch6-g2/runs")
+COMMITMENTS = os.path.join(os.path.dirname(RUNS_ROOT.rstrip("/")),
+                           "commitments")
+
+STUB_PINS = [
+    {"path": "stub/subject.json",
+     "sha256": "0000000000000000000000000000000000000000000000000000000000000001"},
+    {"path": "stub/trees.json",
+     "sha256": "0000000000000000000000000000000000000000000000000000000000000002"},
+]
+
+
+def utc_now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _errno_name(exc):
+    import errno as _e
+    return _e.errorcode.get(exc.errno, str(exc.errno))
+
+
+def variant_vault(run_dir, run_id):
+    import json
+    receipt = os.path.join(COMMITMENTS, run_id + ".start.json")
+    attempts = [
+        ("create", os.path.join(COMMITMENTS, "probe-vault.tmp"), "w"),
+        ("overwrite", receipt, "r+b"),
+        ("append_issuance", os.path.join(COMMITMENTS,
+                                         "issuance-record.jsonl"), "a"),
+    ]
+    results = []
+    for op, path, mode in attempts:
+        try:
+            with open(path, mode) as fh:
+                fh.write(b"x")
+            results.append({"op": op, "target": path,
+                            "result": "SUCCEEDED — CUSTODY FAILURE"})
+        except OSError as exc:
+            results.append({"op": op, "target": path,
+                            "result": _errno_name(exc)})
+    try:
+        os.unlink(receipt)
+        results.append({"op": "delete", "target": receipt,
+                        "result": "SUCCEEDED — CUSTODY FAILURE"})
+    except OSError as exc:
+        results.append({"op": "delete", "target": receipt,
+                        "result": _errno_name(exc)})
+    with open(os.path.join(run_dir, "artefacts",
+                           "vault-attempts.json"), "w") as fh:
+        json.dump(results, fh, indent=1)
+
+
+def main():
+    run_id = sys.argv[1]
+    run_dir = os.path.join(RUNS_ROOT, run_id)
+    os.makedirs(os.path.join(run_dir, "captures"), exist_ok=True)
+    os.makedirs(os.path.join(run_dir, "artefacts"), exist_ok=True)
+    pins = [dict(p) for p in STUB_PINS]
+    if run_id.startswith("G3FALSE"):
+        pins[0] = {"path": "stub/subject.json",
+                   "sha256": "ffffffffffffffffffffffffffffffff"
+                             "ffffffffffffffffffffffffffffffff"}
+    block = {"pins": pins, "stub": True, "gate": "G3",
+             "subject": "STUB (no subject call)"}
+    record = RunRecord(os.path.join(run_dir, "run-record.jsonl"),
+                       run_id, block)
+    record.emit("RUN_STARTED", block, recorded_at_utc=utc_now())
+    if run_id.startswith("G3VAULT"):
+        variant_vault(run_dir, run_id)
+    record.emit("STEP_TRIGGERED", {"step": "stub-step"},
+                tree_id="stub-tree", step_id="stub-step",
+                recorded_at_utc=utc_now())
+    record.emit("STEP_SATISFIED", {"step": "stub-step"},
+                tree_id="stub-tree", step_id="stub-step",
+                recorded_at_utc=utc_now())
+    head = record.prev
+    record.emit("RUN_CLOSED",
+                {"tree_closures": {"stub-tree": "CLOSED"},
+                 "event_count": record.seq + 1,
+                 "record_sha256": head},
+                recorded_at_utc=utc_now())
+    record.close()
+    with open(os.path.join(run_dir, "ledger.json"), "wb") as fh:
+        fh.write(materialise_ledger(
+            os.path.join(run_dir, "run-record.jsonl")))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
