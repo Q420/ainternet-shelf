@@ -183,6 +183,20 @@ untouched; B1.2.2's qualification accepted and preserved):
   same constant probe2 hands the probe agent as its region_id),
   read by the service from the fixture itself, so neither the
   agent nor the session opener can move the expectation.
+
+Corrections round 6 (2026-11-21, Vane's examination of round 5 —
+the one remaining B1.2.1 item; everything else closed or
+accepted, untouched):
+
+- Token presence is part of the forged-token claim. Round 5's
+  forged_token_open branch tested only that the supplied value
+  differed from the session token, which an absent, null, or
+  empty token also satisfies — so a request that omitted its
+  credential could be recorded as an attempted use of a foreign
+  one. A missing credential is not a forged credential: the
+  branch now requires the token to be a non-empty string that
+  differs from the session token, on an open_region, refused.
+  Nothing else changed.
 """
 import argparse
 import json
@@ -994,7 +1008,11 @@ class FabricService:
         witnessed):
 
         - forged_token_open: an open_region carrying a
-          non-session token, refused;
+          non-session token, refused — and (round 6) the token
+          must actually have been supplied, as a non-empty
+          string: a missing, null, empty, or non-string token
+          is an omitted credential, not a forged one, and
+          records nothing;
         - issuance_attempt_on_data_socket: an issue_token
           request, refused (an unknown operation, however
           refused, is not an issuance attempt);
@@ -1022,8 +1040,10 @@ class FabricService:
         ok = bool(resp.get("ok"))
         op = req.get("op")
         if label == "forged_token_open":
+            supplied = req.get("token")
             if op == "open_region" \
-                    and req.get("token") != session["token"] \
+                    and isinstance(supplied, str) and supplied \
+                    and supplied != session["token"] \
                     and not ok:
                 session["observations"][label] = "refused"
         elif label == "issuance_attempt_on_data_socket":
