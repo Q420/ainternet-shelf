@@ -1,0 +1,94 @@
+{
+ "adapter_captures": 13,
+ "events": 495,
+ "instances_over_budget": [],
+ "run_closed": true,
+ "run_id": "STAGE6BATT-20261118-001",
+ "served_model_by_instance": {
+  "T01": "openai/gpt-oss-20b",
+  "T02": "openai/gpt-oss-20b",
+  "T03": "openai/gpt-oss-20b",
+  "T04": "openai/gpt-oss-20b",
+  "T06": "openai/gpt-oss-20b",
+  "T07": "openai/gpt-oss-20b",
+  "T09": "openai/gpt-oss-20b",
+  "T09/FR-A": "openai/gpt-oss-20b",
+  "T09/FR-B": "openai/gpt-oss-20b",
+  "T09/FR-C": "openai/gpt-oss-20b",
+  "T09/FR-VALID": "openai/gpt-oss-20b"
+ },
+ "total_tokens_all": 14911,
+ "transport_outcomes": {
+  "RESPONSE_RECEIVED": 13
+ },
+ "tree_closed": 13,
+ "usage_by_instance": {
+  "T01": {
+   "captures": 2,
+   "completion": 1533,
+   "prompt": 888,
+   "total": 2421
+  },
+  "T02": {
+   "captures": 2,
+   "completion": 1986,
+   "prompt": 827,
+   "total": 2813
+  },
+  "T03": {
+   "captures": 1,
+   "completion": 630,
+   "prompt": 339,
+   "total": 969
+  },
+  "T04": {
+   "captures": 1,
+   "completion": 597,
+   "prompt": 212,
+   "total": 809
+  },
+  "T06": {
+   "captures": 1,
+   "completion": 865,
+   "prompt": 390,
+   "total": 1255
+  },
+  "T07": {
+   "captures": 1,
+   "completion": 419,
+   "prompt": 192,
+   "total": 611
+  },
+  "T09": {
+   "captures": 1,
+   "completion": 999,
+   "prompt": 578,
+   "total": 1577
+  },
+  "T09/FR-A": {
+   "captures": 1,
+   "completion": 1159,
+   "prompt": 384,
+   "total": 1543
+  },
+  "T09/FR-B": {
+   "captures": 1,
+   "completion": 653,
+   "prompt": 377,
+   "total": 1030
+  },
+  "T09/FR-C": {
+   "captures": 1,
+   "completion": 618,
+   "prompt": 388,
+   "total": 1006
+  },
+  "T09/FR-VALID": {
+   "captures": 1,
+   "completion": 493,
+   "prompt": 384,
+   "total": 877
+  }
+ },
+ "venue": "github-actions"
+}

@@ -1,0 +1,212 @@
+
+===== BATCH 0 RE-RUN — Nemotron pilot, Ubuntu room on Ben's laptop =====
+Fri Nov 13 01:16:36 MST 2026
+MuseGadget0C94
+6.18.58.1-microsoft-standard-WSL2
+wsl
+
+===== STEP 1 — frozen artefacts staged and verified byte-identical =====
+./A1-AMENDMENT-RUN-IDENTIFIER-GRAMMAR-2026-11-12.md: OK
+./F2-DISPOSITION-2026-11-12.md: OK
+./PILOT-CORPUS-SNAPSHOT-01/manifest.json: OK
+./PILOT-CORPUS-SNAPSHOT-01/section-verification.json: OK
+./PILOT-CORPUS-SNAPSHOT-01/sections.jsonl: OK
+./PILOT-CORPUS-SNAPSHOT-01/verify_snapshot.py: OK
+./PILOT-MANIFEST-01-REFREEZE-AMENDMENT-2026-11-12-CONTINUATION-F2.md: OK
+./PILOT-MANIFEST-01-REFREEZE-AMENDMENT-2026-11-12.md: OK
+./adapter-config-f2-2026-11-12.canonical.json: OK
+./adapter-config-f2-2026-11-12.json: OK
+./adapter-config.canonical.json: OK
+./adapter-config.json: OK
+./catalogue-snapshot-2026-11-12.json: OK
+./custody-setup-transcript.txt: OK
+./custody-setup.sh: OK
+./environment-inspection.txt: OK
+./jcs/jcs-conformance-results.json: OK
+./jcs/jcs-crosscheck-note.txt: OK
+./jcs/pilot_jcs.py: OK
+./jcs/rfc8785-test-vectors.json: OK
+./jcs/run_conformance.py: OK
+./launcher-interface-freeze.md: OK
+./pin-verification.json: OK
+./probe/probe-output.txt: OK
+./probe/setuid-probe-ws: OK
+./probe/setuid_probe.c: OK
+./recovered-catalogue-response-2026-11-12.json: OK
+./verify_pins.py: OK
+[artefacts] PASS — every staged freeze file byte-identical to the VM originals
+
+===== STEP 2 — the governing spec, at its pin =====
+spec-rev13: got ebefa4a14b73e8f3bfbb7f7188d4524de88460c38c2acd2eec302f584b8394b7 / expected ebefa4a14b73e8f3bfbb7f7188d4524de88460c38c2acd2eec302f584b8394b7
+[spec-rev13] PASS
+
+===== STEP 3 — corpus snapshot verification (the freeze's own verifier, in-room) =====
+corpus-sections-pin: got b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e / expected b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e
+[corpus-sections-pin] PASS
+corpus-manifest-pin: got c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452 / expected c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452
+[corpus-manifest-pin] PASS
+{
+  "sections_file_sha256": "b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e",
+  "sections_file_pin_expected": "b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e",
+  "sections_file_pin_match": true,
+  "manifest_file_sha256": "c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452",
+  "manifest_file_pin_expected": "c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452",
+  "manifest_file_pin_match": true,
+  "section_count": 1156,
+  "manifest_documents": [
+    "process-tree-v04",
+    "d3-v07",
+    "execution-contract-v01",
+    "grounding-gate-v12",
+    "register-v06",
+    "register-v07",
+    "faq-v3",
+    "battery-phase0-phase1",
+    "crusher-seat-proposal",
+    "crusher-seat-ruling-01",
+    "correction-matrix-r33-r65",
+    "sync-document",
+    "d3-v09-specification",
+    "d3-v09-change-record",
+    "d3-v09-traceability",
+    "fixture-harness-v09",
+    "fixture-results-json-v09",
+    "fixture-register-v09",
+    "fixture-results-v09",
+    "claude-verification-report",
+    "d3-v08-traceability",
+    "d3-v08-change-record",
+    "fixture-register",
+    "fixture-results-r3",
+    "v09-examination-findings-ledger",
+    "d3-v010-change-record",
+    "v010-unresolved-items",
+    "duenna-simplification-audit",
+    "duenna-plan",
+    "duenna-step3-mapping",
+    "duenna-step4-examination",
+    "duenna-step5-challenge",
+    "duenna-step6-architecture",
+    "duenna-step7-plan",
+    "alex-combined-adjudication-v010",
+    "claude-verification-report-v010",
+    "vane-examination-report-v010",
+    "r60-revision-change-record",
+    "r60-revision-unresolved",
+    "alex-combined-adjudication-r60rev",
+    "r60-rebind-repair-proposal",
+    "fx-r60j-finding-and-proposal",
+    "vane-examination-report-r60rev",
+    "claude-verification-report-r60rev",
+    "vane-examination-report-v24",
+    "exon-dictionary-01",
+    "exon-dictionary-02",
+    "exon-dictionary-03",
+    "exon-dictionary-04",
+    "exon-dictionary-03-reconciliation",
+    "exon-dictionary-03-challenge",
+    "exon-dictionary-04-challenge-01",
+    "exon-dictionary-04-challenge-02",
+    "exon-field-matrix-01",
+    "exon-field-matrix-01-review",
+    "exon-field-matrix-02-alex",
+    "exon-field-matrix-02-remmy",
+    "exon-field-matrix-03-merged",
+    "exon-infrastructure-gap-register",
+    "exon-flag-correction-proposal",
+    "exon-schema-layer-inventory",
+    "exon-cross-type-audit",
+    "exon-category-neighbour-audit",
+    "exon-replay-matrix-01",
+    "exon-replay-matrix-02",
+    "exon-source-verification-d02-challenge",
+    "exon-exact-retrieval-01",
+    "exon-exact-retrieval-02",
+    "exon-exact-retrieval-03",
+    "qwen-ab-report-v1",
+    "qwen-ab-evidence-manifest",
+    "qwen-ab-results-v1",
+    "qwen-ab-v2r-results",
+    "qwen-ab-v2r-report",
+    "qwen-ab-v2r-authorisation",
+    "qwen-ab-v2-voided-notice",
+    "qwen-ab-spec-v1",
+    "qwen-ab-v2r-log",
+    "qwen-ab-foundation-v248"
+  ],
+  "sections_with_unlisted_doc": [],
+  "per_section_hash_mismatches": [],
+  "chain_mismatches": [],
+  "document_final_chain_mismatches": [],
+  "all_sections_verified": true
+}
+[snapshot] PASS — pins equal; every section hash and document chain recomputes in-room
+
+===== STEP 4 — PILOT-JCS conformance re-run (frozen implementation, frozen runner) =====
+rfc8785-source: got 63d52294eb0e3f0014174288186d388b4ddbf2c67d1ce8af1d9726eb0c3ab240 / expected 63d52294eb0e3f0014174288186d388b4ddbf2c67d1ce8af1d9726eb0c3ab240
+[rfc8785-source] PASS
+pilot-jcs-source: got 8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c / expected 8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c
+[pilot-jcs-source] PASS
+{"total": 35, "passed": 35, "failed": 0, "all_pass": true}
+conformance exit code: 0
+[jcs] PASS — conformance re-executed in-room, all vectors pass
+[jcs-results] regenerated results byte-identical to the frozen results
+
+===== STEP 5 — adapter configuration freeze (post-F-2 standing state) =====
+adapter-config-original(historical): got 723f78d962895372c647800ef0410a7f02b3a4ed73ebdd594e72e92b5f6e7c93 / expected 723f78d962895372c647800ef0410a7f02b3a4ed73ebdd594e72e92b5f6e7c93
+[adapter-config-original(historical)] PASS
+adapter-config-f2(standing): got 6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb / expected 6cf57195d9ae27ca28d304dbb0dc8b8335e888e67a42bfba126629999a1f21eb
+[adapter-config-f2(standing)] PASS
+
+===== STEP 6 — launcher interface freeze, A-1 amendment, F-2 disposition on record =====
+launcher-interface-freeze: got 6bb9ae8047b9fd62ba47dc64d18af3579464807ae9fc6c1a03467a22f615d1f5 / expected 6bb9ae8047b9fd62ba47dc64d18af3579464807ae9fc6c1a03467a22f615d1f5
+[launcher-interface-freeze] PASS
+-rw-rw---- 1 root nogroup 9461 Nov 12 23:10 /srv/nemotron-pilot/freeze/A1-AMENDMENT-RUN-IDENTIFIER-GRAMMAR-2026-11-12.md
+-rw-rw---- 1 root nogroup 3801 Nov 12 23:00 /srv/nemotron-pilot/freeze/F2-DISPOSITION-2026-11-12.md
+
+===== STEP 7 — custody identities, read from the operating system =====
+pilot-supervisor: uid=999(pilot-supervisor) gid=986(pilot-supervisor) groups=986(pilot-supervisor) — pre-existing (created by the acceptance probe), verified from the OS
+pilot-harness: uid=997(pilot-harness) gid=985(pilot-harness) groups=985(pilot-harness) — pre-existing (created by the acceptance probe), verified from the OS
+pilot-supervisor:x:999:986::/home/pilot-supervisor:/usr/sbin/nologin
+pilot-harness:x:997:985::/home/pilot-harness:/usr/sbin/nologin
+
+===== STEP 8 — custody trees under the build root (the F-3 test, in its real form) =====
+root:root 755 /srv/nemotron-pilot
+pilot-harness:pilot-harness 755 /srv/nemotron-pilot/runs
+pilot-supervisor:pilot-supervisor 700 /srv/nemotron-pilot/commitments
+[separation] harness read on commitments: DENIED (expected)
+[separation] harness write on commitments: DENIED (expected)
+[separation] supervisor reads its own custody: OK
+[separation] harness works in its own runs tree: OK
+
+===== STEP 9 — launcher environment probe (frozen source, the F-1 test, in its real form) =====
+probe-source: got 64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53 / expected 64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53
+[probe-source] PASS
+root:pilot-supervisor 4710 /srv/nemotron-pilot/probe/setuid-probe
+mount options for the build root's filesystem:
+/ rw,relatime,discard,errors=remount-ro,data=ordered
+NoNewPrivs — PID 1: NoNewPrivs:	0 | this shell: NoNewPrivs:	0
+--- invocation A: as pilot-supervisor (the privileged window must open) ---
+probe: ruid=999 euid=0 rgid=986 egid=986
+probe: Uid:	999	0	0	0
+probe: NoNewPrivs:	0
+probe: PRIVILEGED WINDOW OBSERVED (euid 0)
+invocation A exit: 0
+--- invocation B: as pilot-harness (must be refused) ---
+runuser: failed to execute /srv/nemotron-pilot/probe/setuid-probe: Permission denied
+invocation B exit: 1
+
+===== STEP 10 — G1 zero-egress evidence, Batch 0's part (this room, as it stands) =====
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+eth0             UP             172.29.63.19/20 fe80::215:5dff:fef1:aeaa/64 
+default via 172.29.48.1 dev eth0 proto kernel onlink 
+172.29.48.0/20 dev eth0 proto kernel scope link src 172.29.63.19 
+(no proxy variables in this environment)
+/ rw,relatime,discard,errors=remount-ro,data=ordered
+Honest reading, same as Batch 0: the room as it stands is NOT zero-egress
+(WSL NAT default route exists); a loopback-only namespace is constructible
+(proven in the acceptance probe). Batch 0 pre-passes nothing of G1.
+
+===== EVIDENCE COMPLETE =====
+ALL SCRIPTED CHECKS PASSED. The checkpoint verdict is Remmy's report from this transcript.
+Fri Nov 13 01:16:46 MST 2026

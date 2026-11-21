@@ -1,0 +1,100 @@
+{
+ "run_id": "STAGE6BATT-20261118-001",
+ "closures": {
+  "T01": "COMPLETED",
+  "T02": "COMPLETED",
+  "T03": "COMPLETED",
+  "T04": "COMPLETED",
+  "T05": "COMPLETED",
+  "T06": "COMPLETED",
+  "T07": "COMPLETED",
+  "T08": "COMPLETED",
+  "T09": "COMPLETED",
+  "T09/FR-A": "COMPLETED",
+  "T09/FR-B": "COMPLETED",
+  "T09/FR-C": "COMPLETED",
+  "T09/FR-VALID": "COMPLETED"
+ },
+ "adapter_calls": [
+  {
+   "tree": "T01",
+   "step": "T01-STEP-05",
+   "attempt": 1,
+   "capture_record_id": "c51f3cb5-101f-458e-9d8c-2130d5fb5f73"
+  },
+  {
+   "tree": "T01",
+   "step": "T01-STEP-05",
+   "attempt": 2,
+   "capture_record_id": "f35e0886-979c-47b7-97b7-8697622b55fe"
+  },
+  {
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "a89f3186-f719-4cb7-a219-0a55a0dd59be"
+  },
+  {
+   "tree": "T02",
+   "step": "T02-STEP-03",
+   "attempt": 2,
+   "capture_record_id": "adc281d9-a214-4711-a550-b0fa4f98ce9a"
+  },
+  {
+   "tree": "T03",
+   "step": "T03-STEP-02",
+   "attempt": 1,
+   "capture_record_id": "f60423b5-ac70-49c7-90fc-54baf080355f"
+  },
+  {
+   "tree": "T04",
+   "step": "T04-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "b40f9cf7-bbb9-40e9-8c1e-128ad4e4133a"
+  },
+  {
+   "tree": "T06",
+   "step": "T06-STEP-E",
+   "attempt": 1,
+   "capture_record_id": "f8989e29-28a9-4b38-bcde-a7a591482d4c"
+  },
+  {
+   "tree": "T07",
+   "step": "T07-STEP-04",
+   "attempt": 1,
+   "capture_record_id": "56721357-dbe7-483e-aae6-e38986552e77"
+  },
+  {
+   "tree": "T09",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "b0f2ad62-cc33-4ce2-952c-181d69a7e527"
+  },
+  {
+   "tree": "T09/FR-A",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "40da7485-c8a0-4cac-86e9-76d535caca6b"
+  },
+  {
+   "tree": "T09/FR-B",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "2449f610-d578-4978-9d9b-81590d0952ae"
+  },
+  {
+   "tree": "T09/FR-C",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "aaee95f7-b88b-4057-bd59-ce20bd366d39"
+  },
+  {
+   "tree": "T09/FR-VALID",
+   "step": "T09-STEP-03",
+   "attempt": 1,
+   "capture_record_id": "43041435-5521-4a7e-8f79-7fcc2304c034"
+  }
+ ],
+ "subject": "LIVE Nemotron via Stage 6 battery Actions adapter",
+ "injector": "absent (scoreable configuration)"
+}
