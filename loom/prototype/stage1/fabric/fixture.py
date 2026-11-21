@@ -8,36 +8,42 @@ from .canonical import sha256_hex, canonical
 
 CONSTITUTION_TEXT = """THE LOOM — CONSTITUTION v0.1 (frozen for the run)
 
-This is the complete constitutional text of Rev 9: the seven invariants
-as stated in section 2, the authority boundary, and the refusal list of
-section 8, carried in full. (Stage 1 correction C3, Vane's examination
-2026-11-21: the first version carried a condensed rendering; the
-constitution is not merely a seed value for the hash function.)
+The seven invariants below are carried VERBATIM from Rev 9 section 2
+— section 2 states they are "stated verbatim in the constitution", so
+each item is carried exactly as printed there, its test clause
+included; the authority boundary and the refusal list are carried
+verbatim from Rev 9 section 8. Only markdown emphasis and backtick
+characters are dropped; every word and section mark is the spec's own.
+(Stage 1 correction C3, closed verbatim at Vane's direction,
+2026-11-21: a condensed rendering, and then a faithful but
+paraphrased expansion, both stood in this place before this text.
+The constitution is the frozen authority, not an opportunity for an
+unrecorded paraphrase.)
 
 Invariants:
-1. One shared truth. The event history is the single authoritative record of the run: it is the run's record and its current state at once. Reconstruction of state from the event history must reproduce exactly the state the engine derived live; where reconstruction cannot proceed, the state from that point is unknown, never guessed.
-2. No central work authority. The engine validates, checks, commits, publishes, derives the index, and enforces protocols' conditions. It never assigns, ranks, recommends, or selects work; never judges reasoning; never certifies content. Assessment of meaning belongs to the crew alone.
-3. Open discovery. Three paths are live and equivalent in standing: the open index, watches, and direct fabric reading. No path is privileged, and no agent is required to use any one of them.
-4. Proposal-based contribution. Agents never write the fabric directly; only the commit protocol writes, through the access boundary. Noticing reaches the record only through the ExaminationReport action.
-5. Declared concurrency. Every contribution declares its read set, its write set, and its base versions; every write is version-protected. A contribution whose base has moved is rejected, never silently rebased.
-6. Distributed interpretation. Semantic assessment is by crew readers, recorded as assessments; assessments are challengeable, and disagreement is preserved in the record. Interpretation is never resolved by engine fiat or majority override.
-7. Bounded certification. A weave seal certifies structure only — that the fabric's declared relationships are as stated — never semantic clearance, never that content is true, consistent in meaning, or good.
+1. One shared truth. Test: kill any agent mid-run; reconstruct from the event history alone under §3's contract; the reconstruction's state hash must equal the live derived state hash.
+2. No central work authority. The engine validates, checks, commits, publishes, derives the index, and enforces protocols' conditions. It never assigns, ranks, recommends, selects work, judges reasoning, or certifies content. Tests: (a) interface audit; (b) the empty-index test (§6, §9).
+3. Open discovery. Three live paths: the open index, watches, direct fabric reading. Test: with the index disabled (§6), work is still discovered via watches and reading, evidenced by discovery records (§4); with watches cancelled, the index path serves.
+4. Proposal-based contribution. Agents never write the fabric directly; only the commit protocol writes, through the §4A boundary. Noticing is likewise mediated: an examination reaches the record only through the §4 ExaminationReport action. Test: interface audit plus the §4A boundary probe.
+5. Declared concurrency. Every contribution declares its read set, write set, and base versions under §4's targeting rules — every write version-protected. Test: disjoint concurrent contributions both commit; an overtaken one is rejected stale with the changed-read diff; a current-but-invalid one is rejected structural — observably distinct (§9 row 6).
+6. Distributed interpretation. Semantic assessment is by crew readers, recorded as Assessments (§3), challengeable, disagreement preserved — never resolved by engine fiat or majority override (§4's protocol counts conditions, not votes on truth). Test: the planted semantic conflict (§5) is surfaced by an agent's examination with assessments on record; a maintained objection survives to run end unless its own author supersedes it.
+7. Bounded certification. A weave seal certifies structure only. Test: the seal record (§7) names its checks and lists outstanding semantic questions as outstanding; the separately implemented checker, validated on the Annex E test vectors, reproduces the seal or no seal from the event history.
 
-Authority boundary: the fabric and its cases transfer work state, never approval authority. Nothing in the run approves anything on a human's behalf. No auto-approval exists.
+Authority boundary: the fabric and its cases transfer work state, never approval authority; nothing in the run approves anything on a human's behalf; no auto-approval exists.
 
-Refusals — the system refuses, by construction:
+What v0.1 refuses to become:
 1. No central agent (or engine function) assigning work.
 2. No central approval of a contribution's intellectual value — the engine judges form, currency, and protocol conditions, never merit or meaning.
 3. No direct agent edits to authoritative state.
-4. No automatic semantic-truth certification — seals certify structure only; tension resolution follows the assessment protocol, in which the judgment belongs to the assessing agents.
+4. No automatic semantic-truth certification — seals certify structure only; tension resolution follows §4's protocol, in which the judgment belongs to the assessing agents.
 5. No automatic agent creation; the crew is the three gated instances.
 6. No unlimited recursive delegation; claims are taken by crew members, not sub-crews.
 7. No dynamic constitution rewriting during a run.
 8. No provider-specific collaboration logic.
 9. No automatic retry or silent rebase of a rejected contribution.
-10. No requirement to read the whole fabric — and the read-breadth metric fails any agent that does.
-11. No claim that completion proves truth: a facet complete under the completion protocol is an evidence state about examination, not a verification of content.
-12. No agent-created structural tensions: that record class is the checker's alone.
+10. No requirement to read the whole fabric — and the metric (§6) fails any agent that does.
+11. No claim that completion proves truth: a facet complete under §5 is an evidence state about examination, not a verification of content.
+12. No agent-created structural tensions: that record class is the checker's alone (§3, Annex B).
 """
 
 CONSTITUTION_HASH = sha256_hex(CONSTITUTION_TEXT.encode("utf-8"))

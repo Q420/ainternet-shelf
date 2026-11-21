@@ -84,6 +84,34 @@ raw.close()
 check("history intact after refused mutations",
       len(store.all_events()) == 1)
 
+# C1, second round — INSERT OR REPLACE must not replace an existing
+# event, by either uniqueness key, and the original row must survive
+# byte-for-byte. (SQLite's REPLACE removes the conflicting row without
+# firing the delete trigger; the BEFORE INSERT guard closes it.)
+raw = sqlite3.connect(db1)
+before = raw.execute("SELECT * FROM events WHERE event_seq=1").fetchone()
+cols = "event_seq, event_id, type, actor, affected, payload, prev_hash, hash"
+forged = list(before)
+forged[3] = "mallory"  # actor
+check("INSERT OR REPLACE by event_seq is refused",
+      refused(lambda: raw.execute(
+          f"INSERT OR REPLACE INTO events ({cols}) VALUES (?,?,?,?,?,?,?,?)",
+          tuple(forged))))
+raw.rollback()
+forged2 = list(before)
+forged2[0] = 99        # new sequence, SAME event_id
+forged2[3] = "mallory"
+check("INSERT OR REPLACE by event_id is refused",
+      refused(lambda: raw.execute(
+          f"INSERT OR REPLACE INTO events ({cols}) VALUES (?,?,?,?,?,?,?,?)",
+          tuple(forged2))))
+raw.rollback()
+after = raw.execute("SELECT * FROM events WHERE event_seq=1").fetchone()
+check("original event byte-for-byte unchanged after REPLACE attempts",
+      after == before and raw.execute(
+          "SELECT COUNT(*) FROM events").fetchone()[0] == 1)
+raw.close()
+
 # C2 — a second RUN_OPENED is an invalid transition: replay halts.
 store.append("RUN_OPENED", "system", [], events[0]["payload"],
              prev_hash=store.last()[1])

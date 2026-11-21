@@ -87,8 +87,13 @@ def _link_error(events, constitution_hash: str, upto: int):
 
 
 def verify_chain(events, constitution_hash: str):
-    """Return (ok, bad_seq). An empty history is NOT a valid chain:
-    there is no genesis, so nothing can be derived from it."""
+    """Hash-chain integrity ONLY: return (ok, bad_seq). An empty history
+    is NOT a valid chain: there is no genesis, so nothing can be
+    derived from it. NOTE (kept explicit at Vane's direction,
+    2026-11-21): this is not interchangeable with verified_fold below —
+    verify_chain checks that the chain is intact; verified_fold
+    additionally enforces the state transitions as it derives state.
+    A caller that needs trustworthy STATE needs the fold."""
     if not events:
         return False, 1
     for i in range(1, len(events) + 1):

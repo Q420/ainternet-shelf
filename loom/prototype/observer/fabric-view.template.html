@@ -178,10 +178,20 @@ function shortActor(a) {
 function regionName(id) {
   const r = regions.get(id); return r ? r.name : 'a region';
 }
-function tick(html, cls) {
+function tick(seqNum, text, cls) {
+  // Event-derived text is inserted as TEXT, never as HTML (observer
+  // correction, Vane's examination 2026-11-21): the page is a display
+  // surface, not an execution surface — a value stored in an event
+  // must not be able to become markup or script here.
   const d = document.createElement('div');
   d.className = 'tick ' + (cls || '');
-  d.innerHTML = html;
+  if (seqNum !== null && seqNum !== undefined) {
+    const s = document.createElement('span');
+    s.className = 'seq'; s.textContent = '#' + seqNum;
+    d.appendChild(s);
+    d.appendChild(document.createTextNode(' '));
+  }
+  d.appendChild(document.createTextNode(text));
   ticker.prepend(d);
 }
 function flash(id, cls, ms) {
@@ -199,12 +209,15 @@ function noteRead(actor, regionId) {
   readsByActor.get(actor).add(regionId);
   const total = regions.size || 6;
   const body = document.getElementById('breadthBody');
-  body.className = ''; body.innerHTML = '';
+  body.className = ''; body.replaceChildren();
   for (const [a, set] of readsByActor) {
     const row = document.createElement('div'); row.className = 'brow';
     const pct = Math.round(100 * set.size / total);
-    row.innerHTML = shortActor(a) + ' — read ' + set.size + ' of ' + total +
-      ' regions <span class="bar" style="width:' + Math.max(10, pct) + 'px"></span>';
+    row.appendChild(document.createTextNode(
+      shortActor(a) + ' — read ' + set.size + ' of ' + total + ' regions '));
+    const bar = document.createElement('span');
+    bar.className = 'bar'; bar.style.width = Math.max(10, pct) + 'px';
+    row.appendChild(bar);
     body.appendChild(row);
   }
 }
@@ -212,8 +225,11 @@ function buildWeb(payload) {
   payload.regions.forEach((reg, i) => {
     const el = document.createElement('div');
     el.className = 'orb regionOrb';
-    el.innerHTML = '<div class="rname">' + reg.title + '</div>' +
-                   '<div class="rver">v' + reg.version + '</div>';
+    const nm = document.createElement('div');
+    nm.className = 'rname'; nm.textContent = reg.title;
+    const vr = document.createElement('div');
+    vr.className = 'rver'; vr.textContent = 'v' + reg.version;
+    el.appendChild(nm); el.appendChild(vr);
     stage.appendChild(el);
     regions.set(reg.region_id, {
       el, angle: ANGLES[i % ANGLES.length], name: reg.title,
@@ -227,15 +243,15 @@ function buildWeb(payload) {
 }
 function applyEvent(ev) {
   const p = ev.payload || {};
-  const seq = '<span class="seq">#' + ev.event_seq + '</span> ';
+  const seq = ev.event_seq;
   switch (ev.type) {
     case 'RUN_OPENED':
       buildWeb(p);
-      tick(seq + 'The run opens. The constitution is hashed in as the root of the chain, and the six regions take their places.', 'gold');
+      tick(seq, 'The run opens. The constitution is hashed in as the root of the chain, and the six regions take their places.', 'gold');
       break;
     case 'DISCOVERY':
       if (p.region_id) { flash(p.region_id, 'read'); noteRead(ev.actor, p.region_id); }
-      tick(seq + shortActor(ev.actor) + ' read ' + regionName(p.region_id) + '.');
+      tick(seq, shortActor(ev.actor) + ' read ' + regionName(p.region_id) + '.');
       break;
     case 'CONTRIBUTION_ACCEPTED': {
       const c = p.contribution || p;
@@ -247,13 +263,13 @@ function applyEvent(ev) {
           if (r) { r.version += 1; r.el.querySelector('.rver').textContent = 'v' + r.version; }
         }
       });
-      tick(seq + 'A contribution from ' + shortActor(ev.actor) + ' was accepted and committed.', 'good');
+      tick(seq, 'A contribution from ' + shortActor(ev.actor) + ' was accepted and committed.', 'good');
       break;
     }
     case 'CONTRIBUTION_REJECTED': {
       (ev.affected || []).forEach(id => flash(id, 'rejected'));
       const why = p.outcome ? (' — ' + p.outcome + (p.invariant ? ' (' + p.invariant + ')' : '') + (p.reason ? ' (' + p.reason + ')' : '')) : '';
-      tick(seq + 'A contribution was rejected' + why + '.', 'bad');
+      tick(seq, 'A contribution was rejected' + why + '.', 'bad');
       break;
     }
     case 'TENSION_RAISED': {
@@ -262,7 +278,7 @@ function applyEvent(ev) {
       tensionRegions.set(t.tension_id || ev.event_id, regs);
       regs.forEach(id => { const r = regions.get(id); if (r) r.tensions.add(t.tension_id || ev.event_id); });
       refreshTension();
-      tick(seq + 'A ' + (t.type || 'semantic') + ' tension was raised over ' +
+      tick(seq, 'A ' + (t.type || 'semantic') + ' tension was raised over ' +
            regs.map(regionName).join(' and ') + '.', 'warn');
       break;
     }
@@ -272,15 +288,15 @@ function applyEvent(ev) {
         regs.forEach(id => { const r = regions.get(id); if (r) r.tensions.delete(p.tension_id); });
         refreshTension();
       }
-      tick(seq + 'A tension is now ' + (p.to || 'updated') + '.', p.to === 'resolved' ? 'good' : 'warn');
+      tick(seq, 'A tension is now ' + (p.to || 'updated') + '.', p.to === 'resolved' ? 'good' : 'warn');
       break;
     }
     case 'EXAMINATION_RECORDED':
-      tick(seq + shortActor(ev.actor) + ' reported an examination — ' + (p.outcome || 'recorded') + '.',
+      tick(seq, shortActor(ev.actor) + ' reported an examination — ' + (p.outcome || 'recorded') + '.',
            p.outcome === 'rejected' ? 'bad' : '');
       break;
     case 'ASSESSMENT_RECORDED':
-      tick(seq + shortActor(ev.actor) + ' recorded an assessment — ' + (p.outcome || 'recorded') + '.',
+      tick(seq, shortActor(ev.actor) + ' recorded an assessment — ' + (p.outcome || 'recorded') + '.',
            p.outcome === 'rejected' ? 'bad' : '');
       break;
     case 'SEAL_ATTEMPTED':
@@ -289,22 +305,22 @@ function applyEvent(ev) {
           r.el.style.boxShadow = '0 0 55px 18px rgba(255,196,77,.9)';
           setTimeout(() => { r.el.style.boxShadow = ''; }, 1300);
         }
-        tick(seq + 'A weave seal was attempted — it passed. Structure certified at this point in the history.', 'gold');
+        tick(seq, 'A weave seal was attempted — it passed. Structure certified at this point in the history.', 'gold');
       } else {
-        tick(seq + 'A weave seal was attempted — it failed. The findings are on the record.', 'warn');
+        tick(seq, 'A weave seal was attempted — it failed. The findings are on the record.', 'warn');
       }
       break;
     case 'FACET_STATUS':
-      tick(seq + regionName(p.facet || p.region_id) + ' is now ' + (p.to || p.status) + '.');
+      tick(seq, regionName(p.facet || p.region_id) + ' is now ' + (p.to || p.status) + '.');
       break;
     case 'COMPLETION_CLAIMED':
-      tick(seq + shortActor(ev.actor) + ' claimed a facet complete, with evidence bound to it.');
+      tick(seq, shortActor(ev.actor) + ' claimed a facet complete, with evidence bound to it.');
       break;
     case 'RUN_CLOSED':
-      tick(seq + 'The run closes. The chain head is anchored outside the fabric.', 'gold');
+      tick(seq, 'The run closes. The chain head is anchored outside the fabric.', 'gold');
       break;
     default:
-      tick(seq + ev.type.replace(/_/g, ' ').toLowerCase() + '.');
+      tick(seq, ev.type.replace(/_/g, ' ').toLowerCase() + '.');
   }
   document.getElementById('evCount').textContent =
     'event ' + ev.event_seq + ' / ' + DATA.events.length;
@@ -325,7 +341,7 @@ function pause() {
 function restart() {
   pause(); idx = 0; readsByActor.clear(); tensionRegions.clear();
   for (const r of regions.values()) r.el.remove();
-  regions.clear(); edges = []; drawEdges(); ticker.innerHTML = '';
+  regions.clear(); edges = []; drawEdges(); ticker.replaceChildren();
   const body = document.getElementById('breadthBody');
   body.className = 'none'; body.textContent = 'No reads yet. The crew arrives in a later phase — when they do, their reading shows here.';
   document.getElementById('evCount').textContent = 'event 0 / ' + DATA.events.length;
@@ -346,7 +362,7 @@ window.addEventListener('resize', layout);
     el.style.left = x + 'px'; el.style.top = Math.min(y, stage.clientHeight - 40) + 'px';
   });
   placeCentre();
-  if (!DATA) { tick('No run data was exported into this page.', 'bad'); return; }
+  if (!DATA) { tick(null, 'No run data was exported into this page.', 'bad'); return; }
   document.getElementById('runMeta').textContent =
     'run ' + DATA.run_id + ' · constitution ' + DATA.constitution_hash.slice(0, 10) + '…';
   const badge = document.getElementById('chainBadge');

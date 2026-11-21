@@ -4,9 +4,14 @@ Reads a run database, verifies the hash chain, and produces a single
 self-contained fabric-view.html (template + the run's real events).
 Nothing in the page is simulated: every visual traces to an event.
 
+The exporter is READ-ONLY and FAIL-CLOSED (observer corrections,
+Vane's examination 2026-11-21): it never creates or alters the history
+it observes — an empty store is refused, not seeded (demo runs are
+made by make_demo_run.py, a separate fixture step) — and a history
+whose chain does not verify produces no page at all.
+
 Usage: python3 export_events.py [db_path] [out_path]
-Defaults: runs/demo.db (created as a fresh genesis run if absent),
-          fabric-view.html beside this script.
+Defaults: runs/demo.db, fabric-view.html beside this script.
 """
 import json
 import os
@@ -16,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
-from fabric.engine import Engine, verify_chain  # noqa: E402
+from fabric.engine import verify_chain  # noqa: E402
 from fabric.fixture import CONSTITUTION_HASH  # noqa: E402
 from fabric.store import EventStore  # noqa: E402
 
@@ -24,10 +29,12 @@ from fabric.store import EventStore  # noqa: E402
 def main():
     db_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "runs", "demo.db")
     out_path = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, "fabric-view.html")
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
     store = EventStore(db_path)
     if store.last() is None:
-        Engine.open_run(store, "demo-run")
+        print("EXPORT REFUSED: the store holds no run. The exporter "
+              "observes history; it does not create it. Make a demo run "
+              "with make_demo_run.py first.", file=sys.stderr)
+        sys.exit(1)
     events = store.all_events()
     ok, bad = verify_chain(events, CONSTITUTION_HASH)
     if not ok:

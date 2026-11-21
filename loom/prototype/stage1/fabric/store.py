@@ -1,8 +1,11 @@
 """Append-only event store — Loom spec v0.1 Rev 9, section 3.
 
 SQLite (WAL). The events table accepts inserts only: BEFORE UPDATE and
-BEFORE DELETE triggers in the schema itself abort any mutation, so the
-rule binds every connection that honours the schema, not just this API.
+BEFORE DELETE triggers in the schema itself abort any mutation, and a
+BEFORE INSERT trigger aborts any insert that would reuse an existing
+event_seq or event_id (closing the INSERT OR REPLACE bypass, whose
+internal row removal fires no delete trigger). The rules bind every
+connection that honours the schema, not just this API.
 (Stage 1 correction C1, Vane's implementation examination 2026-11-21:
 the first version created the table with no such protection and exposed
 its connection directly; detection of tampering is not enforcement.)
@@ -55,6 +58,23 @@ class EventStore:
             """CREATE TRIGGER IF NOT EXISTS events_no_delete
                BEFORE DELETE ON events
                BEGIN SELECT RAISE(ABORT, 'events are append-only'); END"""
+        )
+        # C1, second round (Vane's deeper examination, 2026-11-21):
+        # INSERT OR REPLACE removes the conflicting row internally
+        # WITHOUT firing the delete trigger (recursive triggers off),
+        # so update/delete triggers alone do not make the table
+        # insert-only. This BEFORE INSERT trigger runs before any
+        # conflict resolution and aborts an insert whose event_seq or
+        # event_id already exists, whatever clause the caller used.
+        self._conn.execute(
+            """CREATE TRIGGER IF NOT EXISTS events_no_replace
+               BEFORE INSERT ON events
+               BEGIN
+                 SELECT RAISE(ABORT, 'events are insert-only: event_seq and event_id are unique and final')
+                 WHERE EXISTS (SELECT 1 FROM events
+                               WHERE event_seq = NEW.event_seq
+                                  OR event_id = NEW.event_id);
+               END"""
         )
         self._conn.execute(
             """CREATE TABLE IF NOT EXISTS runs (
