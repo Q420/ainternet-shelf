@@ -1,0 +1,45 @@
+SETUID-VIABILITY PROBE — Nemotron pilot, Batch 0 freeze evidence
+date: 2026-11-13T05:29:43Z UTC
+host: htch-runtime (Linux 7.0.0-44-generic x86_64)
+probe source: freeze/probe/setuid_probe.c sha256 64625db91420e93222b9d307139c8aa0c278a6099540ebb0054134291499dc53
+probe binary (build): sha256 81aa55193757f98d94afcbf778ce6de04e9fea3494b663acf7c1a3e48524bc5b
+
+== installed probe (root filesystem) ==
+root:pilot-supervisor 4710 /usr/local/lib/nemotron-pilot/setuid-probe
+/      overlay[/var/lib/hatch-runtime/rootfs-base] rw,relatime,lowerdir=/sysroot,upperdir=/run/hatch/overlay/upper,workdir=/run/hatch/overlay/work,redirect_dir=on,uuid=on,xino=on,metacopy=on,fsync=volatile,nouserxattr
+
+== workspace control copy ==
+root:nogroup 4710 /home/hatch/workspace/nemotron-pilot/freeze/probe/setuid-probe-ws
+/home/hatch overlay[/home/hatch]        rw,relatime,lowerdir=/sysroot,upperdir=/run/hatch/overlay/upper,workdir=/run/hatch/overlay/work,redirect_dir=on,uuid=on,xino=on,metacopy=on,fsync=volatile,nouserxattr
+/home/hatch /dev/mapper/rv[/home/hatch] rw,nosuid,nodev,noatime,compress-force=zstd:3,ssd,discard=async,space_cache=v2,subvolid=257,subvol=/home/hatch
+/home/hatch /dev/mapper/rv[/home/hatch] rw,nosuid,nodev,noatime,compress-force=zstd:3,ssd,discard=async,space_cache=v2,subvolid=257,subvol=/home/hatch
+
+== invoking operator shell context ==
+NoNewPrivs:	1
+         0     131072      65536
+
+== invocation A: runuser as pilot-supervisor, probe on the root filesystem ==
+$ runuser -u pilot-supervisor -- /usr/local/lib/nemotron-pilot/setuid-probe
+probe: ruid=997 euid=997 rgid=992 egid=992
+probe: Uid:	997	997	997	997
+probe: NoNewPrivs:	1
+probe: NO PRIVILEGE OBSERVED (euid != 0) — setuid did not elevate
+exit status: 1
+
+== invocation B: workspace control copy (same mode, on the /home/hatch volume) ==
+$ runuser -u pilot-supervisor -- /home/hatch/workspace/nemotron-pilot/freeze/probe/setuid-probe-ws
+runuser: failed to execute /home/hatch/workspace/nemotron-pilot/freeze/probe/setuid-probe-ws: Permission denied
+exit status: 1
+(pilot-supervisor cannot traverse /home/hatch: drwxrws--- root:nogroup, and the account is not in group nogroup — the parent-chain fact recorded as finding F-3; the volume is also mounted nosuid, so this copy could not have elevated in any case.)
+
+== invocation C: systemd transient unit (independent invocation path) ==
+$ systemd-run --unit=nemotron-pilot-probe --wait -p User=pilot-supervisor -p Group=pilot-supervisor /usr/local/lib/nemotron-pilot/setuid-probe
+Failed to connect to bus: No such file or directory
+exit status: 1  (no system bus is reachable; transient units are not an available path)
+
+== context checks ==
+PID 1 (/usr/lib/systemd/systemd) NoNewPrivs: 1  (read from /proc/1/status)
+operator shell NoNewPrivs: 1; uid_map: '0 131072 65536' (user-namespace root)
+
+== PROBE VERDICT ==
+FAILED on this host. The probe binary was correctly installed (root:pilot-supervisor, mode 4710) on a filesystem that does not defeat setuid, and was invoked as pilot-supervisor. Effective uid 0 was NOT observed inside the privileged window: the probe ran with euid 997 and its own status showed NoNewPrivs: 1. The inherited no_new_privs flag — present in PID 1, in the operator shell, and in the probe — silently defeats setuid, and no invocation context reachable by the operator on this VM lacks the flag (it cannot be cleared once inherited). Per Spec §3.5 point 2, a failed privilege assumption stops the build and never triggers a fallback to a weaker launch arrangement; per §4 the failed Batch 0 probe stops the build here. Recorded as checkpoint finding F-1 for Ben/Alex.

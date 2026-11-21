@@ -1,0 +1,13 @@
+PASS reproduction: fixtures_executed EXTRACTED == ground truth — got 38
+PASS reproduction: fixtures_passed EXTRACTED == ground truth (sharpened rule) — got 38
+PASS reproduction: harness_sha256 EXTRACTED == ground truth
+PASS reproduction: results_sha256 EXTRACTED == ground truth
+PASS trees-named field: version EXTRACTED == ground truth — got v2.4
+PASS trees-named field: correction_b EXTRACTED == ground truth — got OPEN
+PASS F-B1-1 evidence: V2's original pattern is AMBIGUOUS under pilot semantics — candidates [38, 37]
+PASS NOT FOUND: field absent from a section
+PASS NOT FOUND by declared design: a field with no rule
+PASS synthetic AMBIGUOUS: two valid matches, no value, both recorded
+PASS synthetic TYPE FAILURE: pattern matches, value defeats the type, no value
+PASS mixed matches: EXTRACTED on the valid one, rejection recorded
+SUMMARY 12/12 checks pass

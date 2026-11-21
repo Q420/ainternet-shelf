@@ -1,0 +1,191 @@
+{
+  "implementation": {
+    "name": "PILOT-JCS",
+    "version": "1.0.0",
+    "source_sha256": "8a131cfce23c97623aff6962e5315faf1543fbeb1533af8cd96a91feb9660d6c"
+  },
+  "rfc_source_sha256": "63d52294eb0e3f0014174288186d388b4ddbf2c67d1ce8af1d9726eb0c3ab240",
+  "checks": [
+    {
+      "check": "AppendixB 0000000000000000",
+      "pass": true,
+      "detail": "expected '0' got '0'"
+    },
+    {
+      "check": "AppendixB 8000000000000000",
+      "pass": true,
+      "detail": "expected '0' got '0'"
+    },
+    {
+      "check": "AppendixB 0000000000000001",
+      "pass": true,
+      "detail": "expected '5e-324' got '5e-324'"
+    },
+    {
+      "check": "AppendixB 8000000000000001",
+      "pass": true,
+      "detail": "expected '-5e-324' got '-5e-324'"
+    },
+    {
+      "check": "AppendixB 7fefffffffffffff",
+      "pass": true,
+      "detail": "expected '1.7976931348623157e+308' got '1.7976931348623157e+308'"
+    },
+    {
+      "check": "AppendixB ffefffffffffffff",
+      "pass": true,
+      "detail": "expected '-1.7976931348623157e+308' got '-1.7976931348623157e+308'"
+    },
+    {
+      "check": "AppendixB 4340000000000000",
+      "pass": true,
+      "detail": "expected '9007199254740992' got '9007199254740992'"
+    },
+    {
+      "check": "AppendixB c340000000000000",
+      "pass": true,
+      "detail": "expected '-9007199254740992' got '-9007199254740992'"
+    },
+    {
+      "check": "AppendixB 4430000000000000",
+      "pass": true,
+      "detail": "expected '295147905179352830000' got '295147905179352830000'"
+    },
+    {
+      "check": "AppendixB 7fffffffffffffff",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "AppendixB 7ff0000000000000",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "AppendixB 44b52d02c7e14af5",
+      "pass": true,
+      "detail": "expected '9.999999999999997e+22' got '9.999999999999997e+22'"
+    },
+    {
+      "check": "AppendixB 44b52d02c7e14af6",
+      "pass": true,
+      "detail": "expected '1e+23' got '1e+23'"
+    },
+    {
+      "check": "AppendixB 44b52d02c7e14af7",
+      "pass": true,
+      "detail": "expected '1.0000000000000001e+23' got '1.0000000000000001e+23'"
+    },
+    {
+      "check": "AppendixB 444b1ae4d6e2ef4e",
+      "pass": true,
+      "detail": "expected '999999999999999700000' got '999999999999999700000'"
+    },
+    {
+      "check": "AppendixB 444b1ae4d6e2ef4f",
+      "pass": true,
+      "detail": "expected '999999999999999900000' got '999999999999999900000'"
+    },
+    {
+      "check": "AppendixB 444b1ae4d6e2ef50",
+      "pass": true,
+      "detail": "expected '1e+21' got '1e+21'"
+    },
+    {
+      "check": "AppendixB 3eb0c6f7a0b5ed8c",
+      "pass": true,
+      "detail": "expected '9.999999999999997e-7' got '9.999999999999997e-7'"
+    },
+    {
+      "check": "AppendixB 3eb0c6f7a0b5ed8d",
+      "pass": true,
+      "detail": "expected '0.000001' got '0.000001'"
+    },
+    {
+      "check": "AppendixB 41b3de4355555553",
+      "pass": true,
+      "detail": "expected '333333333.3333332' got '333333333.3333332'"
+    },
+    {
+      "check": "AppendixB 41b3de4355555554",
+      "pass": true,
+      "detail": "expected '333333333.33333325' got '333333333.33333325'"
+    },
+    {
+      "check": "AppendixB 41b3de4355555555",
+      "pass": true,
+      "detail": "expected '333333333.3333333' got '333333333.3333333'"
+    },
+    {
+      "check": "AppendixB 41b3de4355555556",
+      "pass": true,
+      "detail": "expected '333333333.3333334' got '333333333.3333334'"
+    },
+    {
+      "check": "AppendixB 41b3de4355555557",
+      "pass": true,
+      "detail": "expected '333333333.33333343' got '333333333.33333343'"
+    },
+    {
+      "check": "AppendixB becbf647612f3696",
+      "pass": true,
+      "detail": "expected '-0.0000033333333333333333' got '-0.0000033333333333333333'"
+    },
+    {
+      "check": "AppendixB 43143ff3c1cb0959",
+      "pass": true,
+      "detail": "expected '1424953923781206.2' got '1424953923781206.2'"
+    },
+    {
+      "check": "object \u00a73.2.2->\u00a73.2.3",
+      "pass": true,
+      "detail": "expected b'{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"\\xe2\\x82\\xac$\\\\u000f\\\\nA\\'B\\\\\"\\\\\\\\\\\\\\\\\\\\\"/\"}' got b'{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"\\xe2\\x82\\xac$\\\\u000f\\\\nA\\'B\\\\\"\\\\\\\\\\\\\\\\\\\\\"/\"}'"
+    },
+    {
+      "check": "sorting \u00a73.2.3",
+      "pass": true,
+      "detail": "got order ['Carriage Return', 'One', 'Control', 'Latin Small Letter O With Diaeresis', 'Euro Sign', 'Emoji: Grinning Face', 'Hebrew Letter Dalet With Dagesh']"
+    },
+    {
+      "check": "reject: duplicate key at parse",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "reject: lone surrogate at serialise",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "reject: NaN constant at parse",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "reject: Infinity constant at parse",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "reject: native NaN",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "reject: native -Infinity",
+      "pass": true,
+      "detail": "rejected as required"
+    },
+    {
+      "check": "round-trip: canonical output re-canonicalises identically",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "summary": {
+    "total": 35,
+    "passed": 35,
+    "failed": 0,
+    "all_pass": true
+  }
+}

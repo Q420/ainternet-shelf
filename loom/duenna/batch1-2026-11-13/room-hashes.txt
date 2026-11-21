@@ -1,0 +1,9 @@
+61095f219e1d481ed74c65f3a95806a2cba2e7dc847bcb692373ade3974c5ee5  /srv/nemotron-pilot/batch1/work/EXTRACTOR-RULES-02.json
+79db5c87d4c9ccc52cb53c68fec5c2477cf546c9b80babbc489a472d37e57863  /srv/nemotron-pilot/batch1/work/PILOT-DATA-EXPECTED-01.json
+b02e0dd005e884c62d493c1f524da983d77b2468645cf342e2a7fc9d9d08d9e8  /srv/nemotron-pilot/batch1/work/PILOT-DATA-FIXTURES-01.json
+c7eaec18db203651af894e7fbdb53c6df9b36a3da185c4b7ab703d73085b886c  /srv/nemotron-pilot/batch1/work/PILOT-DATA-PACKS-01.json
+55a6c979163a9ce0cb30fca4eb951aff0d02685979290df8bd18dfa28b355c4a  /srv/nemotron-pilot/batch1/work/PILOT-DATA-T09-01.json
+520f36fde41dfb76d5f92fe4da92b6c2f93ae8512051962f76d4942fb5c05a5a  /srv/nemotron-pilot/batch1/work/corpus_source.py
+7a2329154081b6e9c0417c07b1cc7184b167d02c1e820081b68a18dbabafacf3  /srv/nemotron-pilot/batch1/work/rules_engine.py
+9fe224b63a4228774527e2628920e926f6cf88d48af6643969f95f13818da038  /srv/nemotron-pilot/batch1/work/test_corpus_source.py
+9d23a50ec6ba6d3e60afe88bcaa5345da1cf2e9f7a36630b1a33d2598602f03b  /srv/nemotron-pilot/batch1/work/test_rules.py

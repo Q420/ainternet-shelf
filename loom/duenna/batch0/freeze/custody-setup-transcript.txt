@@ -1,0 +1,25 @@
+CUSTODY SETUP TRANSCRIPT — Nemotron pilot, Batch 0 freeze evidence
+date: 2026-11-13T05:29:00Z UTC
+host: htch-runtime (Linux 7.0.0-44-generic x86_64)
+operator identity: uid=0(root) gid=0(root) groups=0(root)
+script: /home/hatch/workspace/nemotron-pilot/freeze/custody-setup.sh
+----------------------------------------------------------------
+== custody setup: accounts ==
+created pilot-harness:
+uid=999(pilot-harness) gid=993(pilot-harness) groups=993(pilot-harness)
+created pilot-supervisor:
+uid=997(pilot-supervisor) gid=992(pilot-supervisor) groups=992(pilot-supervisor)
+== custody setup: trees ==
+chown: changing ownership of '/home/hatch/workspace/nemotron-pilot/runs': Operation not permitted
+chown: changing ownership of '/home/hatch/workspace/nemotron-pilot/commitments': Operation not permitted
+trees set:
+root:nogroup 2770 /home/hatch/workspace/nemotron-pilot/runs
+root:nogroup 700 /home/hatch/workspace/nemotron-pilot/commitments
+== custody setup: group separation read-back (from the OS) ==
+pilot-harness:x:993:
+pilot-supervisor:x:992:
+pilot-harness memberships:    pilot-harness
+pilot-supervisor memberships: pilot-supervisor
+== custody setup: done ==
+----------------------------------------------------------------
+script exit status: 0

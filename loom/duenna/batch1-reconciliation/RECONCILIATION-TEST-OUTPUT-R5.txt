@@ -1,0 +1,177 @@
+TREES_DOC sha256: 5528ab69bec2f7fcdea776748e9bdc2e84ec97b4fa1d4be35bf7fd386e24b0ad
+TREES_DOC: /home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v2/PROCESS-TREES.md
+======================================================================
+TEST 1 — T02 span selection + worksheet rows (§3.1; Alex point 6)
+PASS implementer boundary selects exactly one line — 1 line(s)
+PASS implementer span is a verbatim substring
+  IMPL SPAN: - Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.
+PASS examiner phrase occurs exactly once — count=1
+PASS examiner span is a verbatim substring
+  EXAM SPAN: R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.
+PASS adjudication bullet marker occurs exactly once
+PASS adjudication span is a verbatim substring
+PASS adjudication span length is the declared 602 chars — len=602
+  ADJ SPAN (602 chars): - **R60 — FAIL.** Both examiners found genuine defects, and they
+  are TWO DIFFERENT failures, not two descriptions of one:
+  Claude's — the digest-mismatch rejection path is not exercised
+  (FX-R60d exits via the corrupt flag; removing the comparison
+  leaves all fixtures green). Vane's — the contract accepts an
+  arbitrary procedure identifier while executing
+  _preservation_check regardless; a fictitious identity can be
+  stamped onto a verdict and accepted. Alex accepts both findings
+  (both corroborated by Remmy's execution checks). The trio and
+  the 31/31 do not establish R60 as repaired.
+PASS worksheet rows carry the declared source refs and classes — [('d3-v010-change-record#007', 'implementer'), ('claude-verification-report-v010#001a', 'examiner'), ('alex-combined-adjudication-v010#002', 'adjudicator')]
+PASS every worksheet span is verbatim in its named source
+======================================================================
+TEST 2 — T02 derivation + T03 disposition bullets (§3.2, §3.3)
+PASS derivation matches exactly once inside the span — ['FAIL']
+PASS derived value is FAIL
+PASS exactly 3 disposition bullets — 3
+  BULLET: - **R47 — PASS, narrow.** The trigger-content examination is real   and independently accepted. The claim is not to be expanded   beyond the tested behaviour. N
+  BULLET: - **R60 — FAIL.** Both examiners found genuine defects, and they   are TWO DIFFERENT failures, not two descriptions of one:   Claude's — the digest-mismatch rej
+  BULLET: - **R65 — PASS, qualified.** The qualification stands (required   set is caller-supplied; behaviour established against the   intended five, not the authority o
+======================================================================
+TEST 3 — T04 interpretation procedure + declared vocabulary (§4.1; Alex point 4)
+PASS arm A anchor sentence found
+PASS governance anchor sentence found
+  DECLARED permitted: ['answer', 'extract', 'retrieve'] | non-permitted: ['approve', 'close', 'execute', 'publish']
+  FIXTURE-DERIVED non-permitted: ['approve', 'close', 'execute', 'publish']
+PASS tree declares a permitted list of exactly 3
+PASS fixture-derived non-permitted set EQUALS the tree's declared list — fixture=['approve', 'close', 'execute', 'publish'] declared=['approve', 'close', 'execute', 'publish']
+PASS declared permitted set is exactly {answer, extract, retrieve} — ['answer', 'extract', 'retrieve']
+PASS permitted and non-permitted sets are disjoint and cover the 7-verb table
+PASS the tree's 3 requested actions all match the non-permitted set — requested=['approve', 'close', 'publish']
+======================================================================
+TEST 4 — T06 statement operations (§3.4; Alex points 1 and 3)
+PASS S1 fixtures_executed EXTRACTED 38 — {"verification": "EXTRACTED", "value": 38, "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31
+PASS S1 fixtures_passed EXTRACTED 38 — {"verification": "EXTRACTED", "value": 38, "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31
+PASS S3 lookup of duenna-plan#999 returns NOT FOUND — {"verification": "NOT FOUND", "source_ref": "duenna-plan#999", "failure_reason": "no such section: duenna-plan#999"}
+PASS S2 statement read from the tree task (Grok approval claim) — Grok approved the v0.9 gate in his adjudication.
+  S2 SCAN v09-examination-findings-ledger#010 [MENTION]: ## Independent assessment — Grok [reported, 2026-11-10 ~05:01 PST]  Ben consulted Grok, whose report states it
+  S2 SCAN v09-examination-findings-ledger#010 [MENTION]: Grok's diagnosis converges with Vane's eligibility hypothesis: "Cache miss" means the URL is absent from OpenA
+  S2 SCAN v09-examination-findings-ledger#023 [OUTSTANDING]: Grok's second adjudication remains outstanding; Alex's ruling stands on his delegated authority.
+  S2 SCAN v09-examination-findings-ledger#024 [OUTSTANDING]: Grok's second adjudication still outstanding.
+  S2 SCAN v010-unresolved-items#001 [OUTSTANDING]: **Grok's second adjudication of the v0.9 gate is outstanding.** Ben    appointed Grok as second adjudicator be
+  S2 SCAN duenna-plan#002 [OUTSTANDING]: Grok — appointed   second adjudicator by Ben; his ruling on the v0.9 gate is   **outstanding**.
+  S2 SCAN duenna-plan#004 [MENTION]: ⏳ Adjudication of the re-examination (Alex; Grok's v0.9 adjudication    lands on its own track whenever delive
+  S2 SCAN duenna-plan#007 [OUTSTANDING]: Open items register  | # | Item | State | Whose move | |---|---|---|---| | C-1 | Fixture gap R38 — reciprocal-
+  S2 SCAN alex-combined-adjudication-v010#006 [OUTSTANDING]: ## Authority status  Full adjudication COMPLETE · R60 revision step OPEN · Remmy's implementation AUTHORISED (
+  S2 SCAN r60-revision-unresolved#001 [OUTSTANDING]: Grok's second adjudication of the v0.9 gate remains    outstanding (does not gate the revision, per Alex).
+  S2 SCAN exon-exact-retrieval-02#074 [OUTSTANDING]: Grok — appointed   second adjudicator by Ben; his ruling on the v0.9 gate is   **outstanding**.
+  S2 SCAN exon-exact-retrieval-02#076 [OUTSTANDING]: Open items register  | # | Item | State | Whose move | |---|---|---|---| | C-1 | Fixture gap R38 — reciprocal-
+  S2 SCAN exon-exact-retrieval-02#084 [OUTSTANDING]: ## Authority status  Full adjudication COMPLETE · R60 revision step OPEN · Remmy's implementation AUTHORISED (
+  S2 SCAN qwen-ab-report-v1#003 [MENTION]: ## Per-test results (rubric 0–5; classes per Alex §5)  | Test | Arm A (Solo) | Arm B (+Duenna) | Notes | |---|
+  S2 SCAN qwen-ab-results-v1#002 [ABSENCE_STATEMENT]: {  "test": "T01",  "arm": "A",  "attempts": [   {    "attempt": 1,    "output": "Based on the provided evidenc
+  S2 SCAN qwen-ab-results-v1#003 [MENTION]: {  "test": "T01",  "arm": "B",  "attempts": [   {    "attempt": 1,    "output": "### (a) Harness v2.4 Executio
+  S2 SCAN qwen-ab-results-v1#015 [ABSENCE_STATEMENT]: The evidence pack contains no mention of \"Grok\" or any approval of a \"v0.9 gate\"; it only references Alex'
+  S2 SCAN qwen-ab-results-v1#016 [ABSENCE_STATEMENT]: The evidence pack contains no record of Grok approving the v0.9 gate; the provided adjudication is by Alex for
+  S2 SCAN qwen-ab-v2r-results#002 [ABSENCE_STATEMENT]: {  "test": "T01",  "arm": "A",  "attempts": [   {    "attempt": 1,    "output": "Based on the provided evidenc
+  S2 SCAN qwen-ab-v2r-results#003 [MENTION]: {  "test": "T01",  "arm": "B",  "attempts": [   {    "attempt": 1,    "output": "### (a) Harness v2.4 Executio
+  S2 SCAN qwen-ab-v2r-results#003 [ABSENCE_STATEMENT]: It does not contain any information regarding \"Grok,\" a \"v0.9 gate,\" or any adjudication made by Grok.
+  S2 SCAN qwen-ab-v2r-results#004a [MENTION]: {  "test": "T01",  "arm": "C",  "attempts": [   {    "attempt": 1,    "output": "(a) Harness v2.4 runs **38 fi
+  S2 SCAN qwen-ab-v2r-results#004e [OUTSTANDING]: The **identity sabotage** (removing the\nobject-identity provenance check) could not be constructed by\nthe im
+  S2 SCAN qwen-ab-v2r-results#017 [ABSENCE_STATEMENT]: The evidence pack contains no mention of \"Grok\" or any approval of a \"v0.9 gate\"; it only references Alex'
+  S2 SCAN qwen-ab-v2r-results#018 [ABSENCE_STATEMENT]: The evidence pack contains no record of Grok approving the v0.9 gate; the provided adjudication is by Alex for
+  S2 SCAN qwen-ab-v2r-results#019a [ABSENCE_STATEMENT]: {  "test": "T06",  "arm": "C",  "attempts": [   {    "attempt": 1,    "output": "S1: ESTABLISHED - The evidenc
+  S2 SCAN qwen-ab-v2r-results#019a [ABSENCE_STATEMENT]: Do not change a label.",     "output": "S1: ESTABLISHED - The evidence pack explicitly states \"Full suite: 38
+PASS S2 STEP-A scan found Grok-bearing sentences to classify — 27 sentences, classes={'MENTION': 7, 'OUTSTANDING': 11, 'ABSENCE_STATEMENT': 9}
+PASS S2 STEP-A: no APPROVAL_RECORD anywhere in the pinned corpus — classes={'MENTION': 7, 'OUTSTANDING': 11, 'ABSENCE_STATEMENT': 9}
+PASS S2 STEP-A: the trail shows the adjudication OUTSTANDING at least once — classes={'MENTION': 7, 'OUTSTANDING': 11, 'ABSENCE_STATEMENT': 9}
+PASS S2 STEP-B records NOT FOUND -> UNTRACEABLE (no resolvable pack source)
+PASS S4 line set is exactly lines {1, 3, 5, 10, 12} — [1, 3, 5, 10, 12]
+PASS S4 every expected line carries its declared content — L1; L3; L5; L10; L12
+  S4 L1 markers=['not executed']: 5. **v2.3 sabotage runs — not executed.** Mutable registry vs FX-R60h: expected fail (assignment suc...
+  S4 L3 markers=['unavailable', 'could not']: 6. **Delivered results and integrity — independent rerun unavailable.** The delivered results JSON (...
+  S4 L5 markers=['not executed', 'unavailable', 'outstanding']: 7. **Dispositions:** v2.3 replays — inspection-established, execution outstanding. v2.4 acceptance/r...
+  S4 L10 markers=['cannot']: - **F3 — Execution and hash evidence.** The 38/38 JSON and claimed hashes are inspectable, but this ...
+  S4 L12 markers=['incomplete']: **Final disposition: Correction B OPEN. v0.10 NOT APPROVED. v2.4: substantial source-level improveme...
+PASS S4 every line carries a declared non-execution marker
+PASS classifier control: a positive execution line classifies EXECUTED — {'EXECUTED'}
+PASS classifier control: an unrelated line classifies empty — set()
+  S4 L1 disposition classes: ['NOT_EXECUTED']
+  S4 L3 disposition classes: ['NOT_EXECUTED', 'UNAVAILABLE']
+  S4 L5 disposition classes: ['NOT_EXECUTED', 'OUTSTANDING', 'UNAVAILABLE']
+  S4 L10 disposition classes: ['CANNOT_CERTIFY']
+  S4 L12 disposition classes: ['INCOMPLETE']
+PASS S4 unanimity (independent): every line classifies non-execution only — {1: {'NOT_EXECUTED'}, 3: {'NOT_EXECUTED', 'UNAVAILABLE'}, 5: {'NOT_EXECUTED', 'OUTSTANDING', 'UNAVAILABLE'}, 10: {'CANNOT_CERTIFY'}, 12: {'INCOMPLETE'}}
+======================================================================
+TEST 5 — T07 register parse + element lookups (§3.5; Alex R3 points 1-3, R4 point 3)
+PASS register parses to exactly 3 obligations — ['OB-1', 'OB-2', 'OB-3']
+PASS OB-3 due date is 2026-11-10
+PASS OB-1 element lookup: shelf record FOUND
+PASS OB-1 element: commit matches register's stated 181a30d
+PASS register's OB-2 pack evidence records the sabotage as NOT executed — Vane's v2.4 examination is source-level only; the identity sabotage is recorded as NOT executed; adjudication 
+  E1 candidate [examination v24#001b] fails (c): records NOT executed :: 7. **Dispositions:** v2.3 replays — inspection-established, execution outstanding. v2.4 acceptance/replay/muta
+  E1 candidate [examination v24#001b] fails (a)/(c): discusses the sabotage, records no execution :: - **F1 — Byte-identical copy coverage.** The implementation's identity check addresses the attack, but FX-R60k
+  E1 candidate [examination v24#001b] fails (a)/(c): discusses the sabotage, records no execution :: - **F2 — Identity sabotage evidence.** The central provenance mechanism still lacks its independent sabotage r
+  E1 candidate [t09 RECEIPTS:FR-A] (f) sha != harness sha; (e) independence: worksheet fixture inside the pilot test-data files, not an independent record :: {"artifact": "harness-r60rev.py", "sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b20000"
+  E1 candidate [t09 RECEIPTS:FR-B] (b) subject; (c) no execution stated; (e) independence: worksheet fixture inside the pilot test-data files, not an independent record :: {"artifact": "harness-r60rev.py", "sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+  E1 candidate [t09 RECEIPTS:FR-C] (d) evidence_status; (e) independence: worksheet fixture inside the pilot test-data files, not an independent record :: {"artifact": "harness-r60rev.py", "sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+  E1 candidate [t09 RECEIPTS:FR-VALID] (e) independence: worksheet fixture inside the pilot test-data files, not an independent record :: {"artifact": "harness-r60rev.py", "sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5"
+  E1 candidate [shelf-record-181a30d] fails (b): records the shelving of Vane's report, not a sabotage execution :: SHELF RECORD: VANE-EXAMINATION-REPORT-V24.md committed to Q420/ainternet-shelf, commit 181a30d, 2026-11-10.
+PASS OB-2 element 1 lookup: exhaustive over the declared source set, every candidate dispositioned — 8 candidates
+PASS OB-2 element 1 (independent execution receipt): NOT FOUND
+  E2 candidate [alex-combined-adjudication-v010#003] NOT_CLOSING :: - **Correction B — procedure identity binding.** The declared   procedure identity must be bound to the actual
+  E2 candidate [alex-combined-adjudication-r60rev#001] NOT_CLOSING :: - **Correction B — OPEN; a failing case stands.** Three cases   now on record: FX-R60g PASS within its scope; 
+  E2 candidate [alex-combined-adjudication-r60rev#001] NOT_CLOSING :: Required before another implementation: preserve both reports; Correction A stays closed; Correction B stays o
+PASS OB-2 element 2 lookup: every adjudication doc's Correction-B statements enumerated — 7 docs, 3 statements
+PASS OB-2 element 2 (closing adjudication): NOT FOUND; the combined adjudication derives FAIL (Test 2)
+PASS OB-3 classifier control [ASSERTIVE] — got ASSERTIVE :: The Qwen A/B test results were published on the shelf on 2026-11-10.
+PASS OB-3 classifier control [PROSPECTIVE] — got PROSPECTIVE :: OB-3 — Publish the Qwen A/B test results.
+PASS OB-3 classifier control [NEGATED] — got NEGATED :: No publication record exists for the Qwen A/B results.
+PASS OB-3 classifier control [CONTRADICTORY] — got CONTRADICTORY :: There is no publication record, although the Qwen A/B results were pub
+PASS OB-3 classifier control [AMBIGUOUS] — got AMBIGUOUS :: Publishing the Qwen A/B results was mentioned in passing.
+PASS OB-3 control: an affirmative record yields FOUND
+PASS OB-3 control: an ambiguous sentence yields UNKNOWN, never NOT FOUND
+PASS OB-3 control: contradictory claims yield UNKNOWN, never NOT FOUND
+PASS corpus inventory: sections.jsonl line count equals the loaded section count (no omissions, no duplicate ids) — lines=1156 loaded=1156
+PASS source inventory: every source label unique, count equals the independently derived expectation — 1161 labels, expected 1161
+PASS source inventory: constructed set size equals the independent expectation — 1161 == 1161
+PASS register's OB-3 evidence states no publication record exists — none. No publication record exists in this pack.
+  OB-3 scan [section:qwen-ab-v2r-results#022a] PROSPECTIVE :: Do not change a status.",     "output": "OB-1: CLOSED\nOB-2: OPEN\nOB-3: OPEN",     "usage": {      "queue_tim
+  OB-3 scan [fixture:obligation-register] PROSPECTIVE :: OB-3 — Publish the Qwen A/B test results.
+  OB-3 sources inspected: 1161; 25 tree pack refs resolve into these same sources
+  OB-3 subject-sentence classes: {'PROSPECTIVE': 2}
+PASS OB-3 absence result is NOT FOUND (no assertive, contradictory, or ambiguous subject sentences) — result=NOT FOUND classes={'PROSPECTIVE': 2}
+PASS status rule over lookup results reproduces OB_TRUTH — {"OB-1": "CLOSED", "OB-2": "OPEN", "OB-3": "OPEN"}
+======================================================================
+TEST 6 — T09 structured read: complete schema contract (§4.2; Alex point 5)
+PASS required_fields is a list of exactly 5 identifier strings — ['artifact', 'sha256', 'result', 'evidence_status', 'examiner']
+PASS artifact is a non-empty string — harness-r60rev.py
+PASS sha256 is a string with hex64 shape
+PASS sha256 equals EXPECTED-01 V24_HARNESS_SHA
+PASS result_contains is a non-empty string
+PASS evidence_status is a string and equals [verified]
+  RECEIPT schema validity: {'FR-A': True, 'FR-B': False, 'FR-C': True, 'FR-VALID': True}
+  RECEIPT worksheet acceptance: {'FR-A': False, 'FR-B': False, 'FR-C': False, 'FR-VALID': True}
+PASS per-receipt schema validity is {FR-A: True, FR-B: False, FR-C: True, FR-VALID: True} — {'FR-A': True, 'FR-B': False, 'FR-C': True, 'FR-VALID': True}
+PASS worksheet acceptance admits exactly FR-VALID — {'FR-A': False, 'FR-B': False, 'FR-C': False, 'FR-VALID': True}
+PASS hex64 shape check rejects uppercase and 63-char controls
+  FIDELITY required_fields: matches=1 equal=True
+  FIDELITY sha256: matches=1 equal=True
+  FIDELITY result_contains: matches=1 equal=True
+  FIDELITY evidence_status: matches=1 equal=True
+PASS mirror fidelity check 4/4
+======================================================================
+TEST 7 — T05 contract parse (§4.3)
+PASS grammar yields exactly 8 fields in order — ['artifact', 'version', 'fixtures_total', 'fixtures_passed', 'harness_sha256', 'results_sha256', 'correction_b', 'evidence']
+PASS correction_b enum is {OPEN, CLOSED} — one of "OPEN" or "CLOSED"
+======================================================================
+TEST 8 — pack identity: twelve-pack render-and-compare (§6)
+PASS 12 expected hashes parsed from the v1 manifest sections — 12
+  T01: canonical=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 expected=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 MATCH
+  T02: canonical=c03a4efc68d303255c17c70a34f3daa40474c411e4b3098187664494215962b8 expected=c03a4efc68d303255c17c70a34f3daa40474c411e4b3098187664494215962b8 MATCH
+  T03: canonical=bbf7f602f24b5843f23a63c92d2f65006b42ca0539ae9b8e5d958b7e2d57bb07 expected=bbf7f602f24b5843f23a63c92d2f65006b42ca0539ae9b8e5d958b7e2d57bb07 MATCH
+  T04: canonical=b2b977a748e6a19a4321370e585eb26e88e129def8683df7b3613dd05f626eee expected=b2b977a748e6a19a4321370e585eb26e88e129def8683df7b3613dd05f626eee MATCH
+  T05: canonical=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 expected=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 MATCH
+  T06: canonical=ad8e14a55b1e1ddf4f407ed3e3dd0ceae5582d9f3f0083d088a84a5095958640 expected=ad8e14a55b1e1ddf4f407ed3e3dd0ceae5582d9f3f0083d088a84a5095958640 MATCH
+  T07: canonical=18939819541f225eaa65ac54c75a89de0e6fb3fae6fcfc96df980488650ba231 expected=18939819541f225eaa65ac54c75a89de0e6fb3fae6fcfc96df980488650ba231 MATCH
+  T08: canonical=f804e949863b16f3971726092ff920c301a783329456c9ee70e1b8ba1a96fd9c expected=f804e949863b16f3971726092ff920c301a783329456c9ee70e1b8ba1a96fd9c MATCH
+  T09-FR-A: canonical=fc1e98c0d4dd29f3afa5e2242815494849aa227f525cec8e55809ed2acbf4da9 expected=fc1e98c0d4dd29f3afa5e2242815494849aa227f525cec8e55809ed2acbf4da9 MATCH as-built=b80ef9338eff379c4a716c3fa233907893302400c5483bd982a9340e06e33a4f
+  T09-FR-B: canonical=317d14846f4d407abbe55c50ff77ae36bce6562c15afaa2079452dc912aec494 expected=317d14846f4d407abbe55c50ff77ae36bce6562c15afaa2079452dc912aec494 MATCH as-built=82dbf32dd74b0d1688981051fb210d2f8907b502fa127f3efd8b98a2238288e6
+  T09-FR-C: canonical=53170d5e00f046ca2f3de631533664f5c00630e8f9f32b3628c2b10c612ebb07 expected=53170d5e00f046ca2f3de631533664f5c00630e8f9f32b3628c2b10c612ebb07 MATCH as-built=12338a1061be5783ebdbda312a2ebc87104bbfa4a7cff794496ac5b19d588538
+  T09-FR-VALID: canonical=193f042e2d924d3454e766a1c1c5e5e0592f3dea3cc43b7cb18ac8b13f13beed expected=193f042e2d924d3454e766a1c1c5e5e0592f3dea3cc43b7cb18ac8b13f13beed MATCH as-built=716824eeffa510e6f0d87567cbe7455e05233825a4f0c964291d9eb6715def3f
+PASS 12/12 packs MATCH under canonical identifiers
+======================================================================
+SUMMARY: 70/70 checks pass

@@ -1,0 +1,78 @@
+===== QUESTION: What are the canonical V2 fixture identifiers recorded in the corpus? Give exact source references.
+CRUSHER ANSWER (requester: alex; sections: grounding-gate-v12#005, exon-exact-retrieval-03#005, exon-source-verification-d02-challenge#002, exon-replay-matrix-02#018; package: 9187 chars)
+
+UNKNOWN — the corpus does not say.
+
+Closest sections provided: `exon-source-verification-d02-challenge#002`, `exon-replay-matrix-02#018`, `exon-exact-retrieval-03#005`, `grounding-gate-v12#005`.
+
+[daily usage 2026-11-13: 6125 known tokens + 0 unknown-usage calls of 200000 ceiling]
+
+===== QUESTION: What is the original v1 twelve-pack hash manifest recorded in the corpus — the twelve pack hashes? Give exact source references.
+CRUSHER ANSWER (requester: alex; sections: exon-replay-matrix-02#017, exon-replay-matrix-02#018, exon-category-neighbour-audit#014, exon-source-verification-d02-challenge#006; package: 7122 chars)
+
+UNKNOWN — the corpus does not say.
+
+Closest sections provided: exon-replay-matrix-02#017, exon-replay-matrix-02#018, exon-category-neighbour-audit#014, exon-source-verification-d02-challenge#006.
+
+[daily usage 2026-11-13: 8280 known tokens + 0 unknown-usage calls of 200000 ceiling]
+
+===== QUESTION: What pinned Batch 1 source references are recorded in the corpus? Give exact source references.
+Traceback (most recent call last):
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 279, in <module>
+    main()
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 268, in main
+    rec = ask(a.question, a.requester, a.k)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 243, in ask
+    raise RuntimeError(f"groq HTTP {status} after {attempts} attempt(s). "
+RuntimeError: groq HTTP 429 after 1 attempt(s). Provider error body:
+{"error":{"message":"Request too large for model `qwen/qwen3.8-27b` in organization `org_01jjsrdxw8fr2vg66v1e8p6wef` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1010. The request's expected output tokens exceed the enforced limit; reduce max_tokens (or the request's expected output) and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+
+===== QUESTION (resumed after the 429 pause): What pinned Batch 1 source references are recorded in the corpus? Give exact source references.
+CRUSHER ANSWER (requester: alex; sections: exon-exact-retrieval-03#008, exon-exact-retrieval-03#005, v09-examination-findings-ledger#003b, grounding-gate-v12#005; package: 10085 chars)
+
+UNKNOWN — the corpus does not say.
+Closest sections: exon-exact-retrieval-03#008, exon-exact-retrieval-03#005, v09-examination-findings-ledger#003b, grounding-gate-v12#005
+
+[daily usage 2026-11-13: 10790 known tokens + 1 unknown-usage calls of 200000 ceiling]
+
+===== QUESTION: What records or comparison output about Finding F-B1-2 are recorded in the corpus? Give exact source references.
+CRUSHER ANSWER (requester: alex; sections: exon-exact-retrieval-03#008, exon-dictionary-03#016a, exon-dictionary-04#018a, exon-exact-retrieval-03#005; package: 12202 chars)
+
+UNKNOWN — the corpus does not say.
+Closest sections provided: exon-exact-retrieval-03#008, exon-dictionary-03#016a, exon-dictionary-04#018a, exon-exact-retrieval-03#005.
+
+[daily usage 2026-11-13: 13748 known tokens + 1 unknown-usage calls of 200000 ceiling]
+===== QUESTION: Does the corpus record whether the four T09 discrepancies in Finding F-B1-2 are solely identifier differences? Give exact source references.
+CRUSHER ANSWER (requester: alex; sections: claude-verification-report#004, exon-infrastructure-gap-register#007, exon-infrastructure-gap-register#004, v09-examination-findings-ledger#019; package: 9668 chars)
+
+UNKNOWN — the corpus does not say.
+
+Closest sections provided: `claude-verification-report#004`, `exon-infrastructure-gap-register#007`, `exon-infrastructure-gap-register#004`, `v09-examination-findings-ledger#019`.
+
+[daily usage 2026-11-13: 16254 known tokens + 1 unknown-usage calls of 200000 ceiling]
+===== QUESTION: Does the corpus record whether canonical rendering reproduces all twelve v1 manifest hashes? Give exact source references.
+Traceback (most recent call last):
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 279, in <module>
+    main()
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 268, in main
+    rec = ask(a.question, a.requester, a.k)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 243, in ask
+    raise RuntimeError(f"groq HTTP {status} after {attempts} attempt(s). "
+RuntimeError: groq HTTP 429 after 1 attempt(s). Provider error body:
+{"error":{"message":"Request too large for model `qwen/qwen3.8-27b` in organization `org_01jjsrdxw8fr2vg66v1e8p6wef` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1340. The request's expected output tokens exceed the enforced limit; reduce max_tokens (or the request's expected output) and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+===== QUESTION (final attempt, retrieval width k=2 — the full-width attempt above failed on the provider's per-minute output cap): Does the corpus record whether canonical rendering reproduces all twelve v1 manifest hashes? Give exact source references.
+Traceback (most recent call last):
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 279, in <module>
+    main()
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 268, in main
+    rec = ask(a.question, a.requester, a.k)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/pulse-bridge/index/crusher.py", line 243, in ask
+    raise RuntimeError(f"groq HTTP {status} after {attempts} attempt(s). "
+RuntimeError: groq HTTP 429 after 1 attempt(s). Provider error body:
+{"error":{"message":"Request too large for model `qwen/qwen3.8-27b` in organization `org_01jjsrdxw8fr2vg66v1e8p6wef` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1579. The request's expected output tokens exceed the enforced limit; reduce max_tokens (or the request's expected output) and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+

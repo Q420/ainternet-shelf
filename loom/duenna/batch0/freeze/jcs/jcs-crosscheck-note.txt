@@ -1,0 +1,12 @@
+PILOT-JCS supplementary cross-check (development-time, Batch 0)
+===============================================================
+Beyond the RFC 8785 conformance vectors (jcs-conformance-results.json,
+35/35), the number serialiser was cross-validated against V8's
+JSON.stringify — the reference RFC 8785 Appendix B itself suggests —
+over 5,997 pseudo-random IEEE 754 doubles (seed 20261112; uniform bit
+patterns plus scaled uniform values), run 2026-11-12 at Batch 0.
+
+Result: 0 mismatches.
+
+This note is supplementary assurance for the pin; the conformance
+evidence of record is the RFC-vector run.

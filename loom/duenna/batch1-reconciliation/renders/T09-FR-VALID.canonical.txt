@@ -1,0 +1,11 @@
+=== FIXTURE obligation-spec ===
+OBLIGATION: Correction B may be closed only on a receipt with fields artifact, sha256, result, evidence_status, examiner; artifact harness-r60rev.py; sha256 exactly 854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5; result reporting the executed identity sabotage (FX-R60k fails); evidence_status exactly [verified].
+=== FIXTURE receipt-FR-VALID ===
+RECEIPT SUBMITTED FOR CLOSURE:
+{
+ "artifact": "harness-r60rev.py",
+ "sha256": "854a3e8644817ef1acb9c83be01a0164d3f987ada19e25fe972d86a7e0b2f9d5",
+ "result": "Identity sabotage executed: FX-R60k fails alone; other fixtures unaffected.",
+ "evidence_status": "[verified]",
+ "examiner": "Claude"
+}

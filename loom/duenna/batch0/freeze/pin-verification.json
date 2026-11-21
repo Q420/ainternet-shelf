@@ -1,0 +1,222 @@
+[
+  {
+    "path": "/home/hatch/workspace/duenna-letters/NEMOTRON-PILOT-PLAN-01-DRAFT.md",
+    "exists": true,
+    "bytes": 8205,
+    "sha256": "743e7dd4fa0a7296c81ee8e317c234b39f7bb326bb79f441e1929b4e489aa949",
+    "id": "S1-living-local",
+    "expected_sha256": "2449c259cf73d688932d1ad1c91fb12a225eb35dc7cb3494d5e62adaeb1cb6f1",
+    "expected_bytes": 7497,
+    "verdict": "MISMATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/NEMOTRON-PILOT-PLAN-01-DRAFT.md",
+    "exists": true,
+    "bytes": 8205,
+    "sha256": "743e7dd4fa0a7296c81ee8e317c234b39f7bb326bb79f441e1929b4e489aa949",
+    "id": "S1-shelf-copy",
+    "expected_sha256": null,
+    "expected_bytes": null,
+    "verdict": "RECORDED"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/PILOT-MANIFEST-01.md",
+    "exists": true,
+    "bytes": 8709,
+    "sha256": "0a6fe8c175379c51cbaefb72247a00f0ba9f92620293de68ac7628cc4399544f",
+    "id": "S2-manifest-shelf",
+    "expected_sha256": null,
+    "expected_bytes": null,
+    "verdict": "RECORDED"
+  },
+  {
+    "path": "/home/hatch/workspace/duenna-letters/PILOT-MANIFEST-01.md",
+    "exists": true,
+    "bytes": 8709,
+    "sha256": "0a6fe8c175379c51cbaefb72247a00f0ba9f92620293de68ac7628cc4399544f",
+    "id": "S2-manifest-local",
+    "expected_sha256": null,
+    "expected_bytes": null,
+    "verdict": "RECORDED"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/PILOT-HARNESS-DESIGN-03.md",
+    "exists": true,
+    "bytes": 72026,
+    "sha256": "b0fca1259c0f6432437535ad92224ad8cd824f71a078d91b7f455182c8df0d04",
+    "id": "S3",
+    "expected_sha256": "b0fca1259c0f6432437535ad92224ad8cd824f71a078d91b7f455182c8df0d04",
+    "expected_bytes": null,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/NEMOTRON-ADAPTER-DESIGN-03.md",
+    "exists": true,
+    "bytes": 39840,
+    "sha256": "5be7eb0e59793b98f5352c55778ca2da755e6078be70c00859e3dcc8174909bb",
+    "id": "S4",
+    "expected_sha256": "5be7eb0e59793b98f5352c55778ca2da755e6078be70c00859e3dcc8174909bb",
+    "expected_bytes": null,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/PILOT-ACCEPTANCE-CRITERIA-04.md",
+    "exists": true,
+    "bytes": 54901,
+    "sha256": "7608d74eef511b59ae59c33d18b299ac050c943ebebc10aeed816e101a822e2e",
+    "id": "S5",
+    "expected_sha256": "7608d74eef511b59ae59c33d18b299ac050c943ebebc10aeed816e101a822e2e",
+    "expected_bytes": null,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/INTERPRETATION-NOTE-01.md",
+    "exists": true,
+    "bytes": 12636,
+    "sha256": "94d40cc7477fccc040013a24caf693826b1e28a07a7f3f1f6367fc7f8eb61771",
+    "id": "S6",
+    "expected_sha256": "94d40cc7477fccc040013a24caf693826b1e28a07a7f3f1f6367fc7f8eb61771",
+    "expected_bytes": null,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/V2-QUALIFICATION-01.md",
+    "exists": true,
+    "bytes": 25247,
+    "sha256": "6ae47780785001b6ffc68b73bc2b0a3e11cc9b0a8def493d958b86d60e2f623a",
+    "id": "S7",
+    "expected_sha256": "6ae47780785001b6ffc68b73bc2b0a3e11cc9b0a8def493d958b86d60e2f623a",
+    "expected_bytes": null,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/duenna-letters/NOTE-20261112-duenna-flow-both.md",
+    "exists": true,
+    "bytes": 3970,
+    "sha256": "a2eacc3aa1e32e6d7c6003087811f2eee3f92690df1273b659491551d753f257",
+    "id": "S10",
+    "expected_sha256": "a2eacc3aa1e32e6d7c6003087811f2eee3f92690df1273b659491551d753f257",
+    "expected_bytes": null,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/STAGE5-BUILD-SPEC-13.md",
+    "exists": true,
+    "bytes": 214041,
+    "sha256": "ebefa4a14b73e8f3bfbb7f7188d4524de88460c38c2acd2eec302f584b8394b7",
+    "id": "SPEC13-shelf",
+    "expected_sha256": null,
+    "expected_bytes": 214041,
+    "verdict": "RECORDED"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v2/V2-PACKAGE.md",
+    "exists": true,
+    "bytes": 5796,
+    "sha256": "3dcda7b285f3eb26c979a4bf48b410196d0c804cf5b4f24482882cbe2cc3754f",
+    "id": "row2",
+    "expected_sha256": "3dcda7b285f3eb26c979a4bf48b410196d0c804cf5b4f24482882cbe2cc3754f",
+    "expected_bytes": 5796,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v2/PROCESS-TREES.md",
+    "exists": true,
+    "bytes": 12631,
+    "sha256": "5528ab69bec2f7fcdea776748e9bdc2e84ec97b4fa1d4be35bf7fd386e24b0ad",
+    "id": "row3",
+    "expected_sha256": "5528ab69bec2f7fcdea776748e9bdc2e84ec97b4fa1d4be35bf7fd386e24b0ad",
+    "expected_bytes": 12631,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v2/tools.py",
+    "exists": true,
+    "bytes": 7459,
+    "sha256": "e78f45d31ed6831253ed5fed1dc3f5dd22938b70e7c47cd15e190b912161cc1d",
+    "id": "row4",
+    "expected_sha256": "e78f45d31ed6831253ed5fed1dc3f5dd22938b70e7c47cd15e190b912161cc1d",
+    "expected_bytes": 7459,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v2/demo_tools.py",
+    "exists": true,
+    "bytes": 4446,
+    "sha256": "6c960e442009c6c8978eaeab506311626f74df014aac50ef7bff42ff5bdb4648",
+    "id": "row5",
+    "expected_sha256": "6c960e442009c6c8978eaeab506311626f74df014aac50ef7bff42ff5bdb4648",
+    "expected_bytes": 4446,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/v2/DEMO-RESULTS.json",
+    "exists": true,
+    "bytes": 26634,
+    "sha256": "baaca7a840d19a194a9754be513d8a95f92657ba2624a0cc62ec1f1663b02dbf",
+    "id": "row6",
+    "expected_sha256": "baaca7a840d19a194a9754be513d8a95f92657ba2624a0cc62ec1f1663b02dbf",
+    "expected_bytes": 26634,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/run_ab.py",
+    "exists": true,
+    "bytes": 21273,
+    "sha256": "acb647bd50bfa2f6a219415dd60242a3efbacbf5a68a2d16ac7c3dbd57663d53",
+    "id": "row7",
+    "expected_sha256": "acb647bd50bfa2f6a219415dd60242a3efbacbf5a68a2d16ac7c3dbd57663d53",
+    "expected_bytes": 21273,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/pulse-bridge/index/query.py",
+    "exists": true,
+    "bytes": 3515,
+    "sha256": "f8f2c7cad78089451399564dff19e22aa1c6fc6038f9efb832a9c01954905e32",
+    "id": "row8",
+    "expected_sha256": "f8f2c7cad78089451399564dff19e22aa1c6fc6038f9efb832a9c01954905e32",
+    "expected_bytes": 3515,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/pulse-bridge/index/sections.jsonl",
+    "exists": true,
+    "bytes": 3709804,
+    "sha256": "b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e",
+    "id": "row9",
+    "expected_sha256": "b107e8926abc5fed666c460591850adf41efd5b7d46067f2ee2f546e49c5823e",
+    "expected_bytes": 3709804,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/pulse-bridge/index/manifest.json",
+    "exists": true,
+    "bytes": 50881,
+    "sha256": "c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452",
+    "id": "row10",
+    "expected_sha256": "c93eaa1906a068c53bf7fc54e872941b5556a97200ba6129aaf350a65ac4c452",
+    "expected_bytes": 50881,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/MANIFEST.md",
+    "exists": true,
+    "bytes": 13067,
+    "sha256": "3b4462fbfb5c1ea644272e905d0e4ee3bf9121df57ab9a6a282346b7634ce21f",
+    "id": "row11",
+    "expected_sha256": "3b4462fbfb5c1ea644272e905d0e4ee3bf9121df57ab9a6a282346b7634ce21f",
+    "expected_bytes": 13067,
+    "verdict": "MATCH"
+  },
+  {
+    "path": "/home/hatch/workspace/ainternet-shelf/duenna/qwen-ab/QWEN-AB-EVIDENCE-MANIFEST.json",
+    "exists": true,
+    "bytes": 3863,
+    "sha256": "d544cad83cd86b5b54ebcd02120037c74451e678aa7d1d0e7415ede921bfd56d",
+    "id": "row12",
+    "expected_sha256": "d544cad83cd86b5b54ebcd02120037c74451e678aa7d1d0e7415ede921bfd56d",
+    "expected_bytes": 3863,
+    "verdict": "MATCH"
+  }
+]

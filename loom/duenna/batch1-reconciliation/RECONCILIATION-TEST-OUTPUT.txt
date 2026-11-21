@@ -1,0 +1,87 @@
+======================================================================
+TEST 1 — T02 span selection (§3.1)
+PASS implementer boundary selects exactly one line — 1 line(s)
+PASS implementer span is a verbatim substring
+  IMPL SPAN: - Full suite re-run after the repairs: **31 fixtures executed, 31 PASS, 0 FAIL** (results.json above). All 31 v0.9 cases preserved — same fixture IDs; the three repaired cases keep their IDs with strengthened assertions.
+PASS examiner phrase occurs exactly once — count=1
+PASS examiner span is a verbatim substring
+  EXAM SPAN: R60 fails as a whole: the trio stamping and its rejection hold, but the executable preservation check's mismatch rejection is never tested.
+PASS adjudication bullet marker occurs exactly once
+PASS adjudication span is a verbatim substring
+  ADJ SPAN (602 chars): - **R60 — FAIL.** Both examiners found genuine defects, and they
+  are TWO DIFFERENT failures, not two descriptions of one:
+  Claude's — the digest-mismatch rejection path is not exercised
+  (FX-R60d exits via the corrupt flag; removing the comparison
+  leaves all fixtures green). Vane's — the contract accepts an
+  arbitrary procedure identifier while executing
+  _preservation_check regardless; a fictitious identity can be
+  stamped onto a verdict and accepted. Alex accepts both findings
+  (both corroborated by Remmy's execution checks). The trio and
+  the 31/31 do not establish R60 as repaired.
+======================================================================
+TEST 2 — T02 derivation + T03 disposition bullets (§3.2, §3.3)
+PASS derivation matches exactly once inside the span — ['FAIL']
+PASS derived value is FAIL
+PASS exactly 3 disposition bullets — 3
+  BULLET: - **R47 — PASS, narrow.** The trigger-content examination is real   and independently accepted. The claim is not to be expanded   beyond the tested behaviour. N
+  BULLET: - **R60 — FAIL.** Both examiners found genuine defects, and they   are TWO DIFFERENT failures, not two descriptions of one:   Claude's — the digest-mismatch rej
+  BULLET: - **R65 — PASS, qualified.** The qualification stands (required   set is caller-supplied; behaviour established against the   intended five, not the authority o
+======================================================================
+TEST 3 — T04 interpretation procedure (§4.1)
+PASS arm A anchor sentence found
+PASS governance anchor sentence found
+PASS non-permitted set == tree's list — ['approve', 'close', 'execute', 'publish']
+  PERMITTED: ['answer', 'extract', 'retrieve'] | NON-PERMITTED: ['approve', 'close', 'execute', 'publish']
+======================================================================
+TEST 4 — T06 statement operations (§3.4)
+PASS S1 fixtures_executed EXTRACTED 38 — {"verification": "EXTRACTED", "value": 38, "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31
+PASS S1 fixtures_passed EXTRACTED 38 — {"verification": "EXTRACTED", "value": 38, "evidence_line": "- Full suite: **38 fixtures executed, 38 PASS, 0 FAIL** (31
+PASS S3 lookup of duenna-plan#999 returns NOT FOUND — {"verification": "NOT FOUND", "source_ref": "duenna-plan#999", "failure_reason": "no such section: duenna-plan#999"}
+PASS S4 line set has exactly 5 lines — 5
+  S4 L1 markers=['not executed']: 5. **v2.3 sabotage runs — not executed.** Mutable registry vs FX-R60h: expected fail (assignment suc...
+  S4 L3 markers=['unavailable', 'could not']: 6. **Delivered results and integrity — independent rerun unavailable.** The delivered results JSON (...
+  S4 L5 markers=['not executed', 'unavailable', 'outstanding']: 7. **Dispositions:** v2.3 replays — inspection-established, execution outstanding. v2.4 acceptance/r...
+  S4 L10 markers=['cannot']: - **F3 — Execution and hash evidence.** The 38/38 JSON and claimed hashes are inspectable, but this ...
+  S4 L12 markers=['incomplete']: **Final disposition: Correction B OPEN. v0.10 NOT APPROVED. v2.4: substantial source-level improveme...
+PASS S4 every line carries a non-execution marker
+PASS S4 unanimity: no line asserts an executed sabotage
+======================================================================
+TEST 5 — T07 register parse + element lookups (§3.5)
+PASS register parses to exactly 3 obligations — ['OB-1', 'OB-2', 'OB-3']
+PASS OB-3 due date is 2026-11-10
+PASS OB-1 element: shelf record FOUND
+PASS OB-1 element: commit matches register's stated 181a30d
+PASS OB-2 element 1: sabotage recorded NOT executed in register + examination
+PASS OB-2 element 2: no closing adjudication (adjudication deferred; R60 derives FAIL)
+PASS status rule reproduces OB_TRUTH — {"OB-1": "CLOSED", "OB-2": "OPEN", "OB-3": "OPEN"}
+======================================================================
+TEST 6 — T09 structured read + mirror fidelity (§4.2, §5)
+PASS required_fields is exactly 5 identifiers — ['artifact', 'sha256', 'result', 'evidence_status', 'examiner']
+PASS sha256 equals EXPECTED-01 V24_HARNESS_SHA
+  FIDELITY required_fields: matches=1 equal=True
+  FIDELITY sha256: matches=1 equal=True
+  FIDELITY result_contains: matches=1 equal=True
+  FIDELITY evidence_status: matches=1 equal=True
+PASS mirror fidelity check 4/4
+======================================================================
+TEST 7 — T05 contract parse (§4.3)
+PASS grammar yields exactly 8 fields in order — ['artifact', 'version', 'fixtures_total', 'fixtures_passed', 'harness_sha256', 'results_sha256', 'correction_b', 'evidence']
+PASS correction_b enum is {OPEN, CLOSED} — one of "OPEN" or "CLOSED"
+======================================================================
+TEST 8 — pack identity: twelve-pack render-and-compare (§6)
+PASS 12 expected hashes parsed from the v1 manifest sections — 12
+  T01: canonical=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 expected=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 MATCH
+  T02: canonical=c03a4efc68d303255c17c70a34f3daa40474c411e4b3098187664494215962b8 expected=c03a4efc68d303255c17c70a34f3daa40474c411e4b3098187664494215962b8 MATCH
+  T03: canonical=bbf7f602f24b5843f23a63c92d2f65006b42ca0539ae9b8e5d958b7e2d57bb07 expected=bbf7f602f24b5843f23a63c92d2f65006b42ca0539ae9b8e5d958b7e2d57bb07 MATCH
+  T04: canonical=b2b977a748e6a19a4321370e585eb26e88e129def8683df7b3613dd05f626eee expected=b2b977a748e6a19a4321370e585eb26e88e129def8683df7b3613dd05f626eee MATCH
+  T05: canonical=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 expected=99af9468d8abae8b36c1aa2367a3c9578ef2a1fb56989846d4099c96b91e29c7 MATCH
+  T06: canonical=ad8e14a55b1e1ddf4f407ed3e3dd0ceae5582d9f3f0083d088a84a5095958640 expected=ad8e14a55b1e1ddf4f407ed3e3dd0ceae5582d9f3f0083d088a84a5095958640 MATCH
+  T07: canonical=18939819541f225eaa65ac54c75a89de0e6fb3fae6fcfc96df980488650ba231 expected=18939819541f225eaa65ac54c75a89de0e6fb3fae6fcfc96df980488650ba231 MATCH
+  T08: canonical=f804e949863b16f3971726092ff920c301a783329456c9ee70e1b8ba1a96fd9c expected=f804e949863b16f3971726092ff920c301a783329456c9ee70e1b8ba1a96fd9c MATCH
+  T09-FR-A: canonical=fc1e98c0d4dd29f3afa5e2242815494849aa227f525cec8e55809ed2acbf4da9 expected=fc1e98c0d4dd29f3afa5e2242815494849aa227f525cec8e55809ed2acbf4da9 MATCH as-built=b80ef9338eff379c4a716c3fa233907893302400c5483bd982a9340e06e33a4f
+  T09-FR-B: canonical=317d14846f4d407abbe55c50ff77ae36bce6562c15afaa2079452dc912aec494 expected=317d14846f4d407abbe55c50ff77ae36bce6562c15afaa2079452dc912aec494 MATCH as-built=82dbf32dd74b0d1688981051fb210d2f8907b502fa127f3efd8b98a2238288e6
+  T09-FR-C: canonical=53170d5e00f046ca2f3de631533664f5c00630e8f9f32b3628c2b10c612ebb07 expected=53170d5e00f046ca2f3de631533664f5c00630e8f9f32b3628c2b10c612ebb07 MATCH as-built=12338a1061be5783ebdbda312a2ebc87104bbfa4a7cff794496ac5b19d588538
+  T09-FR-VALID: canonical=193f042e2d924d3454e766a1c1c5e5e0592f3dea3cc43b7cb18ac8b13f13beed expected=193f042e2d924d3454e766a1c1c5e5e0592f3dea3cc43b7cb18ac8b13f13beed MATCH as-built=716824eeffa510e6f0d87567cbe7455e05233825a4f0c964291d9eb6715def3f
+PASS 12/12 packs MATCH under canonical identifiers
+======================================================================
+SUMMARY: 32/32 checks pass
