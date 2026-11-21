@@ -27,7 +27,8 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 17. `OUTSIDE-REVIEW-2026-11-21.md` — an outside review of the design: sound spine, one structural concern (the examiner as a single point), seven construction seams; recommends a short targeted pass before ruling.
 18. `COLLABORATION-REV4.md` + `docs/requirements/SPEC-SHEET-REV4.md` — the targeted pass, with Ben's three rulings (pause scope; identity consequence; gate granularity) (preserved).
 19. `VANE-REV4-PASS-RECHECK-2026-11-21.md` — Vane's re-check: the pass is substantively sound; two acceptance-coverage items (R29, R34) required.
-20. `docs/requirements/SPEC-SHEET-REV5.md` — **the current spec**: Revision 5 adds that coverage; no requirement changes. **The current design pair is COLLABORATION Rev 4 + SPEC SHEET Rev 5** — with Vane for final confirmation, then Ben's design ruling. Nothing builds before it.
+20. `docs/requirements/SPEC-SHEET-REV5.md` — the spec, Revision 5: adds that coverage; no requirement changes.
+21. `COLLABORATION-REV5.md` — the design, Revision 5: a single filing correction (the pairing reference now names SPEC SHEET Revision 5); no other change. **The current design pair is COLLABORATION Rev 5 + SPEC SHEET Rev 5** — with Vane for final confirmation, then Ben's design ruling. Nothing builds before it.
 
 ## Working rules (Ben, 2026-11-21)
 
