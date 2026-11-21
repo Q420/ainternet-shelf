@@ -11,6 +11,20 @@ CORRECTION ROUND (2026-11-21, per Vane's trials-build examination):
   (seq, type, head_hash, path, anchor) must match the sequence event. A
   malformed or mismatched anchor record REFUSES release.
 
+CORRECTION ROUND 3 (2026-11-21, per Vane's correction-2 examination, D7-A
+residual): PACKET SELECTION. The module previously defaulted GT_FILE to
+gt-store/layer4-packet.txt (the Annex A/C packet) when GT_RELEASE_FILE was
+unset, so a release invocation without that setting silently selected the
+wrong packet; the round-2 runner avoided it only by setting the variable
+before import. Selection is now EXPLICIT (chosen shape (b) of the round-3
+dispatch): GT_RELEASE_FILE must be set, and its absence fails closed at
+the packet-selection stage before the sequence is even consulted. In
+addition, before any release the gate hashes the selected file (as the
+loomgt identity) and requires equality with the Annex D packet hash
+recorded in the sequence's GROUND_TRUTH_SEALED event. A readable-but-wrong
+file -- the Annex A/C packet, or any other file -- therefore never
+releases: selection by filename alone is not trusted.
+
 CORRECTION ROUND 2 (2026-11-21, per Vane's correction examination, D7-B):
 - The gate now verifies the COMPLETE SS13 order in the sequence:
   EVIDENCE_FROZEN -> SCORING_COMPLETED -> SCORING_FROZEN, each present, in
@@ -24,23 +38,31 @@ CORRECTION ROUND 2 (2026-11-21, per Vane's correction examination, D7-B):
   sequences REFUSE, with the reason recorded in the result.
 
 Sealed packets (D7-A): GT_RELEASE_FILE selects the sealed packet the
-release operates on. The default path is the correction round 1 packet
-(gt-store/layer4-packet.txt), which contains Annex A + Annex C extracts --
-preserved build history, NOT the sealed ground truth. The actual sealed
-ground truth is the Annex D packet (gt-store/annex-d-packet.txt), sealed
-under the loomgt identity by ledger/seal_annex_d.py; the correction
-round 2 demonstrations set GT_RELEASE_FILE to that packet. The build
-round's stand-in file and its evidence remain preserved as build history.
+release operates on, and it must be set explicitly -- there is no default
+(correction round 3). The correction round 1 packet
+(gt-store/layer4-packet.txt) contains Annex A + Annex C extracts --
+preserved build history, NOT the sealed ground truth, and it can no
+longer be selected by omission. The actual sealed ground truth is the
+Annex D packet (gt-store/annex-d-packet.txt), sealed under the loomgt
+identity by ledger/seal_annex_d.py. Whichever file is selected, the gate
+verifies its SHA-256 against the packet hash recorded in the sequence's
+GROUND_TRUTH_SEALED event before releasing (see step 2.5 below). The
+build round's stand-in file and its evidence remain preserved as build
+history.
 
 Order of operations — the release path cannot hand over material before its
 own access record is secured:
+  0. Verify the packet selection is explicit (GT_RELEASE_FILE set).
   1. Verify the complete scoring order + manifest binding in the sequence.
   2. Verify + structurally validate the SCORING_FROZEN shelf anchor.
+  2.5. Verify the selected packet: hash it (as loomgt) and require
+     equality with the Annex D packet hash recorded in the sequence's
+     GROUND_TRUTH_SEALED event.
   3. Append GROUND_TRUTH_ACCESSED to the sequence.
   4. Anchor the GROUND_TRUTH_ACCESSED head on the shelf (record checked).
   5. ONLY THEN read the sealed material (as the loomgt identity, the only
      identity that can read it) and write it to the examiner output path.
-If any of steps 1-4 fails, the material is NOT read and NOT released.
+If any of steps 0-4 fails, the material is NOT read and NOT released.
 Set GT_RELEASE_SABOTAGE_ANCHOR=1 to simulate an anchoring failure."""
 import hashlib, json, os, re, subprocess, sys
 
@@ -48,9 +70,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ledger_client import call as ledger_call
 import anchor as anchor_mod
 
-GT_FILE = os.environ.get(
-    "GT_RELEASE_FILE",
-    "/tmp/loom-trials-runtime/gt-store/layer4-packet.txt")
+# Correction round 3: NO default packet. Selection is explicit via
+# GT_RELEASE_FILE; when the variable is absent, GT_FILE is None and
+# release() fails closed at the packet-selection stage. (Previously this
+# defaulted to gt-store/layer4-packet.txt -- the Annex A/C packet -- so an
+# invocation without the setting silently selected the wrong packet.)
+GT_FILE_EXPLICIT = "GT_RELEASE_FILE" in os.environ
+GT_FILE = os.environ.get("GT_RELEASE_FILE")
 
 def parse_anchor_record(readback):
     """Parse the GitHub read tool's output into the anchor record dict.
@@ -184,7 +210,53 @@ def find_scoring_order(events):
         "no SCORING_FROZEN exists after a SCORING_COMPLETED that follows "
         "EVIDENCE_FROZEN (seq %d)" % ef["seq"])
 
+def sealed_packet_binding(events):
+    """Returns (seq, packet_sha256, why). The expected sealed packet is the
+    one recorded by the sequence's GROUND_TRUTH_SEALED event (the most
+    recent one, if several): its payload's packet_sha256 must be present
+    and a well-formed SHA-256. This is the value the selected file is
+    verified against -- read from the sealing record in the sequence,
+    never hardcoded here."""
+    sealed = [e for e in events if e["type"] == "GROUND_TRUTH_SEALED"]
+    if not sealed:
+        return None, None, ("no GROUND_TRUTH_SEALED event in the sequence: "
+                            "there is no recorded sealed packet to bind the "
+                            "release to")
+    ev = sealed[-1]
+    v = (ev.get("payload") or {}).get("packet_sha256")
+    if not isinstance(v, str) or not v:
+        return None, None, ("GROUND_TRUTH_SEALED (seq %d) carries no "
+                            "packet_sha256 in its payload" % ev["seq"])
+    if not _SHA256_RE.match(v):
+        return None, None, ("GROUND_TRUTH_SEALED (seq %d) packet_sha256 is "
+                            "not a well-formed SHA-256" % ev["seq"])
+    return ev["seq"], v, None
+
+def selected_packet_sha256():
+    """Returns (sha256, why). Hashes the selected packet file as the
+    loomgt identity -- the only identity that can read the sealed store,
+    and the same identity step 5 reads the material as. Nothing is
+    written anywhere; the file's bytes are not returned, only its hash."""
+    out = subprocess.run(["runuser", "-u", "loomgt", "--", "sha256sum", GT_FILE],
+                         capture_output=True, text=True)
+    if out.returncode != 0:
+        return None, ("the selected packet file could not be hashed as "
+                      "loomgt: " + out.stderr.strip()[-200:])
+    digest = out.stdout.split()[0] if out.stdout.split() else ""
+    if not _SHA256_RE.match(digest):
+        return None, "sha256sum on the selected packet returned no well-formed digest"
+    return digest, None
+
 def release(examiner_id, out_path):
+    # step 0: the packet selection must be explicit (correction round 3).
+    # Absence of GT_RELEASE_FILE fails closed here, before the sequence is
+    # consulted and before any material can be read: there is no default
+    # packet, so the Annex A/C packet can never be selected by omission.
+    if not GT_FILE_EXPLICIT or not GT_FILE:
+        return {"released": False, "stage": "packet-selection",
+                "why": "GT_RELEASE_FILE is not set: packet selection is explicit "
+                       "and there is no default packet (correction round 3); "
+                       "release refused, no material read"}
     events = ledger_call({"op": "list"})["events"]
     # step 1: the complete scoring order + manifest binding must verify
     ef, completed, frozen, manifest_sha, why = find_scoring_order(events)
@@ -200,6 +272,27 @@ def release(examiner_id, out_path):
     if verr:
         return {"released": False, "stage": "anchor-validation",
                 "why": "SCORING_FROZEN anchor record failed structural validation: %s" % verr}
+    # step 2.5: the selected packet must BE the sealed Annex D material
+    # (correction round 3). Its hash, computed as loomgt, must equal the
+    # packet hash recorded in the sequence's GROUND_TRUTH_SEALED event.
+    # A readable-but-wrong file refuses here -- before the access record
+    # is appended and before any material is read for release.
+    binding_seq, expected_packet_sha, bwhy = sealed_packet_binding(events)
+    if expected_packet_sha is None:
+        return {"released": False, "stage": "packet-binding", "why": bwhy}
+    actual_packet_sha, hwhy = selected_packet_sha256()
+    if actual_packet_sha is None:
+        return {"released": False, "stage": "packet-binding",
+                "why": "selected packet (%s) could not be verified: %s" % (GT_FILE, hwhy)}
+    if actual_packet_sha != expected_packet_sha:
+        return {"released": False, "stage": "packet-binding",
+                "why": "selected packet (%s) SHA-256 %s does not equal the sealed "
+                       "Annex D packet hash %s recorded in GROUND_TRUTH_SEALED "
+                       "(seq %d); release refused, no material read"
+                       % (GT_FILE, actual_packet_sha, expected_packet_sha, binding_seq),
+                "selected_packet_sha256": actual_packet_sha,
+                "expected_packet_sha256": expected_packet_sha,
+                "sealed_event_seq": binding_seq}
     # step 3: append the access record
     import datetime
     ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -209,7 +302,10 @@ def release(examiner_id, out_path):
                                    "evidence_frozen_seq": ef["seq"],
                                    "scoring_completed_seq": completed["seq"],
                                    "scoring_frozen_seq": frozen["seq"],
-                                   "sheets_manifest_sha256": manifest_sha},
+                                   "sheets_manifest_sha256": manifest_sha,
+                                   "packet_sha256": expected_packet_sha,
+                                   "packet_binding_event_seq": binding_seq,
+                                   "selected_packet_sha256_verified": actual_packet_sha},
                        "timestamp": ts, "genesis_prev": ""})
     if not app.get("ok"):
         return {"released": False, "stage": "append", "why": "GROUND_TRUTH_ACCESSED append failed: %s" % app}
@@ -232,7 +328,9 @@ def release(examiner_id, out_path):
     with open(out_path, "w") as f: f.write(out.stdout)
     return {"released": True, "access_event_seq": app["seq"], "access_anchor_commit": arec.get("anchor_commit"),
             "material_sha256": hashlib.sha256(out.stdout.encode()).hexdigest(), "out_path": out_path,
-            "gt_file": GT_FILE}
+            "gt_file": GT_FILE, "packet_sha256": expected_packet_sha,
+            "packet_binding_event_seq": binding_seq,
+            "selected_packet_sha256_verified": actual_packet_sha}
 
 if __name__ == "__main__":
     print(json.dumps(release(sys.argv[1], sys.argv[2])))

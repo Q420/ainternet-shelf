@@ -1,0 +1,34 @@
+[
+ {
+  "trial_uid": "DUMMY-1",
+  "python": {
+   "valid": true,
+   "schema_errors": [],
+   "profile_errors": []
+  },
+  "ajv": {
+   "valid": true,
+   "schema_errors": [],
+   "profile_errors": []
+  },
+  "agree": true
+ },
+ {
+  "trial_uid": "DUMMY-2",
+  "python": {
+   "valid": false,
+   "schema_errors": [
+    "response is not a single JSON value"
+   ],
+   "profile_errors": []
+  },
+  "ajv": {
+   "valid": false,
+   "schema_errors": [
+    "response is not a single JSON value"
+   ],
+   "profile_errors": []
+  },
+  "agree": true
+ }
+]
