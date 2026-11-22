@@ -252,6 +252,92 @@ ev = store.all_events()[-1]
 check("behind-view act on an unchanged subject is flagged stale-basis",
       ev["payload"].get("stale_basis") is True)
 
+# --------------------------------------- correction round 2 (Vane)
+# Gap 1 (R1): a commissioning payload naming a different run than the
+# event's own run is refused at append; the fold reports the event's
+# run, never the payload's.
+s2, d2, t2 = fresh()
+n_events = len(s2.all_events())
+try:
+    s2.append("RUN_COMMISSIONED", "dir-1", [],
+              {"run_id": "run-OTHER", "seats": {}})
+    mismatch_appended = True
+except AssertionError:
+    mismatch_appended = False
+check("a commission naming a different run is refused at append (R1)",
+      not mismatch_appended and len(s2.all_events()) == n_events)
+from framework.record import apply_event, empty_state
+crafted = {"event_seq": 1, "event_id": "x", "run_id": "run-1",
+           "type": "RUN_COMMISSIONED", "actor": "dir-1", "affected": [],
+           "payload": {"run_id": "run-OTHER", "seats": {}},
+           "ts": "t", "prev_hash": "", "hash": "h"}
+check("the fold reports the event's run, not the payload's (R1)",
+      apply_event(empty_state(), crafted)["run_id"] == "run-1")
+
+# Gap 2 (R30): with a tree in the record, the paused set is computed
+# from it — a supplied set that disagrees is refused; the computed set
+# (part + transitive downstream) is what is recorded and enforced.
+path3 = os.path.join(tempfile.mkdtemp(), "run.db")
+s3 = FrameworkStore(path3)
+s3.insert_run("run-1", CONSTITUTION_HASH)
+s3.append("RUN_COMMISSIONED", "dir-1", [], {
+    "run_id": "run-1",
+    "tree": {"part-A": ["part-A1"], "part-A1": ["part-A2"],
+             "part-B": []},
+    "seats": {
+        "crew-a": {"role": "crew", "identity_status": "declared"},
+        "exam-1": {"role": "examiner", "identity_status": "declared"},
+    },
+})
+s3.commit()
+d3 = Doorway(s3)
+tk3 = {s: d3.issue_token(s) for s in ("crew-a", "exam-1")}
+g = refused(lambda: A(d3, tk3["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-tree", "outcome": "escalate",
+                       "tree_part": "part-A",
+                       "paused_set": ["part-A"]}))
+check("a supplied paused set missing downstream is refused (R30)",
+      g is not None and "computed" in g, g or "")
+A(d3, tk3["exam-1"], "GATE_OUTCOME",
+  {"joint": "j-tree", "outcome": "escalate", "tree_part": "part-A"})
+paused_ev = s3.all_events()[-1]
+check("the recorded paused set is computed from the tree (R30)",
+      paused_ev["payload"]["paused_set"] ==
+      ["part-A", "part-A1", "part-A2"] and
+      paused_ev["payload"]["paused_set_basis"] ==
+      "computed_from_recorded_tree")
+g = refused(lambda: A(d3, tk3["crew-a"], "CONTRIBUTION",
+                      {"contribution_id": "cx", "tree_part": "part-A2"}))
+check("a transitive downstream part is blocked (R30)", g is not None)
+A(d3, tk3["crew-a"], "CONTRIBUTION",
+  {"contribution_id": "cy", "tree_part": "part-B"})
+check("an unrelated branch still validates (R30)",
+      "cy" in d3.state()["contributions"])
+
+# Gap 3 (R31): staleness covers the tree part and the case — an act
+# from a view predating a change to either is refused.
+s4, d4, t4 = fresh()
+A(d4, t4["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-1", "version": 1, "seat": "crew-a"})
+view_before = s4.head_seq()
+A(d4, t4["orch-1"], "CASE_CORRECTED",
+  {"case_id": "case-1", "version": 2, "seat": "crew-a"})
+g = refused(lambda: d4.act(t4["crew-a"], "COMMENT",
+                           {"case_id": "case-1", "text": "on the case"},
+                           view_seq=view_before))
+check("an act on a case changed since its view is refused (R31)",
+      g is not None and "R31" in g, g or "")
+A(d4, t4["crew-a"], "CONTRIBUTION",
+  {"contribution_id": "cz", "tree_part": "part-Z"})
+view_before = s4.head_seq()
+A(d4, t4["crew-b"], "CONTRIBUTION",
+  {"contribution_id": "cz2", "tree_part": "part-Z"})
+g = refused(lambda: d4.act(t4["crew-a"], "COMMENT",
+                           {"tree_part": "part-Z", "text": "on the part"},
+                           view_seq=view_before))
+check("an act on a tree part changed since its view is refused (R31)",
+      g is not None and "R31" in g, g or "")
+
 # ------------------------------------------------------------ R4: replay
 events = store.all_events()
 check("hash chain verifies", verify_chain(events))

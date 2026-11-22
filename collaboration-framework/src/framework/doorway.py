@@ -158,6 +158,45 @@ class Doorway:
                          "not in the R22 vocabulary (allow, correct, "
                          "escalate)", view_seq)
 
+        # R30 (correction round 2): a pause's set is computed from
+        # the tree the record carries, not accepted from the caller.
+        # When the record carries a tree, the act names the affected
+        # part; the doorway computes the part plus all its transitive
+        # downstream dependents, and a caller-supplied set that
+        # disagrees is refused and recorded. When no tree stands in
+        # the record yet (the tree-carrying piece is later), a
+        # supplied set is recorded flagged as caller-supplied — the
+        # distinction is in the record, not claimed away.
+        if (type_ == "ESCALATION" or
+                (type_ == "GATE_OUTCOME" and
+                 payload.get("outcome") == "escalate")):
+            payload = dict(payload)
+            tree = state.get("tree") or {}
+            root = payload.get("tree_part")
+            if tree:
+                if root is None:
+                    self._refuse(seat_id, type_,
+                                 "a pause under a recorded tree names "
+                                 "the affected tree part, so its set "
+                                 "can be computed from the tree (R30)",
+                                 view_seq)
+                computed, downstream = self._compute_paused(tree, root)
+                supplied = payload.get("paused_set")
+                if supplied is not None and \
+                        set(supplied) != set(computed):
+                    self._refuse(seat_id, type_,
+                                 f"supplied paused set {sorted(supplied)} "
+                                 f"does not match the set computed from "
+                                 f"the recorded tree {sorted(computed)} "
+                                 "(R30)", view_seq)
+                payload["paused_set"] = computed
+                payload["downstream"] = {root: downstream}
+                payload["paused_set_basis"] = \
+                    "computed_from_recorded_tree"
+            elif payload.get("paused_set") is not None:
+                payload["paused_set_basis"] = \
+                    "caller_supplied_no_tree_recorded"
+
         # R30: paused parts (and their downstream) are blocked.
         part = payload.get("tree_part")
         if part is not None:
@@ -175,20 +214,25 @@ class Doorway:
         payload = dict(payload)
         head = state["head_seq"]
         if view_seq < head:
-            subject = payload.get("subject_id") or payload.get("claim_id") \
-                or payload.get("contribution_id")
-            if subject and self._subject_changed(subject, view_seq):
-                self._refuse(seat_id, type_,
-                             f"subject {subject} changed since view at "
-                             f"seq {view_seq} (R31)", view_seq)
+            # R31 (correction round 2): the specified subjects are
+            # the contribution, the tree part, and the case version —
+            # every named subject is checked, not only the first.
+            subjects = [payload.get(k) for k in
+                        ("subject_id", "claim_id", "contribution_id",
+                         "tree_part", "case_id")]
+            for subject in subjects:
+                if subject and self._subject_changed(subject, view_seq):
+                    self._refuse(seat_id, type_,
+                                 f"subject {subject} changed since view "
+                                 f"at seq {view_seq} (R31)", view_seq)
             payload["stale_basis"] = True
 
         affected = []
-        subject = payload.get("subject_id") or payload.get("claim_id") \
-            or payload.get("contribution_id") or payload.get("case_id")
-        if subject:
-            affected.append(subject)
-        if part:
+        for key in ("subject_id", "claim_id", "contribution_id",
+                    "case_id"):
+            if payload.get(key):
+                affected.append(payload[key])
+        if part and part not in affected:
             affected.append(part)
         ev = self.store.append(type_, seat_id, affected, payload)
         self.store.commit()
@@ -201,14 +245,30 @@ class Doorway:
                 return info["source_seq"]
         return None
 
+    def _compute_paused(self, tree, root):
+        """R30: the paused set for `root` computed from the recorded
+        tree — the part itself plus every transitive downstream
+        dependent. Returns (paused_set, downstream_of_root)."""
+        seen = []
+        queue = list(tree.get(root, []))
+        while queue:
+            part = queue.pop(0)
+            if part in seen or part == root:
+                continue
+            seen.append(part)
+            queue.extend(tree.get(part, []))
+        return [root] + seen, seen
+
     def _subject_changed(self, subject, view_seq):
         for ev in self.store.all_events():
             if ev["event_seq"] <= view_seq:
                 continue
             if subject in ev["affected"]:
                 return True
-            if ev["payload"].get("subject_id") == subject:
-                return True
+            for key in ("subject_id", "claim_id", "contribution_id",
+                        "tree_part", "case_id"):
+                if ev["payload"].get(key) == subject:
+                    return True
         return False
 
     # ------------------------------------------------------------ reads

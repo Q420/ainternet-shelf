@@ -133,6 +133,15 @@ class FrameworkStore:
         # itself (and so under the hash), not by store implication.
         run_id = self.get_run_id()
         assert run_id is not None, "no run inserted; events carry a run"
+        # R1 (correction round 2): a commissioning payload that names
+        # a different run than the event's own run is refused at the
+        # door of the record — the two bindings can never disagree in
+        # a recorded history.
+        if type_ == "RUN_COMMISSIONED" and \
+                payload.get("run_id") not in (None, run_id):
+            raise AssertionError(
+                f"RUN_COMMISSIONED payload run {payload.get('run_id')!r} "
+                f"disagrees with the event's run {run_id!r} (R1)")
         last = self.last()
         seq = 1 if last is None else last[0] + 1
         prev_hash = "" if last is None else last[1]
@@ -216,6 +225,7 @@ def empty_state(run_id=None) -> dict:
         "findings": [], "rulings": [], "dispositions": [],
         "escalations": [], "rejections": [],
         "sealed": {},         # material_id -> [seat_id, ...] boundary
+        "tree": {},           # tree_part -> [downstream parts] (R30)
         "paused": {},         # tree_part -> {source_seq, downstream}
         "head_seq": 0,
     }
@@ -239,8 +249,14 @@ def apply_event(state: dict, ev: dict) -> dict:
     state["head_seq"] = ev["event_seq"]
 
     if t == "RUN_COMMISSIONED":
-        state["run_id"] = p.get("run_id", state["run_id"])
+        # R1 (correction round 2): the run the state reports is the
+        # event's own run_id — the one under the hash — never a
+        # payload value that could disagree with it.
+        state["run_id"] = ev.get("run_id", state["run_id"])
         state["lifecycle"] = "commissioned"
+        # R30: the commissioned tree (part -> downstream dependents)
+        # is the record the doorway computes paused sets from.
+        state["tree"] = dict(p.get("tree", {}))
         for seat_id, binding in p.get("seats", {}).items():
             state["seats"][seat_id] = {
                 "role": binding["role"],
