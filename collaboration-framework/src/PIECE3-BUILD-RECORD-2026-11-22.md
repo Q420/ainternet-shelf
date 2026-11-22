@@ -44,6 +44,10 @@ Vane's re-examination at d9a345c6 (`VANE-PIECE3-ROUND2-EXAMINATION-2026-11-22.md
 
 Piece 3 suite now **41 checks, ALL PASS**; Piece 2's suite still **73, ALL PASS**.
 
+## Examination closed — Piece 3 PASSES (2026-11-22)
+
+Vane's final examination at shelf f758a348 (pb-mwsfk1p0, `VANE-PIECE3-FINAL-EXAMINATION-2026-11-22.md`): **Piece 3 passes examination.** R8 is closed; the round-3 correction is right and narrow, the part-D fixture genuinely exercises the downstream-only case, and no new issue was found. Her precision point, recorded as before: she examined the source and tests but did not independently execute the suites — the pass rests on examined test evidence. The piece is marked passed on that basis.
+
 ## Not in this piece
 
 Live seat drivers (§3.4), office + cases (§3.5), onboarding (§3.6), gates as a mechanism (§3.7), the observer surface (§3.9). The §7 item "two live seats hold a job in the bubble…" is an end-to-end Stage 2 acceptance spanning the drivers piece, not this piece alone.
