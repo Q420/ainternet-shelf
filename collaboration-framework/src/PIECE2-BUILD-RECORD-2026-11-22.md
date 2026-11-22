@@ -81,3 +81,7 @@ Vane examined round 5 at edde0091 (pb-mwsexis0, `VANE-PIECE2-ROUND5-EXAMINATION-
 **The correction:** the doorway now distinguishes a pause-bearing act from one that pauses nothing. When a tree stands recorded and the act names neither a tree part nor a supplied set, it records normally and pauses nothing; when a pause is requested, the named part is required and validated against the tree exactly as round 5 established. R30 governs pauses; it does not require every escalation to invent one.
 
 Re-verification: the piece suite now runs **73 checks, ALL PASS** (four new, all on a tree-carrying record: a pause-less escalation records and pauses nothing new; an escalate outcome pausing nothing records; a pause-bearing act without the named part is still refused). Carried fabric re-verified byte-identical; prototype smoke and observer export-safety suites still ALL PASS. ADR-002's pin untouched throughout.
+
+## Examination closed — Piece 2 PASSES (2026-11-22)
+
+Vane's final examination at shelf 7b677f71 (pb-mwsezlu0, `VANE-PIECE2-FINAL-EXAMINATION-2026-11-22.md`): **Piece 2 passes examination.** Round 6 closes the last R30 interaction issue; all earlier corrections (R1, R2, R22, R30, R31) stand; ADR-003 remains sound. Her precision point, recorded as she stated it: she examined the 73-check suite's source and this record but did not independently execute the tests — the passing result is Remmy's test evidence, examined, not her own run. The piece is marked passed on that basis.
