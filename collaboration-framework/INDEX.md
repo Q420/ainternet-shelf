@@ -33,6 +33,7 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 23. **⭐ BEN'S DESIGN RULING (2026-11-21 12:12 MST): "Approved :)" — COLLABORATION Rev 5 + SPEC SHEET Rev 5 are the approved design. Plan Stage 2 (build the core) is open.**
 24. `docs/decisions/ADR-002-substrate-pin.md` — the substrate pin recorded before code (SPEC SHEET §8): the accepted prototype at shelf commit 87c9ec08, preserving ee235533 and ca2a8c16.
 25. INDEX corrections (2026-11-22, at Ben's tap): the structure note now names SPEC SHEET Revision 5 and the open Stage 2; `VANE-CANONICAL-FILING-ACCEPTANCE-2026-11-21.md` (item 16) filed into this folder from `duenna-fix/` (original left in place). Same day, at Ben's direction ("make sure first"): items 11 and 14 corrected to the Revision 1 files as actually filed (unnumbered), verified by diff — the unnumbered COLLABORATION lacks exactly Rev 2's five clarifications, and the unnumbered SPEC SHEET lacks exactly Rev 2's six corrections.
+26. **Stage 2, piece 1 — substrate carry-in (2026-11-22, Ben's start order 14:28 MST):** the pinned substrate (ADR-002, 87c9ec08) carried verbatim into `src/fabric/` and `src/observer/` — record service, seat harness, observer, independent checker, plus their load-bearing dependencies `fixture.py` / `packpin.py`; scripted drivers and trials material not taken. All 16 files byte-identical to the pin; the prototype's Stage 1 smoke and the observer export-safety suite both pass against the carried tree. Record: `src/SUBSTRATE-CARRY-IN-2026-11-22.md`.
 
 ## Working rules (Ben, 2026-11-21)
 
@@ -42,7 +43,7 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 
 ## Structure (created 2026-11-21, shelf commit 916b3153)
 
-The template layout stands inside this folder: `docs/` (vision.md; requirements/ — the SPEC SHEET lives here, current Revision 5 (approved 2026-11-21); architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Plan Stage 2 (build the core) opened with Ben's design ruling of 2026-11-21; directories not yet built into still hold placeholders. The first build piece is the substrate carry-in at the ADR-002 pin (shelf commit 87c9ec08).
+The template layout stands inside this folder: `docs/` (vision.md; requirements/ — the SPEC SHEET lives here, current Revision 5 (approved 2026-11-21); architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Plan Stage 2 (build the core) opened with Ben's design ruling of 2026-11-21; directories not yet built into still hold placeholders. The first build piece — the substrate carry-in at the ADR-002 pin (shelf commit 87c9ec08) — was carried into `src/fabric/` and `src/observer/` on 2026-11-22 (item 26).
 
 ## Filing note
 
