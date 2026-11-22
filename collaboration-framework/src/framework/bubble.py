@@ -242,6 +242,11 @@ def render_view(events, seat_id):
                 "event_seqs": [c["event_seq"]
                                for c in state["certifications"]],
             },
+            "stalled_seats": {
+                seat: {"kind": info.get("kind"),
+                       "part": info.get("part"),
+                       "event_seq": info.get("event_seq")}
+                for seat, info in state["stalled"].items()},
         },
     }
 

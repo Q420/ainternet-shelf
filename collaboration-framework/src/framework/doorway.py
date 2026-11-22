@@ -40,6 +40,10 @@ ACT_AUTHORITY = {
     "COMPLETION_CLAIMED": {"crew"},
     "CASE_ISSUED": {"orchestrator"},
     "CASE_CORRECTED": {"orchestrator"},
+    "CASE_VERIFIED": {"orchestrator"},
+    "CASE_JUDGED": {"examiner"},
+    "CASE_NOTIFIED": {"examiner"},
+    "CASE_ACKNOWLEDGED": {"crew"},
     "GATE_OUTCOME": {"examiner"},
     "FINDING": {"examiner"},
     "CERTIFICATION": {"examiner"},
@@ -101,6 +105,21 @@ class Doorway:
     def _refuse(self, seat_id, attempted_type, ground, view_seq=None):
         self._record_rejection(seat_id, attempted_type, ground, view_seq)
         raise DoorwayRefusal(ground)
+
+    def record_driver_failure(self, seat_id, kind, part=None,
+                              detail=None):
+        """R13: a driver failure, reported by the seat's driver and
+        recorded by the doorway under its own authorship — the
+        model holds no token and cannot record its own failure.
+        The fold marks the seat seat_stalled (R33); no pause is
+        computed here, and nothing is fabricated."""
+        ev = self.store.append(
+            "DRIVER_FAILURE", DOORWAY_ACTOR, [seat_id],
+            {"seat": seat_id, "kind": kind, "part": part,
+             "origin": "driver_report", "detail": detail},
+        )
+        self.store.commit()
+        return ev
 
     # ------------------------------------------------------------ acts
     def act(self, token, type_, payload, view_seq=None):

@@ -40,7 +40,9 @@ EVENT_TYPES = {
     "RUN_COMMISSIONED", "SEAT_BOUND", "CONTRIBUTION", "COMMENT",
     "DISAGREEMENT", "DISAGREEMENT_SETTLED", "GATE_OUTCOME", "FINDING",
     "RULING", "DISPOSITION", "CERTIFICATION", "CASE_ISSUED",
-    "CASE_CORRECTED", "ONBOARDING", "ESCALATION", "CLAIM_STATUS",
+    "CASE_CORRECTED", "CASE_VERIFIED", "CASE_JUDGED", "CASE_NOTIFIED",
+    "CASE_ACKNOWLEDGED", "DRIVER_FAILURE",
+    "ONBOARDING", "ESCALATION", "CLAIM_STATUS",
     "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION", "RUN_CLOSED",
 }
 
@@ -226,6 +228,7 @@ def empty_state(run_id=None) -> dict:
         "findings": [], "rulings": [], "dispositions": [],
         "escalations": [], "rejections": [],
         "sealed": {},         # material_id -> [seat_id, ...] boundary
+        "stalled": {},        # seat_id -> {kind, part, event_seq} (R33)
         "tree": {},           # tree_part -> [downstream parts] (R30)
         "paused": {},         # tree_part -> {source_seq, source_joint,
                               #                 downstream}
@@ -345,9 +348,50 @@ def apply_event(state: dict, ev: dict) -> dict:
                 "source_joint": p.get("joint"),
                 "downstream": p.get("downstream", {}).get(part, []),
             }
-    elif t == "CASE_ISSUED" or t == "CASE_CORRECTED":
-        state["cases"][p["case_id"]] = {
-            "version": p["version"], "seat": p.get("seat"),
+    elif t in ("CASE_ISSUED", "CASE_CORRECTED", "CASE_VERIFIED",
+               "CASE_JUDGED", "CASE_NOTIFIED", "CASE_ACKNOWLEDGED"):
+        # §3.5's acts, tracked per version (Piece 4 groundwork):
+        # the fold records each act as it stands and never infers
+        # one from another — whether a version stands issued is
+        # decided by version_issued() over these entries.
+        entry = state["cases"].setdefault(
+            p["case_id"], {"version": 0, "seat": None, "versions": {}})
+        if p.get("seat"):
+            entry["seat"] = p["seat"]
+        ver = entry["versions"].setdefault(str(p["version"]), {
+            "verified": None, "judged": None, "notified": None,
+            "issued": None, "content": None, "corrected": False,
+            "representational": False, "acknowledged": {},
+        })
+        if t == "CASE_ISSUED":
+            ver["issued"] = ev["event_seq"]
+            # Authorisation does not replace content: a corrected
+            # version's content stands on its CASE_CORRECTED event,
+            # and the authorising CASE_ISSUED may name the version
+            # only. Version 1's content rides on its CASE_ISSUED.
+            if ver["content"] is None:
+                ver["content"] = dict(p)
+            entry["version"] = max(entry["version"], p["version"])
+        elif t == "CASE_CORRECTED":
+            ver["corrected"] = True
+            ver["representational"] = bool(p.get("representational"))
+            ver["content"] = dict(p)
+            entry["version"] = max(entry["version"], p["version"])
+        elif t == "CASE_VERIFIED":
+            ver["verified"] = ev["event_seq"]
+        elif t == "CASE_JUDGED":
+            ver["judged"] = ev["event_seq"]
+        elif t == "CASE_NOTIFIED":
+            ver["notified"] = ev["event_seq"]
+        elif t == "CASE_ACKNOWLEDGED":
+            ver["acknowledged"][actor] = ev["event_seq"]
+    elif t == "DRIVER_FAILURE":
+        # R13/R33: the seat is stalled. No pause is computed, no
+        # state clears it in this piece — a stall stands until a
+        # recorded event establishes otherwise.
+        state["stalled"][p["seat"]] = {
+            "kind": p.get("kind"), "part": p.get("part"),
+            "event_seq": ev["event_seq"],
         }
     elif t == "CERTIFICATION":
         state["certifications"].append({
@@ -398,6 +442,45 @@ def fold(events, run_id=None) -> dict:
 
 def replay(store: FrameworkStore) -> dict:
     return fold(store.all_events(), store.get_run_id())
+
+
+def version_issued(ver) -> bool:
+    """Whether one recorded case version completed its issuance
+    route (R15/R16): office verification and authorisation always;
+    the examiner's act is the sufficiency judgement — or, for a
+    correction recorded as purely representational, the examiner
+    notification. The route follows the version's recorded
+    classification, never whichever events happen to be present."""
+    if not ver or ver.get("verified") is None or \
+            ver.get("issued") is None:
+        return False
+    if ver.get("corrected") and ver.get("representational"):
+        return ver.get("notified") is not None
+    return ver.get("judged") is not None
+
+
+def effective_case(state: dict, seat_id: str):
+    """The seat's current effective case (Piece 4): the highest
+    version that completed its issuance route, with its content as
+    recorded — or None when no version stands issued. A newer
+    incomplete version never displaces a standing one."""
+    best = None
+    for case_id, entry in state["cases"].items():
+        if entry.get("seat") != seat_id:
+            continue
+        for vstr, ver in entry["versions"].items():
+            if version_issued(ver):
+                v = int(vstr)
+                if best is None or v > best["version"]:
+                    best = {
+                        "case_id": case_id, "version": v,
+                        "content": ver.get("content"),
+                        "issued_seq": ver.get("issued"),
+                        "corrected": ver.get("corrected", False),
+                        "acknowledged": seat_id in
+                        ver.get("acknowledged", {}),
+                    }
+    return best
 
 
 def state_hash(state: dict) -> str:
