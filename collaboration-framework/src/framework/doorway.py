@@ -185,15 +185,16 @@ class Doorway:
                             f"{entry.get('source_joint') if entry else None} "
                             "(R30)", view_seq)
 
-        # R30 (correction round 2): a pause's set is computed from
-        # the tree the record carries, not accepted from the caller.
-        # When the record carries a tree, the act names the affected
-        # part; the doorway computes the part plus all its transitive
-        # downstream dependents, and a caller-supplied set that
-        # disagrees is refused and recorded. When no tree stands in
-        # the record yet (the tree-carrying piece is later), a
-        # supplied set is recorded flagged as caller-supplied — the
-        # distinction is in the record, not claimed away.
+        # R30 (correction rounds 2–4): a pause's set is computed
+        # from the tree the record carries, never accepted from the
+        # caller. The act names the affected part; the doorway
+        # computes the part plus all its transitive downstream
+        # dependents, and a caller-supplied set that disagrees is
+        # refused and recorded. When no tree stands in the record,
+        # the set cannot be computed, so a pause attempt fails
+        # closed — refused and recorded; a caller-supplied set is
+        # not a substitute, labelled or not (round 4, removing the
+        # round-2 fallback Vane rejected).
         if (type_ == "ESCALATION" or
                 (type_ == "GATE_OUTCOME" and
                  payload.get("outcome") == "escalate")):
@@ -209,7 +210,18 @@ class Doorway:
                              "gate (R30)", view_seq)
             tree = state.get("tree") or {}
             root = payload.get("tree_part")
-            if tree:
+            if not tree:
+                # Fail closed (round 4): a pause attempted with no
+                # tree in the record cannot have its set computed.
+                # An act that pauses nothing is unaffected.
+                if payload.get("paused_set") is not None or \
+                        root is not None:
+                    self._refuse(seat_id, type_,
+                                 "no tree stands in the record, so "
+                                 "the paused set cannot be computed "
+                                 "from it; a caller-supplied set is "
+                                 "not a substitute (R30)", view_seq)
+            else:
                 if root is None:
                     self._refuse(seat_id, type_,
                                  "a pause under a recorded tree names "
@@ -229,9 +241,6 @@ class Doorway:
                 payload["downstream"] = {root: downstream}
                 payload["paused_set_basis"] = \
                     "computed_from_recorded_tree"
-            elif payload.get("paused_set") is not None:
-                payload["paused_set_basis"] = \
-                    "caller_supplied_no_tree_recorded"
 
         # R30: paused parts (and their downstream) are blocked.
         part = payload.get("tree_part")

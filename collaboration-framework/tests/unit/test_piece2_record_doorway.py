@@ -42,6 +42,8 @@ def fresh():
     store.insert_run("run-1", CONSTITUTION_HASH)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": "run-1",
+        "tree": {"part-A": ["part-A1"], "part-A1": [], "part-B": [],
+                 "part-P": [], "part-Q": [], "part-Z": []},
         "seats": {
             "crew-a": {"role": "crew", "identity_status": "declared"},
             "crew-b": {"role": "crew", "identity_status": "declared"},
@@ -206,14 +208,14 @@ check("the refused read is recorded",
 
 # ------------------------------------- R22/R30: outcomes and the pause
 # Correction 6: "hold" is not an outcome; an escalation records the
-# pause (R30), an allow releases it.
+# pause (R30), an allow releases it. The pause's set is computed from
+# the commissioned tree (round 2); the act names the affected part.
 g = refused(lambda: A(d, tok["exam-1"], "GATE_OUTCOME",
                       {"joint": "joint-1", "outcome": "hold"}))
 check("gate outcome 'hold' is refused (R22 vocabulary)",
       g is not None and "R22" in g, g or "")
 A(d, tok["exam-1"], "GATE_OUTCOME",
-  {"joint": "joint-1", "outcome": "escalate",
-   "paused_set": ["part-A"], "downstream": {"part-A": ["part-A1"]}})
+  {"joint": "joint-1", "outcome": "escalate", "tree_part": "part-A"})
 g = refused(lambda: A(d, tok["crew-a"], "CONTRIBUTION",
                       {"contribution_id": "c3", "tree_part": "part-A"}))
 check("act on a paused part is blocked", g is not None and "R30" in g,
@@ -227,7 +229,8 @@ check("act on an unrelated branch validates normally",
       "c5" in d.state()["contributions"])
 check("paused set is recorded in state", "part-A" in d.state()["paused"])
 A(d, tok["exam-1"], "GATE_OUTCOME",
-  {"joint": "joint-1", "outcome": "allow", "released_set": ["part-A"]})
+  {"joint": "joint-1", "outcome": "allow",
+   "released_set": ["part-A", "part-A1"]})
 A(d, tok["crew-a"], "CONTRIBUTION",
   {"contribution_id": "c6", "tree_part": "part-A"})
 check("released part acts again after allow",
@@ -350,8 +353,7 @@ check("a negative view position is refused (R31)",
       g is not None and "R31" in g, g or "")
 
 A(d5, t5["exam-1"], "GATE_OUTCOME",
-  {"joint": "j-one", "outcome": "escalate", "paused_set": ["part-P"],
-   "downstream": {}})
+  {"joint": "j-one", "outcome": "escalate", "tree_part": "part-P"})
 g = refused(lambda: A(d5, t5["exam-1"], "GATE_OUTCOME",
                       {"joint": "j-two", "outcome": "allow",
                        "released_set": ["part-P"]}))
@@ -381,13 +383,51 @@ check("a pause recorded without its joint is refused (R30)",
 
 view_q = s5.head_seq()
 A(d5, t5["exam-1"], "GATE_OUTCOME",
-  {"joint": "j-nine", "outcome": "escalate", "paused_set": ["part-Q"],
-   "downstream": {}})
+  {"joint": "j-nine", "outcome": "escalate", "tree_part": "part-Q"})
 g = refused(lambda: d5.act(t5["crew-a"], "COMMENT",
                            {"subject_id": "part-Q", "text": "about Q"},
                            view_seq=view_q))
 check("an act on a subject touched only via a recorded paused set "
       "is refused (R31)", g is not None and "R31" in g, g or "")
+
+# --------------------------------------- correction round 4 (Vane)
+# The one remaining defect: the no-tree fallback. With no tree in
+# the record, a pause cannot have its set computed — the doorway
+# fails closed and records the rejection. A caller-supplied set is
+# not a substitute, labelled or not.
+path6 = os.path.join(tempfile.mkdtemp(), "run.db")
+s6 = FrameworkStore(path6)
+s6.insert_run("run-1", CONSTITUTION_HASH)
+s6.append("RUN_COMMISSIONED", "dir-1", [], {
+    "run_id": "run-1",
+    "seats": {
+        "crew-a": {"role": "crew", "identity_status": "declared"},
+        "exam-1": {"role": "examiner", "identity_status": "declared"},
+    },
+})
+s6.commit()
+d6 = Doorway(s6)
+t6 = {s: d6.issue_token(s) for s in ("crew-a", "exam-1")}
+g = refused(lambda: A(d6, t6["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-x", "outcome": "escalate",
+                       "paused_set": ["part-A"],
+                       "downstream": {"part-A": []}}))
+check("a pause with a caller-supplied set and no tree is refused "
+      "(R30)", g is not None and "no tree" in g, g or "")
+g = refused(lambda: A(d6, t6["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-x", "outcome": "escalate",
+                       "tree_part": "part-A"}))
+check("a pause naming a part with no tree to compute from is "
+      "refused (R30)", g is not None and "no tree" in g, g or "")
+check("no paused state was established by the refused pauses",
+      d6.state()["paused"] == {})
+check("both no-tree refusals are recorded",
+      len([r for r in d6.state()["rejections"]
+           if r["attempted"] == "GATE_OUTCOME"]) == 2)
+A(d6, t6["crew-a"], "ESCALATION", {"joint": "j-x", "note": "a "
+                                   "question, pausing nothing"})
+check("an escalation that pauses nothing still records with no "
+      "tree", len(d6.state()["escalations"]) == 1)
 
 # ------------------------------------------------------------ R4: replay
 events = store.all_events()
