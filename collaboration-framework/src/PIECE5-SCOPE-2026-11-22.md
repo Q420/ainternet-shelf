@@ -75,6 +75,9 @@ On her scoping follow-up (filed `VANE-PIECE5-SCOPING-FOLLOWUP-2026-11-22.md`) an
 10. Incomplete R14 → a commission brief missing a required field fails preflight; nothing is issued.
 11. Version transition → an issued correction still requires the seat's acknowledgement before work resumes (Piece 4 regression).
 12. Replay consistency → folding the same history twice yields identical case content, classification, and issuance state.
+13. Atomic pair → a failure injected between the two appends of a correction leaves **neither** event in the record; the head and the case's established state are unchanged.
+
+**H. The correction pair commits atomically (addendum 3, 2026-11-22).** The store's discipline is caller-owned transactions: appends accumulate uncommitted and one `commit()` lands them together; anything that fails before the commit rolls the whole transaction back. The office's correction route uses exactly that: both acts are validated first (authority, and the doorway's classification recompute against the established content — neither check depends on the pair's other event), then CASE_CORRECTED and CASE_VERIFIED are appended inside **one transaction with a single commit**. All-or-none is therefore a property of the store, not of office care. The doorway gains a paired-submission path for this; its single-act path is unchanged.
 
 ## Out of scope for Piece 5
 
