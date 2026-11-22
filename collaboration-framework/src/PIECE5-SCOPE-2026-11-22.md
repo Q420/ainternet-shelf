@@ -27,6 +27,29 @@ Stage 2, piece 5 of 6. Pieces 1–4 passed. Scoping note written before code, pe
 3. **Failed verification leaves no case events.** Generation and the office's checks happen before any case act; a case that fails verification never enters the record. (A draft is not a run state change.)
 4. **Cases are generated for crew seats only**, and every office act is submitted under the orchestrator's token — R17 holds by construction, on top of the doorway's matrix.
 
+## Addendum — the three boundaries settled with Vane (2026-11-22)
+
+On her scoping examination (filed `VANE-PIECE5-SCOPING-REPLIES-2026-11-22.md`):
+
+**A. Classification over six fields.** Flag 2 is amended: the office diffs against the superseded version on **all six** R14 content fields — assignment, tree + highlighted part, evidence_boundary, verification_list, account, authority. Any change → semantic. (Record note: R16's sentence names three fields with the gloss "(a mechanical generation error)"; the examiner reads the exception against all six. The build follows her reading — the stricter direction; the dangerous error is a semantic correction taking the light route.)
+
+**B. Every R14 field has a recorded source; ungrounded = verification fails.**
+
+| Field | Recorded source |
+|---|---|
+| tree | `RUN_COMMISSIONED` payload's tree, verbatim |
+| part (highlighted) | the commission's recorded brief for the seat (`briefs[seat].part`); must be a part of the recorded tree |
+| assignment | the commission's recorded brief (`briefs[seat].assignment`) |
+| verification_list | the commission's recorded brief (`briefs[seat].verification_list`) — the case names what needs verifying because the commission does |
+| evidence_boundary | derived from the record: the material ids of `MATERIAL_SEALED` events whose recorded boundary includes the seat |
+| account | the commissioned seat itself (`RUN_COMMISSIONED` seats entry) |
+| authority | the §4 defaults for the seat's commissioned role, taken from the doorway's act-authority matrix |
+| version | 1 for a new case; superseded version + 1 for a correction |
+
+If any field cannot be grounded from those sources, generation fails verification and no case events are recorded (flag 3, as approved).
+
+**C. The first-content rule, explicit.** A version's content is established by its **earliest content-carrying act** and never replaced: for version 1, CASE_VERIFIED carries the full content (the fold gains content-on-verified-if-none, mirroring the rule Piece 4 set for CASE_ISSUED); for a corrected version, its CASE_CORRECTED (already first-wins since Piece 4 round 2). A later CASE_VERIFIED or CASE_ISSUED for the same version never replaces the established content. The suite tests this, including a duplicate verification carrying different content.
+
 ## Out of scope for Piece 5
 
 Onboarding (§3.6, Piece 6's neighbour), gates (§3.7), orchestrator functions beyond the office (§3.8), the observer (§3.9). The §7 "two live seats" acceptance still awaits a provider adapter. Stage 4's mechanisation of briefcase-building is out of scope per §1 — this piece is the core form §3.5 specifies.
