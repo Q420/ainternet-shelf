@@ -36,3 +36,7 @@ Derived from the approved SPEC SHEET Rev 5, §3.1 (R1–R4), §3.2 (R5–R7), §
 - A held gate's paused set blocks its part + downstream at the doorway while an unrelated branch's acts continue to validate (R30); the paused set is recorded.
 - A stale-view act is flagged `stale-basis`; a subject-changed act is rejected and recorded (R31).
 - Replay reproduces the recorded state exactly; the chain verifies (R4).
+
+---
+
+**Addendum (2026-11-22, correction round 1):** this note's R30 wording ("a GATE_OUTCOME with outcome hold") is superseded — R22's outcome vocabulary is exactly allow / correct / escalate, and the pause is the recorded state an escalate outcome carries. See the build record's correction-round section.

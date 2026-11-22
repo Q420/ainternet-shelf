@@ -22,7 +22,8 @@ doorway consumes the bindings the record carries.
 import hashlib
 import secrets
 
-from .record import (FrameworkStore, fold, validate_status_transition)
+from .record import (FrameworkStore, GATE_OUTCOMES, fold,
+                     validate_status_transition)
 
 DOORWAY_ACTOR = "doorway"
 
@@ -32,7 +33,7 @@ DOORWAY_ACTOR = "doorway"
 # doorway checks the matrix row only.)
 ACT_AUTHORITY = {
     "CONTRIBUTION": {"crew"},
-    "COMMENT": {"crew", "orchestrator", "examiner", "director"},
+    "COMMENT": {"crew"},
     "DISAGREEMENT": {"crew", "orchestrator", "examiner", "director"},
     "DISAGREEMENT_SETTLED": {"crew", "orchestrator", "examiner",
                              "director"},
@@ -116,6 +117,20 @@ class Doorway:
                          "seat not bound in the record (R5)", view_seq)
         role = binding["role"]
 
+        # R31: the view position is mandatory — every proposed act
+        # carries the record position of the view it was made from.
+        # An act without one (or from beyond the head) is refused
+        # and the refusal recorded, like any other.
+        if view_seq is None:
+            self._refuse(seat_id, type_,
+                         "every proposed act carries the record "
+                         "position of the view it was made from (R31)")
+        if view_seq > state["head_seq"]:
+            self._refuse(seat_id, type_,
+                         f"view position {view_seq} is beyond the "
+                         f"record head {state['head_seq']} (R31)",
+                         view_seq)
+
         # R6 / §4: authority.
         allowed = ACT_AUTHORITY.get(type_)
         if allowed is None:
@@ -131,9 +146,17 @@ class Doorway:
             ok, ground = validate_status_transition(
                 state, seat_id, role, payload.get("claim_id"),
                 payload.get("to"), evidence=payload.get("evidence"),
-                at_gate=bool(payload.get("at_gate")))
+                gate_joint=payload.get("gate_joint"))
             if not ok:
                 self._refuse(seat_id, type_, ground, view_seq)
+
+        # R22: gate outcomes are exactly allow / correct / escalate.
+        if type_ == "GATE_OUTCOME" and \
+                payload.get("outcome") not in GATE_OUTCOMES:
+            self._refuse(seat_id, type_,
+                         f"gate outcome {payload.get('outcome')!r} is "
+                         "not in the R22 vocabulary (allow, correct, "
+                         "escalate)", view_seq)
 
         # R30: paused parts (and their downstream) are blocked.
         part = payload.get("tree_part")
@@ -151,7 +174,7 @@ class Doorway:
         # behind view is flagged, not refused.
         payload = dict(payload)
         head = state["head_seq"]
-        if view_seq is not None and view_seq < head:
+        if view_seq < head:
             subject = payload.get("subject_id") or payload.get("claim_id") \
                 or payload.get("contribution_id")
             if subject and self._subject_changed(subject, view_seq):

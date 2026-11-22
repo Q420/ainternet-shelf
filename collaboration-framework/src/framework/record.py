@@ -13,9 +13,9 @@ ADR-003, reusing the substrate's canonical hashing (`fabric.canonical`)
 and its storage discipline (same schema shape, same append-only
 triggers, same hash-chain rule). The carried files are untouched.
 
-Every event carries: its run (the store is one run), its acting seat
-(actor), a timestamp (ts), its type, its payload, and the hash chain
-link (prev_hash/hash) — R1. A correction is a new event naming the
+Every event carries: its run (run_id, in the event itself and so
+under its hash), its acting seat (actor), a timestamp (ts), its
+type, its payload, and the hash chain link (prev_hash/hash) — R1. A correction is a new event naming the
 event it corrects (payload.corrects) — nothing is edited or deleted.
 """
 import json
@@ -66,6 +66,7 @@ class FrameworkStore:
             """CREATE TABLE IF NOT EXISTS events (
                  event_seq INTEGER PRIMARY KEY,
                  event_id TEXT UNIQUE NOT NULL,
+                 run_id TEXT NOT NULL,
                  type TEXT NOT NULL,
                  actor TEXT NOT NULL,
                  affected TEXT NOT NULL,
@@ -128,12 +129,17 @@ class FrameworkStore:
     def append(self, type_: str, actor: str, affected: list,
                payload: dict) -> dict:
         assert type_ in EVENT_TYPES, f"unknown event type {type_}"
+        # R1: every event carries its run — explicitly, in the event
+        # itself (and so under the hash), not by store implication.
+        run_id = self.get_run_id()
+        assert run_id is not None, "no run inserted; events carry a run"
         last = self.last()
         seq = 1 if last is None else last[0] + 1
         prev_hash = "" if last is None else last[1]
         event = {
             "event_seq": seq,
             "event_id": str(uuid.uuid4()),
+            "run_id": run_id,
             "type": type_,
             "actor": actor,
             "affected": list(affected),
@@ -143,10 +149,10 @@ class FrameworkStore:
         }
         event["hash"] = event_hash(prev_hash, event)
         self._conn.execute(
-            "INSERT INTO events (event_seq, event_id, type, actor,"
-            " affected, payload, ts, prev_hash, hash)"
-            " VALUES (?,?,?,?,?,?,?,?,?)",
-            (seq, event["event_id"], type_, actor,
+            "INSERT INTO events (event_seq, event_id, run_id, type,"
+            " actor, affected, payload, ts, prev_hash, hash)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (seq, event["event_id"], run_id, type_, actor,
              json.dumps(event["affected"]), json.dumps(event["payload"]),
              event["ts"], prev_hash, event["hash"]),
         )
@@ -160,14 +166,16 @@ class FrameworkStore:
 
     def all_events(self):
         rows = self._conn.execute(
-            "SELECT event_seq, event_id, type, actor, affected, payload,"
-            " ts, prev_hash, hash FROM events ORDER BY event_seq"
+            "SELECT event_seq, event_id, run_id, type, actor, affected,"
+            " payload, ts, prev_hash, hash FROM events ORDER BY event_seq"
         ).fetchall()
         out = []
-        for seq, eid, typ, actor, affected, payload, ts, prev, h in rows:
+        for seq, eid, run_id, typ, actor, affected, payload, ts, prev, \
+                h in rows:
             out.append({
-                "event_seq": seq, "event_id": eid, "type": typ,
-                "actor": actor, "affected": json.loads(affected),
+                "event_seq": seq, "event_id": eid, "run_id": run_id,
+                "type": typ, "actor": actor,
+                "affected": json.loads(affected),
                 "payload": json.loads(payload), "ts": ts,
                 "prev_hash": prev, "hash": h,
             })
@@ -187,6 +195,11 @@ def verify_chain(events) -> bool:
     return True
 
 
+def verify_run_binding(events, run_id) -> bool:
+    """R1, verifiable: every event carries this run's id."""
+    return all(ev.get("run_id") == run_id for ev in events)
+
+
 # ---------------------------------------------------------------- fold
 
 def empty_state(run_id=None) -> dict:
@@ -198,7 +211,7 @@ def empty_state(run_id=None) -> dict:
         "disagreements": {},  # disagreement_id -> {status, claim_id, by}
         "contributions": {},  # contribution_id -> {author, tree_part}
         "cases": {},          # case_id -> {version, seat}
-        "gates": {},          # joint -> last outcome
+        "gates": {},          # joint -> {outcome, by, event_seq}
         "certifications": [],  # {by, coverage, event_seq}
         "findings": [], "rulings": [], "dispositions": [],
         "escalations": [], "rejections": [],
@@ -269,19 +282,27 @@ def apply_event(state: dict, ev: dict) -> dict:
             claim["status"] = p["to"]
     elif t == "GATE_OUTCOME":
         joint = p.get("joint")
-        state["gates"][joint] = p.get("outcome")
-        # R30: a hold records its paused set; allow/correct at the
-        # same joint releases the parts that outcome names.
-        for part in p.get("paused_set", []):
-            if p.get("outcome") == "hold":
+        # R22: the outcome vocabulary is exactly allow / correct /
+        # escalate. The fold records who recorded the outcome —
+        # later authority (R2's examiner-at-a-gate) is grounded in
+        # this entry, never in a caller's assertion.
+        state["gates"][joint] = {
+            "outcome": p.get("outcome"), "by": actor,
+            "event_seq": ev["event_seq"],
+        }
+        # R30: a gate "holding" work is not a fourth outcome — it is
+        # the paused state an escalation records (work stops on the
+        # part and its recorded downstream, awaiting ruling) until
+        # an allow at the joint releases it.
+        if p.get("outcome") == "escalate":
+            for part in p.get("paused_set", []):
                 state["paused"][part] = {
                     "source_seq": ev["event_seq"],
                     "downstream": p.get("downstream", {}).get(part, []),
                 }
-            else:
-                state["paused"].pop(part, None)
-        if p.get("outcome") in ("allow", "correct"):
-            for part in p.get("released_set", []):
+        elif p.get("outcome") == "allow":
+            for part in p.get("paused_set", []) + \
+                    p.get("released_set", []):
                 state["paused"].pop(part, None)
     elif t == "ESCALATION":
         state["escalations"].append({
@@ -350,8 +371,11 @@ def state_hash(state: dict) -> str:
 
 # ------------------------------------------------------- claim status
 
+GATE_OUTCOMES = ("allow", "correct", "escalate")  # R22
+
+
 def validate_status_transition(state, actor, role, claim_id, to,
-                               evidence=None, at_gate=False):
+                               evidence=None, gate_joint=None):
     """R2's authority rules for claim-status transitions.
 
     Returns (ok, ground). The doorway enforces this before recording;
@@ -368,9 +392,10 @@ def validate_status_transition(state, actor, role, claim_id, to,
         return False, ("disputed follows a recorded disagreement naming "
                        "the claim (R2); it is not recorded directly")
     if to == "evidenced":
-        if role not in ("crew", "examiner"):
-            return False, (f"{role} may not change a claim's status "
-                           "(authority matrix, §4)")
+        # §4: attaching evidence is crew's act alone.
+        if role != "crew":
+            return False, ("evidence is attached by crew (authority "
+                           f"matrix, §4); {role} may not record it")
         if not evidence:
             return False, "evidenced requires the evidence being attached"
         if claim["status"] in ("verified", "stood_down"):
@@ -386,8 +411,16 @@ def validate_status_transition(state, actor, role, claim_id, to,
     if to == "stood_down":
         if actor == claim["author"]:
             return True, ""
-        if role == "examiner" and at_gate:
-            return True, ""
+        if role == "examiner" and gate_joint is not None:
+            # "At a gate" is grounded in the record: the fold must
+            # show a gate outcome for that joint recorded by this
+            # examiner — never a caller-supplied flag.
+            gate = state["gates"].get(gate_joint)
+            if gate is not None and gate.get("by") == actor:
+                return True, ""
+            return False, (f"no gate outcome for joint {gate_joint} "
+                           "recorded by this examiner stands in the "
+                           "record (R2)")
         return False, ("stood_down is recorded by the claim's author, or "
                        "by the examiner at a gate (R2)")
     return False, f"unhandled transition to {to}"

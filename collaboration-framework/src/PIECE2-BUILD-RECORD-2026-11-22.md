@@ -23,3 +23,16 @@
 ## Not in this piece
 
 The bubble (§3.3), live seat drivers (§3.4), office + cases (§3.5), onboarding (§3.6), gates as a mechanism (§3.7), the checker piece (§3.10) — later Stage 2 pieces, one at a time.
+
+## Correction round 1 (2026-11-22, on Vane's examination)
+
+Vane examined Piece 2 at 6367f5c8: **ADR-003 supported; the piece did not pass** — six implementation corrections against the approved requirements (`VANE-PIECE2-EXAMINATION-2026-11-22.md`). All six are corrected here:
+
+1. **R1 run binding** — events now carry `run_id` in the event itself (a column, inside the hashed body); `verify_run_binding` checks every event against the run. Previously the binding was by store implication only.
+2. **§4 comment authority** — COMMENT is crew's alone in `ACT_AUTHORITY`; orchestrator/examiner/director comments are refused and recorded. (Decision 2 above is unaffected; the matrix error was the doorway's, and it is fixed to the matrix as written.)
+3. **R2 evidence authority** — `evidenced` is crew's act alone (§4). **This supersedes decision 2 above**, which had allowed the examiner to attach evidence; Vane's reading of the matrix governs.
+4. **R2 examiner-at-a-gate** — the caller-supplied `at_gate` flag is gone. The examiner names `gate_joint`; the fold must show a gate outcome for that joint recorded by that examiner (the fold now records who recorded each outcome). Another examiner's gate, or an unrecorded joint, does not ground the authority.
+5. **R31 view position mandatory** — `Doorway.act` refuses an act with no view position, and one beyond the record head; both refusals are recorded.
+6. **R22 outcome vocabulary** — gate outcomes are exactly allow / correct / escalate, enforced at the doorway ("hold" is refused and recorded). The R30 pause is represented as recorded state: an **escalate** outcome (or an ESCALATION event) carries the paused set; an **allow** releases it. The scope note's "hold" wording is superseded by this paragraph.
+
+Re-verification: the piece suite now runs **43 checks, ALL PASS** (the six corrections each carry positive and negative checks); carried fabric re-verified byte-identical to the pin; prototype smoke and observer export-safety suites still ALL PASS. ADR-002's pin untouched throughout.
