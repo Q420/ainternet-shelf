@@ -338,6 +338,57 @@ g = refused(lambda: d4.act(t4["crew-a"], "COMMENT",
 check("an act on a tree part changed since its view is refused (R31)",
       g is not None and "R31" in g, g or "")
 
+# --------------------------------------- correction round 3 (Vane)
+# Her second examination of c2949563 (five points): points 1 and 3
+# and the subject coverage of 4 were already closed by round 2 at
+# 981a0a96; this round closes release binding, negative view
+# positions, set-membership staleness, and the jointed pause.
+s5, d5, t5 = fresh()
+g = refused(lambda: d5.act(t5["crew-a"], "COMMENT", {"text": "x"},
+                           view_seq=-1))
+check("a negative view position is refused (R31)",
+      g is not None and "R31" in g, g or "")
+
+A(d5, t5["exam-1"], "GATE_OUTCOME",
+  {"joint": "j-one", "outcome": "escalate", "paused_set": ["part-P"],
+   "downstream": {}})
+g = refused(lambda: A(d5, t5["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-two", "outcome": "allow",
+                       "released_set": ["part-P"]}))
+check("an allow at another joint cannot release the pause (R30)",
+      g is not None and "not bound" in g, g or "")
+check("the pause survives the unbound release attempt",
+      "part-P" in d5.state()["paused"])
+g = refused(lambda: A(d5, t5["crew-a"], "CONTRIBUTION",
+                      {"contribution_id": "cp", "tree_part": "part-P"}))
+check("the part is still blocked after the unbound release",
+      g is not None)
+g = refused(lambda: A(d5, t5["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-one", "outcome": "allow",
+                       "released_set": ["part-never"]}))
+check("releasing a part that is not paused is refused (R30)",
+      g is not None)
+A(d5, t5["exam-1"], "GATE_OUTCOME",
+  {"joint": "j-one", "outcome": "allow", "released_set": ["part-P"]})
+check("an allow at the pausing joint releases it",
+      "part-P" not in d5.state()["paused"])
+
+g = refused(lambda: A(d5, t5["crew-a"], "ESCALATION",
+                      {"paused_set": ["part-Q"],
+                       "tree_part": "part-Q"}))
+check("a pause recorded without its joint is refused (R30)",
+      g is not None and "joint" in g, g or "")
+
+view_q = s5.head_seq()
+A(d5, t5["exam-1"], "GATE_OUTCOME",
+  {"joint": "j-nine", "outcome": "escalate", "paused_set": ["part-Q"],
+   "downstream": {}})
+g = refused(lambda: d5.act(t5["crew-a"], "COMMENT",
+                           {"subject_id": "part-Q", "text": "about Q"},
+                           view_seq=view_q))
+check("an act on a subject touched only via a recorded paused set "
+      "is refused (R31)", g is not None and "R31" in g, g or "")
+
 # ------------------------------------------------------------ R4: replay
 events = store.all_events()
 check("hash chain verifies", verify_chain(events))

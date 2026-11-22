@@ -125,6 +125,10 @@ class Doorway:
             self._refuse(seat_id, type_,
                          "every proposed act carries the record "
                          "position of the view it was made from (R31)")
+        if view_seq < 0:
+            self._refuse(seat_id, type_,
+                         f"view position {view_seq} is not a valid "
+                         "position in the record (R31)", view_seq)
         if view_seq > state["head_seq"]:
             self._refuse(seat_id, type_,
                          f"view position {view_seq} is beyond the "
@@ -158,6 +162,29 @@ class Doorway:
                          "not in the R22 vocabulary (allow, correct, "
                          "escalate)", view_seq)
 
+        # R30 (correction round 3): every gate outcome names its
+        # joint, and an allow releases only pauses that same joint
+        # recorded. A release naming another gate's pause — or a part
+        # not paused at all — is refused and recorded.
+        if type_ == "GATE_OUTCOME":
+            if not payload.get("joint"):
+                self._refuse(seat_id, type_,
+                             "a gate outcome names its joint (R30)",
+                             view_seq)
+            if payload.get("outcome") == "allow":
+                for part in payload.get("paused_set", []) + \
+                        payload.get("released_set", []):
+                    entry = state["paused"].get(part)
+                    if entry is None or \
+                            entry.get("source_joint") != \
+                            payload.get("joint"):
+                        self._refuse(
+                            seat_id, type_,
+                            f"release of {part} is not bound to this "
+                            f"gate: the recorded pause names joint "
+                            f"{entry.get('source_joint') if entry else None} "
+                            "(R30)", view_seq)
+
         # R30 (correction round 2): a pause's set is computed from
         # the tree the record carries, not accepted from the caller.
         # When the record carries a tree, the act names the affected
@@ -171,6 +198,15 @@ class Doorway:
                 (type_ == "GATE_OUTCOME" and
                  payload.get("outcome") == "escalate")):
             payload = dict(payload)
+            # A pause records the joint it rises at, so its release
+            # can be bound to that gate (R30, correction round 3).
+            if (payload.get("paused_set") is not None or
+                    payload.get("tree_part") is not None) and \
+                    not payload.get("joint"):
+                self._refuse(seat_id, type_,
+                             "a pause names the joint it is recorded "
+                             "at, so its release can be bound to that "
+                             "gate (R30)", view_seq)
             tree = state.get("tree") or {}
             root = payload.get("tree_part")
             if tree:
@@ -265,10 +301,21 @@ class Doorway:
                 continue
             if subject in ev["affected"]:
                 return True
+            p = ev["payload"]
             for key in ("subject_id", "claim_id", "contribution_id",
                         "tree_part", "case_id"):
-                if ev["payload"].get(key) == subject:
+                if p.get(key) == subject:
                     return True
+            # A subject can also be touched by being named inside a
+            # recorded set — a pause's parts, a release's parts, a
+            # pause's downstream map (correction round 3).
+            for key in ("paused_set", "released_set"):
+                if subject in (p.get(key) or []):
+                    return True
+            downstream = p.get("downstream") or {}
+            if subject in downstream or \
+                    any(subject in v for v in downstream.values()):
+                return True
         return False
 
     # ------------------------------------------------------------ reads

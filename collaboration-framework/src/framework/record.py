@@ -226,7 +226,8 @@ def empty_state(run_id=None) -> dict:
         "escalations": [], "rejections": [],
         "sealed": {},         # material_id -> [seat_id, ...] boundary
         "tree": {},           # tree_part -> [downstream parts] (R30)
-        "paused": {},         # tree_part -> {source_seq, downstream}
+        "paused": {},         # tree_part -> {source_seq, source_joint,
+                              #                 downstream}
         "head_seq": 0,
     }
 
@@ -309,17 +310,25 @@ def apply_event(state: dict, ev: dict) -> dict:
         # R30: a gate "holding" work is not a fourth outcome — it is
         # the paused state an escalation records (work stops on the
         # part and its recorded downstream, awaiting ruling) until
-        # an allow at the joint releases it.
+        # an allow at the joint releases it. Every pause records the
+        # joint it was set at (source_joint); an allow releases only
+        # pauses that joint itself recorded — a release is bound to
+        # the recorded pause, never to an arbitrary caller list
+        # (correction round 3).
         if p.get("outcome") == "escalate":
             for part in p.get("paused_set", []):
                 state["paused"][part] = {
                     "source_seq": ev["event_seq"],
+                    "source_joint": joint,
                     "downstream": p.get("downstream", {}).get(part, []),
                 }
         elif p.get("outcome") == "allow":
             for part in p.get("paused_set", []) + \
                     p.get("released_set", []):
-                state["paused"].pop(part, None)
+                entry = state["paused"].get(part)
+                if entry is not None and \
+                        entry.get("source_joint") == joint:
+                    state["paused"].pop(part, None)
     elif t == "ESCALATION":
         state["escalations"].append({
             "by": actor, "joint": p.get("joint"),
@@ -328,6 +337,7 @@ def apply_event(state: dict, ev: dict) -> dict:
         for part in p.get("paused_set", []):
             state["paused"][part] = {
                 "source_seq": ev["event_seq"],
+                "source_joint": p.get("joint"),
                 "downstream": p.get("downstream", {}).get(part, []),
             }
     elif t == "CASE_ISSUED" or t == "CASE_CORRECTED":
