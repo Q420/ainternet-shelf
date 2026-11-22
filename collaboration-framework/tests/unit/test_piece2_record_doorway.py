@@ -429,6 +429,42 @@ A(d6, t6["crew-a"], "ESCALATION", {"joint": "j-x", "note": "a "
 check("an escalation that pauses nothing still records with no "
       "tree", len(d6.state()["escalations"]) == 1)
 
+# --------------------------------------- correction round 5 (Vane)
+# The named root must be established by the recorded tree: a pause
+# naming a part the tree does not contain is refused and recorded.
+# A leaf that appears only as a recorded downstream still counts —
+# it is established by the tree.
+path7 = os.path.join(tempfile.mkdtemp(), "run.db")
+s7 = FrameworkStore(path7)
+s7.insert_run("run-1", CONSTITUTION_HASH)
+s7.append("RUN_COMMISSIONED", "dir-1", [], {
+    "run_id": "run-1",
+    "tree": {"root-1": ["leaf-1"], "root-2": []},
+    "seats": {
+        "crew-a": {"role": "crew", "identity_status": "declared"},
+        "exam-1": {"role": "examiner", "identity_status": "declared"},
+    },
+})
+s7.commit()
+d7 = Doorway(s7)
+t7 = {s: d7.issue_token(s) for s in ("crew-a", "exam-1")}
+g = refused(lambda: A(d7, t7["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-g", "outcome": "escalate",
+                       "tree_part": "ghost-part"}))
+check("a pause naming a part absent from the tree is refused (R30)",
+      g is not None and "not in the recorded tree" in g, g or "")
+check("the ghost pause established no paused state",
+      d7.state()["paused"] == {})
+A(d7, t7["exam-1"], "GATE_OUTCOME",
+  {"joint": "j-g", "outcome": "escalate", "tree_part": "leaf-1"})
+leaf_ev = s7.all_events()[-1]
+check("a leaf established only as a downstream can be paused, "
+      "computed set is itself (R30)",
+      leaf_ev["payload"]["paused_set"] == ["leaf-1"])
+g = refused(lambda: A(d7, t7["crew-a"], "CONTRIBUTION",
+                      {"contribution_id": "cl", "tree_part": "leaf-1"}))
+check("the leaf part is blocked once paused (R30)", g is not None)
+
 # ------------------------------------------------------------ R4: replay
 events = store.all_events()
 check("hash chain verifies", verify_chain(events))

@@ -17,7 +17,7 @@
 
 ## Verification (2026-11-22, against the built tree)
 
-- `tests/unit/test_piece2_record_doorway.py` — the suite as first built ran 32 checks, ALL PASS (status authority, matrix refusals, unbound tokens, boundary reads, pause blocking, staleness, replay equality, timestamps). **It has since grown by correction rounds — 43 checks after round 1, 52 after round 2, 60 after round 3, 65 after round 4, ALL PASS at each stage**; each round's section below names what its checks cover. The current count is the one that describes the implementation as it now stands.
+- `tests/unit/test_piece2_record_doorway.py` — the suite as first built ran 32 checks, ALL PASS (status authority, matrix refusals, unbound tokens, boundary reads, pause blocking, staleness, replay equality, timestamps). **It has since grown by correction rounds — 43 checks after round 1, 52 after round 2, 60 after round 3, 65 after round 4, 69 after round 5, ALL PASS at each stage**; each round's section below names what its checks cover. The current count is the one that describes the implementation as it now stands.
 - Regression (re-run at every round): carried fabric byte-identical to the pin (blob hashes re-compared); the prototype Stage 1 smoke and observer export-safety suites ALL PASS against the tree.
 
 ## Not in this piece
@@ -65,3 +65,11 @@ Two further letters arrived together (the second crossed with round 3 in flight)
 **The correction:** the fallback path is removed from `doorway.py`. When no tree stands in the record, a pause attempt (an escalate outcome or an ESCALATION carrying a set or a named part) is refused and the refusal recorded — the doorway fails closed because the set it is required to compute cannot be computed. An escalation that pauses nothing is unaffected and still records. Where a tree stands recorded, nothing changes: the set is computed, a disagreeing supplied set is refused. Round 2's "stated distinction" paragraph is marked superseded above; the earlier R30 test scenarios were reworked onto the computed path (the shared test commissioning now carries a tree).
 
 Re-verification: the piece suite now runs **65 checks, ALL PASS** (five new: caller-supplied pause with no tree refused; part-named pause with no tree refused; no paused state established by either; both refusals recorded; a pause-less escalation still records with no tree). Carried fabric re-verified byte-identical; prototype smoke and observer export-safety suites still ALL PASS. ADR-002's pin untouched throughout.
+
+## Correction round 5 (2026-11-22, on Vane's round-4 examination)
+
+Vane examined round 4 at 40562cb5 (pb-mwseuxum, `VANE-PIECE2-ROUND4-EXAMINATION-2026-11-22.md`): the fail-closed correction stands; **one R30 edge case remained** — the named root was not validated against the recorded tree, so `_compute_paused` silently treated an absent part as a leaf and returned it as a "computed" set. Verified against the source: correct.
+
+**The correction:** before computing, the doorway establishes the root from the tree — the part must appear in the recorded tree, as a key or as a recorded downstream of another part (a leaf established only as a downstream still counts; it is the tree that establishes it). A pause naming a part the tree does not contain is refused and the refusal recorded; no paused state is established.
+
+Re-verification: the piece suite now runs **69 checks, ALL PASS** (four new: ghost part refused with the ground naming the tree; no paused state established; downstream-only leaf pauses with computed set itself; the leaf is then blocked). Carried fabric re-verified byte-identical; prototype smoke and observer export-safety suites still ALL PASS. ADR-002's pin untouched throughout.

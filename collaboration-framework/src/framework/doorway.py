@@ -228,6 +228,18 @@ class Doorway:
                                  "the affected tree part, so its set "
                                  "can be computed from the tree (R30)",
                                  view_seq)
+                # The root itself must be established by the tree —
+                # a part the tree does not contain (neither as a key
+                # nor as a recorded downstream) cannot have a pause
+                # scope derived from it (R30, correction round 5).
+                known = set(tree)
+                for downstream_parts in tree.values():
+                    known.update(downstream_parts)
+                if root not in known:
+                    self._refuse(seat_id, type_,
+                                 f"tree part {root} is not in the "
+                                 "recorded tree, so no paused set can "
+                                 "be computed for it (R30)", view_seq)
                 computed, downstream = self._compute_paused(tree, root)
                 supplied = payload.get("paused_set")
                 if supplied is not None and \
