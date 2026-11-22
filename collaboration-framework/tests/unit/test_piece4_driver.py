@@ -1,5 +1,6 @@
 """Piece 4 tests — live seat drivers (SPEC SHEET §3.4, R11–R13,
-with R15/R16 issuance, R32 acknowledgement, R33 seat_stalled).
+with R15/R16 issuance incl. ordering, R32 acknowledgement,
+R33 seat_stalled).
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece4_driver.py
 Exits 0 when every check passes.
@@ -15,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..",
 from framework.record import FrameworkStore, CONSTITUTION_HASH, fold
 from framework.doorway import Doorway
 from framework.driver import Driver
+from framework.bubble import render_view
 
 FAILURES = []
 
@@ -26,15 +28,20 @@ def check(name, cond, detail=""):
 
 
 class ScriptedModel:
-    def __init__(self, response=None):
-        self.response = response if response is not None else []
+    """Returns script[i] on its i-th call (the last entry repeats).
+    An entry that is an Exception is raised instead."""
+
+    def __init__(self, script=None):
+        self.script = list(script) if script else [[]]
         self.calls = []
 
     def __call__(self, package):
         self.calls.append(package)
-        if isinstance(self.response, Exception):
-            raise self.response
-        return self.response
+        item = self.script.pop(0) if len(self.script) > 1 \
+            else self.script[0]
+        if isinstance(item, Exception):
+            raise item
+        return item
 
 
 path = os.path.join(tempfile.mkdtemp(), "run.db")
@@ -62,6 +69,12 @@ def A(token, type_, payload):
     return d.act(token, type_, payload, view_seq=store.head_seq())
 
 
+def contribution_events(cid):
+    return [ev for ev in store.all_events()
+            if ev["type"] == "CONTRIBUTION" and
+            ev["payload"].get("contribution_id") == cid]
+
+
 CASE_A = {"case_id": "case-a", "version": 1, "seat": "crew-a",
           "part": "part-A", "assignment": "Draft the A section",
           "evidence_boundary": ["mat-1"],
@@ -81,9 +94,9 @@ r = driver_a.wake_cycle()
 check("no wake before authorisation, CASE_ISSUED absent",
       r["woke"] is False and model_a.calls == [])
 A(tok["orch-1"], "CASE_ISSUED", dict(CASE_A))
-model_a.response = [{"type": "CONTRIBUTION", "payload": {
+model_a.script = [[{"type": "CONTRIBUTION", "payload": {
     "contribution_id": "c1", "claim_id": "claim-1",
-    "tree_part": "part-A", "text": "A, first draft"}}]
+    "tree_part": "part-A", "text": "A, first draft"}}]]
 r = driver_a.wake_cycle()
 check("a fully-issued case wakes the model", r["woke"] is True)
 pkg = model_a.calls[-1]
@@ -111,8 +124,8 @@ check("another part's contribution does not wake this seat",
 A(tok["crew-b"], "CONTRIBUTION",
   {"contribution_id": "cb2", "tree_part": "part-A",
    "text": "B's take on A"})
-model_a.response = [{"type": "COMMENT", "payload": {
-    "contribution_id": "cb2", "text": "noted"}}]
+model_a.script = [[{"type": "COMMENT", "payload": {
+    "contribution_id": "cb2", "text": "noted"}}]]
 r = driver_a.wake_cycle()
 check("a contribution on the seat's part wakes it, to answer",
       r["woke"] is True and
@@ -120,7 +133,7 @@ check("a contribution on the seat's part wakes it, to answer",
       [x["kind"] for x in r["reasons"]])
 A(tok["crew-b"], "COMMENT",
   {"contribution_id": "c1", "text": "tighten the intro"})
-model_a.response = []
+model_a.script = [[]]
 r = driver_a.wake_cycle()
 check("a comment on the seat's own contribution wakes it",
       r["woke"] is True and
@@ -134,7 +147,7 @@ A(tok["orch-1"], "MATERIAL_SEALED",
   {"material_id": "mat-2", "boundary": ["crew-a"]})
 A(tok["crew-b"], "CONTRIBUTION",
   {"contribution_id": "cb3", "tree_part": "part-A", "text": "more A"})
-model_a.response = []
+model_a.script = [[]]
 r = driver_a.wake_cycle()
 pkg = model_a.calls[-1]
 sealed_ids = [s["material_id"] for s in pkg["view"]["sealed"]]
@@ -142,8 +155,8 @@ check("the wake view honours the case's evidence boundary",
       sealed_ids == ["mat-1"], str(sealed_ids))
 
 # ------------------------------------- R12: authority at the door
-model_a.response = [{"type": "GATE_OUTCOME", "payload": {
-    "joint": "joint-1", "outcome": "allow"}}]
+model_a.script = [[{"type": "GATE_OUTCOME", "payload": {
+    "joint": "joint-1", "outcome": "allow"}}]]
 A(tok["crew-b"], "CONTRIBUTION",
   {"contribution_id": "cb4", "tree_part": "part-A", "text": "A again"})
 r = driver_a.wake_cycle()
@@ -152,7 +165,7 @@ check("a proposal outside the seat's authority is refused at the "
       r["recorded"] == [] and r["refused"] and
       "§4" in r["refused"][0]["ground"])
 
-# --------------------------- R16/R32: correction, acknowledgement
+# ---------------- R15/R16: issuance ORDER and the correction act
 A(tok["orch-1"], "CASE_CORRECTED",
   dict(CASE_A, version=2, assignment="Draft A, revised",
        representational=False))
@@ -161,32 +174,54 @@ A(tok["orch-1"], "CASE_ISSUED",
   {"case_id": "case-a", "version": 2, "seat": "crew-a"})
 A(tok["crew-b"], "CONTRIBUTION",
   {"contribution_id": "cb5", "tree_part": "part-A", "text": "A v2 era"})
-model_a.response = []
+model_a.script = [[]]
 r = driver_a.wake_cycle()
 check("an incompletely-issued correction does not displace the "
       "standing case", r["woke"] is True and
       model_a.calls[-1]["case_version"] == 1)
 A(tok["exam-1"], "CASE_JUDGED", {"case_id": "case-a", "version": 2})
-model_a.response = [{"type": "CONTRIBUTION", "payload": {
+A(tok["crew-b"], "CONTRIBUTION",
+  {"contribution_id": "cb5b", "tree_part": "part-A",
+   "text": "still v2 era"})
+r = driver_a.wake_cycle()
+check("authorisation recorded BEFORE its prerequisites is not "
+      "made valid by their later arrival (round 1, point 2)",
+      r["woke"] is True and model_a.calls[-1]["case_version"] == 1)
+A(tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-a", "version": 2, "seat": "crew-a"})
+
+# --------------------- R32/R31: acknowledgement, two interactions
+model_a.script = [[{"type": "CONTRIBUTION", "payload": {
     "contribution_id": "c9", "tree_part": "part-A",
-    "text": "work on v2 without acknowledging"}}]
+    "text": "work on v2 without acknowledging"}}]]
+calls_before = len(model_a.calls)
 r = driver_a.wake_cycle()
 check("R32: work on an unacknowledged new version is held, "
-      "nothing recorded", r["recorded"] == [] and
-      r["held"] == ["CONTRIBUTION"])
-model_a.response = [
-    {"type": "CONTRIBUTION", "payload": {
+      "nothing recorded, no second interaction",
+      r["recorded"] == [] and r["held"] == ["CONTRIBUTION"] and
+      len(model_a.calls) == calls_before + 1)
+model_a.script = [
+    [{"type": "CONTRIBUTION", "payload": {
         "contribution_id": "c10", "tree_part": "part-A",
-        "text": "work under v2"}},
-    {"type": "CASE_ACKNOWLEDGED", "payload": {
-        "case_id": "case-a", "version": 2}},
+        "text": "from the pre-ack view"}},
+     {"type": "CASE_ACKNOWLEDGED", "payload": {
+         "case_id": "case-a", "version": 2}}],
+    [{"type": "CONTRIBUTION", "payload": {
+        "contribution_id": "c11", "tree_part": "part-A",
+        "text": "from the fresh view"}}],
 ]
 r = driver_a.wake_cycle()
-check("the seat's own acknowledgement is carried, recorded before "
-      "its other acts",
+check("the acknowledgement is recorded, then work resumes from a "
+      "second package",
       [e["type"] for e in r["recorded"]] ==
       ["CASE_ACKNOWLEDGED", "CONTRIBUTION"] and
-      r["recorded"][1]["payload"]["case_version"] == 2)
+      r["recorded"][1]["payload"]["contribution_id"] == "c11")
+check("the first package's work proposal was held, never recorded "
+      "(round 1, point 1)", contribution_events("c10") == [] and
+      r["held"] == ["CONTRIBUTION"])
+check("the model actually received a fresh package at a new "
+      "position", model_a.calls[-1]["position"] >
+      model_a.calls[-2]["position"])
 
 # --------------------- R16: the representational route, by record
 A(tok["orch-1"], "CASE_CORRECTED",
@@ -196,13 +231,13 @@ A(tok["orch-1"], "CASE_VERIFIED", {"case_id": "case-a", "version": 3})
 A(tok["exam-1"], "CASE_NOTIFIED", {"case_id": "case-a", "version": 3})
 A(tok["orch-1"], "CASE_ISSUED",
   {"case_id": "case-a", "version": 3, "seat": "crew-a"})
-model_a.response = [{"type": "CASE_ACKNOWLEDGED", "payload": {
-    "case_id": "case-a", "version": 3}}]
+model_a.script = [[{"type": "CASE_ACKNOWLEDGED", "payload": {
+    "case_id": "case-a", "version": 3}}], []]
 r = driver_a.wake_cycle()
 check("a representational correction issues on verification + "
       "notification + authorisation (no judgement)",
       r["woke"] is True and
-      model_a.calls[-1]["case_version"] == 3 and
+      model_a.calls[-2]["case_version"] == 3 and
       r["recorded"][0]["type"] == "CASE_ACKNOWLEDGED")
 A(tok["orch-1"], "CASE_CORRECTED",
   dict(CASE_A, version=4, assignment="Draft A, re-scoped",
@@ -213,11 +248,49 @@ A(tok["orch-1"], "CASE_ISSUED",
   {"case_id": "case-a", "version": 4, "seat": "crew-a"})
 A(tok["crew-b"], "CONTRIBUTION",
   {"contribution_id": "cb6", "tree_part": "part-A", "text": "A v4 era"})
-model_a.response = []
+model_a.script = [[]]
 r = driver_a.wake_cycle()
 check("a semantic correction is not issued by the notification "
       "route (route follows the recorded classification)",
       r["woke"] is True and model_a.calls[-1]["case_version"] == 3)
+
+# ------------- R16: a version with no correction act never issues
+A(tok["orch-1"], "CASE_VERIFIED", {"case_id": "case-a", "version": 6})
+A(tok["exam-1"], "CASE_JUDGED", {"case_id": "case-a", "version": 6})
+A(tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-a", "version": 6, "seat": "crew-a"})
+A(tok["crew-b"], "CONTRIBUTION",
+  {"contribution_id": "cb7", "tree_part": "part-A", "text": "A v6 era"})
+model_a.script = [[]]
+r = driver_a.wake_cycle()
+check("version 6 has no CASE_CORRECTED: it does not issue, the "
+      "standing case is untouched (round 1, point 3)",
+      r["woke"] is True and model_a.calls[-1]["case_version"] == 3)
+
+# ------------- R32: an acknowledgement before issuance is not one
+A(tok["orch-1"], "CASE_CORRECTED",
+  dict(CASE_A, version=7, assignment="Draft A, final",
+       representational=False))
+A(tok["orch-1"], "CASE_VERIFIED", {"case_id": "case-a", "version": 7})
+A(tok["crew-a"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-a", "version": 7})  # early: before authorisation
+A(tok["exam-1"], "CASE_JUDGED", {"case_id": "case-a", "version": 7})
+A(tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-a", "version": 7, "seat": "crew-a"})
+model_a.script = [[{"type": "CONTRIBUTION", "payload": {
+    "contribution_id": "c12", "tree_part": "part-A",
+    "text": "work on v7"}}]]
+r = driver_a.wake_cycle()
+check("a pre-issue acknowledgement does not satisfy R32: work on "
+      "v7 is still held (round 1, point 4)",
+      r["woke"] is True and r["recorded"] == [] and
+      r["held"] == ["CONTRIBUTION"])
+model_a.script = [[{"type": "CASE_ACKNOWLEDGED", "payload": {
+    "case_id": "case-a", "version": 7}}], []]
+r = driver_a.wake_cycle()
+check("a fresh acknowledgement after issuance satisfies R32",
+      r["recorded"] and
+      r["recorded"][0]["type"] == "CASE_ACKNOWLEDGED")
 
 # ------------------------------------------- R13/R33: failures
 CASE_B = {"case_id": "case-b", "version": 1, "seat": "crew-b",
@@ -226,7 +299,7 @@ CASE_B = {"case_id": "case-b", "version": 1, "seat": "crew-b",
 A(tok["orch-1"], "CASE_VERIFIED", {"case_id": "case-b", "version": 1})
 A(tok["exam-1"], "CASE_JUDGED", {"case_id": "case-b", "version": 1})
 A(tok["orch-1"], "CASE_ISSUED", dict(CASE_B))
-bad = ScriptedModel(RuntimeError("provider down"))
+bad = ScriptedModel([RuntimeError("provider down")])
 driver_b = Driver(d, "crew-b", tok["crew-b"], bad)
 r = driver_b.wake_cycle()
 check("a provider error is a recorded driver failure",
@@ -243,21 +316,20 @@ check("the seat stands seat_stalled; no pause tree is created",
       state["paused"] == {})
 check("no contribution was fabricated for the stalled seat",
       all(info["author"] != "crew-b" or
-          cid in ("cb1", "cb2", "cb3", "cb4", "cb5", "cb6")
+          cid in ("cb1", "cb2", "cb3", "cb4", "cb5", "cb5b", "cb6",
+                  "cb7")
           for cid, info in state["contributions"].items()))
 r = driver_b.wake_cycle()
 check("a stalled seat is not woken again",
       r["woke"] is False and "stalled" in r)
-view_b = fold(store.all_events())
-from framework.bubble import render_view
 vb = render_view(store.all_events(), "exam-1")
 check("the bubble renders the stalled seat by its state",
       vb["current_state"]["stalled_seats"]["crew-b"]["kind"] ==
       "provider_error")
 
-model_a.response = "not a list of acts"
+model_a.script = ["not a list of acts"]
 A(tok["crew-b"], "CONTRIBUTION",
-  {"contribution_id": "cb7", "tree_part": "part-A", "text": "wake A"})
+  {"contribution_id": "cb8", "tree_part": "part-A", "text": "wake A"})
 r = driver_a.wake_cycle()
 check("malformed model output is a recorded driver failure",
       r["failed"] == "malformed_output" and

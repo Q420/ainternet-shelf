@@ -444,19 +444,30 @@ def replay(store: FrameworkStore) -> dict:
     return fold(store.all_events(), store.get_run_id())
 
 
-def version_issued(ver) -> bool:
+def version_issued(ver, version) -> bool:
     """Whether one recorded case version completed its issuance
     route (R15/R16): office verification and authorisation always;
     the examiner's act is the sufficiency judgement — or, for a
     correction recorded as purely representational, the examiner
     notification. The route follows the version's recorded
-    classification, never whichever events happen to be present."""
+    classification, never whichever events happen to be present.
+    The prerequisites must PRECEDE the authorisation: an early
+    CASE_ISSUED is not made valid by acts recorded after it
+    (correction round 1, point 2). And a version above the initial
+    version stands on its CASE_CORRECTED — no correction event, no
+    correction (point 3)."""
     if not ver or ver.get("verified") is None or \
             ver.get("issued") is None:
         return False
+    if version > 1 and not ver.get("corrected"):
+        return False
+    if not ver["verified"] < ver["issued"]:
+        return False
     if ver.get("corrected") and ver.get("representational"):
-        return ver.get("notified") is not None
-    return ver.get("judged") is not None
+        return ver.get("notified") is not None and \
+            ver["notified"] < ver["issued"]
+    return ver.get("judged") is not None and \
+        ver["judged"] < ver["issued"]
 
 
 def effective_case(state: dict, seat_id: str):
@@ -469,16 +480,22 @@ def effective_case(state: dict, seat_id: str):
         if entry.get("seat") != seat_id:
             continue
         for vstr, ver in entry["versions"].items():
-            if version_issued(ver):
-                v = int(vstr)
+            v = int(vstr)
+            if version_issued(ver, v):
+                # R32: an acknowledgement counts only when the
+                # assigned seat recorded it after this version's
+                # authorisation (correction round 1, point 4).
+                ack_seq = ver.get("acknowledged", {}).get(seat_id)
+                acknowledged = ack_seq is not None and \
+                    ver.get("issued") is not None and \
+                    ack_seq > ver["issued"]
                 if best is None or v > best["version"]:
                     best = {
                         "case_id": case_id, "version": v,
                         "content": ver.get("content"),
                         "issued_seq": ver.get("issued"),
                         "corrected": ver.get("corrected", False),
-                        "acknowledged": seat_id in
-                        ver.get("acknowledged", {}),
+                        "acknowledged": acknowledged,
                     }
     return best
 

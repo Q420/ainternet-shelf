@@ -22,7 +22,10 @@ How a live model occupies a crew seat.
   has not acknowledged, the wake carries the new version and the
   seat's CASE_ACKNOWLEDGED — the model's own proposed act, which
   the driver may carry but never manufactures — must stand
-  recorded before any other proposed act is submitted.
+  recorded before any other proposed act is submitted. The
+  acknowledgement is its own model interaction: only it may be
+  recorded from the first package, and work resumes from a second
+  package the model actually receives at the new position (R31).
 
 Wake reasons are computed from the record against the seat's own
 last recorded act, tied to recorded relevance: the seat's case
@@ -220,31 +223,69 @@ class Driver:
                 return False
 
         if needs_ack:
-            # R32: the acknowledgement is the seat's own act. The
-            # driver submits acknowledgement proposals first and
-            # holds everything else until one stands recorded; it
-            # never manufactures the acknowledgement itself.
+            # R32: the acknowledgement is the seat's own act. From
+            # this first package ONLY the acknowledgement may be
+            # recorded; every other proposal is held — and not
+            # carried over. Those proposals were made from this
+            # view; submitting them later under a fresh position
+            # would claim a basis the model never saw (R31,
+            # correction round 1, point 1).
             ack_idx = [i for i, p in enumerate(proposals)
                        if p["type"] == "CASE_ACKNOWLEDGED"
                        and p["payload"].get("case_id") ==
                        case["case_id"]
                        and p["payload"].get("version") ==
                        case["version"]]
+            result["held"] = [p["type"] for i, p in
+                              enumerate(proposals) if i not in ack_idx]
             acked = any(submit(proposals[i]) for i in ack_idx)
-            if acked:
-                # The acknowledgement itself changed the record
-                # (it names the case), so the remaining acts are
-                # submitted from a re-rendered view — R31's own
-                # prescription — not from the pre-ack position.
-                view = render_view(self.store.all_events(), seat)
-                result["view_position"] = view["position"]
-            for i, proposal in enumerate(proposals):
-                if i in ack_idx:
-                    continue
-                if acked:
-                    submit(proposal)
-                else:
-                    result["held"].append(proposal["type"])
+            if not acked:
+                return result
+            # Second interaction: a fresh package at the new
+            # position, actually received by the model. Only
+            # proposals returned from THIS package proceed.
+            events2 = self.store.all_events()
+            state2 = fold(events2, self.store.get_run_id())
+            case2 = effective_case(state2, seat) or case
+            view = render_view(events2, seat)
+            boundary2 = (case2["content"] or {}).get(
+                "evidence_boundary")
+            if isinstance(boundary2, list):
+                view["sealed"] = [s for s in view["sealed"]
+                                  if s["material_id"] in boundary2]
+            reasons2, _b = _wake_reasons(events2, state2, seat, case2)
+            package2 = {
+                "seat": seat,
+                "case": case2["content"],
+                "case_id": case2["case_id"],
+                "case_version": case2["version"],
+                "view": view,
+                "prompt": {"reasons": reasons2,
+                           "continuation": "acknowledgement "
+                                           "recorded; this package "
+                                           "is the current basis"},
+                "position": view["position"],
+            }
+            result["view_position"] = view["position"]
+            try:
+                raw2 = self.model(package2)
+            except Exception as exc:
+                failed = self._fail("provider_error", part,
+                                    detail=type(exc).__name__)
+                failed["recorded"] = result["recorded"]
+                return failed
+            proposals2 = _validate_proposals(raw2)
+            if proposals2 is None:
+                failed = self._fail("malformed_output", part)
+                failed["recorded"] = result["recorded"]
+                return failed
+            for proposal in proposals2:
+                proposal["payload"].setdefault("case_id",
+                                                case2["case_id"])
+                proposal["payload"].setdefault("case_version",
+                                                case2["version"])
+            for proposal in proposals2:
+                submit(proposal)
         else:
             for proposal in proposals:
                 submit(proposal)
