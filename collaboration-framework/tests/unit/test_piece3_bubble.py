@@ -109,23 +109,58 @@ check("gate outcomes render at their joints",
       view["gates"][0]["joint"] == "joint-1" and
       view["gates"][0]["outcome"] == "escalate")
 check("the current recorded state renders",
-      view["current_state"]["claims"]["claim-1"] == "disputed" and
-      view["current_state"]["paused"] == {"part-B": "joint-1"})
+      view["current_state"]["claims"]["claim-1"]["status"] ==
+      "disputed" and
+      view["current_state"]["paused"]["part-B"]["joint"] == "joint-1")
 
-# R8: nothing that is not in the record — every rendered element
-# carries an event_seq that exists, and unrecorded content is absent.
+# R8: nothing that is not in the record — provenance on EVERY
+# rendered element, nested and derived included (round 1, point 1):
+# walk the whole view collecting every sequence reference and check
+# each against the record's own sequences; and assert presence on
+# the element kinds the first version left bare.
 seqs = {ev["event_seq"] for ev in events}
-rendered_seqs = (
-    [c["event_seq"] for c in view["contributions"]] +
-    [cm["event_seq"] for c in view["contributions"]
-     for cm in c["comments"]] +
-    [cm["event_seq"] for cm in view["job_comments"]] +
-    [x["event_seq"] for x in view["disagreements"]] +
-    [x["event_seq"] for x in view["gates"]])
-check("every rendered element's provenance is in the record",
-      all(s in seqs for s in rendered_seqs) and rendered_seqs)
+
+
+def collect_seqs(node, acc):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k in ("event_seq", "status_seq", "lifecycle_seq",
+                     "paused_at_seq", "position") and \
+                    isinstance(v, int):
+                acc.append(v)
+            elif k == "event_seqs" and isinstance(v, list):
+                acc.extend(v)
+            else:
+                collect_seqs(v, acc)
+    elif isinstance(node, list):
+        for item in node:
+            collect_seqs(item, acc)
+    return acc
+
+
+all_seqs = collect_seqs(view, [])
+check("every sequence reference in the view is a recorded event",
+      all(s in seqs for s in all_seqs) and len(all_seqs) >= 12,
+      f"{len(all_seqs)} references")
+check("tree entries carry structure provenance",
+      all(p["event_seq"] in seqs for p in view["tree"]))
+check("lifecycle carries the provenance of the event setting it",
+      view["lifecycle_seq"] == events[0]["event_seq"])
+check("current-state claims and pauses carry their provenance",
+      view["current_state"]["claims"]["claim-1"]["event_seq"] in seqs
+      and view["current_state"]["paused"]["part-B"]["event_seq"]
+      in seqs)
 check("unrecorded content appears nowhere in the view",
       "zebra-unicorn" not in json.dumps(view))
+
+# R8 (round 1, point 2): the render derives its state from the
+# events itself — a caller cannot inject invented state.
+try:
+    render_view(events, "crew-a", state={"lifecycle": "invented"})
+    injected = True
+except TypeError:
+    injected = False
+check("render_view accepts no caller-supplied state", not injected)
 
 # ------------------------------------------------------------- R9
 crew_json = json.dumps(view)
@@ -183,6 +218,34 @@ A(tok["crew-a"], "COMMENT",
   {"subject_id": "run-1", "text": "on the job, by run id"})
 check("a comment naming the job by its run id records",
       store.all_events()[-1]["type"] == "COMMENT")
+
+# R10 (round 1, point 3): a missing subject is not an invalid one.
+# Historical comments, written straight to the record as a
+# pre-amendment record could hold them:
+store.append("COMMENT", "crew-a", [],
+             {"subject_id": "part-A", "text": "about the part"})
+store.append("COMMENT", "crew-b", [],
+             {"subject_id": "ghost-9", "text": "about nothing"})
+store.append("COMMENT", "crew-a", [], {"text": "no subject at all"})
+store.commit()
+view3 = render_view(store.all_events(), "crew-a")
+unattached = {c["text"]: c for c in view3["unattached_comments"]}
+check("a comment naming an invalid subject is not re-homed",
+      "about the part" in unattached and
+      "about nothing" in unattached)
+check("the invalid relationship is explicit, provenance preserved",
+      unattached["about the part"]["subject"] == "part-A" and
+      unattached["about the part"]["subject_valid"] is False and
+      unattached["about the part"]["event_seq"] in
+      {ev["event_seq"] for ev in store.all_events()})
+job_texts = [c["text"] for c in view3["job_comments"]]
+attached_texts = [cm["text"] for c in view3["contributions"]
+                  for cm in c["comments"]]
+check("invalid-subject comments appear neither under the job nor "
+      "attached", "about the part" not in job_texts and
+      "about the part" not in attached_texts)
+check("a comment with no subject at all renders under the job",
+      "no subject at all" in job_texts)
 
 print()
 if FAILURES:

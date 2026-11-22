@@ -215,6 +215,7 @@ def empty_state(run_id=None) -> dict:
     return {
         "run_id": run_id,
         "lifecycle": "unopened",
+        "lifecycle_seq": None,
         "seats": {},          # seat_id -> {role, identity_status}
         "claims": {},         # claim_id -> {author, status, subject}
         "disagreements": {},  # disagreement_id -> {status, claim_id, by}
@@ -255,6 +256,7 @@ def apply_event(state: dict, ev: dict) -> dict:
         # payload value that could disagree with it.
         state["run_id"] = ev.get("run_id", state["run_id"])
         state["lifecycle"] = "commissioned"
+        state["lifecycle_seq"] = ev["event_seq"]
         # R30: the commissioned tree (part -> downstream dependents)
         # is the record the doorway computes paused sets from.
         state["tree"] = dict(p.get("tree", {}))
@@ -277,26 +279,29 @@ def apply_event(state: dict, ev: dict) -> dict:
         if p.get("claim_id"):
             state["claims"][p["claim_id"]] = {
                 "author": actor, "status": "claimed",
-                "subject": cid,
+                "subject": cid, "status_seq": ev["event_seq"],
             }
     elif t == "DISAGREEMENT":
         did = p.get("disagreement_id", ev["event_id"])
         state["disagreements"][did] = {
             "status": "open", "claim_id": p.get("claim_id"),
-            "by": actor,
+            "by": actor, "status_seq": ev["event_seq"],
         }
         # R2: disputed follows a recorded disagreement naming the claim.
         claim = state["claims"].get(p.get("claim_id") or "")
         if claim and claim["status"] in ("claimed", "evidenced"):
             claim["status"] = "disputed"
+            claim["status_seq"] = ev["event_seq"]
     elif t == "DISAGREEMENT_SETTLED":
         d = state["disagreements"].get(p.get("disagreement_id") or "")
         if d:
             d["status"] = "settled"
+            d["status_seq"] = ev["event_seq"]
     elif t == "CLAIM_STATUS":
         claim = state["claims"].get(p.get("claim_id") or "")
         if claim:
             claim["status"] = p["to"]
+            claim["status_seq"] = ev["event_seq"]
     elif t == "GATE_OUTCOME":
         joint = p.get("joint")
         # R22: the outcome vocabulary is exactly allow / correct /
@@ -354,7 +359,9 @@ def apply_event(state: dict, ev: dict) -> dict:
             for d in state["disagreements"].values():
                 if d["status"] == "open":
                     d["status"] = "open-at-close"
+                    d["status_seq"] = ev["event_seq"]
             state["lifecycle"] = "certified"
+            state["lifecycle_seq"] = ev["event_seq"]
     elif t == "FINDING":
         state["findings"].append({"by": actor,
                                    "event_seq": ev["event_seq"]})
@@ -373,8 +380,10 @@ def apply_event(state: dict, ev: dict) -> dict:
         })
     elif t == "COMPLETION_CLAIMED":
         state["lifecycle"] = "completion_claimed"
+        state["lifecycle_seq"] = ev["event_seq"]
     elif t == "RUN_CLOSED":
         state["lifecycle"] = "closed"
+        state["lifecycle_seq"] = ev["event_seq"]
     # COMMENT and ONBOARDING are recorded acts the fold carries in the
     # history without derived state of their own in this piece.
     return state

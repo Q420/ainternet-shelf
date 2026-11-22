@@ -19,6 +19,16 @@
 - `tests/unit/test_piece3_bubble.py` — **26 checks, ALL PASS**: tree states (paused naming its joint, contributed, open); contributions in order with claim status; comment attachment and job comments; disagreements and gate outcomes rendered; current state rendered; every rendered element's provenance in the record and unrecorded content absent; scoped views omitting sealed material entirely while examiner/orchestrator views span the run; the director's bubble view scoped; bubble comments recorded through the doorway and rendering attached on re-render; subject-less bubble comments refused with nothing recorded; the doorway's authority and R10 refusals holding through the bubble.
 - Regression: **Piece 2's suite still runs 73 checks, ALL PASS** with the R10 amendment in place; carried fabric byte-identical to the pin; prototype smoke and observer export-safety suites ALL PASS.
 
+## Correction round 1 (2026-11-22) — provenance completed, state sealed to the record, subjects distinguished
+
+Vane's examination at 933875b7 (`VANE-PIECE3-EXAMINATION-2026-11-22.md`) found three defects, all in the view's truthfulness; all three verified against the source before correcting:
+
+1. **Provenance was not on every element.** Tree entries, lifecycle, current-state claims/pauses and the certification count carried no sequence. Fixed: the fold now tracks `status_seq` (the event establishing each claim's and disagreement's current status) and `lifecycle_seq` (additive keys in `record.py`); the render gives tree entries their structure provenance (the commissioning event, or the first contribution naming the part), claims and pauses their establishing events, disagreements a `status_seq`, and certifications their event sequences. The test now walks the whole view recursively, checking every sequence reference against the record, with per-kind presence assertions.
+2. **The render accepted caller-supplied state.** `render_view` no longer takes a state argument at all — it folds the events itself, and a test proves a state argument is rejected outright.
+3. **Missing vs invalid comment subjects were conflated.** The render now distinguishes: no subject → the job (as agreed); the job named → the job; a standing contribution → attached; a non-empty subject that is neither → an `unattached_comments` entry carrying the recorded subject with `subject_valid: false` — never presented as a job comment. Tests write historical comments straight to the record and check all four placements.
+
+Piece 3 suite now **34 checks, ALL PASS**; Piece 2's suite still **73, ALL PASS**; carried fabric byte-identical.
+
 ## Not in this piece
 
 Live seat drivers (§3.4), office + cases (§3.5), onboarding (§3.6), gates as a mechanism (§3.7), the observer surface (§3.9). The §7 item "two live seats hold a job in the bubble…" is an end-to-end Stage 2 acceptance spanning the drivers piece, not this piece alone.

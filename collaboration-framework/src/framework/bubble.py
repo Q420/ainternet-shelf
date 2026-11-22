@@ -35,22 +35,35 @@ class BubbleRefusal(Exception):
         self.ground = ground
 
 
-def _comment_subject(payload, contributions, run_id):
-    """Where a recorded comment attaches (R8/R10): the contribution
-    it names, else the job. A comment naming neither is rendered
-    under the job with its provenance — visible, never re-homed to
-    a contribution it did not name."""
+def _comment_home(payload, contributions, run_id):
+    """Where a recorded comment belongs (R8/R10), distinguishing a
+    missing subject from an invalid one:
+
+    - names a standing contribution -> that contribution;
+    - names the job (on_job, or the run itself) -> the job;
+    - names no subject at all -> the job, as agreed;
+    - names a non-empty subject that is neither -> NOT re-homed:
+      the caller renders it as unattached, its recorded subject
+      preserved and the invalid relationship explicit.
+    Returns ("contribution", id) | ("job", None) |
+    ("unattached", recorded_subject)."""
     subject = payload.get("contribution_id") or \
         payload.get("subject_id")
     if subject in contributions:
-        return subject
-    return None  # the job
+        return "contribution", subject
+    if payload.get("on_job") is True or subject == run_id:
+        return "job", None
+    if subject is None:
+        return "job", None
+    return "unattached", subject
 
 
-def render_view(events, seat_id, state=None):
-    """The seat's bubble view of the run the events record."""
-    if state is None:
-        state = fold(events)
+def render_view(events, seat_id):
+    """The seat's bubble view of the run the events record. The
+    state is folded from the events here, inside the render — a
+    caller cannot supply state the record does not establish
+    (correction round 1, point 2)."""
+    state = fold(events)
     run_id = state["run_id"]
     binding = state["seats"].get(seat_id)
     role = binding["role"] if binding else None
@@ -70,7 +83,8 @@ def render_view(events, seat_id, state=None):
         if p.get("claim_id"):
             c = state["claims"].get(p["claim_id"], {})
             claim = {"claim_id": p["claim_id"],
-                     "status": c.get("status")}
+                     "status": c.get("status"),
+                     "status_seq": c.get("status_seq")}
         item = {
             "contribution_id": cid, "author": ev["actor"],
             "tree_part": p.get("tree_part"), "claim": claim,
@@ -82,6 +96,7 @@ def render_view(events, seat_id, state=None):
         contrib_by_id[cid] = item
 
     job_comments = []
+    unattached_comments = []
     for ev in events:
         if ev["type"] != "COMMENT":
             continue
@@ -91,11 +106,18 @@ def render_view(events, seat_id, state=None):
             comment["text"] = p["text"]
         if p.get("stale_basis"):
             comment["stale_basis"] = True
-        target = _comment_subject(p, contrib_by_id, run_id)
-        if target is None:
+        home, target = _comment_home(p, contrib_by_id, run_id)
+        if home == "contribution":
+            contrib_by_id[target]["comments"].append(comment)
+        elif home == "job":
             job_comments.append(comment)
         else:
-            contrib_by_id[target]["comments"].append(comment)
+            # Non-empty but invalid subject: not re-homed. The
+            # recorded subject rides with the comment and the
+            # invalid relationship is explicit (round 1, point 3).
+            comment["subject"] = target
+            comment["subject_valid"] = False
+            unattached_comments.append(comment)
 
     # --- the tree, each part with its recorded state (R8)
     tree = state.get("tree") or {}
@@ -109,6 +131,18 @@ def render_view(events, seat_id, state=None):
             parts.append(item["tree_part"])
     contributed = {i["tree_part"] for i in contributions
                    if i["tree_part"]}
+    # Provenance for structure: a recorded part's structure comes
+    # from the commissioning event; a part known only from a
+    # contribution, from the first contribution naming it.
+    commission_seq = None
+    for ev in events:
+        if ev["type"] == "RUN_COMMISSIONED":
+            commission_seq = ev["event_seq"]
+    first_named = {}
+    for item in contributions:
+        if item["tree_part"] and \
+                item["tree_part"] not in first_named:
+            first_named[item["tree_part"]] = item["event_seq"]
     tree_view = []
     for part in parts:
         pause = state["paused"].get(part)
@@ -119,7 +153,9 @@ def render_view(events, seat_id, state=None):
         else:
             part_state = "open"
         entry = {"part": part, "state": part_state,
-                 "downstream": list(tree.get(part, []))}
+                 "downstream": list(tree.get(part, [])),
+                 "event_seq": commission_seq if part in tree
+                 else first_named.get(part, commission_seq)}
         if pause is not None:
             entry["paused_at_seq"] = pause["source_seq"]
             entry["paused_by_joint"] = pause.get("source_joint")
@@ -134,6 +170,7 @@ def render_view(events, seat_id, state=None):
         d = state["disagreements"].get(did, {})
         disagreements.append({
             "disagreement_id": did, "status": d.get("status"),
+            "status_seq": d.get("status_seq"),
             "claim_id": d.get("claim_id"), "by": ev["actor"],
             "event_seq": ev["event_seq"],
         })
@@ -168,18 +205,26 @@ def render_view(events, seat_id, state=None):
         "seat": seat_id, "role": role, "spans_run": spans,
         "position": state["head_seq"],  # the view's record position
         "lifecycle": state["lifecycle"],
+        "lifecycle_seq": state.get("lifecycle_seq"),
         "tree": tree_view,
         "contributions": contributions,
         "job_comments": job_comments,
+        "unattached_comments": unattached_comments,
         "disagreements": disagreements,
         "gates": gates,
         "sealed": sealed,
         "current_state": {
-            "claims": {cid: c["status"]
+            "claims": {cid: {"status": c["status"],
+                             "event_seq": c.get("status_seq")}
                        for cid, c in state["claims"].items()},
-            "paused": {part: info.get("source_joint")
+            "paused": {part: {"joint": info.get("source_joint"),
+                              "event_seq": info.get("source_seq")}
                        for part, info in state["paused"].items()},
-            "certifications": len(state["certifications"]),
+            "certifications": {
+                "count": len(state["certifications"]),
+                "event_seqs": [c["event_seq"]
+                               for c in state["certifications"]],
+            },
         },
     }
 
