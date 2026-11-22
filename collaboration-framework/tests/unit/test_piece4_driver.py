@@ -305,6 +305,11 @@ check("a second CASE_CORRECTED cannot rewrite an issued version: "
       r["woke"] is True and
       model_a.calls[-1]["case_version"] == 7 and
       model_a.calls[-1]["case"]["assignment"] == "Draft A, final")
+ver7 = fold(store.all_events())["cases"]["case-a"]["versions"]["7"]
+check("the replayed fold preserves version 7's content AND its "
+      "semantic classification against the flip attempt",
+      ver7["content"]["assignment"] == "Draft A, final" and
+      ver7["representational"] is False)
 A(tok["orch-1"], "CASE_VERIFIED", {"case_id": "case-a", "version": 8})
 A(tok["orch-1"], "CASE_CORRECTED",
   dict(CASE_A, version=8, assignment="Draft A, v8",
