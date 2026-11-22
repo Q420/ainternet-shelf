@@ -50,6 +50,32 @@ If any field cannot be grounded from those sources, generation fails verificatio
 
 **C. The first-content rule, explicit.** A version's content is established by its **earliest content-carrying act** and never replaced: for version 1, CASE_VERIFIED carries the full content (the fold gains content-on-verified-if-none, mirroring the rule Piece 4 set for CASE_ISSUED); for a corrected version, its CASE_CORRECTED (already first-wins since Piece 4 round 2). A later CASE_VERIFIED or CASE_ISSUED for the same version never replaces the established content. The suite tests this, including a duplicate verification carrying different content.
 
+## Addendum 2 — the last two boundaries, and the fold amendments they ride with (2026-11-22)
+
+On her scoping follow-up (filed `VANE-PIECE5-SCOPING-FOLLOWUP-2026-11-22.md`) and her system-level examination (`VANE-SYSTEM-EXAMINATION-2026-11-22.md`):
+
+**D. Preflight before append.** The office's sequence is fixed: generate the draft in memory → validate it fully (every field grounded per Addendum B, part in the recorded tree, seat commissioned, R14 complete, internally consistent) → compute the classification → **only then** append events, in the required order (v1: CASE_VERIFIED carrying the content; correction: CASE_CORRECTED → CASE_VERIFIED). A failed preflight appends **nothing** — no CASE_CORRECTED, no CASE_VERIFIED. A draft is examined before it is an act.
+
+**E. Classification enforcement — owned by the doorway.** The office computes the six-field classification and submits it; the **doorway guarantees it**. On any CASE_CORRECTED submission the doorway recomputes the diff between the case's established current content (the highest established version's content) and the submitted corrected content, over the six fields. If the payload's `representational` value disagrees with the recomputed classification — or the submission names a version other than the established version + 1 — the act is refused, the refusal recorded as a REJECTION, and the event is not appended. The fold thereafter trusts a classification the doorway has verified, never a caller's assertion.
+
+**F. Fold amendments riding with this piece** (from her system examination, points C and D):
+- **Exact issuance order.** `version_issued` requires the full chain in order — correction (where applicable) < verification < examiner act (judgement or notification) < authorisation. A judgement or notification recorded before verification cannot issue the version.
+- **First verification stands.** The first CASE_VERIFIED for a version establishes both its content (v1) and its verification position; a later CASE_VERIFIED replaces neither. (Authorisation re-issue, as settled in Piece 4 round 1, is unaffected.)
+
+**G. Piece 5 acceptance tests (explicit).**
+1. Invalid initial case → preflight fails, **zero** case events in the record.
+2. Invalid correction → neither CASE_CORRECTED nor CASE_VERIFIED appended.
+3. Duplicate verification carrying different content → established content and verification position unchanged on replay.
+4. Late judgement (CASE_JUDGED before CASE_VERIFIED) → the version never issues on those acts.
+5. Late notification (CASE_NOTIFIED before CASE_VERIFIED) → same, representational route.
+6. Forged classification → a CASE_CORRECTED whose `representational` disagrees with the doorway's recomputed six-field diff is refused and recorded as a REJECTION; the event is not in the record.
+7. Field-by-field → changing each of the six fields alone classifies semantic; the notification route cannot issue any of them.
+8. Wrong seat → a case for an uncommissioned seat fails preflight.
+9. Wrong tree part → a brief naming a part absent from the recorded tree fails preflight.
+10. Incomplete R14 → a commission brief missing a required field fails preflight; nothing is issued.
+11. Version transition → an issued correction still requires the seat's acknowledgement before work resumes (Piece 4 regression).
+12. Replay consistency → folding the same history twice yields identical case content, classification, and issuance state.
+
 ## Out of scope for Piece 5
 
 Onboarding (§3.6, Piece 6's neighbour), gates (§3.7), orchestrator functions beyond the office (§3.8), the observer (§3.9). The §7 "two live seats" acceptance still awaits a provider adapter. Stage 4's mechanisation of briefcase-building is out of scope per §1 — this piece is the core form §3.5 specifies.
