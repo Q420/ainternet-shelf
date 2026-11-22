@@ -1,0 +1,203 @@
+"""The bubble — SPEC SHEET §3.3 (new).
+
+The shared working surface: a view over the record, writable only
+through recorded acts.
+
+- R8. The bubble renders, per run: the process tree with each
+  part's state; contributions in order; comments attached to the
+  contribution they answer; disagreements with their status; gate
+  outcomes at their joints; the run's current recorded state. It
+  renders nothing that is not in the record — every rendered
+  element carries the event_seq it comes from, so that is
+  mechanically checkable.
+- R9. A seat's view is scoped to its evidence boundary; the
+  examiner's and orchestrator's views span the run. (The director
+  is not named in R9 and is scoped like crew here; the director's
+  run-wide surface is the observer, §3.9/R27 — a separate piece.)
+  A scoped view omits out-of-boundary sealed material entirely:
+  no placeholder, no count, nothing that discloses it exists.
+- R10. Conversation exists only as comments on contributions (or
+  on the job itself). The bubble's one writable act is a comment,
+  routed through the doorway; the bubble holds no other write
+  path, and its comment path refuses a comment naming no subject.
+
+The render is a pure function of the record: same events, same
+view, for any caller.
+"""
+from .record import fold
+
+SPAN_ROLES = {"examiner", "orchestrator"}  # R9
+
+
+class BubbleRefusal(Exception):
+    def __init__(self, ground):
+        super().__init__(ground)
+        self.ground = ground
+
+
+def _comment_subject(payload, contributions, run_id):
+    """Where a recorded comment attaches (R8/R10): the contribution
+    it names, else the job. A comment naming neither is rendered
+    under the job with its provenance — visible, never re-homed to
+    a contribution it did not name."""
+    subject = payload.get("contribution_id") or \
+        payload.get("subject_id")
+    if subject in contributions:
+        return subject
+    return None  # the job
+
+
+def render_view(events, seat_id, state=None):
+    """The seat's bubble view of the run the events record."""
+    if state is None:
+        state = fold(events)
+    run_id = state["run_id"]
+    binding = state["seats"].get(seat_id)
+    role = binding["role"] if binding else None
+    spans = role in SPAN_ROLES
+
+    by_seq = {ev["event_seq"]: ev for ev in events}
+
+    # --- contributions in order, with their comments attached (R8)
+    contributions = []
+    contrib_by_id = {}
+    for ev in events:
+        if ev["type"] != "CONTRIBUTION":
+            continue
+        p = ev["payload"]
+        cid = p.get("contribution_id", ev["event_id"])
+        claim = None
+        if p.get("claim_id"):
+            c = state["claims"].get(p["claim_id"], {})
+            claim = {"claim_id": p["claim_id"],
+                     "status": c.get("status")}
+        item = {
+            "contribution_id": cid, "author": ev["actor"],
+            "tree_part": p.get("tree_part"), "claim": claim,
+            "event_seq": ev["event_seq"], "comments": [],
+        }
+        if p.get("text") is not None:
+            item["text"] = p["text"]
+        contributions.append(item)
+        contrib_by_id[cid] = item
+
+    job_comments = []
+    for ev in events:
+        if ev["type"] != "COMMENT":
+            continue
+        p = ev["payload"]
+        comment = {"author": ev["actor"], "event_seq": ev["event_seq"]}
+        if p.get("text") is not None:
+            comment["text"] = p["text"]
+        if p.get("stale_basis"):
+            comment["stale_basis"] = True
+        target = _comment_subject(p, contrib_by_id, run_id)
+        if target is None:
+            job_comments.append(comment)
+        else:
+            contrib_by_id[target]["comments"].append(comment)
+
+    # --- the tree, each part with its recorded state (R8)
+    tree = state.get("tree") or {}
+    parts = list(tree)
+    for downstream in tree.values():
+        for part in downstream:
+            if part not in parts:
+                parts.append(part)
+    for item in contributions:
+        if item["tree_part"] and item["tree_part"] not in parts:
+            parts.append(item["tree_part"])
+    contributed = {i["tree_part"] for i in contributions
+                   if i["tree_part"]}
+    tree_view = []
+    for part in parts:
+        pause = state["paused"].get(part)
+        if pause is not None:
+            part_state = "paused"
+        elif part in contributed:
+            part_state = "contributed"
+        else:
+            part_state = "open"
+        entry = {"part": part, "state": part_state,
+                 "downstream": list(tree.get(part, []))}
+        if pause is not None:
+            entry["paused_at_seq"] = pause["source_seq"]
+            entry["paused_by_joint"] = pause.get("source_joint")
+        tree_view.append(entry)
+
+    # --- disagreements with their status; gates at their joints (R8)
+    disagreements = []
+    for ev in events:
+        if ev["type"] != "DISAGREEMENT":
+            continue
+        did = ev["payload"].get("disagreement_id", ev["event_id"])
+        d = state["disagreements"].get(did, {})
+        disagreements.append({
+            "disagreement_id": did, "status": d.get("status"),
+            "claim_id": d.get("claim_id"), "by": ev["actor"],
+            "event_seq": ev["event_seq"],
+        })
+    gates = []
+    for ev in events:
+        if ev["type"] != "GATE_OUTCOME":
+            continue
+        gates.append({
+            "joint": ev["payload"].get("joint"),
+            "outcome": ev["payload"].get("outcome"),
+            "by": ev["actor"], "event_seq": ev["event_seq"],
+        })
+
+    # --- sealed material, scoped to the seat's boundary (R9)
+    sealed = []
+    for ev in events:
+        if ev["type"] != "MATERIAL_SEALED":
+            continue
+        boundary = state["sealed"].get(ev["payload"]["material_id"],
+                                       [])
+        if spans or seat_id in boundary:
+            sealed.append({
+                "material_id": ev["payload"]["material_id"],
+                "boundary": list(boundary),
+                "event_seq": ev["event_seq"],
+            })
+        # Out of boundary: omitted entirely — no placeholder, no
+        # count, nothing that discloses it exists (R9).
+
+    return {
+        "run_id": run_id,
+        "seat": seat_id, "role": role, "spans_run": spans,
+        "position": state["head_seq"],  # the view's record position
+        "lifecycle": state["lifecycle"],
+        "tree": tree_view,
+        "contributions": contributions,
+        "job_comments": job_comments,
+        "disagreements": disagreements,
+        "gates": gates,
+        "sealed": sealed,
+        "current_state": {
+            "claims": {cid: c["status"]
+                       for cid, c in state["claims"].items()},
+            "paused": {part: info.get("source_joint")
+                       for part, info in state["paused"].items()},
+            "certifications": len(state["certifications"]),
+        },
+    }
+
+
+def post_comment(doorway, token, view_position, text,
+                 contribution_id=None, on_job=False):
+    """The bubble's one writable act (R10): a comment on a
+    contribution, or on the job itself — through the doorway, at
+    the position of the view it was made from (R31). A comment
+    naming no subject is refused here, before the doorway."""
+    if not on_job and not contribution_id:
+        raise BubbleRefusal(
+            "a comment names the contribution it answers, or the "
+            "job itself (R10)")
+    payload = {"text": text}
+    if contribution_id:
+        payload["contribution_id"] = contribution_id
+    if on_job:
+        payload["on_job"] = True
+    return doorway.act(token, "COMMENT", payload,
+                       view_seq=view_position)

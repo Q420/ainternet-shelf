@@ -325,8 +325,9 @@ A(d4, t4["orch-1"], "CASE_ISSUED",
 view_before = s4.head_seq()
 A(d4, t4["orch-1"], "CASE_CORRECTED",
   {"case_id": "case-1", "version": 2, "seat": "crew-a"})
-g = refused(lambda: d4.act(t4["crew-a"], "COMMENT",
-                           {"case_id": "case-1", "text": "on the case"},
+g = refused(lambda: d4.act(t4["orch-1"], "CASE_CORRECTED",
+                           {"case_id": "case-1", "version": 3,
+                            "seat": "crew-a"},
                            view_seq=view_before))
 check("an act on a case changed since its view is refused (R31)",
       g is not None and "R31" in g, g or "")
@@ -335,8 +336,9 @@ A(d4, t4["crew-a"], "CONTRIBUTION",
 view_before = s4.head_seq()
 A(d4, t4["crew-b"], "CONTRIBUTION",
   {"contribution_id": "cz2", "tree_part": "part-Z"})
-g = refused(lambda: d4.act(t4["crew-a"], "COMMENT",
-                           {"tree_part": "part-Z", "text": "on the part"},
+g = refused(lambda: d4.act(t4["crew-a"], "CONTRIBUTION",
+                           {"contribution_id": "cz3",
+                            "tree_part": "part-Z"},
                            view_seq=view_before))
 check("an act on a tree part changed since its view is refused (R31)",
       g is not None and "R31" in g, g or "")
@@ -384,8 +386,10 @@ check("a pause recorded without its joint is refused (R30)",
 view_q = s5.head_seq()
 A(d5, t5["exam-1"], "GATE_OUTCOME",
   {"joint": "j-nine", "outcome": "escalate", "tree_part": "part-Q"})
-g = refused(lambda: d5.act(t5["crew-a"], "COMMENT",
-                           {"subject_id": "part-Q", "text": "about Q"},
+g = refused(lambda: d5.act(t5["crew-a"], "CONTRIBUTION",
+                           {"contribution_id": "cq",
+                            "subject_id": "part-Q",
+                            "tree_part": "part-B"},
                            view_seq=view_q))
 check("an act on a subject touched only via a recorded paused set "
       "is refused (R31)", g is not None and "R31" in g, g or "")

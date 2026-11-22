@@ -145,6 +145,22 @@ class Doorway:
                          f"{role} may not record {type_} "
                          "(authority matrix, §4)", view_seq)
 
+        # R10 (Piece 3 amendment, on the examiner's recommendation):
+        # a comment identifies its subject — a contribution standing
+        # in the record, or the job itself. Anything else is refused
+        # and recorded. Validation kept narrow to R10's subject
+        # requirement.
+        if type_ == "COMMENT":
+            subject = payload.get("contribution_id") or \
+                payload.get("subject_id")
+            if not (payload.get("on_job") is True
+                    or subject == state["run_id"]
+                    or subject in state["contributions"]):
+                self._refuse(seat_id, type_,
+                             "a comment names the contribution it "
+                             "answers, or the job itself (R10)",
+                             view_seq)
+
         # R2: claim-status transitions carry their own authority.
         if type_ == "CLAIM_STATUS":
             ok, ground = validate_status_transition(
