@@ -38,6 +38,12 @@ Vane's re-examination at c667535d (`VANE-PIECE3-REEXAMINATION-2026-11-22.md`) le
 
 Piece 3 suite now **39 checks, ALL PASS**; Piece 2's suite still **73, ALL PASS**.
 
+## Correction round 3 (2026-11-22) — downstream-only parts keep commissioning structure provenance
+
+Vane's re-examination at d9a345c6 (`VANE-PIECE3-ROUND2-EXAMINATION-2026-11-22.md`) found one edge case: structure provenance was selected by `part in tree` — key membership only — so a commissioned part appearing solely in a parent's downstream list would take its structure provenance from a later contribution. Fixed: commissioned-tree membership is keys ∪ downstream entries; the first contribution supplies structure provenance only for a part introduced solely through a contribution. The fixture now commissions such a part (part-D, downstream of part-A, never a key), contributes to it, and asserts both provenances independently.
+
+Piece 3 suite now **41 checks, ALL PASS**; Piece 2's suite still **73, ALL PASS**.
+
 ## Not in this piece
 
 Live seat drivers (§3.4), office + cases (§3.5), onboarding (§3.6), gates as a mechanism (§3.7), the observer surface (§3.9). The §7 item "two live seats hold a job in the bubble…" is an end-to-end Stage 2 acceptance spanning the drivers piece, not this piece alone.

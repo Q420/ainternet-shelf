@@ -37,7 +37,8 @@ store = FrameworkStore(path)
 store.insert_run("run-1", CONSTITUTION_HASH)
 store.append("RUN_COMMISSIONED", "dir-1", [], {
     "run_id": "run-1",
-    "tree": {"part-A": ["part-A1"], "part-A1": [], "part-B": []},
+    "tree": {"part-A": ["part-A1", "part-D"], "part-A1": [],
+             "part-B": []},
     "seats": {
         "crew-a": {"role": "crew", "identity_status": "declared"},
         "crew-b": {"role": "crew", "identity_status": "declared"},
@@ -81,7 +82,7 @@ check("view position is the record head",
       view["position"] == store.head_seq())
 parts = {p["part"]: p for p in view["tree"]}
 check("tree renders every recorded part",
-      set(parts) == {"part-A", "part-A1", "part-B"})
+      set(parts) == {"part-A", "part-A1", "part-B", "part-D"})
 check("a contributed part renders contributed",
       parts["part-A"]["state"] == "contributed")
 check("a paused part renders paused, naming its joint",
@@ -276,6 +277,23 @@ check("lifecycle provenance follows the event establishing the "
       "current lifecycle value",
       view4["lifecycle"] == "completion_claimed" and
       view4["lifecycle_seq"] == comp_ev["event_seq"])
+
+# R8 (round 3): a downstream-only commissioned part (part-D is in
+# part-A's downstream list but is not a tree key) keeps commissioning
+# structure provenance even after a contribution names it; its state
+# provenance is that contribution.
+c3_ev = A(tok["crew-b"], "CONTRIBUTION",
+          {"contribution_id": "c3", "tree_part": "part-D",
+           "text": "D drafted"})
+view5 = render_view(store.all_events(), "crew-a")
+part_d = next(p for p in view5["tree"] if p["part"] == "part-D")
+check("a downstream-only part's structure provenance is the "
+      "commissioning event",
+      part_d["event_seq"] == commission_seq)
+check("its contributed state provenance is the contribution event, "
+      "independently", part_d["state"] == "contributed" and
+      part_d["state_event_seq"] == c3_ev["event_seq"] and
+      c3_ev["event_seq"] != commission_seq)
 
 print()
 if FAILURES:

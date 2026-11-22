@@ -143,6 +143,12 @@ def render_view(events, seat_id):
         if item["tree_part"] and \
                 item["tree_part"] not in first_named:
             first_named[item["tree_part"]] = item["event_seq"]
+    # Commissioned-tree membership means keys AND downstream
+    # entries: a downstream-only part is still established by the
+    # commissioning event (round 3 edge case).
+    tree_parts = set(tree)
+    for downstream in tree.values():
+        tree_parts.update(downstream)
     tree_view = []
     for part in parts:
         pause = state["paused"].get(part)
@@ -164,7 +170,7 @@ def render_view(events, seat_id):
             state_seq = commission_seq
         entry = {"part": part, "state": part_state,
                  "downstream": list(tree.get(part, [])),
-                 "event_seq": commission_seq if part in tree
+                 "event_seq": commission_seq if part in tree_parts
                  else first_named.get(part, commission_seq),
                  "state_event_seq": state_seq}
         if pause is not None:
