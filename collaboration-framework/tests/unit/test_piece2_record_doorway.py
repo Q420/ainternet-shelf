@@ -465,6 +465,30 @@ g = refused(lambda: A(d7, t7["crew-a"], "CONTRIBUTION",
                       {"contribution_id": "cl", "tree_part": "leaf-1"}))
 check("the leaf part is blocked once paused (R30)", g is not None)
 
+# --------------------------------------- correction round 6 (Vane)
+# A pause-less escalation records normally whether or not a tree is
+# present (round 4 established it with no tree; the tree branch must
+# not refuse it). A pause-bearing act under a tree still requires
+# the named, validated part. (d7/s7 carry a recorded tree; leaf-1
+# stands paused from round 5.)
+n_esc = len(d7.state()["escalations"])
+A(d7, t7["crew-a"], "ESCALATION",
+  {"joint": "j-q", "note": "a question, pausing nothing"})
+check("a pause-less escalation records normally with a tree "
+      "present (R30)", len(d7.state()["escalations"]) == n_esc + 1)
+check("the pause-less escalation paused nothing new",
+      set(d7.state()["paused"]) == {"leaf-1"})
+A(d7, t7["exam-1"], "GATE_OUTCOME",
+  {"joint": "j-q", "outcome": "escalate"})
+check("an escalate outcome pausing nothing records with a tree "
+      "present (R30)", set(d7.state()["paused"]) == {"leaf-1"})
+g = refused(lambda: A(d7, t7["exam-1"], "GATE_OUTCOME",
+                      {"joint": "j-q", "outcome": "escalate",
+                       "paused_set": ["root-1"]}))
+check("a pause-bearing act under a tree still requires the named "
+      "part (R30)", g is not None and "names the affected" in g,
+      g or "")
+
 # ------------------------------------------------------------ R4: replay
 events = store.all_events()
 check("hash chain verifies", verify_chain(events))

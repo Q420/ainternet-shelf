@@ -17,7 +17,7 @@
 
 ## Verification (2026-11-22, against the built tree)
 
-- `tests/unit/test_piece2_record_doorway.py` — the suite as first built ran 32 checks, ALL PASS (status authority, matrix refusals, unbound tokens, boundary reads, pause blocking, staleness, replay equality, timestamps). **It has since grown by correction rounds — 43 checks after round 1, 52 after round 2, 60 after round 3, 65 after round 4, 69 after round 5, ALL PASS at each stage**; each round's section below names what its checks cover. The current count is the one that describes the implementation as it now stands.
+- `tests/unit/test_piece2_record_doorway.py` — the suite as first built ran 32 checks, ALL PASS (status authority, matrix refusals, unbound tokens, boundary reads, pause blocking, staleness, replay equality, timestamps). **It has since grown by correction rounds — 43 checks after round 1, 52 after round 2, 60 after round 3, 65 after round 4, 69 after round 5, 73 after round 6, ALL PASS at each stage**; each round's section below names what its checks cover. The current count is the one that describes the implementation as it now stands.
 - Regression (re-run at every round): carried fabric byte-identical to the pin (blob hashes re-compared); the prototype Stage 1 smoke and observer export-safety suites ALL PASS against the tree.
 
 ## Not in this piece
@@ -73,3 +73,11 @@ Vane examined round 4 at 40562cb5 (pb-mwseuxum, `VANE-PIECE2-ROUND4-EXAMINATION-
 **The correction:** before computing, the doorway establishes the root from the tree — the part must appear in the recorded tree, as a key or as a recorded downstream of another part (a leaf established only as a downstream still counts; it is the tree that establishes it). A pause naming a part the tree does not contain is refused and the refusal recorded; no paused state is established.
 
 Re-verification: the piece suite now runs **69 checks, ALL PASS** (four new: ghost part refused with the ground naming the tree; no paused state established; downstream-only leaf pauses with computed set itself; the leaf is then blocked). Carried fabric re-verified byte-identical; prototype smoke and observer export-safety suites still ALL PASS. ADR-002's pin untouched throughout.
+
+## Correction round 6 (2026-11-22, on Vane's round-5 examination)
+
+Vane examined round 5 at edde0091 (pb-mwsexis0, `VANE-PIECE2-ROUND5-EXAMINATION-2026-11-22.md`): the root validation is accepted; **one R30 interaction issue remained** — the tree-present branch refused whenever no root was named, including an escalation that requests no pause at all. Round 4 had established that a pause-less escalation records normally, but only exercised it with no tree recorded. Verified against the source: correct — the refusal was unconditional in the tree branch.
+
+**The correction:** the doorway now distinguishes a pause-bearing act from one that pauses nothing. When a tree stands recorded and the act names neither a tree part nor a supplied set, it records normally and pauses nothing; when a pause is requested, the named part is required and validated against the tree exactly as round 5 established. R30 governs pauses; it does not require every escalation to invent one.
+
+Re-verification: the piece suite now runs **73 checks, ALL PASS** (four new, all on a tree-carrying record: a pause-less escalation records and pauses nothing new; an escalate outcome pausing nothing records; a pause-bearing act without the named part is still refused). Carried fabric re-verified byte-identical; prototype smoke and observer export-safety suites still ALL PASS. ADR-002's pin untouched throughout.

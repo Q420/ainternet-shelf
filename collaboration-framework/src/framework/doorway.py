@@ -221,6 +221,12 @@ class Doorway:
                                  "the paused set cannot be computed "
                                  "from it; a caller-supplied set is "
                                  "not a substitute (R30)", view_seq)
+            elif root is None and payload.get("paused_set") is None:
+                # A pause-less act (an escalation raising a question,
+                # pausing nothing) records normally, tree or no tree
+                # — R30 governs pauses, and none is requested here
+                # (correction round 6).
+                pass
             else:
                 if root is None:
                     self._refuse(seat_id, type_,
