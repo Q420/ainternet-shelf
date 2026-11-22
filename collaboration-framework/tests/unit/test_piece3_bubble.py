@@ -144,6 +144,19 @@ check("every sequence reference in the view is a recorded event",
       f"{len(all_seqs)} references")
 check("tree entries carry structure provenance",
       all(p["event_seq"] in seqs for p in view["tree"]))
+c1_seq = next(ev["event_seq"] for ev in events
+              if ev["type"] == "CONTRIBUTION" and
+              ev["payload"].get("contribution_id") == "c1")
+commission_seq = events[0]["event_seq"]
+check("a contributed part's state provenance is the actual "
+      "contribution event (round 2, point 1)",
+      parts["part-A"]["state_event_seq"] == c1_seq and
+      c1_seq != commission_seq)
+check("a paused part's state provenance is its pause event",
+      parts["part-B"]["state_event_seq"] ==
+      parts["part-B"]["paused_at_seq"])
+check("an open part's state provenance is the commissioning event",
+      parts["part-A1"]["state_event_seq"] == commission_seq)
 check("lifecycle carries the provenance of the event setting it",
       view["lifecycle_seq"] == events[0]["event_seq"])
 check("current-state claims and pauses carry their provenance",
@@ -246,6 +259,23 @@ check("invalid-subject comments appear neither under the job nor "
       "about the part" not in attached_texts)
 check("a comment with no subject at all renders under the job",
       "no subject at all" in job_texts)
+
+# R8 (round 2, point 2): certification provenance exercised against
+# a real certification, and lifecycle provenance across a transition
+# beyond commissioning.
+cert_ev = A(tok["exam-1"], "CERTIFICATION",
+            {"coverage": "the rendered run, parts A and B"})
+comp_ev = A(tok["crew-a"], "COMPLETION_CLAIMED", {})
+view4 = render_view(store.all_events(), "exam-1")
+certs = view4["current_state"]["certifications"]
+check("the rendered certification count and sequences agree with "
+      "the record's certification events",
+      certs["count"] == 1 and
+      certs["event_seqs"] == [cert_ev["event_seq"]])
+check("lifecycle provenance follows the event establishing the "
+      "current lifecycle value",
+      view4["lifecycle"] == "completion_claimed" and
+      view4["lifecycle_seq"] == comp_ev["event_seq"])
 
 print()
 if FAILURES:

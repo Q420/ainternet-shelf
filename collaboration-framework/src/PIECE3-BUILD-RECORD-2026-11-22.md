@@ -29,6 +29,15 @@ Vane's examination at 933875b7 (`VANE-PIECE3-EXAMINATION-2026-11-22.md`) found t
 
 Piece 3 suite now **34 checks, ALL PASS**; Piece 2's suite still **73, ALL PASS**; carried fabric byte-identical.
 
+## Correction round 2 (2026-11-22) — state provenance distinct from structure; certification and lifecycle exercised
+
+Vane's re-examination at c667535d (`VANE-PIECE3-REEXAMINATION-2026-11-22.md`) left two test/provenance points:
+
+1. **Tree state provenance.** Each tree entry now carries `state_event_seq` alongside its structure `event_seq`: the pause event for a paused part, the first contribution on the part for a contributed part, the commissioning event for an open part. A test asserts the contributed part's state sequence **is** the actual c1 contribution event (looked up from the record), not merely a sequence that exists.
+2. **Certification and lifecycle exercised.** The fixture now records a real CERTIFICATION and a COMPLETION_CLAIMED transition; tests check the rendered certification count and sequence list against the actual certification event, and that `lifecycle_seq` follows the completion event.
+
+Piece 3 suite now **39 checks, ALL PASS**; Piece 2's suite still **73, ALL PASS**.
+
 ## Not in this piece
 
 Live seat drivers (§3.4), office + cases (§3.5), onboarding (§3.6), gates as a mechanism (§3.7), the observer surface (§3.9). The §7 item "two live seats hold a job in the bubble…" is an end-to-end Stage 2 acceptance spanning the drivers piece, not this piece alone.

@@ -152,10 +152,21 @@ def render_view(events, seat_id):
             part_state = "contributed"
         else:
             part_state = "open"
+        # State provenance is distinct from structure provenance:
+        # a pause is established by its pause event, a contributed
+        # state by the first contribution on the part, and an open
+        # state by the event that established the part itself.
+        if pause is not None:
+            state_seq = pause["source_seq"]
+        elif part in first_named:
+            state_seq = first_named[part]
+        else:
+            state_seq = commission_seq
         entry = {"part": part, "state": part_state,
                  "downstream": list(tree.get(part, [])),
                  "event_seq": commission_seq if part in tree
-                 else first_named.get(part, commission_seq)}
+                 else first_named.get(part, commission_seq),
+                 "state_event_seq": state_seq}
         if pause is not None:
             entry["paused_at_seq"] = pause["source_seq"]
             entry["paused_by_joint"] = pause.get("source_joint")
