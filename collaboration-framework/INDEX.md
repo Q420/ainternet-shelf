@@ -32,6 +32,7 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 22. `VANE-PAIR-CONFIRMATION-2026-11-21.md` — Vane's final confirmation: the pair has her support and stands for Ben's design ruling.
 23. **⭐ BEN'S DESIGN RULING (2026-11-21 12:12 MST): "Approved :)" — COLLABORATION Rev 5 + SPEC SHEET Rev 5 are the approved design. Plan Stage 2 (build the core) is open.**
 24. `docs/decisions/ADR-002-substrate-pin.md` — the substrate pin recorded before code (SPEC SHEET §8): the accepted prototype at shelf commit 87c9ec08, preserving ee235533 and ca2a8c16.
+25. INDEX corrections (2026-11-22, at Ben's tap): the structure note now names SPEC SHEET Revision 5 and the open Stage 2; `VANE-CANONICAL-FILING-ACCEPTANCE-2026-11-21.md` (item 16) filed into this folder from `duenna-fix/` (original left in place).
 
 ## Working rules (Ben, 2026-11-21)
 
@@ -41,7 +42,7 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 
 ## Structure (created 2026-11-21, shelf commit 916b3153)
 
-The template layout stands inside this folder: `docs/` (vision.md; requirements/ — the SPEC SHEET lives here, current Revision 4; architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Empty directories hold placeholders until the build opens at plan Stage 2.
+The template layout stands inside this folder: `docs/` (vision.md; requirements/ — the SPEC SHEET lives here, current Revision 5 (approved 2026-11-21); architecture/, api/, decisions/ — ADR-001 records the substrate decision), `src/` (frontend / backend / shared), `tests/` (unit / integration / e2e / fixtures), `scripts/`, `infra/`, `.github/workflows/`, plus README.md, CONTRIBUTING.md, and .env.example. Plan Stage 2 (build the core) opened with Ben's design ruling of 2026-11-21; directories not yet built into still hold placeholders. The first build piece is the substrate carry-in at the ADR-002 pin (shelf commit 87c9ec08).
 
 ## Filing note
 
