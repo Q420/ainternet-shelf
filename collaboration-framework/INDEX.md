@@ -18,10 +18,10 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 8. `PLAN-REVIEW-COMPARISON-2026-11-21.md` — the two reviews compared; the six consistency corrections agreed.
 9. `COLLABORATION-PLAN-2026-11-21-REV3.md` — **Revision 3: the current plan. APPROVED by Ben ("Proceed", 2026-11-21 11:26 MST).**
 10. `DEVELOPMENT-TEMPLATE.md` + `TEMPLATE-ADOPTION.md` — Ben's supplied development template, filed verbatim, and its mapping onto the plan (time frames disregarded at Ben's direction).
-11. `COLLABORATION-REV1.md` / `COLLABORATION-REV2.md` — the design, Revisions 1–2 (preserved).
+11. `COLLABORATION.md` (Revision 1, filed unnumbered) / `COLLABORATION-REV2.md` — the design, Revisions 1–2 (preserved).
 12. `VANE-COLLABORATION-EXAMINATION-2026-11-21.md` + `VANE-COLLABORATION-EXAMINATION-FULL-2026-11-21.md` — Vane's design examinations.
 13. `COLLABORATION-REV3.md` — the design, Revision 3 (preserved).
-14. `docs/requirements/SPEC-SHEET-REV1.md` / `SPEC-SHEET-REV2.md` / `SPEC-SHEET-REV3.md` — the spec, Revisions 1–3 (preserved).
+14. `docs/requirements/SPEC-SHEET.md` (Revision 1, filed unnumbered) / `SPEC-SHEET-REV2.md` / `SPEC-SHEET-REV3.md` — the spec, Revisions 1–3 (preserved).
 15. `VANE-SPEC-SHEET-EXAMINATION-2026-11-21.md` + `VANE-SPEC-SHEET-REV2-VERDICT-2026-11-21.md` — Vane's spec examinations; the pair supported for Ben's ruling subject to one matrix correction (applied in Rev 3).
 16. `VANE-CANONICAL-FILING-ACCEPTANCE-2026-11-21.md` — Vane's acceptance of this folder as canonical.
 17. `OUTSIDE-REVIEW-2026-11-21.md` — an outside review of the design: sound spine, one structural concern (the examiner as a single point), seven construction seams; recommends a short targeted pass before ruling.
@@ -32,7 +32,7 @@ Ben, 2026-11-21: go to Vane; talk about what a collaborative framework should ha
 22. `VANE-PAIR-CONFIRMATION-2026-11-21.md` — Vane's final confirmation: the pair has her support and stands for Ben's design ruling.
 23. **⭐ BEN'S DESIGN RULING (2026-11-21 12:12 MST): "Approved :)" — COLLABORATION Rev 5 + SPEC SHEET Rev 5 are the approved design. Plan Stage 2 (build the core) is open.**
 24. `docs/decisions/ADR-002-substrate-pin.md` — the substrate pin recorded before code (SPEC SHEET §8): the accepted prototype at shelf commit 87c9ec08, preserving ee235533 and ca2a8c16.
-25. INDEX corrections (2026-11-22, at Ben's tap): the structure note now names SPEC SHEET Revision 5 and the open Stage 2; `VANE-CANONICAL-FILING-ACCEPTANCE-2026-11-21.md` (item 16) filed into this folder from `duenna-fix/` (original left in place).
+25. INDEX corrections (2026-11-22, at Ben's tap): the structure note now names SPEC SHEET Revision 5 and the open Stage 2; `VANE-CANONICAL-FILING-ACCEPTANCE-2026-11-21.md` (item 16) filed into this folder from `duenna-fix/` (original left in place). Same day, at Ben's direction ("make sure first"): items 11 and 14 corrected to the Revision 1 files as actually filed (unnumbered), verified by diff — the unnumbered COLLABORATION lacks exactly Rev 2's five clarifications, and the unnumbered SPEC SHEET lacks exactly Rev 2's six corrections.
 
 ## Working rules (Ben, 2026-11-21)
 
