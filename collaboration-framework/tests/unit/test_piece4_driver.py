@@ -292,6 +292,35 @@ check("a fresh acknowledgement after issuance satisfies R32",
       r["recorded"] and
       r["recorded"][0]["type"] == "CASE_ACKNOWLEDGED")
 
+# ------------- Round 2: an issued version's content is fixed
+A(tok["orch-1"], "CASE_CORRECTED",
+  dict(CASE_A, version=7, assignment="REWRITTEN after issuance",
+       representational=True))
+A(tok["crew-b"], "CONTRIBUTION",
+  {"contribution_id": "cb9", "tree_part": "part-A", "text": "wake A"})
+model_a.script = [[]]
+r = driver_a.wake_cycle()
+check("a second CASE_CORRECTED cannot rewrite an issued version: "
+      "the effective case is unchanged (round 2)",
+      r["woke"] is True and
+      model_a.calls[-1]["case_version"] == 7 and
+      model_a.calls[-1]["case"]["assignment"] == "Draft A, final")
+A(tok["orch-1"], "CASE_VERIFIED", {"case_id": "case-a", "version": 8})
+A(tok["orch-1"], "CASE_CORRECTED",
+  dict(CASE_A, version=8, assignment="Draft A, v8",
+       representational=False))
+A(tok["exam-1"], "CASE_JUDGED", {"case_id": "case-a", "version": 8})
+A(tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-a", "version": 8, "seat": "crew-a"})
+A(tok["crew-b"], "CONTRIBUTION",
+  {"contribution_id": "cb10", "tree_part": "part-A",
+   "text": "wake A again"})
+model_a.script = [[]]
+r = driver_a.wake_cycle()
+check("a correction recorded after its version's verification "
+      "does not issue (the correction precedes the route)",
+      r["woke"] is True and model_a.calls[-1]["case_version"] == 7)
+
 # ------------------------------------------- R13/R33: failures
 CASE_B = {"case_id": "case-b", "version": 1, "seat": "crew-b",
           "part": "part-B", "assignment": "Draft the B section",
@@ -317,7 +346,7 @@ check("the seat stands seat_stalled; no pause tree is created",
 check("no contribution was fabricated for the stalled seat",
       all(info["author"] != "crew-b" or
           cid in ("cb1", "cb2", "cb3", "cb4", "cb5", "cb5b", "cb6",
-                  "cb7")
+                  "cb7", "cb9", "cb10")
           for cid, info in state["contributions"].items()))
 r = driver_b.wake_cycle()
 check("a stalled seat is not woken again",

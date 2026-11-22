@@ -361,6 +361,7 @@ def apply_event(state: dict, ev: dict) -> dict:
         ver = entry["versions"].setdefault(str(p["version"]), {
             "verified": None, "judged": None, "notified": None,
             "issued": None, "content": None, "corrected": False,
+            "corrected_seq": None,
             "representational": False, "acknowledged": {},
         })
         if t == "CASE_ISSUED":
@@ -373,9 +374,18 @@ def apply_event(state: dict, ev: dict) -> dict:
                 ver["content"] = dict(p)
             entry["version"] = max(entry["version"], p["version"])
         elif t == "CASE_CORRECTED":
-            ver["corrected"] = True
-            ver["representational"] = bool(p.get("representational"))
-            ver["content"] = dict(p)
+            # A version's correction is established once, by its
+            # first CASE_CORRECTED (correction round 2): a second
+            # correction event for the same version stands in the
+            # history but never replaces the established content
+            # or classification. Once issued, the version is
+            # fixed; a change is a new version with its own route.
+            if not ver["corrected"]:
+                ver["corrected"] = True
+                ver["corrected_seq"] = ev["event_seq"]
+                ver["representational"] = bool(
+                    p.get("representational"))
+                ver["content"] = dict(p)
             entry["version"] = max(entry["version"], p["version"])
         elif t == "CASE_VERIFIED":
             ver["verified"] = ev["event_seq"]
@@ -463,9 +473,18 @@ def version_issued(ver, version) -> bool:
         return False
     if not ver["verified"] < ver["issued"]:
         return False
-    if ver.get("corrected") and ver.get("representational"):
-        return ver.get("notified") is not None and \
-            ver["notified"] < ver["issued"]
+    if ver.get("corrected"):
+        # The correction precedes the whole route (round 2): the
+        # acts that issue a version act on the content its
+        # correction established.
+        cseq = ver.get("corrected_seq")
+        if cseq is None or not cseq < ver["verified"]:
+            return False
+        if ver.get("representational"):
+            return ver.get("notified") is not None and \
+                cseq < ver["notified"] < ver["issued"]
+        return ver.get("judged") is not None and \
+            cseq < ver["judged"] < ver["issued"]
     return ver.get("judged") is not None and \
         ver["judged"] < ver["issued"]
 
