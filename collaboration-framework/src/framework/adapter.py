@@ -51,7 +51,15 @@ the driver's back.
   carrying no budget — identify() and the other
   pre-activation calls, made before any activation clock
   exists. A call that cannot begin within budget does not
-  begin. The adapter also times its own prompt rendering
+  begin. Where the caller also supplies the activation's
+  ABSOLUTE deadline — a monotonic instant propagated from
+  the framework (INDEX 222) — that point is the call's
+  deadline VERBATIM: the adapter enforces the framework's
+  one clock rather than reconstructing a deadline from the
+  sampled budget, so no interval between the framework's
+  sampling and the adapter's establishment can push the
+  cancellation boundary past the activation deadline. The
+  adapter also times its own prompt rendering
   (last_render_s) — timing evidence under INDEX 217/219;
   it governs nothing.
 - A5. `identify()` asks the model to state what it is and
@@ -196,23 +204,37 @@ class OpenAICompatibleAdapter:
         self.last_render_s = None
 
     # ----------------------------------------------------- deadline
-    def _begin_deadline(self, budget=None):
+    def _begin_deadline(self, budget=None, deadline=None):
         """Open the operation's TOTAL deadline (A6): one
         absolute point on a monotonic clock covering transport,
         response AND the adapter's own handling, through the
         final outcome. Begun by every public operation. The
-        span is settled by INDEX 219: a supplied activation
-        budget (Piece A3, R49/R51) governs EXCLUSIVELY — the
-        effective deadline is now + budget and the configured
-        timeout plays no part, so no shorter per-call span can
-        be reintroduced over a worker call; a call carrying no
-        budget (identify(), the pre-activation calls) keeps
-        the finite fence, now + the configured timeout."""
-        if budget is not None:
-            span = budget
+        point's authority is settled by INDEX 219 as corrected
+        by INDEX 222, in this order:
+
+        - A supplied ABSOLUTE deadline (a monotonic instant
+          propagated from the framework — the activation's own
+          deadline, doorway-derived) is used VERBATIM: no
+          now + anything. The adapter enforces the framework's
+          deadline; it does not reconstruct one, so the
+          transport cancellation boundary derived from this
+          point is the activation deadline itself, never that
+          point drifted forward by a sampling-to-establishment
+          interval.
+        - Otherwise a supplied activation budget (Piece A3,
+          R49/R51) governs EXCLUSIVELY — the effective deadline
+          is now + budget and the configured timeout plays no
+          part, so no shorter per-call span can be reintroduced
+          over a worker call.
+        - A call carrying neither (identify(), the
+          pre-activation calls) keeps the finite fence,
+          now + the configured timeout."""
+        if deadline is not None:
+            self._deadline = deadline
+        elif budget is not None:
+            self._deadline = time.monotonic() + budget
         else:
-            span = self.timeout
-        self._deadline = time.monotonic() + span
+            self._deadline = time.monotonic() + self.timeout
         return self._deadline
 
     def _check_deadline(self):
@@ -435,7 +457,7 @@ class OpenAICompatibleAdapter:
         return content, provider_model_id
 
     # --------------------------------------------------------- wake
-    def __call__(self, package, budget=None):
+    def __call__(self, package, budget=None, deadline=None):
         """One bounded call. budget (Piece A3, R49/R51) is the
         activation's remaining budget in seconds, supplied by
         the caller as a call parameter — it never enters the
@@ -443,7 +465,18 @@ class OpenAICompatibleAdapter:
         governed exclusively by that budget (INDEX 219): the
         remaining activation deadline is its one clock and
         the configured timeout plays no part. A call that
-        cannot begin within budget does not begin at all."""
+        cannot begin within budget does not begin at all.
+
+        deadline (INDEX 222) is the activation's ABSOLUTE
+        deadline — a monotonic instant propagated from the
+        framework alongside the budget. Where it is supplied
+        it is the call's deadline verbatim (see
+        _begin_deadline): the budget keeps its
+        response-acceptance role, but the cancellation
+        boundary follows the original point, not a
+        reconstruction from the sampled budget. A supplied
+        deadline already in the past refuses before any
+        provider call, exactly as an exhausted budget does."""
         if budget is not None:
             if isinstance(budget, bool) or \
                     not isinstance(budget, (int, float)):
@@ -456,7 +489,19 @@ class OpenAICompatibleAdapter:
                     detail="the activation deadline has "
                            "passed; the call cannot begin "
                            "within budget")
-        self._begin_deadline(budget)
+        if deadline is not None:
+            if isinstance(deadline, bool) or \
+                    not isinstance(deadline, (int, float)):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="the supplied deadline is not a "
+                           "number")
+            if deadline <= time.monotonic():
+                raise AdapterFailure(
+                    "no_response",
+                    detail="the activation deadline has "
+                           "passed; the call cannot begin")
+        self._begin_deadline(budget, deadline)
         self.last_render_s = None
         render_started = time.monotonic()
         prompt = _render_prompt(package)

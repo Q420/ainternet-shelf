@@ -718,6 +718,29 @@ class Doorway:
             return None, None
         return deadline - time.monotonic(), None
 
+    def activation_deadline(self, instance_id):
+        """(deadline, problem): the instance's activation
+        deadline as an ABSOLUTE monotonic instant — the
+        doorway's own anchor plus the pinned case's deadline
+        (INDEX 222). The value is the ORIGINAL deadline:
+        derived from the stored anchor at every read,
+        identical at every read, never re-sampled into a
+        duration and never re-based — so a caller that
+        propagates it (the loop, to its callable) propagates
+        the activation's one clock itself, not a
+        reconstruction of it that drifts by whatever time
+        passes between a sampling and an invocation.
+        deadline is None where the pinned case carries no
+        deadline regime; problem is set where the anchor
+        cannot be established."""
+        state = self.state()
+        _, entry = self._assembly_entry_of_instance(
+            state, instance_id)
+        if entry is None or entry.get("activated_seq") is None:
+            return None, ("the instance holds no standing "
+                          "activation")
+        return self._activation_deadline(state, entry)
+
     def _activation_stall(self, state, instance_id):
         """The stall standing against the instance's
         activation, or None (R50)."""

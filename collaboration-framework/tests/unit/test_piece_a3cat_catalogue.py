@@ -233,8 +233,9 @@ class Script:
         self.steps = list(steps)
         self.calls = []
 
-    def __call__(self, package, budget=None):
-        self.calls.append({"package": package, "budget": budget})
+    def __call__(self, package, budget=None, deadline=None):
+        self.calls.append({"package": package, "budget": budget,
+                           "deadline": deadline})
         step = self.steps.pop(0)
         if isinstance(step, Exception):
             raise step

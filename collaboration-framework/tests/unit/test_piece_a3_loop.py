@@ -52,7 +52,14 @@ there too. Round 2 also witnesses (T21) that a seat
 credential cannot assert instance provenance: a
 caller-supplied instance_id is stripped on the seat route,
 so provenance in the record is doorway-established or
-absent.
+absent. The INDEX 222 witness (T22) runs the activation
+under a controlled clock: the loop propagates the
+doorway's absolute deadline to the callable alongside the
+budget, and a known interval advanced between the loop's
+sampling and the adapter's invocation adds no drift — the
+adapter's established deadline, and the transport bound
+derived from it, equal the original activation deadline
+exactly.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a3_loop.py
 Exits 0 when every check passes.
@@ -237,14 +244,16 @@ def loop_check(store):
 class Script:
     """A scripted fake model: each step is a response dict, an
     exception to raise, or a function of the package. Every
-    call is captured with the budget it was handed."""
+    call is captured with the budget and the absolute
+    deadline it was handed."""
 
     def __init__(self, steps):
         self.steps = list(steps)
         self.calls = []
 
-    def __call__(self, package, budget=None):
-        self.calls.append({"package": package, "budget": budget})
+    def __call__(self, package, budget=None, deadline=None):
+        self.calls.append({"package": package, "budget": budget,
+                           "deadline": deadline})
         step = self.steps.pop(0)
         if isinstance(step, Exception):
             raise step
@@ -929,7 +938,7 @@ class TrivialModel:
     def __init__(self):
         self.n = 0
 
-    def __call__(self, package, budget=None):
+    def __call__(self, package, budget=None, deadline=None):
         self.n += 1
         if self.n == 1:
             return {"outcome": "tool_requests",
@@ -1244,9 +1253,9 @@ adapter._call = provider
 budgets = []
 
 
-def expiring_model(package, budget=None):
+def expiring_model(package, budget=None, deadline=None):
     budgets.append(budget)
-    return adapter(package, budget=budget)
+    return adapter(package, budget=budget, deadline=deadline)
 
 
 real_record = d.record_loop_iteration
@@ -1425,6 +1434,114 @@ check("T21: the pair route strips a supplied instance_id "
       "carries it",
       "instance_id" not in ev1["payload"] and
       "instance_id" not in ev2["payload"])
+
+# -- T22 (INDEX 222): the deadline the adapter enforces is
+# the activation's OWN absolute deadline, propagated from
+# the doorway — not a reconstruction from a sampled
+# duration. Under a controlled clock, a known interval is
+# advanced between the loop's sampling and the adapter's
+# invocation; the deadline the adapter establishes (and so
+# the transport bound derived from it — the transport reads
+# adapter._deadline as its one absolute point) must equal
+# the original activation deadline exactly, with no drift
+# added. Against the pre-correction behaviour — the adapter
+# establishing now + budget at invocation time — the
+# established point would stand at original + DRIFT and
+# this section fails.
+real_monotonic = time.monotonic
+clock = {"now": 10000.0}
+time.monotonic = lambda: clock["now"]
+try:
+    store, d, office, gen, tok = fresh(
+        bounds={"step_ceiling": 5, "deadline_seconds": 60})
+    r, itok = activate(store, d, office, gen, tok)
+    original, problem = d.activation_deadline(
+        r["instance_id"])
+    check("T22 (INDEX 222): the doorway exposes the "
+          "activation's absolute deadline — the anchor plus "
+          "the pinned deadline — identical at every read",
+          problem is None and original == 10060.0 and
+          d.activation_deadline(r["instance_id"])[0] == original)
+    handed = []
+    established = []
+    bounds_at_call = []
+    adapter = OpenAICompatibleAdapter(model="m", api_key="k",
+                                      timeout=5.0)
+
+    def provider(messages):
+        established.append(adapter._deadline)
+        # The transport's termination bound, derived exactly
+        # as the transport derives it: the established
+        # absolute point minus now.
+        bounds_at_call.append(
+            adapter._deadline - clock["now"])
+        return (json.dumps({"outcome": "yield",
+                            "summary": "standing"}), "m")
+
+    adapter._call = provider
+    DRIFT = 7.0
+
+    def drifting_model(package, budget=None, deadline=None):
+        handed.append({"budget": budget,
+                       "deadline": deadline})
+        # The sampling-to-invocation interval, made exact:
+        # the clock advances by DRIFT after the loop sampled
+        # its values and before the adapter establishes its
+        # deadline.
+        clock["now"] += DRIFT
+        return adapter(package, budget=budget,
+                       deadline=deadline)
+
+    res = Loop(d, itok, drifting_model).run()
+    check("T22 (INDEX 222): the loop hands the callable the "
+          "absolute deadline alongside the budget, both from "
+          "the one doorway derivation",
+          len(handed) == 1 and
+          handed[0]["deadline"] == original and
+          handed[0]["budget"] == 60.0)
+    check("T22 (INDEX 222): with the clock advanced by a "
+          "known interval between sampling and invocation, "
+          "the adapter's established deadline is the "
+          "ORIGINAL activation deadline — no drift — and "
+          "the transport bound derived from it is the true "
+          "remaining time",
+          res["ok"] and res["outcome"] == "yield" and
+          established == [original] and
+          bounds_at_call == [60.0 - DRIFT])
+
+    # The adapter alone, under the same controlled clock: a
+    # supplied absolute deadline is used verbatim however
+    # much time has passed since it was sampled, and a
+    # supplied deadline already in the past refuses before
+    # any provider call, exactly as an exhausted budget does.
+    direct = OpenAICompatibleAdapter(model="m", api_key="k",
+                                     timeout=5.0)
+    direct_established = []
+
+    def direct_provider(messages):
+        direct_established.append(direct._deadline)
+        return (json.dumps({"outcome": "yield",
+                            "summary": "standing"}), "m")
+
+    direct._call = direct_provider
+    clock["now"] = 20000.0
+    out = direct(pkg, budget=30, deadline=20042.0)
+    check("T22 (INDEX 222): the adapter uses a supplied "
+          "absolute deadline verbatim — not now + budget, "
+          "not now + the configured timeout",
+          out == {"outcome": "yield", "summary": "standing"}
+          and direct_established == [20042.0])
+    try:
+        direct(pkg, budget=30, deadline=clock["now"] - 1.0)
+        past_refused = False
+    except AdapterFailure as failure:
+        past_refused = failure.kind == "no_response"
+    check("T22 (INDEX 222): a supplied deadline already in "
+          "the past refuses before any provider call — the "
+          "exhausted-budget refusal, on the absolute point",
+          past_refused and direct_established == [20042.0])
+finally:
+    time.monotonic = real_monotonic
 
 print()
 if FAILURES:

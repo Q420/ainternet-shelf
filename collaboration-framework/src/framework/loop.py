@@ -27,7 +27,15 @@ The shape, as the scope settles it:
   cannot begin. The activation's remaining budget reaches the
   callable as a call parameter, outside the model-visible
   prompt; the activation deadline is the governing limit and
-  any per-call limit is only tighter.
+  any per-call limit is only tighter. Since INDEX 222 the
+  loop ALSO propagates the doorway's ABSOLUTE deadline — the
+  anchor-derived monotonic instant itself, identical at every
+  read — alongside the budget at every invocation: the budget
+  is a duration sampled at invocation time and keeps the
+  response-acceptance role, but the callable's cancellation
+  boundary follows the original point verbatim, never a
+  reconstruction that drifts by the sampling-to-invocation
+  interval.
 - Each iteration runs in an exact order: (i) the bounds and
   deadline are checked; (ii) a package is constructed and
   frozen from a snapshot of the record — the pinned case view
@@ -204,7 +212,8 @@ class Loop:
     to the record); instance_token — the instance's own
     credential, as packed by the generator; model — the
     callable invoked per iteration as
-    model(package, budget=remaining); executor — the A2
+    model(package, budget=remaining, deadline=<the
+    activation's absolute deadline>); executor — the A2
     executor, used to perform dispatches the loop records and
     to close in-flight accounting at a stall. Without an
     executor, dispatches the loop records stand unperformed
@@ -403,14 +412,28 @@ class Loop:
             # at all — the anchor failed between the recording
             # decision and the call: no lawful budget exists
             # to invoke under, and the stop is the machinery's.
-            remaining, problem = doorway.activation_remaining(
+            # INDEX 222: the budget and the deadline handed to
+            # the callable come from ONE doorway derivation —
+            # the activation's absolute deadline, from which
+            # the remaining budget is the distance to now. The
+            # absolute point travels with the call so the
+            # callable's cancellation boundary is the
+            # activation deadline itself; a callable handed
+            # only the sampled duration would reconstruct its
+            # deadline at establishment and drift past the
+            # true point by the sampling-to-invocation
+            # interval.
+            deadline, problem = doorway.activation_deadline(
                 ctx["instance_id"])
             if problem is not None:
                 return self._stall(ctx, "runtime_failure",
                                    detail=problem)
+            remaining = deadline - time.monotonic() \
+                if deadline is not None else None
             call_started = time.monotonic()
             try:
-                raw = self.model(package, budget=remaining)
+                raw = self.model(package, budget=remaining,
+                                 deadline=deadline)
             except AdapterFailure as failure:
                 self._note_call_timing(ctx, iteration,
                                        package_s, call_started)
