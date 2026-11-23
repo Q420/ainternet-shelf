@@ -27,3 +27,7 @@ No new tools. No change to the grant shape, the doorway's enforcement, or the ex
 (b) An undescribable granted tool: fail package construction closed (proposed), or omit-and-record?
 (c) Registry version: bump to `tool-registry-v2` (proposed), or extend under v1?
 (d) Catalogue in every iteration's package (proposed), or first-iteration only with later packages referencing it?
+
+## Settlements (the examiner, 2026-11-23 — scope PASSED, INDEX 204)
+
+All four as proposed, with her conditions: **(a)** hash + reconstruction — canonicalisation deterministic and specified; historical registry versions remain immutable and available for replay; a missing historical version yields an explicit inability to verify, never a silently successful check. **(b)** fail closed — an attributable runtime failure; the unregistered-grant vs missing-metadata distinction stays explicit. **(c)** `tool-registry-v2`; v1 preserved; old dispatches never reinterpreted under the new contract. **(d)** every iteration. Two emphases for the build: the acceptance test exercises the **actual loop package construction against an assembled instance**; the adapter renders the catalogue as structured package data and invents, renames, or supplements nothing.
