@@ -23,6 +23,12 @@ against its dispatch's); and the start-ordering witness —
 TOOL_STARTED recorded by the executing thread itself, already
 standing in the record at the moment the operation body runs,
 with a failed start report meaning the operation never runs.
+Correction round 2 adds: genuinely serialized record access
+(the store's own lock, held inside the store and across the
+doorway's check-and-append) and the blocked-start witness —
+a start step held past the operation deadline lands after
+the uncertain outcome and so records no start and performs
+nothing, with no concurrent use of the store connection.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a2_dispatch.py
 Exits 0 when every check passes.
@@ -33,6 +39,8 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 SRC = os.path.join(ROOT, "src")
@@ -954,6 +962,82 @@ check("T16 a dispatch governed by a foreign registry "
       dc["result"] == "divergent"
       and any(p["kind"] == "dispatch_registry_version_mismatch"
               for p in dc["problems"]), json.dumps(dc))
+
+# -- T17: the blocked start (correction round 2). The
+# worker's start step is held past the operation deadline:
+# the calling thread's join times out and it records the
+# uncertain outcome while the worker is still inside its
+# start step. When the worker's start step finally runs,
+# the outcome already stands — so no start is recorded,
+# the operation never runs, and the two threads' record
+# access, serialized by the store's own lock, never drives
+# the connection concurrently.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+ex, sandbox, claims = make_executor(d, deadline=0.3)
+res = d.request_tool(itok, "sandbox.write",
+                     {"path": "notes/blocked.txt",
+                      "content": "never"}, "req-blocked")
+did = res["dispatch_id"]
+performed = []
+orig_perform = ex._perform
+
+
+def counting_perform(tool, parameters):
+    performed.append(tool)
+    return orig_perform(tool, parameters)
+
+
+ex._perform = counting_perform
+orig_started = d.record_tool_started
+start_step_done = threading.Event()
+
+
+def blocked_started(dispatch_id):
+    try:
+        time.sleep(1.5)  # far past the 0.3s deadline
+        return orig_started(dispatch_id)
+    finally:
+        start_step_done.set()
+
+
+d.record_tool_started = blocked_started
+try:
+    summary = ex.execute(did)
+finally:
+    d.record_tool_started = orig_started
+check("T17 with the start step blocked past the deadline, "
+      "execute() completes cleanly and reports uncertain",
+      summary["ok"] and summary["outcome"] == "uncertain")
+worker_settled = start_step_done.wait(10)
+starts = [e for e in events_of(store, "TOOL_STARTED")
+          if e["payload"].get("dispatch_id") == did]
+outcomes = [e for e in events_of(store, "TOOL_OUTCOME")
+            if e["payload"].get("dispatch_id") == did]
+check("T17 no TOOL_STARTED is recorded once the uncertain "
+      "outcome stands — no start after an outcome",
+      worker_settled and not starts and len(outcomes) == 1
+      and outcomes[0]["payload"]["outcome"] == "uncertain")
+check("T17 the operation body never ran",
+      performed == []
+      and not os.path.exists(
+          os.path.join(sandbox, "notes", "blocked.txt")))
+entry = d.state()["dispatches"][did]
+check("T17 the dispatch stands uncertain in the fold, "
+      "with no start",
+      entry["outcome"] == "uncertain"
+      and entry["started_seq"] is None)
+ex2 = Executor(d, sandbox, claim_dir=claims, deadline=2.0,
+               executor_id="executor-2")
+check("T17 recovery accounts the dispatch exactly as it "
+      "stands — nothing to redo, nothing to settle",
+      ex2.recover() == []
+      and ex.claim_phase(did) == "reported")
+verdict = run_checker(store)
+dc = verdict["checks"]["dispatch_correspondence"]
+check("T17 the checker reports dispatch_correspondence ok "
+      "over the blocked-start history",
+      dc["result"] == "ok", json.dumps(dc))
 
 print()
 if FAILURES:

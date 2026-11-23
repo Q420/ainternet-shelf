@@ -21,6 +21,7 @@ event it corrects (payload.corrects) — nothing is edited or deleted.
 import hashlib
 import json
 import sqlite3
+import threading
 import time
 import uuid
 
@@ -148,14 +149,26 @@ class FrameworkStore:
 
     def __init__(self, path: str):
         self.path = path
-        # check_same_thread=False: the executor's worker thread
-        # records its own TOOL_STARTED through the doorway
-        # (Piece A2, correction round 1) — the start report is
-        # the executing thread's first act, so the connection
-        # cannot be bound to the thread that opened the store.
-        # Callers remain responsible for not driving the
-        # connection concurrently; the executor's calling
-        # thread is parked in join() while its worker records.
+        # One lock serializes every use of the connection
+        # (Piece A2, correction round 2): the store holds it
+        # inside each of its methods, so no two threads ever
+        # drive the connection at the same time, whatever
+        # callers do. It is re-entrant — append() reads the
+        # run and the chain head through the same locked
+        # paths — and a caller that must make a check and its
+        # append atomic holds it across the whole sequence
+        # via serialized() (the doorway's executor reports do
+        # exactly that: their state check and their append
+        # are one step, never separable by another thread's
+        # append).
+        self._lock = threading.RLock()
+        # check_same_thread=False: the executor's worker
+        # thread records its own TOOL_STARTED through the
+        # doorway (Piece A2, correction round 1) — the start
+        # report is the executing thread's first act, so the
+        # connection cannot be bound to the thread that
+        # opened the store. The flag is not load-bearing for
+        # safety: the lock above is what serializes access.
         self._conn = sqlite3.connect(path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute(
@@ -201,22 +214,35 @@ class FrameworkStore:
         )
         self._conn.commit()
 
+    def serialized(self):
+        """The store's serialization lock, as a context
+        manager: hold it across a sequence of store calls to
+        make the sequence atomic against other threads. It is
+        the same lock every store method holds internally,
+        and re-entrant for the thread that holds it."""
+        return self._lock
+
     def insert_run(self, run_id: str, constitution_hash: str):
-        self._conn.execute(
-            "INSERT INTO runs (run_id, constitution_hash) VALUES (?,?)",
-            (run_id, constitution_hash),
-        )
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO runs (run_id, constitution_hash)"
+                " VALUES (?,?)",
+                (run_id, constitution_hash),
+            )
 
     def get_run_id(self):
-        row = self._conn.execute("SELECT run_id FROM runs LIMIT 1").fetchone()
-        return row[0] if row else None
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT run_id FROM runs LIMIT 1").fetchone()
+            return row[0] if row else None
 
     def last(self):
-        row = self._conn.execute(
-            "SELECT event_seq, hash FROM events ORDER BY event_seq DESC"
-            " LIMIT 1"
-        ).fetchone()
-        return row  # (seq, hash) or None
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT event_seq, hash FROM events ORDER BY"
+                " event_seq DESC LIMIT 1"
+            ).fetchone()
+            return row  # (seq, hash) or None
 
     def head_seq(self) -> int:
         last = self.last()
@@ -224,67 +250,83 @@ class FrameworkStore:
 
     def append(self, type_: str, actor: str, affected: list,
                payload: dict) -> dict:
-        assert type_ in EVENT_TYPES, f"unknown event type {type_}"
-        # R1: every event carries its run — explicitly, in the event
-        # itself (and so under the hash), not by store implication.
-        run_id = self.get_run_id()
-        assert run_id is not None, "no run inserted; events carry a run"
-        # R1 (correction round 2): a commissioning payload that names
-        # a different run than the event's own run is refused at the
-        # door of the record — the two bindings can never disagree in
-        # a recorded history.
-        if type_ == "RUN_COMMISSIONED" and \
-                payload.get("run_id") not in (None, run_id):
-            raise AssertionError(
-                f"RUN_COMMISSIONED payload run {payload.get('run_id')!r} "
-                f"disagrees with the event's run {run_id!r} (R1)")
-        last = self.last()
-        seq = 1 if last is None else last[0] + 1
-        prev_hash = "" if last is None else last[1]
-        event = {
-            "event_seq": seq,
-            "event_id": str(uuid.uuid4()),
-            "run_id": run_id,
-            "type": type_,
-            "actor": actor,
-            "affected": list(affected),
-            "payload": payload,
-            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "prev_hash": prev_hash,
-        }
-        event["hash"] = event_hash(prev_hash, event)
-        self._conn.execute(
-            "INSERT INTO events (event_seq, event_id, run_id, type,"
-            " actor, affected, payload, ts, prev_hash, hash)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (seq, event["event_id"], run_id, type_, actor,
-             json.dumps(event["affected"]), json.dumps(event["payload"]),
-             event["ts"], prev_hash, event["hash"]),
-        )
-        return event
+        # The whole append — the chain-head read, the sequence
+        # computation and the insert — is one locked step: two
+        # threads appending at once can never read the same
+        # head and collide on the sequence.
+        with self._lock:
+            assert type_ in EVENT_TYPES, \
+                f"unknown event type {type_}"
+            # R1: every event carries its run — explicitly, in
+            # the event itself (and so under the hash), not by
+            # store implication.
+            run_id = self.get_run_id()
+            assert run_id is not None, \
+                "no run inserted; events carry a run"
+            # R1 (correction round 2): a commissioning payload
+            # that names a different run than the event's own
+            # run is refused at the door of the record — the
+            # two bindings can never disagree in a recorded
+            # history.
+            if type_ == "RUN_COMMISSIONED" and \
+                    payload.get("run_id") not in (None, run_id):
+                raise AssertionError(
+                    f"RUN_COMMISSIONED payload run "
+                    f"{payload.get('run_id')!r} disagrees with "
+                    f"the event's run {run_id!r} (R1)")
+            last = self.last()
+            seq = 1 if last is None else last[0] + 1
+            prev_hash = "" if last is None else last[1]
+            event = {
+                "event_seq": seq,
+                "event_id": str(uuid.uuid4()),
+                "run_id": run_id,
+                "type": type_,
+                "actor": actor,
+                "affected": list(affected),
+                "payload": payload,
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                    time.gmtime()),
+                "prev_hash": prev_hash,
+            }
+            event["hash"] = event_hash(prev_hash, event)
+            self._conn.execute(
+                "INSERT INTO events (event_seq, event_id, run_id,"
+                " type, actor, affected, payload, ts, prev_hash,"
+                " hash) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (seq, event["event_id"], run_id, type_, actor,
+                 json.dumps(event["affected"]),
+                 json.dumps(event["payload"]),
+                 event["ts"], prev_hash, event["hash"]),
+            )
+            return event
 
     def commit(self):
-        self._conn.commit()
+        with self._lock:
+            self._conn.commit()
 
     def rollback(self):
-        self._conn.rollback()
+        with self._lock:
+            self._conn.rollback()
 
     def all_events(self):
-        rows = self._conn.execute(
-            "SELECT event_seq, event_id, run_id, type, actor, affected,"
-            " payload, ts, prev_hash, hash FROM events ORDER BY event_seq"
-        ).fetchall()
-        out = []
-        for seq, eid, run_id, typ, actor, affected, payload, ts, prev, \
-                h in rows:
-            out.append({
-                "event_seq": seq, "event_id": eid, "run_id": run_id,
-                "type": typ, "actor": actor,
-                "affected": json.loads(affected),
-                "payload": json.loads(payload), "ts": ts,
-                "prev_hash": prev, "hash": h,
-            })
-        return out
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT event_seq, event_id, run_id, type, actor,"
+                " affected, payload, ts, prev_hash, hash FROM"
+                " events ORDER BY event_seq"
+            ).fetchall()
+            out = []
+            for seq, eid, run_id, typ, actor, affected, payload, \
+                    ts, prev, h in rows:
+                out.append({
+                    "event_seq": seq, "event_id": eid,
+                    "run_id": run_id, "type": typ, "actor": actor,
+                    "affected": json.loads(affected),
+                    "payload": json.loads(payload), "ts": ts,
+                    "prev_hash": prev, "hash": h,
+                })
+            return out
 
 
 def verify_chain(events) -> bool:

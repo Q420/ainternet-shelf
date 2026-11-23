@@ -644,34 +644,46 @@ class Doorway:
         established as begun for a standing dispatch — begun
         only, never success or completion. Recorded under the
         executor identity; this route is the only one that can
-        record it, and it records nothing else."""
-        state = self.state()
-        entry = state["dispatches"].get(dispatch_id)
-        if entry is None:
-            self._executor_refuse(
-                "TOOL_STARTED", dispatch_id,
-                f"no dispatch {dispatch_id} stands in the "
-                f"record; a start answers a standing dispatch "
-                f"(R45)")
-        if entry.get("started_seq") is not None:
-            self._executor_refuse(
-                "TOOL_STARTED", dispatch_id,
-                f"dispatch {dispatch_id} already stands "
-                f"started; there is no second start (R45)")
-        if entry.get("outcome") is not None or \
-                entry.get("reconciled_seq") is not None:
-            self._executor_refuse(
-                "TOOL_STARTED", dispatch_id,
-                f"dispatch {dispatch_id} already stands "
-                f"settled; a start does not follow an outcome "
-                f"(R45)")
-        ev = self.store.append(
-            "TOOL_STARTED", EXECUTOR_ACTOR, [dispatch_id],
-            {"dispatch_id": dispatch_id,
-             "instance_id": entry.get("instance_id"),
-             "request_id": entry.get("request_id")})
-        self.store.commit()
-        return ev
+        record it, and it records nothing else.
+
+        The state check and the append are one atomic step
+        (correction round 2): the store's serialization lock
+        is held across both, so no outcome another thread
+        records — the deadline's uncertain outcome, above
+        all — can slip between the check and the start it
+        answers. Where an outcome already stands when the
+        start step runs, the start is refused and nothing is
+        recorded for it: the only histories are dispatch →
+        start → outcome, or dispatch → outcome with no start
+        at all."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["dispatches"].get(dispatch_id)
+            if entry is None:
+                self._executor_refuse(
+                    "TOOL_STARTED", dispatch_id,
+                    f"no dispatch {dispatch_id} stands in the "
+                    f"record; a start answers a standing "
+                    f"dispatch (R45)")
+            if entry.get("started_seq") is not None:
+                self._executor_refuse(
+                    "TOOL_STARTED", dispatch_id,
+                    f"dispatch {dispatch_id} already stands "
+                    f"started; there is no second start (R45)")
+            if entry.get("outcome") is not None or \
+                    entry.get("reconciled_seq") is not None:
+                self._executor_refuse(
+                    "TOOL_STARTED", dispatch_id,
+                    f"dispatch {dispatch_id} already stands "
+                    f"settled; a start does not follow an "
+                    f"outcome (R45)")
+            ev = self.store.append(
+                "TOOL_STARTED", EXECUTOR_ACTOR, [dispatch_id],
+                {"dispatch_id": dispatch_id,
+                 "instance_id": entry.get("instance_id"),
+                 "request_id": entry.get("request_id")})
+            self.store.commit()
+            return ev
 
     def record_tool_outcome(self, dispatch_id, outcome,
                             result=None, detail=None):
@@ -683,51 +695,59 @@ class Doorway:
         is not settled, and a delayed report of result or
         failure attributable to the original dispatch still
         records as its outcome. A timeout is recorded
-        uncertain, never as non-occurrence."""
-        if outcome not in ("result", "failure", "uncertain"):
-            self._executor_refuse(
-                "TOOL_OUTCOME", dispatch_id,
-                f"outcome {outcome!r} is not in the R46 "
-                f"vocabulary (result, failure, uncertain)")
-        state = self.state()
-        entry = state["dispatches"].get(dispatch_id)
-        if entry is None:
-            self._executor_refuse(
-                "TOOL_OUTCOME", dispatch_id,
-                f"no dispatch {dispatch_id} stands in the "
-                f"record; an outcome is never recorded before "
-                f"its dispatch (R45)")
-        standing = entry.get("outcome")
-        if entry.get("reconciled_seq") is not None:
-            self._executor_refuse(
-                "TOOL_OUTCOME", dispatch_id,
-                f"dispatch {dispatch_id} stands reconciled; "
-                f"the examiner's determination settled it "
-                f"(R46)")
-        if standing in ("result", "failure"):
-            self._executor_refuse(
-                "TOOL_OUTCOME", dispatch_id,
-                f"dispatch {dispatch_id} already stands with "
-                f"outcome {standing}; an outcome is terminal "
-                f"(R46)")
-        if standing == "uncertain" and outcome == "uncertain":
-            self._executor_refuse(
-                "TOOL_OUTCOME", dispatch_id,
-                f"dispatch {dispatch_id} already stands "
-                f"uncertain; uncertainty is recorded once "
-                f"(R46)")
-        payload = {"dispatch_id": dispatch_id,
-                   "instance_id": entry.get("instance_id"),
-                   "request_id": entry.get("request_id"),
-                   "outcome": outcome}
-        if result is not None:
-            payload["result"] = result
-        if detail is not None:
-            payload["detail"] = detail
-        ev = self.store.append("TOOL_OUTCOME", EXECUTOR_ACTOR,
-                               [dispatch_id], payload)
-        self.store.commit()
-        return ev
+        uncertain, never as non-occurrence.
+
+        The checks and the append are one atomic step under
+        the store's serialization lock (correction round 2),
+        as in record_tool_started: the two executor reports
+        can never interleave one another's checks and
+        appends."""
+        with self.store.serialized():
+            if outcome not in ("result", "failure", "uncertain"):
+                self._executor_refuse(
+                    "TOOL_OUTCOME", dispatch_id,
+                    f"outcome {outcome!r} is not in the R46 "
+                    f"vocabulary (result, failure, uncertain)")
+            state = self.state()
+            entry = state["dispatches"].get(dispatch_id)
+            if entry is None:
+                self._executor_refuse(
+                    "TOOL_OUTCOME", dispatch_id,
+                    f"no dispatch {dispatch_id} stands in the "
+                    f"record; an outcome is never recorded "
+                    f"before its dispatch (R45)")
+            standing = entry.get("outcome")
+            if entry.get("reconciled_seq") is not None:
+                self._executor_refuse(
+                    "TOOL_OUTCOME", dispatch_id,
+                    f"dispatch {dispatch_id} stands reconciled; "
+                    f"the examiner's determination settled it "
+                    f"(R46)")
+            if standing in ("result", "failure"):
+                self._executor_refuse(
+                    "TOOL_OUTCOME", dispatch_id,
+                    f"dispatch {dispatch_id} already stands "
+                    f"with outcome {standing}; an outcome is "
+                    f"terminal (R46)")
+            if standing == "uncertain" and \
+                    outcome == "uncertain":
+                self._executor_refuse(
+                    "TOOL_OUTCOME", dispatch_id,
+                    f"dispatch {dispatch_id} already stands "
+                    f"uncertain; uncertainty is recorded once "
+                    f"(R46)")
+            payload = {"dispatch_id": dispatch_id,
+                       "instance_id": entry.get("instance_id"),
+                       "request_id": entry.get("request_id"),
+                       "outcome": outcome}
+            if result is not None:
+                payload["result"] = result
+            if detail is not None:
+                payload["detail"] = detail
+            ev = self.store.append("TOOL_OUTCOME", EXECUTOR_ACTOR,
+                                   [dispatch_id], payload)
+            self.store.commit()
+            return ev
 
     def _tool_reconciled_problem(self, state, payload):
         """Why a TOOL_RECONCILED may not be recorded, or None
