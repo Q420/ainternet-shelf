@@ -183,17 +183,23 @@ class OpenAICompatibleAdapter:
                         "provider_error",
                         detail="response stream offers no bounded "
                                "read; failing closed")
-                try:
-                    resp.fp.raw._sock.settimeout(remaining())
-                except AdapterFailure:
-                    raise
-                except Exception:
-                    raise AdapterFailure(
-                        "provider_error",
-                        detail="cannot bound the response "
-                               "read; failing closed")
                 while True:
-                    remaining()
+                    left = remaining()
+                    if getattr(resp, "length", None) == 0:
+                        # Completion path, handled explicitly:
+                        # a Content-Length body is fully received,
+                        # and http.client has retired the stream
+                        # (resp.fp is None from here) — no further
+                        # read is needed and no timeout is set on
+                        # the retired socket.
+                        break
+                    try:
+                        resp.fp.raw._sock.settimeout(left)
+                    except Exception:
+                        raise AdapterFailure(
+                            "provider_error",
+                            detail="cannot bound the response "
+                                   "read; failing closed")
                     chunk = read1(65536)
                     remaining()
                     if not chunk:

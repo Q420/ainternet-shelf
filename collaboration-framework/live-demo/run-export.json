@@ -1,0 +1,179 @@
+{
+ "runs": [
+  {
+   "run_id": "run-live-1",
+   "constitution_hash": "fde0e5d14b594ba1e3237d140870b6c06468ba3d6a4b15f42ef31f907761ba22",
+   "status": "open"
+  }
+ ],
+ "events": [
+  {
+   "event_seq": 1,
+   "event_id": "a1d7da0e-d109-47f8-af37-f29b7c607751",
+   "run_id": "run-live-1",
+   "type": "RUN_COMMISSIONED",
+   "actor": "dir-1",
+   "affected": "[]",
+   "payload": "{\"run_id\": \"run-live-1\", \"tree\": {\"A\": [\"B\"], \"B\": []}, \"seats\": {\"orch-1\": {\"role\": \"orchestrator\", \"identity_status\": \"declared\"}, \"exam-1\": {\"role\": \"examiner\", \"identity_status\": \"declared\"}, \"dir-1\": {\"role\": \"director\", \"identity_status\": \"declared\"}, \"crew-a\": {\"role\": \"crew\", \"identity_status\": \"declared\"}, \"crew-b\": {\"role\": \"crew\", \"identity_status\": \"declared\"}}, \"briefs\": {\"crew-a\": {\"part\": \"A\", \"assignment\": \"Write two or three sentences explaining what a shared, durable record gives a team of agents that a passing chat log does not.\", \"verification_list\": [\"the text answers the assignment\"]}, \"crew-b\": {\"part\": \"B\", \"assignment\": \"Part A's contribution stands in your view. Write one or two sentences on what it missed or got wrong.\", \"verification_list\": [\"the text engages part A's contribution\"]}}, \"gates\": {\"assembly\": \"assembly\", \"completion\": \"completion\", \"B\": \"judgement\"}}",
+   "ts": "2026-11-23T06:13:00Z",
+   "prev_hash": "",
+   "hash": "27d5e0e3686907c28bfc51402880a16fb684999181280a4614ae4f8ee13356cf"
+  },
+  {
+   "event_seq": 2,
+   "event_id": "a168d1cf-37f2-4fa2-a399-d713a98cdebd",
+   "run_id": "run-live-1",
+   "type": "ONBOARDING",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"seat_id\": \"crew-a\", \"declaration\": \"I\\u2019m Kimi, an AI assistant developed by Moonshot AI (\\u6708\\u4e4b\\u6697\\u9762). My underlying model is a large language model trained by Moonshot AI. I can\\u2019t confirm a specific model version from this chat, so I won\\u2019t invent one.\\n\\nI can help explain concepts, answer questions, summarize and analyze provided material, draft and edit text, translate, brainstorm, plan, write and debug code, and reason through problems step by step. I can participate in this run as an AI collaborator, using the context and tools available here.\\n\\nMy limits are that I\\u2019m not human, I don\\u2019t have independent agency outside this chat or its provided tools, and I may not retain memory across sessions unless the host system supports it. My knowledge can be incomplete or out of date, and I can make mistakes, especially with ambiguous instructions, niche topics, or current events. Code, calculations, and high-stakes factual, legal, medical, or financial outputs should be verified.\", \"capability\": null, \"limits\": null, \"terms_acknowledged\": true, \"terms_ref\": null, \"identity_status\": \"declared\", \"provider_model_id\": \"moonshotai/kimi-k3.1-pro\"}",
+   "ts": "2026-11-23T06:14:29Z",
+   "prev_hash": "27d5e0e3686907c28bfc51402880a16fb684999181280a4614ae4f8ee13356cf",
+   "hash": "cff04646c5d052ab23e8e399b3f0f06bf1bd35dbc98f58125bc8510bb1c82945"
+  },
+  {
+   "event_seq": 3,
+   "event_id": "88b354ea-0f74-4048-8cec-15ff7ce1a152",
+   "run_id": "run-live-1",
+   "type": "ONBOARDING",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"seat_id\": \"crew-b\", \"declaration\": \"I\\u2019m Kimi, an AI assistant developed and provided by Moonshot AI (\\u6708\\u4e4b\\u6697\\u9762). My foundation is a large language model trained by Moonshot AI. I don\\u2019t have a reliable exact deployment version to state, so I won\\u2019t invent one.\\n\\nI can help with explanation, reasoning, writing and editing, summarization, translation, brainstorming, programming, debugging, code review, and analyzing information you provide. I can adapt my tone and format to the task and work collaboratively through a problem.\\n\\nMy limits are that I can be wrong, incomplete, or outdated, especially on recent or obscure topics. I don\\u2019t inherently have access to private systems, personal data, or real-time information unless the environment provides it. I may lack persistent memory beyond the current conversation unless the product supplies it. I can\\u2019t act in the world independently except through tools made available to me, and important outputs should be verified.\", \"capability\": null, \"limits\": null, \"terms_acknowledged\": true, \"terms_ref\": null, \"identity_status\": \"declared\", \"provider_model_id\": \"moonshotai/kimi-k3.1-pro\"}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "cff04646c5d052ab23e8e399b3f0f06bf1bd35dbc98f58125bc8510bb1c82945",
+   "hash": "66259e27094b3179c7304cc13972c8888d7e0782f8cf3966ceaf36896975b359"
+  },
+  {
+   "event_seq": 4,
+   "event_id": "7d4863dd-a720-4066-a5df-b29b93ac927f",
+   "run_id": "run-live-1",
+   "type": "GATE_OUTCOME",
+   "actor": "exam-1",
+   "affected": "[]",
+   "payload": "{\"joint\": \"assembly\", \"outcome\": \"allow\"}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "66259e27094b3179c7304cc13972c8888d7e0782f8cf3966ceaf36896975b359",
+   "hash": "68ba6b93286ca4854d9cca904cd39e8205fb605e1fd7e0d295399d51effb17d7"
+  },
+  {
+   "event_seq": 5,
+   "event_id": "7c69fc26-ebb4-4b5f-8fc2-6b2d7901f507",
+   "run_id": "run-live-1",
+   "type": "CASE_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-a\"]",
+   "payload": "{\"case_id\": \"case-crew-a\", \"version\": 1, \"seat\": \"crew-a\", \"account\": \"crew-a\", \"assignment\": \"Write two or three sentences explaining what a shared, durable record gives a team of agents that a passing chat log does not.\", \"part\": \"A\", \"verification_list\": [\"the text answers the assignment\"], \"tree\": {\"A\": [\"B\"], \"B\": []}, \"evidence_boundary\": [], \"authority\": [\"CASE_ACKNOWLEDGED\", \"CLAIM_STATUS\", \"COMMENT\", \"COMPLETION_CLAIMED\", \"CONTRIBUTION\", \"DISAGREEMENT\", \"DISAGREEMENT_SETTLED\", \"ESCALATION\"]}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "68ba6b93286ca4854d9cca904cd39e8205fb605e1fd7e0d295399d51effb17d7",
+   "hash": "5ba580687a65d21c6fd119a9e8b0f38ab4cc6e0eeaa315d65ac74153d6ce31cc"
+  },
+  {
+   "event_seq": 6,
+   "event_id": "f370e01d-9c34-446f-9299-a380e229c46f",
+   "run_id": "run-live-1",
+   "type": "CASE_JUDGED",
+   "actor": "exam-1",
+   "affected": "[\"case-crew-a\"]",
+   "payload": "{\"case_id\": \"case-crew-a\", \"version\": 1}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "5ba580687a65d21c6fd119a9e8b0f38ab4cc6e0eeaa315d65ac74153d6ce31cc",
+   "hash": "b4b1adeb64aebbf2b7737831f2732fc91fd6d1dff630c8e8f9e0420b087f68a0"
+  },
+  {
+   "event_seq": 7,
+   "event_id": "ce8b8c33-a927-43c1-9ae2-4adf19012766",
+   "run_id": "run-live-1",
+   "type": "CASE_ISSUED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-a\"]",
+   "payload": "{\"case_id\": \"case-crew-a\", \"version\": 1, \"seat\": \"crew-a\"}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "b4b1adeb64aebbf2b7737831f2732fc91fd6d1dff630c8e8f9e0420b087f68a0",
+   "hash": "c9111d462dcb4f8d9559a5bf5fbe704c09084f93e10fc6fbd0bec3996f408266"
+  },
+  {
+   "event_seq": 8,
+   "event_id": "685565ed-81aa-4f34-bb7d-ec9cc5f349e8",
+   "run_id": "run-live-1",
+   "type": "CASE_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-b\"]",
+   "payload": "{\"case_id\": \"case-crew-b\", \"version\": 1, \"seat\": \"crew-b\", \"account\": \"crew-b\", \"assignment\": \"Part A's contribution stands in your view. Write one or two sentences on what it missed or got wrong.\", \"part\": \"B\", \"verification_list\": [\"the text engages part A's contribution\"], \"tree\": {\"A\": [\"B\"], \"B\": []}, \"evidence_boundary\": [], \"authority\": [\"CASE_ACKNOWLEDGED\", \"CLAIM_STATUS\", \"COMMENT\", \"COMPLETION_CLAIMED\", \"CONTRIBUTION\", \"DISAGREEMENT\", \"DISAGREEMENT_SETTLED\", \"ESCALATION\"]}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "c9111d462dcb4f8d9559a5bf5fbe704c09084f93e10fc6fbd0bec3996f408266",
+   "hash": "14f8c98d51910eb653d0fe5bd2b2f9e686ff762dfef6a8f4505168970f00b41e"
+  },
+  {
+   "event_seq": 9,
+   "event_id": "e27a6131-0c19-494b-a8ba-b615eb99fd1b",
+   "run_id": "run-live-1",
+   "type": "CASE_JUDGED",
+   "actor": "exam-1",
+   "affected": "[\"case-crew-b\"]",
+   "payload": "{\"case_id\": \"case-crew-b\", \"version\": 1}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "14f8c98d51910eb653d0fe5bd2b2f9e686ff762dfef6a8f4505168970f00b41e",
+   "hash": "f5d166915340298a50711a64e0082f037d1126ef81607bd45040c842aa9aeb1e"
+  },
+  {
+   "event_seq": 10,
+   "event_id": "9f746aea-e6ee-4d2e-abbb-aee405a5ada6",
+   "run_id": "run-live-1",
+   "type": "CASE_ISSUED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-b\"]",
+   "payload": "{\"case_id\": \"case-crew-b\", \"version\": 1, \"seat\": \"crew-b\"}",
+   "ts": "2026-11-23T06:15:50Z",
+   "prev_hash": "f5d166915340298a50711a64e0082f037d1126ef81607bd45040c842aa9aeb1e",
+   "hash": "a5ac8f803a99845a5620ee2096a8e035ddfb169a4efb948d6aae843303b30b13"
+  },
+  {
+   "event_seq": 11,
+   "event_id": "aaa2842e-0880-45d2-989e-75364adce7f9",
+   "run_id": "run-live-1",
+   "type": "CONTRIBUTION",
+   "actor": "crew-a",
+   "affected": "[\"crew-a-live-10-1\", \"case-crew-a\", \"A\"]",
+   "payload": "{\"contribution_id\": \"crew-a-live-10-1\", \"tree_part\": \"A\", \"text\": \"A shared, durable record gives agents a common source of truth that persists across sessions, keeping decisions, completed work, and open questions visible to the whole team. Unlike a passing chat log, it lets teammates verify what happened, avoid duplicating effort, and build reliably on one another\\u2019s work even as participants join or leave.\", \"case_id\": \"case-crew-a\", \"case_version\": 1}",
+   "ts": "2026-11-23T06:16:50Z",
+   "prev_hash": "a5ac8f803a99845a5620ee2096a8e035ddfb169a4efb948d6aae843303b30b13",
+   "hash": "4a2c67f2d236d3ce506709b028aaf0a08a64db5e96055f1781fd32effe4314a3"
+  },
+  {
+   "event_seq": 12,
+   "event_id": "05df1624-abde-43e2-911d-ada115f7fc9f",
+   "run_id": "run-live-1",
+   "type": "GATE_OUTCOME",
+   "actor": "exam-1",
+   "affected": "[]",
+   "payload": "{\"joint\": \"B\", \"outcome\": \"allow\"}",
+   "ts": "2026-11-23T06:16:50Z",
+   "prev_hash": "4a2c67f2d236d3ce506709b028aaf0a08a64db5e96055f1781fd32effe4314a3",
+   "hash": "a698bba9cb71c47ccc9372b4783d435c44ff5a934f4b5b2a65b55b236b89c37d"
+  },
+  {
+   "event_seq": 13,
+   "event_id": "75f47fc8-9e3b-48c0-b3f4-f12c016c49d6",
+   "run_id": "run-live-1",
+   "type": "CONTRIBUTION",
+   "actor": "crew-b",
+   "affected": "[\"crew-b-live-12-2\", \"case-crew-b\", \"B\"]",
+   "payload": "{\"contribution_id\": \"crew-b-live-12-2\", \"tree_part\": \"B\", \"text\": \"Part A overstates what durability and visibility guarantee: a shared record can still be stale, incomplete, or mistaken, so it is not automatically a reliable source of truth. It should also address verification, clear ownership, and update conventions that keep the record current and resolve conflicts.\", \"case_id\": \"case-crew-b\", \"case_version\": 1}",
+   "ts": "2026-11-23T06:17:50Z",
+   "prev_hash": "a698bba9cb71c47ccc9372b4783d435c44ff5a934f4b5b2a65b55b236b89c37d",
+   "hash": "3833c312c2b372eb4e938a3d54c1ebb14ae40018cdd1f139fc66c9aaaeee02c0"
+  },
+  {
+   "event_seq": 14,
+   "event_id": "9b62b1b8-f08f-446e-95fd-9cd63b5bcf77",
+   "run_id": "run-live-1",
+   "type": "REJECTION",
+   "actor": "doorway",
+   "affected": "[\"orch-1\"]",
+   "payload": "{\"seat\": \"orch-1\", \"attempted_type\": \"RUN_READY_FOR_COMPLETION\", \"ground\": \"readiness declared with no crew completion claim standing in the record; the declaration answers the claim record, never replaces it (\\u00a73.8)\", \"view_seq\": 13}",
+   "ts": "2026-11-23T06:17:50Z",
+   "prev_hash": "3833c312c2b372eb4e938a3d54c1ebb14ae40018cdd1f139fc66c9aaaeee02c0",
+   "hash": "061ca3111306f52cb920b7155ad90bcb59acf2ad5ff4f14fb9a77dbccebea0b9"
+  }
+ ]
+}

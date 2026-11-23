@@ -207,3 +207,41 @@ to perform at final examination.
 
 Suite after round 2: Piece 8, 26 checks, ALL PASS; every
 regression green.
+
+## Examination round 3 (2026-11-23) — the hard transport deadline
+
+A4 and the handling checks stand. One transport gap
+remained, and it was real: the socket timeout was set once,
+so a blocking read begun near the deadline inherited the
+ORIGINAL budget, and the clock checks could only notice the
+overrun after the read returned. The read loop now bounds
+every blocking read by the CURRENT remaining time:
+`settimeout(remaining())` before each `read1`. The
+completion path is handled explicitly, from a mechanism
+verified first-hand: when a Content-Length body is fully
+received, http.client retires the stream (`resp.fp` becomes
+None, `resp.isclosed()` true) — so the loop breaks on
+`resp.length == 0` before any further timeout is set, and
+chunked/close-delimited bodies complete via the empty read.
+A failure to reach or set the socket on a live, incomplete
+response still fails the call closed.
+
+New witnesses, with the tolerance stated (0.25s over a 0.6s
+deadline): the slow-drip now asserts elapsed < 0.85s (lands
+0.60s), and a withhold witness — first chunk delivered at
+0.5s, the rest withheld 3s — fails as no_response at 0.60s:
+the blocking read is interrupted AT the deadline, not
+noticed afterward.
+
+**The live record, as a complete inspectable export:**
+`live-demo/run-export.json` carries the store's full
+contents as text (every run row, every event row, every
+stored column, payloads verbatim), and
+`scripts/rebuild_store_from_export.py` rebuilds a store
+from it through the framework's own schema, rows inserted
+verbatim. Verified from the receiving side here: rebuild →
+checker returns all eight checks ok over the 14 events.
+(The base64 store export remains alongside it.)
+
+Suite after round 3: Piece 8, 28 checks, ALL PASS; every
+regression green.

@@ -66,6 +66,23 @@ class Handler(BaseHTTPRequestHandler):
                          "body": body.decode("utf-8", "replace")})
         if SCRIPT["override"]:
             spec = SCRIPT["override"].pop(0)
+            if isinstance(spec, tuple) and spec[0] == "withhold":
+                # First chunk near the deadline, then silence:
+                # the blocking read that matters begins with
+                # only a sliver of the budget left.
+                self.send_response(200)
+                self.send_header("Content-Type",
+                                 "application/json")
+                self.send_header("Content-Length", "100000")
+                self.end_headers()
+                time.sleep(spec[1])
+                try:
+                    self.wfile.write(b"x")
+                    self.wfile.flush()
+                    time.sleep(spec[2])
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
             if isinstance(spec, tuple) and spec[0] == "drip":
                 # Send a large body one byte at a time, slowly:
                 # no individual inactivity window is exceeded,
@@ -257,10 +274,26 @@ check("A6: a slow-drip response exceeding the total budget (but "
       r["failed"] == "no_response" and
       fold(store.all_events())["stalled"]["crew-a"]["kind"] ==
       "no_response")
-check("the total deadline bit: the call ended well inside the "
-      "drip's duration, after exactly one dispatch",
-      elapsed < 1.8 and len(REQUESTS) == before + 1,
+check("the total deadline bit: the call ended within the "
+      "stated tolerance (0.25s) of the 0.6s deadline, after "
+      "exactly one dispatch",
+      elapsed < 0.85 and len(REQUESTS) == before + 1,
       detail=f"elapsed={elapsed:.2f}s")
+
+# --------------------- A6: a blocking read cannot cross the deadline
+store, d, tok = fresh_store()
+SCRIPT["override"] = [("withhold", 0.5, 3.0)]
+started = time.monotonic()
+r = Driver(d, "crew-a", tok["crew-a"],
+           adapter(timeout=0.6)).wake_cycle()
+elapsed = time.monotonic() - started
+check("A6: a chunk arriving near the deadline (0.5s) followed by "
+      "withheld data fails the wake as no_response",
+      r["failed"] == "no_response" and r["recorded"] == [])
+check("the blocking read was interrupted at the deadline, not "
+      "at the original socket timeout: elapsed within the "
+      "stated 0.25s tolerance of the 0.6s deadline",
+      0.55 <= elapsed < 0.85, detail=f"elapsed={elapsed:.2f}s")
 
 # -------------------------------------------------------- provider error
 store, d, tok = fresh_store()
@@ -315,6 +348,7 @@ class _FakeResp:
     def __init__(self, body, bad_sock=False, no_read1=False):
         self._body = body
         self._bad_sock = bad_sock
+        self.length = None
         if not no_read1:
             self.read1 = self._read1
         sock = mock.Mock()
