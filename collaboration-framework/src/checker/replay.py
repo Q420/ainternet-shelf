@@ -78,12 +78,12 @@ def _shape_problem(ev):
     Returns a description, or None."""
     if not _is_int(ev.get("event_seq")):
         return "event position is not an integer"
-    if not isinstance(ev.get("type"), str):
-        return "event type is not a string"
-    if not isinstance(ev.get("actor"), str):
-        return "event actor is not a string"
-    if not isinstance(ev.get("affected"), list):
-        return "event affected is not a list"
+    for key in ("event_id", "run_id", "type", "actor", "ts",
+                "prev_hash", "hash"):
+        if not isinstance(ev.get(key), str):
+            return f"event {key} is not a string"
+    if not _is_str_list(ev.get("affected")):
+        return "event affected is not a list of strings"
     t = ev["type"]
     p = ev["payload"]
     if not isinstance(p, dict):
@@ -165,9 +165,16 @@ def _shape_problem(ev):
         if bad_opt("representational",
                    lambda v: isinstance(v, bool)):
             return f"{t} representational is not a boolean"
-        for key in ("assignment", "part", "account", "authority"):
+        for key in ("assignment", "part", "account"):
             if bad_opt_str(key):
                 return f"{t} {key} is not a string"
+        if "authority" in p and not _is_str_list(p["authority"]):
+            return f"{t} authority is not a list of act types"
+        if "criteria_mapping" in p and not (
+                isinstance(p["criteria_mapping"], dict) and all(
+                    isinstance(v, str)
+                    for v in p["criteria_mapping"].values())):
+            return f"{t} criteria_mapping is not a map of strings"
         if "tree" in p and not _is_tree(p["tree"]):
             return f"{t} tree is not a map of part lists"
         for key in ("evidence_boundary", "verification_list"):

@@ -19,10 +19,14 @@ Node vocabulary (the schema is data, compared as canonical JSON):
   {"t": "map", "v": node}       an object with arbitrary keys
                                 whose values conform
   {"t": "obj", "f": {k: node}}  an object with exactly these keys
-  {"t": "fields", "f": {...}}   an object with an open key set
-                                whose NAMED fields, when present,
-                                conform — for verbatim payload
-                                copies (a case's content)
+  {"t": "fields", "f": {...}, "req": [...]}
+                                an object whose keys are a SUBSET
+                                of the named set — the permitted
+                                key set for a verbatim payload
+                                copy (a case's content): every
+                                field present must be named here,
+                                named fields conform when present,
+                                and the "req" keys must be present
 
 Correction round 1: values whose shapes the record contract
 defines carry those shapes here — a map may have an open key
@@ -73,20 +77,24 @@ SCHEMA = {
                 "notified": {"t": "opt", "v": {"t": "int"}},
                 "issued": {"t": "opt", "v": {"t": "int"}},
                 "content": {"t": "opt", "v": {"t": "fields", "f": {
-                    "assignment": {"t": "str"},
-                    "tree": {"t": "map", "v": {
-                        "t": "list", "v": {"t": "str"}}},
-                    "part": {"t": "str"},
-                    "evidence_boundary": {
-                        "t": "list", "v": {"t": "str"}},
-                    "verification_list": {
-                        "t": "list", "v": {"t": "str"}},
-                    "account": {"t": "str"},
-                    "authority": {"t": "str"},
                     "case_id": {"t": "str"},
                     "version": {"t": "int"},
                     "seat": {"t": "str"},
-                    "representational": {"t": "bool"}}}},
+                    "representational": {"t": "bool"},
+                    "assignment": {"t": "opt", "v": {"t": "str"}},
+                    "tree": {"t": "map", "v": {
+                        "t": "list", "v": {"t": "str"}}},
+                    "part": {"t": "opt", "v": {"t": "str"}},
+                    "evidence_boundary": {
+                        "t": "list", "v": {"t": "str"}},
+                    "verification_list": {"t": "opt", "v": {
+                        "t": "list", "v": {"t": "str"}}},
+                    "account": {"t": "str"},
+                    "authority": {
+                        "t": "list", "v": {"t": "str"}},
+                    "criteria_mapping": {
+                        "t": "map", "v": {"t": "str"}}},
+                    "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},
                 "representational": {"t": "bool"},

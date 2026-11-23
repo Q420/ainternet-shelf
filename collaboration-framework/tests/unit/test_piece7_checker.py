@@ -164,7 +164,7 @@ CASE_CONTENT = {
     "case_id": "case-crew-1", "version": 1, "seat": "crew-1",
     "assignment": "write part B", "tree": TREE, "part": "B",
     "evidence_boundary": ["record"], "verification_list": ["v1"],
-    "account": "acct", "authority": "orch-1",
+    "account": "acct", "authority": ["CONTRIBUTION"],
 }
 storeB.append("CASE_VERIFIED", "orch-1", [], dict(CASE_CONTENT))
 storeB.append("CASE_JUDGED", "exam-1", [],
@@ -443,6 +443,35 @@ check("C4 a planted field inside the checker's reconstruction "
       bad_recon == ["cases.case-crew-1.versions.1.planted"],
       str(bad_recon))
 
+# Round 2: case content's key set is closed — an unknown key
+# inside content fails the witness at every surface.
+liveB2 = replay(storeB)
+liveB2["cases"]["case-crew-1"]["versions"]["1"]["content"][
+    "brand_new"] = 1
+check("C4 an unknown key inside live case content fails, named",
+      projection.conforms(liveB2)
+      == ["cases.case-crew-1.versions.1.content.brand_new"],
+      str(projection.conforms(liveB2)))
+planted_content = copy.deepcopy(projection.snapshot(storeB))
+planted_content["cases"]["case-crew-1"]["versions"]["1"][
+    "content"]["brand_new"] = {"nested": True}
+_, v = run_checker(storeB.path, "run-1", planted_content)
+check("C4 the checker names an unknown key inside case content "
+      "in a supplied snapshot",
+      v["checks"]["snapshot_schema"]["result"] == "nonconforming"
+      and v["checks"]["snapshot_schema"]["paths"]
+      == ["cases.case-crew-1.versions.1.content.brand_new"],
+      json.dumps(v["checks"].get("snapshot_schema")))
+recon2, halt2 = checker_replay.replay_events(storeB.all_events(),
+                                             "run-1")
+recon2["cases"]["case-crew-1"]["versions"]["1"]["content"][
+    "brand_new"] = 1
+check("C4 an unknown key inside the reconstruction's case "
+      "content fails its schema witness, named by path",
+      checker_mod._conforms(json.loads(canonical(recon2)),
+                            checker_schema.SCHEMA)
+      == ["cases.case-crew-1.versions.1.content.brand_new"])
+
 # ============================================================ crit. 5
 false_snap = copy.deepcopy(snapA)
 false_snap["lifecycle"] = "bogus"
@@ -558,6 +587,71 @@ check("C8 a contribution with an integer tree_part halts "
       and v["checks"]["replay"]["result"] == "schema_invalid"
       and v["checks"]["replay"]["at_seq"] == 2
       and v["checks"]["chain_hash"]["result"] == "ok",
+      json.dumps(v["checks"]))
+
+# Round 2: the envelope's defined fields are guarded too —
+# C6 is not limited to fields the fold happens to read.
+storeH, dH, tokH = fresh(gates=None)
+storeH.append("COMMENT", "crew-1", [7], {"text": "note"})
+storeH.commit()
+quiesce(storeH)
+proc, v = run_checker(storeH.path, "run-1", None)
+check("C8 an event whose affected list holds a non-string "
+      "halts schema_invalid at its position",
+      proc.returncode == 0
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["replay"]["at_seq"] == 2
+      and v["checks"]["chain_hash"]["result"] == "ok",
+      json.dumps(v["checks"]))
+
+
+def ts_tampered_copy(store):
+    """A copy whose LAST event carries an integer ts, its hash
+    recomputed — hash-valid, in sequence, wrongly typed. The
+    store's own DDL declares ts TEXT, whose affinity would
+    coerce an integer to text on storage, so the copy's events
+    table is rebuilt with an untyped ts column — a store
+    written by another hand, which is exactly what the checker
+    exists to read."""
+    dst = os.path.join(tempfile.mkdtemp(), "ts.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    conn.execute(
+        "CREATE TABLE events2 (event_seq INTEGER PRIMARY KEY,"
+        " event_id TEXT UNIQUE NOT NULL, run_id TEXT NOT NULL,"
+        " type TEXT NOT NULL, actor TEXT NOT NULL,"
+        " affected TEXT NOT NULL, payload TEXT NOT NULL,"
+        " ts, prev_hash TEXT NOT NULL, hash TEXT NOT NULL)")
+    conn.execute("INSERT INTO events2 SELECT * FROM events")
+    conn.execute("DROP TABLE events")
+    conn.execute("ALTER TABLE events2 RENAME TO events")
+    row = conn.execute(
+        "SELECT event_seq, event_id, run_id, type, actor, affected,"
+        " payload, prev_hash FROM events ORDER BY event_seq DESC"
+        " LIMIT 1").fetchone()
+    seq, eid, run_id, typ, actor, affected, payload, prev = row
+    ev = {"event_seq": seq, "event_id": eid, "run_id": run_id,
+          "type": typ, "actor": actor,
+          "affected": json.loads(affected),
+          "payload": json.loads(payload), "ts": 999,
+          "prev_hash": prev}
+    conn.execute("UPDATE events SET ts = 999, hash = ?"
+                 " WHERE event_seq = ?",
+                 (event_hash(prev, ev), seq))
+    conn.commit()
+    conn.close()
+    return dst, seq
+
+
+ts_path, ts_seq = ts_tampered_copy(storeB)
+proc, v = run_checker(ts_path, "run-1", None)
+check("C8 a hash-valid event with an integer ts halts "
+      "schema_invalid at its own position",
+      proc.returncode == 0
+      and v["checks"]["chain_hash"]["result"] == "ok"
+      and v["checks"]["chain_sequence"]["result"] == "ok"
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["replay"]["at_seq"] == ts_seq,
       json.dumps(v["checks"]))
 
 # ============================================================ crit. 9

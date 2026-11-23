@@ -200,6 +200,21 @@ def _conforms(value, node, path=""):
             if k not in fields:
                 out.append(f"{path}.{k}" if path else k)
         return out
+    if t == "fields":
+        if not isinstance(value, dict):
+            return [path]
+        out = []
+        fields = node["f"]
+        for k in node.get("req", []):
+            if k not in value:
+                out.append(f"{path}.{k}" if path else k)
+        for k, v in value.items():
+            p = f"{path}.{k}" if path else k
+            if k not in fields:
+                out.append(p)
+            else:
+                out += _conforms(v, fields[k], p)
+        return out
     return [path]
 
 

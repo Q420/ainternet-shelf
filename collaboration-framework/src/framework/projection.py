@@ -31,12 +31,15 @@ from framework.record import replay
 #   {"t": "map", "v": node}      an object with arbitrary keys
 #                                whose values conform
 #   {"t": "obj", "f": {k: node}} an object with exactly these keys
-#   {"t": "fields", "f": {...}}  an object with an open key set
-#                                whose NAMED fields, when present,
-#                                conform — for verbatim payload
-#                                copies (a case's content), whose
-#                                keys are the payload's own but
-#                                whose contract fields have shapes
+#   {"t": "fields", "f": {...}, "req": [...]}
+#                                an object whose keys are a SUBSET
+#                                of the named set — the permitted
+#                                key set for a verbatim payload
+#                                copy (a case's content): every
+#                                field present must be named here
+#                                (C3's exhaustiveness), named
+#                                fields conform when present, and
+#                                the "req" keys must be present
 #
 # Correction round 1 (Vane's examination of the first build):
 # values whose shapes the record contract defines are described
@@ -67,20 +70,29 @@ def _obj(f):
     return {"t": "obj", "f": f}
 
 
-def _fields(f):
-    return {"t": "fields", "f": f}
+def _fields(f, req=()):
+    return {"t": "fields", "f": f, "req": list(req)}
 
 
 _TREE_SHAPE = _map(_list(_STR))
 
+# The permitted case-content key set (round 2): the event
+# metadata every case payload carries, the six semantic content
+# fields, and the office's classification mapping — the union
+# the system's own builders produce (office.py's issued content;
+# doorway.py's criteria_mapping). Shapes follow the builders:
+# the office's authority term is the sorted list of act types
+# the seat's role may perform; brief fields drawn with .get()
+# may be null.
 _CASE_CONTENT = _fields({
-    "assignment": _STR, "tree": _TREE_SHAPE, "part": _STR,
-    "evidence_boundary": _list(_STR),
-    "verification_list": _list(_STR),
-    "account": _STR, "authority": _STR,
     "case_id": _STR, "version": _INT, "seat": _STR,
     "representational": _BOOL,
-})
+    "assignment": _opt(_STR), "tree": _TREE_SHAPE,
+    "part": _opt(_STR), "evidence_boundary": _list(_STR),
+    "verification_list": _opt(_list(_STR)),
+    "account": _STR, "authority": _list(_STR),
+    "criteria_mapping": _map(_STR),
+}, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({
     "verified": _opt(_INT), "judged": _opt(_INT),
@@ -223,10 +235,16 @@ def conforms(value, node=None, path=""):
         if not isinstance(value, dict):
             return [path]
         out = []
-        for k, sub in node["f"].items():
-            if k in value:
-                p = f"{path}.{k}" if path else k
-                out += conforms(value[k], sub, p)
+        fields = node["f"]
+        for k in node.get("req", []):
+            if k not in value:
+                out.append(f"{path}.{k}" if path else k)
+        for k, v in value.items():
+            p = f"{path}.{k}" if path else k
+            if k not in fields:
+                out.append(p)
+            else:
+                out += conforms(v, fields[k], p)
         return out
     return [path]
 

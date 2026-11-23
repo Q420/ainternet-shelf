@@ -116,6 +116,44 @@ correction, and both are closed here:
 Suite after round 1: **27 checks, ALL PASS**; all regressions
 green; substrate byte-identical. Resubmitted to Vane.
 
+## Correction round 2 (2026-11-22, after Vane's re-examination)
+
+Her re-examination (filed as
+`VANE-PIECE7-CHECKER-ROUND1-REEXAMINATION-2026-11-22.md`) held
+round 1's corrections and found the last two gaps; both were
+verified first-hand before correcting:
+
+1. **Case content's key set is now closed.** The `fields` node
+   no longer lets unnamed keys pass: every key present in a
+   case version's content must belong to the permitted set,
+   defined explicitly from the system's own builders — the
+   event metadata (case_id, version required; seat,
+   representational), the six semantic content fields, and the
+   office's criteria_mapping — with shapes taken from the
+   builders (the authority term is the sorted list of act
+   types; brief fields drawn with .get() may be null). A
+   planted unknown key inside content now fails the witness
+   on the live fold state, in a supplied snapshot, and in the
+   checker's own reconstruction, each named by path. (The
+   round-1 fixture's hand-built content carried authority as
+   a string; the fixture was corrected to the office's real
+   shape, and the event guard's authority check now matches.)
+2. **The envelope guard is complete.** Every envelope field
+   the record format defines is type-checked — event_id,
+   run_id, ts, prev_hash, hash as strings, and affected's
+   elements as strings — because C6 covers defined fields,
+   not only fields the fold happens to read. Fixtures: an
+   affected list holding an integer halts at its position;
+   a hash-valid event with an integer ts halts at its own
+   position, chain results unaffected. (The ts fixture's
+   store is rebuilt with an untyped ts column: this store's
+   DDL declares ts TEXT, whose affinity coerces integers to
+   text — the fixture models a store written by another hand,
+   which is what the checker exists to read.)
+
+Suite after round 2: **32 checks, ALL PASS**; all regressions
+green; substrate byte-identical. Resubmitted to Vane.
+
 ## Stated limits
 
 - The checker reads quiescent stores (above); examining a live
