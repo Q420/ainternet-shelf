@@ -100,8 +100,13 @@ contribution text is recorded verbatim under your seat."""
 
 class AdapterFailure(Exception):
     """A boundary failure carrying its kind (A4/A6): one of
-    no_response, malformed_response, provider_error. The driver
-    records it as a DRIVER_FAILURE; it is never an outcome."""
+    no_response, malformed_response, provider_error — or
+    transport_unresolved, raised only by the connector
+    transport (live-demo/connector_transport.py) when a
+    helper process's termination after the deadline could
+    not be confirmed. That kind names a transport failure,
+    not an adapter outcome. The driver records it as a
+    DRIVER_FAILURE; it is never an outcome."""
 
     def __init__(self, kind, detail=None):
         super().__init__(kind)

@@ -30,6 +30,23 @@ to a temp dir. The real provider is never called.
    model and carries the messages verbatim, field-for-field
    what the adapter's own _dispatch sends
    ({model, messages, temperature: 0.2} — no other fields).
+6. The adapter's actual remaining deadline governs
+   (VANE-CONNECTOR-TRANSPORT-EXAMINATION-2026-11-23.md,
+   correction 1): with a 2s deadline established on the
+   real adapter and ~half of it already elapsed before
+   _call starts, a 10s sleeper is terminated at the
+   ORIGINAL deadline — not granted a fresh full timeout —
+   and raises no_response with the pid confirmed dead.
+   Separately: with the deadline already expired before
+   _call, the helper is never launched at all (its pid
+   marker never appears) and no_response is raised.
+7. Negative witness for the group confirmation
+   (correction 2): the kill is real but the group-emptiness
+   probe is patched to raise PermissionError during
+   confirmation, so emptiness cannot be established ->
+   transport_unresolved, never no_response, no outcome —
+   even though the helper really is dead. An unknown or
+   unprobable group is never treated as an empty one.
 
 Run: PYTHONPATH=src python3 live-demo/test_connector_transport.py
 Exits 0 when every check passes.
@@ -250,6 +267,114 @@ try:
           f"reaped={reaped}, dead={pid_dead(pid2)}")
 except Exception as exc:
     print(f"cleanup warning: {exc}")
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- 6: the adapter's actual remaining deadline governs —
+# a partially elapsed deadline terminates the helper at
+# the ORIGINAL deadline, not at a fresh full timeout.
+PIDFILE6 = os.path.join(TMP, "sleeper6.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE6
+adapter6 = OpenAICompatibleAdapter(model="stub/model-1",
+                                   timeout=30.0)
+install_connector_transport(adapter6, SLEEP_PATH,
+                            "stub/model-1")
+SPAN6 = 2.0
+t_begin6 = time.monotonic()
+adapter6._begin_deadline(budget=SPAN6)
+time.sleep(1.0)  # ~half the span elapses before _call runs
+holder6 = {"result": None, "failure": None}
+t_call6 = time.monotonic()
+try:
+    holder6["result"] = adapter6._call(
+        [{"role": "user", "content": "hello"}])
+except AdapterFailure as failure:
+    holder6["failure"] = failure
+t_end6 = time.monotonic()
+failure6 = holder6["failure"]
+check("6: expiry under a partially elapsed deadline raises "
+      "no_response",
+      failure6 is not None and failure6.kind == "no_response",
+      f"kind={getattr(failure6, 'kind', None)}")
+check("6: no outcome was produced",
+      holder6["result"] is None)
+check("6: the helper was terminated at the original "
+      "deadline — the call ran out the remaining ~1s, not "
+      "a fresh 30s timeout and not the stub's 10s",
+      0.5 < (t_end6 - t_call6) < 2.5 and
+      (t_end6 - t_begin6) < SPAN6 + 1.5,
+      f"from-deadline={t_end6 - t_begin6:.2f}s "
+      f"from-call={t_end6 - t_call6:.2f}s")
+with open(PIDFILE6, encoding="utf-8") as fh:
+    pid6 = int(fh.read().strip())
+check("6: the helper pid is confirmed dead afterwards",
+      pid_dead(pid6), f"pid={pid6}")
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- 6b: no time remains -> the helper is never launched.
+PIDFILE6B = os.path.join(TMP, "sleeper6b.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE6B
+adapter6b = OpenAICompatibleAdapter(model="stub/model-1",
+                                    timeout=30.0)
+install_connector_transport(adapter6b, SLEEP_PATH,
+                            "stub/model-1")
+adapter6b._begin_deadline(budget=0.2)
+time.sleep(0.4)  # the deadline is already past before _call
+failure6b = None
+try:
+    adapter6b._call([{"role": "user", "content": "hello"}])
+except AdapterFailure as failure:
+    failure6b = failure
+check("6: an already-expired deadline raises no_response",
+      failure6b is not None and
+      failure6b.kind == "no_response",
+      f"kind={getattr(failure6b, 'kind', None)}")
+check("6: with no time remaining the helper is never "
+      "launched (its pid marker never appears)",
+      not os.path.exists(PIDFILE6B))
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- 7: the negative witness — the expiry kill is real,
+# but the group-emptiness probe fails during confirmation,
+# so emptiness cannot be established and the result must
+# be transport_unresolved, never a false confirmation.
+PIDFILE7 = os.path.join(TMP, "sleeper7.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE7
+adapter7 = OpenAICompatibleAdapter(model="stub/model-1",
+                                   timeout=1.0)
+install_connector_transport(adapter7, SLEEP_PATH,
+                            "stub/model-1")
+real_killpg7 = connector_transport._killpg
+
+
+def probe_denied_killpg(pgid, sig):
+    if sig == 0:
+        raise PermissionError(
+            "patched: group emptiness probe denied")
+    return real_killpg7(pgid, sig)
+
+
+connector_transport._killpg = probe_denied_killpg
+holder7 = {"result": None, "failure": None}
+try:
+    holder7["result"] = adapter7._call(
+        [{"role": "user", "content": "hello"}])
+except AdapterFailure as failure:
+    holder7["failure"] = failure
+finally:
+    connector_transport._killpg = real_killpg7
+failure7 = holder7["failure"]
+check("7: unestablishable group emptiness raises "
+      "transport_unresolved, never no_response",
+      failure7 is not None and
+      failure7.kind == "transport_unresolved",
+      f"kind={getattr(failure7, 'kind', None)}")
+check("7: no outcome was produced",
+      holder7["result"] is None)
+with open(PIDFILE7, encoding="utf-8") as fh:
+    pid7 = int(fh.read().strip())
+check("7: the helper really was killed — the unresolved "
+      "kind is about unprovable emptiness, not a surviving "
+      "process", pid_dead(pid7), f"pid={pid7}")
 os.environ.pop("STUB_PIDFILE", None)
 
 shutil.rmtree(TMP, ignore_errors=True)

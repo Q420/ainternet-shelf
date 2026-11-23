@@ -25,10 +25,20 @@ actively terminating its connection and confirming the
 worker thread ended (Piece 8, A6) — a wrapper that merely
 stops waiting would NOT establish that property. This
 wrapper therefore runs the helper as a subprocess in its
-own process group and, on expiry of the per-call bound:
+own process group and, on expiry of the adapter's total
+deadline:
 
+- the subprocess bound is the time REMAINING to the
+  deadline the adapter already established
+  (`_begin_deadline` sets `adapter._deadline` before every
+  public operation, identify() included) — never a fresh
+  span, never an extension; if no time remains, the
+  helper is not launched at all;
 - terminates the helper's whole process group (SIGTERM,
-  a brief grace, then SIGKILL);
+  a brief grace, then SIGKILL) — the group id is a KNOWN
+  identity, the helper's own pid (it leads its group,
+  start_new_session=True), never a lookup that can fail
+  soft into "gone";
 - REAPS the child and CONFIRMS the group is gone before
   raising anything;
 - only then raises AdapterFailure "no_response" — the
@@ -65,10 +75,14 @@ Failure-kind mapping (mirroring `_dispatch`):
   detail strings;
 - an OpenAI-style error body carried through on stdout
   -> provider_error;
-- the per-call bound expires and termination is confirmed
-  -> no_response, detail "total deadline exceeded" (the
-  adapter's own);
-- expiry with termination unconfirmed
+- the adapter's deadline expires and, where a helper was
+  launched, its termination is confirmed -> no_response,
+  detail "total deadline exceeded" (the adapter's own);
+  if the deadline had already passed before the call, the
+  helper is never launched and the same no_response is
+  raised directly;
+- expiry with termination unconfirmed — including any
+  failure to establish the group's identity or emptiness
   -> transport_unresolved (a new kind, used only here).
 """
 
@@ -83,11 +97,11 @@ import time
 
 from framework.adapter import AdapterFailure
 
-# Process-group operations, held as module-level aliases so
-# the witness can patch them and watch the unresolved
-# branch (test_connector_transport.py patches _killpg).
+# The process-group signal/probe, held as a module-level
+# alias so the witness can patch it and watch the
+# unresolved branch (test_connector_transport.py patches
+# _killpg).
 _killpg = os.killpg
-_getpgid = os.getpgid
 
 _TERM_GRACE_SECONDS = 1.0
 _CONFIRM_WINDOW_SECONDS = 5.0
@@ -95,11 +109,13 @@ _POLL_SECONDS = 0.02
 
 
 def _group_gone(pgid):
-    """True iff no member of the process group remains.
+    """True iff the process group is ESTABLISHED empty —
+    only a probe that raises ProcessLookupError establishes
+    that. A member answering the probe means not gone;
     PermissionError means a member exists that is not ours
-    to signal — that is still there, not gone."""
-    if pgid is None:
-        return True
+    to signal — still there, not gone; any other probe
+    failure propagates, so an unestablishable group is
+    never mistaken for an empty one."""
     try:
         _killpg(pgid, 0)
     except ProcessLookupError:
@@ -110,14 +126,13 @@ def _group_gone(pgid):
 
 
 def _signal_group(proc, pgid, sig):
-    if pgid is not None:
-        try:
-            _killpg(pgid, sig)
-            return
-        except ProcessLookupError:
-            return
-        except PermissionError:
-            pass  # fall through to the direct child signal
+    try:
+        _killpg(pgid, sig)
+        return
+    except ProcessLookupError:
+        return
+    except PermissionError:
+        pass  # fall through to the direct child signal
     try:
         proc.send_signal(sig)
     except ProcessLookupError:
@@ -129,11 +144,16 @@ def _terminate_and_confirm(proc):
     confirm it has ended: SIGTERM, a brief grace, SIGKILL,
     then poll until the child stands reaped (poll() reaps)
     AND the group is empty, inside a bounded confirmation
-    window. Returns True only on confirmed termination."""
-    try:
-        pgid = _getpgid(proc.pid)
-    except (ProcessLookupError, PermissionError):
-        pgid = None
+    window. Returns True only on confirmed termination.
+
+    The group id is KNOWN, not looked up: the helper was
+    started with start_new_session=True, so it leads its
+    own process group and the group id is the child's pid.
+    Any failure to establish the group's emptiness —
+    including an exception anywhere in here — leaves the
+    termination unconfirmed (the caller maps that to
+    transport_unresolved, never no_response)."""
+    pgid = proc.pid
     _signal_group(proc, pgid, signal.SIGTERM)
     deadline = time.monotonic() + _TERM_GRACE_SECONDS
     while time.monotonic() < deadline:
@@ -163,7 +183,30 @@ def install_connector_transport(adapter, helper_path, model):
         body = json.dumps(
             {"model": model, "messages": messages,
              "temperature": 0.2}).encode("utf-8")
-        bound = adapter.timeout
+        # The bound is the time REMAINING to the adapter's
+        # own total deadline: _begin_deadline establishes
+        # adapter._deadline before every public operation
+        # invokes the transport (identify() included), so
+        # the helper can never run past the point the
+        # adapter itself set. No fresh deadline is created
+        # and the existing one is never extended; the
+        # adapter's own _check_deadline behaviour is
+        # untouched. The only case with no established
+        # deadline is a direct _call outside any public
+        # operation (the witness does this); then the
+        # adapter's configured timeout is the bound.
+        established = getattr(adapter, "_deadline", None)
+        if established is not None:
+            bound = established - time.monotonic()
+        else:
+            bound = adapter.timeout
+        if bound <= 0:
+            # The adapter's total deadline has already
+            # passed: do not launch the helper at all. The
+            # adapter's own expiry kind and detail.
+            raise AdapterFailure(
+                "no_response",
+                detail="total deadline exceeded")
         try:
             proc = subprocess.Popen(
                 [sys.executable, helper_path, "chat", model],
