@@ -322,11 +322,21 @@ def apply_event(state: dict, ev: dict) -> dict:
                                 if p.get("attestation_ref") else None),
             }
         elif p.get("attestation_ref"):
-            rec["identity_status"] = p.get("identity_status",
-                                           rec["identity_status"])
-            rec["attestation"] = {"event_seq": ev["event_seq"],
-                                  "attestation_ref":
-                                      p["attestation_ref"]}
+            # An attestation raises status only (examination
+            # round 1): a same- or lower-status attested event
+            # alters neither the status nor the attestation
+            # provenance the record derives. The doorway refuses
+            # such acts; the fold is safe on its own as well, so
+            # replay of any history derives the same record.
+            rank = {"unverified": 0, "declared": 1,
+                    "provider-confirmed": 2}
+            new = p.get("identity_status")
+            if new in rank and rank[new] > rank.get(
+                    rec["identity_status"], 0):
+                rec["identity_status"] = new
+                rec["attestation"] = {
+                    "event_seq": ev["event_seq"],
+                    "attestation_ref": p["attestation_ref"]}
     elif t == "CONTRIBUTION":
         cid = p.get("contribution_id", ev["event_id"])
         state["contributions"][cid] = {

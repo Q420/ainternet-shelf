@@ -178,6 +178,106 @@ except DoorwayRefusal:
     check("T8 out-of-role act refused exactly as before", True)
 check("T8 onboarding records no case", d.state()["cases"] == {})
 
+# -- Round 1 (examination): an attestation raises status ONLY.
+# T9: an attested downgrade is refused and recorded; the status
+# and the attestation provenance stand unchanged.
+store, d = fresh()
+orch = d.issue_token("orch-1")
+ob.onboard(d, orch, "crew-1", "decl",
+           identity_status="provider-confirmed",
+           attestation_ref="att/original")
+before = len(store.all_events())
+try:
+    ob.attest(d, orch, "crew-1", "unverified",
+              attestation_ref="att/downgrade")
+    check("T9 attested downgrade refused", False)
+except DoorwayRefusal:
+    check("T9 attested downgrade refused", True)
+rec = ob.onboarding_record(d, "crew-1")
+check("T9 status and provenance unchanged after the attempt",
+      rec["identity_status"] == "provider-confirmed"
+      and rec["attestation"]["attestation_ref"] == "att/original")
+evs = store.all_events()
+check("T9 the refusal is recorded (one REJECTION appended)",
+      len(evs) == before + 1 and evs[-1]["type"] == "REJECTION")
+
+# T10: an attested same-status act is refused; it may not replace
+# the recorded attestation provenance while raising nothing.
+store, d = fresh()
+orch = d.issue_token("orch-1")
+ob.onboard(d, orch, "crew-1", "decl", identity_status="declared")
+ob.attest(d, orch, "crew-1", "provider-confirmed",
+          attestation_ref="att/first")
+try:
+    ob.attest(d, orch, "crew-1", "provider-confirmed",
+              attestation_ref="att/second")
+    check("T10 attested same-status act refused", False)
+except DoorwayRefusal:
+    check("T10 attested same-status act refused", True)
+rec = ob.onboarding_record(d, "crew-1")
+check("T10 original attestation provenance stands",
+      rec["attestation"]["attestation_ref"] == "att/first")
+
+# T11: the fold itself derives no change from a non-raising
+# attested event, even in a history that bypassed the doorway
+# (direct store append) — replay safety, not a doorway claim.
+store, d = fresh()
+orch = d.issue_token("orch-1")
+ob.onboard(d, orch, "crew-1", "decl",
+           identity_status="provider-confirmed",
+           attestation_ref="att/original")
+store.append("ONBOARDING", "orch-1", [], {
+    "seat_id": "crew-1", "identity_status": "unverified",
+    "attestation_ref": "att/forged"})
+store.commit()
+rec = ob.onboarding_record(d, "crew-1")
+check("T11 fold ignores a non-raising attested event on replay",
+      rec["identity_status"] == "provider-confirmed"
+      and rec["attestation"]["attestation_ref"] == "att/original")
+
+# -- Round 1: token binding as enforcement, not a label.
+# T12: a token bound at onboarding authenticates only against the
+# identity it bound to. The same doorway, over a record where the
+# seat's established declaration differs, does not authenticate
+# it. (The store is rebound on the doorway to stand for a record
+# the token was never issued against.)
+store, d = fresh()
+orch = d.issue_token("orch-1")
+ob.onboard(d, orch, "crew-1", "declaration A",
+           identity_status="declared")
+crew = d.issue_token("crew-1")
+ev = d.act(crew, "COMMENT", {"on_job": True, "text": "ok"},
+           view_seq=store.head_seq())
+check("T12 token authenticates against its own onboarding record",
+      ev["actor"] == "crew-1")
+store2, d2 = fresh()
+orch2 = d2.issue_token("orch-1")
+ob.onboard(d2, orch2, "crew-1", "declaration B",
+           identity_status="declared")
+d.store = store2  # the same doorway over the other record
+try:
+    d.act(crew, "COMMENT", {"on_job": True, "text": "ok"},
+          view_seq=store2.head_seq())
+    check("T12 token refused against a different established "
+          "identity", False)
+except DoorwayRefusal:
+    check("T12 token refused against a different established "
+          "identity", True)
+d.store = store
+
+# T13: an attested status upgrade does not invalidate the seat's
+# token — the upgrade changes the status, never the identity.
+store, d = fresh()
+orch = d.issue_token("orch-1")
+ob.onboard(d, orch, "crew-1", "decl", identity_status="declared")
+crew = d.issue_token("crew-1")
+ob.attest(d, orch, "crew-1", "provider-confirmed",
+          attestation_ref="att/up")
+ev = d.act(crew, "COMMENT", {"on_job": True, "text": "still me"},
+           view_seq=store.head_seq())
+check("T13 token survives an attested status upgrade",
+      ev["actor"] == "crew-1")
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")

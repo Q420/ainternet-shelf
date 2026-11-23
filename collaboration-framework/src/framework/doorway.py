@@ -99,6 +99,9 @@ class Doorway:
         self._tokens = {}  # sha256(token) -> seat_id
         self._token_basis = {}  # sha256(token) -> "onboarding" |
         # "commission" (Piece 6, scope F2 as settled)
+        self._token_identity = {}  # sha256(token) -> fingerprint of
+        # the onboarding record the token bound against (onboarding
+        # route only; examination round 1)
 
     # ------------------------------------------------------------ state
     def state(self):
@@ -110,8 +113,10 @@ class Doorway:
 
         Piece 6 (R20, scope F2 as settled): where an onboarding
         record stands for the seat, the token binds against that
-        record; where none stands, the commission / SEAT_BOUND
-        binding remains the basis — the compatibility path, which is
+        record — to the identity declaration it established, which
+        authentication re-derives and compares on every act (R5);
+        where none stands, the commission / SEAT_BOUND binding
+        remains the basis — the compatibility path, which is
         NOT the intended route for the Stage 2 end-to-end run (that
         run onboards before binding). `binding_basis` reports which.
         """
@@ -122,10 +127,32 @@ class Doorway:
         token = secrets.token_hex(24)
         digest = hashlib.sha256(token.encode()).hexdigest()
         self._tokens[digest] = seat_id
+        record = state["onboarding"].get(seat_id)
         self._token_basis[digest] = (
-            "onboarding" if seat_id in state["onboarding"]
-            else "commission")
+            "onboarding" if record is not None else "commission")
+        if record is not None:
+            # The token binds to the seat's onboarded identity
+            # (R5): the fingerprint of the identity declaration
+            # the onboarding record established. Authentication
+            # re-derives it from the record on every act, so the
+            # token authenticates only while the seat's established
+            # identity is the one it was issued against. The
+            # identity *status* is deliberately not part of the
+            # fingerprint: an attested status upgrade changes the
+            # status, never the identity, and must not invalidate
+            # the seat's token. Commission-route tokens carry no
+            # fingerprint — they bind to the commission's seat
+            # binding, the pre-onboarding guarantee, and no
+            # stronger claim is made for them.
+            self._token_identity[digest] = self._identity_fingerprint(
+                seat_id, record)
         return token
+
+    @staticmethod
+    def _identity_fingerprint(seat_id, onboarding_record):
+        return hashlib.sha256(
+            f"{seat_id}\x00{onboarding_record.get('declaration')}"
+            .encode()).hexdigest()
 
     def binding_basis(self, token):
         """Which record a token bound against (Piece 6, F2):
@@ -140,7 +167,22 @@ class Doorway:
         if not token:
             return None
         digest = hashlib.sha256(token.encode()).hexdigest()
-        return self._tokens.get(digest)
+        seat_id = self._tokens.get(digest)
+        if seat_id is None:
+            return None
+        bound = self._token_identity.get(digest)
+        if bound is not None:
+            # Onboarding-route token: authentication depends on
+            # the onboarding identity it bound against (R5). If
+            # the record's established identity for this seat is
+            # not that identity — a different declaration stands —
+            # the token is a mismatched identity and does not
+            # authenticate.
+            record = self.state()["onboarding"].get(seat_id)
+            if record is None or self._identity_fingerprint(
+                    seat_id, record) != bound:
+                return None
+        return seat_id
 
     # ------------------------------------------------------------ record
     def _record_rejection(self, seat_id, attempted_type, ground,
@@ -481,10 +523,23 @@ class Doorway:
             return ("a provider-confirmed status carries its "
                     "attestation reference (R18)")
         existing = state["onboarding"].get(payload.get("seat_id"))
-        if existing is not None and not payload.get("attestation_ref"):
+        if existing is not None:
             recorded = existing["identity_status"]
-            if self._STATUS_RANK[status] > \
-                    self._STATUS_RANK.get(recorded, 0):
+            rises = self._STATUS_RANK[status] > \
+                self._STATUS_RANK.get(recorded, 0)
+            if payload.get("attestation_ref"):
+                # An attestation raises status only (examination
+                # round 1): a same- or lower-status attested act
+                # is refused, so it can neither downgrade the
+                # seat nor replace the attestation provenance the
+                # record already derives.
+                if not rises:
+                    return (f"attested identity status "
+                            f"{status} does not raise "
+                            f"{payload.get('seat_id')}'s recorded "
+                            f"status {recorded}; an attestation "
+                            f"raises status only (R18)")
+            elif rises:
                 return (f"identity status upgrade for "
                         f"{payload.get('seat_id')} from {recorded} "
                         f"to {status} without a recorded attestation "
