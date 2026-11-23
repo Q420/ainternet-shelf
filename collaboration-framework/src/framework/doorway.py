@@ -751,13 +751,16 @@ class Doorway:
             outcome = payload.get("outcome")
             if outcome == "allow" and \
                     joint == _gates.ASSEMBLY_JOINT and \
-                    state.get("assembly_proposals"):
-                # §3.8 (S2): where a proposal stands, an assembly
-                # allow answers an examined assembly — a record
-                # bound to the latest proposal must stand first.
-                # An allow recorded before that examination
-                # authorizes nothing and does not record.
-                latest = state["assembly_proposals"][-1][
+                    _gates.run_proposals(state):
+                # §3.8 (S2): where a run-level proposal stands,
+                # an assembly allow answers an examined assembly
+                # — a record bound to the latest run-level
+                # proposal must stand first. An allow recorded
+                # before that examination authorizes nothing and
+                # does not record. (Piece A1 correction round 1:
+                # an instance proposal is not the run's proposal
+                # and never becomes the latest here.)
+                latest = _gates.run_proposals(state)[-1][
                     "event_seq"]
                 bound = any(
                     rec.get("proposal_seq") == latest
@@ -1167,13 +1170,16 @@ class Doorway:
         """Why an ASSEMBLY_GENERATED may not be recorded, or
         None (Piece A1, R37/R38): the assembly and its instance
         are new (ids are never reused); the record binds to the
-        exact proposal it answers and to the exact instance
-        onboarding that precedes it — by position and by the
-        declaration's fingerprint, identity claims living only
-        in the onboarding event; the case binding names the
-        seat's effective case; skills are pinned by name and
-        version; grants, when present, are grant-shaped data
-        (their enforcement is a later piece)."""
+        exact proposal it answers — an instance proposal, never
+        a run-level one (correction round 1) — and to the exact
+        instance onboarding that precedes it — by position and
+        by the declaration's fingerprint, identity claims
+        living only in the onboarding event; the case binding
+        names the seat's effective case, and the part the
+        record fills is that case's own part (correction round
+        1); skills are pinned by name and version; grants, when
+        present, are grant-shaped data (their enforcement is a
+        later piece)."""
         assembly_id = payload.get("assembly_id")
         instance_id = payload.get("instance_id")
         if assembly_id in state["assemblies"]:
@@ -1197,6 +1203,12 @@ class Doorway:
                     f"{payload.get('proposal_seq')!r} names no "
                     f"standing ASSEMBLY_PROPOSED; a generation "
                     f"answers an exact proposal (R40)")
+        if proposal["payload"].get("proposal_kind") != \
+                "instance":
+            return ("the proposal the generation answers is "
+                    "a run-level proposal; a generation answers "
+                    "an instance proposal only — the two share "
+                    "an event kind, never a referent (R40)")
         if proposal["payload"].get("seat") not in (
                 None, payload.get("seat")):
             return ("the proposal names a different seat slot "
@@ -1237,6 +1249,13 @@ class Doorway:
                     f"{payload.get('case_version')}; the "
                     f"seat's effective case is {eff['case_id']} "
                     f"version {eff['version']} (R37)")
+        case_part = (eff.get("content") or {}).get("part")
+        if payload.get("part") != case_part:
+            return (f"the record fills part "
+                    f"{payload.get('part')!r}; the case it "
+                    f"binds covers part {case_part!r} — an "
+                    f"assembly's part must be its case's part, "
+                    f"or the pairing is ungrounded (R37)")
         skills = payload.get("skills")
         if not isinstance(skills, list) or any(
                 not isinstance(s, dict) or not s.get("name")

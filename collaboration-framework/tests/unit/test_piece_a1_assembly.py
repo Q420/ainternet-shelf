@@ -16,6 +16,7 @@ rejected.
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a1_assembly.py
 Exits 0 when every check passes.
 """
+import copy
 import json
 import os
 import subprocess
@@ -26,6 +27,7 @@ ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 SRC = os.path.join(ROOT, "src")
 sys.path.insert(0, SRC)
 
+from framework import gates as _gates  # noqa: E402
 from framework import onboarding as ob  # noqa: E402
 from framework import projection  # noqa: E402
 from framework.doorway import Doorway, DoorwayRefusal  # noqa: E402
@@ -33,6 +35,7 @@ from framework.generator import Generator  # noqa: E402
 from framework.office import Office  # noqa: E402
 from framework.record import (CONSTITUTION_HASH, FrameworkStore,  # noqa: E402
                               assembly_record_hash,
+                              declaration_fingerprint,
                               instance_credential_fingerprint)
 
 FAILURES = []
@@ -572,6 +575,201 @@ check("T12 a pack sealing a different object is reported",
       and any(p["kind"] == "assembly_hash_mismatch"
               and p["type"] == "ASSEMBLY_PACKED"
               for p in ac["problems"]), json.dumps(ac))
+
+# -- T13: correction round 1 (Vane's examination of the build)
+# — the proposal discriminator and the case/part
+# correspondence. ASSEMBLY_PROPOSED is a shared event kind: a
+# §3.8 run-level proposal and an A1 instance proposal must
+# never be mistaken for one another, in either fold, in the
+# gate derivations, or at the doorway; and an assembly's part
+# must be the part its bound case covers, at preflight and at
+# the doorway alike.
+CREW5 = [{"seat": s, "role": r} for s, r in (
+    ("orch-1", "orchestrator"), ("exam-1", "examiner"),
+    ("dir-1", "director"), ("crew-1", "crew"),
+    ("crew-2", "crew"))]
+GATES_A1 = {"assembly": "assembly", "completion": "completion",
+            "part-B": "judgement"}
+
+
+def run_proposal(d, store, tok):
+    """A §3.8 run-level proposal, recorded as the orchestrator
+    piece records it: the commission references and the full
+    crew, no discriminator — absence is run-level."""
+    cs = d.state()["commission_seq"]
+    return d.act(tok["orch-1"], "ASSEMBLY_PROPOSED", {
+        "commission_seq": cs, "tree_ref": cs, "gates_ref": cs,
+        "crew": [dict(c) for c in CREW5]},
+        view_seq=store.head_seq())
+
+
+def run_record(d, store, tok, proposal_seq, gate_set):
+    """The examiner's §3.8 assembly record, bound to a
+    run-level proposal (no seat onboarding stands in these
+    worlds, so every derived status is unverified)."""
+    return d.act(tok["exam-1"], "ASSEMBLY_RECORD", {
+        "proposal_seq": proposal_seq,
+        "criteria_mapping": {"part-A": "criterion-part-A",
+                             "part-B": "criterion-part-B"},
+        "gate_set": dict(gate_set),
+        "identity_weighed": {c["seat"]: "unverified"
+                             for c in CREW5}},
+        view_seq=store.head_seq())
+
+
+def fresh_gated():
+    """fresh()'s world with a declared gate set — the
+    doorway's assembly-allow discipline binds only declared
+    runs."""
+    path = os.path.join(tempfile.mkdtemp(), "run.db")
+    store = FrameworkStore(path)
+    store.insert_run("run-1", CONSTITUTION_HASH)
+    store.append("RUN_COMMISSIONED", "dir-1", [], {
+        "run_id": "run-1",
+        "tree": {"part-A": ["part-B"], "part-B": []},
+        "gates": dict(GATES_A1),
+        "seats": {
+            "orch-1": {"role": "orchestrator",
+                       "identity_status": "declared"},
+            "exam-1": {"role": "examiner",
+                       "identity_status": "declared"},
+            "dir-1": {"role": "director",
+                      "identity_status": "declared"},
+            "crew-1": {"role": "crew",
+                       "identity_status": "unverified"},
+            "crew-2": {"role": "crew",
+                       "identity_status": "unverified"},
+        },
+        "briefs": {"crew-1": dict(FULL), "crew-2": dict(FULL)},
+    })
+    store.commit()
+    d = Doorway(store)
+    office = Office(d)
+    gen = Generator(d)
+    tok = {s: d.issue_token(s) for s in
+           ("orch-1", "exam-1", "dir-1", "crew-1", "crew-2")}
+    return store, d, office, gen, tok
+
+
+def forged_generated(proposal_seq, onboarding_seq, part):
+    """An ASSEMBLY_GENERATED payload in the generator's own
+    shape, hand-built so a test can vary exactly one binding."""
+    return {
+        "assembly_id": "assembly-crew-1-1",
+        "instance_id": "inst-crew-1-1",
+        "seat": "crew-1",
+        "part": part,
+        "case_id": "case-crew-1",
+        "case_version": 1,
+        "proposal_seq": proposal_seq,
+        "onboarding_seq": onboarding_seq,
+        "declaration_fingerprint": declaration_fingerprint(
+            "inst-crew-1-1", DECL),
+        "model_selection": {"basis": None, "requested": None},
+        "skills": [dict(s) for s in SKILLS],
+        "grants": copy.deepcopy(GRANTS),
+    }
+
+
+# (a) an instance proposal does not displace the operative
+# gate declaration the run-level record established.
+store, d, office, gen, tok = fresh()
+prop = run_proposal(d, store, tok)
+check("T13a before any record, the operative set is the "
+      "commission's declaration (here, none)",
+      _gates.operative_declaration(d.state()) == {})
+run_record(d, store, tok, prop["event_seq"], GATES_A1)
+check("T13a the record bound to the run proposal governs",
+      _gates.operative_declaration(d.state()) == GATES_A1)
+gen.propose(tok["orch-1"], "crew-1", part="part-A",
+            role_requirements="a careful drafting model")
+check("T13a the fold keeps the two proposals distinct",
+      [p["proposal_kind"] for p in
+       d.state()["assembly_proposals"]] == ["run", "instance"])
+check("T13a the instance proposal does not displace the "
+      "operative declaration",
+      _gates.operative_declaration(d.state()) == GATES_A1)
+
+# (b) a run-level assembly allow recorded after an instance
+# proposal still validates against the run proposal's record.
+store, d, office, gen, tok = fresh_gated()
+prop = run_proposal(d, store, tok)
+run_record(d, store, tok, prop["event_seq"], GATES_A1)
+gen.propose(tok["orch-1"], "crew-1", part="part-A",
+            role_requirements="a careful drafting model")
+ev = d.act(tok["exam-1"], "GATE_OUTCOME",
+           {"joint": "assembly", "outcome": "allow"},
+           view_seq=store.head_seq())
+check("T13b the assembly allow answers the run proposal, "
+      "not the instance proposal standing after it",
+      ev["type"] == "GATE_OUTCOME"
+      and _gates.assembly_open(d.state()))
+
+# (c) generation refuses to answer a run-level proposal — at
+# preflight (nothing recorded) and at the doorway (a refusal
+# recorded) alike.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop = run_proposal(d, store, tok)
+head = store.head_seq()
+r = gen.generate(tok["orch-1"], "crew-1", identify,
+                 skills=SKILLS, grants=GRANTS)
+check("T13c generation does not answer a run-level proposal",
+      r["ok"] is False and store.head_seq() == head
+      and d.state()["instance_onboarding"] == {}
+      and d.state()["assemblies"] == {})
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+before = len(store.all_events())
+check("T13c a generation bound to the run proposal is "
+      "refused at the doorway, the refusal recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_GENERATED",
+          forged_generated(prop["event_seq"],
+                           ob_ev["event_seq"], "part-A"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION"
+      and "run-level" in store.all_events()[-1]["payload"].get(
+          "ground", ""))
+
+# (d) the part correspondence: a part the bound case does not
+# cover fails generation preflight (nothing recorded) and is
+# refused at the doorway (refusal recorded).
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+gen.propose(tok["orch-1"], "crew-1", part="part-B",
+            role_requirements="a careful drafting model")
+head = store.head_seq()
+r = gen.generate(tok["orch-1"], "crew-1", identify,
+                 skills=SKILLS, grants=GRANTS)
+check("T13d a part the case does not cover fails preflight",
+      r["ok"] is False and "part" in " ".join(r["problems"]))
+check("T13d preflight recorded nothing",
+      store.head_seq() == head
+      and d.state()["instance_onboarding"] == {}
+      and d.state()["assemblies"] == {})
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop_ev = gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                      role_requirements="a careful drafting "
+                                        "model")
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+before = len(store.all_events())
+check("T13d a record filling a part its case does not cover "
+      "is refused at the doorway, the refusal recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_GENERATED",
+          forged_generated(prop_ev["event_seq"],
+                           ob_ev["event_seq"], "part-B"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION"
+      and "part" in store.all_events()[-1]["payload"].get(
+          "ground", ""))
 
 print()
 if FAILURES:

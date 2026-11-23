@@ -60,13 +60,19 @@ class Generator:
         return state["assemblies"].get(assembly_id)
 
     def _open_proposal(self, state, seat_id):
-        """The latest standing proposal naming this seat slot
-        that no generated assembly has answered yet, or None."""
+        """The latest standing instance proposal naming this
+        seat slot that no generated assembly has answered yet,
+        or None. Only an instance proposal is an answerable
+        referent (correction round 1): a run-level proposal
+        shares the event kind but proposes the run's gate set,
+        and a generation never answers one."""
         answered = {e.get("proposal_seq")
                     for e in state["assemblies"].values()}
         best = None
         for ev in self.store.all_events():
             if ev["type"] == "ASSEMBLY_PROPOSED" and \
+                    ev["payload"].get("proposal_kind") == \
+                    "instance" and \
                     ev["payload"].get("seat") == seat_id and \
                     ev["event_seq"] not in answered:
                 best = ev
@@ -97,7 +103,10 @@ class Generator:
         proposal, extended with the seat slot it fills, the part,
         and the role requirements the generation answers. The
         commission references name the standing commission
-        exactly, as §3.8's discipline requires."""
+        exactly, as §3.8's discipline requires. The payload
+        carries the proposal discriminator (correction round 1):
+        "instance" — this proposal fills a seat slot and is
+        never the run-level proposal the gate derivations read."""
         state = self.doorway.state()
         binding = state["seats"].get(seat_id) or {}
         payload = {
@@ -106,6 +115,7 @@ class Generator:
             "gates_ref": state["commission_seq"],
             "crew": [{"seat": seat_id,
                       "role": binding.get("role")}],
+            "proposal_kind": "instance",
             "seat": seat_id,
             "part": part,
             "role_requirements": role_requirements,
@@ -132,7 +142,8 @@ class Generator:
             problems.append(
                 f"assemblies fill crew seat slots; {seat_id} "
                 f"is {binding.get('role')}")
-        if self._open_proposal(state, seat_id) is None:
+        proposal = self._open_proposal(state, seat_id)
+        if proposal is None:
             problems.append(
                 f"no unanswered proposal stands for seat "
                 f"{seat_id}; a generation answers a proposal")
@@ -141,10 +152,25 @@ class Generator:
             problems.append(
                 "the model declared no identity; an instance "
                 "onboards on its own declaration (R38)")
-        if effective_case(state, seat_id) is None:
+        eff = effective_case(state, seat_id)
+        if eff is None:
             problems.append(
                 f"no issued case stands for seat {seat_id}; "
                 f"an assembly binds to a case (R37)")
+        elif proposal is not None:
+            # Correction round 1: the part the proposal names
+            # must be the part the bound case's established
+            # content covers — each id grounded is not enough;
+            # their pairing must correspond, here in preflight
+            # (before any act) as at the doorway.
+            part = proposal["payload"].get("part")
+            case_part = (eff.get("content") or {}).get("part")
+            if part != case_part:
+                problems.append(
+                    f"the proposal names part {part!r}; the "
+                    f"case the assembly would bind covers part "
+                    f"{case_part!r} — an assembly's part must "
+                    f"be its case's part (R37)")
         if not isinstance(skills, (list, tuple)) or any(
                 not isinstance(s, dict) or not s.get("name")
                 or not s.get("version") for s in skills):

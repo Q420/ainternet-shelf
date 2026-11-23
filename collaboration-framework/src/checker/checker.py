@@ -362,10 +362,12 @@ def _assembly_result(events, state):
     one-to-one rule (one instance identity, one immutable
     generated assembly, one onboarding reference, one judgement
     target, one pack seal); the judged and sealed object being
-    the generated object, by canonical hash; and no activation
-    without the full chain and the record's grants section. An
-    incomplete or incorrectly ordered assembly history is
-    reported, never read as valid."""
+    the generated object, by canonical hash; the generation
+    answering an instance proposal, never a run-level one (the
+    shared event kind's discriminator, correction round 1);
+    and no activation without the full chain and the record's
+    grants section. An incomplete or incorrectly ordered
+    assembly history is reported, never read as valid."""
     problems = []
 
     def problem(kind, **fields):
@@ -442,6 +444,11 @@ def _assembly_result(events, state):
         elif prop["payload"].get("seat") not in (None,
                                                  p.get("seat")):
             problem("generated_answers_other_slot",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+        if prop is not None and \
+                prop["payload"].get("proposal_kind") != \
+                "instance":
+            problem("generated_answers_run_proposal",
                     assembly_id=aid, at_seq=ev["event_seq"])
         # The exact onboarding it binds to: an instance
         # onboarding, for this instance and assembly, after the

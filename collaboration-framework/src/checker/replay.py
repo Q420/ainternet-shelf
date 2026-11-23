@@ -238,6 +238,9 @@ def _shape_problem(ev):
                     for c in crew)):
             return "ASSEMBLY_PROPOSED crew is not a list of " \
                 "seat/role bindings"
+        if bad_opt_str("proposal_kind"):
+            return "ASSEMBLY_PROPOSED proposal_kind is not " \
+                "a string"
     elif t == "ASSEMBLY_RECORD":
         if bad_opt("proposal_seq", _is_int):
             return "ASSEMBLY_RECORD proposal_seq is not an integer"
@@ -658,8 +661,14 @@ def _apply(state, ev):
             "event_seq": seq, "by": actor,
             "tree_part": p.get("tree_part")})
     elif t == "ASSEMBLY_PROPOSED":
+        # Piece A1 correction round 1: the proposal
+        # discriminator, normalised exactly as the framework
+        # fold normalises it — only an explicit "instance"
+        # marks an instance proposal; absence is run-level.
         state["assembly_proposals"].append({
-            "event_seq": seq, "crew": p.get("crew")})
+            "event_seq": seq, "crew": p.get("crew"),
+            "proposal_kind": "instance"
+            if p.get("proposal_kind") == "instance" else "run"})
     elif t == "ASSEMBLY_RECORD":
         state["assembly_records"].append({
             "event_seq": seq, "proposal_seq": p.get("proposal_seq"),

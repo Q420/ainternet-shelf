@@ -182,7 +182,8 @@ SCHEMA = _obj({
     "assembly_proposals": _list(_obj({
         "event_seq": _INT,
         "crew": _opt(_list(_obj({
-            "seat": _STR, "role": _STR})))})),
+            "seat": _STR, "role": _STR}))),
+        "proposal_kind": _STR})),
     "assembly_records": _list(_obj({
         "event_seq": _INT, "proposal_seq": _opt(_INT),
         "gate_set": _map(_STR)})),

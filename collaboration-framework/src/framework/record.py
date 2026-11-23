@@ -351,7 +351,16 @@ def empty_state(run_id=None) -> dict:
         "commission_seq": None,  # the RUN_COMMISSIONED event's
                               # position (§3.8: a proposal answers
                               # an exact commission, by reference)
-        "assembly_proposals": [],  # {event_seq, crew} (R26)
+        "assembly_proposals": [],  # {event_seq, crew,
+                              # proposal_kind} (R26; Piece A1
+                              # correction round 1: the proposal
+                              # discriminator — "instance" for a
+                              # generated instance's proposal,
+                              # "run" for the §3.8 gate proposal;
+                              # a payload carrying no
+                              # discriminator folds as "run", so
+                              # pre-discriminator histories read
+                              # exactly as they always did)
         "assembly_records": [],  # {event_seq, proposal_seq,
                               # gate_set} (R35)
         "run_ready_seq": None,  # the latest
@@ -772,9 +781,18 @@ def apply_event(state: dict, ev: dict) -> dict:
         # R26: the orchestrator's proposal, a recorded act. The
         # fold carries the crew it proposed; the tree and gates it
         # adopts stand in the commission it references.
+        # Piece A1 correction round 1: the event kind is shared —
+        # a §3.8 run-level gate proposal and an A1 instance
+        # proposal both record as ASSEMBLY_PROPOSED — so the fold
+        # carries the payload's proposal discriminator,
+        # normalised here: only an explicit "instance" marks an
+        # instance proposal; absence (every pre-discriminator
+        # history) is a run-level proposal.
         state["assembly_proposals"].append({
             "event_seq": ev["event_seq"],
             "crew": p.get("crew"),
+            "proposal_kind": "instance"
+            if p.get("proposal_kind") == "instance" else "run",
         })
     elif t == "ASSEMBLY_RECORD":
         # R35: the examiner's assembly record, bound to the exact

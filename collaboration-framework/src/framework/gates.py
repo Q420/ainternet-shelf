@@ -171,16 +171,30 @@ def validate_gate_set(tree, declaration):
 
 # --------------------------------------------------------- enrich
 
+def run_proposals(state):
+    """The run-level proposals standing in the fold (§3.8):
+    ASSEMBLY_PROPOSED is a shared event kind (Piece A1
+    correction round 1) — an A1 instance proposal fills a seat
+    slot and proposes no gate set, so every run-level
+    derivation reads only the proposals whose discriminator
+    is "run" (absence in a pre-discriminator history folds as
+    "run" upstream). An instance proposal never displaces the
+    run's latest proposal here."""
+    return [p for p in state.get("assembly_proposals") or []
+            if p.get("proposal_kind") != "instance"]
+
+
 def operative_declaration(state):
     """The gate set that governs (§3.8, S2): the examined set of
-    the assembly record bound to the LATEST proposal, while such
-    a record stands — otherwise the commission's proposed
-    declaration. On re-proposal the operative set reverts to the
-    declaration until the new record stands; a previous approved
-    set survives nothing as an unrecorded authority. A pure
-    function of the fold: latest proposal → its bound record, if
-    any → that record's set, else the declaration."""
-    proposals = state.get("assembly_proposals") or []
+    the assembly record bound to the LATEST run-level proposal,
+    while such a record stands — otherwise the commission's
+    proposed declaration. On re-proposal the operative set
+    reverts to the declaration until the new record stands; a
+    previous approved set survives nothing as an unrecorded
+    authority. A pure function of the fold: latest run-level
+    proposal → its bound record, if any → that record's set,
+    else the declaration."""
+    proposals = run_proposals(state)
     if proposals:
         latest = proposals[-1].get("event_seq")
         bound = None
@@ -312,7 +326,7 @@ def assembly_open(state):
     standing = standing_outcome(state, ASSEMBLY_JOINT)
     if standing is None or standing.get("outcome") != "allow":
         return False
-    proposals = state.get("assembly_proposals") or []
+    proposals = run_proposals(state)
     if not proposals:
         return True
     latest = proposals[-1].get("event_seq")

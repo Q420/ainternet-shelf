@@ -184,7 +184,8 @@ SCHEMA = {
             "crew": {"t": "opt", "v": {"t": "list", "v": {
                 "t": "obj", "f": {
                     "seat": {"t": "str"},
-                    "role": {"t": "str"}}}}}}}},
+                    "role": {"t": "str"}}}}},
+            "proposal_kind": {"t": "str"}}}},
         "assembly_records": {"t": "list", "v": {"t": "obj", "f": {
             "event_seq": {"t": "int"},
             "proposal_seq": {"t": "opt", "v": {"t": "int"}},
