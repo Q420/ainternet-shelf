@@ -361,6 +361,88 @@ check("C4 the checker reports the planted snapshot as "
       == ["seats.crew-1.planted_field"],
       json.dumps(v["checks"].get("snapshot_schema")))
 
+# Round 1 (Vane's examination): the planted-field witness must
+# also run against the LIVE FOLD STATE itself, and against the
+# checker's RECONSTRUCTION — not only against exported snapshots.
+liveC = replay(storeC)
+liveC["seats"]["crew-1"]["planted_field"] = True
+check("C4 a planted field in the live fold state fails the "
+      "witness, named by path",
+      projection.conforms(liveC) == ["seats.crew-1.planted_field"],
+      str(projection.conforms(liveC)))
+liveB = replay(storeB)
+liveB["cases"]["case-crew-1"]["versions"]["1"]["planted"] = 1
+check("C4 a planted field inside a live case version fails, "
+      "named by path",
+      projection.conforms(liveB)
+      == ["cases.case-crew-1.versions.1.planted"],
+      str(projection.conforms(liveB)))
+
+
+def rewritten_copy(store, new_tree):
+    """A copy of the store whose commission carries a planted
+    nested structure inside its tree, with the whole hash chain
+    recomputed — a rewritten history, internally consistent, so
+    only the schema witness can catch the shape."""
+    dst = os.path.join(tempfile.mkdtemp(), "rewritten.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    for trig in ("events_no_update", "events_no_delete",
+                 "events_no_replace"):
+        conn.execute(f"DROP TRIGGER IF EXISTS {trig}")
+    rows = conn.execute(
+        "SELECT event_seq, event_id, run_id, type, actor, affected,"
+        " payload, ts FROM events ORDER BY event_seq").fetchall()
+    prev = ""
+    for seq, eid, run_id, typ, actor, affected, payload, ts in rows:
+        p = json.loads(payload)
+        if typ == "RUN_COMMISSIONED":
+            p["tree"] = new_tree
+        ev = {"event_seq": seq, "event_id": eid, "run_id": run_id,
+              "type": typ, "actor": actor,
+              "affected": json.loads(affected), "payload": p,
+              "ts": ts, "prev_hash": prev}
+        h = event_hash(prev, ev)
+        conn.execute("UPDATE events SET payload = ?, prev_hash = ?,"
+                     " hash = ? WHERE event_seq = ?",
+                     (json.dumps(p), prev, h, seq))
+        prev = h
+    conn.commit()
+    conn.close()
+    return dst
+
+
+_, v = run_checker(rewritten_copy(storeA, {"A": [{"planted": 1}]}),
+                   "run-1", snapA)
+check("C4 a planted structure inside the reconstruction's tree "
+      "fails closed: the chain verifies, the replay halts "
+      "schema_invalid on the wrongly typed tree value",
+      v["checks"]["chain_hash"]["result"] == "ok"
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["replay"]["at_seq"] == 1,
+      json.dumps(v["checks"]))
+
+# And the projection-schema walk itself, over the checker's own
+# reconstruction, names a planted field by path (the layer that
+# witnesses whatever reaches the state past the event guard).
+import checker.checker as checker_mod  # noqa: E402
+import checker.replay as checker_replay  # noqa: E402
+
+recon, halt = checker_replay.replay_events(storeB.all_events(),
+                                           "run-1")
+check("C4 the checker's reconstruction of the case-lifecycle "
+      "run conforms before planting", halt is None
+      and checker_mod._conforms(
+          json.loads(canonical(recon)), checker_schema.SCHEMA)
+      == [])
+recon["cases"]["case-crew-1"]["versions"]["1"]["planted"] = 1
+bad_recon = checker_mod._conforms(
+    json.loads(canonical(recon)), checker_schema.SCHEMA)
+check("C4 a planted field inside the checker's reconstruction "
+      "fails its schema witness, named by path",
+      bad_recon == ["cases.case-crew-1.versions.1.planted"],
+      str(bad_recon))
+
 # ============================================================ crit. 5
 false_snap = copy.deepcopy(snapA)
 false_snap["lifecycle"] = "bogus"
@@ -442,6 +524,41 @@ check("C8 a hash-valid, wrongly typed event produces a classed "
       and v["checks"]["chain_hash"]["result"] == "ok"
       and "Traceback" not in proc.stdout + proc.stderr,
       json.dumps(v["checks"]) + proc.stderr)
+
+# Round 1: the classification contract — a wrongly typed defined
+# field halts the replay; it does not fold into a nonconforming
+# state. Her concrete case first, then an equivalent.
+storeF, dF, tokF = fresh(gates=None)
+storeF._conn.close()
+pathF = os.path.join(tempfile.mkdtemp(), "run.db")
+storeF = FrameworkStore(pathF)
+storeF.insert_run("run-1", CONSTITUTION_HASH)
+storeF.append("RUN_COMMISSIONED", "dir-1", [], {
+    "run_id": "run-1", "tree": TREE,
+    "seats": {"crew-1": {"role": "crew", "identity_status": 7}}})
+storeF.commit()
+quiesce(storeF)
+proc, v = run_checker(storeF.path, "run-1", None)
+check("C8 a commission binding with an integer identity_status "
+      "halts schema_invalid at the commission",
+      proc.returncode == 0
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["replay"]["at_seq"] == 1
+      and v["checks"]["chain_hash"]["result"] == "ok",
+      json.dumps(v["checks"]))
+storeG, dG, tokG = fresh(gates=None)
+storeG.append("CONTRIBUTION", "crew-1", [], {
+    "contribution_id": "c-g1", "tree_part": 5, "text": "work"})
+storeG.commit()
+quiesce(storeG)
+proc, v = run_checker(storeG.path, "run-1", None)
+check("C8 a contribution with an integer tree_part halts "
+      "schema_invalid at its position",
+      proc.returncode == 0
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["replay"]["at_seq"] == 2
+      and v["checks"]["chain_hash"]["result"] == "ok",
+      json.dumps(v["checks"]))
 
 # ============================================================ crit. 9
 proto = os.path.expanduser("~/workspace/loom-prototype")

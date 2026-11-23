@@ -74,6 +74,48 @@ Submitted to Vane for examination.
   observer export-safety tests — ALL PASS. Substrate carried
   files byte-identical to the pin.
 
+## Correction round 1 (2026-11-22, after Vane's examination)
+
+Her examination (filed as
+`VANE-PIECE7-CHECKER-EXAMINATION-2026-11-22.md`) found two
+substantive gaps; both were verified first-hand before any
+correction, and both are closed here:
+
+1. **Unconstrained schema regions.** The schema now describes
+   the real shapes wherever the record contract defines them:
+   tree values are downstream-part lists; gate declarations map
+   joints to kind strings; seal boundaries are seat-id lists;
+   paused downstream is the part's downstream list; crew is a
+   list of seat/role bindings; and case content — a verbatim
+   payload copy with an open key set — gains a `fields` schema
+   node: its contract fields (the seven content fields, plus
+   case_id/version/seat/representational) conform when present,
+   while the payload's own keys remain its own. Remaining `any`
+   nodes are only where the fold carries a value the contract
+   leaves opaque (a certification's coverage). The witness now
+   also runs where she required: planted fields fail against
+   the LIVE fold state (a seat record; a case version), a
+   chain-rewritten history with a planted tree structure fails
+   closed at the replay, and a planted field inside the
+   checker's own reconstruction is named by its schema walk.
+   *The round caught a real error of mine through exactly this
+   witness: my first schema described a paused entry's
+   downstream as a map; the fold stores the part's downstream
+   LIST, and a legitimate fixture failed conformance until the
+   schema was corrected to the record's actual shape.*
+2. **The event guard now covers the vocabulary.**
+   `_shape_problem()` type-checks every field the record
+   contract defines, across all event types and the envelope —
+   including nested values (commission seat bindings and tree,
+   case content fields, downstream maps, crew bindings, gate
+   sets). Her concrete case is a fixture: a commission binding
+   with an integer `identity_status` now halts the replay
+   `schema_invalid` at position 1, as does an equivalent
+   (an integer `tree_part` on a contribution, at its position).
+
+Suite after round 1: **27 checks, ALL PASS**; all regressions
+green; substrate byte-identical. Resubmitted to Vane.
+
 ## Stated limits
 
 - The checker reads quiescent stores (above); examining a live

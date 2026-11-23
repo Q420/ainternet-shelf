@@ -31,6 +31,19 @@ from framework.record import replay
 #   {"t": "map", "v": node}      an object with arbitrary keys
 #                                whose values conform
 #   {"t": "obj", "f": {k: node}} an object with exactly these keys
+#   {"t": "fields", "f": {...}}  an object with an open key set
+#                                whose NAMED fields, when present,
+#                                conform — for verbatim payload
+#                                copies (a case's content), whose
+#                                keys are the payload's own but
+#                                whose contract fields have shapes
+#
+# Correction round 1 (Vane's examination of the first build):
+# values whose shapes the record contract defines are described
+# by those shapes — tree values are downstream-part lists, gate
+# declarations map joints to kind strings, a seal boundary is a
+# list of seat ids — never left as unconstrained `any` regions
+# where a nested field could hide.
 
 _ANY = {"t": "any"}
 _STR = {"t": "str"}
@@ -54,10 +67,25 @@ def _obj(f):
     return {"t": "obj", "f": f}
 
 
+def _fields(f):
+    return {"t": "fields", "f": f}
+
+
+_TREE_SHAPE = _map(_list(_STR))
+
+_CASE_CONTENT = _fields({
+    "assignment": _STR, "tree": _TREE_SHAPE, "part": _STR,
+    "evidence_boundary": _list(_STR),
+    "verification_list": _list(_STR),
+    "account": _STR, "authority": _STR,
+    "case_id": _STR, "version": _INT, "seat": _STR,
+    "representational": _BOOL,
+})
+
 _CASE_VERSION = _obj({
     "verified": _opt(_INT), "judged": _opt(_INT),
     "notified": _opt(_INT), "issued": _opt(_INT),
-    "content": _opt(_map(_ANY)),
+    "content": _opt(_CASE_CONTENT),
     "corrected": _BOOL, "corrected_seq": _opt(_INT),
     "representational": _BOOL, "acknowledged": _map(_INT),
 })
@@ -69,17 +97,18 @@ SCHEMA = _obj({
     "seats": _map(_obj({
         "role": _STR, "identity_status": _STR})),
     "onboarding": _map(_obj({
-        "declaration": _ANY, "identity_status": _STR,
-        "capability": _ANY, "limits": _ANY,
-        "terms_acknowledged": _ANY, "terms_ref": _ANY,
+        "declaration": _opt(_STR), "identity_status": _STR,
+        "capability": _opt(_STR), "limits": _opt(_STR),
+        "terms_acknowledged": _opt(_BOOL),
+        "terms_ref": _opt(_STR),
         "onboarded_seq": _INT,
         "attestation": _opt(_obj({
-            "event_seq": _INT, "attestation_ref": _ANY}))})),
+            "event_seq": _INT, "attestation_ref": _STR}))})),
     "claims": _map(_obj({
         "author": _STR, "status": _STR, "subject": _STR,
         "status_seq": _INT})),
     "disagreements": _map(_obj({
-        "status": _STR, "claim_id": _ANY, "by": _STR,
+        "status": _STR, "claim_id": _opt(_STR), "by": _STR,
         "status_seq": _INT})),
     "contributions": _map(_obj({
         "author": _STR, "tree_part": _opt(_STR)})),
@@ -87,42 +116,47 @@ SCHEMA = _obj({
         "version": _INT, "seat": _opt(_STR),
         "versions": _map(_CASE_VERSION)})),
     "gates": _map(_obj({
-        "outcome": _ANY, "by": _STR, "event_seq": _INT})),
+        "outcome": _opt(_STR), "by": _STR, "event_seq": _INT})),
     "certifications": _list(_obj({
         "by": _STR, "coverage": _ANY, "event_seq": _INT})),
     "findings": _list(_obj({"by": _STR, "event_seq": _INT})),
     "rulings": _list(_obj({
-        "by": _STR, "event_seq": _INT, "joint": _ANY,
-        "action": _ANY})),
+        "by": _STR, "event_seq": _INT, "joint": _opt(_STR),
+        "action": _opt(_STR)})),
     "dispositions": _list(_obj({"by": _STR, "event_seq": _INT})),
     "escalations": _list(_obj({
-        "by": _STR, "joint": _ANY, "event_seq": _INT})),
+        "by": _STR, "joint": _opt(_STR), "event_seq": _INT})),
     "rejections": _list(_obj({
-        "seat": _ANY, "attempted": _ANY, "ground": _ANY,
-        "event_seq": _INT, "part": _ANY})),
-    "sealed": _map(_list(_ANY)),
+        "seat": _opt(_STR), "attempted": _opt(_STR),
+        "ground": _opt(_STR), "event_seq": _INT,
+        "part": _opt(_STR)})),
+    "sealed": _map(_list(_STR)),
     "stalled": _map(_obj({
-        "kind": _ANY, "part": _ANY, "event_seq": _INT})),
-    "tree": _map(_ANY),
+        "kind": _opt(_STR), "part": _opt(_STR),
+        "event_seq": _INT})),
+    "tree": _TREE_SHAPE,
     "paused": _map(_obj({
-        "source_seq": _INT, "source_joint": _ANY,
-        "downstream": _ANY})),
-    "gate_declaration": _map(_ANY),
+        "source_seq": _INT, "source_joint": _opt(_STR),
+        "downstream": _list(_STR)})),
+    "gate_declaration": _map(_STR),
     "gates_present": _BOOL,
     "completion_claim_seq": _opt(_INT),
     "holder_unavailable": _list(_obj({
-        "joint": _ANY, "by": _STR, "event_seq": _INT})),
+        "joint": _opt(_STR), "by": _STR, "event_seq": _INT})),
     "commission_seq": _opt(_INT),
     "assembly_proposals": _list(_obj({
-        "event_seq": _INT, "crew": _ANY})),
+        "event_seq": _INT,
+        "crew": _opt(_list(_obj({
+            "seat": _STR, "role": _STR})))})),
     "assembly_records": _list(_obj({
-        "event_seq": _INT, "proposal_seq": _ANY,
-        "gate_set": _map(_ANY)})),
+        "event_seq": _INT, "proposal_seq": _opt(_INT),
+        "gate_set": _map(_STR)})),
     "run_ready_seq": _opt(_INT),
     "completion_claims": _list(_obj({
-        "event_seq": _INT, "by": _STR, "tree_part": _ANY})),
+        "event_seq": _INT, "by": _STR,
+        "tree_part": _opt(_STR)})),
     "routing_notes": _list(_obj({
-        "disagreement_id": _ANY, "joint": _ANY,
+        "disagreement_id": _opt(_STR), "joint": _opt(_STR),
         "event_seq": _INT, "by": _STR})),
     "uncased": _map(_list(_STR)),
     "pre_ack": _map(_list(_STR)),
@@ -184,6 +218,15 @@ def conforms(value, node=None, path=""):
         for k in value:
             if k not in fields:
                 out.append(f"{path}.{k}" if path else k)
+        return out
+    if t == "fields":
+        if not isinstance(value, dict):
+            return [path]
+        out = []
+        for k, sub in node["f"].items():
+            if k in value:
+                p = f"{path}.{k}" if path else k
+                out += conforms(value[k], sub, p)
         return out
     return [path]
 

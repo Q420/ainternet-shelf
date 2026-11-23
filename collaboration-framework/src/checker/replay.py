@@ -57,10 +57,33 @@ def _is_int(v):
     return isinstance(v, int) and not isinstance(v, bool)
 
 
+def _is_str_list(v):
+    return isinstance(v, list) and \
+        all(isinstance(x, str) for x in v)
+
+
+def _is_tree(v):
+    return isinstance(v, dict) and \
+        all(_is_str_list(x) for x in v.values())
+
+
 def _shape_problem(ev):
-    """Whether the event's payload lacks the shape its type's fold
-    step requires, or carries a wrongly typed value for a field
-    that step reads. Returns a description, or None."""
+    """Whether the event — envelope or payload — carries a value
+    of the wrong type for a field the record contract defines, or
+    lacks a shape its type's fold step requires. Covers the full
+    event vocabulary (correction round 1: the classification
+    contract is that a hash-valid, in-sequence event with a
+    wrongly typed defined field HALTS the replay as
+    schema_invalid; it does not fold into a nonconforming state).
+    Returns a description, or None."""
+    if not _is_int(ev.get("event_seq")):
+        return "event position is not an integer"
+    if not isinstance(ev.get("type"), str):
+        return "event type is not a string"
+    if not isinstance(ev.get("actor"), str):
+        return "event actor is not a string"
+    if not isinstance(ev.get("affected"), list):
+        return "event affected is not a list"
     t = ev["type"]
     p = ev["payload"]
     if not isinstance(p, dict):
@@ -71,9 +94,12 @@ def _shape_problem(ev):
     def need_str(key):
         return not isinstance(p.get(key), str)
 
-    def opt_str(key):
+    def bad_opt_str(key):
         return key in p and p[key] is not None and \
             not isinstance(p[key], str)
+
+    def bad_opt(key, ok):
+        return key in p and p[key] is not None and not ok(p[key])
 
     if t == "RUN_COMMISSIONED":
         seats = p.get("seats")
@@ -85,45 +111,129 @@ def _shape_problem(ev):
                         not isinstance(binding.get("role"), str):
                     return f"commission binding for {seat_id!r} " \
                         "lacks a role"
-        if "tree" in p and not isinstance(p["tree"], dict):
-            return "commission tree is not an object"
+                if "identity_status" in binding and \
+                        not isinstance(
+                            binding["identity_status"], str):
+                    return f"commission binding for {seat_id!r} " \
+                        "has a non-string identity_status"
+        if "tree" in p and not _is_tree(p["tree"]):
+            return "commission tree is not a map of part lists"
+        gates = p.get("gates")
+        if gates is not None and not (
+                isinstance(gates, dict) and all(
+                    isinstance(v, str) for v in gates.values())):
+            return "commission gates is not a map of kind strings"
     elif t == "SEAT_BOUND":
         if need_str("seat_id") or need_str("role"):
             return "SEAT_BOUND requires seat_id and role strings"
+        if bad_opt_str("identity_status"):
+            return "SEAT_BOUND identity_status is not a string"
     elif t == "ONBOARDING":
         if need_str("seat_id"):
             return "ONBOARDING requires a seat_id string"
-        if opt_str("identity_status"):
-            return "ONBOARDING identity_status is not a string"
+        for key in ("identity_status", "declaration", "capability",
+                    "limits", "terms_ref", "attestation_ref"):
+            if bad_opt_str(key):
+                return f"ONBOARDING {key} is not a string"
+        if bad_opt("terms_acknowledged",
+                   lambda v: isinstance(v, bool)):
+            return "ONBOARDING terms_acknowledged is not a boolean"
+    elif t == "CONTRIBUTION":
+        for key in ("contribution_id", "tree_part", "claim_id"):
+            if bad_opt_str(key):
+                return f"CONTRIBUTION {key} is not a string"
+    elif t == "DISAGREEMENT":
+        for key in ("disagreement_id", "claim_id"):
+            if bad_opt_str(key):
+                return f"DISAGREEMENT {key} is not a string"
+    elif t == "DISAGREEMENT_SETTLED":
+        if bad_opt_str("disagreement_id"):
+            return "DISAGREEMENT_SETTLED disagreement_id is not " \
+                "a string"
     elif t == "CLAIM_STATUS":
         if not isinstance(p.get("to"), str):
             return "CLAIM_STATUS requires a 'to' string"
+        if bad_opt_str("claim_id"):
+            return "CLAIM_STATUS claim_id is not a string"
     elif t in _CASE_ACTS:
         if need_str("case_id"):
             return f"{t} requires a case_id string"
         if not _is_int(p.get("version")):
             return f"{t} requires an integer version"
-        if opt_str("seat"):
+        if bad_opt_str("seat"):
             return f"{t} seat is not a string"
+        if bad_opt("representational",
+                   lambda v: isinstance(v, bool)):
+            return f"{t} representational is not a boolean"
+        for key in ("assignment", "part", "account", "authority"):
+            if bad_opt_str(key):
+                return f"{t} {key} is not a string"
+        if "tree" in p and not _is_tree(p["tree"]):
+            return f"{t} tree is not a map of part lists"
+        for key in ("evidence_boundary", "verification_list"):
+            if key in p and not _is_str_list(p[key]):
+                return f"{t} {key} is not a list of strings"
     elif t == "DRIVER_FAILURE":
         if need_str("seat"):
             return "DRIVER_FAILURE requires a seat string"
+        for key in ("kind", "part"):
+            if bad_opt_str(key):
+                return f"DRIVER_FAILURE {key} is not a string"
     elif t == "MATERIAL_SEALED":
         if need_str("material_id"):
             return "MATERIAL_SEALED requires a material_id string"
-        if "boundary" in p and not isinstance(p["boundary"], list):
-            return "MATERIAL_SEALED boundary is not a list"
+        if "boundary" in p and not _is_str_list(p["boundary"]):
+            return "MATERIAL_SEALED boundary is not a list of " \
+                "seat ids"
     elif t in ("GATE_OUTCOME", "ESCALATION"):
+        for key in ("joint", "outcome"):
+            if bad_opt_str(key):
+                return f"{t} {key} is not a string"
         for key in ("paused_set", "released_set"):
-            if key in p and not isinstance(p[key], list):
-                return f"{t} {key} is not a list"
-        if "downstream" in p and not isinstance(p["downstream"],
-                                                dict):
-            return f"{t} downstream is not an object"
+            if key in p and not _is_str_list(p[key]):
+                return f"{t} {key} is not a list of parts"
+        if "downstream" in p and not _is_tree(p["downstream"]):
+            return f"{t} downstream is not a map of part lists"
+    elif t == "CERTIFICATION":
+        if bad_opt("closes_run", lambda v: isinstance(v, bool)):
+            return "CERTIFICATION closes_run is not a boolean"
+    elif t == "RULING":
+        for key in ("joint", "action"):
+            if bad_opt_str(key):
+                return f"RULING {key} is not a string"
+    elif t == "REJECTION":
+        for key in ("seat", "attempted_type", "ground", "part"):
+            if bad_opt_str(key):
+                return f"REJECTION {key} is not a string"
+    elif t == "HOLDER_UNAVAILABLE":
+        if bad_opt_str("joint"):
+            return "HOLDER_UNAVAILABLE joint is not a string"
+    elif t == "COMPLETION_CLAIMED":
+        if bad_opt_str("tree_part"):
+            return "COMPLETION_CLAIMED tree_part is not a string"
+    elif t == "ASSEMBLY_PROPOSED":
+        crew = p.get("crew")
+        if crew is not None and not (
+                isinstance(crew, list) and all(
+                    isinstance(c, dict)
+                    and isinstance(c.get("seat"), str)
+                    and isinstance(c.get("role"), str)
+                    for c in crew)):
+            return "ASSEMBLY_PROPOSED crew is not a list of " \
+                "seat/role bindings"
     elif t == "ASSEMBLY_RECORD":
+        if bad_opt("proposal_seq", _is_int):
+            return "ASSEMBLY_RECORD proposal_seq is not an integer"
         gs = p.get("gate_set")
-        if gs is not None and not isinstance(gs, dict):
-            return "ASSEMBLY_RECORD gate_set is not an object"
+        if gs is not None and not (
+                isinstance(gs, dict) and all(
+                    isinstance(v, str) for v in gs.values())):
+            return "ASSEMBLY_RECORD gate_set is not a map of " \
+                "kind strings"
+    elif t == "COMMENT":
+        for key in ("routes_disagreement", "to_gate"):
+            if bad_opt_str(key):
+                return f"COMMENT {key} is not a string"
     return None
 
 

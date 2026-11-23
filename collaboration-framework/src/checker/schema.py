@@ -19,6 +19,16 @@ Node vocabulary (the schema is data, compared as canonical JSON):
   {"t": "map", "v": node}       an object with arbitrary keys
                                 whose values conform
   {"t": "obj", "f": {k: node}}  an object with exactly these keys
+  {"t": "fields", "f": {...}}   an object with an open key set
+                                whose NAMED fields, when present,
+                                conform — for verbatim payload
+                                copies (a case's content)
+
+Correction round 1: values whose shapes the record contract
+defines carry those shapes here — a map may have an open key
+set while still requiring a defined value shape (tree values
+are downstream-part lists; gate declarations map joints to kind
+strings; a seal boundary is a list of seat ids).
 """
 
 SCHEMA = {
@@ -31,16 +41,16 @@ SCHEMA = {
             "role": {"t": "str"},
             "identity_status": {"t": "str"}}}},
         "onboarding": {"t": "map", "v": {"t": "obj", "f": {
-            "declaration": {"t": "any"},
+            "declaration": {"t": "opt", "v": {"t": "str"}},
             "identity_status": {"t": "str"},
-            "capability": {"t": "any"},
-            "limits": {"t": "any"},
-            "terms_acknowledged": {"t": "any"},
-            "terms_ref": {"t": "any"},
+            "capability": {"t": "opt", "v": {"t": "str"}},
+            "limits": {"t": "opt", "v": {"t": "str"}},
+            "terms_acknowledged": {"t": "opt", "v": {"t": "bool"}},
+            "terms_ref": {"t": "opt", "v": {"t": "str"}},
             "onboarded_seq": {"t": "int"},
             "attestation": {"t": "opt", "v": {"t": "obj", "f": {
                 "event_seq": {"t": "int"},
-                "attestation_ref": {"t": "any"}}}}}}},
+                "attestation_ref": {"t": "str"}}}}}}},
         "claims": {"t": "map", "v": {"t": "obj", "f": {
             "author": {"t": "str"},
             "status": {"t": "str"},
@@ -48,7 +58,7 @@ SCHEMA = {
             "status_seq": {"t": "int"}}}},
         "disagreements": {"t": "map", "v": {"t": "obj", "f": {
             "status": {"t": "str"},
-            "claim_id": {"t": "any"},
+            "claim_id": {"t": "opt", "v": {"t": "str"}},
             "by": {"t": "str"},
             "status_seq": {"t": "int"}}}},
         "contributions": {"t": "map", "v": {"t": "obj", "f": {
@@ -62,14 +72,27 @@ SCHEMA = {
                 "judged": {"t": "opt", "v": {"t": "int"}},
                 "notified": {"t": "opt", "v": {"t": "int"}},
                 "issued": {"t": "opt", "v": {"t": "int"}},
-                "content": {"t": "opt", "v": {
-                    "t": "map", "v": {"t": "any"}}},
+                "content": {"t": "opt", "v": {"t": "fields", "f": {
+                    "assignment": {"t": "str"},
+                    "tree": {"t": "map", "v": {
+                        "t": "list", "v": {"t": "str"}}},
+                    "part": {"t": "str"},
+                    "evidence_boundary": {
+                        "t": "list", "v": {"t": "str"}},
+                    "verification_list": {
+                        "t": "list", "v": {"t": "str"}},
+                    "account": {"t": "str"},
+                    "authority": {"t": "str"},
+                    "case_id": {"t": "str"},
+                    "version": {"t": "int"},
+                    "seat": {"t": "str"},
+                    "representational": {"t": "bool"}}}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},
                 "representational": {"t": "bool"},
                 "acknowledged": {"t": "map", "v": {"t": "int"}}}}}}}},
         "gates": {"t": "map", "v": {"t": "obj", "f": {
-            "outcome": {"t": "any"},
+            "outcome": {"t": "opt", "v": {"t": "str"}},
             "by": {"t": "str"},
             "event_seq": {"t": "int"}}}},
         "certifications": {"t": "list", "v": {"t": "obj", "f": {
@@ -82,54 +105,57 @@ SCHEMA = {
         "rulings": {"t": "list", "v": {"t": "obj", "f": {
             "by": {"t": "str"},
             "event_seq": {"t": "int"},
-            "joint": {"t": "any"},
-            "action": {"t": "any"}}}},
+            "joint": {"t": "opt", "v": {"t": "str"}},
+            "action": {"t": "opt", "v": {"t": "str"}}}}},
         "dispositions": {"t": "list", "v": {"t": "obj", "f": {
             "by": {"t": "str"},
             "event_seq": {"t": "int"}}}},
         "escalations": {"t": "list", "v": {"t": "obj", "f": {
             "by": {"t": "str"},
-            "joint": {"t": "any"},
+            "joint": {"t": "opt", "v": {"t": "str"}},
             "event_seq": {"t": "int"}}}},
         "rejections": {"t": "list", "v": {"t": "obj", "f": {
-            "seat": {"t": "any"},
-            "attempted": {"t": "any"},
-            "ground": {"t": "any"},
+            "seat": {"t": "opt", "v": {"t": "str"}},
+            "attempted": {"t": "opt", "v": {"t": "str"}},
+            "ground": {"t": "opt", "v": {"t": "str"}},
             "event_seq": {"t": "int"},
-            "part": {"t": "any"}}}},
-        "sealed": {"t": "map", "v": {"t": "list", "v": {"t": "any"}}},
+            "part": {"t": "opt", "v": {"t": "str"}}}}},
+        "sealed": {"t": "map", "v": {"t": "list", "v": {"t": "str"}}},
         "stalled": {"t": "map", "v": {"t": "obj", "f": {
-            "kind": {"t": "any"},
-            "part": {"t": "any"},
+            "kind": {"t": "opt", "v": {"t": "str"}},
+            "part": {"t": "opt", "v": {"t": "str"}},
             "event_seq": {"t": "int"}}}},
-        "tree": {"t": "map", "v": {"t": "any"}},
+        "tree": {"t": "map", "v": {"t": "list", "v": {"t": "str"}}},
         "paused": {"t": "map", "v": {"t": "obj", "f": {
             "source_seq": {"t": "int"},
-            "source_joint": {"t": "any"},
-            "downstream": {"t": "any"}}}},
-        "gate_declaration": {"t": "map", "v": {"t": "any"}},
+            "source_joint": {"t": "opt", "v": {"t": "str"}},
+            "downstream": {"t": "list", "v": {"t": "str"}}}}},
+        "gate_declaration": {"t": "map", "v": {"t": "str"}},
         "gates_present": {"t": "bool"},
         "completion_claim_seq": {"t": "opt", "v": {"t": "int"}},
         "holder_unavailable": {"t": "list", "v": {"t": "obj", "f": {
-            "joint": {"t": "any"},
+            "joint": {"t": "opt", "v": {"t": "str"}},
             "by": {"t": "str"},
             "event_seq": {"t": "int"}}}},
         "commission_seq": {"t": "opt", "v": {"t": "int"}},
         "assembly_proposals": {"t": "list", "v": {"t": "obj", "f": {
             "event_seq": {"t": "int"},
-            "crew": {"t": "any"}}}},
+            "crew": {"t": "opt", "v": {"t": "list", "v": {
+                "t": "obj", "f": {
+                    "seat": {"t": "str"},
+                    "role": {"t": "str"}}}}}}}},
         "assembly_records": {"t": "list", "v": {"t": "obj", "f": {
             "event_seq": {"t": "int"},
-            "proposal_seq": {"t": "any"},
-            "gate_set": {"t": "map", "v": {"t": "any"}}}}},
+            "proposal_seq": {"t": "opt", "v": {"t": "int"}},
+            "gate_set": {"t": "map", "v": {"t": "str"}}}}},
         "run_ready_seq": {"t": "opt", "v": {"t": "int"}},
         "completion_claims": {"t": "list", "v": {"t": "obj", "f": {
             "event_seq": {"t": "int"},
             "by": {"t": "str"},
-            "tree_part": {"t": "any"}}}},
+            "tree_part": {"t": "opt", "v": {"t": "str"}}}}},
         "routing_notes": {"t": "list", "v": {"t": "obj", "f": {
-            "disagreement_id": {"t": "any"},
-            "joint": {"t": "any"},
+            "disagreement_id": {"t": "opt", "v": {"t": "str"}},
+            "joint": {"t": "opt", "v": {"t": "str"}},
             "event_seq": {"t": "int"},
             "by": {"t": "str"}}}},
         "uncased": {"t": "map", "v": {
