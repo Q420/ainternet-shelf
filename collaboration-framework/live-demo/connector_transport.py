@@ -34,6 +34,14 @@ deadline:
   public operation, identify() included) — never a fresh
   span, never an extension; if no time remains, the
   helper is not launched at all;
+- the remaining time is recomputed immediately AFTER
+  the helper is created and before any wait on it:
+  process creation can itself consume the rest of the
+  deadline, and a stale pre-creation bound would let
+  the helper run past it — if the recompute finds the
+  deadline gone, the just-launched helper goes through
+  the same terminate-and-confirm procedure instead of
+  being waited on;
 - terminates the helper's whole process group (SIGTERM,
   a brief grace, then SIGKILL) — the group id is a KNOWN
   identity, the helper's own pid (it leads its group,
@@ -80,7 +88,9 @@ Failure-kind mapping (mirroring `_dispatch`):
   detail "total deadline exceeded" (the adapter's own);
   if the deadline had already passed before the call, the
   helper is never launched and the same no_response is
-  raised directly;
+  raised directly; if it expired during process creation,
+  the newly launched helper is terminated and confirmed
+  first, through the same procedure;
 - expiry with termination unconfirmed — including any
   failure to establish the group's identity or emptiness
   -> transport_unresolved (a new kind, used only here).
@@ -102,6 +112,11 @@ from framework.adapter import AdapterFailure
 # unresolved branch (test_connector_transport.py patches
 # _killpg).
 _killpg = os.killpg
+
+# The process constructor, likewise a module-level alias
+# so the witness can patch it (test 8 makes process
+# creation consume the remaining deadline).
+_Popen = subprocess.Popen
 
 _TERM_GRACE_SECONDS = 1.0
 _CONFIRM_WINDOW_SECONDS = 5.0
@@ -170,6 +185,42 @@ def _terminate_and_confirm(proc):
         time.sleep(_POLL_SECONDS)
 
 
+def _expire_and_raise(proc):
+    """The cancellation boundary, shared by BOTH expiry
+    paths — the deadline reached while waiting on the
+    helper, and the deadline found already gone
+    immediately after the helper was created — so the two
+    can never diverge in behaviour: terminate the helper's
+    whole process group and CONFIRM it ended before
+    raising anything. Confirmed termination raises the
+    adapter's own expiry kind, "no_response"; anything
+    unconfirmed — including any exception inside the
+    termination procedure — raises the distinct kind
+    "transport_unresolved", never no_response. This
+    function never returns."""
+    try:
+        confirmed = _terminate_and_confirm(proc)
+    except Exception:
+        confirmed = False
+    if confirmed:
+        try:
+            proc.communicate(timeout=2.0)  # drain
+        except Exception:
+            pass
+        raise AdapterFailure(
+            "no_response",
+            detail="total deadline exceeded")
+    for stream in (proc.stdin, proc.stdout, proc.stderr):
+        try:
+            stream.close()
+        except Exception:
+            pass
+    raise AdapterFailure(
+        "transport_unresolved",
+        detail="helper process termination could "
+               "not be confirmed after the deadline")
+
+
 def install_connector_transport(adapter, helper_path, model):
     """Replace `adapter._call` with a transport carried
     through the connector helper at `helper_path`, calling
@@ -195,9 +246,10 @@ def install_connector_transport(adapter, helper_path, model):
         # deadline is a direct _call outside any public
         # operation (the witness does this); then the
         # adapter's configured timeout is the bound.
+        call_started = time.monotonic()
         established = getattr(adapter, "_deadline", None)
         if established is not None:
-            bound = established - time.monotonic()
+            bound = established - call_started
         else:
             bound = adapter.timeout
         if bound <= 0:
@@ -208,44 +260,45 @@ def install_connector_transport(adapter, helper_path, model):
                 "no_response",
                 detail="total deadline exceeded")
         try:
-            proc = subprocess.Popen(
+            proc = _Popen(
                 [sys.executable, helper_path, "chat", model],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, start_new_session=True)
         except OSError as exc:
             raise AdapterFailure("provider_error",
                                  detail=type(exc).__name__)
+        # Recompute the remaining time now that the helper
+        # exists, BEFORE waiting on it: process creation
+        # itself can consume the rest of the deadline, and
+        # the stale pre-creation bound would then let the
+        # helper run past the adapter's actual deadline.
+        # With an established deadline the remainder is
+        # measured against that deadline; without one, the
+        # fallback bound (the adapter's configured timeout)
+        # is measured from this call's start, so creation
+        # time counts against it the same way.
+        if established is not None:
+            remaining = established - time.monotonic()
+        else:
+            remaining = bound - (time.monotonic()
+                                 - call_started)
+        if remaining <= 0:
+            # The deadline expired during process creation:
+            # do not enter the wait at all — put the newly
+            # launched helper through the same cancellation
+            # procedure as an expiry during the wait.
+            # Never returns.
+            _expire_and_raise(proc)
         try:
             out, err = proc.communicate(input=body,
-                                        timeout=bound)
+                                        timeout=remaining)
         except subprocess.TimeoutExpired:
             # The cancellation boundary: terminate the whole
             # process group and confirm it ended BEFORE
             # raising; an unconfirmed termination is an
             # unresolved transport condition, never a
             # no_response. Nothing returns from this path.
-            try:
-                confirmed = _terminate_and_confirm(proc)
-            except Exception:
-                confirmed = False
-            if confirmed:
-                try:
-                    proc.communicate(timeout=2.0)  # drain
-                except Exception:
-                    pass
-                raise AdapterFailure(
-                    "no_response",
-                    detail="total deadline exceeded")
-            for stream in (proc.stdin, proc.stdout,
-                           proc.stderr):
-                try:
-                    stream.close()
-                except Exception:
-                    pass
-            raise AdapterFailure(
-                "transport_unresolved",
-                detail="helper process termination could "
-                       "not be confirmed after the deadline")
+            _expire_and_raise(proc)
         if proc.returncode != 0:
             detail = (err or b"").decode(
                 "utf-8", "replace").strip()

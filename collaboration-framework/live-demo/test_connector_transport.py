@@ -47,6 +47,19 @@ to a temp dir. The real provider is never called.
    transport_unresolved, never no_response, no outcome —
    even though the helper really is dead. An unknown or
    unprobable group is never treated as an empty one.
+8. Process creation consumes the remaining deadline
+   (VANE-CONNECTOR-TRANSPORT-REEXAMINATION-2026-11-23.md,
+   item 3): the module's _Popen alias is patched to sleep
+   ~1.5s before delegating to the real constructor,
+   against an adapter deadline with ~1.0s remaining at
+   call time and a stub that sleeps 10s before printing
+   a valid success JSON. The pre-creation bound passes
+   the launch check, but by the time the helper exists
+   the deadline is gone: the wrapper must recompute,
+   refuse the wait, and put the newly launched helper
+   through the same cancellation procedure — no_response,
+   the pid confirmed dead, no outcome, and still no
+   outcome ~3s later (no late result).
 
 Run: PYTHONPATH=src python3 live-demo/test_connector_transport.py
 Exits 0 when every check passes.
@@ -375,6 +388,70 @@ with open(PIDFILE7, encoding="utf-8") as fh:
 check("7: the helper really was killed — the unresolved "
       "kind is about unprovable emptiness, not a surviving "
       "process", pid_dead(pid7), f"pid={pid7}")
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- 8: process creation consumes the remaining deadline.
+# The constructor is patched to sleep ~1.5s before it
+# delegates, against a deadline with ~1.0s remaining at
+# call time. The pre-creation bound (~1.0s) passes the
+# launch check; by the time the helper exists, the
+# deadline is gone. The wrapper must NOT hand the wait
+# the stale bound — it must terminate the newly launched
+# helper through the same cancellation procedure.
+PIDFILE8 = os.path.join(TMP, "sleeper8.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE8
+adapter8 = OpenAICompatibleAdapter(model="stub/model-1",
+                                   timeout=30.0)
+install_connector_transport(adapter8, SLEEP_PATH,
+                            "stub/model-1")
+real_popen8 = connector_transport._Popen
+holder8 = {"proc": None, "result": None, "failure": None}
+
+
+def slow_popen8(*args, **kwargs):
+    time.sleep(1.5)  # creation eats the remaining deadline
+    proc = real_popen8(*args, **kwargs)
+    holder8["proc"] = proc
+    return proc
+
+
+connector_transport._Popen = slow_popen8
+SPAN8 = 1.0
+t_begin8 = time.monotonic()
+adapter8._begin_deadline(budget=SPAN8)
+try:
+    holder8["result"] = adapter8._call(
+        [{"role": "user", "content": "hello"}])
+except AdapterFailure as failure:
+    holder8["failure"] = failure
+finally:
+    connector_transport._Popen = real_popen8
+t_end8 = time.monotonic()
+raised8_at = time.monotonic()
+failure8 = holder8["failure"]
+proc8 = holder8["proc"]
+check("8: creation consuming the deadline raises "
+      "no_response",
+      failure8 is not None and failure8.kind == "no_response",
+      f"kind={getattr(failure8, 'kind', None)}")
+check("8: no outcome was produced",
+      holder8["result"] is None)
+check("8: the helper was not granted the stale bound past "
+      "the deadline — total elapsed stays close to the "
+      "deadline and well under the stub's 10s",
+      (t_end8 - t_begin8) < SPAN8 + 4.0,
+      f"from-deadline={t_end8 - t_begin8:.2f}s")
+check("8: the helper really was launched (creation was "
+      "patched and slow, not skipped)", proc8 is not None)
+check("8: the helper pid is confirmed dead afterwards",
+      proc8 is not None and pid_dead(proc8.pid),
+      f"pid={getattr(proc8, 'pid', None)}")
+time.sleep(max(0.0, 3.0 - (time.monotonic() - raised8_at)))
+check("8: ~3s later still no outcome exists and the "
+      "helper is still gone — no late result can arrive",
+      holder8["result"] is None and
+      holder8["failure"] is failure8 and
+      proc8 is not None and pid_dead(proc8.pid))
 os.environ.pop("STUB_PIDFILE", None)
 
 shutil.rmtree(TMP, ignore_errors=True)
