@@ -255,7 +255,10 @@ outcome(d, store, tok, "C", "allow")
 ev = contrib(d, store, tok, "crew-1", "c-t9b", "C")
 check("T9 a complete set opens the run", ev["type"] == "CONTRIBUTION")
 
-# -- T10: the completion sequence.
+# -- T10: the completion sequence. (§3.8 migration: the gate
+# answers the orchestrator's readiness declaration; the crew's
+# claim alone arms nothing. Certification also states its
+# coverage's identity statuses, R36.)
 store, d, tok = fresh()
 outcome(d, store, tok, "assembly", "allow")
 outcome(d, store, tok, "B", "allow")
@@ -271,12 +274,18 @@ ev = contrib(d, store, tok, "crew-1", "c-t10", "B")
 check("T10 a completion correct returns the run to work",
       ev["type"] == "CONTRIBUTION")
 A(d, store, tok["crew-1"], "COMPLETION_CLAIMED", {"text": "done again"})
+check("T10 the crew's claim alone does not arm the gate",
+      refused(lambda: A(d, store, tok["exam-1"], "CERTIFICATION",
+                        {"coverage": "full"})))
+A(d, store, tok["orch-1"], "RUN_READY_FOR_COMPLETION", {})
 outcome(d, store, tok, "completion", "allow")
-ev = A(d, store, tok["exam-1"], "CERTIFICATION", {"coverage": "full"})
-check("T10 certification records after claim + allow",
+ev = A(d, store, tok["exam-1"], "CERTIFICATION",
+       {"coverage": "full",
+        "identity_status": {"crew-1": "unverified"}})
+check("T10 certification records after readiness + allow",
       ev["type"] == "CERTIFICATION")
 ev = A(d, store, tok["orch-1"], "RUN_CLOSED", {})
-check("T10 closure records after claim + allow",
+check("T10 closure records after readiness + allow",
       ev["type"] == "RUN_CLOSED")
 
 # -- T11: holder_unavailable — a distinct derived state; an
@@ -327,28 +336,34 @@ check("T14 an unruled escalation awaits a ruling, distinctly",
       "B" in w["awaiting_ruling"] and "B" not in w["awaiting_gate"])
 
 # -- T15: completion binding — an allow is never reusable
-# (correction 3).
+# (correction 3; §3.8 migration: the binding is to the
+# readiness declaration, not the crew's claim).
 store, d, tok = fresh()
 outcome(d, store, tok, "assembly", "allow")
 outcome(d, store, tok, "completion", "allow")
-check("T15 an allow before any claim authorizes nothing",
+cert = {"coverage": "full", "identity_status": {}}
+check("T15 an allow before any readiness authorizes nothing",
       refused(lambda: A(d, store, tok["exam-1"], "CERTIFICATION",
-                        {"coverage": "full"})))
+                        cert)))
 A(d, store, tok["crew-1"], "COMPLETION_CLAIMED", {"text": "done"})
-check("T15 the early allow does not answer the later claim",
+check("T15 the early allow does not answer a later declaration",
       refused(lambda: A(d, store, tok["exam-1"], "CERTIFICATION",
-                        {"coverage": "full"})))
+                        cert)))
+A(d, store, tok["orch-1"], "RUN_READY_FOR_COMPLETION", {})
+check("T15 the declaration alone does not reuse the early allow",
+      refused(lambda: A(d, store, tok["exam-1"], "CERTIFICATION",
+                        cert)))
 outcome(d, store, tok, "completion", "allow")
-ev = A(d, store, tok["exam-1"], "CERTIFICATION", {"coverage": "full"})
-check("T15 an allow after the claim authorizes certification",
+ev = A(d, store, tok["exam-1"], "CERTIFICATION", cert)
+check("T15 an allow after the declaration authorizes it",
       ev["type"] == "CERTIFICATION")
-A(d, store, tok["crew-1"], "COMPLETION_CLAIMED", {"text": "again"})
-check("T15 a second claim is not covered by the first allow",
+A(d, store, tok["orch-1"], "RUN_READY_FOR_COMPLETION", {})
+check("T15 a second declaration is not covered by the first allow",
       refused(lambda: A(d, store, tok["exam-1"], "CERTIFICATION",
-                        {"coverage": "full"})))
+                        cert)))
 outcome(d, store, tok, "completion", "allow")
-ev = A(d, store, tok["exam-1"], "CERTIFICATION", {"coverage": "full"})
-check("T15 a fresh allow answers the second claim",
+ev = A(d, store, tok["exam-1"], "CERTIFICATION", cert)
+check("T15 a fresh allow answers the second declaration",
       ev["type"] == "CERTIFICATION")
 
 # -- T16: an unresolvable work act is refused fail-closed

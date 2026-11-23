@@ -34,6 +34,10 @@ GATE_PROCESS_ACTS = {
     "CASE_VERIFIED", "CASE_JUDGED", "CASE_NOTIFIED", "CASE_CORRECTED",
     "GATE_OUTCOME", "FINDING", "RULING", "DISPOSITION", "ESCALATION",
     "HOLDER_UNAVAILABLE",
+    # §3.8's acts are gate-process: the assembly proposal and
+    # record frame the assembly gate's judgement, and the
+    # readiness declaration is what the completion gate answers.
+    "ASSEMBLY_PROPOSED", "ASSEMBLY_RECORD", "RUN_READY_FOR_COMPLETION",
     # CERTIFICATION and RUN_CLOSED are gate-process except that
     # the completion rule (§3.8 of the scope) binds them; the
     # doorway checks that rule separately.
@@ -167,22 +171,47 @@ def validate_gate_set(tree, declaration):
 
 # --------------------------------------------------------- enrich
 
+def operative_declaration(state):
+    """The gate set that governs (§3.8, S2): the examined set of
+    the assembly record bound to the LATEST proposal, while such
+    a record stands — otherwise the commission's proposed
+    declaration. On re-proposal the operative set reverts to the
+    declaration until the new record stands; a previous approved
+    set survives nothing as an unrecorded authority. A pure
+    function of the fold: latest proposal → its bound record, if
+    any → that record's set, else the declaration."""
+    proposals = state.get("assembly_proposals") or []
+    if proposals:
+        latest = proposals[-1].get("event_seq")
+        bound = None
+        for rec in state.get("assembly_records") or []:
+            if rec.get("proposal_seq") == latest:
+                bound = rec
+        if bound is not None:
+            return dict(bound.get("gate_set") or {})
+    return dict(state.get("gate_declaration") or {})
+
+
 def enrich(state):
     """Derive `gate_set` and `waiting` over a folded state.
     Pure and idempotent: the same record always derives the
     same derived state."""
-    declaration = state.get("gate_declaration") or {}
     # G7 (correction round 1): declared is whether the commission
     # carried a gates field, never whether the field's contents
     # happen to be non-empty — an explicitly empty declaration
     # derives as declared and invalid, with named defects.
     declared = bool(state.get("gates_present"))
+    # §3.8: validity is judged over the OPERATIVE set — the
+    # declaration before any assembly record stands, the
+    # examiner-approved set after.
+    operative = operative_declaration(state)
     defects = validate_gate_set(state.get("tree") or {},
-                                  declaration) if declared else []
+                                  operative) if declared else []
     state["gate_set"] = {
         "declared": declared,
         "valid": declared and not defects,
         "defects": defects,
+        "operative": operative,
     }
     state["waiting"] = derive_waiting(state)
     return state
@@ -219,10 +248,10 @@ def derive_waiting(state):
         "holder_unavailable": [],
         "paused_by_gate": sorted((state.get("paused") or {}).keys()),
     }
-    declaration = state.get("gate_declaration") or {}
+    declaration = (state.get("gate_set") or {}).get("operative") \
+        or state.get("gate_declaration") or {}
     if not (state.get("gate_set") or {}).get("declared"):
         return waiting
-    gate_set = state.get("gate_set") or {}
     joints = [ASSEMBLY_JOINT, COMPLETION_JOINT] + sorted(
         joint for joint, kind in declaration.items()
         if kind == "judgement")
@@ -238,13 +267,16 @@ def derive_waiting(state):
                 waiting["awaiting_ruling"].append(joint)
                 continue
         if joint == ASSEMBLY_JOINT:
-            # An assembly allow permits passage only over a valid
-            # declaration (§3.1): an allow recorded over an
-            # invalid set stands in history but opens nothing,
-            # so the assembly gate still awaits resolution.
-            permits = gate_set.get("valid", False) and \
-                standing is not None and \
-                standing.get("outcome") == "allow"
+            # Passage at assembly is exactly assembly_open's
+            # rule (§3.8): an allow over an invalid set, or one
+            # recorded before the bound assembly record, stands
+            # in history but opens nothing, so the gate still
+            # awaits resolution.
+            permits = assembly_open(state)
+        elif joint == COMPLETION_JOINT:
+            # The completion gate awaits the readiness
+            # declaration it answers (§3.8, S5).
+            permits = completion_ready(state)
         else:
             permits = standing is not None and \
                 standing.get("outcome") == "allow"
@@ -264,16 +296,33 @@ def derive_waiting(state):
 # ---------------------------------------------------------- queries
 
 def assembly_open(state):
-    """The pre-run block's one release condition (§3.3): the
-    declaration is valid AND the assembly gate's standing
-    outcome is `allow`. `correct` and `escalate` never open the
-    run — the block is fail-closed."""
+    """The pre-run block's release condition. Where no assembly
+    proposal stands, the gates piece's rule (§3.3 of its scope):
+    the declaration is valid AND the assembly gate's standing
+    outcome is `allow`. Where a proposal stands, §3.8's rule:
+    the operative set is valid AND an assembly record bound to
+    the latest proposal stands AND the standing assembly outcome
+    is an `allow` recorded after that record — a re-proposal
+    therefore closes the run again until the new assembly is
+    examined and allowed. `correct` and `escalate` never open
+    the run — the block is fail-closed."""
     gate_set = state.get("gate_set") or {}
     if not gate_set.get("declared") or not gate_set.get("valid"):
         return False
     standing = standing_outcome(state, ASSEMBLY_JOINT)
-    return standing is not None and \
-        standing.get("outcome") == "allow"
+    if standing is None or standing.get("outcome") != "allow":
+        return False
+    proposals = state.get("assembly_proposals") or []
+    if not proposals:
+        return True
+    latest = proposals[-1].get("event_seq")
+    bound = None
+    for rec in state.get("assembly_records") or []:
+        if rec.get("proposal_seq") == latest:
+            bound = rec
+    if bound is None:
+        return False
+    return standing["event_seq"] > bound["event_seq"]
 
 
 def passage_blocker(state, part):
@@ -282,7 +331,8 @@ def passage_blocker(state, part):
     on X and on every part downstream of X until its standing
     outcome is `allow`. The gate guards passage between joints;
     it never orders contributions within a part (R29)."""
-    declaration = state.get("gate_declaration") or {}
+    declaration = (state.get("gate_set") or {}).get("operative") \
+        or state.get("gate_declaration") or {}
     tree = state.get("tree") or {}
     for joint, kind in declaration.items():
         if kind != "judgement":
@@ -368,15 +418,18 @@ def resolve_part(state, actor, type_, payload):
 
 
 def completion_ready(state):
-    """The completion gate's precondition (§3.8 of the scope),
-    bound by position: a completion claim stands AND the
-    completion gate's standing outcome is an `allow` recorded
-    after that claim. An earlier `allow` answers nothing that
-    stands and is never reusable against a later claim."""
-    claim_seq = state.get("completion_claim_seq")
-    if claim_seq is None:
+    """The completion gate's precondition, bound by position
+    (§3.8, S5): the orchestrator's readiness declaration stands
+    AND the completion gate's standing outcome is an `allow`
+    recorded after it. The gate answers the declaration — the
+    crew's COMPLETION_CLAIMED is the claim about the work and
+    arms nothing by itself; an earlier `allow` answers no
+    declaration that stands and is never reusable against a
+    later one."""
+    ready_seq = state.get("run_ready_seq")
+    if ready_seq is None:
         return False
     standing = standing_outcome(state, COMPLETION_JOINT)
     return standing is not None and \
         standing.get("outcome") == "allow" and \
-        standing["event_seq"] > claim_seq
+        standing["event_seq"] > ready_seq

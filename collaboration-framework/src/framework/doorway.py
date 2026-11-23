@@ -23,6 +23,7 @@ import hashlib
 import secrets
 
 from . import gates as _gates
+from . import orchestrator as _orch
 from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
                      GATE_OUTCOMES, fold, validate_status_transition)
 
@@ -34,7 +35,13 @@ DOORWAY_ACTOR = "doorway"
 # doorway checks the matrix row only.)
 ACT_AUTHORITY = {
     "CONTRIBUTION": {"crew"},
-    "COMMENT": {"crew"},
+    # §3.8 (R26): the orchestrator's conduct includes recorded
+    # notes to seats — COMMENT gains the orchestrator. A note
+    # still names its subject under R10, like any comment.
+    "COMMENT": {"crew", "orchestrator"},
+    "ASSEMBLY_PROPOSED": {"orchestrator"},
+    "ASSEMBLY_RECORD": {"examiner"},
+    "RUN_READY_FOR_COMPLETION": {"orchestrator"},
     "DISAGREEMENT": {"crew", "orchestrator", "examiner", "director"},
     "DISAGREEMENT_SETTLED": {"crew", "orchestrator", "examiner",
                              "director"},
@@ -108,10 +115,11 @@ class Doorway:
     # ------------------------------------------------------------ state
     def state(self):
         # The folded record, enriched with the derived gate state
-        # (Piece 6 gates): gate_set and waiting are pure functions
-        # of the record, computed over the fold by gates.enrich.
-        return _gates.enrich(
-            fold(self.store.all_events(), self.store.get_run_id()))
+        # (Piece 6 gates) and the §3.8 derivations (Piece 6
+        # orchestrator functions): gate_set, waiting, routing and
+        # claims_by_part are pure functions of the record.
+        return _orch.derive(_gates.enrich(
+            fold(self.store.all_events(), self.store.get_run_id())))
 
     # ------------------------------------------------------------ tokens
     def issue_token(self, seat_id: str) -> str:
@@ -475,6 +483,45 @@ class Doorway:
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
 
+        # §3.8 (R26/R35): the assembly acts carry their own
+        # mechanical discipline — a proposal answers an exact
+        # commission by reference; a record is bound to the exact
+        # proposal it examines and is complete and consistent
+        # against the fold. Substance remains the examiner's.
+        if type_ == "ASSEMBLY_PROPOSED":
+            problem = self._assembly_proposal_problem(state, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+        if type_ == "ASSEMBLY_RECORD":
+            problem = self._assembly_record_problem(state, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+
+        # §3.8 (S5): readiness cannot float free of the claim
+        # record — with no crew completion claim standing, the
+        # declaration is refused. Completeness beyond that floor
+        # is the completion gate's judgement, not the doorway's.
+        if type_ == "RUN_READY_FOR_COMPLETION":
+            if not state["completion_claims"]:
+                self._refuse(seat_id, type_,
+                             "readiness declared with no crew "
+                             "completion claim standing in the "
+                             "record; the declaration answers the "
+                             "claim record, never replaces it "
+                             "(§3.8)", view_seq)
+
+        # §3.8 (S4): a routing note's referents are validated —
+        # an actual recorded disagreement, and a destination
+        # relevant to its subject. A label without an enforceable
+        # referent does not record.
+        if type_ == "COMMENT" and (
+                "routes_disagreement" in payload
+                or "to_gate" in payload):
+            problem = self._routing_problem(state, seat_id, role,
+                                            payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+
         # R21–R25 (Piece 6 gates): gate enforcement. It binds
         # only runs whose commission declared a gate set (G7, as
         # settled); a declared-but-invalid set enforces fully
@@ -524,20 +571,48 @@ class Doorway:
         RUN_CLOSED; GATE_OUTCOME carries the ruling mechanics;
         work acts carry the pre-run block and passage."""
         if type_ in ("CERTIFICATION", "RUN_CLOSED"):
-            # §3.8's completion sequence: certification and
-            # closure require a standing completion claim
-            # answered by the completion gate's allow.
+            # The completion sequence (§3.8, S5): certification
+            # and closure require the orchestrator's readiness
+            # declaration answered by the completion gate's
+            # allow, recorded after the declaration.
             if not _gates.completion_ready(state):
                 self._refuse(
                     seat_id, type_,
                     "certification and closure require a "
-                    "completion claim answered by the completion "
-                    "gate's allow, recorded after the claim (R21)",
-                    view_seq)
+                    "readiness declaration answered by the "
+                    "completion gate's allow, recorded after "
+                    "the declaration (R21)", view_seq)
+            if type_ == "CERTIFICATION":
+                # R36: the certification states its coverage's
+                # identity statuses, exactly as derived.
+                problem = self._certification_coverage_problem(
+                    state, payload)
+                if problem is not None:
+                    self._refuse(seat_id, type_, problem, view_seq)
             return
         if type_ == "GATE_OUTCOME":
             joint = payload.get("joint")
             outcome = payload.get("outcome")
+            if outcome == "allow" and \
+                    joint == _gates.ASSEMBLY_JOINT and \
+                    state.get("assembly_proposals"):
+                # §3.8 (S2): where a proposal stands, an assembly
+                # allow answers an examined assembly — a record
+                # bound to the latest proposal must stand first.
+                # An allow recorded before that examination
+                # authorizes nothing and does not record.
+                latest = state["assembly_proposals"][-1][
+                    "event_seq"]
+                bound = any(
+                    rec.get("proposal_seq") == latest
+                    for rec in state.get("assembly_records", []))
+                if not bound:
+                    self._refuse(
+                        seat_id, type_,
+                        "an assembly allow requires the "
+                        "examiner's assembly record, bound to "
+                        "the latest proposal, standing first "
+                        "(R35)", view_seq)
             ruling = _gates.latest_ruling(state, joint)
             if outcome == "allow" and ruling is not None and \
                     ruling.get("action") == "stop that part":
@@ -751,6 +826,179 @@ class Doorway:
                         f"{payload.get('seat_id')} from {recorded} "
                         f"to {status} without a recorded attestation "
                         f"(R18)")
+        return None
+
+    def _assembly_proposal_problem(self, state, payload):
+        """Why an ASSEMBLY_PROPOSED may not be recorded, or None
+        (§3.8, S1): the proposal answers the standing commission
+        exactly, by reference — its commission_seq, tree_ref and
+        gates_ref all name the commission event's position — and
+        it carries the proposed crew in full."""
+        commission_seq = state.get("commission_seq")
+        if commission_seq is None:
+            return "no commission stands in the record to answer (R26)"
+        for field in ("commission_seq", "tree_ref", "gates_ref"):
+            if payload.get(field) != commission_seq:
+                return (f"the proposal's {field} "
+                        f"{payload.get(field)!r} does not name the "
+                        f"standing commission at seq "
+                        f"{commission_seq}; a proposal answers an "
+                        f"exact commission, by reference (R26)")
+        crew = payload.get("crew")
+        if not isinstance(crew, list) or not crew or \
+                any(not isinstance(c, dict) or not c.get("seat")
+                    or not c.get("role") for c in crew):
+            return ("the proposal carries the proposed crew in "
+                    "full: a non-empty list of seat and role (R26)")
+        return None
+
+    def _assembly_record_problem(self, state, payload):
+        """Why an ASSEMBLY_RECORD may not be recorded, or None
+        (§3.8, S2): the record is bound to an exact standing
+        proposal; its criteria mapping covers every part of the
+        commissioned tree; its identity assessment covers every
+        proposed seat and matches the derived statuses; its gate
+        set satisfies the completeness rule over the tree. All
+        mechanical — whether the mapping is right remains the
+        examiner's judgement."""
+        proposal_seq = payload.get("proposal_seq")
+        proposal = None
+        for ev in self.store.all_events():
+            if ev["event_seq"] == proposal_seq and \
+                    ev["type"] == "ASSEMBLY_PROPOSED":
+                proposal = ev
+                break
+        if proposal is None:
+            return (f"proposal_seq {proposal_seq!r} names no "
+                    f"standing ASSEMBLY_PROPOSED; a record is "
+                    f"bound to the exact proposal it examines "
+                    f"(R35)")
+        tree = state.get("tree") or {}
+        mapping = payload.get("criteria_mapping")
+        if not isinstance(mapping, dict):
+            return "the record carries a criteria mapping (R35)"
+        missing = _gates.all_parts(tree) - set(mapping)
+        if missing:
+            return (f"the criteria mapping omits tree parts "
+                    f"{sorted(missing)}; it covers every proposed "
+                    f"part (R35)")
+        weighed = payload.get("identity_weighed")
+        if not isinstance(weighed, dict):
+            return "the record carries an identity assessment (R35)"
+        crew = (proposal["payload"].get("crew") or [])
+        for member in crew:
+            seat = member.get("seat")
+            if seat not in weighed:
+                return (f"the identity assessment omits proposed "
+                        f"seat {seat}; it covers every proposed "
+                        f"seat (R35)")
+            derived = _orch.identity_status_of(state, seat)
+            if weighed[seat] != derived:
+                return (f"the identity assessment states "
+                        f"{weighed[seat]!r} for {seat}; the record "
+                        f"derives {derived!r} (R35)")
+        gate_set = payload.get("gate_set")
+        if not isinstance(gate_set, dict):
+            return "the record carries the gate set it examined (R35)"
+        defects = _gates.validate_gate_set(tree, gate_set)
+        if defects:
+            return (f"the record's gate set is not a complete, "
+                    f"valid set over the tree: {defects[0]} (R35)")
+        return None
+
+    def _routing_problem(self, state, seat_id, role, payload):
+        """Why a routing note may not be recorded, or None
+        (§3.8, S4): routing is the orchestrator's conduct; both
+        referents are required; the disagreement stands recorded;
+        the destination is relevant to the disagreement's
+        subject — the judgement gate naming its part, or the
+        completion gate (the only destination for a job-level
+        claim)."""
+        if role != "orchestrator":
+            return ("routing a disagreement is the orchestrator's "
+                    "conduct (R26); another seat's note carries no "
+                    "routing")
+        disagreement_id = payload.get("routes_disagreement")
+        joint = payload.get("to_gate")
+        if not disagreement_id or not joint:
+            return ("a routing note names both the disagreement "
+                    "and the gate it routes to (§3.8)")
+        disagreement = (state.get("disagreements") or {}).get(
+            disagreement_id)
+        if disagreement is None:
+            return (f"disagreement {disagreement_id} stands "
+                    f"nowhere in the record; a route names an "
+                    f"actual recorded disagreement (§3.8)")
+        kind, value = _gates._claim_part(
+            state, disagreement.get("claim_id"))
+        if kind == "unresolvable":
+            return (f"the disagreement's subject cannot be "
+                    f"resolved ({value}); no relevant destination "
+                    f"can be established (§3.8)")
+        operative = (state.get("gate_set") or {}).get(
+            "operative") or {}
+        if kind == "part":
+            valid = {j for j, k in operative.items()
+                     if k == "judgement" and j == value}
+            valid.add(_gates.COMPLETION_JOINT)
+        else:
+            valid = {_gates.COMPLETION_JOINT}
+        if joint not in valid:
+            return (f"gate {joint} is not a relevant destination "
+                    f"for this disagreement (its subject resolves "
+                    f"to {value if kind == 'part' else 'the job'}; "
+                    f"relevant: {sorted(valid)}) (§3.8)")
+        return None
+
+    def _certification_coverage_problem(self, state, payload):
+        """Why a CERTIFICATION's coverage may not stand, or None
+        (§3.8, S3; R36): the declared boundary is validated
+        (absent = whole run; an empty list, an unknown part, or
+        a duplicate is refused), and the stated identity_status
+        must be exactly the derived coverage — no omission, no
+        misstatement, no invented status. Whether the
+        certification's conclusions are warranted is not the
+        doorway's question."""
+        if "covers_parts" in payload:
+            covers = payload["covers_parts"]
+            if not isinstance(covers, list) or not covers:
+                return ("covers_parts, when present, is a "
+                        "non-empty list of tree parts; whole-run "
+                        "coverage is declared by its absence — an "
+                        "empty list certifies nothing and is "
+                        "refused (R36)")
+            if len(set(covers)) != len(covers):
+                return ("covers_parts names a part more than "
+                        "once (R36)")
+            parts = _gates.all_parts(state.get("tree") or {})
+            unknown = [part for part in covers if part not in parts]
+            if unknown:
+                return (f"covers_parts names parts outside the "
+                        f"commissioned tree: {unknown} (R36)")
+            covers_parts = list(covers)
+        else:
+            covers_parts = None
+        derived = _orch.certification_coverage(state, covers_parts)
+        stated = payload.get("identity_status")
+        if not isinstance(stated, dict):
+            return ("a certification states the identity status "
+                    "of every seat whose contributions it covers "
+                    "(identity_status) (R36)")
+        for seat, status in derived.items():
+            if seat not in stated:
+                return (f"the certification omits {seat}, whose "
+                        f"contributions it covers; their derived "
+                        f"status is {status!r} (R36)")
+            if stated[seat] != status:
+                return (f"the certification states "
+                        f"{stated[seat]!r} for {seat}; the record "
+                        f"derives {status!r} (R36)")
+        for seat in stated:
+            if seat not in derived:
+                return (f"the certification states a status for "
+                        f"{seat}, whose contributions it does not "
+                        f"cover; an invented status does not "
+                        f"record (R36)")
         return None
 
     def submit_pair(self, token, acts, view_seq=None):

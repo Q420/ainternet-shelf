@@ -168,10 +168,13 @@ g = refused(lambda: A(d, tok["exam-1"], "RULING", {"text": "x"}))
 check("examiner recording a ruling is refused (matrix)", g is not None)
 A(d, tok["dir-1"], "RULING", {"text": "proceed"})
 check("director records a ruling", len(d.state()["rulings"]) == 1)
-# Correction 2: comment authority is crew's alone (§4).
-g = refused(lambda: A(d, tok["orch-1"], "COMMENT", {"text": "hi"}))
-check("orchestrator commenting is refused (matrix)",
-      g is not None and "§4" in g, g or "")
+# Comment authority (§4, as §3.8/R26 settled it): crew, and the
+# orchestrator — whose recorded notes to seats are its conduct.
+# The examiner still may not comment.
+ev = A(d, tok["orch-1"], "COMMENT",
+       {"on_job": True, "text": "orchestrator note"})
+check("orchestrator commenting records (R26 notes)",
+      ev["type"] == "COMMENT")
 g = refused(lambda: A(d, tok["exam-1"], "COMMENT", {"text": "hi"}))
 check("examiner commenting is refused (matrix)", g is not None)
 

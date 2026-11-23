@@ -80,6 +80,17 @@ def _wake_reasons(events, state, seat_id, case):
                 "by": ev["actor"],
             })
         elif t == "COMMENT":
+            if p.get("to_seat") == seat_id:
+                # §3.8 (S4): an orchestrator's note addressed to
+                # this seat is a wake reason, attributable to the
+                # note's event. Only the addressed seat derives
+                # it; the seat's view keeps its existing evidence
+                # boundary — a note grants no access.
+                reasons.append({
+                    "kind": "orchestrator_note",
+                    "event_seq": ev["event_seq"],
+                    "by": ev["actor"],
+                })
             subject = p.get("contribution_id") or \
                 p.get("subject_id")
             if subject in my_contribs:

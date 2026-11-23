@@ -44,6 +44,11 @@ EVENT_TYPES = {
     "CASE_ACKNOWLEDGED", "DRIVER_FAILURE",
     "ONBOARDING", "ESCALATION", "CLAIM_STATUS", "HOLDER_UNAVAILABLE",
     "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION", "RUN_CLOSED",
+    # §3.8 (Piece 6, orchestrator functions): the assembly
+    # proposal, the examiner's assembly record, and the
+    # orchestrator's readiness declaration — three distinct acts
+    # with three distinct meanings, none impersonating another.
+    "ASSEMBLY_PROPOSED", "ASSEMBLY_RECORD", "RUN_READY_FOR_COMPLETION",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -266,8 +271,65 @@ def empty_state(run_id=None) -> dict:
         "holder_unavailable": [],  # {joint, by, event_seq} —
                               # HOLDER_UNAVAILABLE declarations
                               # (R33; Piece 6 gates, §3.6)
+        "commission_seq": None,  # the RUN_COMMISSIONED event's
+                              # position (§3.8: a proposal answers
+                              # an exact commission, by reference)
+        "assembly_proposals": [],  # {event_seq, crew} (R26)
+        "assembly_records": [],  # {event_seq, proposal_seq,
+                              # gate_set} (R35)
+        "run_ready_seq": None,  # the latest
+                              # RUN_READY_FOR_COMPLETION position
+                              # (§3.8: the declaration the
+                              # completion gate answers)
+        "completion_claims": [],  # {event_seq, by, tree_part} —
+                              # every COMPLETION_CLAIMED (the
+                              # readiness floor and the derived
+                              # claims_by_part read these)
+        "routing_notes": [],  # {disagreement_id, joint, event_seq,
+                              # by} — validated routing notes;
+                              # orchestrator.py derives the current
+                              # route per disagreement (§3.8)
+        "uncased": {},        # tree_part -> [contribution_id] —
+                              # contributions recorded with no
+                              # effective case standing for their
+                              # seat and part AT their position
+                              # (§3.8, S6: position-sensitive; a
+                              # later case never recases them)
+        "pre_ack": {},        # tree_part -> [contribution_id] —
+                              # contributions recorded under a
+                              # standing case not yet acknowledged
+                              # by their seat (the R32 state) — a
+                              # separate fact from uncased, never
+                              # folded into it (§3.8, S6)
         "head_seq": 0,
     }
+
+
+def _case_status_at(state, seat_id, part):
+    """Whether an effective case stands for (seat, part) in the
+    fold AS IT STANDS NOW — which, called from within a fold
+    step, is the record as of the event being folded: the
+    position-sensitive reading §3.8's uncased derivation needs.
+    Returns (cased, acknowledged): a version issued to the seat
+    whose content names the part, its issuance route complete
+    over the events folded so far; acknowledged when the seat's
+    acknowledgement of that version stands and postdates its
+    authorisation."""
+    for case_id, entry in state["cases"].items():
+        if entry.get("seat") != seat_id:
+            continue
+        for vstr, ver in entry["versions"].items():
+            content = ver.get("content") or {}
+            if content.get("part") != part:
+                continue
+            if not version_issued(ver, int(vstr)):
+                continue
+            ack_seq = ver.get("acknowledged", {}).get(seat_id)
+            acknowledged = ack_seq is not None and \
+                ver.get("issued") is not None and \
+                ack_seq > ver["issued"]
+            return True, acknowledged
+    return False, False
 
 
 def _subject_changed_parts(payload):
@@ -294,6 +356,7 @@ def apply_event(state: dict, ev: dict) -> dict:
         state["run_id"] = ev.get("run_id", state["run_id"])
         state["lifecycle"] = "commissioned"
         state["lifecycle_seq"] = ev["event_seq"]
+        state["commission_seq"] = ev["event_seq"]
         # R30: the commissioned tree (part -> downstream dependents)
         # is the record the doorway computes paused sets from.
         state["tree"] = dict(p.get("tree", {}))
@@ -369,6 +432,19 @@ def apply_event(state: dict, ev: dict) -> dict:
         state["contributions"][cid] = {
             "author": actor, "tree_part": p.get("tree_part"),
         }
+        # §3.8 (S6): case provenance is evaluated HERE, at the
+        # contribution's own position, over the fold as it stands
+        # at this step — a case issued later never recases this
+        # contribution, and supersession later never uncases it.
+        # Uncased and pre-acknowledgement are separate facts and
+        # are derived separately, neither folded into the other.
+        cased, acknowledged = _case_status_at(
+            state, actor, p.get("tree_part"))
+        key = p.get("tree_part") or "(job)"
+        if not cased:
+            state["uncased"].setdefault(key, []).append(cid)
+        elif not acknowledged:
+            state["pre_ack"].setdefault(key, []).append(cid)
         if p.get("claim_id"):
             state["claims"][p["claim_id"]] = {
                 "author": actor, "status": "claimed",
@@ -557,11 +633,47 @@ def apply_event(state: dict, ev: dict) -> dict:
         # position — only an outcome recorded after the latest
         # claim answers it.
         state["completion_claim_seq"] = ev["event_seq"]
+        state["completion_claims"].append({
+            "event_seq": ev["event_seq"], "by": actor,
+            "tree_part": p.get("tree_part"),
+        })
+    elif t == "ASSEMBLY_PROPOSED":
+        # R26: the orchestrator's proposal, a recorded act. The
+        # fold carries the crew it proposed; the tree and gates it
+        # adopts stand in the commission it references.
+        state["assembly_proposals"].append({
+            "event_seq": ev["event_seq"],
+            "crew": p.get("crew"),
+        })
+    elif t == "ASSEMBLY_RECORD":
+        # R35: the examiner's assembly record, bound to the exact
+        # proposal it examines. gates.py derives the operative
+        # gate set from the record bound to the latest proposal.
+        state["assembly_records"].append({
+            "event_seq": ev["event_seq"],
+            "proposal_seq": p.get("proposal_seq"),
+            "gate_set": dict(p.get("gate_set") or {}),
+        })
+    elif t == "RUN_READY_FOR_COMPLETION":
+        # §3.8 (S5): the orchestrator's readiness declaration —
+        # the act the completion gate answers. The crew's claims
+        # stand separately, above; neither impersonates the other.
+        state["run_ready_seq"] = ev["event_seq"]
+    elif t == "COMMENT":
+        # §3.8 (S4): a validated routing note. The fold carries
+        # the note's referents; orchestrator.py derives the
+        # current route per disagreement (latest valid route).
+        if p.get("routes_disagreement") and p.get("to_gate"):
+            state["routing_notes"].append({
+                "disagreement_id": p.get("routes_disagreement"),
+                "joint": p.get("to_gate"),
+                "event_seq": ev["event_seq"], "by": actor,
+            })
     elif t == "RUN_CLOSED":
         state["lifecycle"] = "closed"
         state["lifecycle_seq"] = ev["event_seq"]
-    # COMMENT is a recorded act the fold carries in the history without
-    # derived state of its own.
+    # A COMMENT with no routing referents is a recorded act the
+    # fold carries in the history without derived state of its own.
     return state
 
 

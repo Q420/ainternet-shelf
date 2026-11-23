@@ -211,11 +211,11 @@ except BubbleRefusal:
     pass
 check("the refused bubble comment recorded nothing",
       len(store.all_events()) == n_events)
-g = refused(lambda: post_comment(d, tok["orch-1"], view2["position"],
-                                 "orchestrator note",
+g = refused(lambda: post_comment(d, tok["exam-1"], view2["position"],
+                                 "examiner note",
                                  contribution_id="c1"))
 check("no act in the bubble bypasses the record's authority "
-      "(orchestrator comment refused by the doorway)",
+      "(examiner comment refused by the doorway)",
       g is not None and "§4" in g, g or "")
 
 # R10 at the doorway (Piece 3 amendment): a comment must name a
