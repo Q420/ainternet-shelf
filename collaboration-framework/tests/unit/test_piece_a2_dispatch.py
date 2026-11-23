@@ -29,6 +29,11 @@ doorway's check-and-append) and the blocked-start witness —
 a start step held past the operation deadline lands after
 the uncertain outcome and so records no start and performs
 nothing, with no concurrent use of the store connection.
+Correction round 3 adds: the deadline recheck after the start
+report — a start step blocked while holding the store lock
+past the deadline leaves the start standing but the operation
+unperformed, with exactly one uncertain outcome recorded and
+a history the checker verifies.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a2_dispatch.py
 Exits 0 when every check passes.
@@ -1037,6 +1042,95 @@ verdict = run_checker(store)
 dc = verdict["checks"]["dispatch_correspondence"]
 check("T17 the checker reports dispatch_correspondence ok "
       "over the blocked-start history",
+      dc["result"] == "ok", json.dumps(dc))
+
+# -- T18: the deadline recheck (correction round 3). T17
+# delays the start step BEFORE the doorway method is entered,
+# so the delayed worker never holds the store lock. Here the
+# delay sits inside the store's append of the TOOL_STARTED
+# event — a call the doorway makes from within its
+# store.serialized() section — so the worker sleeps while
+# HOLDING the serialization lock, past the deadline. The
+# calling thread's join times out and its uncertain-outcome
+# report waits on the same lock; when the start finally
+# stands and the lock frees, the worker rechecks the deadline
+# before performing: expired, so the operation body never
+# runs, and the caller's uncertain outcome is the dispatch's
+# one outcome, standing after the start.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+ex, sandbox, claims = make_executor(d, deadline=0.3)
+res = d.request_tool(itok, "sandbox.write",
+                     {"path": "notes/late.txt",
+                      "content": "never"}, "req-late")
+did = res["dispatch_id"]
+performed = []
+orig_perform = ex._perform
+
+
+def counting_perform2(tool, parameters):
+    performed.append(tool)
+    return orig_perform(tool, parameters)
+
+
+ex._perform = counting_perform2
+orig_append = store.append
+
+
+def slow_started_append(type_, actor, affected, payload):
+    if type_ == "TOOL_STARTED":
+        # Inside the doorway's serialized start section:
+        # this thread holds the store lock while it sleeps.
+        time.sleep(1.5)  # far past the 0.3s deadline
+    return orig_append(type_, actor, affected, payload)
+
+
+store.append = slow_started_append
+error = None
+t0 = time.monotonic()
+try:
+    summary = ex.execute(did)
+except Exception as exc:  # concurrent access would land here
+    error = exc
+    summary = {}
+finally:
+    store.append = orig_append
+elapsed = time.monotonic() - t0
+check("T18 with the start report blocked inside the store "
+      "lock past the deadline, execute() completes cleanly "
+      "and reports uncertain — and took the lock's time, not "
+      "the deadline's, proving the caller waited on the lock "
+      "rather than writing concurrently",
+      error is None and summary.get("ok")
+      and summary.get("outcome") == "uncertain"
+      and elapsed >= 1.2,
+      f"elapsed={elapsed:.2f} error={error!r}")
+check("T18 the operation body did not run after the "
+      "deadline",
+      performed == []
+      and not os.path.exists(
+          os.path.join(sandbox, "notes", "late.txt")))
+starts = [e for e in events_of(store, "TOOL_STARTED")
+          if e["payload"].get("dispatch_id") == did]
+outcomes = [e for e in events_of(store, "TOOL_OUTCOME")
+            if e["payload"].get("dispatch_id") == did]
+entry = d.state()["dispatches"][did]
+check("T18 exactly one outcome stands — the uncertain one — "
+      "after exactly one start, and the fold agrees",
+      len(starts) == 1 and len(outcomes) == 1
+      and outcomes[0]["payload"]["outcome"] == "uncertain"
+      and starts[0]["event_seq"] < outcomes[0]["event_seq"]
+      and entry["outcome"] == "uncertain"
+      and entry["started_seq"] == starts[0]["event_seq"])
+ex2 = Executor(d, sandbox, claim_dir=claims, deadline=2.0,
+               executor_id="executor-2")
+check("T18 the claim stands accounted and recovery has "
+      "nothing to redo",
+      ex.claim_phase(did) == "reported" and ex2.recover() == [])
+verdict = run_checker(store)
+dc = verdict["checks"]["dispatch_correspondence"]
+check("T18 the checker reports dispatch_correspondence ok "
+      "over the start-then-uncertain history",
       dc["result"] == "ok", json.dumps(dc))
 
 print()

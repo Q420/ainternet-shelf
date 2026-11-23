@@ -27,7 +27,11 @@ timeout is never proof of non-occurrence.
 
 Execution runs under a deadline: an operation that outlives
 it is reported uncertain, not failed — the framework does not
-know whether it happened. `sandbox.flaky`'s
+know whether it happened. The deadline binds the beginning
+too: the worker rechecks it after recording its start, so a
+start report that itself outlives the deadline (correction
+round 3) never lets a new operation begin late — the dispatch
+records uncertain instead. `sandbox.flaky`'s
 execute-but-lose-the-report mode performs its operation and
 then reports uncertainty: the report, not the execution, is
 what was lost.
@@ -233,6 +237,11 @@ class Executor:
                     "outcome": "uncertain"}
         tool, parameters = source
         box = {}
+        # The deadline the join below waits on, as a point on
+        # the monotonic clock: the worker rechecks it after
+        # its start report (see run()), so the same instant
+        # governs both threads.
+        deadline_at = time.monotonic() + self.deadline
 
         def run():
             # The start is the executing thread's own first
@@ -252,6 +261,22 @@ class Executor:
             except Exception as exc:  # the start report failed
                 box["start_error"] = exc
                 return
+            # The deadline recheck (correction round 3): the
+            # start report itself may outlive the deadline —
+            # above all when it holds the store's serialization
+            # lock and the calling thread waits on that lock to
+            # record uncertainty. A start recorded late does
+            # not license a late beginning: if the deadline has
+            # expired by the time the start stands, the
+            # operation body must not run. The fact is handed
+            # back distinctly; the outcome is the calling
+            # thread's to record (or already recorded on its
+            # timeout path) — uncertain, since a begun-but-
+            # unperformed dispatch is not a result or a failure
+            # the executor can establish.
+            if time.monotonic() >= deadline_at:
+                box["deadline_expired"] = True
+                return
             try:
                 box["value"] = self._perform(tool, parameters)
             except Exception as exc:  # the operation's failure
@@ -268,6 +293,30 @@ class Executor:
                 dispatch_id, "uncertain",
                 detail="the operation outlived the deadline; "
                        "whether it occurred is not established")
+            self._set_phase(dispatch_id, "reported")
+            return {"ok": True, "dispatch_id": dispatch_id,
+                    "outcome": "uncertain"}
+        if "deadline_expired" in box:
+            # The worker finished first, but its start report
+            # completed only after the deadline (correction
+            # round 3): the start stands, nothing was
+            # performed, and no outcome has been recorded yet
+            # — the timeout path above never ran because the
+            # worker was no longer alive when the join
+            # returned. The outcome is uncertain, recorded
+            # here exactly once: execution was established as
+            # begun, but the operation did not run within its
+            # deadline, so neither a result nor a failure is
+            # established. (Where the join did time out with
+            # the worker still inside its start report, the
+            # branch above already recorded this same outcome
+            # — the doorway's serialization means the two
+            # paths can never both record one.)
+            self.doorway.record_tool_outcome(
+                dispatch_id, "uncertain",
+                detail="the start report completed after the "
+                       "operation deadline; the operation was "
+                       "not performed")
             self._set_phase(dispatch_id, "reported")
             return {"ok": True, "dispatch_id": dispatch_id,
                     "outcome": "uncertain"}
