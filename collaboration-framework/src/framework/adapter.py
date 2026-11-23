@@ -49,6 +49,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import time
 import urllib.error
 import urllib.request
 
@@ -85,40 +86,19 @@ class AdapterFailure(Exception):
 
 
 def _extract_json_object(text):
-    """The model's content as one JSON object, or None. A fenced
-    or lightly wrapped object is accepted; anything else is
-    off-contract."""
+    """The model's content as one JSON object, or None. The
+    contract is exactly one JSON object and nothing else
+    (A4): the ENTIRE content, stripped of surrounding
+    whitespace only, must parse as that one object. Prose
+    around it, a fence, or a second object makes the whole
+    response malformed — nothing is extracted from it."""
     if not isinstance(text, str):
         return None
-    start = text.find("{")
-    if start < 0:
+    try:
+        obj = json.loads(text.strip())
+    except ValueError:
         return None
-    depth = 0
-    in_str = False
-    esc = False
-    for i in range(start, len(text)):
-        ch = text[i]
-        if in_str:
-            if esc:
-                esc = False
-            elif ch == "\\":
-                esc = True
-            elif ch == '"':
-                in_str = False
-            continue
-        if ch == '"':
-            in_str = True
-        elif ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                try:
-                    obj = json.loads(text[start:i + 1])
-                except ValueError:
-                    return None
-                return obj if isinstance(obj, dict) else None
-    return None
+    return obj if isinstance(obj, dict) else None
 
 
 class OpenAICompatibleAdapter:
@@ -138,8 +118,25 @@ class OpenAICompatibleAdapter:
 
     # ---------------------------------------------------- transport
     def _call(self, messages):
-        """One provider call under one total deadline. Returns
-        (content, provider_model_id). No retry, ever (A6)."""
+        """One provider call under one TOTAL deadline (A6): an
+        absolute point on a monotonic clock, computed before
+        dispatch. Every blocking operation is bounded by the
+        time remaining; the body is read in chunks under the
+        same bound, so a provider drip-feeding inside each
+        socket window cannot hold the call open; and the call
+        never returns successfully after its deadline — the
+        clock is checked again after reading and after
+        parsing. Returns (content, provider_model_id). No
+        retry, ever."""
+        deadline = time.monotonic() + self.timeout
+
+        def remaining():
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise AdapterFailure(
+                    "no_response", detail="total deadline exceeded")
+            return left
+
         key = self._api_key or os.environ.get(self._api_key_env)
         body = {"model": self.model, "messages": messages,
                 "temperature": 0.2}
@@ -152,8 +149,28 @@ class OpenAICompatibleAdapter:
             method="POST")
         try:
             with urllib.request.urlopen(
-                    req, timeout=self.timeout) as resp:
-                raw = resp.read().decode("utf-8", "replace")
+                    req, timeout=remaining()) as resp:
+                chunks = []
+                # read1 returns after at most one socket read, so
+                # control comes back here between drips and the
+                # clock check — not the socket's inactivity
+                # window — is what bounds the total.
+                read_chunk = getattr(resp, "read1", None) or \
+                    (lambda n: resp.read(n))
+                while True:
+                    left = remaining()
+                    try:
+                        resp.fp.raw._sock.settimeout(left)
+                    except Exception:
+                        pass
+                    chunk = read_chunk(65536)
+                    remaining()
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                raw = b"".join(chunks).decode("utf-8", "replace")
+        except AdapterFailure:
+            raise
         except urllib.error.HTTPError as exc:
             raise AdapterFailure("provider_error",
                                  detail=f"HTTP {exc.code}")
@@ -166,11 +183,13 @@ class OpenAICompatibleAdapter:
                                      detail="total deadline exceeded")
             raise AdapterFailure("provider_error",
                                  detail=type(exc.reason).__name__)
+        remaining()
         try:
             parsed = json.loads(raw)
         except ValueError:
             raise AdapterFailure("malformed_response",
                                  detail="provider body is not JSON")
+        remaining()
         if not isinstance(parsed, dict):
             raise AdapterFailure("malformed_response",
                                  detail="provider body is not an object")

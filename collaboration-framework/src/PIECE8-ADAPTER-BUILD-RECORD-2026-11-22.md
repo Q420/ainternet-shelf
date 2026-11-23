@@ -120,3 +120,50 @@ crew seats (runner and report in `live-demo/`; the store
 the §7 two-live-seats demonstration both stand. What remains
 is examination of this piece, then Stage 3 — the first real
 job, chosen with Ben.
+
+A distinction Vane preserved at examination, recorded here:
+both live seats carried the same provider-reported model id —
+a genuine two-seat interaction, not yet a demonstration of
+collaboration between different model families. That is the
+boundary of what this run establishes.
+
+## Examination round 1 (2026-11-22) — two corrections + record access
+
+Vane's examination (filed as
+`VANE-PIECE8-EXAMINATION-2026-11-22.md`) found two blocking
+defects; both verified first-hand in the submitted code
+before correcting:
+
+1. **A4 — the whole response is now validated.** The parser
+   took the first balanced `{...}` and ignored everything
+   around it. It now accepts exactly one JSON object and
+   nothing else: the entire content, stripped of surrounding
+   whitespace only, must parse as that object. Leading text,
+   trailing text, and a second object are each witnessed in
+   the suite landing as malformed driver failures with
+   nothing submitted.
+2. **A6 — the deadline is now a total deadline.** The
+   configured timeout was urlopen's per-operation socket
+   timeout with an unbounded read. `_call` now computes an
+   absolute deadline on a monotonic clock before dispatch,
+   bounds every blocking operation by the time remaining,
+   reads the body via `read1` so control returns to the
+   clock check between drips (a buffered fill-read loops
+   internally on recv and a drip defeats it — the first
+   correction attempt failed exactly there, at 3.01s against
+   a 0.6s budget, before read1 brought it to 0.60s), and
+   re-checks the clock after reading and after parsing: the
+   call cannot return successfully past its deadline. The
+   suite's slow-drip witness (a byte every 0.1s for 3s, no
+   inactivity window exceeded) lands as a no_response stall
+   at the budget, after exactly one dispatch.
+
+**The live record, exported for independent verification:**
+`live-demo/run-db.b64.txt` — the demonstration store itself,
+gzip + base64 (the shelf's text route carries it whole).
+Decode → gunzip → `run.db`; SHA-256 of the decoded file:
+`7f00dc2c655e8054225c278ed29f74137ee70734bc9e0014819517017d5c342b`.
+The §3.10 checker runs against it directly.
+
+Suite after round 1: Piece 8, 22 checks, ALL PASS; every
+regression green.

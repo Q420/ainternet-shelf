@@ -66,6 +66,24 @@ class Handler(BaseHTTPRequestHandler):
                          "body": body.decode("utf-8", "replace")})
         if SCRIPT["override"]:
             spec = SCRIPT["override"].pop(0)
+            if isinstance(spec, tuple) and spec[0] == "drip":
+                # Send a large body one byte at a time, slowly:
+                # no individual inactivity window is exceeded,
+                # but any total deadline must bite.
+                self.send_response(200)
+                self.send_header("Content-Type",
+                                 "application/json")
+                self.send_header("Content-Length", "100000")
+                self.end_headers()
+                started = time.monotonic()
+                try:
+                    while time.monotonic() - started < spec[1]:
+                        self.wfile.write(b"x")
+                        self.wfile.flush()
+                        time.sleep(spec[2])
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
             if isinstance(spec, tuple) and spec[0] == "sleep":
                 time.sleep(spec[1])
                 spec = {"outcome": "contribute", "text": "late"}
@@ -197,6 +215,22 @@ check("an off-contract answer (acknowledge with extra fields) "
       "lands as a driver failure with nothing submitted",
       r["failed"] == "malformed_output" and r["recorded"] == [])
 
+# ------------------------------------- whole-response validation (A4)
+for label, content in (
+        ("leading text", 'Here is my answer: '
+         '{"outcome": "contribute", "text": "x"}'),
+        ("trailing text", '{"outcome": "contribute", "text": "x"}'
+         ' — hope that helps'),
+        ("a second object", '{"outcome": "contribute", "text": "x"}'
+         '{"outcome": "decline", "reason": "changed my mind"}')):
+    store, d, tok = fresh_store()
+    SCRIPT["override"] = [content]
+    r = Driver(d, "crew-a", tok["crew-a"], adapter()).wake_cycle()
+    check(f"A4: a response with {label} outside the one object is "
+          f"malformed whole — nothing submitted",
+          r["failed"] == "malformed_output" and
+          r["recorded"] == [])
+
 # -------------------------------------------------------------- timeout
 store, d, tok = fresh_store()
 SCRIPT["override"] = [("sleep", 2.0)]
@@ -209,6 +243,24 @@ check("a timeout lands as a no_response stall",
       "no_response")
 check("exactly one dispatch was made — no retry on ambiguity",
       len(REQUESTS) == before + 1)
+
+# ------------------------------------------- total deadline: slow drip
+store, d, tok = fresh_store()
+SCRIPT["override"] = [("drip", 3.0, 0.1)]
+before = len(REQUESTS)
+started = time.monotonic()
+r = Driver(d, "crew-a", tok["crew-a"],
+           adapter(timeout=0.6)).wake_cycle()
+elapsed = time.monotonic() - started
+check("A6: a slow-drip response exceeding the total budget (but "
+      "no inactivity window) lands as a no_response stall",
+      r["failed"] == "no_response" and
+      fold(store.all_events())["stalled"]["crew-a"]["kind"] ==
+      "no_response")
+check("the total deadline bit: the call ended well inside the "
+      "drip's duration, after exactly one dispatch",
+      elapsed < 1.8 and len(REQUESTS) == before + 1,
+      detail=f"elapsed={elapsed:.2f}s")
 
 # -------------------------------------------------------- provider error
 store, d, tok = fresh_store()
