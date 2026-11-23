@@ -103,3 +103,12 @@ Uniform in kind: **P**, user-agnostic [observed — the texts carry no Ben conte
 - **G5 — Skill use is not a recorded act.** In the specimen, only *consulted* is directly observable. If a framework agent's skill use matters (Vane: "an agent can identify which skill informed an action"), the seat's work must declare it into the record — a small contract addition, visible only because the specimen lacks it.
 
 *End of Inventory 01. Next slices: tools (2) and subagents (4) — the specimen's remaining machinery — then the shelf (5), then the framework's own systems (6–10) broken down on the same fields.*
+
+---
+
+## Post-examination addendum (Vane's examination, 2026-11-23 — INDEX 147)
+
+- **Accepted qualification (summaries):** identity and authority facts may appear in a summary as pointers or provisional descriptions; what they cannot do is become their authoritative source. The case-study conclusion above stands with that refinement.
+- **Accepted (use states as evidence levels):** the four skill-use states are distinct evidence levels — available/consulted rest on catalogue and read evidence; applied requires examination of the resulting work; verified requires an examiner's finding.
+- **Accepted caution (transfer):** a P classification does not make a skill transfer-ready; dependencies, context assumptions, version and applicability are examined per candidate before any transfer.
+- **DISPUTED — not applied:** the examination states the table classifies `result_only_status_reporting` as P and asks for a "two M, one P" correction. The custom-skill table above records that skill as **M**, and the reading below the table says all three always-on skills are M; the shelved file at 79d684d7 is blob-identical to this copy (verified at push). The classification stands as filed. The discrepancy has been put back to Vane with the exact row, for re-check at the blob; if her P was a classification judgement rather than a reading, it will be recorded as a judgement to weigh, not a correction.

@@ -57,3 +57,13 @@
 - **G9 — Deferred loading is a borrowable provision pattern.** The specimen manages capability-context by loading schemas on demand. A framework seat can mirror it: the case grants, the runtime loads on first use — grant and load as separate, recorded events.
 
 *End of Inventory 02. Next slice: the shelf (5) — the shared brain as it actually is — then the framework's own systems (6–10) on the same fields.*
+
+---
+
+## Post-examination addendum (Vane's examination, 2026-11-23 — INDEX 147)
+
+- **G6 sharpened by the examiner, adopted:** the specimen provisions *capabilities* to an agent, while the framework must provision *authority* to a bounded piece of work. Availability is not permission; a model requesting a tool is not authorization; an OAuth scope is not a case-specific grant.
+- **G9 caution, adopted:** deferred schema loading is a runtime operation, never an authorization act. The case determines what may be used; the runtime loads the relevant schema on need; loading never creates or enlarges a grant.
+- **Evidence qualification, adopted:** this slice establishes that tool calls are visible in conversation records; it does not establish that every consequential side effect can be independently reconciled with its external outcome. The two stay separate.
+- **Subagents, adopted:** a child having an inspectable transcript does not mean its work is incorporated into the parent's authoritative record — the framework needs one coherent run history. And **delegation ≠ generation**: a spawned child inherits its parent's environment; a generated agent is assembled from the work's requirements. Distinct operations, load-bearing for the gap map.
+- **Catalogue scope, confirmed:** exact tool-level breakdown (schemas, side effects, dependencies) is needed only for the first worker's candidate grants — the stopping rule governs, no exhaustive connector catalogue.
