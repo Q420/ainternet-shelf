@@ -1,0 +1,213 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "model_requested": "moonshotai/kimi-k3.1-pro",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 2,
+  "recorded": [
+   {
+    "event_seq": 17,
+    "event_id": "e187ef3b-132c-4d59-88f3-330a7e22bce0",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 16,
+     "catalogue_hash": "cffbd62f79fd9dcbfe434bb2487251058aa2adcaf37a2fd056831bf440c7915b",
+     "registry_version": "tool-registry-v2"
+    },
+    "ts": "2026-11-23T22:15:30Z",
+    "prev_hash": "c1b2b7be664525d019675659011d790e9189477ead73844d79387daef0ff2db8",
+    "hash": "df76c2eb3b7bb9d892033066be0d59ccfc524b13a77b7bcf9ac8b7791002b0aa"
+   },
+   {
+    "event_seq": 30,
+    "event_id": "908c1371-8334-4385-854e-53e5d0722393",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 2,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 29,
+     "catalogue_hash": "cffbd62f79fd9dcbfe434bb2487251058aa2adcaf37a2fd056831bf440c7915b",
+     "registry_version": "tool-registry-v2"
+    },
+    "ts": "2026-11-23T22:16:22Z",
+    "prev_hash": "fa10145ee889416a58698c6e488e77696667f6b79719846620362f59f83a78e2",
+    "hash": "a91c937a4259dbf22bb9e44acd3de6a3d2563b44de96094b69c9268fe060080a"
+   }
+  ],
+  "refused": [],
+  "dispatched": [
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-1",
+    "dispatch_id": "dispatch-1",
+    "outcome": null,
+    "reconciled_outcome": null
+   },
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-2",
+    "dispatch_id": "dispatch-2",
+    "outcome": null,
+    "reconciled_outcome": null
+   },
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-3",
+    "dispatch_id": "dispatch-3",
+    "outcome": null,
+    "reconciled_outcome": null
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 31,
+   "event_id": "d71904ed-0cb7-419b-b84a-f4f2102f1efc",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 16,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 2,
+    "detail": "no_response: total deadline exceeded"
+   },
+   "ts": "2026-11-23T22:18:22Z",
+   "prev_hash": "a91c937a4259dbf22bb9e44acd3de6a3d2563b44de96094b69c9268fe060080a",
+   "hash": "efd475ed9992f2df6708e6252482df3833f6651bc68984ee14bd0d1c32657c4d"
+  }
+ },
+ "iterations": 2,
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 31
+ },
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-2",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-2",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-3",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-3",
+   "outcome": "result"
+  }
+ ],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m Kimi, an AI assistant based on a large language model trained and provided by Moonshot AI (\u6708\u4e4b\u6697\u9762). I don\u2019t have a reliable exact model version identifier to state for this deployment. I\u2019m an AI, not a human.\n\nI can help with explanation, reasoning, writing and editing, summarization, translation, brainstorming, coding and debugging, reviewing documents or plans, and analyzing information provided in the run. In a collaboration, I can act as a tireless drafting and review partner: proposing options, spotting inconsistencies, organizing notes, and helping turn discussion into concrete output.\n\nMy limits matter too. I can be wrong, including in confident-sounding ways, so important facts, code, calculations, and decisions should be verified. My built-in knowledge may be incomplete or outdated, and I don\u2019t have real-time information or external access unless the environment provides tools for it. I may not retain memory beyond the current conversation or supplied context. I can only act through the interfaces and tools made available to me, and my output shouldn\u2019t be treated as a substitute for qualified professional judgment in areas like medicine, law, finance, or safety-critical engineering.",
+  "provider_model_id": "moonshotai/kimi-k3.1-pro",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 31,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ }
+}
