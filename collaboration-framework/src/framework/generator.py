@@ -49,6 +49,22 @@ from . import onboarding as _onboarding
 from .record import (assembly_record_hash, declaration_fingerprint,
                      effective_case, instance_credential_fingerprint)
 
+# The A3-CAT catalogue contract's declaration (Piece A3-CAT,
+# correction round): every assembly this generator produces
+# declares, in its sealed generated record, that its loop
+# iterations carry the tool catalogue commitment — the
+# catalogue hash and the registry version on every
+# LOOP_ITERATION. The declaration is the compatibility
+# discriminator the checker reads: an assembly whose record
+# carries it is governed by the contract and its iterations
+# must carry both fields; an assembly generated before the
+# contract existed carries no declaration, and its iterations
+# are historical record, exempt identifiably rather than by
+# inference from missing fields. The value is contract data,
+# duplicated in the checker's own copy as its other contracts
+# are.
+CATALOGUE_CONTRACT = "a3-cat"
+
 
 class Generator:
     def __init__(self, doorway):
@@ -236,6 +252,7 @@ class Generator:
             "skills": [{"name": s["name"],
                         "version": s["version"]} for s in skills],
             "grants": copy.deepcopy(grants),
+            "catalogue_contract": CATALOGUE_CONTRACT,
         }
         ev = self.doorway.act(token, "ASSEMBLY_GENERATED", record,
                               view_seq=self.store.head_seq())

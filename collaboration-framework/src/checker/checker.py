@@ -884,6 +884,15 @@ _LOOP_ACTOR = "loop"
 _LOOP_GROUNDS = ("step_ceiling", "deadline", "provider_failure",
                  "malformed_response", "runtime_failure")
 
+# The A3-CAT catalogue contract's declaration value (Piece
+# A3-CAT, correction round): the sealed ASSEMBLY_GENERATED
+# payload of an assembly governed by the contract declares
+# it; this checker's own statement of the value, duplicated
+# as its other contracts are. An assembly whose record
+# carries no declaration predates the contract — its
+# iterations are historical and exempt, identifiably.
+_CATALOGUE_CONTRACT = "a3-cat"
+
 
 def _derive_catalogue(grants, version):
     """The expected tool catalogue for a sealed grants list
@@ -960,18 +969,28 @@ def _loop_result(events, state):
     resolved; a delayed report settling it afterwards is
     executor accounting, not instance activity); and no
     instance activity — no iteration, request, dispatch or
-    start — follows a stall. An iteration carrying a
-    catalogue hash (Piece A3-CAT) is verified against the
-    catalogue independently reconstructed from the
-    activation's sealed grants under this checker's own
-    registry copy at the recorded version: a version this
-    copy does not hold, or a catalogue it cannot derive
-    from the sealed grants, is an explicit divergence —
-    never a silent ok — and a hash that differs from the
-    reconstruction's is a mismatch. An iteration carrying
-    no hash is lawful historical record (pre-A3-CAT) and
-    asks nothing here. Nothing here runs a model or a
-    tool (R48)."""
+    start — follows a stall. The catalogue commitment (Piece
+    A3-CAT) is governed by the compatibility discriminator
+    the sealed generated record declares: an assembly whose
+    ASSEMBLY_GENERATED payload declares the contract owes
+    the catalogue hash and the registry version on every
+    iteration — either field absent is divergent
+    (catalogue_commitment_missing), so a governed iteration
+    cannot evade verification by omission — and where both
+    stand, the hash is verified against the catalogue
+    independently reconstructed from the activation's sealed
+    grants under this checker's own registry copy at the
+    recorded version: a version this copy does not hold, or
+    a catalogue it cannot derive from the sealed grants, is
+    an explicit divergence — never a silent ok — and a hash
+    that differs from the reconstruction's is a mismatch. An
+    assembly whose record declares no contract predates it:
+    its iterations are lawful historical record and ask
+    nothing here, the exemption read from the assembly's own
+    declaration, never inferred from an iteration's missing
+    fields. An undeclared assembly's iteration that
+    nevertheless carries a hash is verified as before.
+    Nothing here runs a model or a tool (R48)."""
     problems = []
 
     def problem(kind, **fields):
@@ -1157,13 +1176,32 @@ def _loop_result(events, state):
                         nxt["cursor_to"] < seq:
                     problem("iteration_event_not_presented",
                             assembly_id=aid, at_seq=seq)
-            # Piece A3-CAT: an iteration carrying a catalogue
-            # hash is verified against the catalogue this
-            # checker independently reconstructs from the
-            # activation's sealed grants, under its own
-            # registry copy at the recorded version.
+            # Piece A3-CAT: the catalogue commitment. The
+            # assembly's sealed declaration governs: a
+            # declared assembly owes both fields on every
+            # iteration, and either absent is divergent in
+            # itself — stripping the fields cannot manufacture
+            # the historical exception, which lives in the
+            # assembly record, outside the iteration events.
+            # Where a hash stands (declared, or volunteered
+            # by an undeclared record), it is verified against
+            # the catalogue this checker independently
+            # reconstructs from the activation's sealed
+            # grants, under its own registry copy at the
+            # recorded version.
+            gen = generated.get(aid)
+            declared = gen is not None and \
+                gen["payload"].get("catalogue_contract") == \
+                _CATALOGUE_CONTRACT
             recorded_hash = p.get("catalogue_hash")
-            if recorded_hash is not None:
+            recorded_version = p.get("registry_version")
+            if declared and (recorded_hash is None or
+                             recorded_version is None):
+                problem("catalogue_commitment_missing",
+                        assembly_id=aid, at_seq=seq,
+                        catalogue_hash=recorded_hash,
+                        registry_version=recorded_version)
+            elif recorded_hash is not None:
                 version = p.get("registry_version")
                 if not known_version(version):
                     problem(

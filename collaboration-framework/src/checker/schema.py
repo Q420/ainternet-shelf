@@ -87,7 +87,9 @@ SCHEMA = {
             "authorised_seq": {"t": "opt", "v": {"t": "int"}},
             "activated_seq": {"t": "opt", "v": {"t": "int"}},
             "credential": {"t": "str"},
-            "grants_present": {"t": "bool"}}}},
+            "grants_present": {"t": "bool"},
+            "catalogue_contract": {"t": "opt",
+                                   "v": {"t": "str"}}}}},
         "loop_activations": {"t": "map", "v": {"t": "obj", "f": {
             "instance_id": {"t": "opt", "v": {"t": "str"}},
             "activated_seq": {"t": "opt", "v": {"t": "int"}},

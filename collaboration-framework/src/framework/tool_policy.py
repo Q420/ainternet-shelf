@@ -43,10 +43,36 @@ Every contract function takes the version it applies; the
 default is the current version, and an unknown version fails
 closed — a version the registry does not hold is a contract
 nobody can verify under.
+
+The versioned views are frozen deeply at module load (A3-CAT
+correction round): every mapping is a MappingProxyType, every
+list a tuple, every set a frozenset, so no caller can alter a
+version's contract — v1's historical ceiling contract
+included — for the lifetime of the process. Accessors return
+plain, mutable copies; the registry's own data never leaves
+this module by reference.
 """
-import copy
+from collections.abc import Mapping
+from types import MappingProxyType
 
 from fabric.canonical import canonical, sha256_hex
+
+
+def _freeze(value):
+    """The deeply immutable form of a registry structure:
+    mappings become MappingProxyType, lists and tuples become
+    tuples of frozen items, sets become frozensets; scalars
+    pass through. Applied to each version's view at module
+    load, so the contract a version names cannot be altered
+    in-process, at any depth."""
+    if isinstance(value, dict):
+        return MappingProxyType(
+            {key: _freeze(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze(item) for item in value)
+    if isinstance(value, (set, frozenset)):
+        return frozenset(value)
+    return value
 
 # The registry's current version identifier: inspectable, and
 # pinned for a run by being recorded in every TOOL_DISPATCHED
@@ -67,7 +93,7 @@ FLAKY_MODES = ("succeed", "fail", "hang-past-deadline",
                "execute-but-lose-the-report")
 
 # The v1 view: the registry exactly as Piece A2 settled it.
-_TOOLS_V1 = {
+_TOOLS_V1 = _freeze({
     "sandbox.write": {
         "ceiling_keys": {"path_prefix"},
         "param_keys": {"path", "content"},
@@ -80,7 +106,7 @@ _TOOLS_V1 = {
         "ceiling_keys": {"path_prefix"},
         "param_keys": {"mode", "path", "content", "hang_seconds"},
     },
-}
+})
 
 # The v2 view: v1's ceiling contract, unchanged, plus the
 # worker-facing layer (Piece A3-CAT): a plain description of
@@ -89,7 +115,7 @@ _TOOLS_V1 = {
 # meaning. The parameter lists name exactly the tool's
 # param_keys; the A2 suite's agreement battery witnesses the
 # two copies agree on all of it, under both versions.
-_TOOLS_V2 = {
+_TOOLS_V2 = _freeze({
     "sandbox.write": {
         "ceiling_keys": {"path_prefix"},
         "param_keys": {"path", "content"},
@@ -150,16 +176,19 @@ _TOOLS_V2 = {
                         "number)"},
         ],
     },
-}
+})
 
 # One registry view per version, v1 preserved immutable for
-# historical verification (Piece A3-CAT settlement (a)/(c)).
-_REGISTRIES = {
+# historical verification (Piece A3-CAT settlement (a)/(c)) —
+# the version map itself is frozen with its views, so a
+# version can neither be altered nor added in-process.
+_REGISTRIES = MappingProxyType({
     "tool-registry-v1": _TOOLS_V1,
     "tool-registry-v2": _TOOLS_V2,
-}
+})
 
-# The current view: what an unversioned call applies.
+# The current view: what an unversioned call applies. This
+# is the frozen v2 view itself, not a mutable alias to it.
 _TOOLS = _TOOLS_V2
 
 
@@ -208,11 +237,11 @@ def worker_facing(tool, version=None):
     parameters = spec.get("parameters")
     if not isinstance(description, str) or \
             not description.strip() or \
-            not isinstance(parameters, list):
+            not isinstance(parameters, (list, tuple)):
         return None
     names = set()
     for param in parameters:
-        if not isinstance(param, dict) or \
+        if not isinstance(param, Mapping) or \
                 set(param) != {"name", "required", "meaning"} \
                 or not isinstance(param.get("name"), str) \
                 or not param["name"] \
@@ -223,8 +252,15 @@ def worker_facing(tool, version=None):
         names.add(param["name"])
     if names != set(spec["param_keys"]):
         return None
+    # A plain, mutable copy, rebuilt field by field: the
+    # frozen registry's own structures never leave by
+    # reference (and cannot be deep-copied in any case).
     return {"description": description,
-            "parameters": copy.deepcopy(parameters)}
+            "parameters": [
+                {"name": param["name"],
+                 "required": param["required"],
+                 "meaning": param["meaning"]}
+                for param in parameters]}
 
 
 def request_fingerprint(tool, parameters) -> str:

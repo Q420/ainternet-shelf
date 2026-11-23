@@ -929,6 +929,12 @@ def apply_event(state: dict, ev: dict) -> dict:
             "authorised_seq": None, "activated_seq": None,
             "credential": "none",
             "grants_present": p.get("grants") is not None,
+            # Piece A3-CAT, correction round: the generated
+            # record's catalogue-contract declaration, carried
+            # on the entry — "a3-cat" where the assembly is
+            # governed by the contract, None on records that
+            # predate it.
+            "catalogue_contract": p.get("catalogue_contract"),
         }
     elif t in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
                "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",

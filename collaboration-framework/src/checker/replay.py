@@ -294,6 +294,9 @@ def _shape_problem(ev):
                     not isinstance(p["grants"], list):
                 return "ASSEMBLY_GENERATED grants is not a " \
                     "list or null"
+            if bad_opt_str("catalogue_contract"):
+                return "ASSEMBLY_GENERATED " \
+                    "catalogue_contract is not a string"
             if "model_selection" in p and \
                     not isinstance(p["model_selection"], dict):
                 return "ASSEMBLY_GENERATED model_selection " \
@@ -784,6 +787,7 @@ def _apply(state, ev):
             "authorised_seq": None, "activated_seq": None,
             "credential": "none",
             "grants_present": p.get("grants") is not None,
+            "catalogue_contract": p.get("catalogue_contract"),
         }
     elif t in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
                "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",

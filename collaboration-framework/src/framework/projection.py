@@ -143,7 +143,8 @@ SCHEMA = _obj({
         "packed_seq": _opt(_INT), "pack_hash": _opt(_STR),
         "authorised_seq": _opt(_INT),
         "activated_seq": _opt(_INT),
-        "credential": _STR, "grants_present": _BOOL})),
+        "credential": _STR, "grants_present": _BOOL,
+        "catalogue_contract": _opt(_STR)})),
     "loop_activations": _map(_obj({
         "instance_id": _opt(_STR), "activated_seq": _opt(_INT),
         "case_id": _opt(_STR), "case_version": _opt(_INT),

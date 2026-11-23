@@ -15,8 +15,11 @@ harness pattern, a stub callable capturing packages):
   contract in BOTH policy copies;
 - a grant for an unregistered tool advertises nothing, and
   its requests still refuse at the doorway;
-- a registered tool stripped of its description (a test-side
-  registry mutation) fails package construction closed: an
+- a registered tool whose registry entry lacks its
+  description — presented through an isolated test registry
+  (a thawed copy of the canonical one) installed by
+  controlled replacement, the canonical registry itself
+  being frozen — fails package construction closed: an
   attributable LOOP_STALLED runtime_failure, zero model
   calls, no iteration recorded;
 - the recorded LOOP_ITERATION hash equals the real checker's
@@ -33,17 +36,30 @@ harness pattern, a stub callable capturing packages):
   dispatches and settles with the file's content;
 - the adapter renders the catalogue verbatim in its own
   prompt section, and a package without a tools field
-  renders byte-identically to the legacy construction.
+  renders byte-identically to the legacy construction;
+- (correction round) the catalogue commitment is governed
+  by the declaration the sealed ASSEMBLY_GENERATED record
+  carries: stripping both fields from one — or every —
+  iteration of a declared assembly's record is divergent
+  (catalogue_commitment_missing), while a legacy-shaped
+  record (no declaration, no fields, modelled on the
+  pre-correction construction) verifies clean;
+- (correction round) the versioned registries are deeply
+  immutable in BOTH policy copies — mutation attempts at
+  every depth raise — and their frozen contents agree.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a3cat_catalogue.py
 Exits 0 when every check passes.
 """
 import copy
 import json
+import operator
 import os
 import subprocess
 import sys
 import tempfile
+from collections.abc import Mapping
+from types import MappingProxyType
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 SRC = os.path.join(ROOT, "src")
@@ -60,7 +76,8 @@ from framework.generator import Generator  # noqa: E402
 from framework.loop import Loop  # noqa: E402
 from framework.office import Office  # noqa: E402
 from framework.record import (CONSTITUTION_HASH,  # noqa: E402
-                              FrameworkStore)
+                              FrameworkStore,
+                              assembly_record_hash)
 import checker.tool_policy as ck_policy  # noqa: E402
 
 FAILURES = []
@@ -414,18 +431,40 @@ check("CAT6 a request for the unregistered tool still "
                   for e in events_of(store, "TOOL_DISPATCHED")),
       json.dumps(res.get("refused")))
 
-# -- CAT7 (iv): a registered tool stripped of its description
-# fails construction closed — attributable runtime_failure,
-# zero model calls, no iteration.
+# -- CAT7 (iv): a registered tool whose registry entry lacks
+# its description fails construction closed — attributable
+# runtime_failure, zero model calls, no iteration. The
+# defect is presented through an ISOLATED test registry: a
+# thawed (plain, mutable) copy of the canonical registries
+# with one description removed, installed by controlled
+# replacement of the module's registry map for the run's
+# duration. The canonical registry is deeply frozen
+# (CAT11); it is never mutated.
+def thaw(value):
+    """A plain, mutable deep copy of a (possibly frozen)
+    registry structure: mappings to dicts, tuples to lists,
+    frozensets to sets, scalars unchanged."""
+    if isinstance(value, Mapping):
+        return {k: thaw(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [thaw(v) for v in value]
+    if isinstance(value, (set, frozenset)):
+        return {thaw(v) for v in value}
+    return value
+
+
 store, d, office, gen, tok = fresh()
 r, itok = activate(store, d, office, gen, tok)
 model = Script([yield_()])
-entry_v2 = fw_policy._TOOLS_V2["sandbox.read"]
-saved_description = entry_v2.pop("description")
+test_registries = thaw(fw_policy._REGISTRIES)
+del test_registries["tool-registry-v2"]["sandbox.read"][
+    "description"]
+saved_registries = fw_policy._REGISTRIES
+fw_policy._REGISTRIES = test_registries
 try:
     res = Loop(d, itok, model).run()
 finally:
-    entry_v2["description"] = saved_description
+    fw_policy._REGISTRIES = saved_registries
 stalled = events_of(store, "LOOP_STALLED")
 detail = stalled[0]["payload"].get("detail") or "" \
     if stalled else ""
@@ -529,6 +568,198 @@ legacy = adapter_mod._CONTRACT + "\n\nYour wake package:\n" \
 check("CAT9 a package without a tools field renders "
       "byte-identically to the legacy construction",
       captured["messages"][1]["content"] == legacy)
+
+# -- CAT10 (correction round, finding 1): the catalogue
+# commitment is governed by the declaration in the sealed
+# ASSEMBLY_GENERATED record — the compatibility
+# discriminator. A clone store replays a real run's exact
+# event sequence with payloads rewritten, so sequence
+# numbers (and every reference that names one) stand
+# unchanged and the only divergence is the intended one.
+def clone_store(source, transform=None):
+    path = os.path.join(tempfile.mkdtemp(), "run.db")
+    clone = FrameworkStore(path)
+    clone.insert_run("run-1", CONSTITUTION_HASH)
+    for ev in source.all_events():
+        payload = copy.deepcopy(ev["payload"])
+        if transform is not None:
+            payload = transform(ev["type"], payload)
+        clone.append(ev["type"], ev["actor"],
+                     list(ev["affected"]), payload)
+    clone.commit()
+    return clone
+
+
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+Loop(d, itok, Script([contribute(), yield_()])).run()
+generated_payload = next(
+    e["payload"] for e in events_of(store, "ASSEMBLY_GENERATED")
+    if e["payload"].get("assembly_id") == r["assembly_id"])
+fold_entry = d.state()["assemblies"][r["assembly_id"]]
+check("CAT10 a new-contract assembly declares the contract "
+      "in its sealed generated record, and the fold carries "
+      "the declaration",
+      generated_payload.get("catalogue_contract") == "a3-cat"
+      and fold_entry.get("catalogue_contract") == "a3-cat")
+verbatim = clone_store(store)
+lc = loop_check(verbatim)
+check("CAT10 a verbatim clone of a new-contract record "
+      "verifies its loop correspondence, catalogue included",
+      lc["result"] == "ok", json.dumps(lc))
+
+first_iter_seq = events_of(store, "LOOP_ITERATION")[0][
+    "event_seq"]
+strip_state = {"done": False}
+
+
+def strip_first(type_, payload):
+    if type_ == "LOOP_ITERATION" and not strip_state["done"]:
+        strip_state["done"] = True
+        payload.pop("catalogue_hash", None)
+        payload.pop("registry_version", None)
+    return payload
+
+
+stripped_one = clone_store(store, strip_first)
+lc = loop_check(stripped_one)
+kinds = [p["kind"] for p in lc["problems"]]
+check("CAT10 stripping both fields from ONE iteration of "
+      "a declared record is divergent under "
+      "catalogue_commitment_missing, at that iteration only",
+      lc["result"] == "divergent"
+      and kinds == ["catalogue_commitment_missing"]
+      and lc["problems"][0]["at_seq"] == first_iter_seq,
+      json.dumps(lc))
+
+
+def strip_all(type_, payload):
+    if type_ == "LOOP_ITERATION":
+        payload.pop("catalogue_hash", None)
+        payload.pop("registry_version", None)
+    return payload
+
+
+stripped_all = clone_store(store, strip_all)
+lc = loop_check(stripped_all)
+n_iters = len(events_of(store, "LOOP_ITERATION"))
+check("CAT10 stripping both fields from EVERY iteration "
+      "still diverges — the declaration stands in the "
+      "assembly, outside the iteration events",
+      lc["result"] == "divergent"
+      and [p["kind"] for p in lc["problems"]]
+      == ["catalogue_commitment_missing"] * n_iters,
+      json.dumps(lc))
+
+legacy_state = {}
+
+
+def legacy_shape(type_, payload):
+    # The pre-correction construction: the generated record
+    # carries no declaration (and the acts that name it by
+    # hash name the stripped object), and no iteration
+    # carries the catalogue fields.
+    if type_ == "ASSEMBLY_GENERATED":
+        payload.pop("catalogue_contract", None)
+        legacy_state["record_hash"] = assembly_record_hash(
+            payload)
+    elif type_ in ("ASSEMBLY_JUDGED", "ASSEMBLY_PACKED"):
+        payload["record_hash"] = legacy_state["record_hash"]
+    elif type_ == "LOOP_ITERATION":
+        payload.pop("catalogue_hash", None)
+        payload.pop("registry_version", None)
+    return payload
+
+
+legacy = clone_store(store, legacy_shape)
+legacy_generated = next(
+    e["payload"] for e in events_of(legacy, "ASSEMBLY_GENERATED")
+    if e["payload"].get("assembly_id") == r["assembly_id"])
+legacy_iters = events_of(legacy, "LOOP_ITERATION")
+lc = loop_check(legacy)
+verdict = run_checker(legacy)
+catalogue_kinds = [p["kind"] for c in verdict["checks"].values()
+                   for p in c.get("problems", [])
+                   if p["kind"].startswith("catalogue")]
+check("CAT10 the legacy-shaped clone really is legacy: no "
+      "declaration in its generated record, no catalogue "
+      "fields on its iterations",
+      "catalogue_contract" not in legacy_generated
+      and all("catalogue_hash" not in e["payload"]
+              and "registry_version" not in e["payload"]
+              for e in legacy_iters))
+check("CAT10 a legacy-shaped record verifies clean — its "
+      "loop correspondence is ok and no catalogue kind "
+      "appears anywhere in the verdict",
+      lc["result"] == "ok" and catalogue_kinds == [],
+      json.dumps(lc))
+
+# -- CAT11 (correction round, finding 2): the versioned
+# registries are deeply immutable in BOTH policy copies —
+# mutation attempts at every depth raise — and the two
+# copies' frozen contents agree.
+def raises_mutation(fn):
+    try:
+        fn()
+    except (TypeError, AttributeError):
+        return True
+    return False
+
+
+def mutation_attempts(policy):
+    v1_read = policy._TOOLS_V1["sandbox.read"]
+    v2_read = policy._TOOLS_V2["sandbox.read"]
+    return [
+        lambda: operator.setitem(
+            policy._REGISTRIES, "tool-registry-v3", {}),
+        lambda: operator.delitem(
+            policy._REGISTRIES, "tool-registry-v1"),
+        lambda: operator.setitem(
+            policy._TOOLS_V1, "sandbox.read", {}),
+        lambda: operator.setitem(
+            v1_read, "ceiling_keys", frozenset()),
+        lambda: v1_read["ceiling_keys"].add("bogus"),
+        lambda: v1_read["param_keys"].discard("path"),
+        lambda: operator.setitem(
+            policy._TOOLS_V2, "sandbox.read", {}),
+        lambda: operator.setitem(
+            v2_read, "description", "a rewritten description"),
+        lambda: operator.setitem(
+            v2_read["parameters"], 0, {}),
+        lambda: operator.setitem(
+            v2_read["parameters"][0], "name", "bogus"),
+        lambda: operator.delitem(policy._TOOLS_V2,
+                                  "sandbox.read"),
+        lambda: operator.setitem(
+            policy._TOOLS, "sandbox.read", {}),
+    ]
+
+
+for label, policy in (("framework", fw_policy),
+                      ("checker", ck_policy)):
+    attempts = mutation_attempts(policy)
+    check(f"CAT11 the {label} copy's registries are deeply "
+          f"immutable: every mutation attempt — version map, "
+          f"v1 and v2 entries, nested key sets, the parameter "
+          f"schema and its entries, the current-view alias — "
+          f"raises",
+          isinstance(policy._REGISTRIES, MappingProxyType)
+          and isinstance(policy._TOOLS_V1, MappingProxyType)
+          and isinstance(policy._TOOLS_V2, MappingProxyType)
+          and all(raises_mutation(fn) for fn in attempts))
+check("CAT11 the current view is the frozen v2 view itself "
+      "in both copies, the two copies' frozen contents "
+      "agree exactly, and the accessors still return the "
+      "true contract after the attempts",
+      fw_policy._TOOLS is fw_policy._TOOLS_V2
+      and ck_policy._TOOLS is ck_policy._TOOLS_V2
+      and thaw(fw_policy._REGISTRIES)
+      == thaw(ck_policy._REGISTRIES)
+      and fw_policy.worker_facing("sandbox.read")
+      == ck_policy.worker_facing("sandbox.read")
+      and fw_policy.check_ceiling(
+          "sandbox.read", {"path_prefix": "notes/"},
+          {"path": "notes/a.txt"})[0])
 
 print()
 if FAILURES:
