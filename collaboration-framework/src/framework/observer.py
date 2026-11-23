@@ -36,6 +36,7 @@ Discipline:
   type, actor). The original payload never crosses into the
   render, so material under any other key has no path in.
 """
+import html
 import json
 import os
 import sqlite3
@@ -130,17 +131,17 @@ def _verify(db_path, run_id):
 
 def _sealed_representation(ev):
     """The allowlist representation of a sealed event (scope
-    O5): a fresh structure carrying only approved existence
-    metadata. The original payload is never copied across."""
+    O5): a fresh structure carrying exactly the approved
+    existence metadata — material reference, event position,
+    holding seat, event type, actor — and nothing else. The
+    original payload is never copied across."""
     p = ev["payload"]
     return {
         "event_seq": ev["event_seq"],
         "type": ev["type"],
         "actor": ev["actor"],
-        "ts": ev["ts"],
         "sealed": {
             "material_id": p.get("material_id"),
-            "boundary": list(p.get("boundary", [])),
             "held_by": ev["actor"],
             "event_seq": ev["event_seq"],
         },
@@ -236,10 +237,8 @@ def _summary(events, state):
         elif e["type"] == "MATERIAL_SEALED":
             p = e["payload"]
             rec(f"Sealed material {p.get('material_id')} "
-                f"exists, sealed by {e['actor']} for boundary "
-                f"seats {', '.join(p.get('boundary', []))} — "
-                f"its content is not shown.",
-                [e["event_seq"]])
+                f"exists, sealed by {e['actor']} — its content "
+                f"is not shown.", [e["event_seq"]])
 
     if state.get("rejections"):
         rec(f"{len(state['rejections'])} act(s) were refused "
@@ -344,7 +343,22 @@ def script_safe_json(obj) -> str:
 def export_html(db_path, run_id, out_path, template_path=None):
     """Render the run to a single self-contained page
     (scope O6): a static snapshot that names its head and
-    never presents itself as the run's current state."""
+    never presents itself as the run's current state.
+
+    The output path must not identify the source store —
+    including by an equivalent path — or the export would
+    overwrite the very record it observes; that is refused
+    before anything is read or written. Stored values that
+    reach HTML context (the run ID) are HTML-escaped; the
+    JSON blob's script-safe encoding does not protect plain
+    substitutions."""
+    if os.path.realpath(out_path) == os.path.realpath(db_path) \
+            or (os.path.exists(out_path)
+                and os.path.samefile(out_path, db_path)):
+        raise ObserverRefusal(
+            "export refused: the output path identifies the "
+            "source store; the observer does not overwrite "
+            "what it observes")
     account = observe(db_path, run_id)
     template_path = template_path or os.path.join(
         HERE, "observer-template.html")
@@ -352,7 +366,8 @@ def export_html(db_path, run_id, out_path, template_path=None):
         template = f.read()
     page = template.replace(
         "__OBSERVER_DATA__", script_safe_json(account))
-    page = page.replace("__RUN_ID__", account["run_id"])
+    page = page.replace(
+        "__RUN_ID__", html.escape(account["run_id"]))
     page = page.replace(
         "__HEAD_SEQ__", str(account["snapshot"]["head_seq"]))
     page = page.replace(

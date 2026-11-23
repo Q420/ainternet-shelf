@@ -379,13 +379,14 @@ def t_sealed_and_script_safety():
                "SECRET-NESTED-789")))
     sealed_entries = [e for e in acct["detail"]
                       if e["type"] == "MATERIAL_SEALED"]
-    check("C7 the sealed representation is allowlist-shaped"
-          " and carries the existence metadata",
+    check("C7 the sealed representation is exactly the"
+          " approved allowlist — no ts, no boundary, nothing"
+          " beyond it",
           len(sealed_entries) == 1
           and set(sealed_entries[0]) == {"event_seq", "type",
-                                         "actor", "ts", "sealed"}
+                                         "actor", "sealed"}
           and sealed_entries[0]["sealed"] == {
-              "material_id": "mat-1", "boundary": ["crew-1"],
+              "material_id": "mat-1",
               "held_by": "orch-1",
               "event_seq": sealed_entries[0]["event_seq"]},
           sealed_entries)
@@ -406,6 +407,40 @@ def t_sealed_and_script_safety():
     check("C8 the export names its snapshot head",
           f"event <strong>{acct['snapshot']['head_seq']}</strong>"
           in page and acct["snapshot"]["head_hash"] in page)
+
+
+# ------------------------------ correction round 1 (Vane)
+def t_correction_round_1():
+    store, p = fresh_store()
+    store.insert_run("run-1", CONSTITUTION_HASH)
+    commission(store)
+    store._conn.commit()
+    with open(p, "rb") as f:
+        before = f.read()
+    msg = refuses(lambda: export_html(p, "run-1", p))
+    alias = os.path.join(os.path.dirname(p), ".",
+                         os.path.basename(p))
+    msg2 = refuses(lambda: export_html(p, "run-1", alias))
+    with open(p, "rb") as f:
+        after = f.read()
+    check("R1 an output path identifying the source store is"
+          " refused — directly and by equivalent path — and"
+          " the store stays byte-identical",
+          msg is not None and msg2 is not None
+          and before == after, (msg, msg2))
+    hostile = "</title><script>alert(1)</script>"
+    store2, p2 = fresh_store()
+    store2.insert_run(hostile, CONSTITUTION_HASH)
+    commission(store2)
+    store2._conn.commit()
+    out = os.path.join(TMP, "hostile.html")
+    export_html(p2, hostile, out)
+    with open(out, encoding="utf-8") as f:
+        page = f.read()
+    check("R1 a hostile run ID is HTML-escaped in the title"
+          " and heading substitutions",
+          hostile not in page
+          and "&lt;/title&gt;" in page, page[:300])
 
 
 # ------------------------------------------------- criterion 9
@@ -435,6 +470,7 @@ def main():
     t_snapshot_provenance_detail()
     t_waiting_states()
     t_sealed_and_script_safety()
+    t_correction_round_1()
     t_end_to_end()
     print(f"\n{len(PASS)} passed, {len(FAIL)} failed")
     if FAIL:

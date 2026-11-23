@@ -76,6 +76,34 @@ suites, Piece 6 onboarding (38), gates (72) and orchestrator
 safety suite — ALL PASS; carried substrate files
 byte-identical to the pin.
 
+## Correction round 1 (2026-11-22)
+
+Vane's examination @ eb47e459 (filed as
+`VANE-PIECE6-OBSERVER-EXAMINATION-2026-11-22.md`): the
+architecture accepted; three implementation corrections, all
+verified against the source here and applied:
+
+1. The sealed representation is narrowed to EXACTLY the
+   approved allowlist — `ts` and `boundary` removed from
+   `_sealed_representation()`, and the summary's sealed
+   statement no longer names boundary seats. The suite now
+   asserts the exact permitted shape, not only the secrets'
+   absence.
+2. `export_html()` refuses an output path that identifies
+   the source store — by `realpath` equality or `samefile`,
+   so equivalent paths refuse too — before anything is read
+   or written; the suite witnesses the refusal both ways
+   and the store byte-identical after it.
+3. The run ID is HTML-escaped in the template substitutions
+   (title and heading); a hostile run-ID fixture
+   (`</title><script>…`) proves the exported page cannot
+   interpret it as markup.
+
+Her fourth point needs no change: the stall limitation is
+accepted as a fact of the record semantics, and this record
+keeps stating it plainly (below). Suite now **33 checks,
+ALL PASS**; regressions re-run green; substrate identical.
+
 ## Stated limits
 
 - The summary's plain-words statements cover the event kinds
