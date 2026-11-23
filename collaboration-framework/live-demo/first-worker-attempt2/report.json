@@ -1,0 +1,151 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "model_requested": "moonshotai/kimi-k3.1-pro",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": true,
+  "outcome": "decline",
+  "reason": "I cannot access the three source documents: the read_file requests for sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md were all rejected because no read_file grant stands in the sealed assembly record. Their contents are not included in my wake package, so I cannot write an accurate brief.md without inventing claims.",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 2,
+  "recorded": [
+   {
+    "event_seq": 17,
+    "event_id": "a71c2609-324b-4c11-afe9-adf0d0e566c0",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 16
+    },
+    "ts": "2026-11-23T21:19:42Z",
+    "prev_hash": "79886ce6eabb6b9d9d0746197a18946cd4293ff9dd51a11c77b90b560ea4f34c",
+    "hash": "3ec8fa356841b0a7c769e2f387b863d364553a6dd912035e4d209003c398378e"
+   },
+   {
+    "event_seq": 24,
+    "event_id": "ff6d5ae1-f132-465c-b466-3c8ae1d838ac",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 2,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 23
+    },
+    "ts": "2026-11-23T21:20:33Z",
+    "prev_hash": "88b7cb4c2dbefb11e25891ad70b6b8de437c1740e12d7620783fb8adc70745b9",
+    "hash": "a627baef10272f9515489783d4cb2f1a9b9d9a9a9c531d4279f697ed847b6f3b"
+   }
+  ],
+  "refused": [
+   {
+    "type": "TOOL_REQUESTED",
+    "request_id": "loop-inst-crew-1-1-1-1",
+    "ground": "no grant for tool read_file stands in the sealed assembly record of instance inst-crew-1-1; a grant outside the sealed record does not exist for the doorway (R44)"
+   },
+   {
+    "type": "TOOL_REQUESTED",
+    "request_id": "loop-inst-crew-1-1-1-2",
+    "ground": "no grant for tool read_file stands in the sealed assembly record of instance inst-crew-1-1; a grant outside the sealed record does not exist for the doorway (R44)"
+   },
+   {
+    "type": "TOOL_REQUESTED",
+    "request_id": "loop-inst-crew-1-1-1-3",
+    "ground": "no grant for tool read_file stands in the sealed assembly record of instance inst-crew-1-1; a grant outside the sealed record does not exist for the doorway (R44)"
+   }
+  ],
+  "dispatched": []
+ },
+ "iterations": 2,
+ "stall": null,
+ "dispatches": [],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m Kimi, an AI assistant developed by Moonshot AI (\u6708\u4e4b\u6697\u9762). My underlying model is Kimi; I don\u2019t have a specific public model version identifier to provide.\n\nI can help with discussion, analysis, writing, summarization, planning, coding and debugging, explaining concepts, and iterating on ideas or artifacts within this run. I work best when given clear goals, relevant context, and feedback.\n\nMy limits: I\u2019m an AI, not a human collaborator. I can make mistakes, misunderstand ambiguous instructions, or lack reliable information about recent or specialized topics. I don\u2019t have independent access to external systems or real-world actions unless tools are provided, and I may not retain memory beyond this conversation unless the host product supplies it. Important facts, code, and decisions should be verified.",
+  "provider_model_id": "moonshotai/kimi-k3.1-pro",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 24,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ }
+}
