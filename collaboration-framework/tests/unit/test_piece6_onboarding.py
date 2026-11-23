@@ -278,6 +278,58 @@ ev = d.act(crew, "COMMENT", {"on_job": True, "text": "still me"},
 check("T13 token survives an attested status upgrade",
       ev["actor"] == "crew-1")
 
+# -- Round 2 (examination): the route transition.
+# T14: a pre-onboarding commission token remains valid only
+# while no onboarding record stands. Once the seat is onboarded,
+# the old token no longer authenticates; a newly issued token
+# binds to the onboarding identity and works.
+store, d = fresh()
+orch = d.issue_token("orch-1")
+crew_old = d.issue_token("crew-1")
+ev = d.act(crew_old, "COMMENT", {"on_job": True, "text": "before"},
+           view_seq=store.head_seq())
+check("T14 commission token works before onboarding",
+      ev["actor"] == "crew-1")
+ob.onboard(d, orch, "crew-1", "decl", identity_status="declared")
+try:
+    d.act(crew_old, "COMMENT", {"on_job": True, "text": "after"},
+          view_seq=store.head_seq())
+    check("T14 old token refused once onboarding stands", False)
+except DoorwayRefusal:
+    check("T14 old token refused once onboarding stands", True)
+crew_new = d.issue_token("crew-1")
+check("T14 the new token's basis is onboarding",
+      d.binding_basis(crew_new) == "onboarding")
+ev = d.act(crew_new, "COMMENT", {"on_job": True, "text": "after"},
+           view_seq=store.head_seq())
+check("T14 the newly issued token authenticates normally",
+      ev["actor"] == "crew-1")
+
+# T15: the orchestrator's own transition — its commission token
+# performs the onboarding act (no record stands for it yet at
+# authentication time), then dies; a fresh token issued against
+# the established record carries the work on.
+store, d = fresh()
+orch_old = d.issue_token("orch-1")
+ob.onboard(d, orch_old, "orch-1", "orchestrator declaration",
+           identity_status="declared")
+try:
+    ob.onboard(d, orch_old, "exam-1", "examiner declaration",
+               identity_status="declared")
+    check("T15 orchestrator's old token refused after its own "
+          "onboarding", False)
+except DoorwayRefusal:
+    check("T15 orchestrator's old token refused after its own "
+          "onboarding", True)
+orch_new = d.issue_token("orch-1")
+check("T15 the fresh orchestrator token binds at onboarding",
+      d.binding_basis(orch_new) == "onboarding")
+ob.onboard(d, orch_new, "exam-1", "examiner declaration",
+           identity_status="declared")
+check("T15 the fresh token carries the work on",
+      ob.onboarding_record(d, "exam-1")["declaration"]
+      == "examiner declaration")
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")

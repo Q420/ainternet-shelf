@@ -118,7 +118,11 @@ class Doorway:
         where none stands, the commission / SEAT_BOUND binding
         remains the basis — the compatibility path, which is
         NOT the intended route for the Stage 2 end-to-end run (that
-        run onboards before binding). `binding_basis` reports which.
+        run onboards before binding). The compatibility route is
+        conditional, not permanent: once a seat's onboarding
+        stands, its pre-onboarding tokens no longer authenticate,
+        and a fresh token binds to the onboarding identity.
+        `binding_basis` reports the route a token was issued on.
         """
         state = self.state()
         if seat_id not in state["seats"]:
@@ -171,6 +175,7 @@ class Doorway:
         if seat_id is None:
             return None
         bound = self._token_identity.get(digest)
+        record = self.state()["onboarding"].get(seat_id)
         if bound is not None:
             # Onboarding-route token: authentication depends on
             # the onboarding identity it bound against (R5). If
@@ -178,10 +183,21 @@ class Doorway:
             # not that identity — a different declaration stands —
             # the token is a mismatched identity and does not
             # authenticate.
-            record = self.state()["onboarding"].get(seat_id)
             if record is None or self._identity_fingerprint(
                     seat_id, record) != bound:
                 return None
+        elif record is not None:
+            # Commission-route token (examination round 2): the
+            # compatibility route is conditional on no onboarding
+            # record standing for the seat. Once onboarding
+            # stands, a token issued before it no longer
+            # authenticates — the seat crosses into the onboarded
+            # state and acts under a token bound to its onboarding
+            # identity. (This is also how an orchestrator's own
+            # transition works: its commission token records the
+            # onboarding act, then a fresh token is issued against
+            # the established record.)
+            return None
         return seat_id
 
     # ------------------------------------------------------------ record
