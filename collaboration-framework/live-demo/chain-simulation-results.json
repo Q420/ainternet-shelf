@@ -1,0 +1,212 @@
+{
+ "kind": "chain simulation \u2014 transport and latency evidence (not worker-work evidence; no run commissioned, no store written, no assembly or activation)",
+ "recorded_at": "2026-11-23T22:50:23.299148+00:00",
+ "stub_mode": false,
+ "configuration": {
+  "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+  "model": "moonshotai/kimi-k3.1-pro",
+  "adapter_timeout_seconds": 300.0,
+  "helper": "/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py",
+  "transport": "live-demo/connector_transport.py (connector helper route, INDEX 192/215)",
+  "repetitions_per_experiment": 3,
+  "interface": "non-streaming \u2014 the whole response arrives at once, so time-to-first-response cannot be separated from total response time through this interface"
+ },
+ "identify_pre_activation": {
+  "wall_seconds": 76.602,
+  "ok": true,
+  "failure": null,
+  "provider_model_id": "moonshotai/kimi-k3.1-pro",
+  "prompt_tokens": 130,
+  "completion_tokens": 849,
+  "note": "pre-activation; governed by the adapter timeout, NOT charged to the 600s activation budget"
+ },
+ "experiment_1_tiny_prompt": {
+  "description": "a tiny prompt end to end \u2014 baseline route and queue latency, at the scale of the worker's first-iteration call",
+  "messages": [
+   {
+    "role": "user",
+    "content": "Reply with the single word: ready"
+   }
+  ],
+  "reps": [
+   {
+    "rep": 1,
+    "wall_seconds": 131.385,
+    "ok": true,
+    "failure": null,
+    "content_preview": "ready",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 92,
+    "completion_tokens": 51,
+    "total_tokens": 143,
+    "raw_usage_captured": true
+   },
+   {
+    "rep": 2,
+    "wall_seconds": 56.015,
+    "ok": true,
+    "failure": null,
+    "content_preview": "ready",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 92,
+    "completion_tokens": 62,
+    "total_tokens": 154,
+    "raw_usage_captured": true
+   },
+   {
+    "rep": 3,
+    "wall_seconds": 53.373,
+    "ok": true,
+    "failure": null,
+    "content_preview": "ready",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 92,
+    "completion_tokens": 57,
+    "total_tokens": 149,
+    "raw_usage_captured": true
+   }
+  ],
+  "median_wall_seconds": 56.015
+ },
+ "experiment_2_full_input": {
+  "description": "the complete rendered model request of attempt 4's iteration 2, with only the final ask changed (an appended override: disregard the assignment, reply with the single word 'ready')",
+  "reconstruction": {
+   "source_store": "/home/hatch/workspace/collaboration-framework/live-demo/first-worker-attempt4/run.db",
+   "method": "the loop's own _build_package against a copy of attempt 4's store, the copy's record filtered to iteration 2's recorded cursor_to (the head the package was frozen at); no event written anywhere",
+   "cursor_from": 16,
+   "cursor_to": 29,
+   "frozen_head": 29,
+   "seconds_remaining": {
+    "value": 548.0,
+    "provenance": "record-derived: the pinned deadline_seconds minus the recorded activation-to-iteration-2 timestamp interval (52s); the live monotonic remainder it stands in for equalled this within a second"
+   },
+   "deviations": [
+    "bounds.seconds_remaining is the record-derived value above, not a live monotonic reading (the activation's anchor belongs to a finished process and cannot be re-read)",
+    "the package is built against a filtered copy of the record, not the live store \u2014 the loop's construction itself is unmodified and the original store is untouched"
+   ]
+  },
+  "rendered_request_bytes": 134844,
+  "appended_override": "MEASUREMENT OVERRIDE: this presentation is a latency measurement, not the assignment. Disregard the assignment above entirely and reply with the single word \"ready\" and nothing else \u2014 no JSON, no punctuation, no other text.",
+  "reps": [
+   {
+    "rep": 1,
+    "wall_seconds": 37.301,
+    "ok": true,
+    "failure": null,
+    "content_preview": "ready",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 32377,
+    "completion_tokens": 200,
+    "total_tokens": 32577,
+    "raw_usage_captured": true
+   },
+   {
+    "rep": 2,
+    "wall_seconds": 181.281,
+    "ok": true,
+    "failure": null,
+    "content_preview": "ready",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 32377,
+    "completion_tokens": 1774,
+    "total_tokens": 34151,
+    "raw_usage_captured": true
+   },
+   {
+    "rep": 3,
+    "wall_seconds": 102.922,
+    "ok": true,
+    "failure": null,
+    "content_preview": "ready",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 32377,
+    "completion_tokens": 461,
+    "total_tokens": 32838,
+    "raw_usage_captured": true
+   }
+  ],
+  "median_wall_seconds": 102.922,
+  "request_identity_check": {
+   "expected_prompt_tokens": [
+    15000,
+    18000
+   ],
+   "observed_prompt_tokens": [
+    32377,
+    32377,
+    32377
+   ],
+   "verdict": "counts outside the expected range but above the intactness floor \u2014 the payload travelled; the range expectation, not the request, is what differs"
+  }
+ },
+ "experiment_3_generation": {
+  "description": "a small prompt asking for roughly 1,000 tokens of output \u2014 the generation rate (completion tokens / wall seconds, per rep)",
+  "messages": [
+   {
+    "role": "user",
+    "content": "Write a numbered list of 100 short, distinct one-line tips for staying focused while working, numbered 1 to 100, one tip per line. Do not add any introduction or conclusion."
+   }
+  ],
+  "reps": [
+   {
+    "rep": 1,
+    "wall_seconds": 270.937,
+    "ok": false,
+    "failure": {
+     "kind": "provider_error",
+     "detail": "connector helper exited 1: Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\", line 88, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\", line 81, in main\n    print(json.dumps(call(req)))\n                     ^^^^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\", line 60, in call\n    with opener.open(request, timeout=request_timeout()) as response:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1392, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1348, in do_open\n    r = h.getresponse()\n        ^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 1457, in getresponse\n    response.begin()\n  File \"/usr/lib/python3.12/http/client.py\", line 336, in begin\n    version, status, reason = self._read_status()\n                              ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 305, in _read_status\n    raise RemoteDisconnected(\"Remote end closed connection without\"\nhttp.client.RemoteDisconnected: Remote end closed connection without response"
+    },
+    "content_preview": null,
+    "provider_model_id": null,
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "total_tokens": null,
+    "raw_usage_captured": false,
+    "generation_rate_tokens_per_second": null
+   },
+   {
+    "rep": 2,
+    "wall_seconds": 219.936,
+    "ok": true,
+    "failure": null,
+    "content_preview": "1. Define one clear goal before you start.\n2. Break large tasks into small, conc",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 124,
+    "completion_tokens": 3155,
+    "total_tokens": 3279,
+    "raw_usage_captured": true,
+    "generation_rate_tokens_per_second": 14.345
+   },
+   {
+    "rep": 3,
+    "wall_seconds": 260.834,
+    "ok": true,
+    "failure": null,
+    "content_preview": "1. Silence nonessential notifications.\n2. Keep your phone out of reach.\n3. Work ",
+    "provider_model_id": "moonshotai/kimi-k3.1-pro",
+    "prompt_tokens": 124,
+    "completion_tokens": 3272,
+    "total_tokens": 3396,
+    "raw_usage_captured": true,
+    "generation_rate_tokens_per_second": 12.544
+   }
+  ],
+  "median_wall_seconds": 240.385,
+  "median_generation_rate_tokens_per_second": 13.444500000000001
+ },
+ "projection": {
+  "formula": "projected composition seconds = median(experiment 2 wall) + 1000 / median(experiment 3 generation rate)",
+  "brief_output_tokens_assumed": 1000,
+  "composition_seconds": 177.302,
+  "per_call_ceiling_seconds": 300.0,
+  "margin_seconds": 122.698,
+  "decision_reading": "credible margin beneath the 300s per-call ceiling",
+  "whole_assignment": {
+   "formula": "median(experiment 1 wall) + projected composition seconds",
+   "seconds": 233.317,
+   "activation_budget_seconds": 600.0,
+   "within_budget": true,
+   "note": "identify() excluded \u2014 pre-activation, its own clock (see identify_pre_activation)"
+  }
+ }
+}
