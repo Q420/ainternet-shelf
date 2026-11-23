@@ -582,24 +582,36 @@ def _apply(state, ev):
     return state
 
 
-def replay_events(events, run_id=None):
+def replay_events(events, run_id=None, classifiable=None):
     """Replay the stream. Returns (state, halt): the reconstructed
     state (None when the replay halted) and the halt as
-    (seq, detail) or None. Each event is shape-checked before it
-    is applied, and the application itself is guarded — a defect
-    the table did not foresee still lands as a classed halt, not
-    an exception."""
+    (kind, seq, detail) or None. Each event is shape-checked
+    before it is applied, and the application itself is guarded
+    — a defect the table did not foresee still lands as a classed
+    halt, not an exception.
+
+    The halt's kind honours C6's preconditions (round 3): a halt
+    is "schema_invalid" only at a position the caller has
+    established as hash-valid and in sequence (`classifiable`,
+    the set of such positions from the checker's chain
+    examination); at any other position the halt is
+    "not_classified" — the chain results carry that defect, and
+    the replay does not borrow their classification."""
     state = blank_state(run_id)
     for ev in events:
+        seq = ev.get("event_seq")
+        kind = "schema_invalid"
+        if classifiable is not None and seq not in classifiable:
+            kind = "not_classified"
         problem = _shape_problem(ev)
         if problem is not None:
-            return None, (ev.get("event_seq"), problem)
+            return None, (kind, seq, problem)
         try:
             _apply(state, ev)
         except SchemaHalt:
             raise
         except Exception as exc:  # classed, never a traceback
-            return None, (ev.get("event_seq"),
+            return None, (kind, seq,
                           f"event cannot be applied "
                           f"({type(exc).__name__})")
     return state, None

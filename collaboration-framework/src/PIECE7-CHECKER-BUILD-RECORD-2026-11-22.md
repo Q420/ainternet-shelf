@@ -154,6 +154,36 @@ verified first-hand before correcting:
 Suite after round 2: **32 checks, ALL PASS**; all regressions
 green; substrate byte-identical. Resubmitted to Vane.
 
+## Correction round 3 (2026-11-22, after Vane's re-examination)
+
+Her re-examination (filed as
+`VANE-PIECE7-CHECKER-ROUND2-REEXAMINATION-2026-11-22.md`) held
+rounds 1–2 and found the final classification gap, verified
+first-hand in both combinations before correcting:
+`schema_invalid` was being reported for malformed events whose
+hash did not verify, or whose linkage was broken under a
+recomputed hash — though Rev 4 reserves the classification
+for an event that is hashable, hash-valid, and in sequence.
+
+The checker now computes each position's chain standing once
+(hash validity and sequence standing, each on its own terms;
+the two reported chain results derive from that computation
+and remain independent of each other), and the replay receives
+the set of positions where BOTH properties stand. A halt at
+such a position is `schema_invalid`; a halt anywhere else is
+reported as `not_classified`, with the detail naming the
+withheld classification and pointing at the chain results,
+which carry the defect. Fixtures cover both of her
+combinations: a wrongly typed event with an invalid stored
+hash (chain_hash invalid, sequence ok, replay not_classified)
+and the same event with a recomputed hash over broken linkage
+(chain_hash ok, sequence invalid, replay not_classified) —
+alongside the standing fixtures where a wrongly typed event
+with both preconditions met still halts `schema_invalid`.
+
+Suite after round 3: **34 checks, ALL PASS**; all regressions
+green; substrate byte-identical. Resubmitted to Vane.
+
 ## Stated limits
 
 - The checker reads quiescent stores (above); examining a live

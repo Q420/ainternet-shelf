@@ -654,6 +654,79 @@ check("C8 a hash-valid event with an integer ts halts "
       and v["checks"]["replay"]["at_seq"] == ts_seq,
       json.dumps(v["checks"]))
 
+# Round 3: schema_invalid is reserved for a hash-valid,
+# in-sequence event (C6's preconditions). A wrongly typed event
+# failing either precondition is NOT classified schema_invalid;
+# the chain results carry the defect independently.
+storeI, dI, tokI = fresh(gates=None)
+storeI.append("CASE_ISSUED", "orch-1", [], {
+    "case_id": "case-crew-1", "version": "one", "seat": "crew-1"})
+storeI.commit()
+quiesce(storeI)
+
+
+def hash_broken_copy(store):
+    dst = os.path.join(tempfile.mkdtemp(), "hashbroken.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    for trig in ("events_no_update", "events_no_delete",
+                 "events_no_replace"):
+        conn.execute(f"DROP TRIGGER IF EXISTS {trig}")
+    conn.execute("UPDATE events SET hash = 'deadbeef'"
+                 " WHERE event_seq = 2")
+    conn.commit()
+    conn.close()
+    return dst
+
+
+proc, v = run_checker(hash_broken_copy(storeI), "run-1", None)
+check("C6 a wrongly typed event with an invalid stored hash "
+      "is not classified schema_invalid",
+      proc.returncode == 0
+      and v["checks"]["chain_hash"]["result"]
+      == "hash_chain_invalid"
+      and v["checks"]["chain_hash"]["at_seq"] == 2
+      and v["checks"]["chain_sequence"]["result"] == "ok"
+      and v["checks"]["replay"]["result"] == "not_classified"
+      and v["checks"]["replay"]["at_seq"] == 2,
+      json.dumps(v["checks"]))
+
+
+def linkage_broken_copy(store):
+    dst = os.path.join(tempfile.mkdtemp(), "linkbroken.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    for trig in ("events_no_update", "events_no_delete",
+                 "events_no_replace"):
+        conn.execute(f"DROP TRIGGER IF EXISTS {trig}")
+    row = conn.execute(
+        "SELECT event_id, type, actor, affected, payload, ts"
+        " FROM events WHERE event_seq = 2").fetchone()
+    ev = {"event_seq": 2, "event_id": row[0], "run_id": "run-1",
+          "type": row[1], "actor": row[2],
+          "affected": json.loads(row[3]),
+          "payload": json.loads(row[4]), "ts": row[5],
+          "prev_hash": "bogus"}
+    conn.execute("UPDATE events SET prev_hash = 'bogus',"
+                 " hash = ? WHERE event_seq = 2",
+                 (event_hash("bogus", ev),))
+    conn.commit()
+    conn.close()
+    return dst
+
+
+proc, v = run_checker(linkage_broken_copy(storeI), "run-1", None)
+check("C6 a wrongly typed event with a recomputed hash but "
+      "broken linkage is not classified schema_invalid",
+      proc.returncode == 0
+      and v["checks"]["chain_hash"]["result"] == "ok"
+      and v["checks"]["chain_sequence"]["result"]
+      == "sequence_invalid"
+      and v["checks"]["chain_sequence"]["at_seq"] == 2
+      and v["checks"]["replay"]["result"] == "not_classified"
+      and v["checks"]["replay"]["at_seq"] == 2,
+      json.dumps(v["checks"]))
+
 # ============================================================ crit. 9
 proto = os.path.expanduser("~/workspace/loom-prototype")
 mismatch = []

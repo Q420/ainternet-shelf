@@ -102,50 +102,76 @@ def _read_store(path, run_id):
 
 # ------------------------------------------------------------ chain
 
-def _hash_result(events):
+def _chain_positions(events):
+    """Per-position chain standing: {seq: (hash_ok, seq_ok,
+    hash_detail)} — each event's hash validity and sequence
+    standing computed on their own terms, neither derived from
+    the other (C6). Together they establish the positions at
+    which a replay halt may be classified schema_invalid:
+    Rev 4 reserves that classification for an event that is
+    canonically hashable, whose stored hash verifies, and
+    which stands in sequence (round 3)."""
+    positions = {}
+    prev_hash = ""
+    for expected, ev in enumerate(events, start=1):
+        seq = ev.get("event_seq")
+        if "_read_error" in ev:
+            hash_ok, hash_detail = False, \
+                "event contents cannot be read, so their hash " \
+                "cannot be recomputed"
+        else:
+            body = {k: ev[k] for k in _ENVELOPE if k != "hash"}
+            try:
+                hash_ok = event_hash(
+                    ev["prev_hash"], body) == ev["hash"]
+                hash_detail = None if hash_ok else \
+                    "stored hash does not equal the hash " \
+                    "recomputed from the event's contents"
+            except Exception:
+                hash_ok, hash_detail = False, \
+                    "event contents cannot be canonically " \
+                    "serialized and hashed"
+        seq_ok = seq == expected and ev.get("prev_hash") == prev_hash
+        positions[seq] = (hash_ok, seq_ok, hash_detail)
+        prev_hash = ev.get("hash")
+    return positions
+
+
+def _hash_result(events, positions=None):
     """Hash integrity, independently of sequence: each event's
     stored hash against the hash recomputed from its contents.
     Contents that cannot be canonically hashed at all fail here —
     hash validity cannot be established for them (C6)."""
+    if positions is None:
+        positions = _chain_positions(events)
     for ev in events:
-        seq = ev.get("event_seq")
-        if "_read_error" in ev:
-            return {"result": "hash_chain_invalid", "at_seq": seq,
-                    "detail": "event contents cannot be read, so "
-                              "their hash cannot be recomputed"}
-        body = {k: ev[k] for k in _ENVELOPE if k != "hash"}
-        try:
-            recomputed = event_hash(ev["prev_hash"], body)
-        except Exception:
-            return {"result": "hash_chain_invalid", "at_seq": seq,
-                    "detail": "event contents cannot be canonically "
-                              "serialized and hashed"}
-        if recomputed != ev["hash"]:
-            return {"result": "hash_chain_invalid", "at_seq": seq,
-                    "detail": "stored hash does not equal the hash "
-                              "recomputed from the event's contents"}
+        hash_ok, _, detail = positions[ev.get("event_seq")]
+        if not hash_ok:
+            return {"result": "hash_chain_invalid",
+                    "at_seq": ev.get("event_seq"), "detail": detail}
     return {"result": "ok"}
 
 
-def _sequence_result(events):
+def _sequence_result(events, positions=None):
     """Sequence structure, independently of hash validity:
     positions contiguous from the first event (which stands at
     position 1), no gaps or duplicates in stored order, and each
     event's prev_hash naming the preceding event's hash."""
+    if positions is None:
+        positions = _chain_positions(events)
     prev_hash = ""
-    expected = 1
-    for ev in events:
+    for expected, ev in enumerate(events, start=1):
         seq = ev.get("event_seq")
-        if seq != expected:
-            return {"result": "sequence_invalid", "at_seq": seq,
-                    "detail": f"expected position {expected}, "
-                              f"found {seq}"}
-        if ev.get("prev_hash") != prev_hash:
+        _, seq_ok, _ = positions[seq]
+        if not seq_ok:
+            if seq != expected:
+                return {"result": "sequence_invalid", "at_seq": seq,
+                        "detail": f"expected position {expected}, "
+                                  f"found {seq}"}
             return {"result": "sequence_invalid", "at_seq": seq,
                     "detail": "prev_hash does not name the "
                               "preceding event's hash"}
         prev_hash = ev.get("hash")
-        expected += 1
     return {"result": "ok"}
 
 
@@ -329,8 +355,9 @@ def check(request):
         "result": "problem", "detail": binding[0]}
 
     # The two chain properties, reported independently (C6).
-    checks["chain_hash"] = _hash_result(events)
-    checks["chain_sequence"] = _sequence_result(events)
+    positions = _chain_positions(events)
+    checks["chain_hash"] = _hash_result(events, positions)
+    checks["chain_sequence"] = _sequence_result(events, positions)
 
     # Replay — the checker's own reconstruction. Events whose
     # stored contents could not be read cannot be applied; the
@@ -344,11 +371,18 @@ def check(request):
             "detail": "an event's stored contents cannot be read "
                       "(see chain_hash)"}
     else:
-        state, halt = replay_events(events, run_id)
+        classifiable = {seq for seq, (h, s, _)
+                        in positions.items() if h and s}
+        state, halt = replay_events(events, run_id, classifiable)
         if halt is not None:
+            kind, at_seq, detail = halt
+            if kind == "not_classified":
+                detail = "schema classification withheld: the " \
+                         "event at this position is not " \
+                         "established hash-valid and in sequence " \
+                         f"(see the chain results) — {detail}"
             checks["replay"] = {
-                "result": "schema_invalid", "at_seq": halt[0],
-                "detail": halt[1]}
+                "result": kind, "at_seq": at_seq, "detail": detail}
         else:
             checks["replay"] = {"result": "ok"}
 
