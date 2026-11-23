@@ -66,6 +66,26 @@ class Handler(BaseHTTPRequestHandler):
                          "body": body.decode("utf-8", "replace")})
         if SCRIPT["override"]:
             spec = SCRIPT["override"].pop(0)
+            if isinstance(spec, tuple) and spec[0] == "slow_headers":
+                # Drip the response HEADERS byte by byte (each
+                # socket read far inside any timeout) so header
+                # acquisition alone crosses the deadline; the
+                # body that follows is valid and instant.
+                body = json.dumps(_completion(json.dumps(
+                    {"outcome": "contribute",
+                     "text": "too late"}))).encode()
+                head = (b"HTTP/1.1 200 OK\r\n"
+                        b"Content-Type: application/json\r\n"
+                        b"Content-Length: " +
+                        str(len(body)).encode() + b"\r\n\r\n")
+                try:
+                    for i in range(len(head)):
+                        self.connection.sendall(head[i:i + 1])
+                        time.sleep(spec[1])
+                    self.connection.sendall(body)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
             if isinstance(spec, tuple) and spec[0] == "withhold":
                 # First chunk near the deadline, then silence:
                 # the blocking read that matters begins with
@@ -301,6 +321,23 @@ SCRIPT["override"] = [("status", 500)]
 r = Driver(d, "crew-a", tok["crew-a"], adapter()).wake_cycle()
 check("an HTTP error lands as a provider_error failure",
       r["failed"] == "provider_error" and r["recorded"] == [])
+
+# --------------------- A6: the deadline governs header acquisition
+store, d, tok = fresh_store()
+SCRIPT["override"] = [("slow_headers", 0.03)]
+before = len(REQUESTS)
+started = time.monotonic()
+r = Driver(d, "crew-a", tok["crew-a"],
+           adapter(timeout=0.6)).wake_cycle()
+elapsed = time.monotonic() - started
+check("A6: headers drip-fed across the deadline (each read "
+      "inside the socket timeout) fail the wake as no_response",
+      r["failed"] == "no_response" and r["recorded"] == [])
+check("the failure landed AT the deadline (within the stated "
+      "0.25s tolerance), enforced — not noticed after a late "
+      "urlopen return; exactly one dispatch",
+      0.55 <= elapsed < 0.85 and len(REQUESTS) == before + 1,
+      detail=f"elapsed={elapsed:.2f}s")
 
 # --------------------------- A6: the deadline covers handling, too
 import framework.adapter as adapter_module

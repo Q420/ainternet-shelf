@@ -245,3 +245,38 @@ checker returns all eight checks ok over the 14 events.
 
 Suite after round 3: Piece 8, 28 checks, ALL PASS; every
 regression green.
+
+## Examination round 4 (2026-11-23) — the deadline governs every phase
+
+A4, the handling checks, the body-read correction and the
+completion path all stand. One boundary remained, before
+the body loop: `urlopen` acquires the connection and the
+response HEADERS internally under the budget given once at
+dispatch — a provider drip-feeding headers stayed inside
+every socket window while crossing the deadline, detectable
+only after urlopen returned.
+
+The transport now runs on a daemon worker thread
+(`_dispatch`), and the calling thread enforces the deadline
+with a timed join. Every phase — connection, request,
+header acquisition, body, parsing — sits under the one
+absolute point, and on expiry the call fails AT the
+deadline rather than noticing afterward. The worker's
+residue is bounded and inert, and the record states it
+plainly: a timed-out worker's own socket timeout (the
+budget at dispatch) ends it within roughly another budget;
+its late result is discarded unread; nothing can be
+submitted from it, because submission happens only on the
+calling thread's success path. The per-read socket-timeout
+discipline and the fail-closed read path remain inside the
+transport, unchanged.
+
+New witness: headers drip-fed byte by byte (each read far
+inside any socket timeout) across a 0.6s deadline fail the
+wake as no_response at the deadline — elapsed inside the
+stated 0.25s tolerance, exactly one dispatch.
+
+Suite after round 4: Piece 8, 30 checks, ALL PASS; every
+regression green. The live-record replay remains Vane's to
+perform against the round-3 export; nothing about it
+changed this round.

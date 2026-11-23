@@ -49,6 +49,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -138,16 +139,49 @@ class OpenAICompatibleAdapter:
     # ---------------------------------------------------- transport
     def _call(self, messages):
         """One provider call under the operation's total
-        deadline. Every blocking operation is bounded by the
-        time remaining; the body is read via read1 under the
-        same bound, so a provider drip-feeding inside each
-        socket window cannot hold the call open. The read path
-        FAILS CLOSED: if the stream offers no bounded read, or
-        the socket's timeout cannot be set to the remaining
-        time, the call fails rather than proceeding unbounded.
-        Returns (content, provider_model_id). No retry, ever."""
+        deadline. The transport runs on a daemon worker thread
+        and the calling thread enforces the deadline with a
+        timed join: EVERY phase — connection, request, the
+        response headers urlopen acquires internally, the body,
+        parsing — sits under the same absolute point, and on
+        expiry the call fails AT the deadline, not on a
+        post-return clock check. A timed-out worker is inert:
+        its socket timeout (the budget at dispatch) ends it
+        within roughly another budget, its late result is
+        discarded unread, and nothing can be submitted from
+        it — submission happens only on this thread's success
+        path. Returns (content, provider_model_id). No retry,
+        ever."""
         deadline = getattr(self, "_deadline", None) or \
             self._begin_deadline()
+        box = {}
+
+        def work():
+            try:
+                box["value"] = self._dispatch(messages, deadline)
+            except BaseException as exc:  # carried, re-raised here
+                box["error"] = exc
+
+        worker = threading.Thread(target=work, daemon=True)
+        worker.start()
+        worker.join(max(0.0, deadline - time.monotonic()))
+        if worker.is_alive():
+            raise AdapterFailure(
+                "no_response", detail="total deadline exceeded")
+        if "error" in box:
+            raise box["error"]
+        return box["value"]
+
+    def _dispatch(self, messages, deadline):
+        """The blocking transport itself (runs on _call's
+        worker thread): one urlopen dispatch, the body read
+        via read1 with the socket timeout reset to the current
+        remaining time before every read — a provider
+        drip-feeding inside each socket window cannot hold
+        the call open — and the read path FAILS CLOSED: no
+        unbounded fallback, no silently ignored inability to
+        bound a read."""
+
 
         def remaining():
             left = deadline - time.monotonic()
