@@ -97,6 +97,8 @@ class Doorway:
     def __init__(self, store: FrameworkStore):
         self.store = store
         self._tokens = {}  # sha256(token) -> seat_id
+        self._token_basis = {}  # sha256(token) -> "onboarding" |
+        # "commission" (Piece 6, scope F2 as settled)
 
     # ------------------------------------------------------------ state
     def state(self):
@@ -104,7 +106,15 @@ class Doorway:
 
     # ------------------------------------------------------------ tokens
     def issue_token(self, seat_id: str) -> str:
-        """Bind a fresh token to a seat the record knows (R5)."""
+        """Bind a fresh token to a seat the record knows (R5).
+
+        Piece 6 (R20, scope F2 as settled): where an onboarding
+        record stands for the seat, the token binds against that
+        record; where none stands, the commission / SEAT_BOUND
+        binding remains the basis — the compatibility path, which is
+        NOT the intended route for the Stage 2 end-to-end run (that
+        run onboards before binding). `binding_basis` reports which.
+        """
         state = self.state()
         if seat_id not in state["seats"]:
             raise DoorwayRefusal(f"seat {seat_id} is not bound in the "
@@ -112,7 +122,19 @@ class Doorway:
         token = secrets.token_hex(24)
         digest = hashlib.sha256(token.encode()).hexdigest()
         self._tokens[digest] = seat_id
+        self._token_basis[digest] = (
+            "onboarding" if seat_id in state["onboarding"]
+            else "commission")
         return token
+
+    def binding_basis(self, token):
+        """Which record a token bound against (Piece 6, F2):
+        "onboarding" where an onboarding record stands for the
+        seat, "commission" on the compatibility path."""
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        if digest not in self._tokens:
+            return None
+        return self._token_basis.get(digest)
 
     def _authenticate(self, token):
         if not token:
@@ -346,6 +368,18 @@ class Doorway:
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
 
+        # R18 (Piece 6): identity status discipline. The doorway
+        # owns it, as it owns the case classification: a
+        # provider-confirmed claim without its attestation
+        # reference, and any status upgrade attempted without a
+        # recorded attestation, are refused and the refusal
+        # recorded. The reference is recorded provenance; recording
+        # it does not independently verify the provider's claim.
+        if type_ == "ONBOARDING":
+            problem = self._onboarding_problem(state, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+
         # R31: staleness. The act names its subject; if any later
         # event touched that subject, the view it was made from is
         # stale about the thing that matters — reject. Otherwise a
@@ -421,6 +455,40 @@ class Doorway:
                     f"with the doorway's recomputed six-field diff "
                     f"(changed: {changed if changed else 'none'}) "
                     f"(R16)")
+        return None
+
+    # Identity statuses in rising order (R18): an upgrade is a move
+    # to a later entry. Establishment (the first onboarding) is not
+    # an upgrade; it sets the initial status.
+    _STATUS_RANK = {"unverified": 0, "declared": 1,
+                    "provider-confirmed": 2}
+
+    def _onboarding_problem(self, state, payload):
+        """Why an ONBOARDING act may not be recorded, or None
+        (R18, Piece 6 scope §3 as settled). Statuses outside the
+        R18 vocabulary are refused; provider-confirmed always
+        carries its attestation reference; and where an onboarding
+        record already stands for the seat, a status above the
+        recorded one is an upgrade, permitted only by an act
+        carrying its attestation reference."""
+        status = payload.get("identity_status")
+        if status not in self._STATUS_RANK:
+            return (f"identity status {status!r} is not in the R18 "
+                    f"vocabulary (declared, provider-confirmed, "
+                    f"unverified)")
+        if status == "provider-confirmed" and \
+                not payload.get("attestation_ref"):
+            return ("a provider-confirmed status carries its "
+                    "attestation reference (R18)")
+        existing = state["onboarding"].get(payload.get("seat_id"))
+        if existing is not None and not payload.get("attestation_ref"):
+            recorded = existing["identity_status"]
+            if self._STATUS_RANK[status] > \
+                    self._STATUS_RANK.get(recorded, 0):
+                return (f"identity status upgrade for "
+                        f"{payload.get('seat_id')} from {recorded} "
+                        f"to {status} without a recorded attestation "
+                        f"(R18)")
         return None
 
     def submit_pair(self, token, acts, view_seq=None):

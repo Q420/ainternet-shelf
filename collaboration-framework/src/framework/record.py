@@ -231,6 +231,12 @@ def empty_state(run_id=None) -> dict:
         "lifecycle": "unopened",
         "lifecycle_seq": None,
         "seats": {},          # seat_id -> {role, identity_status}
+        "onboarding": {},     # seat_id -> {declaration, identity_status,
+                              #   capability, limits, terms_acknowledged,
+                              #   terms_ref, onboarded_seq, attestation}
+                              #   (Piece 6, R18-R19: the first ONBOARDING
+                              #   establishes the record; a later attested
+                              #   ONBOARDING raises status only)
         "claims": {},         # claim_id -> {author, status, subject}
         "disagreements": {},  # disagreement_id -> {status, claim_id, by}
         "contributions": {},  # contribution_id -> {author, tree_part}
@@ -286,6 +292,41 @@ def apply_event(state: dict, ev: dict) -> dict:
             "role": p["role"],
             "identity_status": p.get("identity_status", "unverified"),
         }
+    elif t == "ONBOARDING":
+        # Piece 6 (R18-R19, scope F1 as settled): the FIRST onboarding
+        # establishes the seat's record - declaration verbatim,
+        # capability, limits, terms acknowledgement, initial status -
+        # and is never replaced or rewritten. A LATER onboarding
+        # carrying an attestation reference may raise the status only:
+        # the attestation (event position + reference) is preserved as
+        # the upgrade's provenance, and the original declaration and
+        # details stand untouched. A later onboarding without an
+        # attestation changes nothing the fold derives (the doorway
+        # refuses status upgrades attempted without one; a same- or
+        # lower-status restatement is history, not a new record).
+        seat = p["seat_id"]
+        rec = state["onboarding"].get(seat)
+        if rec is None:
+            state["onboarding"][seat] = {
+                "declaration": p.get("declaration"),
+                "identity_status": p.get("identity_status",
+                                         "unverified"),
+                "capability": p.get("capability"),
+                "limits": p.get("limits"),
+                "terms_acknowledged": p.get("terms_acknowledged"),
+                "terms_ref": p.get("terms_ref"),
+                "onboarded_seq": ev["event_seq"],
+                "attestation": ({"event_seq": ev["event_seq"],
+                                 "attestation_ref":
+                                     p["attestation_ref"]}
+                                if p.get("attestation_ref") else None),
+            }
+        elif p.get("attestation_ref"):
+            rec["identity_status"] = p.get("identity_status",
+                                           rec["identity_status"])
+            rec["attestation"] = {"event_seq": ev["event_seq"],
+                                  "attestation_ref":
+                                      p["attestation_ref"]}
     elif t == "CONTRIBUTION":
         cid = p.get("contribution_id", ev["event_id"])
         state["contributions"][cid] = {
@@ -462,8 +503,8 @@ def apply_event(state: dict, ev: dict) -> dict:
     elif t == "RUN_CLOSED":
         state["lifecycle"] = "closed"
         state["lifecycle_seq"] = ev["event_seq"]
-    # COMMENT and ONBOARDING are recorded acts the fold carries in the
-    # history without derived state of their own in this piece.
+    # COMMENT is a recorded act the fold carries in the history without
+    # derived state of its own.
     return state
 
 
