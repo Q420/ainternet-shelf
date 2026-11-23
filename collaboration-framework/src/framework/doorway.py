@@ -78,9 +78,11 @@ def established_case_content(state, case_id):
 
 def classify_case_change(old, new):
     """R16's classification, computed (Piece 5, addendum 1 §A): the
-    six-field diff between a case's established content and a
-    proposed correction. Returns the list of changed fields; an
-    empty list means the correction is purely representational."""
+    diff between a case's established content and a proposed
+    correction, over the six semantic fields (compared as seven
+    stored keys — tree and part are one semantic field). Returns
+    the list of changed keys; an empty list means the correction
+    is purely representational."""
     return [f for f in CASE_CONTENT_FIELDS
             if (old or {}).get(f) != (new or {}).get(f)]
 
@@ -470,6 +472,33 @@ class Doorway:
                          "the pair's verification names a different "
                          "case version than its correction (R15)",
                          view_seq)
+        # R30 (examination round 1): the paired route stands under
+        # the same pause boundary as the single-act route. A
+        # correction for a paused part — or for a part downstream
+        # of a recorded pause — is refused and recorded before
+        # either event is appended.
+        part = corrected.get("part")
+        if part is not None:
+            paused_hit = self._paused_hit(state, part)
+            if paused_hit is not None:
+                self._refuse(seat_id, "CASE_CORRECTED",
+                             f"tree part {part} is paused "
+                             f"(paused at seq {paused_hit}, R30)",
+                             view_seq)
+        # R31 (examination round 1): the pair's subjects — the case
+        # and its tree part — are checked against the submitted
+        # view exactly as the single-act route checks its subjects:
+        # a subject changed since the view refuses the pair, and
+        # the refusal is recorded. A merely behind view, with no
+        # subject changed, is admitted and flagged stale_basis.
+        if view_seq < state["head_seq"]:
+            for subject in (corrected.get("case_id"), part):
+                if subject and self._subject_changed(subject,
+                                                     view_seq):
+                    self._refuse(seat_id, "CASE_CORRECTED",
+                                 f"subject {subject} changed since "
+                                 f"view at seq {view_seq} (R31)",
+                                 view_seq)
         corrected = dict(corrected)
         verified = dict(verified)
         if view_seq < state["head_seq"]:

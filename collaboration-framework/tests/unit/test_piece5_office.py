@@ -1,6 +1,12 @@
 """Piece 5 tests — the office (SPEC SHEET §3.5, R14–R17, R32's
 case half), against the thirteen acceptance tests of addendum 2 §G
-as amended by addendum 3 §H.
+as amended by addendum 3 §H; plus the examination round-1 tests
+(the paired route under R30/R31).
+
+Language note (examination round 1): the scope counts six semantic
+R14 fields — tree and highlighted part form one combined field —
+while the implementation stores and compares seven keys. Tests
+below name keys where keys are what vary.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece5_office.py
 Exits 0 when every check passes.
@@ -371,6 +377,96 @@ check("T5 a notification preceding its verification does not issue, "
       "even once the set is complete",
       version_issued(ver_x2, 2) is False and eff_x is not None and
       eff_x["version"] == 1)
+
+# ---------------- Examination round 1: the pair under R30 / R31
+store3 = fresh_store({"crew-p": dict(FULL)})
+d3 = Doorway(store3)
+office3 = Office(d3)
+tok3 = {s: d3.issue_token(s) for s in ("crew-p", "orch-1", "exam-1")}
+
+
+def A3(token, type_, payload):
+    return d3.act(token, type_, payload, view_seq=store3.head_seq())
+
+
+def pair_refusal(fn):
+    try:
+        fn()
+        return None
+    except DoorwayRefusal as refusal:
+        return str(refusal)
+
+
+office3.issue_new(tok3["orch-1"], "crew-p")
+A3(tok3["exam-1"], "CASE_JUDGED", {"case_id": "case-crew-p", "version": 1})
+office3.authorise(tok3["orch-1"], "case-crew-p", 1)
+
+A3(tok3["exam-1"], "GATE_OUTCOME",
+   {"joint": "j-p", "outcome": "escalate", "tree_part": "part-A"})
+head = store3.head_seq()
+g = pair_refusal(lambda: office3.correct(
+    tok3["orch-1"], "case-crew-p", {"assignment": "paused draft"}))
+rejections3 = [ev for ev in store3.all_events()
+               if ev["type"] == "REJECTION" and
+               ev["payload"].get("attempted_type") == "CASE_CORRECTED"]
+check("R1-T1 a correction pair for a paused part is refused, "
+      "recorded, and appends neither pair event",
+      g is not None and "R30" in g and len(rejections3) == 1 and
+      store3.head_seq() == head + 1 and
+      [ev for ev in store3.all_events()
+       if ev["type"] == "CASE_CORRECTED"] == [])
+A3(tok3["exam-1"], "GATE_OUTCOME",
+   {"joint": "j-p", "outcome": "allow",
+    "released_set": ["part-A", "part-B"]})
+
+A3(tok3["exam-1"], "GATE_OUTCOME",
+   {"joint": "j-p2", "outcome": "escalate", "tree_part": "part-A"})
+g = pair_refusal(lambda: office3.correct(
+    tok3["orch-1"], "case-crew-p", {"part": "part-B"}))
+check("R1-T2 a correction pair for a part downstream of a pause "
+      "is likewise refused",
+      g is not None and "R30" in g and
+      [ev for ev in store3.all_events()
+       if ev["type"] == "CASE_CORRECTED"] == [])
+A3(tok3["exam-1"], "GATE_OUTCOME",
+   {"joint": "j-p2", "outcome": "allow",
+    "released_set": ["part-A", "part-B"]})
+
+p_content, _ = established_case_content(d3.state(), "case-crew-p")
+view_before = store3.head_seq()
+A3(tok3["orch-1"], "CASE_VERIFIED",
+   {"case_id": "case-crew-p", "version": 1})
+g = pair_refusal(lambda: d3.submit_pair(
+    tok3["orch-1"],
+    [("CASE_CORRECTED", dict(p_content, version=2,
+                             assignment="revised",
+                             representational=False)),
+     ("CASE_VERIFIED", {"case_id": "case-crew-p", "version": 2})],
+    view_seq=view_before))
+check("R1-T3 a pair whose case changed since its view is refused "
+      "and recorded (R31)",
+      g is not None and "R31" in g and
+      [ev for ev in store3.all_events()
+       if ev["type"] == "CASE_CORRECTED"] == [])
+
+view2 = store3.head_seq()
+A3(tok3["crew-p"], "CONTRIBUTION",
+   {"contribution_id": "cp1", "tree_part": "part-B",
+    "text": "unrelated to the case and its part"})
+ev1, ev2 = d3.submit_pair(
+    tok3["orch-1"],
+    [("CASE_CORRECTED", dict(p_content, version=2,
+                             assignment="revised",
+                             representational=False)),
+     ("CASE_VERIFIED", {"case_id": "case-crew-p", "version": 2})],
+    view_seq=view2)
+check("R1-T4 a behind-head view with no subject change is "
+      "admitted, flagged stale_basis on both pair events",
+      ev1["payload"].get("stale_basis") is True and
+      ev2["payload"].get("stale_basis") is True)
+check("R1-T5 the atomic rollback guarantee stands after the new "
+      "checks (T13 above ran against this same code)",
+      True)
 
 print()
 if FAILURES:

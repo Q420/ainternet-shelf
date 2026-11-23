@@ -24,8 +24,9 @@ are never the office's to record.
   correction's content rides on its CASE_CORRECTED.
 - Correct (R16/R17): the correction draft is the established
   content with named changes applied, preflighted whole, its
-  classification computed by the six-field diff, and submitted as
-  the atomic pair — CASE_CORRECTED + CASE_VERIFIED in one store
+  classification computed by the classification diff (six semantic
+  fields, compared as seven stored keys), and submitted as the
+  atomic pair — CASE_CORRECTED + CASE_VERIFIED in one store
   transaction (addendum 3 §H). The doorway recomputes the
   classification independently and refuses a disagreement.
 """

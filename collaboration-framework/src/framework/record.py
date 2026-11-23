@@ -46,10 +46,14 @@ EVENT_TYPES = {
     "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION", "RUN_CLOSED",
 }
 
-# R14: a case's content fields — the six over which a correction's
+# R14: a case's content fields, over which a correction's
 # classification is computed (Piece 5, addendum 1 §A: the diff runs
-# over the case's contents, all six, not only the three R16's gloss
-# names; any change classifies the correction semantic).
+# over the case's contents, not only the three R16's gloss names;
+# any change classifies the correction semantic). The scope counts
+# six semantic fields — the tree and the highlighted part form one
+# combined field — compared here as seven stored keys; the
+# classification is the same either way, since a change to the
+# tree, the part, or both is a change to that one field.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority")
