@@ -117,6 +117,28 @@ SCHEMA = _obj({
         "onboarded_seq": _INT,
         "attestation": _opt(_obj({
             "event_seq": _INT, "attestation_ref": _STR}))})),
+    "instance_onboarding": _map(_obj({
+        "declaration": _opt(_STR),
+        "provider_model_id": _opt(_STR), "identity_status": _STR,
+        "capability": _opt(_STR), "limits": _opt(_STR),
+        "terms_acknowledged": _opt(_BOOL),
+        "terms_ref": _opt(_STR),
+        "onboarded_seq": _INT,
+        "attestation": _opt(_obj({
+            "event_seq": _INT, "attestation_ref": _STR})),
+        "seat": _opt(_STR), "assembly_id": _opt(_STR)})),
+    "assemblies": _map(_obj({
+        "instance_id": _opt(_STR), "seat": _opt(_STR),
+        "part": _opt(_STR), "case_id": _opt(_STR),
+        "case_version": _opt(_INT),
+        "proposal_seq": _opt(_INT), "onboarding_seq": _opt(_INT),
+        "generated_seq": _INT,
+        "verified_seq": _opt(_INT), "judged_seq": _opt(_INT),
+        "judged_hash": _opt(_STR),
+        "packed_seq": _opt(_INT), "pack_hash": _opt(_STR),
+        "authorised_seq": _opt(_INT),
+        "activated_seq": _opt(_INT),
+        "credential": _STR, "grants_present": _BOOL})),
     "claims": _map(_obj({
         "author": _STR, "status": _STR, "subject": _STR,
         "status_seq": _INT})),

@@ -18,6 +18,7 @@ under its hash), its acting seat (actor), a timestamp (ts), its
 type, its payload, and the hash chain link (prev_hash/hash) — R1. A correction is a new event naming the
 event it corrects (payload.corrects) — nothing is edited or deleted.
 """
+import hashlib
 import json
 import sqlite3
 import time
@@ -49,6 +50,15 @@ EVENT_TYPES = {
     # orchestrator's readiness declaration — three distinct acts
     # with three distinct meanings, none impersonating another.
     "ASSEMBLY_PROPOSED", "ASSEMBLY_RECORD", "RUN_READY_FOR_COMPLETION",
+    # Agent layer (Piece A1, SPEC Rev 6 R37–R40): the assembly
+    # lifecycle of a generated instance. ASSEMBLY_PROPOSED above
+    # doubles as the lifecycle's proposal act — the same act,
+    # its payload extended with the seat slot being filled —
+    # and the instance's own ONBOARDING (subject "instance")
+    # stands between the proposal and ASSEMBLY_GENERATED.
+    "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+    "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
+    "INSTANCE_ACTIVATED",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -62,6 +72,57 @@ EVENT_TYPES = {
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority")
+
+# Piece A1 (R37–R40): the assembly record — the immutable object
+# an ASSEMBLY_GENERATED establishes, the examiner judges, and
+# ASSEMBLY_PACKED seals. Its canonical hash is computed over
+# exactly these fields under a versioned canonicalisation tag, so
+# the judged object, the sealed object and the generated object
+# are provably the same object (the Piece 7 seal-correspondence
+# pattern). Identity claims are NOT among the fields: the
+# declaration and the provider-reported id live only in the
+# instance's ONBOARDING event; the record binds to that event by
+# position (onboarding_seq) and by the declaration's fingerprint.
+ASSEMBLY_RECORD_FIELDS = ("assembly_id", "instance_id", "seat",
+                          "part", "case_id", "case_version",
+                          "proposal_seq", "onboarding_seq",
+                          "declaration_fingerprint",
+                          "model_selection", "skills", "grants")
+ASSEMBLY_RECORD_HASH_VERSION = 1
+
+
+def assembly_record_hash(record: dict) -> str:
+    """The canonical hash of an assembly record (Piece A1):
+    SHA-256 over the fabric canonical form of the record's fields
+    under the version tag. The pack event itself is never an
+    input — the hash names the generated object, not the act
+    that seals it."""
+    body = {k: record.get(k) for k in ASSEMBLY_RECORD_FIELDS}
+    return sha256_hex(canonical({
+        "assembly_record_v": ASSEMBLY_RECORD_HASH_VERSION,
+        "record": body}))
+
+
+def declaration_fingerprint(instance_id, declaration) -> str:
+    """The fingerprint of an instance's established declaration
+    (R38): binds the declaration to the instance it was taken
+    from, in the doorway's seat-binding style. The fingerprint
+    binds a claim; it does not prove it."""
+    return hashlib.sha256(
+        f"{instance_id}\x00{declaration}".encode()).hexdigest()
+
+
+def instance_credential_fingerprint(instance_id, declaration,
+                                    case_id, case_version) -> str:
+    """The fingerprint an instance's credential binds to (R38):
+    the established declaration, the instance, and the case
+    binding (id + version). Two instances of the same model in
+    the same role hold distinct credentials because their
+    instance ids differ."""
+    return hashlib.sha256(
+        f"{instance_id}\x00{declaration}\x00{case_id}"
+        f"\x00{case_version}".encode()).hexdigest()
+
 
 CLAIM_STATUSES = {"claimed", "evidenced", "verified", "disputed",
                   "stood_down"}
@@ -242,6 +303,22 @@ def empty_state(run_id=None) -> dict:
                               #   (Piece 6, R18-R19: the first ONBOARDING
                               #   establishes the record; a later attested
                               #   ONBOARDING raises status only)
+        "instance_onboarding": {},  # instance_id -> the same
+                              # record shape as a seat's, plus the
+                              # seat slot and assembly it belongs
+                              # to (Piece A1, R38: per-instance
+                              # onboarding, kept beside the
+                              # per-seat state; neither rewrites
+                              # the other)
+        "assemblies": {},     # assembly_id -> the assembly's
+                              # lifecycle standing (Piece A1, R40):
+                              # the binding ids, each act's
+                              # position (first-wins, like a case
+                              # version's), the judged and sealed
+                              # hashes, and the credential state
+                              # the doorway derives — "none" before
+                              # pack, "prepared" at pack, "active"
+                              # only at INSTANCE_ACTIVATED (R39)
         "claims": {},         # claim_id -> {author, status, subject}
         "disagreements": {},  # disagreement_id -> {status, claim_id, by}
         "contributions": {},  # contribution_id -> {author, tree_part}
@@ -340,6 +417,49 @@ def _subject_changed_parts(payload):
     return part
 
 
+def _apply_instance_onboarding(state: dict, ev: dict):
+    """One fold step for an instance-subject ONBOARDING (Piece
+    A1, R38). The first onboarding establishes the instance's
+    record — declaration verbatim, provider-reported id as its
+    own claim, capability, limits, terms — and is never replaced
+    or rewritten. A later onboarding carrying an attestation
+    reference may raise the status only, exactly as a seat's
+    attestation does; the original declaration stands untouched
+    and the attestation is preserved as the upgrade's
+    provenance."""
+    p = ev["payload"]
+    iid = p.get("instance_id")
+    rec = state["instance_onboarding"].get(iid)
+    if rec is None:
+        state["instance_onboarding"][iid] = {
+            "declaration": p.get("declaration"),
+            "provider_model_id": p.get("provider_model_id"),
+            "identity_status": p.get("identity_status",
+                                     "unverified"),
+            "capability": p.get("capability"),
+            "limits": p.get("limits"),
+            "terms_acknowledged": p.get("terms_acknowledged"),
+            "terms_ref": p.get("terms_ref"),
+            "onboarded_seq": ev["event_seq"],
+            "attestation": ({"event_seq": ev["event_seq"],
+                             "attestation_ref":
+                                 p["attestation_ref"]}
+                            if p.get("attestation_ref") else None),
+            "seat": p.get("seat_id"),
+            "assembly_id": p.get("assembly_id"),
+        }
+    elif p.get("attestation_ref"):
+        rank = {"unverified": 0, "declared": 1,
+                "provider-confirmed": 2}
+        new = p.get("identity_status")
+        if new in rank and rank[new] > rank.get(
+                rec["identity_status"], 0):
+            rec["identity_status"] = new
+            rec["attestation"] = {
+                "event_seq": ev["event_seq"],
+                "attestation_ref": p["attestation_ref"]}
+
+
 def apply_event(state: dict, ev: dict) -> dict:
     """One fold step. Deterministic; replay reproduces state (R4).
 
@@ -397,6 +517,13 @@ def apply_event(state: dict, ev: dict) -> dict:
         # attestation changes nothing the fold derives (the doorway
         # refuses status upgrades attempted without one; a same- or
         # lower-status restatement is history, not a new record).
+        if p.get("subject") == "instance":
+            # Piece A1 (R38): an instance's onboarding, keyed by
+            # instance — a separate state from the seats', with
+            # the same first-wins establishment and attested
+            # raise-only discipline.
+            _apply_instance_onboarding(state, ev)
+            return state
         seat = p["seat_id"]
         rec = state["onboarding"].get(seat)
         if rec is None:
@@ -658,6 +785,59 @@ def apply_event(state: dict, ev: dict) -> dict:
             "proposal_seq": p.get("proposal_seq"),
             "gate_set": dict(p.get("gate_set") or {}),
         })
+    elif t == "ASSEMBLY_GENERATED":
+        # Piece A1 (R37): the generated assembly — the fold
+        # opens its lifecycle entry. The record's contents ride
+        # on the event; the entry carries the binding ids and
+        # the positions the later acts fill in, first-wins like
+        # a case version's route positions: a second act of a
+        # kind stands in the history but never replaces the
+        # standing position. Whether the acts were *allowed* is
+        # the doorway's enforcement; the checker verifies the
+        # correspondence independently.
+        state["assemblies"][p.get("assembly_id")] = {
+            "instance_id": p.get("instance_id"),
+            "seat": p.get("seat"),
+            "part": p.get("part"),
+            "case_id": p.get("case_id"),
+            "case_version": p.get("case_version"),
+            "proposal_seq": p.get("proposal_seq"),
+            "onboarding_seq": p.get("onboarding_seq"),
+            "generated_seq": ev["event_seq"],
+            "verified_seq": None, "judged_seq": None,
+            "judged_hash": None,
+            "packed_seq": None, "pack_hash": None,
+            "authorised_seq": None, "activated_seq": None,
+            "credential": "none",
+            "grants_present": p.get("grants") is not None,
+        }
+    elif t in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+               "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
+               "INSTANCE_ACTIVATED"):
+        # Piece A1 (R39/R40): the assembly's later acts, each
+        # filling its own position on the generated entry.
+        entry = state["assemblies"].get(p.get("assembly_id")
+                                         or "")
+        if entry is not None:
+            if t == "ASSEMBLY_VERIFIED" and \
+                    entry["verified_seq"] is None:
+                entry["verified_seq"] = ev["event_seq"]
+            elif t == "ASSEMBLY_JUDGED" and \
+                    entry["judged_seq"] is None:
+                entry["judged_seq"] = ev["event_seq"]
+                entry["judged_hash"] = p.get("record_hash")
+            elif t == "ASSEMBLY_PACKED" and \
+                    entry["packed_seq"] is None:
+                entry["packed_seq"] = ev["event_seq"]
+                entry["pack_hash"] = p.get("record_hash")
+                entry["credential"] = "prepared"
+            elif t == "ASSEMBLY_ISSUE_AUTHORISED" and \
+                    entry["authorised_seq"] is None:
+                entry["authorised_seq"] = ev["event_seq"]
+            elif t == "INSTANCE_ACTIVATED" and \
+                    entry["activated_seq"] is None:
+                entry["activated_seq"] = ev["event_seq"]
+                entry["credential"] = "active"
     elif t == "RUN_READY_FOR_COMPLETION":
         # §3.8 (S5): the orchestrator's readiness declaration —
         # the act the completion gate answers. The crew's claims

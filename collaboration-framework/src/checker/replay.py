@@ -39,7 +39,15 @@ _KNOWN_TYPES = {
     "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION",
     "RUN_CLOSED", "ASSEMBLY_PROPOSED", "ASSEMBLY_RECORD",
     "RUN_READY_FOR_COMPLETION",
+    # Agent layer (Piece A1): the assembly lifecycle acts.
+    "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+    "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
+    "INSTANCE_ACTIVATED",
 }
+
+_ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
+                  "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
+                  "ASSEMBLY_ISSUE_AUTHORISED", "INSTANCE_ACTIVATED")
 
 
 class SchemaHalt(Exception):
@@ -133,7 +141,8 @@ def _shape_problem(ev):
             return "ONBOARDING requires a seat_id string"
         for key in ("identity_status", "declaration", "capability",
                     "limits", "terms_ref", "attestation_ref",
-                    "provider_model_id"):
+                    "provider_model_id", "subject", "instance_id",
+                    "assembly_id"):
             if bad_opt_str(key):
                 return f"ONBOARDING {key} is not a string"
         if bad_opt("terms_acknowledged",
@@ -242,6 +251,52 @@ def _shape_problem(ev):
         for key in ("routes_disagreement", "to_gate"):
             if bad_opt_str(key):
                 return f"COMMENT {key} is not a string"
+    elif t in _ASSEMBLY_ACTS:
+        # Piece A1: every lifecycle act names its assembly and
+        # its instance; the generated record carries the binding
+        # fields its fold step reads, in their contract shapes.
+        if need_str("assembly_id") or need_str("instance_id"):
+            return f"{t} requires assembly_id and instance_id " \
+                "strings"
+        if t == "ASSEMBLY_GENERATED":
+            if need_str("seat") or need_str("case_id"):
+                return "ASSEMBLY_GENERATED requires seat and " \
+                    "case_id strings"
+            if not _is_int(p.get("case_version")):
+                return "ASSEMBLY_GENERATED case_version is " \
+                    "not an integer"
+            for key in ("proposal_seq", "onboarding_seq"):
+                if not _is_int(p.get(key)):
+                    return f"ASSEMBLY_GENERATED {key} is not " \
+                        "an integer"
+            if bad_opt_str("part"):
+                return "ASSEMBLY_GENERATED part is not a string"
+            if bad_opt_str("declaration_fingerprint"):
+                return "ASSEMBLY_GENERATED " \
+                    "declaration_fingerprint is not a string"
+            skills = p.get("skills")
+            if not isinstance(skills, list) or any(
+                    not isinstance(s, dict)
+                    or not isinstance(s.get("name"), str)
+                    or not isinstance(s.get("version"), str)
+                    for s in skills):
+                return "ASSEMBLY_GENERATED skills is not a " \
+                    "list of name/version pins"
+            if "grants" in p and p["grants"] is not None and \
+                    not isinstance(p["grants"], list):
+                return "ASSEMBLY_GENERATED grants is not a " \
+                    "list or null"
+            if "model_selection" in p and \
+                    not isinstance(p["model_selection"], dict):
+                return "ASSEMBLY_GENERATED model_selection " \
+                    "is not an object"
+        if t in ("ASSEMBLY_JUDGED", "ASSEMBLY_PACKED"):
+            if bad_opt_str("record_hash"):
+                return f"{t} record_hash is not a string"
+        if t == "ASSEMBLY_PACKED":
+            if bad_opt_str("credential_fingerprint"):
+                return "ASSEMBLY_PACKED " \
+                    "credential_fingerprint is not a string"
     return None
 
 
@@ -252,6 +307,8 @@ def blank_state(run_id=None):
         "lifecycle_seq": None,
         "seats": {},
         "onboarding": {},
+        "instance_onboarding": {},
+        "assemblies": {},
         "claims": {},
         "disagreements": {},
         "contributions": {},
@@ -381,6 +438,43 @@ def _apply(state, ev):
             "identity_status": p.get("identity_status", "unverified"),
         }
     elif t == "ONBOARDING":
+        if p.get("subject") == "instance":
+            # Piece A1: an instance's onboarding, keyed by
+            # instance in its own state — first establishment
+            # stands verbatim; a later attested act raises the
+            # status only, on a strict raise.
+            iid = p.get("instance_id")
+            irec = state["instance_onboarding"].get(iid)
+            if irec is None:
+                state["instance_onboarding"][iid] = {
+                    "declaration": p.get("declaration"),
+                    "provider_model_id": p.get(
+                        "provider_model_id"),
+                    "identity_status": p.get("identity_status",
+                                             "unverified"),
+                    "capability": p.get("capability"),
+                    "limits": p.get("limits"),
+                    "terms_acknowledged": p.get(
+                        "terms_acknowledged"),
+                    "terms_ref": p.get("terms_ref"),
+                    "onboarded_seq": seq,
+                    "attestation": (
+                        {"event_seq": seq,
+                         "attestation_ref": p["attestation_ref"]}
+                        if p.get("attestation_ref") else None),
+                    "seat": p.get("seat_id"),
+                    "assembly_id": p.get("assembly_id"),
+                }
+            elif p.get("attestation_ref"):
+                new = p.get("identity_status")
+                if new in _STATUS_RANK and \
+                        _STATUS_RANK[new] > _STATUS_RANK.get(
+                            irec["identity_status"], 0):
+                    irec["identity_status"] = new
+                    irec["attestation"] = {
+                        "event_seq": seq,
+                        "attestation_ref": p["attestation_ref"]}
+            return state
         seat = p["seat_id"]
         rec = state["onboarding"].get(seat)
         if rec is None:
@@ -570,6 +664,51 @@ def _apply(state, ev):
         state["assembly_records"].append({
             "event_seq": seq, "proposal_seq": p.get("proposal_seq"),
             "gate_set": dict(p.get("gate_set") or {})})
+    elif t == "ASSEMBLY_GENERATED":
+        # Piece A1: the generated assembly opens its lifecycle
+        # entry; the later acts fill their own positions,
+        # first-wins.
+        state["assemblies"][p.get("assembly_id")] = {
+            "instance_id": p.get("instance_id"),
+            "seat": p.get("seat"),
+            "part": p.get("part"),
+            "case_id": p.get("case_id"),
+            "case_version": p.get("case_version"),
+            "proposal_seq": p.get("proposal_seq"),
+            "onboarding_seq": p.get("onboarding_seq"),
+            "generated_seq": seq,
+            "verified_seq": None, "judged_seq": None,
+            "judged_hash": None,
+            "packed_seq": None, "pack_hash": None,
+            "authorised_seq": None, "activated_seq": None,
+            "credential": "none",
+            "grants_present": p.get("grants") is not None,
+        }
+    elif t in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+               "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
+               "INSTANCE_ACTIVATED"):
+        entry = state["assemblies"].get(p.get("assembly_id")
+                                         or "")
+        if entry is not None:
+            if t == "ASSEMBLY_VERIFIED" and \
+                    entry["verified_seq"] is None:
+                entry["verified_seq"] = seq
+            elif t == "ASSEMBLY_JUDGED" and \
+                    entry["judged_seq"] is None:
+                entry["judged_seq"] = seq
+                entry["judged_hash"] = p.get("record_hash")
+            elif t == "ASSEMBLY_PACKED" and \
+                    entry["packed_seq"] is None:
+                entry["packed_seq"] = seq
+                entry["pack_hash"] = p.get("record_hash")
+                entry["credential"] = "prepared"
+            elif t == "ASSEMBLY_ISSUE_AUTHORISED" and \
+                    entry["authorised_seq"] is None:
+                entry["authorised_seq"] = seq
+            elif t == "INSTANCE_ACTIVATED" and \
+                    entry["activated_seq"] is None:
+                entry["activated_seq"] = seq
+                entry["credential"] = "active"
     elif t == "RUN_READY_FOR_COMPLETION":
         state["run_ready_seq"] = seq
     elif t == "COMMENT":

@@ -34,12 +34,13 @@ creates no store, and leaves no artifacts (C7). It imports
 `fabric.canonical` — the record-format and hashing primitive —
 and the standard library only; never a `framework.*` module.
 """
+import hashlib
 import json
 import os
 import sqlite3
 import sys
 
-from fabric.canonical import canonical, event_hash
+from fabric.canonical import canonical, event_hash, sha256_hex
 
 from checker.replay import replay_events
 from checker.schema import SCHEMA
@@ -330,6 +331,199 @@ def _seal_result(events, state):
     return {"result": "ok"}
 
 
+# ---------------------------------------------------------- assembly
+
+# The assembly record's fields, as this checker derives them
+# from the record contract (SPEC Rev 6, R37): the generated
+# record's canonical hash is recomputed over exactly these
+# fields under the version tag, independently of the framework.
+_ASSEMBLY_RECORD_FIELDS = (
+    "assembly_id", "instance_id", "seat", "part", "case_id",
+    "case_version", "proposal_seq", "onboarding_seq",
+    "declaration_fingerprint", "model_selection", "skills",
+    "grants")
+
+_ASSEMBLY_STAGES = ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+                    "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
+                    "INSTANCE_ACTIVATED")
+
+
+def _assembly_record_hash(payload):
+    body = {k: payload.get(k) for k in _ASSEMBLY_RECORD_FIELDS}
+    return sha256_hex(canonical(
+        {"assembly_record_v": 1, "record": body}))
+
+
+def _assembly_result(events, state):
+    """Assembly correspondence (Piece A1, R37–R40/R55): every
+    generated instance's lifecycle, verified from the events
+    themselves — attribution by the actor's recorded role; the
+    normative order, each act answering its predecessor; the
+    one-to-one rule (one instance identity, one immutable
+    generated assembly, one onboarding reference, one judgement
+    target, one pack seal); the judged and sealed object being
+    the generated object, by canonical hash; and no activation
+    without the full chain and the record's grants section. An
+    incomplete or incorrectly ordered assembly history is
+    reported, never read as valid."""
+    problems = []
+
+    def problem(kind, **fields):
+        entry = {"kind": kind}
+        entry.update(fields)
+        problems.append(entry)
+
+    by_seq = {ev["event_seq"]: ev for ev in events}
+    seats = state["seats"]
+
+    def role_of(actor):
+        return (seats.get(actor) or {}).get("role")
+
+    onboardings = {}
+    generated = {}
+    stages = {}
+    for ev in events:
+        t = ev["type"]
+        p = ev["payload"]
+        if t == "ASSEMBLY_PROPOSED":
+            if role_of(ev["actor"]) != "orchestrator":
+                problem("assembly_act_wrong_role", type=t,
+                        at_seq=ev["event_seq"], actor=ev["actor"])
+        elif t == "ONBOARDING" and p.get("subject") == "instance":
+            onboardings.setdefault(
+                p.get("instance_id"), []).append(ev)
+        elif t == "ASSEMBLY_GENERATED":
+            aid = p.get("assembly_id")
+            if aid in generated:
+                problem("duplicate_generated_assembly",
+                        assembly_id=aid, at_seq=ev["event_seq"])
+            generated.setdefault(aid, ev)
+        elif t in _ASSEMBLY_STAGES:
+            stages.setdefault(p.get("assembly_id"), {}) \
+                .setdefault(t, []).append(ev)
+
+    # One establishing onboarding per instance; any later
+    # instance onboarding is an attestation, carrying its
+    # reference.
+    for iid, evs in onboardings.items():
+        for extra in evs[1:]:
+            if not extra["payload"].get("attestation_ref"):
+                problem("second_instance_onboarding",
+                        instance_id=iid,
+                        at_seq=extra["event_seq"])
+
+    seen_instances = {}
+    seen_onboardings = {}
+    for aid, ev in generated.items():
+        p = ev["payload"]
+        iid = p.get("instance_id")
+        if role_of(ev["actor"]) != "orchestrator":
+            problem("assembly_act_wrong_role",
+                    type="ASSEMBLY_GENERATED",
+                    at_seq=ev["event_seq"], actor=ev["actor"])
+        if iid in seen_instances:
+            problem("instance_in_two_assemblies",
+                    instance_id=iid, assembly_id=aid,
+                    at_seq=ev["event_seq"])
+        seen_instances[iid] = aid
+        oseq = p.get("onboarding_seq")
+        if oseq in seen_onboardings:
+            problem("onboarding_bound_twice",
+                    onboarding_seq=oseq, assembly_id=aid,
+                    at_seq=ev["event_seq"])
+        seen_onboardings[oseq] = aid
+        # The proposal the generation answers.
+        prop = by_seq.get(p.get("proposal_seq"))
+        if prop is None or prop["type"] != "ASSEMBLY_PROPOSED" \
+                or prop["event_seq"] >= ev["event_seq"]:
+            problem("generated_without_proposal",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+            prop = None
+        elif prop["payload"].get("seat") not in (None,
+                                                 p.get("seat")):
+            problem("generated_answers_other_slot",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+        # The exact onboarding it binds to: an instance
+        # onboarding, for this instance and assembly, after the
+        # proposal and before the generation.
+        bound = by_seq.get(oseq)
+        if bound is None or bound["type"] != "ONBOARDING" or \
+                bound["payload"].get("subject") != "instance":
+            problem("generated_onboarding_binding_broken",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+            bound = None
+        if bound is not None:
+            ob = bound["payload"]
+            if ob.get("instance_id") != iid or \
+                    ob.get("assembly_id") != aid:
+                problem("generated_binds_other_instance",
+                        assembly_id=aid, at_seq=ev["event_seq"])
+            if prop is not None and \
+                    bound["event_seq"] <= prop["event_seq"]:
+                problem("onboarding_before_proposal",
+                        assembly_id=aid, at_seq=ev["event_seq"])
+            fingerprint = hashlib.sha256(
+                f"{iid}\x00{ob.get('declaration')}"
+                .encode()).hexdigest()
+            if p.get("declaration_fingerprint") != fingerprint:
+                problem("declaration_fingerprint_mismatch",
+                        assembly_id=aid, at_seq=ev["event_seq"])
+        digest = _assembly_record_hash(p)
+        # The stages: at most one each, in the normative order,
+        # each after its predecessor; a later stage standing
+        # without an earlier one is an incomplete history.
+        mine = stages.get(aid, {})
+        last = ev["event_seq"]
+        for i, kind in enumerate(_ASSEMBLY_STAGES):
+            evs = mine.get(kind, [])
+            if len(evs) > 1:
+                problem("duplicate_assembly_act", type=kind,
+                        assembly_id=aid,
+                        at_seq=evs[1]["event_seq"])
+            if not evs:
+                later = [k for k in _ASSEMBLY_STAGES[i + 1:]
+                         if mine.get(k)]
+                if later:
+                    problem("assembly_stage_missing", type=kind,
+                            assembly_id=aid,
+                            later_stage=later[0],
+                            at_seq=mine[later[0]][0]["event_seq"])
+                continue
+            stage_ev = evs[0]
+            if stage_ev["event_seq"] <= last:
+                problem("assembly_act_out_of_order", type=kind,
+                        assembly_id=aid,
+                        at_seq=stage_ev["event_seq"])
+            last = max(last, stage_ev["event_seq"])
+            want = "examiner" if kind == "ASSEMBLY_JUDGED" \
+                else "orchestrator"
+            if role_of(stage_ev["actor"]) != want:
+                problem("assembly_act_wrong_role", type=kind,
+                        assembly_id=aid,
+                        at_seq=stage_ev["event_seq"],
+                        actor=stage_ev["actor"])
+            if kind in ("ASSEMBLY_JUDGED", "ASSEMBLY_PACKED") and \
+                    stage_ev["payload"].get("record_hash") != \
+                    digest:
+                problem("assembly_hash_mismatch", type=kind,
+                        assembly_id=aid,
+                        at_seq=stage_ev["event_seq"])
+            if kind == "INSTANCE_ACTIVATED" and \
+                    p.get("grants") is None:
+                problem("activated_without_grants",
+                        assembly_id=aid,
+                        at_seq=stage_ev["event_seq"])
+    for aid, mine in stages.items():
+        if aid not in generated:
+            for kind, evs in mine.items():
+                problem("assembly_act_without_generation",
+                        type=kind, assembly_id=aid,
+                        at_seq=evs[0]["event_seq"])
+    if problems:
+        return {"result": "divergent", "problems": problems}
+    return {"result": "ok"}
+
+
 # ----------------------------------------------------------- verdict
 
 def check(request):
@@ -400,6 +594,7 @@ def check(request):
         checks["projection_schema"] = {"result": "not_run"}
         checks["replay_equality"] = {"result": "not_run"}
         checks["seal_correspondence"] = {"result": "not_run"}
+        checks["assembly_correspondence"] = {"result": "not_run"}
     else:
         mine = json.loads(canonical(state))
         bad = _conforms(mine, SCHEMA)
@@ -421,6 +616,8 @@ def check(request):
                 {"result": "ok"} if not divs else
                 {"result": "divergent", "divergences": divs})
         checks["seal_correspondence"] = _seal_result(events, state)
+        checks["assembly_correspondence"] = _assembly_result(
+            events, state)
     return verdict
 
 

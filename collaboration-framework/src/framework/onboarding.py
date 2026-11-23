@@ -19,6 +19,16 @@ Onboarding confers readiness only (R20): it changes no authority,
 records no case, and wakes no driver. The doorway binds the seat's
 token at onboarding (scope F2 as settled: where an onboarding
 record stands, `issue_token` binds against it).
+
+Piece A1 (SPEC Rev 6, R38) adds the instance path beside the seat
+path: the same ONBOARDING act, extended — never duplicated — with
+an explicit subject discriminator. An instance onboards once, at
+its assembly, under its own instance id; the fold keeps the
+per-instance state beside the per-seat state, and neither
+rewrites the other. Existing seat records and behaviour are
+unchanged: a seat payload's subject is "seat", and histories
+recorded before the discriminator existed carry no subject and
+fold as seat records, as they always did.
 """
 
 from __future__ import annotations
@@ -42,6 +52,7 @@ def onboard(doorway, orchestrator_token, seat_id, declaration,
     if view_seq is None:
         view_seq = doorway.state()["head_seq"]
     payload = {
+        "subject": "seat",
         "seat_id": seat_id,
         "declaration": declaration,
         "capability": capability,
@@ -77,3 +88,48 @@ def onboarding_record(doorway, seat_id):
     """The seat's onboarding record as the fold derives it, or
     None where no onboarding stands."""
     return doorway.state()["onboarding"].get(seat_id)
+
+
+def onboard_instance(doorway, orchestrator_token, seat_id,
+                     instance_id, assembly_id, declaration,
+                     provider_model_id=None, identity_status="declared",
+                     capability=None, limits=None,
+                     terms_acknowledged=None, terms_ref=None,
+                     attestation_ref=None, view_seq=None):
+    """Record a generated instance's onboarding (Piece A1, R38).
+
+    The declaration is the instance's own, taken at its assembly
+    (the provider adapter's `identify()` supplies it, with the
+    provider-reported model id as its own attributed claim beside
+    it — it never raises the identity status). The payload names
+    the seat slot the instance fills and the assembly it belongs
+    to; the ASSEMBLY_GENERATED that follows binds to this exact
+    event by position and by the declaration's fingerprint —
+    identity claims live only here, never duplicated into the
+    assembly record."""
+    if view_seq is None:
+        view_seq = doorway.state()["head_seq"]
+    payload = {
+        "subject": "instance",
+        "seat_id": seat_id,
+        "instance_id": instance_id,
+        "assembly_id": assembly_id,
+        "declaration": declaration,
+        "identity_status": identity_status,
+        "capability": capability,
+        "limits": limits,
+        "terms_acknowledged": terms_acknowledged,
+        "terms_ref": terms_ref,
+    }
+    if attestation_ref is not None:
+        payload["attestation_ref"] = attestation_ref
+    if provider_model_id is not None:
+        payload["provider_model_id"] = provider_model_id
+    return doorway.act(orchestrator_token, "ONBOARDING", payload,
+                       view_seq=view_seq)
+
+
+def instance_onboarding_record(doorway, instance_id):
+    """The instance's onboarding record as the fold derives it,
+    or None where no instance onboarding stands."""
+    return doorway.state()["instance_onboarding"].get(instance_id)

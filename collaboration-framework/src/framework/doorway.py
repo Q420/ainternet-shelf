@@ -25,7 +25,10 @@ import secrets
 from . import gates as _gates
 from . import orchestrator as _orch
 from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
-                     GATE_OUTCOMES, fold, validate_status_transition)
+                     GATE_OUTCOMES, assembly_record_hash,
+                     declaration_fingerprint, effective_case, fold,
+                     instance_credential_fingerprint,
+                     validate_status_transition)
 
 DOORWAY_ACTOR = "doorway"
 
@@ -41,6 +44,20 @@ ACT_AUTHORITY = {
     "COMMENT": {"crew", "orchestrator"},
     "ASSEMBLY_PROPOSED": {"orchestrator"},
     "ASSEMBLY_RECORD": {"examiner"},
+    # Agent layer (Piece A1, R40): the assembly lifecycle of a
+    # generated instance. The office's acts — generation,
+    # construction verification, pack, activation — are recorded
+    # under the orchestrator's token, the office being
+    # orchestrator-side machinery (Piece 5); the proposal and the
+    # issue authorisation are the orchestrator's own; the
+    # sufficiency judgement remains the examiner's own, like
+    # CASE_JUDGED. No act substitutes for another.
+    "ASSEMBLY_GENERATED": {"orchestrator"},
+    "ASSEMBLY_VERIFIED": {"orchestrator"},
+    "ASSEMBLY_JUDGED": {"examiner"},
+    "ASSEMBLY_PACKED": {"orchestrator"},
+    "ASSEMBLY_ISSUE_AUTHORISED": {"orchestrator"},
+    "INSTANCE_ACTIVATED": {"orchestrator"},
     "RUN_READY_FOR_COMPLETION": {"orchestrator"},
     "DISAGREEMENT": {"crew", "orchestrator", "examiner", "director"},
     "DISAGREEMENT_SETTLED": {"crew", "orchestrator", "examiner",
@@ -111,6 +128,10 @@ class Doorway:
         self._token_identity = {}  # sha256(token) -> fingerprint of
         # the onboarding record the token bound against (onboarding
         # route only; examination round 1)
+        self._instance_tokens = {}  # sha256(token) -> {instance_id,
+        # fingerprint} (Piece A1: an instance's credential, issued
+        # at pack in the prepared state; it authenticates only
+        # while the record derives the credential active — R39)
 
     # ------------------------------------------------------------ state
     def state(self):
@@ -191,12 +212,35 @@ class Doorway:
         if not token:
             return None
         digest = hashlib.sha256(token.encode()).hexdigest()
-        return self._tokens.get(digest)
+        seat_id = self._tokens.get(digest)
+        if seat_id is not None:
+            return seat_id
+        inst = self._instance_tokens.get(digest)
+        if inst is not None:
+            # An instance's credential names the seat slot its
+            # assembly fills, so a refusal of its act identifies
+            # the slot (Piece A1).
+            entry = self._assembly_of_instance(
+                self.state(), inst["instance_id"])
+            return entry["seat"] if entry else None
+        return None
+
+    def _assembly_of_instance(self, state, instance_id):
+        """The fold's assembly entry for an instance, or None
+        (Piece A1). Assemblies are keyed by assembly id; an
+        instance belongs to exactly one."""
+        for entry in state["assemblies"].values():
+            if entry.get("instance_id") == instance_id:
+                return entry
+        return None
 
     def _authenticate(self, token):
         if not token:
             return None
         digest = hashlib.sha256(token.encode()).hexdigest()
+        inst = self._instance_tokens.get(digest)
+        if inst is not None:
+            return self._authenticate_instance(inst)
         seat_id = self._tokens.get(digest)
         if seat_id is None:
             return None
@@ -225,6 +269,96 @@ class Doorway:
             # the established record.)
             return None
         return seat_id
+
+    def _authenticate_instance(self, inst):
+        """Whether an instance's credential authenticates, and
+        as which seat (Piece A1, R38/R39). The credential state
+        is derived from the record — prepared at pack, active
+        only where INSTANCE_ACTIVATED stands — never from a
+        doorway-side flag: a prepared credential does not
+        authenticate, and no doorway state can make it do so
+        before the activation event stands. The fingerprint is
+        re-derived from the record on every presentation, as a
+        seat's onboarding-bound token is: the instance's
+        established declaration, its instance id, and its case
+        binding. An authenticating instance acts as the occupant
+        of the seat slot its assembly fills."""
+        state = self.state()
+        entry = self._assembly_of_instance(state,
+                                           inst["instance_id"])
+        if entry is None or entry["credential"] != "active":
+            return None
+        record = state["instance_onboarding"].get(
+            inst["instance_id"])
+        if record is None:
+            return None
+        bound = instance_credential_fingerprint(
+            inst["instance_id"], record.get("declaration"),
+            entry["case_id"], entry["case_version"])
+        if bound != inst["fingerprint"]:
+            return None
+        return entry["seat"]
+
+    def _auth_ground(self, token):
+        """The ground a failed authentication is recorded under
+        (Piece A1): an instance credential that is known but not
+        active is refused for exactly that reason — the
+        credential invariant is the ground, not a generic
+        mismatch — and one whose binding no longer matches the
+        record is refused as a mismatched identity."""
+        if token:
+            digest = hashlib.sha256(token.encode()).hexdigest()
+            inst = self._instance_tokens.get(digest)
+            if inst is not None:
+                entry = self._assembly_of_instance(
+                    self.state(), inst["instance_id"])
+                if entry is not None and \
+                        entry["credential"] != "active":
+                    return (f"instance credential for "
+                            f"{inst['instance_id']} stands "
+                            f"{entry['credential']}; only an "
+                            f"active credential authenticates "
+                            f"(R39)")
+                return ("instance credential does not match "
+                        "the identity it bound against (R38)")
+        return "unbound or mismatched identity (R5)"
+
+    def issue_instance_token(self, instance_id: str) -> str:
+        """Issue an instance's credential (Piece A1, R39): the
+        doorway is the only mechanism that issues one, and it
+        issues only where the instance's assembly stands packed
+        — the pack is what prepares the credential. The token
+        binds to the fingerprint of the instance's established
+        declaration, its instance id, and its case binding
+        (R38), re-derived from the record here and re-derived
+        again at every authentication. Issuing confers no
+        usability: the credential stands prepared, and
+        authentication refuses it until the record carries the
+        activation."""
+        state = self.state()
+        entry = self._assembly_of_instance(state, instance_id)
+        if entry is None or entry["packed_seq"] is None:
+            raise DoorwayRefusal(
+                f"no packed assembly stands for instance "
+                f"{instance_id}; no credential issues (R39)")
+        record = state["instance_onboarding"].get(instance_id)
+        fingerprint = instance_credential_fingerprint(
+            instance_id, (record or {}).get("declaration"),
+            entry["case_id"], entry["case_version"])
+        token = secrets.token_hex(24)
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        self._instance_tokens[digest] = {
+            "instance_id": instance_id, "fingerprint": fingerprint}
+        return token
+
+    def instance_credential_state(self, instance_id: str) -> str:
+        """An instance credential's state as the record derives
+        it (Piece A1): "none" where no assembly stands for the
+        instance (or none is packed yet), "prepared" at pack,
+        "active" only at INSTANCE_ACTIVATED."""
+        entry = self._assembly_of_instance(self.state(),
+                                           instance_id)
+        return entry["credential"] if entry else "none"
 
     # ------------------------------------------------------------ record
     def _record_rejection(self, seat_id, attempted_type, ground,
@@ -282,7 +416,7 @@ class Doorway:
         seat_id = self._authenticate(token)
         if seat_id is None:
             self._refuse(self._presented_seat(token), type_,
-                         "unbound or mismatched identity (R5)", view_seq)
+                         self._auth_ground(token), view_seq)
         state = self.state()
         binding = state["seats"].get(seat_id)
         if binding is None:
@@ -494,6 +628,28 @@ class Doorway:
                 self._refuse(seat_id, type_, problem, view_seq)
         if type_ == "ASSEMBLY_RECORD":
             problem = self._assembly_record_problem(state, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+
+        # Agent layer (Piece A1, R37–R40): an assembly proposal
+        # that names the seat slot it fills (the §3.8 proposal,
+        # extended) names a commissioned crew slot and a part of
+        # the recorded tree; the lifecycle acts that follow carry
+        # their own mechanical discipline — the normative order,
+        # the onboarding binding, the judged object's hash, the
+        # credential invariant. Substance — whether an instance
+        # is sufficient — remains the examiner's.
+        if type_ == "ASSEMBLY_PROPOSED" and \
+                payload.get("seat") is not None:
+            problem = self._assembly_slot_problem(state, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+        if type_ in ("ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
+                     "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
+                     "ASSEMBLY_ISSUE_AUTHORISED",
+                     "INSTANCE_ACTIVATED"):
+            problem = self._assembly_lifecycle_problem(
+                state, type_, payload)
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
 
@@ -804,6 +960,10 @@ class Doorway:
                 not payload.get("attestation_ref"):
             return ("a provider-confirmed status carries its "
                     "attestation reference (R18)")
+        if payload.get("subject") == "instance":
+            # Piece A1 (R38): the instance path carries the same
+            # status discipline against the per-instance state.
+            return self._instance_onboarding_problem(state, payload)
         existing = state["onboarding"].get(payload.get("seat_id"))
         if existing is not None:
             recorded = existing["identity_status"]
@@ -826,6 +986,272 @@ class Doorway:
                         f"{payload.get('seat_id')} from {recorded} "
                         f"to {status} without a recorded attestation "
                         f"(R18)")
+        return None
+
+    def _instance_onboarding_problem(self, state, payload):
+        """Why an instance-subject ONBOARDING may not be
+        recorded, or None (Piece A1, R38). The act names its
+        instance, its assembly, and the seat slot it fills; the
+        slot is commissioned. An instance onboards once, at its
+        assembly: where its record already stands, a further act
+        is an attestation or nothing — an attested act must
+        raise the status (the seat rule, carried over), and an
+        unattested act records nothing."""
+        for field in ("instance_id", "assembly_id", "seat_id"):
+            if not isinstance(payload.get(field), str) or \
+                    not payload.get(field):
+                return (f"an instance onboarding names its "
+                        f"{field} (R38)")
+        if payload.get("seat_id") not in state["seats"]:
+            return (f"seat slot {payload.get('seat_id')} is not "
+                    f"commissioned in the record (R38)")
+        existing = state["instance_onboarding"].get(
+            payload.get("instance_id"))
+        if existing is None:
+            if not payload.get("declaration"):
+                return ("an instance's onboarding establishes "
+                        "its declaration (R38)")
+            return None
+        recorded = existing["identity_status"]
+        status = payload.get("identity_status")
+        rises = self._STATUS_RANK[status] > \
+            self._STATUS_RANK.get(recorded, 0)
+        if payload.get("attestation_ref"):
+            if not rises:
+                return (f"attested identity status {status} "
+                        f"does not raise the instance's "
+                        f"recorded status {recorded}; an "
+                        f"attestation raises status only (R38)")
+            return None
+        return (f"instance {payload.get('instance_id')} already "
+                f"stands onboarded; an instance onboards once, "
+                f"at its assembly — a further act is an "
+                f"attestation or nothing (R38)")
+
+    def _event_at(self, seq):
+        """The recorded event at a position, or None."""
+        if not isinstance(seq, int) or isinstance(seq, bool):
+            return None
+        for ev in self.store.all_events():
+            if ev["event_seq"] == seq:
+                return ev
+        return None
+
+    def _generated_payload(self, assembly_id):
+        """The ASSEMBLY_GENERATED payload that established an
+        assembly, or None — the immutable object the later
+        lifecycle acts answer to."""
+        for ev in self.store.all_events():
+            if ev["type"] == "ASSEMBLY_GENERATED" and \
+                    ev["payload"].get("assembly_id") == assembly_id:
+                return ev["payload"]
+        return None
+
+    def _assembly_slot_problem(self, state, payload):
+        """Why an assembly proposal naming its seat slot may not
+        be recorded, or None (Piece A1): the slot is a
+        commissioned crew seat — a role specification an
+        assembly fills — and the part it names is a part of the
+        recorded tree."""
+        seat_id = payload.get("seat")
+        binding = state["seats"].get(seat_id)
+        if binding is None:
+            return (f"seat slot {seat_id} is not commissioned "
+                    f"in the record; an assembly fills a "
+                    f"commissioned slot (R37)")
+        if binding.get("role") != "crew":
+            return (f"assemblies fill crew seat slots; "
+                    f"{seat_id} is {binding.get('role')} (R37)")
+        part = payload.get("part")
+        tree = state.get("tree") or {}
+        if part is not None and tree:
+            known = set(tree)
+            for downstream in tree.values():
+                known.update(downstream or [])
+            if part not in known:
+                return (f"part {part} is not in the recorded "
+                        f"tree (R37)")
+        return None
+
+    def _assembly_lifecycle_problem(self, state, type_, payload):
+        """Why an assembly lifecycle act may not be recorded, or
+        None (Piece A1, R37–R40). The doorway owns the sequence,
+        as it owns the case classification and the identity
+        discipline: each act answers the standing record — the
+        generated assembly binds to its exact proposal and
+        onboarding; verification precedes judgement; the
+        judgement and the pack name the generated object by its
+        canonical hash, so a judgement of a different object
+        cannot seal this one; authorisation follows pack;
+        activation follows authorisation and requires the
+        record's grants section. A duplicate act of a kind for
+        an assembly does not record — the lifecycle is
+        one-to-one."""
+        assembly_id = payload.get("assembly_id")
+        instance_id = payload.get("instance_id")
+        if not assembly_id or not instance_id:
+            return (f"{type_} names its assembly and its "
+                    f"instance (R37)")
+        if type_ == "ASSEMBLY_GENERATED":
+            return self._assembly_generated_problem(
+                state, payload)
+        entry = state["assemblies"].get(assembly_id)
+        if entry is None:
+            return (f"no generated assembly {assembly_id} "
+                    f"stands in the record (R40)")
+        if entry.get("instance_id") != instance_id:
+            return (f"assembly {assembly_id} belongs to "
+                    f"instance {entry.get('instance_id')}, not "
+                    f"{instance_id} (R37)")
+        stage = {
+            "ASSEMBLY_VERIFIED": ("verified_seq", "generated_seq",
+                                  "generation"),
+            "ASSEMBLY_JUDGED": ("judged_seq", "verified_seq",
+                                "construction verification"),
+            "ASSEMBLY_PACKED": ("packed_seq", "judged_seq",
+                                "the sufficiency judgement"),
+            "ASSEMBLY_ISSUE_AUTHORISED": (
+                "authorised_seq", "packed_seq", "pack"),
+            "INSTANCE_ACTIVATED": ("activated_seq",
+                                   "authorised_seq",
+                                   "the issue authorisation"),
+        }[type_]
+        own_seq, prior_seq, prior_name = stage
+        if entry.get(own_seq) is not None:
+            return (f"assembly {assembly_id} already stands "
+                    f"with its {type_} recorded; the lifecycle "
+                    f"is one-to-one (R40)")
+        if entry.get(prior_seq) is None:
+            return (f"{type_} for assembly {assembly_id} "
+                    f"answers {prior_name}, which does not stand "
+                    f"in the record; the sequence is normative "
+                    f"(R40)")
+        if type_ in ("ASSEMBLY_JUDGED", "ASSEMBLY_PACKED"):
+            generated = self._generated_payload(assembly_id)
+            digest = assembly_record_hash(generated or {})
+            named = payload.get("record_hash")
+            if named != digest:
+                return (f"{type_} names record hash {named!r}; "
+                        f"the generated assembly's canonical "
+                        f"hash is {digest} — the act must name "
+                        f"the exact object it answers (R37)")
+            if type_ == "ASSEMBLY_PACKED" and \
+                    named != entry.get("judged_hash"):
+                return ("the pack names a different object "
+                        "than the judgement it answers; a "
+                        "judgement of a changed assembly is "
+                        "stale and seals nothing (R37)")
+        if type_ == "ASSEMBLY_PACKED":
+            generated = self._generated_payload(assembly_id)
+            bound = self._event_at(
+                (generated or {}).get("onboarding_seq"))
+            declaration = (bound or {}).get("payload", {}).get(
+                "declaration")
+            expected = instance_credential_fingerprint(
+                instance_id, declaration,
+                entry.get("case_id"), entry.get("case_version"))
+            if payload.get("credential_fingerprint") != expected:
+                return ("the pack's credential fingerprint "
+                        "does not match the fingerprint of the "
+                        "instance's established declaration, its "
+                        "instance id and its case binding (R38)")
+        if type_ == "INSTANCE_ACTIVATED" and \
+                not entry.get("grants_present"):
+            return ("the assembly record carries no grants "
+                    "section; an instance does not activate "
+                    "without one — the shape must exist before "
+                    "an instance lives (R39)")
+        return None
+
+    def _assembly_generated_problem(self, state, payload):
+        """Why an ASSEMBLY_GENERATED may not be recorded, or
+        None (Piece A1, R37/R38): the assembly and its instance
+        are new (ids are never reused); the record binds to the
+        exact proposal it answers and to the exact instance
+        onboarding that precedes it — by position and by the
+        declaration's fingerprint, identity claims living only
+        in the onboarding event; the case binding names the
+        seat's effective case; skills are pinned by name and
+        version; grants, when present, are grant-shaped data
+        (their enforcement is a later piece)."""
+        assembly_id = payload.get("assembly_id")
+        instance_id = payload.get("instance_id")
+        if assembly_id in state["assemblies"]:
+            return (f"assembly {assembly_id} already stands "
+                    f"generated; a changed assembly is a new "
+                    f"assembly, never a rewrite (R37)")
+        for entry in state["assemblies"].values():
+            if entry.get("instance_id") == instance_id:
+                return (f"instance {instance_id} already "
+                        f"belongs to another assembly; instance "
+                        f"ids are never reused (R38)")
+            if entry.get("onboarding_seq") == \
+                    payload.get("onboarding_seq"):
+                return ("the onboarding is already bound to "
+                        "another assembly; the binding is "
+                        "one-to-one (R38)")
+        proposal = self._event_at(payload.get("proposal_seq"))
+        if proposal is None or \
+                proposal["type"] != "ASSEMBLY_PROPOSED":
+            return (f"proposal_seq "
+                    f"{payload.get('proposal_seq')!r} names no "
+                    f"standing ASSEMBLY_PROPOSED; a generation "
+                    f"answers an exact proposal (R40)")
+        if proposal["payload"].get("seat") not in (
+                None, payload.get("seat")):
+            return ("the proposal names a different seat slot "
+                    "than the assembly fills (R37)")
+        bound = self._event_at(payload.get("onboarding_seq"))
+        if bound is None or bound["type"] != "ONBOARDING" or \
+                bound["payload"].get("subject") != "instance":
+            return (f"onboarding_seq "
+                    f"{payload.get('onboarding_seq')!r} names "
+                    f"no instance onboarding; the generated "
+                    f"record binds to the exact onboarding event "
+                    f"(R38)")
+        ob = bound["payload"]
+        if ob.get("instance_id") != instance_id or \
+                ob.get("assembly_id") != assembly_id:
+            return ("the bound onboarding names a different "
+                    "instance or assembly than the generated "
+                    "record (R38)")
+        if not proposal["event_seq"] < bound["event_seq"]:
+            return ("the instance's onboarding follows the "
+                    "proposal it answers; the sequence is "
+                    "normative (R40)")
+        if payload.get("declaration_fingerprint") != \
+                declaration_fingerprint(
+                    instance_id, ob.get("declaration")):
+            return ("the record's declaration fingerprint "
+                    "does not match the bound onboarding's "
+                    "declaration (R38)")
+        eff = effective_case(state, payload.get("seat"))
+        if eff is None:
+            return (f"no issued case stands for seat "
+                    f"{payload.get('seat')}; an assembly binds "
+                    f"to a case (R37)")
+        if eff["case_id"] != payload.get("case_id") or \
+                eff["version"] != payload.get("case_version"):
+            return (f"the case binding names "
+                    f"{payload.get('case_id')} version "
+                    f"{payload.get('case_version')}; the "
+                    f"seat's effective case is {eff['case_id']} "
+                    f"version {eff['version']} (R37)")
+        skills = payload.get("skills")
+        if not isinstance(skills, list) or any(
+                not isinstance(s, dict) or not s.get("name")
+                or not s.get("version") for s in skills):
+            return ("the assembly record pins its skills by "
+                    "name and version (R37)")
+        grants = payload.get("grants")
+        if grants is not None and (
+                not isinstance(grants, list) or any(
+                    not isinstance(g, dict) or not g.get("tool")
+                    for g in grants)):
+            return ("grants, when present, are a list of "
+                    "grant objects naming their tool (R44's "
+                    "shape, as data; enforcement is a later "
+                    "piece)")
         return None
 
     def _assembly_proposal_problem(self, state, payload):
