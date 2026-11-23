@@ -1,0 +1,591 @@
+"""Focused witness for the Groq connector transport
+(live-demo/groq_connector_transport.py) — the W1–W8
+witnesses of GROQ-TRANSPORT-SCOPE-2026-11-23.md Rev 2
+(INDEX 229-231), exercised against STUB helpers written
+to a temp dir, plus the real Groq helper's own timeout
+function imported as a module (W6b). The real provider
+is never called by this suite; the one live route
+verification is a separate, single call recorded in
+groq-route-verification.json.
+
+W1 request fidelity — the body the helper receives is
+   the adapter's own construction, byte for byte.
+W2 deadline enforcement — a never-answering helper is
+   terminated at the established deadline, termination
+   confirmed, no_response.
+W3 unconfirmable termination -> transport_unresolved.
+W4 helper error exit -> provider_error, diagnostics
+   bounded at the 2000-character limit.
+W5 malformed helper output -> malformed_response,
+   never a fabricated answer; an error body ->
+   provider_error.
+W6a the helper receives the effective remaining
+   allowance as GROQ_API_TIMEOUT (the INDEX 215 checks
+   re-run against the new route).
+W6b the REAL helper's own timeout behaviour:
+   request_timeout() honours a finite positive
+   GROQ_API_TIMEOUT and falls back to 120 for unset /
+   unparseable / non-positive / non-finite values; and
+   at the transport level the outer deadline terminates
+   the helper even when a longer internal timeout was
+   requested in the parent environment (the transport
+   supplies the remaining allowance, never a fresh
+   duration, and its bound is the hard wall).
+W7 timing stages published after success and after
+   failure, unreached stages null, the communicate span
+   labelled inseparable in its own data.
+W8 the identity-pin refusal path: the harness's own
+   comparison code, and a full harness subprocess run
+   whose stub route reports a different model id — the
+   run aborts before activation, the mismatch recorded
+   in report.json, and the record carries no
+   INSTANCE_ACTIVATED event.
+Route selection: unset -> NVIDIA, "groq" -> Groq, any
+   other non-empty value refuses (unit level), and a
+   harness subprocess with a typo'd WORKER_ROUTE exits
+   non-zero having staged nothing.
+
+Run: PYTHONPATH=src python3 \
+    live-demo/test_groq_connector_transport.py
+Exits 0 when every check passes.
+"""
+
+import hashlib
+import importlib.util
+import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+sys.path.insert(0, os.path.join(ROOT, "src"))
+sys.path.insert(0, HERE)
+
+from framework.adapter import (AdapterFailure,  # noqa: E402
+                               OpenAICompatibleAdapter)
+import groq_connector_transport  # noqa: E402
+from groq_connector_transport import (  # noqa: E402
+    install_groq_connector_transport)
+import first_worker_run as harness  # noqa: E402
+
+PIN = "openai/gpt-oss-120b"
+FAILURES = []
+
+
+def check(name, cond, detail=""):
+    print(("PASS  " if cond else "FAIL  ") + name +
+          (("  " + detail) if detail else ""))
+    if not cond:
+        FAILURES.append(name)
+
+
+DECLARATION = ("I am StubModel 1.0, provided by "
+               "StubProvider for tests.")
+YIELD_CONTENT = json.dumps(
+    {"outcome": "yield", "summary": "the stub stands"})
+STUB_OK = '''\
+import json, os, sys
+raw = sys.stdin.buffer.read()
+rec = os.environ.get("STUB_RECORD")
+if rec:
+    with open(rec, "wb") as fh:
+        fh.write(raw)
+envrec = os.environ.get("STUB_ENVFILE")
+if envrec:
+    with open(envrec, "w") as fh:
+        fh.write(os.environ.get("GROQ_API_TIMEOUT",
+                                "<unset>"))
+if b"State your identity" in raw:
+    content = %r
+else:
+    content = %r
+print(json.dumps({
+    "id": "chatcmpl-stub", "model": %r,
+    "choices": [{"index": 0, "message": {
+        "role": "assistant", "content": content}}]}))
+''' % (DECLARATION, YIELD_CONTENT, PIN)
+
+STUB_SLEEP = '''\
+import json, os, sys, time
+pidfile = os.environ.get("STUB_PIDFILE")
+if pidfile:
+    with open(pidfile, "w") as fh:
+        fh.write(str(os.getpid()))
+envrec = os.environ.get("STUB_ENVFILE")
+if envrec:
+    with open(envrec, "w") as fh:
+        fh.write(os.environ.get("GROQ_API_TIMEOUT",
+                                "<unset>"))
+sys.stdin.buffer.read()
+time.sleep(10)
+print(json.dumps({
+    "id": "chatcmpl-stub", "model": %r,
+    "choices": [{"index": 0, "message": {
+        "role": "assistant", "content": %r}}]}))
+''' % (PIN, YIELD_CONTENT)
+
+STUB_ERROR = '''\
+import sys
+sys.stdin.buffer.read()
+sys.stderr.write("E" * 5000)
+sys.exit(3)
+'''
+
+STUB_NOTJSON = '''\
+import sys
+sys.stdin.buffer.read()
+print("this is not json at all")
+'''
+
+STUB_NOCHOICES = '''\
+import json, sys
+sys.stdin.buffer.read()
+print(json.dumps({"model": %r, "unexpected": True}))
+''' % PIN
+
+STUB_ERRORBODY = '''\
+import json, sys
+sys.stdin.buffer.read()
+print(json.dumps({"error": {"message": "provider says no",
+                             "code": "stub_error"}}))
+'''
+
+STUB_WRONG_MODEL = '''\
+import json, sys
+raw = sys.stdin.buffer.read()
+if b"State your identity" in raw:
+    content = %r
+else:
+    content = %r
+print(json.dumps({
+    "id": "chatcmpl-stub", "model": "some/other-model",
+    "choices": [{"index": 0, "message": {
+        "role": "assistant", "content": content}}]}))
+''' % (DECLARATION, YIELD_CONTENT)
+
+TMP = tempfile.mkdtemp(prefix="groq-transport-witness-")
+PATHS = {}
+for name, body in (("ok", STUB_OK), ("sleep", STUB_SLEEP),
+                   ("error", STUB_ERROR),
+                   ("notjson", STUB_NOTJSON),
+                   ("nochoices", STUB_NOCHOICES),
+                   ("errorbody", STUB_ERRORBODY),
+                   ("wrongmodel", STUB_WRONG_MODEL)):
+    p = os.path.join(TMP, f"stub_{name}.py")
+    with open(p, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    PATHS[name] = p
+RECORD = os.path.join(TMP, "last_request.json")
+ENVFILE = os.path.join(TMP, "helper_timeout.txt")
+
+
+def pid_dead(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    return False
+
+
+def failure_of(adapter, messages=None):
+    try:
+        adapter._call(messages or
+                      [{"role": "user", "content": "hello"}])
+    except AdapterFailure as failure:
+        return failure
+    return None
+
+
+# -- W1: request fidelity + the success path.
+os.environ["STUB_RECORD"] = RECORD
+adapter = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+install_groq_connector_transport(adapter, PATHS["ok"], PIN)
+MESSAGES = [{"role": "system", "content": "s"},
+            {"role": "user", "content": "u"}]
+content, pmid = adapter._call(MESSAGES)
+check("W1: _call returns the stub's content unaltered",
+      content == YIELD_CONTENT)
+check("W1: _call returns the provider-reported model id "
+      "unaltered", pmid == PIN)
+with open(RECORD, "rb") as fh:
+    raw_sent = fh.read()
+expected_body = json.dumps(
+    {"model": PIN, "messages": MESSAGES,
+     "temperature": 0.2}).encode("utf-8")
+check("W1: the body the helper received is the adapter's "
+      "own construction, byte for byte",
+      raw_sent == expected_body)
+sent = json.loads(raw_sent.decode("utf-8"))
+check("W1: the body carries exactly the adapter's own "
+      "fields (model, messages, temperature)",
+      set(sent) == {"model", "messages", "temperature"})
+check("W1: the body names the pinned model",
+      sent.get("model") == PIN)
+check("W1: the messages cross verbatim",
+      sent.get("messages") == MESSAGES)
+os.environ.pop("STUB_RECORD", None)
+
+# -- W2: deadline enforcement, confirmed termination.
+PIDFILE = os.path.join(TMP, "sleeper.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE
+adapter2 = OpenAICompatibleAdapter(model=PIN, timeout=1.0)
+install_groq_connector_transport(adapter2, PATHS["sleep"],
+                                 PIN)
+t0 = time.monotonic()
+failure2 = failure_of(adapter2)
+elapsed2 = time.monotonic() - t0
+check("W2: expiry raises no_response",
+      failure2 is not None and
+      failure2.kind == "no_response",
+      f"kind={getattr(failure2, 'kind', None)}")
+check("W2: the call returned in well under the stub's "
+      "10s sleep", elapsed2 < 4.0, f"elapsed={elapsed2:.2f}s")
+with open(PIDFILE, encoding="utf-8") as fh:
+    pid2 = int(fh.read().strip())
+check("W2: the helper pid is confirmed dead afterwards "
+      "(gone and reaped, not abandoned)", pid_dead(pid2),
+      f"pid={pid2}")
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- W3: unconfirmable termination -> transport_unresolved.
+PIDFILE3 = os.path.join(TMP, "sleeper3.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE3
+adapter3 = OpenAICompatibleAdapter(model=PIN, timeout=1.0)
+install_groq_connector_transport(adapter3, PATHS["sleep"],
+                                 PIN)
+real_killpg = groq_connector_transport._killpg
+
+
+def broken_killpg(pgid, sig):
+    raise OSError("patched: process-group kill unavailable")
+
+
+groq_connector_transport._killpg = broken_killpg
+try:
+    failure3 = failure_of(adapter3)
+finally:
+    groq_connector_transport._killpg = real_killpg
+check("W3: unconfirmable termination raises the distinct "
+      "kind transport_unresolved, never no_response",
+      failure3 is not None and
+      failure3.kind == "transport_unresolved",
+      f"kind={getattr(failure3, 'kind', None)}")
+try:
+    with open(PIDFILE3, encoding="utf-8") as fh:
+        pid3 = int(fh.read().strip())
+    os.kill(pid3, signal.SIGKILL)
+    deadline = time.monotonic() + 3.0
+    while time.monotonic() < deadline:
+        try:
+            done, _ = os.waitpid(pid3, os.WNOHANG)
+            if done == pid3:
+                break
+        except ChildProcessError:
+            break
+        if pid_dead(pid3):
+            break
+        time.sleep(0.05)
+    print(f"cleanup: unresolved stub pid {pid3} killed, "
+          f"dead={pid_dead(pid3)}")
+except Exception as exc:
+    print(f"cleanup warning: {exc}")
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- W4: helper error exit -> provider_error, bounded.
+adapter4 = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+install_groq_connector_transport(adapter4, PATHS["error"],
+                                 PIN)
+failure4 = failure_of(adapter4)
+check("W4: a non-zero helper exit raises provider_error",
+      failure4 is not None and
+      failure4.kind == "provider_error",
+      f"kind={getattr(failure4, 'kind', None)}")
+check("W4: the detail names the helper's exit",
+      failure4 is not None and
+      "connector helper exited 3" in (failure4.detail or ""))
+check("W4: diagnostics are bounded at the 2000-char "
+      "limit despite a 5000-char stderr",
+      failure4 is not None and
+      len(failure4.detail or "") <=
+      len("connector helper exited 3: ") + 2000,
+      f"detail_len={len((failure4.detail or '')) if failure4 else None}")
+
+# -- W5: malformed output, never a fabricated answer.
+adapter5 = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+install_groq_connector_transport(adapter5,
+                                 PATHS["notjson"], PIN)
+failure5 = failure_of(adapter5)
+check("W5: non-JSON helper output raises "
+      "malformed_response",
+      failure5 is not None and
+      failure5.kind == "malformed_response",
+      f"kind={getattr(failure5, 'kind', None)}")
+adapter5b = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+install_groq_connector_transport(adapter5b,
+                                 PATHS["nochoices"], PIN)
+failure5b = failure_of(adapter5b)
+check("W5: a JSON body with no message content raises "
+      "malformed_response",
+      failure5b is not None and
+      failure5b.kind == "malformed_response",
+      f"kind={getattr(failure5b, 'kind', None)}")
+adapter5c = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+install_groq_connector_transport(adapter5c,
+                                 PATHS["errorbody"], PIN)
+failure5c = failure_of(adapter5c)
+check("W5: an OpenAI-style error body raises "
+      "provider_error, not malformed",
+      failure5c is not None and
+      failure5c.kind == "provider_error",
+      f"kind={getattr(failure5c, 'kind', None)}")
+
+# -- W6a: the helper receives the effective remaining
+# allowance (INDEX 215 re-run against the Groq route).
+os.environ["STUB_ENVFILE"] = ENVFILE
+adapter6 = OpenAICompatibleAdapter(model=PIN, timeout=30.0)
+install_groq_connector_transport(adapter6, PATHS["ok"], PIN)
+adapter6._begin_deadline(budget=2.0)
+time.sleep(1.0)  # ~half the budget elapses before _call
+adapter6._call([{"role": "user", "content": "hello"}])
+with open(ENVFILE, encoding="utf-8") as fh:
+    raw6a = fh.read().strip()
+try:
+    value6a = float(raw6a)
+except ValueError:
+    value6a = None
+check("W6a: the helper's environment carries a numeric "
+      "GROQ_API_TIMEOUT", value6a is not None,
+      f"raw={raw6a!r}")
+check("W6a: under a partially elapsed deadline the value "
+      "is the recomputed remaining allowance (~1s), not "
+      "the configured span (30s) and not the budget (2s)",
+      value6a is not None and 0.4 < value6a < 1.6,
+      f"value={value6a}")
+adapter6b = OpenAICompatibleAdapter(model=PIN, timeout=7.0)
+install_groq_connector_transport(adapter6b, PATHS["ok"],
+                                 PIN)
+adapter6b._call([{"role": "user", "content": "hello"}])
+with open(ENVFILE, encoding="utf-8") as fh:
+    raw6b = fh.read().strip()
+try:
+    value6b = float(raw6b)
+except ValueError:
+    value6b = None
+check("W6a: with no established deadline the helper "
+      "receives the fallback bound — the configured "
+      "timeout, undiminished but for launch moments",
+      value6b is not None and 6.0 < value6b <= 7.0,
+      f"value={value6b}")
+os.environ.pop("STUB_ENVFILE", None)
+
+# -- W6b: the REAL helper's own timeout behaviour.
+HELPER_PATH = os.path.expanduser(
+    "~/workspace/custom-connectors/custom.groq/bin/"
+    "groq_api.py")
+with open(HELPER_PATH, "rb") as fh:
+    helper_sha = hashlib.sha256(fh.read()).hexdigest()
+print(f"evidence: modified groq_api.py sha256={helper_sha}")
+spec = importlib.util.spec_from_file_location(
+    "groq_api_witness", HELPER_PATH)
+helper_mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helper_mod)
+saved_env = os.environ.get("GROQ_API_TIMEOUT")
+CASES = [(None, 120), ("300", 300.0), ("250.5", 250.5),
+         ("abc", 120), ("-5", 120), ("0", 120),
+         ("nan", 120), ("inf", 120)]
+for raw, expected in CASES:
+    if raw is None:
+        os.environ.pop("GROQ_API_TIMEOUT", None)
+    else:
+        os.environ["GROQ_API_TIMEOUT"] = raw
+    got = helper_mod.request_timeout()
+    check(f"W6b: request_timeout() with GROQ_API_TIMEOUT="
+          f"{raw!r} -> {expected}", got == expected,
+          f"got={got}")
+if saved_env is None:
+    os.environ.pop("GROQ_API_TIMEOUT", None)
+else:
+    os.environ["GROQ_API_TIMEOUT"] = saved_env
+with open(HELPER_PATH, encoding="utf-8") as fh:
+    helper_src = fh.read()
+check("W6b: the helper source carries the caller-derived "
+      "treatment (request_timeout + GROQ_API_TIMEOUT, the "
+      "hardcoded 120 sole survivor as the default)",
+      "def request_timeout()" in helper_src and
+      "GROQ_API_TIMEOUT" in helper_src and
+      "timeout=request_timeout()" in helper_src)
+# W6b transport level: a longer internal timeout requested
+# in the parent environment does not extend the call —
+# the transport supplies the remaining allowance and its
+# own bound terminates the helper at the deadline.
+os.environ["GROQ_API_TIMEOUT"] = "999"
+os.environ["STUB_ENVFILE"] = ENVFILE
+PIDFILE6B = os.path.join(TMP, "sleeper6b.pid")
+os.environ["STUB_PIDFILE"] = PIDFILE6B
+adapter6c = OpenAICompatibleAdapter(model=PIN, timeout=1.0)
+install_groq_connector_transport(adapter6c, PATHS["sleep"],
+                                 PIN)
+t0 = time.monotonic()
+failure6c = failure_of(adapter6c)
+elapsed6c = time.monotonic() - t0
+os.environ.pop("GROQ_API_TIMEOUT", None)
+check("W6b: with a longer internal timeout requested, "
+      "expiry at the outer deadline still raises "
+      "no_response",
+      failure6c is not None and
+      failure6c.kind == "no_response",
+      f"kind={getattr(failure6c, 'kind', None)}")
+check("W6b: the helper was terminated at the outer "
+      "deadline, well under its requested 999s",
+      elapsed6c < 4.0, f"elapsed={elapsed6c:.2f}s")
+with open(ENVFILE, encoding="utf-8") as fh:
+    raw6c = fh.read().strip()
+try:
+    value6c = float(raw6c)
+except ValueError:
+    value6c = None
+check("W6b: the transport supplied the remaining "
+      "allowance (~1s), never the requested fresh 999s",
+      value6c is not None and 0.0 < value6c < 1.6,
+      f"value={value6c}")
+os.environ.pop("STUB_ENVFILE", None)
+os.environ.pop("STUB_PIDFILE", None)
+
+# -- W7: timing stages.
+adapter7 = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+call7 = install_groq_connector_transport(
+    adapter7, PATHS["ok"], PIN)
+check("W7: before any call the timings attribute stands "
+      "as None", call7.last_call_timings is None)
+adapter7._call([{"role": "user", "content": "hello"}])
+t7 = call7.last_call_timings
+check("W7: a completed call leaves every stage measured",
+      isinstance(t7, dict) and
+      all(isinstance(t7[k], float) for k in (
+          "body_preparation_s", "helper_launch_s",
+          "submission_provider_wait_receipt_s",
+          "response_parsing_s")),
+      detail=f"timings={t7}")
+check("W7: the communicate span is labelled inseparable "
+      "in its own data",
+      t7 is not None and
+      "inseparable" in t7[
+          "submission_provider_wait_receipt_note"])
+adapter7b = OpenAICompatibleAdapter(model=PIN, timeout=0.5)
+call7b = install_groq_connector_transport(
+    adapter7b, PATHS["sleep"], PIN)
+failure7b = failure_of(adapter7b)
+t7b = call7b.last_call_timings
+check("W7: on the expiry path the stages reached stand "
+      "measured and parsing stands None",
+      failure7b is not None and
+      failure7b.kind == "no_response" and
+      isinstance(t7b, dict) and
+      isinstance(t7b["submission_provider_wait_receipt_s"],
+                 float) and
+      t7b["response_parsing_s"] is None,
+      detail=f"kind={getattr(failure7b, 'kind', None)} "
+             f"timings={t7b}")
+
+# -- Route selection (unit level, the harness's own code).
+check("route: unset WORKER_ROUTE resolves to the NVIDIA "
+      "route", harness.resolve_worker_route(None) ==
+      "nvidia" and harness.resolve_worker_route("") ==
+      "nvidia")
+check("route: 'groq' resolves to the Groq route",
+      harness.resolve_worker_route("groq") == "groq")
+try:
+    harness.resolve_worker_route("grop")
+    route_raised = False
+except ValueError:
+    route_raised = True
+check("route: any other non-empty value refuses",
+      route_raised)
+
+# -- Route selection (harness subprocess): a typo refuses
+# before anything is staged.
+suffix_route = "witnessroute"
+route_dir = os.path.join(ROOT, "live-demo",
+                         f"first-worker-{suffix_route}")
+shutil.rmtree(route_dir, ignore_errors=True)
+env_route = dict(os.environ, WORKER_ROUTE="grop")
+proc_route = subprocess.run(
+    [sys.executable,
+     os.path.join(HERE, "first_worker_run.py"),
+     suffix_route],
+    capture_output=True, text=True, env=env_route, cwd=ROOT)
+check("route: a harness run with WORKER_ROUTE=grop exits "
+      "non-zero", proc_route.returncode != 0,
+      f"rc={proc_route.returncode}")
+check("route: the refused run staged nothing (its run "
+      "directory was never created)",
+      not os.path.exists(route_dir))
+
+# -- W8: the identity-pin refusal path.
+check("W8: the harness pin comparison accepts an exact "
+      "match", harness.check_model_pin(PIN, PIN) is True)
+try:
+    harness.check_model_pin("some/other-model", PIN)
+    pin_raised = False
+except harness.ModelPinMismatchError:
+    pin_raised = True
+check("W8: the harness pin comparison raises on a "
+      "mismatch", pin_raised)
+suffix_w8 = "witnessw8"
+w8_dir = os.path.join(ROOT, "live-demo",
+                      f"first-worker-{suffix_w8}")
+shutil.rmtree(w8_dir, ignore_errors=True)
+env_w8 = dict(os.environ, WORKER_ROUTE="groq",
+              GROQ_HELPER_PATH=PATHS["wrongmodel"],
+              ADAPTER_TIMEOUT="10")
+proc_w8 = subprocess.run(
+    [sys.executable,
+     os.path.join(HERE, "first_worker_run.py"), suffix_w8],
+    capture_output=True, text=True, env=env_w8, cwd=ROOT)
+check("W8: a harness run whose route reports a different "
+      "model id exits non-zero", proc_w8.returncode != 0,
+      f"rc={proc_w8.returncode} "
+      f"stderr={proc_w8.stderr.strip()[:200]}")
+report8 = None
+report8_path = os.path.join(w8_dir, "report.json")
+if os.path.exists(report8_path):
+    with open(report8_path, encoding="utf-8") as fh:
+        report8 = json.load(fh)
+check("W8: the abort and its reason stand in report.json "
+      "(mismatch recorded, no activation performed)",
+      report8 is not None and
+      report8.get("aborted") is True and
+      report8.get("provider_model_id") ==
+      "some/other-model" and
+      report8.get("pinned_model") == PIN and
+      report8.get("activation_performed") is False,
+      f"report={report8}")
+export8_path = os.path.join(w8_dir, "run-export.json")
+event_types8 = []
+if os.path.exists(export8_path):
+    with open(export8_path, encoding="utf-8") as fh:
+        event_types8 = [e["type"] for e in
+                        json.load(fh)["events"]]
+check("W8: the record carries no INSTANCE_ACTIVATED "
+      "event — the run stopped before activation",
+      "INSTANCE_ACTIVATED" not in event_types8 and
+      len(event_types8) > 0,
+      f"events={event_types8}")
+check("W8: no worker call followed the mismatch (no "
+      "LOOP_ITERATION in the record)",
+      "LOOP_ITERATION" not in event_types8)
+shutil.rmtree(w8_dir, ignore_errors=True)
+
+shutil.rmtree(TMP, ignore_errors=True)
+print()
+if FAILURES:
+    print(f"{len(FAILURES)} FAILURES")
+    sys.exit(1)
+print("ALL PASS")

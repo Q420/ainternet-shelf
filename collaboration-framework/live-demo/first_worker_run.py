@@ -89,12 +89,83 @@ from framework.record import (CONSTITUTION_HASH,  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from connector_transport import (  # noqa: E402
     install_connector_transport)
+from groq_connector_transport import (  # noqa: E402
+    install_groq_connector_transport)
 
 RUN_ID = "run-first-worker-1"
 MODEL_DEFAULT = "moonshotai/kimi-k3.1-pro"
 CONNECTOR_HELPER = os.path.expanduser(
     "~/workspace/custom-connectors/custom.nvidia/bin/"
     "nvidia_api.py")
+
+# The Groq route (GROQ-TRANSPORT-SCOPE-2026-11-23.md Rev 2,
+# INDEX 228-231): selected by WORKER_ROUTE=groq, with the
+# model pinned — no fallback, no alias, no automatic
+# selection. The helper path is overridable via
+# GROQ_HELPER_PATH so witnesses can substitute a stub.
+GROQ_CONNECTOR_HELPER = os.path.expanduser(
+    "~/workspace/custom-connectors/custom.groq/bin/"
+    "groq_api.py")
+GROQ_MODEL_PIN = "openai/gpt-oss-120b"
+GROQ_ENDPOINT = ("https://api.groq.com/openai/v1/chat/"
+                 "completions")
+
+
+def resolve_worker_route(raw):
+    """Route selection, fail-closed (INDEX 230, correction
+    3): unset or empty preserves the existing NVIDIA route;
+    "groq" selects the Groq route; any other non-empty
+    value is refused — a typo must never silently change
+    the experiment by falling back to NVIDIA."""
+    if raw is None or raw == "":
+        return "nvidia"
+    if raw == "groq":
+        return "groq"
+    raise ValueError(
+        f"WORKER_ROUTE={raw!r} is not a recognised route "
+        f"(expected unset for the NVIDIA route, or 'groq'); "
+        f"refusing to run")
+
+
+class ModelPinMismatchError(Exception):
+    """The provider-reported model id does not equal the
+    pinned model id (INDEX 230, correction 2): a
+    pre-activation stop, never a silent substitution."""
+
+    def __init__(self, provider_model_id, pinned_model):
+        super().__init__(
+            f"provider-reported model id "
+            f"{provider_model_id!r} does not match the "
+            f"pinned model {pinned_model!r}")
+        self.provider_model_id = provider_model_id
+        self.pinned_model = pinned_model
+
+
+def check_model_pin(provider_model_id, pinned_model):
+    """The identity pin comparison, factored so the
+    witness drives the real code path: returns True on an
+    exact match, raises ModelPinMismatchError otherwise."""
+    if provider_model_id != pinned_model:
+        raise ModelPinMismatchError(provider_model_id,
+                                    pinned_model)
+    return True
+
+
+def make_pinned_identify(adapter, pinned_model):
+    """Wrap the adapter's identify() with the pin stop:
+    the identity result is compared against the pin the
+    moment it is known — inside generation, before any
+    onboarding is recorded and long before activation —
+    and a mismatch raises ModelPinMismatchError, so no
+    activation and no worker call can follow it."""
+    def _identify():
+        identity = adapter.identify()
+        provider_model_id = identity.get(
+            "provider_model_id") if isinstance(
+                identity, dict) else None
+        check_model_pin(provider_model_id, pinned_model)
+        return identity
+    return _identify
 BOUNDS = {"step_ceiling": 12, "deadline_seconds": 600}
 TRACE = ("Ben's ruling 2026-11-23 (a modest real assignment "
          "before A4); FIRST-WORKER-RUN-SCOPE-2026-11-23.md "
@@ -264,6 +335,15 @@ def export_store(store_path, out_path):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    # Route selection first, before any staging or assembly
+    # work (INDEX 230, correction 3): an invalid value
+    # refuses outright and nothing is staged.
+    try:
+        route = resolve_worker_route(
+            os.environ.get("WORKER_ROUTE"))
+    except ValueError as exc:
+        print(f"ABORT: {exc}", file=sys.stderr)
+        return 2
     name = "first-worker" + (f"-{argv[0]}" if argv else "")
     run_dir = os.path.join(ROOT, "live-demo", name)
     store_path = os.path.join(run_dir, "run.db")
@@ -383,16 +463,35 @@ def main(argv=None):
     # deadline behaviour are unchanged; only _call's
     # transport is replaced, under the examiner's
     # cancellation boundary (connector_transport.py).
-    adapter = OpenAICompatibleAdapter(
-        endpoint=os.environ.get(
-            "ADAPTER_ENDPOINT",
-            "https://integrate.api.nvidia.com/v1/chat/"
-            "completions"),
-        model=os.environ.get("ADAPTER_MODEL", MODEL_DEFAULT),
-        timeout=float(os.environ.get("ADAPTER_TIMEOUT",
-                                     "120")))
-    install_connector_transport(adapter, CONNECTOR_HELPER,
-                                adapter.model)
+    if route == "groq":
+        # The Groq route: the model is PINNED (the pin
+        # overrides ADAPTER_MODEL for the run) and the
+        # transport is the Groq twin, through the Groq
+        # connector helper (GROQ_HELPER_PATH overridable
+        # for witnesses).
+        adapter = OpenAICompatibleAdapter(
+            endpoint=os.environ.get("ADAPTER_ENDPOINT",
+                                    GROQ_ENDPOINT),
+            model=GROQ_MODEL_PIN,
+            timeout=float(os.environ.get("ADAPTER_TIMEOUT",
+                                         "120")))
+        install_groq_connector_transport(
+            adapter,
+            os.environ.get("GROQ_HELPER_PATH",
+                           GROQ_CONNECTOR_HELPER),
+            adapter.model)
+    else:
+        adapter = OpenAICompatibleAdapter(
+            endpoint=os.environ.get(
+                "ADAPTER_ENDPOINT",
+                "https://integrate.api.nvidia.com/v1/chat/"
+                "completions"),
+            model=os.environ.get("ADAPTER_MODEL",
+                                 MODEL_DEFAULT),
+            timeout=float(os.environ.get("ADAPTER_TIMEOUT",
+                                         "120")))
+        install_connector_transport(adapter, CONNECTOR_HELPER,
+                                    adapter.model)
 
     # 4. ASSEMBLE — the full A1 lifecycle. identify() is the
     # adapter's own identity call; skills are honestly empty
@@ -403,11 +502,48 @@ def main(argv=None):
                                   "source documents and write "
                                   "a short, accurate, "
                                   "plain-words brief")
+    identify_callable = adapter.identify
+    if route == "groq":
+        identify_callable = make_pinned_identify(
+            adapter, GROQ_MODEL_PIN)
     try:
         generated = gen.generate(
-            tok["orch-1"], "crew-1", adapter.identify,
+            tok["orch-1"], "crew-1", identify_callable,
             skills=[], grants=GRANTS,
             model_requested=adapter.model)
+    except ModelPinMismatchError as mismatch:
+        # The pre-activation stop (INDEX 230, correction 2):
+        # record the abort and its reason, export the record
+        # as it stands (no activation event in it), and exit
+        # non-zero. No activation, no worker call.
+        events_now = store.all_events()
+        export_store(store_path,
+                     os.path.join(run_dir, "run-export.json"))
+        abort_report = {
+            "kind": "first generated-worker run harness "
+                    "abort (derived matter, not record)",
+            "run_id": RUN_ID,
+            "worker_route": route,
+            "model_pinned": GROQ_MODEL_PIN,
+            "model_requested": adapter.model,
+            "manifest_hash": manifest_hash,
+            "aborted": True,
+            "abort_stage": "pre-activation identity pin",
+            "abort_reason": str(mismatch),
+            "provider_model_id": mismatch.provider_model_id,
+            "pinned_model": mismatch.pinned_model,
+            "activation_performed": any(
+                e["type"] == "INSTANCE_ACTIVATED"
+                for e in events_now),
+            "event_count": len(events_now),
+        }
+        with open(os.path.join(run_dir, "report.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(abort_report, fh, indent=1)
+        print(f"ABORT: model identity pin mismatch: "
+              f"{mismatch}; the run stops before activation",
+              file=sys.stderr)
+        return 1
     except AdapterFailure as failure:
         print(f"ABORT: the identity call failed "
               f"({failure.kind}: {failure.detail}); the "
@@ -472,6 +608,9 @@ def main(argv=None):
                 "(derived matter, not record)",
         "run_id": RUN_ID,
         "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+        "worker_route": route,
+        "model_pinned": (GROQ_MODEL_PIN if route == "groq"
+                         else None),
         "model_requested": adapter.model,
         "manifest_hash": manifest_hash,
         "manifest": manifest,

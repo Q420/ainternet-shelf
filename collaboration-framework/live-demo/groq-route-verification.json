@@ -1,0 +1,23 @@
+{
+ "kind": "groq route verification (route evidence only \u2014 no assembly, no activation, no worker run)",
+ "note": "Single tiny call through the real Groq connector helper under the pinned model, per GROQ-TRANSPORT-SCOPE-2026-11-23.md Rev 2. Route evidence only.",
+ "pinned_model": "openai/gpt-oss-120b",
+ "helper": "/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py",
+ "wall_time_s": 1.164,
+ "helper_exit_code": 0,
+ "provider_reported_model_id": "openai/gpt-oss-120b",
+ "usage": {
+  "queue_time": 0.196023889,
+  "prompt_tokens": 78,
+  "prompt_time": 0.002912984,
+  "completion_tokens": 46,
+  "completion_time": 0.096211764,
+  "total_tokens": 124,
+  "total_time": 0.099124748,
+  "completion_tokens_details": {
+   "reasoning_tokens": 36
+  }
+ },
+ "content": "ready",
+ "identity_matches_pin": true
+}
