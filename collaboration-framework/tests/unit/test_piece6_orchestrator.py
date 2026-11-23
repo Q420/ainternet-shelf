@@ -476,6 +476,61 @@ check("T11 after v2 acknowledgement: cased, not pre-ack",
       "c-v2post" not in st["pre_ack"].get("B", [])
       and "c-v2post" not in st["uncased"].get("B", []))
 
+# -- T12 (correction round 2): the effective version is
+# selected per case lineage BEFORE part coverage — a semantic
+# correction that moves the case to another part retires the
+# old version's coverage of its old part entirely.
+store, d, tok = fresh(gates=FULL_GATES)
+open_run(d, store, tok)
+outcome(d, store, tok, "B", "allow")
+outcome(d, store, tok, "C", "allow")
+CASE_M1 = {"case_id": "case-m", "version": 1, "seat": "crew-1",
+           "part": "B", "assignment": "Build B",
+           "evidence_boundary": [], "verification_list": ["chk"],
+           "account": "crew-1", "authority": "crew defaults"}
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-m", "version": 1})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-m", "version": 1})
+A(d, store, tok["orch-1"], "CASE_ISSUED", dict(CASE_M1))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-m", "version": 1})
+contrib(d, store, tok, "crew-1", "c-m1", "B")
+st = d.state()
+check("T12 under v1 (part B, acknowledged): cased for B",
+      "c-m1" not in st["uncased"].get("B", [])
+      and "c-m1" not in st["pre_ack"].get("B", []))
+CASE_M2 = dict(CASE_M1, version=2, part="C",
+               assignment="Build C", representational=False)
+A(d, store, tok["orch-1"], "CASE_CORRECTED", dict(CASE_M2))
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-m", "version": 2})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-m", "version": 2})
+A(d, store, tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-m", "version": 2})
+contrib(d, store, tok, "crew-1", "c-m2b", "B")
+contrib(d, store, tok, "crew-1", "c-m2c", "C")
+st = d.state()
+check("T12 the superseded version no longer covers B: the "
+      "contribution is uncased for B",
+      "c-m2b" in st["uncased"].get("B", [])
+      and "c-m2b" not in st["pre_ack"].get("B", []))
+check("T12 the effective version covers C, unacknowledged: "
+      "cased and pre-ack for C",
+      "c-m2c" in st["pre_ack"].get("C", [])
+      and "c-m2c" not in st["uncased"].get("C", []))
+check("T12 the v1-era contribution keeps its provenance",
+      "c-m1" not in st["uncased"].get("B", [])
+      and "c-m1" not in st["pre_ack"].get("B", []))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-m", "version": 2})
+contrib(d, store, tok, "crew-1", "c-m3c", "C")
+st = d.state()
+check("T12 after v2 acknowledgement: cased for C, not pre-ack",
+      "c-m3c" not in st["pre_ack"].get("C", [])
+      and "c-m3c" not in st["uncased"].get("C", []))
+
 print()
 if FAILURES:
     print(f"PIECE 6 ORCHESTRATOR TESTS: {len(FAILURES)} FAILURE(S): "

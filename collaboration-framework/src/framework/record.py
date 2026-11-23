@@ -313,30 +313,41 @@ def _case_status_at(state, seat_id, part):
     Returns (cased, acknowledged).
 
     The version that governs is the EFFECTIVE one at this
-    position (§3.8 correction round 1): among the seat's issued
-    versions whose content names the part, the highest version
-    (a later issuance of the same version rank breaks the tie).
-    A superseding version's unacknowledged state is the
-    contribution's state — an earlier version's acknowledgement
-    does not carry forward onto its successor."""
+    position, selected the way the driver's effective case is
+    (§3.8 correction rounds 1–2): within each of the seat's
+    case lineages, the highest issued version is that lineage's
+    effective version — selected BEFORE any question of part
+    coverage, so a superseding version that moved the case to
+    another part retires the old version's coverage entirely
+    rather than leaving it effective for its old part. A
+    contribution is cased when some lineage's effective version
+    covers its part (the latest-issued such version governs),
+    and its acknowledgement state is that version's own — an
+    earlier version's acknowledgement never carries forward."""
     best = None
     for case_id, entry in state["cases"].items():
         if entry.get("seat") != seat_id:
             continue
+        effective = None
         for vstr, ver in entry["versions"].items():
-            content = ver.get("content") or {}
-            if content.get("part") != part:
-                continue
             if not version_issued(ver, int(vstr)):
                 continue
             version = int(vstr)
-            if best is None or version > best[0] or (
-                    version == best[0]
-                    and ver["issued"] > best[1]["issued"]):
-                best = (version, ver)
+            if effective is None or version > effective[0] or (
+                    version == effective[0]
+                    and ver["issued"] > effective[1]["issued"]):
+                effective = (version, ver)
+        if effective is None:
+            continue
+        ver = effective[1]
+        content = ver.get("content") or {}
+        if content.get("part") != part:
+            continue
+        if best is None or ver["issued"] > best["issued"]:
+            best = ver
     if best is None:
         return False, False
-    ver = best[1]
+    ver = best
     ack_seq = ver.get("acknowledged", {}).get(seat_id)
     acknowledged = ack_seq is not None and \
         ver.get("issued") is not None and \
