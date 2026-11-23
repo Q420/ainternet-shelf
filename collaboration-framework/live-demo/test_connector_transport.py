@@ -59,7 +59,33 @@ to a temp dir. The real provider is never called.
    refuse the wait, and put the newly launched helper
    through the same cancellation procedure — no_response,
    the pid confirmed dead, no outcome, and still no
-   outcome ~3s later (no late result).
+   outcome ~3s later (no late result). The load-bearing
+   evidence is direct, not temporal
+   (VANE-CONNECTOR-TRANSPORT-WITNESS-EXAMINATION-2026-
+   11-23.md): the patched constructor returns a tracked
+   wrapper around the real process that records every
+   communicate() entry, so the test asserts outright
+   that no communicate entry ever carried the request
+   body — the wait was never entered. (The one entry
+   that does occur on this path is the post-termination
+   drain inside the cancellation procedure, which
+   carries no input.) The elapsed-time assertion is
+   retained only as a secondary sanity check: under the
+   original defect the stale-bound timeline (~2.5s)
+   would pass inside it, so timing alone cannot
+   distinguish the fix from the defect — the recorded
+   entry list can. A deterministic boundary sweep in
+   the same section drives creation delays of
+   0.4/0.8/1.0/1.2s against a 1.0s span under a
+   controlled monotonic clock (the module's _monotonic
+   alias, advanced only by the patched constructor)
+   and asserts the boundary fact from the recorded
+   entries per case: the wait is entered iff the
+   remainder at creation return is positive, with
+   exactly that remainder as its timeout; at remainder
+   exactly 0 it is never entered. The original
+   real-clock flow is retained alongside the sweep as
+   the physical companion.
 
 Run: PYTHONPATH=src python3 live-demo/test_connector_transport.py
 Exits 0 when every check passes.
@@ -390,7 +416,164 @@ check("7: the helper really was killed — the unresolved "
       "process", pid_dead(pid7), f"pid={pid7}")
 os.environ.pop("STUB_PIDFILE", None)
 
-# -- 8: process creation consumes the remaining deadline.
+# -- 8 (sweep): the creation/deadline boundary under a
+# controlled clock — deterministic, not sleep-based.
+# connector_transport reads the deadline clock through
+# its _monotonic alias; here it is patched to a fake
+# clock that ONLY the patched constructor advances, by
+# exactly the simulated creation delay, so each case
+# lands precisely on its side of the boundary:
+# remainder at creation return = span - delay, and the
+# wait must be entered iff that remainder is > 0, with
+# exactly the remainder as its timeout; at remainder
+# <= 0 the wait must never be entered and the shared
+# termination path must run instead. The deadline is
+# set directly in fake-clock units because the boundary
+# cases (notably delay == span, remainder exactly 0)
+# must be exact; the deadline's provenance through the
+# adapter's own _begin_deadline is witnessed by test 6.
+# The helpers are real subprocesses throughout, so the
+# termination and the pid's death stay physical facts.
+class FakeClock8:
+    """A monotonic clock that advances only when the
+    patched constructor says creation consumed time."""
+
+    def __init__(self, start):
+        self.now = start
+
+    def __call__(self):
+        return self.now
+
+    def advance(self, dt):
+        self.now += dt
+
+
+class TrackedProc8:
+    """A thin instrumented stand-in for the real
+    subprocess.Popen result, returned only by test 8's
+    patched constructors (the sweep and the real-clock
+    companion below). It records every communicate()
+    entry (input, timeout) before delegating, and
+    delegates the rest of the surface
+    connector_transport uses — pid, poll(), send_signal(),
+    returncode, stdin/stdout/stderr — faithfully to the
+    real process, so the module under test behaves
+    exactly as it does with an untracked process."""
+
+    def __init__(self, real):
+        self._real = real
+        self.communicate_calls = []
+
+    @property
+    def pid(self):
+        return self._real.pid
+
+    @property
+    def returncode(self):
+        return self._real.returncode
+
+    @property
+    def stdin(self):
+        return self._real.stdin
+
+    @property
+    def stdout(self):
+        return self._real.stdout
+
+    @property
+    def stderr(self):
+        return self._real.stderr
+
+    def poll(self):
+        return self._real.poll()
+
+    def send_signal(self, sig):
+        return self._real.send_signal(sig)
+
+    def communicate(self, input=None, timeout=None):
+        self.communicate_calls.append((input, timeout))
+        return self._real.communicate(input=input,
+                                      timeout=timeout)
+
+    def __getattr__(self, name):
+        # Anything beyond the surface above delegates to
+        # the real process unchanged.
+        return getattr(self._real, name)
+
+
+SPAN8S = 1.0
+real_monotonic8 = connector_transport._monotonic
+real_popen8s = connector_transport._Popen
+for delay8 in (0.4, 0.8, 1.0, 1.2):
+    clock8 = FakeClock8(5000.0)
+    adapter8s = OpenAICompatibleAdapter(model="stub/model-1",
+                                        timeout=30.0)
+    install_connector_transport(adapter8s, SLEEP_PATH,
+                                "stub/model-1")
+    adapter8s._deadline = clock8.now + SPAN8S
+    holder8s = {"proc": None, "result": None,
+                "failure": None}
+
+    def sweep_popen8(*args, _clock=clock8, _delay=delay8,
+                     _holder=holder8s, **kwargs):
+        _clock.advance(_delay)
+        proc = TrackedProc8(real_popen8s(*args, **kwargs))
+        _holder["proc"] = proc
+        return proc
+
+    connector_transport._monotonic = clock8
+    connector_transport._Popen = sweep_popen8
+    try:
+        holder8s["result"] = adapter8s._call(
+            [{"role": "user", "content": "hello"}])
+    except AdapterFailure as failure:
+        holder8s["failure"] = failure
+    finally:
+        connector_transport._monotonic = real_monotonic8
+        connector_transport._Popen = real_popen8s
+    proc8s = holder8s["proc"]
+    calls8s = (proc8s.communicate_calls
+               if proc8s is not None else [])
+    waits8s = [t for (inp, t) in calls8s if inp is not None]
+    drains8s = [t for (inp, t) in calls8s if inp is None]
+    remaining8 = SPAN8S - delay8
+    failure8s = holder8s["failure"]
+    tag8 = f"8: sweep delay={delay8:.1f}s"
+    check(f"{tag8} — no_response, no outcome",
+          failure8s is not None and
+          failure8s.kind == "no_response" and
+          holder8s["result"] is None,
+          f"remaining={remaining8:.1f} "
+          f"kind={getattr(failure8s, 'kind', None)}")
+    check(f"{tag8} — communicate entered iff the "
+          f"remainder was positive",
+          (len(waits8s) == 1) == (remaining8 > 0),
+          f"entered={len(waits8s) == 1} waits={waits8s}")
+    if remaining8 > 0:
+        check(f"{tag8} — the timeout communicate "
+              f"received is the computed remainder",
+              len(waits8s) == 1 and
+              abs(waits8s[0] - remaining8) < 0.01,
+              f"recorded={waits8s} "
+              f"expected~{remaining8:.2f}")
+    else:
+        check(f"{tag8} — communicate count is ZERO on "
+              f"the wait side: no body-carrying entry "
+              f"at all",
+              waits8s == [],
+              f"waits={waits8s}")
+    check(f"{tag8} — the shared termination path ran "
+          f"(exactly one post-confirmation drain entry) "
+          f"and the helper pid is dead",
+          drains8s == [2.0] and proc8s is not None and
+          pid_dead(proc8s.pid),
+          f"drains={drains8s} "
+          f"pid={getattr(proc8s, 'pid', None)}")
+
+# -- 8 (real-clock companion): the same boundary with
+# real time and a real subprocess — the physical
+# counterpart of the deterministic sweep above.
+# Process creation consumes the remaining deadline.
 # The constructor is patched to sleep ~1.5s before it
 # delegates, against a deadline with ~1.0s remaining at
 # call time. The pre-creation bound (~1.0s) passes the
@@ -398,6 +581,25 @@ os.environ.pop("STUB_PIDFILE", None)
 # deadline is gone. The wrapper must NOT hand the wait
 # the stale bound — it must terminate the newly launched
 # helper through the same cancellation procedure.
+#
+# The load-bearing evidence is DIRECT, not temporal
+# (VANE-CONNECTOR-TRANSPORT-WITNESS-EXAMINATION-2026-
+# 11-23.md): the patched constructor returns a tracked
+# wrapper (TrackedProc8) around the real process that
+# records every communicate() entry — whether it carried
+# the request body, and with what timeout — before
+# delegating. Under the original defect, the wait WOULD
+# have been entered with the stale pre-creation bound:
+# the body-carrying timeout list would read [~1.0]. The
+# assertion that this list is EMPTY is what distinguishes
+# the fix from the defect; the elapsed-time check below
+# is kept only as a secondary sanity check, because the
+# defective timeline (~1.5s creation + ~1.0s stale wait
+# + termination ~= 2.5s) passes inside its window.
+# The one communicate entry that legitimately occurs on
+# this path is the drain inside the cancellation
+# procedure (no input, 2.0s), which happens only after
+# termination has been confirmed — it is not the wait.
 PIDFILE8 = os.path.join(TMP, "sleeper8.pid")
 os.environ["STUB_PIDFILE"] = PIDFILE8
 adapter8 = OpenAICompatibleAdapter(model="stub/model-1",
@@ -410,7 +612,7 @@ holder8 = {"proc": None, "result": None, "failure": None}
 
 def slow_popen8(*args, **kwargs):
     time.sleep(1.5)  # creation eats the remaining deadline
-    proc = real_popen8(*args, **kwargs)
+    proc = TrackedProc8(real_popen8(*args, **kwargs))
     holder8["proc"] = proc
     return proc
 
@@ -436,9 +638,25 @@ check("8: creation consuming the deadline raises "
       f"kind={getattr(failure8, 'kind', None)}")
 check("8: no outcome was produced",
       holder8["result"] is None)
-check("8: the helper was not granted the stale bound past "
-      "the deadline — total elapsed stays close to the "
-      "deadline and well under the stub's 10s",
+calls8 = (proc8.communicate_calls if proc8 is not None
+          else [])
+wait_timeouts8 = [t for (inp, t) in calls8
+                  if inp is not None]
+check("8: communicate was never entered as the wait — "
+      "zero recorded entries carried the request body "
+      "(under the stale-bound defect this list would "
+      "hold the ~1.0s stale bound)",
+      proc8 is not None and wait_timeouts8 == [],
+      f"body-carrying timeouts={wait_timeouts8}")
+check("8: every recorded communicate entry is the "
+      "post-termination drain (no input, 2.0s) — the "
+      "wait appears nowhere in the record",
+      proc8 is not None and
+      all(inp is None and t == 2.0 for (inp, t) in calls8),
+      f"entries={[(inp is None, t) for (inp, t) in calls8]}")
+check("8: timing sanity (secondary only — the "
+      "defective ~2.5s timeline would also pass this "
+      "window): total elapsed well under the stub's 10s",
       (t_end8 - t_begin8) < SPAN8 + 4.0,
       f"from-deadline={t_end8 - t_begin8:.2f}s")
 check("8: the helper really was launched (creation was "

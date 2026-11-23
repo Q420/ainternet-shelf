@@ -118,6 +118,16 @@ _killpg = os.killpg
 # creation consume the remaining deadline).
 _Popen = subprocess.Popen
 
+# The monotonic clock, likewise a module-level alias so
+# the witness can substitute a controlled clock and drive
+# the deadline boundary deterministically (test 8's
+# sweep). connector_call reads the deadline clock only
+# through this alias; under the real clock the behaviour
+# is identical. (_terminate_and_confirm deliberately
+# keeps the real clock: its windows govern physical
+# process death, not the adapter's deadline.)
+_monotonic = time.monotonic
+
 _TERM_GRACE_SECONDS = 1.0
 _CONFIRM_WINDOW_SECONDS = 5.0
 _POLL_SECONDS = 0.02
@@ -246,7 +256,7 @@ def install_connector_transport(adapter, helper_path, model):
         # deadline is a direct _call outside any public
         # operation (the witness does this); then the
         # adapter's configured timeout is the bound.
-        call_started = time.monotonic()
+        call_started = _monotonic()
         established = getattr(adapter, "_deadline", None)
         if established is not None:
             bound = established - call_started
@@ -278,9 +288,9 @@ def install_connector_transport(adapter, helper_path, model):
         # is measured from this call's start, so creation
         # time counts against it the same way.
         if established is not None:
-            remaining = established - time.monotonic()
+            remaining = established - _monotonic()
         else:
-            remaining = bound - (time.monotonic()
+            remaining = bound - (_monotonic()
                                  - call_started)
         if remaining <= 0:
             # The deadline expired during process creation:
