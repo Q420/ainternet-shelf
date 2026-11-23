@@ -1,0 +1,68 @@
+{
+ "kind": "live-run harness report (derived matter, not record)",
+ "run_id": "run-live-1",
+ "seats_live": [
+  "crew-a",
+  "crew-b"
+ ],
+ "seats_conducted_by_operator": [
+  "orch-1",
+  "exam-1",
+  "dir-1"
+ ],
+ "onboarding": {
+  "crew-a": {
+   "declaration": "I\u2019m Kimi, an AI assistant developed by Moonshot AI (\u6708\u4e4b\u6697\u9762). My underlying model is a large language model trained by Moonshot AI. I can\u2019t confirm a specific model version from this chat, so I won\u2019t invent one.\n\nI can help explain concepts, answer questions, summarize and analyze provided material, draft and edit text, translate, brainstorm, plan, write and debug code, and reason through problems step by step. I can participate in this run as an AI collaborator, using the context and tools available here.\n\nMy limits are that I\u2019m not human, I don\u2019t have independent agency outside this chat or its provided tools, and I may not retain memory across sessions unless the host system supports it. My knowledge can be incomplete or out of date, and I can make mistakes, especially with ambiguous instructions, niche topics, or current events. Code, calculations, and high-stakes factual, legal, medical, or financial outputs should be verified.",
+   "provider_model_id": "moonshotai/kimi-k3.1-pro",
+   "identity_status": "declared",
+   "note": "two attributed claims, recorded verbatim; no comparison verdict is recorded in the run record"
+  },
+  "crew-b": {
+   "declaration": "I\u2019m Kimi, an AI assistant developed and provided by Moonshot AI (\u6708\u4e4b\u6697\u9762). My foundation is a large language model trained by Moonshot AI. I don\u2019t have a reliable exact deployment version to state, so I won\u2019t invent one.\n\nI can help with explanation, reasoning, writing and editing, summarization, translation, brainstorming, programming, debugging, code review, and analyzing information you provide. I can adapt my tone and format to the task and work collaboratively through a problem.\n\nMy limits are that I can be wrong, incomplete, or outdated, especially on recent or obscure topics. I don\u2019t inherently have access to private systems, personal data, or real-time information unless the environment provides it. I may lack persistent memory beyond the current conversation unless the product supplies it. I can\u2019t act in the world independently except through tools made available to me, and important outputs should be verified.",
+   "provider_model_id": "moonshotai/kimi-k3.1-pro",
+   "identity_status": "declared",
+   "note": "two attributed claims, recorded verbatim; no comparison verdict is recorded in the run record"
+  }
+ },
+ "wakes": [
+  {
+   "seat": "crew-a",
+   "woke": true,
+   "failed": null,
+   "recorded": [
+    "CONTRIBUTION"
+   ],
+   "refused": []
+  },
+  {
+   "seat": "crew-b",
+   "woke": true,
+   "failed": null,
+   "recorded": [
+    "CONTRIBUTION"
+   ],
+   "refused": []
+  }
+ ],
+ "completion": {
+  "steps": [
+   "completion claim: not attempted \u2014 a crew seat's own claim is an act the response contract does not elicit, and the harness manufactures no acts",
+   "route stopped: readiness declared with no crew completion claim standing in the record; the declaration answers the claim record, never replaces it (\u00a73.8)"
+  ]
+ },
+ "end_state": "commissioned",
+ "gate_steps": [
+  "judgement gate B: allow (recorded before waking crew-b)"
+ ],
+ "checker": {
+  "run_binding": "ok",
+  "chain_hash": "ok",
+  "chain_sequence": "ok",
+  "replay": "ok",
+  "projection_schema": "ok",
+  "snapshot_schema": "ok",
+  "replay_equality": "ok",
+  "seal_correspondence": "ok"
+ },
+ "observer_rendered_to": "/home/hatch/workspace/collaboration-framework/scripts/../live-demo/run.html"
+}

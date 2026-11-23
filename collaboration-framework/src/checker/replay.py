@@ -132,7 +132,8 @@ def _shape_problem(ev):
         if need_str("seat_id"):
             return "ONBOARDING requires a seat_id string"
         for key in ("identity_status", "declaration", "capability",
-                    "limits", "terms_ref", "attestation_ref"):
+                    "limits", "terms_ref", "attestation_ref",
+                    "provider_model_id"):
             if bad_opt_str(key):
                 return f"ONBOARDING {key} is not a string"
         if bad_opt("terms_acknowledged",
@@ -385,6 +386,7 @@ def _apply(state, ev):
         if rec is None:
             state["onboarding"][seat] = {
                 "declaration": p.get("declaration"),
+                "provider_model_id": p.get("provider_model_id"),
                 "identity_status": p.get("identity_status",
                                          "unverified"),
                 "capability": p.get("capability"),

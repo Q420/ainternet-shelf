@@ -109,7 +109,8 @@ SCHEMA = _obj({
     "seats": _map(_obj({
         "role": _STR, "identity_status": _STR})),
     "onboarding": _map(_obj({
-        "declaration": _opt(_STR), "identity_status": _STR,
+        "declaration": _opt(_STR),
+        "provider_model_id": _opt(_STR), "identity_status": _STR,
         "capability": _opt(_STR), "limits": _opt(_STR),
         "terms_acknowledged": _opt(_BOOL),
         "terms_ref": _opt(_STR),

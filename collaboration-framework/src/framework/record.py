@@ -402,6 +402,7 @@ def apply_event(state: dict, ev: dict) -> dict:
         if rec is None:
             state["onboarding"][seat] = {
                 "declaration": p.get("declaration"),
+                "provider_model_id": p.get("provider_model_id"),
                 "identity_status": p.get("identity_status",
                                          "unverified"),
                 "capability": p.get("capability"),

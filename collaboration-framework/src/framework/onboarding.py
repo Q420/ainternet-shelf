@@ -30,11 +30,15 @@ from .doorway import Doorway  # noqa: F401
 def onboard(doorway, orchestrator_token, seat_id, declaration,
             capability=None, limits=None, terms_acknowledged=None,
             terms_ref=None, identity_status="declared",
-            attestation_ref=None, view_seq=None):
+            attestation_ref=None, provider_model_id=None,
+            view_seq=None):
     """Record a seat's onboarding (R18-R19). The declaration is
     carried byte-for-byte; the doorway refuses a provider-confirmed
     claim that arrives without its attestation reference, and the
-    refusal is recorded."""
+    refusal is recorded. Piece 8 (A5): where a provider adapter
+    supplies the provider-reported model identifier, it is
+    recorded verbatim as its own attributed claim beside the
+    declaration — it never raises the identity status."""
     if view_seq is None:
         view_seq = doorway.state()["head_seq"]
     payload = {
@@ -48,6 +52,8 @@ def onboard(doorway, orchestrator_token, seat_id, declaration,
     }
     if attestation_ref is not None:
         payload["attestation_ref"] = attestation_ref
+    if provider_model_id is not None:
+        payload["provider_model_id"] = provider_model_id
     return doorway.act(orchestrator_token, "ONBOARDING", payload,
                        view_seq=view_seq)
 

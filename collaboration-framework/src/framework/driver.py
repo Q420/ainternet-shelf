@@ -34,6 +34,33 @@ arrive with §3.8's recorded form; no substitute event is invented
 here. The model is a callable — the piece's boundary; provider
 adapters (and real timeouts) are later work. No scheduler exists
 or may be added (R29): a wake cycle runs only when invoked.
+
+Piece 8 (the provider adapter) settles the boundary's shape:
+
+- The wake package carries the seat's **role** (A3), read from
+  the seat's binding — prompt context travels through the
+  boundary, never around it.
+- A boundary may return a TYPED outcome (A4): {"outcome":
+  "proposals", "proposals": [...]} or {"outcome": "decline",
+  "reason": ...}. A decline is a non-act: it returns as the
+  wake's outcome, is never flattened into an empty proposal
+  list, and nothing is submitted for it. A bare proposal list
+  (the Piece 4 shape) remains a proposals outcome. A boundary
+  failure raised as an exception carrying a `kind` attribute
+  (no_response / malformed_response / provider_error) is
+  recorded under the record's failure vocabulary; any other
+  exception is a provider_error, as before.
+- R32 is strict (A4/A9): at an acknowledgement-required wake
+  the first response must be the acknowledgement ALONE. Any
+  other first response — a contribution, or an acknowledgement
+  accompanied by further proposals — fails the wake as a
+  malformed-for-context driver failure: nothing is submitted,
+  nothing is held, nothing is carried into the second package.
+  The legacy path (submit the acknowledgement, set the rest
+  aside) does not survive. Symmetrically, an acknowledgement
+  offered for the governing case at a wake that does not
+  require one is refused in validation; as the response's sole
+  proposal it fails the wake the same way.
 """
 from .bubble import render_view
 from .doorway import DoorwayRefusal
@@ -145,6 +172,38 @@ def _validate_proposals(raw):
     return out
 
 
+# Piece 8 (A4): adapter failure kinds, mapped onto the record's
+# DRIVER_FAILURE vocabulary.
+_FAILURE_KINDS = {"no_response": "no_response",
+                  "malformed_response": "malformed_output",
+                  "provider_error": "provider_error"}
+
+
+def _failure_kind(exc):
+    return _FAILURE_KINDS.get(getattr(exc, "kind", None),
+                              "provider_error")
+
+
+def _resolve_outcome(raw):
+    """Resolve a boundary return into (kind, data): ("proposals",
+    [validated proposals]) / ("decline", reason) / ("malformed",
+    None). A typed outcome dict is the Piece 8 contract; a bare
+    list remains a proposals outcome (Piece 4)."""
+    if isinstance(raw, dict) and "outcome" in raw:
+        if raw["outcome"] == "decline":
+            reason = raw.get("reason")
+            return ("decline",
+                    reason if isinstance(reason, str) else "")
+        if raw["outcome"] == "proposals":
+            props = _validate_proposals(raw.get("proposals"))
+            return ("proposals", props) if props is not None \
+                else ("malformed", None)
+        return ("malformed", None)
+    props = _validate_proposals(raw)
+    return ("proposals", props) if props is not None \
+        else ("malformed", None)
+
+
 class Driver:
     def __init__(self, doorway, seat_id, token, model):
         self.doorway = doorway
@@ -212,6 +271,7 @@ class Driver:
                               if s["material_id"] in boundary]
         package = {
             "seat": seat,
+            "role": (state["seats"].get(seat) or {}).get("role"),
             "case": content,
             "case_id": case["case_id"],
             "case_version": case["version"],
@@ -222,12 +282,13 @@ class Driver:
 
         try:
             raw = self.model(package)
-        except Exception as exc:  # provider error (R13)
-            return self._fail("provider_error", part,
+        except Exception as exc:  # boundary failure (R13)
+            return self._fail(_failure_kind(exc), part,
                               detail=type(exc).__name__)
-        proposals = _validate_proposals(raw)
-        if proposals is None:
+        outcome, data = _resolve_outcome(raw)
+        if outcome == "malformed":
             return self._fail("malformed_output", part)
+        proposals = data if outcome == "proposals" else []
 
         # Every act is made under the effective case: stamp its
         # provenance where the model did not supply it (R32 —
@@ -238,6 +299,7 @@ class Driver:
                                             case["version"])
 
         result = {"seat": seat, "woke": True, "failed": None,
+                  "declined": None,
                   "case": case, "reasons": reasons,
                   "view_position": view["position"],
                   "recorded": [], "refused": [], "held": []}
@@ -255,23 +317,38 @@ class Driver:
                      "ground": refusal.ground})
                 return False
 
+        if outcome == "decline":
+            # A4: a decline is the wake's outcome — a non-act.
+            # Nothing is submitted for it, at either interaction,
+            # and no acknowledgement is recorded or replayed.
+            result["declined"] = data
+            return result
+
         if needs_ack:
-            # R32: the acknowledgement is the seat's own act. From
-            # this first package ONLY the acknowledgement may be
-            # recorded; every other proposal is held — and not
-            # carried over. Those proposals were made from this
-            # view; submitting them later under a fresh position
-            # would claim a basis the model never saw (R31,
-            # correction round 1, point 1).
-            ack_idx = [i for i, p in enumerate(proposals)
-                       if p["type"] == "CASE_ACKNOWLEDGED"
-                       and p["payload"].get("case_id") ==
-                       case["case_id"]
-                       and p["payload"].get("version") ==
-                       case["version"]]
-            result["held"] = [p["type"] for i, p in
-                              enumerate(proposals) if i not in ack_idx]
-            acked = any(submit(proposals[i]) for i in ack_idx)
+            # R32, as settled in Piece 8 (A4/A9): the first
+            # interaction is exclusively for the acknowledgement.
+            # The response must be the matching CASE_ACKNOWLEDGED
+            # ALONE. Anything else — a contribution, or an
+            # acknowledgement accompanied by further proposals —
+            # is malformed for this context: the wake fails as a
+            # driver failure, nothing is submitted, nothing is
+            # held, and nothing is carried into the second
+            # package. Those proposals were made from this view;
+            # submitting any of them later under a fresh position
+            # would claim a basis the model never saw (R31).
+            def _is_ack(p):
+                return p["type"] == "CASE_ACKNOWLEDGED" and \
+                    p["payload"].get("case_id") == case["case_id"] and \
+                    p["payload"].get("version") == case["version"]
+            if len(proposals) != 1 or not _is_ack(proposals[0]):
+                failed = self._fail(
+                    "malformed_output", part,
+                    detail="acknowledgement interaction: the first "
+                           "response must be the acknowledgement "
+                           "alone (R32)")
+                failed["recorded"] = result["recorded"]
+                return failed
+            acked = submit(proposals[0])
             if not acked:
                 return result
             # Second interaction: a fresh package at the new
@@ -289,6 +366,7 @@ class Driver:
             reasons2, _b = _wake_reasons(events2, state2, seat, case2)
             package2 = {
                 "seat": seat,
+                "role": (state2["seats"].get(seat) or {}).get("role"),
                 "case": case2["content"],
                 "case_id": case2["case_id"],
                 "case_version": case2["version"],
@@ -303,15 +381,21 @@ class Driver:
             try:
                 raw2 = self.model(package2)
             except Exception as exc:
-                failed = self._fail("provider_error", part,
+                # A6/R32: the recorded acknowledgement stands; the
+                # failure is reported without replaying it.
+                failed = self._fail(_failure_kind(exc), part,
                                     detail=type(exc).__name__)
                 failed["recorded"] = result["recorded"]
                 return failed
-            proposals2 = _validate_proposals(raw2)
-            if proposals2 is None:
+            outcome2, data2 = _resolve_outcome(raw2)
+            if outcome2 == "malformed":
                 failed = self._fail("malformed_output", part)
                 failed["recorded"] = result["recorded"]
                 return failed
+            if outcome2 == "decline":
+                result["declined"] = data2
+                return result
+            proposals2 = data2
             for proposal in proposals2:
                 proposal["payload"].setdefault("case_id",
                                                 case2["case_id"])
@@ -320,7 +404,28 @@ class Driver:
             for proposal in proposals2:
                 submit(proposal)
         else:
+            # A4: an acknowledgement for the governing case at a
+            # wake that does not require one is contextually
+            # invalid — refused in validation, never submitted.
+            # As the response's sole proposal it fails the wake.
+            def _is_ack(p):
+                return p["type"] == "CASE_ACKNOWLEDGED" and \
+                    p["payload"].get("case_id") == case["case_id"]
+            stray = [p for p in proposals if _is_ack(p)]
+            if stray and len(stray) == len(proposals):
+                failed = self._fail(
+                    "malformed_output", part,
+                    detail="acknowledgement offered where none is "
+                           "required (R32)")
+                failed["recorded"] = result["recorded"]
+                return failed
             for proposal in proposals:
+                if _is_ack(proposal):
+                    result["refused"].append(
+                        {"type": proposal["type"],
+                         "ground": "R32: no acknowledgement is "
+                                   "required at this wake"})
+                    continue
                 submit(proposal)
 
         # R31: on a staleness refusal the driver re-renders the

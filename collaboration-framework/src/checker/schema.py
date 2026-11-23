@@ -46,6 +46,7 @@ SCHEMA = {
             "identity_status": {"t": "str"}}}},
         "onboarding": {"t": "map", "v": {"t": "obj", "f": {
             "declaration": {"t": "opt", "v": {"t": "str"}},
+            "provider_model_id": {"t": "opt", "v": {"t": "str"}},
             "identity_status": {"t": "str"},
             "capability": {"t": "opt", "v": {"t": "str"}},
             "limits": {"t": "opt", "v": {"t": "str"}},
