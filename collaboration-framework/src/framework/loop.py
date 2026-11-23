@@ -84,7 +84,8 @@ import copy
 
 from .adapter import AdapterFailure
 from .bubble import render_view
-from .doorway import DoorwayRefusal
+from .doorway import (LOOP_ITERATION_DEADLINE_GROUND,
+                      DoorwayRefusal)
 from .record import EVENT_TYPES, fold
 
 __all__ = ["Loop"]
@@ -249,12 +250,23 @@ class Loop:
             iteration = ctx["iterations"] + 1
 
             # (iii) Record the iteration, with the package's
-            # exact cursor range, before the call.
+            # exact cursor range, before the call. The
+            # doorway's recording decision carries the
+            # deadline decision (correction round 1): where
+            # the deadline expired before the event could be
+            # recorded — a package whose construction carried
+            # the clock past expiry — the event is refused,
+            # no iteration is counted, and the loop answers
+            # with its deadline stall. Any other refusal is
+            # the machinery's own failure.
             try:
                 ev = doorway.record_loop_iteration(
                     ctx["assembly_id"], iteration,
                     ctx["cursor"], head)
             except DoorwayRefusal as refusal:
+                if refusal.ground == \
+                        LOOP_ITERATION_DEADLINE_GROUND:
+                    return self._stall(ctx, "deadline")
                 return self._stall(
                     ctx, "runtime_failure",
                     detail=f"the iteration could not be "
@@ -269,14 +281,26 @@ class Loop:
 
             # (iv) Invoke the callable, with the activation's
             # remaining budget as a call parameter — outside
-            # the package the model sees.
+            # the package the model sees. Once the iteration
+            # stands recorded, the callable is invoked for it
+            # (correction round 1): one iteration is one model
+            # call, so there is no path that records an
+            # iteration and then exits uncalled. The budget
+            # may already be exhausted by invocation time —
+            # the callable receives it as derived, and a
+            # callable that cannot begin within it does not
+            # begin (the adapter refuses an exhausted budget
+            # before any provider request); the loop answers
+            # that outcome with its deadline stall, below. The
+            # one exception is a budget that cannot be derived
+            # at all — the anchor failed between the recording
+            # decision and the call: no lawful budget exists
+            # to invoke under, and the stop is the machinery's.
             remaining, problem = doorway.activation_remaining(
                 ctx["instance_id"])
             if problem is not None:
                 return self._stall(ctx, "runtime_failure",
                                    detail=problem)
-            if remaining is not None and remaining <= 0:
-                return self._stall(ctx, "deadline")
             try:
                 raw = self.model(package, budget=remaining)
             except AdapterFailure as failure:
@@ -531,16 +555,17 @@ class Loop:
         request is collected and discards nothing independent
         of it.
 
-        An act's doorway view position is the record's head
-        as the act is submitted: the iteration event — the
-        loop's own bookkeeping, recorded between the package
-        freeze and adjudication by the sequence's order —
-        names the case in its payload, and the doorway's
-        subject rule (R31) would read it as the case changing
-        under every act the call produced. The model's basis
-        is a different fact from the act's doorway basis, and
-        the record keeps it exactly: it is the cursor range
-        the iteration event carries."""
+        An act's doorway view position is the frozen package
+        head — the view the model actually received, and the
+        close of the cursor range the iteration event carries
+        (Piece A3, correction round 1). Anything recorded
+        after the freeze — including the iteration event
+        itself, which is bookkeeping and not a subject change
+        under R31 — does not move the act's basis: the record
+        must not claim the act was made from a view the
+        worker never saw. A genuine subject change after the
+        freeze still refuses the act under R31, as it refuses
+        any seat's."""
         doorway = self.doorway
         for proposal in data["proposals"]:
             proposal["payload"].setdefault(
@@ -551,7 +576,7 @@ class Loop:
                 ev = doorway.act(
                     self.token, proposal["type"],
                     proposal["payload"],
-                    view_seq=doorway.store.head_seq())
+                    view_seq=ctx["cursor"])
                 ctx["recorded"].append(ev)
             except DoorwayRefusal as refusal:
                 ctx["refused"].append(

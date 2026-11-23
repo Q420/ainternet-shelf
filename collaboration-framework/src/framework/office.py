@@ -33,7 +33,8 @@ are never the office's to record.
 import copy
 
 from .doorway import (ACT_AUTHORITY, classify_case_change,
-                      established_case_content)
+                      established_case_content,
+                      loop_bounds_problem)
 from .record import CASE_CONTENT_FIELDS
 
 
@@ -79,7 +80,7 @@ class Office:
             authority = sorted(
                 t for t, roles in ACT_AUTHORITY.items()
                 if role in roles)
-        return {
+        content = {
             "case_id": self.case_id_for(seat_id),
             "version": 1,
             "seat": seat_id,
@@ -91,6 +92,16 @@ class Office:
             "evidence_boundary": self._sealed_for(seat_id),
             "authority": authority,
         }
+        # Piece A3 (R49, correction round 1): the loop bounds
+        # are case content like the rest — where the recorded
+        # brief names them, the draft carries them, so they
+        # reach the issued case through this route and no
+        # other. A brief without bounds produces a case
+        # without the field, exactly as before.
+        if brief.get("loop_bounds") is not None:
+            content["loop_bounds"] = copy.deepcopy(
+                brief["loop_bounds"])
+        return content
 
     # ---------------------------------------------------- preflight
     def preflight(self, content):
@@ -109,10 +120,20 @@ class Office:
             problems.append(
                 f"cases are issued to crew seats; {seat_id} is "
                 f"{(seats[seat_id] or {}).get('role')}")
-        for field in ("case_id", "version", "seat") + \
-                CASE_CONTENT_FIELDS:
+        # loop_bounds is the one optional content field (Piece
+        # A3): a case may lawfully carry none — no loop runs on
+        # it — so it is not an R14 grounding requirement. When
+        # present it must be well-formed; malformed bounds fail
+        # preflight whole, never silently stripped.
+        for field in ("case_id", "version", "seat") + tuple(
+                f for f in CASE_CONTENT_FIELDS
+                if f != "loop_bounds"):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
+        if content.get("loop_bounds") is not None:
+            problem = loop_bounds_problem(content["loop_bounds"])
+            if problem is not None:
+                problems.append(problem)
         tree = content.get("tree")
         part = content.get("part")
         if isinstance(tree, dict) and part is not None:
@@ -187,6 +208,15 @@ class Office:
                  "version": current_version + 1,
                  "seat": current.get("seat")}
         for field in CASE_CONTENT_FIELDS:
+            # loop_bounds rides forward only where it stands
+            # or is being set: a correction of a case that
+            # never carried bounds does not acquire a null
+            # field it never had (Piece A3, correction
+            # round 1).
+            if field == "loop_bounds" and \
+                    "loop_bounds" not in current and \
+                    "loop_bounds" not in changes:
+                continue
             draft[field] = copy.deepcopy(current.get(field))
         for field, value in changes.items():
             draft[field] = copy.deepcopy(value)

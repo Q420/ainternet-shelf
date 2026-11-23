@@ -63,6 +63,16 @@ LOOP_STALL_GROUNDS = ("step_ceiling", "deadline",
                       "provider_failure", "malformed_response",
                       "runtime_failure")
 
+# Piece A3 (correction round 1): the iteration route's
+# deadline refusal — a fixed ground text, held as a constant
+# so the loop can tell this refusal from every other: it is
+# the one refusal after which no iteration stands counted,
+# and the loop answers it with its deadline stall, not a
+# runtime failure.
+LOOP_ITERATION_DEADLINE_GROUND = (
+    "the activation deadline expired before the iteration "
+    "could be recorded; no iteration is counted (R49)")
+
 # §4 authority matrix — which roles may record which act types.
 # (Claim-status transitions are governed separately by R2; case
 # issue/correction by §3.5's three acts in their own piece — here the
@@ -145,11 +155,44 @@ def classify_case_change(old, new):
     """R16's classification, computed (Piece 5, addendum 1 §A): the
     diff between a case's established content and a proposed
     correction, over the six semantic fields (compared as seven
-    stored keys — tree and part are one semantic field). Returns
-    the list of changed keys; an empty list means the correction
-    is purely representational."""
+    stored keys — tree and part are one semantic field), plus —
+    Piece A3, correction round 1 — the loop_bounds key, which
+    classifies like any other content change. Returns the list
+    of changed keys; an empty list means the correction is
+    purely representational."""
     return [f for f in CASE_CONTENT_FIELDS
             if (old or {}).get(f) != (new or {}).get(f)]
+
+
+def loop_bounds_problem(bounds):
+    """Why a case's loop_bounds may not stand, or None (Piece
+    A3, R49; correction round 1). The bounds are optional — a
+    case carrying none (None here) is a case no loop runs on,
+    and that is lawful. When present they must be an object
+    with a step_ceiling that is a positive integer and a
+    deadline_seconds that is a positive number: the two values
+    the loop's bounds are made of. Malformed bounds are refused
+    at the office/doorway boundary, never silently stripped —
+    a stripped field would leave a case that looks unbounded
+    in a different way than it was issued."""
+    if bounds is None:
+        return None
+    if not isinstance(bounds, dict):
+        return ("loop_bounds is not an object; the loop's "
+                "bounds are a step ceiling and a deadline "
+                "(R49)")
+    ceiling = bounds.get("step_ceiling")
+    if isinstance(ceiling, bool) or \
+            not isinstance(ceiling, int) or ceiling <= 0:
+        return ("loop_bounds step_ceiling is not a positive "
+                "integer (R49)")
+    deadline = bounds.get("deadline_seconds")
+    if isinstance(deadline, bool) or \
+            not isinstance(deadline, (int, float)) or \
+            not deadline > 0:
+        return ("loop_bounds deadline_seconds is not a "
+                "positive number (R49)")
+    return None
 
 
 class DoorwayRefusal(Exception):
@@ -1051,7 +1094,12 @@ class Doorway:
         standing, unstalled activation; the count never
         exceeds the pinned ceiling; cursor ranges chain, each
         opening where the previous closed, closing no earlier
-        than it opens and no later than the record's head."""
+        than it opens and no later than the record's head. The
+        deadline decision is part of the recording decision
+        (correction round 1): the doorway derives the deadline
+        from its anchor here, inside the serialized boundary,
+        and refuses the event — counting no iteration — where
+        the deadline has already expired."""
         with self.store.serialized():
             state = self.state()
             entry = state["assemblies"].get(assembly_id)
@@ -1078,6 +1126,28 @@ class Doorway:
                     "the pinned case carries no loop bounds; "
                     "no loop runs and no iteration records "
                     "(R49)")
+            # Piece A3 (correction round 1): the deadline
+            # decision is part of this recording decision —
+            # derived here, from the anchor and the pinned
+            # bounds, inside the same serialized boundary as
+            # the append, so a package whose construction
+            # carried the clock past expiry cannot record an
+            # iteration after the deadline. An expired
+            # deadline refuses the event whole: no iteration
+            # stands counted, and the loop answers with its
+            # deadline stall. An anchor that cannot be
+            # established refuses likewise — fail closed, no
+            # substituted clock.
+            deadline, problem = self._activation_deadline(
+                state, entry)
+            if problem is not None:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id, problem)
+            if deadline is not None and \
+                    time.monotonic() >= deadline:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    LOOP_ITERATION_DEADLINE_GROUND)
             count = len(loop.get("iterations") or [])
             if iteration != count + 1:
                 self._loop_refuse(
@@ -1552,6 +1622,21 @@ class Doorway:
                                  f"at seq {view_seq} (R31)", view_seq)
             payload["stale_basis"] = True
 
+        # Piece A3 (correction round 1): instance provenance.
+        # An act presented under an instance credential is
+        # recorded with the instance it was presented under —
+        # the doorway knows the credential's instance, and the
+        # record carries it (as a tool request's payload
+        # carries its instance, R44) so the act is attributable
+        # to the instance and not only to the seat it fills.
+        # Without it, a stalled activation's later acts are
+        # indistinguishable from the seat's own lawful work.
+        # The doorway's identification governs: a payload
+        # naming another instance is overwritten, never
+        # trusted. An ordinary seat credential stamps nothing.
+        if presented is not None:
+            payload["instance_id"] = presented
+
         affected = []
         for key in ("subject_id", "claim_id", "contribution_id",
                     "case_id"):
@@ -1770,6 +1855,14 @@ class Doorway:
         if not any(f in payload for f in CASE_CONTENT_FIELDS) and \
                 "representational" not in payload:
             return None
+        # Piece A3 (correction round 1): bounds a correction
+        # carries must be well-formed to stand — refused here,
+        # at the doorway's own boundary, never silently
+        # stripped on the way into the record (R49).
+        if "loop_bounds" in payload:
+            problem = loop_bounds_problem(payload["loop_bounds"])
+            if problem is not None:
+                return problem
         entry = state["cases"].get(case_id) or {}
         named = (entry.get("versions") or {}).get(
             str(payload.get("version"))) or {}
@@ -2443,6 +2536,17 @@ class Doorway:
     def _subject_changed(self, subject, view_seq):
         for ev in self.store.all_events():
             if ev["event_seq"] <= view_seq:
+                continue
+            # Piece A3 (correction round 1): the loop's
+            # iteration bookkeeping is not a subject change.
+            # A LOOP_ITERATION event carries the case binding
+            # because it accounts a call made under that case —
+            # it changes no case content, and an act whose view
+            # precedes it is not stale about its subject for
+            # the bookkeeping's standing there. (A genuine
+            # change — a correction, a contribution touching
+            # the subject — still refuses, exactly as before.)
+            if ev["type"] == "LOOP_ITERATION":
                 continue
             if subject in ev["affected"]:
                 return True

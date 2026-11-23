@@ -21,7 +21,7 @@ position (scope Rev 4, C6). It never escapes as an exception.
 
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
-                       "account", "authority")
+                       "account", "authority", "loop_bounds")
 
 _STATUS_RANK = {"unverified": 0, "declared": 1,
                 "provider-confirmed": 2}

@@ -37,12 +37,13 @@ executor and the A2 sandbox registry:
   copies' agreement on the new state; replay executing
   nothing.
 
-One scaffolding note: the office's case routes carry only
-the R14 content fields, so a case carrying loop_bounds is
-established here by the recorded case acts themselves
-(CASE_VERIFIED with the full content, CASE_JUDGED,
-CASE_ISSUED) — the same acts the office submits, with the
-bounds field the content now names.
+Cases are established through the office's real route
+(generate → verify → judge → authorise, and correct for a
+correction): loop_bounds is case content (correction round
+1), named by the commission's recorded briefs, carried by
+office.generate into the issued case, and changed — where a
+test changes it — by office.correct. No case in this suite
+is established by hand-built content.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a3_loop.py
 Exits 0 when every check passes.
@@ -62,7 +63,6 @@ from framework import projection  # noqa: E402
 from framework.adapter import (AdapterFailure,  # noqa: E402
                                OpenAICompatibleAdapter)
 from framework.doorway import (Doorway, DoorwayRefusal,  # noqa: E402
-                               classify_case_change,
                                established_case_content)
 from framework.executor import Executor  # noqa: E402
 from framework.generator import Generator  # noqa: E402
@@ -108,10 +108,13 @@ def identify():
     return {"declaration": DECL, "provider_model_id": PROVIDER_ID}
 
 
-def fresh():
+def fresh(bounds=BOUNDS):
     path = os.path.join(tempfile.mkdtemp(), "run.db")
     store = FrameworkStore(path)
     store.insert_run("run-1", CONSTITUTION_HASH)
+    brief = dict(FULL)
+    if bounds is not None:
+        brief["loop_bounds"] = dict(bounds)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": "run-1",
         "tree": {"part-A": ["part-B"], "part-B": []},
@@ -127,7 +130,7 @@ def fresh():
             "crew-2": {"role": "crew",
                        "identity_status": "unverified"},
         },
-        "briefs": {"crew-1": dict(FULL), "crew-2": dict(FULL)},
+        "briefs": {"crew-1": dict(brief), "crew-2": dict(brief)},
     })
     store.commit()
     d = Doorway(store)
@@ -138,15 +141,14 @@ def fresh():
     return store, d, office, gen, tok
 
 
-def issue_case(d, office, tok, seat, bounds=None):
-    """Issue a case for a seat by the recorded case acts; with
-    bounds, the issued content carries loop_bounds (see the
-    scaffolding note in the module docstring)."""
-    content = office.generate(seat)
-    if bounds is not None:
-        content["loop_bounds"] = dict(bounds)
-    d.act(tok["orch-1"], "CASE_VERIFIED", content,
-          view_seq=d.store.head_seq())
+def issue_case(d, office, tok, seat):
+    """The Piece 5 route, as the A1 suite walks it: office
+    generation + verification (the draft assembled from the
+    recorded commission — loop_bounds included where the
+    brief names them), the examiner's judgement, the
+    orchestrator's authorisation."""
+    r = office.issue_new(tok["orch-1"], seat)
+    assert r["ok"], r
     d.act(tok["exam-1"], "CASE_JUDGED",
           {"case_id": f"case-{seat}", "version": 1},
           view_seq=d.store.head_seq())
@@ -154,11 +156,12 @@ def issue_case(d, office, tok, seat, bounds=None):
 
 
 def activate(store, d, office, gen, tok, seat="crew-1",
-             grants=GRANTS, bounds=BOUNDS):
+             grants=GRANTS):
     """The full A1 lifecycle for one seat slot, ending with an
-    activated instance whose pinned case carries the given
-    bounds; returns (generate_result, instance_token)."""
-    issue_case(d, office, tok, seat, bounds=bounds)
+    activated instance whose pinned case carries the bounds
+    fresh() commissioned; returns (generate_result,
+    instance_token)."""
+    issue_case(d, office, tok, seat)
     gen.propose(tok["orch-1"], seat, part="part-A",
                 role_requirements="a careful drafting model")
     r = gen.generate(tok["orch-1"], seat, identify,
@@ -362,10 +365,9 @@ check("T2: a provider failure stalls as provider_failure with "
       stalls[0]["actor"] == "loop")
 
 # -- T3: the step-ceiling stall, at exactly the ceiling.
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 2,
-                           "deadline_seconds": 60})
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 2, "deadline_seconds": 60})
+r, itok = activate(store, d, office, gen, tok)
 model = Script([contribute(cid="c-1"), contribute(cid="c-2"),
                 contribute(cid="c-3")])
 res = Loop(d, itok, model).run()
@@ -382,10 +384,9 @@ check("T3: the checker verifies the ceiling history",
       loop_check(store)["result"] == "ok")
 
 # -- T4: the deadline, enforced from the remaining budget.
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 5,
-                           "deadline_seconds": 0.3})
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.3})
+r, itok = activate(store, d, office, gen, tok)
 time.sleep(0.45)
 model = Script([contribute()])
 res = Loop(d, itok, model).run()
@@ -397,10 +398,9 @@ check("T4: a loop starting after expiry cannot begin — "
       events_of(store, "LOOP_STALLED")[0]["payload"]
       ["iterations"] == 0)
 
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 5,
-                           "deadline_seconds": 0.5})
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.5})
+r, itok = activate(store, d, office, gen, tok)
 
 
 def slow(package):
@@ -466,23 +466,21 @@ check("T4: a yield combined with anything is malformed whole "
 # -- T5: bounds pinning — a mid-activation correction carrying
 # larger bounds governs nothing; the pinned version's ceiling
 # stops the loop.
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 1,
-                           "deadline_seconds": 60})
-state = d.state()
-current, _v = established_case_content(state, "case-crew-1")
-draft = dict(current)
-draft["version"] = 2
-draft["loop_bounds"] = {"step_ceiling": 9,
-                        "deadline_seconds": 600}
-draft["representational"] = not classify_case_change(
-    current, draft)
-d.submit_pair(tok["orch-1"],
-              [("CASE_CORRECTED", draft),
-               ("CASE_VERIFIED", {"case_id": "case-crew-1",
-                                  "version": 2})],
-              view_seq=store.head_seq())
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 1, "deadline_seconds": 60})
+r, itok = activate(store, d, office, gen, tok)
+corr = office.correct(
+    tok["orch-1"], "case-crew-1",
+    {"loop_bounds": {"step_ceiling": 9,
+                     "deadline_seconds": 600}})
+check("T5: the correction rides the office's real route — "
+      "classified semantic on the bounds change, version 2 "
+      "established carrying the larger bounds",
+      corr["ok"] and corr["version"] == 2 and
+      corr["changed"] == ["loop_bounds"] and
+      established_case_content(d.state(), "case-crew-1")[0]
+      ["loop_bounds"] == {"step_ceiling": 9,
+                          "deadline_seconds": 600})
 model = Script([contribute(cid="c-1"), contribute(cid="c-2")])
 res = Loop(d, itok, model).run()
 iters = events_of(store, "LOOP_ITERATION")
@@ -500,10 +498,9 @@ check("T5: the checker verifies the pinned-bounds history "
 
 # -- T6: doorway temporal admission — derived by the doorway,
 # unforgeable by the caller.
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 5,
-                           "deadline_seconds": 0.4})
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.4})
+r, itok = activate(store, d, office, gen, tok)
 time.sleep(0.55)
 check("T6: after expiry the doorway refuses the dispatch and "
       "records the refusal — no dispatch stands",
@@ -543,8 +540,8 @@ check("T6: within budget, admission passes as before",
       res_ok["ok"] and len(events_of(store, "TOOL_DISPATCHED"))
       == 1)
 
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok, bounds=None)
+store, d, office, gen, tok = fresh(bounds=None)
+r, itok = activate(store, d, office, gen, tok)
 res_ok = d.request_tool(itok, "sandbox.write",
                         {"path": "notes/a.txt", "content": "x"},
                         "req-plain")
@@ -603,10 +600,9 @@ check("T8: with accounting closed the stall route records",
       d.record_loop_stalled(r["assembly_id"], "deadline")
       ["type"] == "LOOP_STALLED")
 
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 5,
-                           "deadline_seconds": 0.5})
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.5})
+r, itok = activate(store, d, office, gen, tok)
 ex, _sandbox, _claims = make_executor(d, deadline=2.0)
 model = Script([
     tool_req("sandbox.flaky",
@@ -744,8 +740,8 @@ check("T10: the checker verifies the cursor history",
 
 # -- T11: a case without bounds cannot loop; neither can a
 # seat credential or an unactivated instance.
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok, bounds=None)
+store, d, office, gen, tok = fresh(bounds=None)
+r, itok = activate(store, d, office, gen, tok)
 model = Script([contribute()])
 res = Loop(d, itok, model).run()
 check("T11: no bounds, no loop — refused before the first "
@@ -764,10 +760,9 @@ check("T11: a seat credential does not run a loop — the loop "
 # store recovers the anchor; the original deadline is
 # enforced, never re-based; the anchor binding removed,
 # admission closes.
-store, d, office, gen, tok = fresh()
-r, itok = activate(store, d, office, gen, tok,
-                   bounds={"step_ceiling": 5,
-                           "deadline_seconds": 0.8})
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.8})
+r, itok = activate(store, d, office, gen, tok)
 iid = r["instance_id"]
 d2 = Doorway(store)
 remaining2, problem2 = d2.activation_remaining(iid)
@@ -931,6 +926,244 @@ check("T15: the checker's replay of a loop history executes "
       tree_bytes(sandbox) == before and
       verdict["checks"]["loop_correspondence"]["result"] ==
       "ok")
+
+# -- T16 (correction round 1): the act's view basis is the
+# frozen package head — the view the model actually received.
+# (a) An unrelated contribution landing between the freeze
+# and adjudication does not refuse the act, and the act's
+# recorded basis is the frozen position, not the submission
+# head: it stands flagged stale_basis, where the submission
+# head would have recorded a fictional current basis.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+
+
+def step_unrelated(package):
+    d.act(tok["crew-2"], "CONTRIBUTION",
+          {"contribution_id": "c-other", "tree_part": "part-B",
+           "text": "another seat's work on another part"},
+          view_seq=store.head_seq())
+    return contribute(cid="c-1")
+
+
+res = Loop(d, itok, Script([step_unrelated, yield_()])).run()
+mine = [e for e in events_of(store, "CONTRIBUTION")
+        if e["payload"].get("contribution_id") == "c-1"]
+check("T16: an unrelated contribution between freeze and "
+      "submission does not refuse the act — it stands, made "
+      "from its frozen basis (flagged stale_basis, not "
+      "re-based to the submission head)",
+      res["ok"] and res["outcome"] == "yield" and
+      len(mine) == 1 and
+      mine[0]["payload"].get("stale_basis") is True and
+      any(e["payload"].get("contribution_id") == "c-other"
+          for e in events_of(store, "CONTRIBUTION")))
+check("T16: the checker verifies the frozen-basis history",
+      loop_check(store)["result"] == "ok")
+
+# (b) A genuine subject change between the freeze and
+# adjudication — the case itself corrected — still refuses
+# the act under R31, at the frozen view position.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+
+
+def step_correcting(package):
+    office.correct(tok["orch-1"], "case-crew-1",
+                   {"assignment": "Draft the A section — "
+                                  "revised"})
+    return contribute(cid="c-1")
+
+
+res = Loop(d, itok, Script([step_correcting, yield_()])).run()
+frozen_head = events_of(store, "LOOP_ITERATION")[0]["payload"][
+    "cursor_to"]
+r31 = [e for e in events_of(store, "REJECTION")
+       if e["payload"].get("attempted_type") == "CONTRIBUTION"
+       and "R31" in e["payload"].get("ground", "")]
+check("T16: a genuine subject change after the freeze "
+      "refuses the act under R31 — the contribution never "
+      "lands, and the refusal records the frozen view "
+      "position it was judged against",
+      res["ok"] and res["outcome"] == "yield" and
+      len(events_of(store, "CONTRIBUTION")) == 0 and
+      len(r31) == 1 and
+      r31[0]["payload"].get("view_seq") == frozen_head and
+      any("R31" in f.get("ground", "") for f in res["refused"]))
+
+# -- T17 (correction round 1): instance provenance — acts
+# under an instance credential are attributable to the
+# instance; after a stall they are refused, while the seat's
+# own acts are untouched, in the doorway and in the checker.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+iid = r["instance_id"]
+Loop(d, itok, Script([contribute(cid="c-1"), yield_()])).run()
+mine = [e for e in events_of(store, "CONTRIBUTION")
+        if e["payload"].get("contribution_id") == "c-1"]
+check("T17: an act recorded under the instance credential "
+      "carries the instance's provenance in the record",
+      len(mine) == 1 and
+      mine[0]["payload"].get("instance_id") == iid and
+      mine[0]["actor"] == "crew-1")
+
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+iid = r["instance_id"]
+res_r = d.request_tool(itok, "sandbox.write",
+                       {"path": "notes/a.txt", "content": "x"},
+                       "req-open")
+d.record_tool_outcome(res_r["dispatch_id"], "uncertain",
+                      detail="accounting witness")
+d.record_loop_stalled(r["assembly_id"], "deadline")
+check("T17: after the stall, the instance's own act is "
+      "refused and recorded, while the seat's own act — under "
+      "its plain credential, carrying no provenance — still "
+      "records",
+      refused(lambda: d.act(
+          itok, "CONTRIBUTION",
+          {"contribution_id": "late", "tree_part": "part-A",
+           "text": "too late", "case_id": "case-crew-1",
+           "case_version": 1}, view_seq=store.head_seq())) and
+      d.act(tok["crew-1"], "CONTRIBUTION",
+            {"contribution_id": "seat-work",
+             "tree_part": "part-A", "text": "the seat's own"},
+            view_seq=store.head_seq())["type"] == "CONTRIBUTION")
+check("T17: the checker accepts that history — the seat's "
+      "post-stall act is not the instance's activity",
+      loop_check(store)["result"] == "ok")
+store.append("CONTRIBUTION", "crew-1", ["case-crew-1"], {
+    "contribution_id": "sneaked", "tree_part": "part-A",
+    "text": "an instance act after its stall",
+    "case_id": "case-crew-1", "case_version": 1,
+    "instance_id": iid})
+store.commit()
+lc = loop_check(store)
+kinds = {p["kind"] for p in lc.get("problems", [])}
+check("T17: a hand-appended post-stall act carrying the "
+      "instance's provenance is divergent in the checker — "
+      "instance_act_after_stall — while the seat act above "
+      "was not flagged",
+      lc["result"] == "divergent" and
+      "instance_act_after_stall" in kinds)
+
+# -- T18 (correction round 1): loop_bounds through the real
+# case route — carried by generate into the issued case,
+# classified on correction, and refused malformed at the
+# office and doorway boundaries, never stripped.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+content, ver_no = established_case_content(d.state(),
+                                           "case-crew-1")
+check("T18: the issued case's content carries the brief's "
+      "loop_bounds — the office route delivered them, at "
+      "version 1",
+      ver_no == 1 and content.get("loop_bounds") == BOUNDS)
+head_before = store.head_seq()
+bad = office.correct(
+    tok["orch-1"], "case-crew-1",
+    {"loop_bounds": {"step_ceiling": 0,
+                     "deadline_seconds": 60}})
+bad2 = office.correct(
+    tok["orch-1"], "case-crew-1",
+    {"loop_bounds": {"step_ceiling": 3}})
+check("T18: malformed bounds are refused at the office "
+      "boundary — a zero ceiling and a missing deadline both "
+      "fail preflight, and nothing is appended for either",
+      not bad["ok"] and not bad2["ok"] and
+      any("loop_bounds" in p for p in bad["problems"]) and
+      any("loop_bounds" in p for p in bad2["problems"]) and
+      store.head_seq() == head_before)
+check("T18: malformed bounds are refused at the doorway "
+      "boundary too — a correction carrying them does not "
+      "record, and the refusal stands",
+      refused(lambda: d.act(
+          tok["orch-1"], "CASE_CORRECTED",
+          {"case_id": "case-crew-1", "version": 2,
+           "loop_bounds": {"step_ceiling": "five",
+                           "deadline_seconds": 60},
+           "representational": False},
+          view_seq=store.head_seq())) and
+      any("loop_bounds" in e["payload"].get("ground", "")
+          for e in events_of(store, "REJECTION")))
+
+# -- T19 (correction round 1): the iteration/deadline
+# boundary — expiry before the iteration event counts no
+# iteration; expiry after it still invokes the callable,
+# with the exhausted budget, and no provider request begins.
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.45})
+r, itok = activate(store, d, office, gen, tok)
+model = Script([contribute()])
+loop = Loop(d, itok, model)
+real_build = loop._build_package
+
+
+def slow_build(ctx):
+    time.sleep(0.6)
+    return real_build(ctx)
+
+
+loop._build_package = slow_build
+res = loop.run()
+stalls = events_of(store, "LOOP_STALLED")
+check("T19: package construction crossing the deadline "
+      "counts no iteration — the doorway's recording decision "
+      "refuses the event (recorded), the model is never "
+      "called, and the deadline stall stands at zero",
+      not res["ok"] and res["ground"] == "deadline" and
+      len(events_of(store, "LOOP_ITERATION")) == 0 and
+      len(model.calls) == 0 and len(stalls) == 1 and
+      stalls[0]["payload"]["iterations"] == 0 and
+      any(e["payload"].get("attempted_type") == "LOOP_ITERATION"
+          and "deadline" in e["payload"].get("ground", "")
+          for e in events_of(store, "REJECTION")))
+
+store, d, office, gen, tok = fresh(
+    bounds={"step_ceiling": 5, "deadline_seconds": 0.45})
+r, itok = activate(store, d, office, gen, tok)
+adapter = OpenAICompatibleAdapter(model="m", api_key="k")
+provider_calls = []
+
+
+def provider(messages):
+    provider_calls.append(messages)
+    return (json.dumps({"outcome": "yield",
+                        "summary": "standing"}), "m")
+
+
+adapter._call = provider
+budgets = []
+
+
+def expiring_model(package, budget=None):
+    budgets.append(budget)
+    return adapter(package, budget=budget)
+
+
+real_record = d.record_loop_iteration
+
+
+def record_then_expire(*args, **kwargs):
+    ev = real_record(*args, **kwargs)
+    time.sleep(0.6)
+    return ev
+
+
+d.record_loop_iteration = record_then_expire
+res = Loop(d, itok, expiring_model).run()
+stalls = events_of(store, "LOOP_STALLED")
+check("T19: expiry immediately after the iteration event "
+      "still invokes the callable — with the exhausted "
+      "budget — and the adapter begins no provider request; "
+      "the iteration stands counted and the stall is the "
+      "deadline's",
+      not res["ok"] and res["ground"] == "deadline" and
+      len(budgets) == 1 and budgets[0] is not None and
+      budgets[0] <= 0 and provider_calls == [] and
+      len(events_of(store, "LOOP_ITERATION")) == 1 and
+      len(stalls) == 1 and
+      stalls[0]["payload"]["iterations"] == 1)
 
 print()
 if FAILURES:

@@ -1102,11 +1102,14 @@ def _loop_result(events, state):
     # reported there; a delayed settlement of a standing
     # uncertainty is permitted and is not activity.)
     stall_by_instance = {}
+    seat_by_instance = {}
     for aid, ev in stalls.items():
         gen = generated.get(aid)
         if gen is not None:
             stall_by_instance[gen["payload"].get(
                 "instance_id")] = ev["event_seq"]
+            seat_by_instance[gen["payload"].get(
+                "instance_id")] = gen["payload"].get("seat")
     for ev in events:
         p = ev["payload"]
         seq = ev["event_seq"]
@@ -1117,6 +1120,18 @@ def _loop_result(events, state):
         if ev["type"] in ("TOOL_REQUESTED", "TOOL_DISPATCHED",
                           "TOOL_STARTED"):
             problem("instance_activity_after_stall",
+                    type=ev["type"], instance_id=iid, at_seq=seq)
+        elif ev["actor"] == seat_by_instance.get(iid):
+            # A record act the seat authored carrying the
+            # stalled instance's provenance (Piece A3,
+            # correction round 1): the doorway stamps the
+            # instance behind the credential on every act it
+            # presents, so an instance-authored act after the
+            # stall is identifiable — and divergent. The
+            # seat's own acts carry no instance provenance and
+            # are never flagged for the stall: the seat's
+            # other lawful work is not the instance's.
+            problem("instance_act_after_stall",
                     type=ev["type"], instance_id=iid, at_seq=seq)
     if problems:
         return {"result": "divergent", "problems": problems}

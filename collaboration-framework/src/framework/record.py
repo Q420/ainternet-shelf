@@ -84,9 +84,16 @@ EVENT_TYPES = {
 # combined field — compared here as seven stored keys; the
 # classification is the same either way, since a change to the
 # tree, the part, or both is a change to that one field.
+# Piece A3 (correction round 1): loop_bounds joins the fields as
+# an eighth stored key — the bounded loop's limits live in the
+# issued case (R49), so the case-authority route (the office's
+# generate/correct and the doorway's classification) must be able
+# to carry them; a field the route strips is not a usable case
+# requirement. Unlike the R14 fields it is OPTIONAL: a case may
+# carry no bounds, and then no loop runs on it.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
-                       "account", "authority")
+                       "account", "authority", "loop_bounds")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and
