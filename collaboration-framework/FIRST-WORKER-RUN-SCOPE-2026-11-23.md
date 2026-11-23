@@ -40,3 +40,7 @@ The product is real: if it is good, it is the brief we hand anyone who asks wher
 (c) Judging: the split stands, and the accuracy pass **is** structured claim-by-claim with a separate coverage/distortion pass (folded into the result criteria above).
 
 Her closing line, adopted as the run's spirit: *the first worker does not need to impress us. It needs to tell us the truth about what we have built.*
+
+## ADDENDUM — Attempt 4 timing configuration (2026-11-23)
+
+Settled by the examiner's timing/information analysis of attempt 3 (INDEX 212; VANE-FIRST-WORKER-ATTEMPT3-EXAMINATION-2026-11-23.md), on Ben's direction to analyse the whole flow and run it again. **One parameter changes: the adapter's per-call span for this run is 300 seconds** (harness configuration, `ADAPTER_TIMEOUT=300`), in place of the 120-second default attempts 2–3 ran under. Everything else is unchanged: the assignment, the three sources and their manifest, the loop bounds {step_ceiling 12, deadline_seconds 600}, the model, the tool grants, and the result criteria. The activation deadline remains absolute: a call may use up to 300 seconds, never more than the activation budget remaining, and no call receives a fresh allowance extending the activation. Attempt 4 runs in a fresh directory (`first-worker-attempt4`); attempts 1–3 stand untouched.
