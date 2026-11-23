@@ -16,11 +16,13 @@ For each part, the office's generator assembles a worker-and-case pair. The acts
 
 1. **Proposal** (orchestrator): the tree and role specifications.
 2. **Generation** (office/generator): model selection with basis, identity declaration taken, skills pinned at exact versions, tool grants drafted, the briefcase constructed.
-3. **Sufficiency judgement** (examiner): identity weighed against the actual proposed instance; case sufficiency; grant proportionality.
-4. **Construction verification** (office): the assembly matches its record, technically complete.
-5. **Pack** (office): the assembly record is sealed; credentials are **prepared — and unusable**.
+3. **Construction verification** (office): the assembly matches its record, technically complete.
+4. **Sufficiency judgement** (examiner): identity weighed against the actual proposed instance — judged on the technically verified assembly; case sufficiency; grant proportionality.
+5. **Pack** (office): a distinct recorded act — the assembly record is sealed; credentials are **prepared — and unusable**.
 6. **Issue authorisation** (orchestrator): the assembly may go live.
 7. **Activation** (recorded act): credentials become usable; the instance exists.
+
+A continuation assembly passes through this same sequence in full. Continuing work is not a shortcut around assembly controls.
 
 **Invariant:** no instance is active, and no credential usable, before step 6. Generation or technical verification alone activates nothing. The generator is machinery inside the office; it holds no authority of its own, and its verification never substitutes for the examiner's judgement or the orchestrator's authorisation. The director's approval boundary is unchanged by this layer.
 
@@ -48,11 +50,11 @@ Dispatch is a recorded sequence, in this order and no other:
 4. **Execution** (execution service, outside the record): the operation runs.
 5. **Outcome recorded** (against the dispatch identity): result, failure, or **uncertain** — a timeout or missing response is an uncertain outcome, never evidence the operation did not happen.
 
-Retries and duplicate requests are governed per dispatch identity: a request already dispatched is never silently re-dispatched. Uncertain outcomes are resolved only by an authorised reconciliation act, and remain visible until then. **Replay never executes**: the fold and the checker reconstruct recorded outcomes only.
+Every request carries a **stable request identity**, assigned at first presentation and deduplicated at the doorway: a retry — including one from a worker that never received its dispatch identity — resolves against the existing dispatch state and never creates a second dispatch for the same request. An uncertain outcome does not release the grant's bound: the capacity stays charged until reconciliation resolves the dispatch. Uncertain outcomes are resolved only by an authorised reconciliation act, and remain visible until then. **Replay never executes**: the fold and the checker reconstruct recorded outcomes only.
 
 ## 7. Context, retrieval, publication
 
-An instance's memory is exactly three kinds. **Working memory**: the loop's context — destroyed at termination, never inherited, never evidence. **The record**: the run's history, the only account of the instance's acts. **The shared brain (the shelf)**: read only through the retrieval contract — the case's **retrieval manifest** names what must be retrieved, what may be, and what is sealed off; every retrieval passes the framework's retrieval path and lands in the record as a **read receipt** (path + blob). **Search is retrieval**: queries, results, snippets, metadata and counts are constrained by the same evidence boundary as reads. There is no fourth memory and no private persistence: an instance that learns something that matters contributes it to the record or the brain, in the open.
+An instance's memory is exactly three kinds. **Working memory**: the loop's context — disposed of at termination in §9's defined sense, never inherited, never evidence. **The record**: the run's history, the only account of the instance's acts. **The shared brain (the shelf)**: read only through the retrieval contract — the case's **retrieval manifest** names what must be retrieved, what may be, and what is sealed off; every retrieval passes the framework's retrieval path and lands in the record as a **read receipt** (path + blob). The path **mechanically enforces the manifest before disclosing content or metadata**; it is the only route (per §4's construction the instance has no alternate repository access), and rejected retrieval attempts are recorded. **Search is retrieval**: queries, results, snippets, metadata and counts are constrained by the same evidence boundary as reads, and enforced the same way. There is no fourth memory and no private persistence: an instance that learns something that matters contributes it to the record or the brain, in the open.
 
 **Publication** is the controlled way out: the instance submits an artifact through the doorway (its write grant is permission to submit, never shelf write access); the office verifies it against the case's verification list; the office publishes with its own credential; the **publication act** records instance, case, and the artifact's blob SHA. A successor's manifest names the artifact by path + blob.
 
@@ -66,10 +68,18 @@ The framework's own adapter is extended into the loop (decision 1): its examined
 
 **Termination** is two separately evidenced deaths at the yield position: **credential death** — the doorway refuses the instance from that record position forward (the built token-death-at-state-change pattern); and **execution death** — the runtime terminates the loop, attested by a termination entry stating exactly what terminated (the runtime attests only what it can guarantee: a local loop's end is attested as such, never dressed as proof about a remote provider's internals). The instance's identity and contributions remain in the record permanently; nothing live remains.
 
-**Continuation.** The office builds the continuation case from the record and the shelf — never from the outgoing instance's working memory or summary — naming what the successor must retrieve, what it must verify, and what it must never assume. The successor is a new instance, generated blind.
+**Destruction of working memory** means the framework disposes of the loop context, buffers, session state and credentials under its own control, and can show none of it passes to a successor. It is not a claim that a remote provider erased its internal copies — the framework neither asserts nor attests that.
+
+**Continuation.** The office builds the continuation case from the record and the shelf — never from the outgoing instance's working memory or summary — naming what the successor must retrieve, what it must verify, and what it must never assume. The successor is a new instance, generated blind. **A continuation case for a part touched by an unresolved uncertain dispatch is not issued until an authorised reconciliation act establishes the outcome.** Continuation of other parts proceeds only where the office determines — and records — that the uncertain operation cannot affect them; that determination is never an informal reading of the case.
 
 ## 10. Acceptance: the handoff demonstration
 
 The first worker's central acceptance test is the two-instance blind handoff, walked against the record: A is generated for a bounded part → A retrieves its provisioned context and does real, grant-using work → A records its contributions and yields under the yield protocol → the office constructs and issues the continuation case → A's credential and execution deaths are recorded → B is generated independently, A's private session destroyed and unavailable → B reconstructs from case + brain, its work traceable to the specific artifacts and record positions it retrieved → B continues the work → the whole chain is attributable and independently examinable in one record. Failure, any one sufficient: B needs A's private context (continuity failed); A retains live authority or execution after yield (boundary failed); the continuation rests on a summary without recoverable evidence (handoff failed).
 
 *End of COLLABORATION Revision 6 (agent layer). Companion requirements: SPEC SHEET Revision 6.*
+
+---
+
+## Correction round 1 (Vane's examination of the Rev 6 pair, 2026-11-23 — INDEX 156)
+
+Applied to this document and the companion spec together: (1) §2 assembly order corrected — construction verification (office) precedes the examiner's sufficiency judgement, which judges the technically verified assembly; pack is a distinct recorded act; continuation assemblies pass through the full sequence. (2) §6 — every request carries a stable request identity, deduplicated at the doorway (a retry resolves against existing dispatch state, including a retry from a worker that never received its dispatch identity); an uncertain outcome does not release the grant's bound. (3) §7 — the retrieval path mechanically enforces the manifest before disclosing content or metadata; rejected retrieval attempts are recorded. (4) §§7/9 — working-memory destruction defined as disposal of framework-controlled state with successor inaccessibility; no provider-side erasure is asserted. (5) §9 — an affected continuation is not issued while an uncertain dispatch is unresolved; other parts continue only on a recorded office determination of non-effect.
