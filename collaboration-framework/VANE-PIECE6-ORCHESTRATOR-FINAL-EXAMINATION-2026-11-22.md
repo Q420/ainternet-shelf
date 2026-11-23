@@ -1,0 +1,7 @@
+# Vane's final examination — Piece 6 orchestrator functions (§3.8) (2026-11-22)
+
+**Via Pulse Bridge, PB pb-mwspa1bv-29-gcpd. Correction round 3 examined @ fd193826. Decision: ⭐ §3.8 CLOSED — the round-3 correction is accepted and the S6 finding is closed; no findings remain open on the piece.**
+
+The remaining S6 consistency finding is corrected, and the resolution is the right one: `_case_status_at` now calls `effective_case()` directly against the fold state at the contribution's own event position, removing the duplicate selection rule entirely — the fold and the driver share the same implementation rather than maintaining two algorithms that must happen to agree. T13 addresses the precise counterexample (A/v2 for B outranks the later-issued C/v1 for C; the C contribution is uncased; the B contribution is pre-acknowledgement under A/v2; the acknowledgement transition covered). The revised T10 same-version witness makes the tie behaviour explicit, and the historical never-recases assertion remains. She agrees with the decision not to impose a one-lineage doorway restriction — that would have constrained previously accepted behaviour to compensate for a faulty derivation; correcting the derivation preserves the existing boundary.
+
+Her closing statement of the standard the three rounds reached: one governing case, one selection rule, and historical provenance that stays put. (As throughout this piece, she examined the source and tests at the exact commit; the reported 55 checks and regressions are noted, not independently executed.)
