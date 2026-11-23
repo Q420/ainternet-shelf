@@ -378,6 +378,59 @@ check("the abandoned worker and its connection are actually "
       detail=f"client_gone={SCRIPT['client_gone']}, "
              f"worker_alive={a._last_worker.is_alive()}")
 
+# -------- A6: the pre-socket connection attempt is bounded, witnessed
+import socket as socket_module
+import urllib.request
+from unittest import mock
+
+store, d, tok = fresh_store()
+connect_timeouts = []
+
+
+def blocked_create_connection(address, timeout=None, *args, **kw):
+    # A silent network path: the attempt neither completes
+    # nor is refused. The only way out is the timeout the
+    # attempt was dispatched with — the exact condition the
+    # build record claims bounds this phase. (Simulated at
+    # the socket-creation boundary: a genuinely silent route
+    # is not reproducible in the test environment.)
+    connect_timeouts.append(timeout)
+    give_up = time.monotonic() + (timeout or 5.0)
+    while time.monotonic() < give_up:
+        time.sleep(0.02)
+    raise socket_module.timeout("connect timed out")
+
+
+a = adapter(timeout=0.6)
+with mock.patch.object(socket_module, "create_connection",
+                       blocked_create_connection), \
+        mock.patch.object(urllib.request, "getproxies",
+                          lambda: {}):
+    started = time.monotonic()
+    r = Driver(d, "crew-a", tok["crew-a"], a).wake_cycle()
+    elapsed = time.monotonic() - started
+check("A6: a connection attempt still blocked at the deadline "
+      "(no socket exists to shut down) fails the wake as "
+      "no_response, nothing recorded",
+      r["failed"] == "no_response" and r["recorded"] == [])
+check("the caller returned at the absolute deadline (within "
+      "the stated 0.25s tolerance)",
+      0.55 <= elapsed < 0.85, detail=f"elapsed={elapsed:.2f}s")
+check("the attempt was dispatched under the operation's own "
+      "timeout (no larger window was handed to the socket)",
+      len(connect_timeouts) == 1 and
+      0 < connect_timeouts[0] <= 0.6,
+      detail=f"dispatch timeout={connect_timeouts}")
+gone_deadline = started + 2.0
+while time.monotonic() < gone_deadline and \
+        a._last_worker.is_alive():
+    time.sleep(0.05)
+check("the dispatch-time timeout ended the worker within the "
+      "stated tolerance (2.0s from dispatch), and termination "
+      "is CONFIRMED by the flag — not merely a grace expired",
+      not a._last_worker.is_alive() and
+      getattr(a, "_worker_terminated", False))
+
 # --------------------------- A6: the deadline covers handling, too
 import framework.adapter as adapter_module
 import urllib.request

@@ -326,3 +326,35 @@ provider_model_id moonshotai/kimi-k3.1-pro.
 
 Suite after round 5: Piece 8, 32 checks, ALL PASS; every
 regression green.
+
+## Examination round 6 (2026-11-23) — the pre-socket phase, witnessed
+
+The established-connection termination was closed at round
+5. The one exempted phase — a connection attempt whose
+socket does not yet exist — had a stated bound but no
+evidence. No code changed this round; the witness was
+added. It simulates the silent network at the exact
+boundary the claim concerns: `socket.create_connection`
+patched to a peer that neither completes nor refuses,
+honouring only the timeout it is handed (a genuinely silent
+route is not reproducible in the test environment, and the
+suite says so at the witness). Established:
+
+- the caller returns no_response AT the 0.6s deadline
+  (elapsed 0.60s), nothing recorded;
+- the attempt was dispatched under the operation's own
+  timeout — the recorded dispatch timeout is 0.5995s, no
+  larger window handed to the socket;
+- the dispatch-time timeout ends the worker within the
+  stated tolerance (2.0s from dispatch), and
+  `_worker_terminated` CONFIRMS the termination — the flag
+  is set from the worker's actual state after the grace
+  join, not from the grace expiring;
+- no late result or submission: the discarded-box design is
+  unchanged, and the wake recorded nothing.
+
+With this, every phase of the A6 deadline — connection
+attempt, connection, headers, body, handling — has a
+witness at the boundary it claims. Suite: Piece 8, 36
+checks, ALL PASS; every regression green. The live-record
+replay remains Vane's to perform.
