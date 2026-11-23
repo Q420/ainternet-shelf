@@ -988,8 +988,13 @@ def _loop_result(events, state):
     its iterations are lawful historical record and ask
     nothing here, the exemption read from the assembly's own
     declaration, never inferred from an iteration's missing
-    fields. An undeclared assembly's iteration that
-    nevertheless carries a hash is verified as before.
+    fields. An assembly declaring any OTHER value declares
+    a contract this checker does not understand: that is
+    divergent in itself (catalogue_contract_unknown),
+    reported once for the assembly — a declared-but-unknown
+    contract is not a historical record, and no exemption
+    is invented for it. An undeclared assembly's iteration
+    that nevertheless carries a hash is verified as before.
     Nothing here runs a model or a tool (R48)."""
     problems = []
 
@@ -1118,6 +1123,25 @@ def _loop_result(events, state):
         if pinned_bounds_malformed(aid):
             problem("pinned_bounds_malformed", assembly_id=aid,
                     at_seq=activated[aid])
+        # Piece A3-CAT, re-examination: the discriminator's
+        # third case. A declaration that is present but is
+        # not the contract this checker knows is divergent
+        # in itself — the record declares a governing
+        # contract the checker cannot identify, which is
+        # not a historical record and earns no exemption.
+        # Reported once, here at the assembly level (as
+        # pinned_bounds_malformed is), rather than per
+        # iteration: the unknown contract is a property of
+        # the assembly, and an activated assembly with no
+        # iterations at all must not slip by unreported.
+        gen = generated.get(aid)
+        contract = gen["payload"].get("catalogue_contract") \
+            if gen is not None else None
+        if contract is not None and \
+                contract != _CATALOGUE_CONTRACT:
+            problem("catalogue_contract_unknown",
+                    assembly_id=aid, at_seq=activated[aid],
+                    catalogue_contract=contract)
 
     for aid, evs in iterations.items():
         bounds = pinned_bounds(aid)
@@ -1188,7 +1212,12 @@ def _loop_result(events, state):
             # the catalogue this checker independently
             # reconstructs from the activation's sealed
             # grants, under its own registry copy at the
-            # recorded version.
+            # recorded version. An assembly declaring an
+            # UNKNOWN contract is not governed here — what
+            # its iterations owe under that contract is
+            # unknowable — and it is not historical either:
+            # it stands reported once at the assembly level
+            # above (catalogue_contract_unknown).
             gen = generated.get(aid)
             declared = gen is not None and \
                 gen["payload"].get("catalogue_contract") == \

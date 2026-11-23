@@ -46,7 +46,14 @@ harness pattern, a stub callable capturing packages):
   pre-correction construction) verifies clean;
 - (correction round) the versioned registries are deeply
   immutable in BOTH policy copies — mutation attempts at
-  every depth raise — and their frozen contents agree.
+  every depth raise — and their frozen contents agree;
+- (re-examination) the discriminator has three cases, not
+  two: an assembly declaring a value this checker does not
+  understand ("a3-cat-next", or even the empty string) is
+  divergent in itself (catalogue_contract_unknown) — it is
+  not passed through the legacy exception, and its
+  iterations' missing commitment fields are not separately
+  charged under the governed regime either.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a3cat_catalogue.py
 Exits 0 when every check passes.
@@ -760,6 +767,68 @@ check("CAT11 the current view is the frozen v2 view itself "
       and fw_policy.check_ceiling(
           "sandbox.read", {"path_prefix": "notes/"},
           {"path": "notes/a.txt"})[0])
+
+# -- CAT12 (re-examination): the discriminator's third
+# case. A clone declares a contract the checker does not
+# understand — the judged/packed hashes honestly recomputed
+# over the rewritten generated record, as the legacy
+# clone's are — and its iterations omit both commitment
+# fields. That record must report the unknown contract,
+# never pass through the legacy exception. (Cloning CAT10's
+# declared record: `store` and `r` still name it.)
+def unknown_shape(value):
+    state = {}
+
+    def transform(type_, payload):
+        if type_ == "ASSEMBLY_GENERATED":
+            payload["catalogue_contract"] = value
+            state["record_hash"] = assembly_record_hash(
+                payload)
+        elif type_ in ("ASSEMBLY_JUDGED", "ASSEMBLY_PACKED"):
+            payload["record_hash"] = state["record_hash"]
+        elif type_ == "LOOP_ITERATION":
+            payload.pop("catalogue_hash", None)
+            payload.pop("registry_version", None)
+        return payload
+
+    return transform
+
+
+for label, value in (("a successor contract", "a3-cat-next"),
+                     ("the empty string", "")):
+    clone = clone_store(store, unknown_shape(value))
+    gen_payload = next(
+        e["payload"] for e in events_of(clone,
+                                        "ASSEMBLY_GENERATED")
+        if e["payload"].get("assembly_id") == r["assembly_id"])
+    iters = events_of(clone, "LOOP_ITERATION")
+    lc = loop_check(clone)
+    unknown = [p for p in lc["problems"]
+               if p["kind"] == "catalogue_contract_unknown"]
+    check(f"CAT12 the clone declaring {label} really "
+          f"declares it, and its iterations omit both "
+          f"commitment fields",
+          gen_payload.get("catalogue_contract") == value
+          and len(iters) > 0
+          and all("catalogue_hash" not in e["payload"]
+                  and "registry_version" not in e["payload"]
+                  for e in iters))
+    check(f"CAT12 an assembly declaring {label} is "
+          f"divergent under catalogue_contract_unknown — "
+          f"once, naming the assembly and the declared "
+          f"value — and its loop correspondence is not ok",
+          lc["result"] == "divergent" and len(unknown) == 1
+          and unknown[0].get("assembly_id")
+          == r["assembly_id"]
+          and unknown[0].get("catalogue_contract") == value,
+          json.dumps(lc))
+    check(f"CAT12 the unknown declaration is not passed "
+          f"through the legacy exception (the record is "
+          f"divergent) nor charged under the governed "
+          f"regime: no catalogue_commitment_missing stands "
+          f"for {label}",
+          all(p["kind"] != "catalogue_commitment_missing"
+              for p in lc["problems"]), json.dumps(lc))
 
 print()
 if FAILURES:
