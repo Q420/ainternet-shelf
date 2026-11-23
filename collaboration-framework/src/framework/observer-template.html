@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Observer — run __RUN_ID__</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem auto;
+         max-width: 60rem; padding: 0 1rem; line-height: 1.45; }
+  .snapshot { border: 1px solid #888; padding: 0.75rem 1rem;
+              background: #f4f4f0; }
+  .kind { font-size: 0.75rem; text-transform: uppercase;
+          letter-spacing: 0.05em; border: 1px solid #888;
+          border-radius: 0.5rem; padding: 0 0.4rem; }
+  .derived { color: #555; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border-bottom: 1px solid #ccc; padding: 0.3rem 0.5rem;
+           text-align: left; vertical-align: top;
+           font-size: 0.9rem; }
+  pre { white-space: pre-wrap; word-break: break-word;
+        font-size: 0.8rem; margin: 0; }
+</style>
+</head>
+<body>
+<h1>Run __RUN_ID__ — observer</h1>
+<div class="snapshot">
+  <strong>Snapshot.</strong> This page shows the run's record
+  up to event <strong>__HEAD_SEQ__</strong> (head hash
+  <code>__HEAD_HASH__</code>). It is a static account of that
+  point in the record — not a live view. If the run has
+  continued since, this page does not show it.
+</div>
+<h2>Summary</h2>
+<ul id="summary"></ul>
+<h2>Waiting states (derived)</h2>
+<div id="waiting"></div>
+<h2>Full detail</h2>
+<table id="detail">
+  <thead><tr><th>#</th><th>Type</th><th>Actor</th>
+  <th>Payload</th></tr></thead>
+  <tbody></tbody>
+</table>
+<script id="observer-data" type="application/json">__OBSERVER_DATA__</script>
+<script>
+  const data = JSON.parse(
+    document.getElementById("observer-data").textContent);
+  const ul = document.getElementById("summary");
+  for (const s of data.summary) {
+    const li = document.createElement("li");
+    if (s.kind === "derived") li.className = "derived";
+    const badge = document.createElement("span");
+    badge.className = "kind";
+    badge.textContent = s.kind;
+    li.appendChild(badge);
+    li.appendChild(document.createTextNode(
+      " " + s.text + " (events: " +
+      (s.events.join(", ") || "—") + ")"));
+    ul.appendChild(li);
+  }
+  const w = document.getElementById("waiting");
+  const names = Object.keys(data.waiting).filter(
+    k => data.waiting[k] && data.waiting[k].length);
+  const stalled = Object.keys(data.stalled || {});
+  if (!names.length && !stalled.length) {
+    w.textContent = "Nothing is waiting at this snapshot.";
+  } else {
+    const list = document.createElement("ul");
+    for (const k of names) {
+      const li = document.createElement("li");
+      li.textContent = k + ": " + data.waiting[k].join(", ");
+      list.appendChild(li);
+    }
+    for (const seat of stalled) {
+      const li = document.createElement("li");
+      li.textContent = "seat_stalled: " + seat;
+      list.appendChild(li);
+    }
+    w.appendChild(list);
+  }
+  const tbody = document.querySelector("#detail tbody");
+  for (const ev of data.detail) {
+    const tr = document.createElement("tr");
+    for (const cell of [ev.event_seq, ev.type, ev.actor]) {
+      const td = document.createElement("td");
+      td.textContent = cell;
+      tr.appendChild(td);
+    }
+    const td = document.createElement("td");
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify(
+      ev.sealed ? {sealed: ev.sealed} : ev.payload, null, 1);
+    td.appendChild(pre);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
+</script>
+</body>
+</html>
