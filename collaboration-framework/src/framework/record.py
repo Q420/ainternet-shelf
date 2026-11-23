@@ -46,6 +46,14 @@ EVENT_TYPES = {
     "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION", "RUN_CLOSED",
 }
 
+# R14: a case's content fields — the six over which a correction's
+# classification is computed (Piece 5, addendum 1 §A: the diff runs
+# over the case's contents, all six, not only the three R16's gloss
+# names; any change classifies the correction semantic).
+CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
+                       "evidence_boundary", "verification_list",
+                       "account", "authority")
+
 CLAIM_STATUSES = {"claimed", "evidenced", "verified", "disputed",
                   "stood_down"}
 
@@ -388,7 +396,19 @@ def apply_event(state: dict, ev: dict) -> dict:
                 ver["content"] = dict(p)
             entry["version"] = max(entry["version"], p["version"])
         elif t == "CASE_VERIFIED":
-            ver["verified"] = ev["event_seq"]
+            # The first verification stands (Piece 5, addendum 2
+            # §F/D): its position is the version's verification
+            # position, immutably — a second verification of the
+            # same version is history, never a replacement. And
+            # where the verification carries the case's content —
+            # version 1's issuance route under §3.5, where content
+            # rides on the verification — that content is
+            # established here, first-wins like the position.
+            if ver["verified"] is None:
+                ver["verified"] = ev["event_seq"]
+            if ver["content"] is None and \
+                    any(f in p for f in CASE_CONTENT_FIELDS):
+                ver["content"] = dict(p)
         elif t == "CASE_JUDGED":
             ver["judged"] = ev["event_seq"]
         elif t == "CASE_NOTIFIED":
@@ -465,7 +485,9 @@ def version_issued(ver, version) -> bool:
     CASE_ISSUED is not made valid by acts recorded after it
     (correction round 1, point 2). And a version above the initial
     version stands on its CASE_CORRECTED — no correction event, no
-    correction (point 3)."""
+    correction (point 3). The order within the route is exact:
+    correction < verification < the examiner's act < authorisation
+    (Piece 5, addendum 2 §F)."""
     if not ver or ver.get("verified") is None or \
             ver.get("issued") is None:
         return False
@@ -480,13 +502,18 @@ def version_issued(ver, version) -> bool:
         cseq = ver.get("corrected_seq")
         if cseq is None or not cseq < ver["verified"]:
             return False
+        # The issuance order is exact (Piece 5, addendum 2 §F):
+        # correction < verification < the examiner's act <
+        # authorisation. An examiner act recorded before the
+        # verification it answers does not complete the route,
+        # however complete the set of acts looks.
         if ver.get("representational"):
             return ver.get("notified") is not None and \
-                cseq < ver["notified"] < ver["issued"]
+                ver["verified"] < ver["notified"] < ver["issued"]
         return ver.get("judged") is not None and \
-            cseq < ver["judged"] < ver["issued"]
+            ver["verified"] < ver["judged"] < ver["issued"]
     return ver.get("judged") is not None and \
-        ver["judged"] < ver["issued"]
+        ver["verified"] < ver["judged"] < ver["issued"]
 
 
 def effective_case(state: dict, seat_id: str):

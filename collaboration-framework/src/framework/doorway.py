@@ -22,8 +22,8 @@ doorway consumes the bindings the record carries.
 import hashlib
 import secrets
 
-from .record import (FrameworkStore, GATE_OUTCOMES, fold,
-                     validate_status_transition)
+from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
+                     GATE_OUTCOMES, fold, validate_status_transition)
 
 DOORWAY_ACTOR = "doorway"
 
@@ -56,6 +56,33 @@ ACT_AUTHORITY = {
     "MATERIAL_SEALED": {"orchestrator"},
     "RUN_CLOSED": {"orchestrator", "director"},
 }
+
+
+def established_case_content(state, case_id):
+    """A case's established current content (Piece 5): the content
+    of its highest version whose content stands in the fold, with
+    that version number — or (None, 0) when no version's content
+    stands. Content stands where the fold established it: version
+    1's on its verification (or, in pre-office histories, its
+    authorisation), a corrected version's on its first
+    CASE_CORRECTED."""
+    entry = state["cases"].get(case_id)
+    if not entry:
+        return None, 0
+    best_content, best_version = None, 0
+    for vkey, ver in entry["versions"].items():
+        if ver.get("content") is not None and int(vkey) > best_version:
+            best_content, best_version = ver["content"], int(vkey)
+    return best_content, best_version
+
+
+def classify_case_change(old, new):
+    """R16's classification, computed (Piece 5, addendum 1 §A): the
+    six-field diff between a case's established content and a
+    proposed correction. Returns the list of changed fields; an
+    empty list means the correction is purely representational."""
+    return [f for f in CASE_CONTENT_FIELDS
+            if (old or {}).get(f) != (new or {}).get(f)]
 
 
 class DoorwayRefusal(Exception):
@@ -305,6 +332,18 @@ class Doorway:
                              f"(paused at seq {paused_hit}, R30)",
                              view_seq)
 
+        # R16 (Piece 5, addendum 2 §E): the doorway owns the
+        # classification. On any CASE_CORRECTED it recomputes the
+        # six-field diff against the case's established current
+        # content; a submitted classification that disagrees — or a
+        # version that is not the established case's next version —
+        # is refused and the refusal recorded. A caller's label is
+        # never taken on trust.
+        if type_ == "CASE_CORRECTED":
+            problem = self._classification_problem(state, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+
         # R31: staleness. The act names its subject; if any later
         # event touched that subject, the view it was made from is
         # stale about the thing that matters — reject. Otherwise a
@@ -335,6 +374,118 @@ class Doorway:
         ev = self.store.append(type_, seat_id, affected, payload)
         self.store.commit()
         return ev
+
+    def _classification_problem(self, state, payload):
+        """Why a CASE_CORRECTED may not be recorded, or None (R16,
+        Piece 5 addendum 2 §E). Enforcement covers every correction
+        that could take effect: one carrying case content or a
+        classification claim. Such a correction must name the
+        established case's next version, carry its classification,
+        and that classification must match the doorway's own
+        recomputed six-field diff against the established content.
+        Two histories stand outside it, deliberately: a bare
+        correction carrying neither content nor a claim (the
+        pre-office record is full of them; there is nothing to
+        recompute), and a second correction for a version whose
+        correction already stands — the fold's first-wins rule
+        governs those (Piece 4, round 2): recorded, examinable,
+        and never able to replace what stands."""
+        case_id = payload.get("case_id")
+        if not any(f in payload for f in CASE_CONTENT_FIELDS) and \
+                "representational" not in payload:
+            return None
+        entry = state["cases"].get(case_id) or {}
+        named = (entry.get("versions") or {}).get(
+            str(payload.get("version"))) or {}
+        if named.get("corrected"):
+            return None
+        current, current_version = established_case_content(
+            state, case_id)
+        if current is None:
+            return (f"case {case_id} has no established content "
+                    f"to correct (R16)")
+        if payload.get("version") != current_version + 1:
+            return (f"correction names version "
+                    f"{payload.get('version')} but the established "
+                    f"case stands at version {current_version}; a "
+                    f"correction is its next version (R16)")
+        if payload.get("representational") is None:
+            return ("a content-carrying correction records its "
+                    "classification (R16)")
+        changed = classify_case_change(current, payload)
+        if bool(payload.get("representational")) == bool(changed):
+            return (f"submitted classification representational="
+                    f"{payload.get('representational')!r} disagrees "
+                    f"with the doorway's recomputed six-field diff "
+                    f"(changed: {changed if changed else 'none'}) "
+                    f"(R16)")
+        return None
+
+    def submit_pair(self, token, acts, view_seq=None):
+        """The correction pair, atomically (§3.5; Piece 5, addendum
+        3 §H): CASE_CORRECTED + CASE_VERIFIED appended inside one
+        store transaction with a single commit. Both acts are
+        validated against the same pre-pair state before anything
+        is appended — authority, view position, and the doorway's
+        recomputed classification — and a failure during either
+        append or the commit is caught explicitly and rolled back,
+        so no pending partial transaction survives: head and case
+        state stand exactly as before the pair was offered."""
+        if len(acts) != 2 or acts[0][0] != "CASE_CORRECTED" or \
+                acts[1][0] != "CASE_VERIFIED":
+            raise ValueError(
+                "the paired route carries exactly "
+                "(CASE_CORRECTED, CASE_VERIFIED)")
+        (_, corrected), (_, verified) = acts
+        seat_id = self._authenticate(token)
+        if seat_id is None:
+            self._refuse(None, "CASE_CORRECTED",
+                         "unbound or mismatched identity (R5)",
+                         view_seq)
+        state = self.state()
+        binding = state["seats"].get(seat_id)
+        if binding is None:
+            self._refuse(seat_id, "CASE_CORRECTED",
+                         "seat not bound in the record (R5)", view_seq)
+        role = binding["role"]
+        for type_ in ("CASE_CORRECTED", "CASE_VERIFIED"):
+            if role not in ACT_AUTHORITY.get(type_, set()):
+                self._refuse(seat_id, type_,
+                             f"{role} may not record {type_} "
+                             "(authority matrix, §4)", view_seq)
+        if view_seq is None:
+            self._refuse(seat_id, "CASE_CORRECTED",
+                         "every proposed act carries the record "
+                         "position of the view it was made from (R31)")
+        if view_seq < 0 or view_seq > state["head_seq"]:
+            self._refuse(seat_id, "CASE_CORRECTED",
+                         f"view position {view_seq} is not a valid "
+                         f"position in the record (R31)", view_seq)
+        problem = self._classification_problem(state, corrected)
+        if problem is not None:
+            self._refuse(seat_id, "CASE_CORRECTED", problem, view_seq)
+        if verified.get("case_id") != corrected.get("case_id") or \
+                verified.get("version") != corrected.get("version"):
+            self._refuse(seat_id, "CASE_VERIFIED",
+                         "the pair's verification names a different "
+                         "case version than its correction (R15)",
+                         view_seq)
+        corrected = dict(corrected)
+        verified = dict(verified)
+        if view_seq < state["head_seq"]:
+            corrected["stale_basis"] = True
+            verified["stale_basis"] = True
+        case_id = corrected.get("case_id")
+        try:
+            ev1 = self.store.append("CASE_CORRECTED", seat_id,
+                                    [case_id], corrected)
+            ev2 = self.store.append("CASE_VERIFIED", seat_id,
+                                    [case_id], verified)
+            self.store.commit()
+        except Exception:
+            self.store.rollback()
+            raise
+        return ev1, ev2
 
     def _paused_hit(self, state, part):
         """Seq of the pause covering `part`, or None (R30)."""
