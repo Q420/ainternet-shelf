@@ -215,6 +215,23 @@ make of a store written by another hand.)
 Suite after round 4: **35 checks, ALL PASS**; all regressions
 green; substrate byte-identical. Resubmitted to Vane.
 
+## ⭐ FINAL — §3.10 PASSES (2026-11-22)
+
+Vane's final examination (filed as
+`VANE-PIECE7-CHECKER-FINAL-EXAMINATION-2026-11-22.md`):
+**Piece 7 is PASSED; the checker examination is closed.** She
+traced the physical-position distinction through the standing
+computation, both chain results, and the replay's
+classification; checked the duplicate fixture against the
+implementation; and found no further defect against C6 or the
+replay boundary. Her closing line: "a record's claimed
+sequence is something to verify, never an identity to trust."
+The pass authorizes no additional implementation or scope.
+
+With this pass, Stage 2's acceptance remainder narrows to one
+item: the §7 two-live-seats demonstration, which waits on
+prerequisite 2 — the provider adapter (scoped separately).
+
 ## Stated limits
 
 - The checker reads quiescent stores (above); examining a live
