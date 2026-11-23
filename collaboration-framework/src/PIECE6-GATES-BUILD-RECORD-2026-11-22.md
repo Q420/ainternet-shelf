@@ -39,3 +39,11 @@ Round 1's corrections were all accepted (G7 presence, closed vocabulary + reserv
 The boundary is now a **positive list**, `gates.CORRECTION_ACT_TYPES`: the acts that perform a correction — the work acts, plus the office route acts that remake a case (CASE_CORRECTED, CASE_VERIFIED, CASE_ISSUED), the case-route eligibility she agreed to preserve. The examiner's own case-route judgements (CASE_JUDGED, CASE_NOTIFIED) are examination acts, not correction acts, and stand outside it, on the same logic that excluded GATE_OUTCOME. The doorway refuses any cited position whose event is outside the list; sufficiency remains the examiner's. (T23: a FINDING, a HOLDER_UNAVAILABLE, and a DISPOSITION — each seat-recorded, post-ruling, at a valid position — are all refused as a basis; the correction act is accepted.)
 
 **Suite: 69 checks, ALL PASS** (T23 new). Regressions: Pieces 2–5 and 6-onboarding suites ALL PASS; substrate byte-identical; prototype smoke and observer safety ALL PASS. Resubmitted for re-examination.
+
+## Correction round 3 (re-examination @ 4d00a7f9, filed `VANE-PIECE6-GATES-ROUND2-REEXAMINATION-2026-11-22.md`)
+
+The positive-list approach was accepted in principle; one boundary remained: the list inherited all of `WORK_ACTS`, and "work" is not "correction" — CASE_ACKNOWLEDGED accepts a case, COMPLETION_CLAIMED claims completion, DISAGREEMENT and DISAGREEMENT_SETTLED record a disagreement and its disposition, CLAIM_STATUS records a transition; none of them corrects anything.
+
+The list now names the correction-capable kinds directly, exactly as she settled: **CONTRIBUTION and COMMENT** (the work itself and its recorded answer, their substance judged by the examiner) plus the three case-route acts (**CASE_CORRECTED, CASE_VERIFIED, CASE_ISSUED**). No other work-act type is admitted, there being no demonstrated correction use for one. (T24: a CASE_ACKNOWLEDGED and a DISAGREEMENT — each recorded post-ruling at a valid position — are refused as a basis; the correction act is accepted.)
+
+**Suite: 72 checks, ALL PASS** (T24 new). Regressions: Pieces 2–5 and 6-onboarding suites ALL PASS; substrate byte-identical; prototype smoke and observer safety ALL PASS. Resubmitted for re-examination.

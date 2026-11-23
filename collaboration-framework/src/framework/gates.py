@@ -44,20 +44,29 @@ ASSEMBLY_JOINT = "assembly"
 COMPLETION_JOINT = "completion"
 
 # The correction acts a re-judgement's correction_basis may cite
-# (R23/R24; correction round 2 made the boundary a positive list):
-# the acts that *perform* a correction — the work acts (the work
-# itself, redone or extended by the responsible seat) and the
-# office route acts that remake a case (its correction, its
-# verification, its authorisation), since an assembly correction
-# is performed through §3.5's route. Seat-authored is not the
-# test: examination acts (FINDING, CASE_JUDGED, CASE_NOTIFIED),
-# authority acts (RULING, DISPOSITION), declarations and setup
-# acts (HOLDER_UNAVAILABLE, ESCALATION, ONBOARDING, SEAT_BOUND,
-# MATERIAL_SEALED), the gate machinery's own outcomes, and
-# doorway records are none of them correction acts, however
-# legitimately they stand in the record. Eligibility is
-# mechanical; sufficiency remains the examiner's judgement.
-CORRECTION_ACT_TYPES = WORK_ACTS | {
+# (R23/R24; correction round 2 made the boundary a positive
+# list; round 3 narrowed it to correction-capable kinds): the
+# acts that can *perform* a correction — CONTRIBUTION and
+# COMMENT (the work itself, redone or extended by the
+# responsible seat, and its recorded answer) and the office
+# route acts that remake a case (its correction, its
+# verification, its authorisation), since an assembly
+# correction is performed through §3.5's route. The broader
+# category "work act" is not the test: CASE_ACKNOWLEDGED
+# accepts an issued case, COMPLETION_CLAIMED claims completion,
+# DISAGREEMENT and DISAGREEMENT_SETTLED record a disagreement
+# and its disposition, CLAIM_STATUS records a transition —
+# none of them corrects anything. Nor do examination acts
+# (FINDING, CASE_JUDGED, CASE_NOTIFIED), authority acts
+# (RULING, DISPOSITION), declarations and setup acts
+# (HOLDER_UNAVAILABLE, ESCALATION, ONBOARDING, SEAT_BOUND,
+# MATERIAL_SEALED), the gate machinery's own outcomes, or
+# doorway records, however legitimately they stand in the
+# record. Eligibility is mechanical — the doorway determines
+# only whether the cited event is of a kind that can perform
+# the role; sufficiency remains the examiner's judgement.
+CORRECTION_ACT_TYPES = {
+    "CONTRIBUTION", "COMMENT",
     "CASE_CORRECTED", "CASE_VERIFIED", "CASE_ISSUED",
 }
 

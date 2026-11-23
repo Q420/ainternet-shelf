@@ -508,6 +508,48 @@ ev = outcome(d, store, tok, "B", "allow",
 check("T23 a basis citing the correction act records",
       ev["type"] == "GATE_OUTCOME")
 
+# -- Correction round 3: the positive list names
+# correction-capable kinds — it does not inherit "work act".
+# T24: a CASE_ACKNOWLEDGED and a DISAGREEMENT, each recorded
+# after the ruling at a valid position, are refused as a basis;
+# neither performs a correction.
+store, d, tok = fresh()
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-c", "version": 1})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-c", "version": 1})
+A(d, store, tok["orch-1"], "CASE_ISSUED", {
+    "case_id": "case-c", "version": 1, "seat": "crew-1",
+    "part": "C", "assignment": "Build the C part",
+    "evidence_boundary": ["mat-1"],
+    "verification_list": ["check C"],
+    "account": "crew-1", "authority": "crew defaults"})
+outcome(d, store, tok, "assembly", "allow")
+outcome(d, store, tok, "C", "allow")
+outcome(d, store, tok, "B", "escalate", tree_part="B")
+A(d, store, tok["dir-1"], "RULING",
+  {"joint": "B", "action": "correct as stated"})
+ack = A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+        {"case_id": "case-c", "version": 1})
+check("T24 a basis citing a CASE_ACKNOWLEDGED is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[ack["event_seq"]])))
+A(d, store, tok["crew-1"], "CONTRIBUTION",
+  {"contribution_id": "c-t24", "claim_id": "claim-t24",
+   "tree_part": "C", "text": "work on C"})
+dis = A(d, store, tok["crew-2"], "DISAGREEMENT",
+        {"claim_id": "claim-t24", "disagreement_id": "d-t24"})
+check("T24 a basis citing a DISAGREEMENT is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[dis["event_seq"]])))
+corr = A(d, store, tok["crew-1"], "COMMENT",
+         {"on_job": True, "text": "the stated correction"})
+ev = outcome(d, store, tok, "B", "allow",
+             correction_basis=[corr["event_seq"]],
+             released_set=["B", "D"])
+check("T24 a basis citing the correction act records",
+      ev["type"] == "GATE_OUTCOME")
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")
