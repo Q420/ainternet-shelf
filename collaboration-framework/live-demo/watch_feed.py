@@ -44,7 +44,7 @@ os.makedirs(FEED, exist_ok=True)
 push_lock = threading.Lock()
 dirty = threading.Event()
 
-FEED_FILES = ("run.log", "worker.log", "status.txt")
+FEED_FILES = ("run.log", "worker.log", "status.txt", "agent.txt")
 LAPTOP_FEED = "C:/Users/Ben/office-feed"
 PLACER_NAME = "feed-place.sh"
 PLACER_LOCAL = os.path.join(FEED, PLACER_NAME)
@@ -55,7 +55,7 @@ PLACER_SCRIPT = """#!/bin/bash
 # files open: cp from inside replaces what the panes read,
 # where an scp overwrite from outside did not reliably land.
 cd /mnt/c/Users/Ben/office-feed || exit 1
-for name in run.log worker.log status.txt; do
+for name in run.log worker.log status.txt agent.txt; do
   if [ -f "$name.new" ]; then
     cp "$name.new" "$name"
     rm -f "$name.new"
@@ -77,7 +77,7 @@ def stage_commands(files):
              f"laptop:{LAPTOP_FEED}/{name}.new"])
     commands.append(
         ["scp", "-F", SSH_CONFIG, "-q", PLACER_LOCAL,
-         f"laptop:{LAPTOP_FEED}/{PLACER_NAME}"])
+         f"laptop:C:/Users/Ben/{PLACER_NAME}"])
     return commands
 
 
@@ -128,6 +128,123 @@ def brief(p):
     if "text" in p:
         bits.append("text=" + str(p["text"])[:80].replace("\n", " "))
     return " ".join(bits)[:220]
+
+
+_STALL_WORDS = {
+    "provider_failure": "the model did not answer in time",
+    "deadline": "the run's time budget ran out",
+    "step_ceiling": "the step budget ran out",
+    "runtime_failure": "something in the machinery failed",
+    "malformed_response": "the model's reply could not be "
+                          "understood",
+}
+
+
+def render_agent(events, outcome=None):
+    """The AGENT pane's text: what the agent is doing, in plain
+    words, from the record's events alone. A header states the
+    current state (including how long a call has been in
+    flight — honestly labelled as waiting, since the model's
+    interior is not visible); below it, the recent actions.
+    `outcome` is the harness report's loop_result, when the
+    run has finished."""
+    req_path = {}
+    disp_what = {}
+    lines = []
+    state = "the agent is being assembled"
+    last_iter_ts = None
+    for e in events:
+        t = e["type"]
+        p = e["payload"] if isinstance(e["payload"], dict) else {}
+        if t == "INSTANCE_ACTIVATED":
+            state = "the agent is awake and reading its case"
+            lines.append("• the agent was assembled and "
+                         "activated for this job")
+        elif t == "LOOP_ITERATION":
+            last_iter_ts = e.get("ts")
+            state = (f"waiting on the model — step "
+                     f"{p.get('iteration')} call in flight")
+            lines.append(f"— step {p.get('iteration')}: the "
+                         f"agent looks at its package and "
+                         f"decides —")
+        elif t == "TOOL_REQUESTED":
+            tool = p.get("tool", "?")
+            params = p.get("parameters") or {}
+            path = params.get("path", "")
+            req_path[p.get("request_id")] = (tool, path)
+            verb = {"sandbox.read": "read",
+                    "sandbox.write": "write"}.get(tool, tool)
+            lines.append(f"• the agent wants to {verb} {path}")
+        elif t == "TOOL_DISPATCHED":
+            what = req_path.get(p.get("request_id"),
+                                (p.get("tool", "?"), ""))
+            disp_what[p.get("dispatch_id")] = what
+            verb = {"sandbox.read": "reading",
+                    "sandbox.write": "writing"}.get(
+                        what[0], what[0])
+            state = f"{verb} {what[1]}…"
+            lines.append(f"• {verb} {what[1]}…")
+        elif t == "TOOL_OUTCOME":
+            what = disp_what.get(p.get("dispatch_id"),
+                                 ("?", ""))
+            oc = p.get("outcome")
+            if oc == "result":
+                extra = ""
+                res = p.get("result")
+                if isinstance(res, dict) and \
+                        isinstance(res.get("content"), str):
+                    extra = (f" ({len(res['content'])} "
+                             f"characters back)")
+                lines.append(f"• ✓ {what[0]} on {what[1]} "
+                             f"done{extra}")
+                state = "the agent has what it asked for"
+            elif oc == "uncertain":
+                lines.append(f"• ? {what[0]} on {what[1]}: "
+                             f"outcome uncertain")
+                state = "an outcome is uncertain"
+            else:
+                lines.append(f"• ✗ {what[0]} on {what[1]} "
+                             f"failed")
+                state = "a tool call failed"
+        elif t == "REJECTION":
+            tool = p.get("tool", "a request")
+            why = (p.get("detail") or p.get("reason") or
+                   p.get("ground") or "")
+            lines.append(f"• ✗ the doorway refused {tool}: "
+                         f"{str(why)[:90]}")
+            state = "the agent was refused at the doorway"
+        elif t == "LOOP_STALLED":
+            words = _STALL_WORDS.get(p.get("ground"),
+                                     p.get("ground"))
+            lines.append(f"■ the run stopped: {words}")
+            state = f"stopped — {words}"
+    if outcome:
+        oc = outcome.get("outcome")
+        if oc == "yield":
+            state = "finished — the agent completed the job"
+            lines.append("■ the agent finished and yielded")
+        elif oc == "decline":
+            state = "the agent declined the assignment"
+            lines.append("■ the agent declined the assignment")
+        elif oc == "stalled":
+            words = _STALL_WORDS.get(outcome.get("ground"),
+                                     outcome.get("ground"))
+            state = f"stopped — {words}"
+    if last_iter_ts and state.startswith("waiting on the "
+                                         "model"):
+        try:
+            from datetime import datetime, timezone
+            t0 = datetime.fromisoformat(
+                last_iter_ts.replace("Z", "+00:00"))
+            secs = int((datetime.now(timezone.utc) -
+                        t0).total_seconds())
+            if secs >= 0:
+                state += f" ({secs}s so far)"
+        except Exception:
+            pass
+    body = "\n".join(lines[-14:]) if lines else \
+        "• nothing has happened yet"
+    return (f"WHAT THE AGENT IS DOING\n{state}\n\n{body}\n")
 
 
 def main():
@@ -192,6 +309,15 @@ def main():
             f"{outcome_line}\n")
         with open(os.path.join(FEED, "status.txt"), "w") as fh:
             fh.write(status)
+        agent_outcome = None
+        if os.path.exists(REPORT):
+            try:
+                agent_outcome = (json.load(open(REPORT))
+                                 .get("loop_result") or None)
+            except Exception:
+                agent_outcome = None
+        with open(os.path.join(FEED, "agent.txt"), "w") as fh:
+            fh.write(render_agent(events, agent_outcome))
         run_log.flush()
         worker_log.flush()
         dirty.set()
