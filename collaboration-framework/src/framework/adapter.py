@@ -46,12 +46,13 @@ the driver's back.
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import socket
 import threading
 import time
-import urllib.error
+import urllib.parse
 import urllib.request
 
 DEFAULT_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
@@ -140,20 +141,27 @@ class OpenAICompatibleAdapter:
     def _call(self, messages):
         """One provider call under the operation's total
         deadline. The transport runs on a daemon worker thread
-        and the calling thread enforces the deadline with a
-        timed join: EVERY phase — connection, request, the
-        response headers urlopen acquires internally, the body,
-        parsing — sits under the same absolute point, and on
-        expiry the call fails AT the deadline, not on a
-        post-return clock check. A timed-out worker is inert:
-        its socket timeout (the budget at dispatch) ends it
-        within roughly another budget, its late result is
-        discarded unread, and nothing can be submitted from
-        it — submission happens only on this thread's success
-        path. Returns (content, provider_model_id). No retry,
-        ever."""
+        over a connection this adapter owns from creation
+        (http.client, not urlopen), and the calling thread
+        enforces the deadline with a timed join: EVERY phase
+        -- connection, request, response headers, body,
+        parsing -- sits under the same absolute point. On
+        expiry the caller ACTIVELY TERMINATES the transport:
+        the published connection's socket is shut down and
+        closed, which interrupts whatever blocking read the
+        worker is inside, and the worker is joined for a
+        short grace period to confirm it ended. A provider
+        operation therefore cannot outlive its deadline on
+        any path where a socket exists; the only phase no
+        shutdown can reach is a connection attempt whose
+        socket has not been created yet, and that is bounded
+        by the dispatch-time socket timeout. Nothing can be
+        submitted from a terminated worker: submission
+        happens only on this thread's success path. Returns
+        (content, provider_model_id). No retry, ever."""
         deadline = getattr(self, "_deadline", None) or \
             self._begin_deadline()
+        self._active_conn = None
         box = {}
 
         def work():
@@ -163,25 +171,95 @@ class OpenAICompatibleAdapter:
                 box["error"] = exc
 
         worker = threading.Thread(target=work, daemon=True)
+        self._last_worker = worker
         worker.start()
         worker.join(max(0.0, deadline - time.monotonic()))
         if worker.is_alive():
+            conn = self._active_conn
+            if conn is not None:
+                try:
+                    if conn.sock is not None:
+                        conn.sock.shutdown(socket.SHUT_RDWR)
+                except Exception:
+                    pass
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            worker.join(1.0)
+            self._worker_terminated = not worker.is_alive()
             raise AdapterFailure(
                 "no_response", detail="total deadline exceeded")
         if "error" in box:
             raise box["error"]
         return box["value"]
 
+    def _open_connection(self, remaining):
+        """Build (not yet connect) the connection for the
+        endpoint, honouring the environment's proxy
+        configuration the way urllib would (getproxies +
+        proxy_bypass): direct, absolute-form through an HTTP
+        proxy, or a CONNECT tunnel for HTTPS. The connection
+        is published to self._active_conn BEFORE any blocking
+        operation, so the calling thread can terminate the
+        transport at the deadline. Returns (conn, path)."""
+        parsed = urllib.parse.urlsplit(self.endpoint)
+        scheme = parsed.scheme or "http"
+        host = parsed.hostname
+        port = parsed.port or (443 if scheme == "https" else 80)
+        path = parsed.path or "/"
+        if parsed.query:
+            path += "?" + parsed.query
+        proxy_url = None
+        if not urllib.request.proxy_bypass(host):
+            proxies = urllib.request.getproxies()
+            proxy_url = proxies.get(scheme) or proxies.get("all")
+        timeout = remaining()
+        extra_headers = {}
+        if proxy_url:
+            p = urllib.parse.urlsplit(proxy_url)
+            phost = p.hostname
+            pport = p.port or 8080
+            if p.username:
+                import base64 as _b64
+                cred = _b64.b64encode(
+                    f"{urllib.parse.unquote(p.username)}:"
+                    f"{urllib.parse.unquote(p.password or '')}"
+                    .encode()).decode()
+                extra_headers["Proxy-Authorization"] = \
+                    f"Basic {cred}"
+            if scheme == "https":
+                conn = http.client.HTTPSConnection(
+                    phost, pport, timeout=timeout)
+                conn.set_tunnel(host, port,
+                                headers=extra_headers or None)
+            else:
+                conn = http.client.HTTPConnection(
+                    phost, pport, timeout=timeout)
+                path = self.endpoint  # absolute-form
+        elif scheme == "https":
+            conn = http.client.HTTPSConnection(host, port,
+                                               timeout=timeout)
+        else:
+            conn = http.client.HTTPConnection(host, port,
+                                              timeout=timeout)
+        self._active_conn = conn
+        self._proxy_headers = extra_headers if \
+            (proxy_url and scheme == "http") else {}
+        return conn, path
+
     def _dispatch(self, messages, deadline):
         """The blocking transport itself (runs on _call's
-        worker thread): one urlopen dispatch, the body read
-        via read1 with the socket timeout reset to the current
-        remaining time before every read — a provider
-        drip-feeding inside each socket window cannot hold
-        the call open — and the read path FAILS CLOSED: no
-        unbounded fallback, no silently ignored inability to
-        bound a read."""
-
+        worker thread) over the owned connection: request,
+        header acquisition, and the body read via read1 with
+        the socket timeout reset to the current remaining
+        time before every read -- a provider drip-feeding
+        inside each socket window cannot hold the read loop
+        open -- and the read path FAILS CLOSED: no unbounded
+        fallback, no silently ignored inability to bound a
+        read. Phases outside the read loop (connect, headers)
+        are bounded by the calling thread's active
+        termination at the deadline (see _call)."""
 
         def remaining():
             left = deadline - time.monotonic()
@@ -191,69 +269,64 @@ class OpenAICompatibleAdapter:
             return left
 
         key = self._api_key or os.environ.get(self._api_key_env)
-        body = {"model": self.model, "messages": messages,
-                "temperature": 0.2}
-        req = urllib.request.Request(
-            self.endpoint,
-            data=json.dumps(body).encode("utf-8"),
-            headers={"Content-Type": "application/json",
-                     **({"Authorization": f"Bearer {key}"}
-                        if key else {})},
-            method="POST")
+        payload = json.dumps(
+            {"model": self.model, "messages": messages,
+             "temperature": 0.2}).encode("utf-8")
+        conn, path = self._open_connection(remaining)
         try:
-            with urllib.request.urlopen(
-                    req, timeout=remaining()) as resp:
-                chunks = []
-                # read1 returns after at most one socket read, so
-                # control comes back here between drips and the
-                # clock check — not the socket's inactivity
-                # window — is what bounds the total. There is no
-                # fallback: a stream without a bounded read, or a
-                # socket whose timeout cannot be set, fails the
-                # call closed rather than reading unbounded.
-                read1 = getattr(resp, "read1", None)
-                if read1 is None:
+            headers = {"Content-Type": "application/json",
+                       **({"Authorization": f"Bearer {key}"}
+                          if key else {}),
+                       **getattr(self, "_proxy_headers", {})}
+            conn.request("POST", path, body=payload,
+                         headers=headers)
+            if conn.sock is not None:
+                conn.sock.settimeout(remaining())
+            resp = conn.getresponse()
+            if resp.status >= 400:
+                raise AdapterFailure(
+                    "provider_error", detail=f"HTTP {resp.status}")
+            chunks = []
+            read1 = getattr(resp, "read1", None)
+            if read1 is None:
+                raise AdapterFailure(
+                    "provider_error",
+                    detail="response stream offers no bounded "
+                           "read; failing closed")
+            while True:
+                left = remaining()
+                if getattr(resp, "length", None) == 0:
+                    # Completion path, handled explicitly: a
+                    # Content-Length body is fully received and
+                    # http.client has retired the stream -- no
+                    # further read, no timeout set on it.
+                    break
+                try:
+                    resp.fp.raw._sock.settimeout(left)
+                except Exception:
                     raise AdapterFailure(
                         "provider_error",
-                        detail="response stream offers no bounded "
+                        detail="cannot bound the response "
                                "read; failing closed")
-                while True:
-                    left = remaining()
-                    if getattr(resp, "length", None) == 0:
-                        # Completion path, handled explicitly:
-                        # a Content-Length body is fully received,
-                        # and http.client has retired the stream
-                        # (resp.fp is None from here) — no further
-                        # read is needed and no timeout is set on
-                        # the retired socket.
-                        break
-                    try:
-                        resp.fp.raw._sock.settimeout(left)
-                    except Exception:
-                        raise AdapterFailure(
-                            "provider_error",
-                            detail="cannot bound the response "
-                                   "read; failing closed")
-                    chunk = read1(65536)
-                    remaining()
-                    if not chunk:
-                        break
-                    chunks.append(chunk)
-                raw = b"".join(chunks).decode("utf-8", "replace")
+                chunk = read1(65536)
+                remaining()
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            raw = b"".join(chunks).decode("utf-8", "replace")
         except AdapterFailure:
             raise
-        except urllib.error.HTTPError as exc:
-            raise AdapterFailure("provider_error",
-                                 detail=f"HTTP {exc.code}")
         except (socket.timeout, TimeoutError):
             raise AdapterFailure("no_response",
                                  detail="total deadline exceeded")
-        except urllib.error.URLError as exc:
-            if isinstance(exc.reason, (socket.timeout, TimeoutError)):
-                raise AdapterFailure("no_response",
-                                     detail="total deadline exceeded")
+        except (http.client.HTTPException, OSError) as exc:
             raise AdapterFailure("provider_error",
-                                 detail=type(exc.reason).__name__)
+                                 detail=type(exc).__name__)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
         remaining()
         try:
             parsed = json.loads(raw)

@@ -24,19 +24,14 @@ from dynamic_credentials import add_surrogate_to_request
 
 HOST = "integrate.api.nvidia.com"
 
-
-class SurrogateHandler(urllib.request.BaseHandler):
-    handler_order = 100
-
-    def https_request(self, req):
-        if req.host == HOST:
-            add_surrogate_to_request(req, "custom.nvidia",
-                                     allowed_hosts=[HOST])
-        return req
-
-
-urllib.request.install_opener(
-    urllib.request.build_opener(SurrogateHandler()))
+# The adapter's transport is http.client (Piece 8 round 5), so
+# the surrogate is obtained once here and carried as the
+# adapter's bearer key; the egress machinery performs the
+# same swap on the approved request.
+_probe = urllib.request.Request(f"https://{HOST}/v1/chat/completions")
+add_surrogate_to_request(_probe, "custom.nvidia",
+                         allowed_hosts=[HOST])
+SURROGATE = _probe.headers["Authorization"].split(" ", 1)[1]
 
 from framework.adapter import OpenAICompatibleAdapter
 from framework.live_run import run_demonstration

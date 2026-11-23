@@ -66,6 +66,22 @@ class Handler(BaseHTTPRequestHandler):
                          "body": body.decode("utf-8", "replace")})
         if SCRIPT["override"]:
             spec = SCRIPT["override"].pop(0)
+            if isinstance(spec, tuple) and spec[0] == "endless_headers":
+                # Drip header bytes indefinitely at intervals
+                # far below the socket timeout: no inactivity
+                # window ever fires. Only active termination
+                # by the client can end this connection.
+                try:
+                    self.connection.sendall(
+                        b"HTTP/1.1 200 OK\r\nX-Drip: ")
+                    for _ in range(200):
+                        self.connection.sendall(b"x")
+                        time.sleep(spec[1])
+                    self.connection.sendall(b"\r\n\r\n{}")
+                except (BrokenPipeError, ConnectionResetError,
+                        ConnectionAbortedError):
+                    SCRIPT["client_gone"] = True
+                return
             if isinstance(spec, tuple) and spec[0] == "slow_headers":
                 # Drip the response HEADERS byte by byte (each
                 # socket read far inside any timeout) so header
@@ -339,6 +355,29 @@ check("the failure landed AT the deadline (within the stated "
       0.55 <= elapsed < 0.85 and len(REQUESTS) == before + 1,
       detail=f"elapsed={elapsed:.2f}s")
 
+# ------------- A6: expiry actively terminates the transport itself
+store, d, tok = fresh_store()
+SCRIPT["override"] = [("endless_headers", 0.05)]
+SCRIPT["client_gone"] = False
+a = adapter(timeout=0.6)
+started = time.monotonic()
+r = Driver(d, "crew-a", tok["crew-a"], a).wake_cycle()
+check("A6: an endlessly drip-fed header phase fails the wake "
+      "as no_response with nothing recorded",
+      r["failed"] == "no_response" and r["recorded"] == [])
+gone_deadline = started + 2.5
+while time.monotonic() < gone_deadline and not (
+        SCRIPT["client_gone"] and not a._last_worker.is_alive()):
+    time.sleep(0.05)
+check("the abandoned worker and its connection are actually "
+      "gone within the stated tolerance (2.5s from dispatch, "
+      "against a peer that would have dripped for 10s): the "
+      "worker thread ended and the server saw the disconnect",
+      SCRIPT["client_gone"] and not a._last_worker.is_alive()
+      and getattr(a, "_worker_terminated", False),
+      detail=f"client_gone={SCRIPT['client_gone']}, "
+             f"worker_alive={a._last_worker.is_alive()}")
+
 # --------------------------- A6: the deadline covers handling, too
 import framework.adapter as adapter_module
 import urllib.request
@@ -411,14 +450,34 @@ class _FakeResp:
 
 ENVELOPE = json.dumps(_completion(json.dumps(
     {"outcome": "contribute", "text": "x"}))).encode()
+
+
+class _FakeConn:
+    def __init__(self, resp):
+        self._resp = resp
+        self.sock = mock.Mock()
+        self.status = 200
+
+    def request(self, *args, **kwargs):
+        pass
+
+    def getresponse(self):
+        return self._resp
+
+    def close(self):
+        pass
+
+
 for label, fake in (
         ("no bounded read (read1 unavailable)",
          _FakeResp(ENVELOPE, no_read1=True)),
         ("socket timeout cannot be set",
          _FakeResp(ENVELOPE, bad_sock=True))):
+    fake.status = 200
     a = adapter()
-    with mock.patch.object(urllib.request, "urlopen",
-                           return_value=fake):
+    with mock.patch.object(
+            OpenAICompatibleAdapter, "_open_connection",
+            lambda self, remaining, _f=fake: (_FakeConn(_f), "/")):
         try:
             a({"seat": "crew-a", "case_id": "c", "case_version": 1,
                "case": {"part": "A"}, "position": 1})

@@ -280,3 +280,49 @@ Suite after round 4: Piece 8, 30 checks, ALL PASS; every
 regression green. The live-record replay remains Vane's to
 perform against the round-3 export; nothing about it
 changed this round.
+
+## Examination round 5 (2026-11-23) — the transport, taken lower-level
+
+The foreground deadline stood; the residue did not. The
+"roughly another budget" bound on the abandoned worker was
+an inactivity timeout — a peer drip-feeding inside it could
+keep the worker and its connection alive indefinitely.
+Accepted, and the offered lower-level route taken:
+
+**The adapter now owns the connection from creation.**
+`_dispatch` runs on http.client, not urlopen: the
+connection is built by `_open_connection` (honouring the
+environment's proxy configuration as urllib would —
+getproxies + proxy_bypass: direct, absolute-form through an
+HTTP proxy, or a CONNECT tunnel for HTTPS) and published
+before any blocking operation. On expiry the calling thread
+ACTIVELY TERMINATES the transport: the socket is shut down
+(SHUT_RDWR — which interrupts whatever blocking read the
+worker is inside, headers or body) and closed, and the
+worker is joined for a one-second grace to confirm it
+ended. The one phase no shutdown can reach is a connection
+attempt whose socket does not exist yet; it is bounded by
+the dispatch-time socket timeout, and the record states
+that boundary rather than papering over it. The per-read
+timeout discipline, the explicit completion path, and the
+fail-closed read rules all carry over unchanged.
+
+New witness: a peer drip-feeds header bytes every 0.05s —
+far inside the socket timeout, so no inactivity window ever
+fires — toward a ten-second header. The wake fails at the
+0.6s deadline; within the stated tolerance (worker and
+connection gone by 2.5s from dispatch) the suite asserts
+the worker thread has ended, the termination was confirmed
+(`_worker_terminated`), and the server itself saw the
+client disconnect. One-dispatch and no-submission
+assertions stand throughout.
+
+The demo runner was updated to the new transport (the
+connector surrogate is obtained once and carried as the
+adapter's bearer key), and the live route was re-verified
+end to end: a real `identify()` against NVIDIA through the
+proxy tunnel returned the model's declaration with
+provider_model_id moonshotai/kimi-k3.1-pro.
+
+Suite after round 5: Piece 8, 32 checks, ALL PASS; every
+regression green.
