@@ -103,15 +103,21 @@ def _read_store(path, run_id):
 # ------------------------------------------------------------ chain
 
 def _chain_positions(events):
-    """Per-position chain standing: {seq: (hash_ok, seq_ok,
-    hash_detail)} — each event's hash validity and sequence
-    standing computed on their own terms, neither derived from
-    the other (C6). Together they establish the positions at
-    which a replay halt may be classified schema_invalid:
-    Rev 4 reserves that classification for an event that is
-    canonically hashable, whose stored hash verifies, and
-    which stands in sequence (round 3)."""
-    positions = {}
+    """Per-position chain standing: a list, in stored order, of
+    (hash_ok, seq_ok, hash_detail) — one entry per PHYSICAL
+    event. Standing is keyed by the event's actual position,
+    never by its claimed event_seq: a sequence number is
+    evidence about where an event claims to stand, not the
+    identity of the position at which the claim is examined,
+    and a malformed stream may carry the same event_seq on two
+    physical events (round 4). Each event's hash validity and
+    sequence standing are computed on their own terms, neither
+    derived from the other (C6). Together they establish the
+    positions at which a replay halt may be classified
+    schema_invalid: Rev 4 reserves that classification for an
+    event that is canonically hashable, whose stored hash
+    verifies, and which stands in sequence (round 3)."""
+    positions = []
     prev_hash = ""
     for expected, ev in enumerate(events, start=1):
         seq = ev.get("event_seq")
@@ -132,7 +138,7 @@ def _chain_positions(events):
                     "event contents cannot be canonically " \
                     "serialized and hashed"
         seq_ok = seq == expected and ev.get("prev_hash") == prev_hash
-        positions[seq] = (hash_ok, seq_ok, hash_detail)
+        positions.append((hash_ok, seq_ok, hash_detail))
         prev_hash = ev.get("hash")
     return positions
 
@@ -144,11 +150,12 @@ def _hash_result(events, positions=None):
     hash validity cannot be established for them (C6)."""
     if positions is None:
         positions = _chain_positions(events)
-    for ev in events:
-        hash_ok, _, detail = positions[ev.get("event_seq")]
+    for pos, ev in enumerate(events, start=1):
+        hash_ok, _, detail = positions[pos - 1]
         if not hash_ok:
             return {"result": "hash_chain_invalid",
-                    "at_seq": ev.get("event_seq"), "detail": detail}
+                    "at_seq": ev.get("event_seq"),
+                    "at_position": pos, "detail": detail}
     return {"result": "ok"}
 
 
@@ -156,22 +163,24 @@ def _sequence_result(events, positions=None):
     """Sequence structure, independently of hash validity:
     positions contiguous from the first event (which stands at
     position 1), no gaps or duplicates in stored order, and each
-    event's prev_hash naming the preceding event's hash."""
+    event's prev_hash naming the preceding event's hash. The
+    first offending event is identified by its physical
+    position; its claimed event_seq is reported alongside."""
     if positions is None:
         positions = _chain_positions(events)
-    prev_hash = ""
     for expected, ev in enumerate(events, start=1):
         seq = ev.get("event_seq")
-        _, seq_ok, _ = positions[seq]
+        _, seq_ok, _ = positions[expected - 1]
         if not seq_ok:
             if seq != expected:
-                return {"result": "sequence_invalid", "at_seq": seq,
+                return {"result": "sequence_invalid",
+                        "at_seq": seq, "at_position": expected,
                         "detail": f"expected position {expected}, "
                                   f"found {seq}"}
             return {"result": "sequence_invalid", "at_seq": seq,
+                    "at_position": expected,
                     "detail": "prev_hash does not name the "
                               "preceding event's hash"}
-        prev_hash = ev.get("hash")
     return {"result": "ok"}
 
 
@@ -371,18 +380,19 @@ def check(request):
             "detail": "an event's stored contents cannot be read "
                       "(see chain_hash)"}
     else:
-        classifiable = {seq for seq, (h, s, _)
-                        in positions.items() if h and s}
+        classifiable = {pos for pos, (h, s, _) in
+                        enumerate(positions, start=1) if h and s}
         state, halt = replay_events(events, run_id, classifiable)
         if halt is not None:
-            kind, at_seq, detail = halt
+            kind, at_seq, detail, at_position = halt
             if kind == "not_classified":
                 detail = "schema classification withheld: the " \
                          "event at this position is not " \
                          "established hash-valid and in sequence " \
                          f"(see the chain results) — {detail}"
             checks["replay"] = {
-                "result": kind, "at_seq": at_seq, "detail": detail}
+                "result": kind, "at_seq": at_seq,
+                "at_position": at_position, "detail": detail}
         else:
             checks["replay"] = {"result": "ok"}
 

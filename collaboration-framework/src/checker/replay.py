@@ -585,7 +585,7 @@ def _apply(state, ev):
 def replay_events(events, run_id=None, classifiable=None):
     """Replay the stream. Returns (state, halt): the reconstructed
     state (None when the replay halted) and the halt as
-    (kind, seq, detail) or None. Each event is shape-checked
+    (kind, seq, detail, position) or None. Each event is shape-checked
     before it is applied, and the application itself is guarded
     — a defect the table did not foresee still lands as a classed
     halt, not an exception.
@@ -593,19 +593,22 @@ def replay_events(events, run_id=None, classifiable=None):
     The halt's kind honours C6's preconditions (round 3): a halt
     is "schema_invalid" only at a position the caller has
     established as hash-valid and in sequence (`classifiable`,
-    the set of such positions from the checker's chain
-    examination); at any other position the halt is
+    the set of such PHYSICAL positions from the checker's chain
+    examination — positions, not claimed sequence numbers,
+    round 4); at any other position the halt is
     "not_classified" — the chain results carry that defect, and
-    the replay does not borrow their classification."""
+    the replay does not borrow their classification. The halt
+    reports both the event's claimed event_seq and its physical
+    position."""
     state = blank_state(run_id)
-    for ev in events:
+    for pos, ev in enumerate(events, start=1):
         seq = ev.get("event_seq")
         kind = "schema_invalid"
-        if classifiable is not None and seq not in classifiable:
+        if classifiable is not None and pos not in classifiable:
             kind = "not_classified"
         problem = _shape_problem(ev)
         if problem is not None:
-            return None, (kind, seq, problem)
+            return None, (kind, seq, problem, pos)
         try:
             _apply(state, ev)
         except SchemaHalt:
@@ -613,5 +616,5 @@ def replay_events(events, run_id=None, classifiable=None):
         except Exception as exc:  # classed, never a traceback
             return None, (kind, seq,
                           f"event cannot be applied "
-                          f"({type(exc).__name__})")
+                          f"({type(exc).__name__})", pos)
     return state, None

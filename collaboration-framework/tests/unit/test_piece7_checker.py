@@ -727,6 +727,56 @@ check("C6 a wrongly typed event with a recomputed hash but "
       and v["checks"]["replay"]["at_seq"] == 2,
       json.dumps(v["checks"]))
 
+# Round 4: standing is keyed by PHYSICAL position, not by the
+# claimed event_seq. A later duplicate event_seq must not
+# overwrite the standing of the event that legitimately stands
+# at that sequence. (The fixture store's events table is
+# rebuilt without the primary key — this store's DDL makes a
+# duplicate event_seq uninsertable, which is the framework's
+# own protection, not the checker's assumption.)
+def duplicate_seq_copy(store):
+    dst = os.path.join(tempfile.mkdtemp(), "dup.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    conn.execute(
+        "CREATE TABLE events2 (event_seq INTEGER, event_id TEXT,"
+        " run_id TEXT, type TEXT, actor TEXT, affected TEXT,"
+        " payload TEXT, ts TEXT, prev_hash TEXT, hash TEXT)")
+    conn.execute("INSERT INTO events2 SELECT * FROM events")
+    conn.execute("DROP TABLE events")
+    conn.execute("ALTER TABLE events2 RENAME TO events")
+    prev = conn.execute(
+        "SELECT hash FROM events ORDER BY rowid DESC LIMIT 1"
+    ).fetchone()[0]
+    ev = {"event_seq": 2, "event_id": "evt-dup", "run_id": "run-1",
+          "type": "COMMENT", "actor": "crew-1", "affected": [],
+          "payload": {"text": "dup"}, "ts": "2026-01-01T00:00:00Z",
+          "prev_hash": prev}
+    conn.execute(
+        "INSERT INTO events VALUES (2, 'evt-dup', 'run-1',"
+        " 'COMMENT', 'crew-1', '[]', ?, '2026-01-01T00:00:00Z',"
+        " ?, ?)",
+        (json.dumps({"text": "dup"}), prev, event_hash(prev, ev)))
+    conn.commit()
+    conn.close()
+    return dst
+
+
+proc, v = run_checker(duplicate_seq_copy(storeI), "run-1", None)
+check("C6 a duplicate event_seq does not steal the standing of "
+      "the event at that position: the malformed event keeps "
+      "its schema_invalid classification, the duplicate is the "
+      "sequence defect at its physical position",
+      proc.returncode == 0
+      and v["checks"]["chain_hash"]["result"] == "ok"
+      and v["checks"]["chain_sequence"]["result"]
+      == "sequence_invalid"
+      and v["checks"]["chain_sequence"]["at_position"] == 3
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["replay"]["at_seq"] == 2
+      and v["checks"]["replay"]["at_position"] == 2,
+      json.dumps(v["checks"]))
+
 # ============================================================ crit. 9
 proto = os.path.expanduser("~/workspace/loom-prototype")
 mismatch = []

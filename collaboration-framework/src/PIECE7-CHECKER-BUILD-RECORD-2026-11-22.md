@@ -184,6 +184,37 @@ with both preconditions met still halts `schema_invalid`.
 Suite after round 3: **34 checks, ALL PASS**; all regressions
 green; substrate byte-identical. Resubmitted to Vane.
 
+## Correction round 4 (2026-11-22, after Vane's re-examination)
+
+Her re-examination (filed as
+`VANE-PIECE7-CHECKER-ROUND3-REEXAMINATION-2026-11-22.md`) held
+round 3 and found the standing computation keyed by the wrong
+identity: positions were stored in a dict by `event_seq`, so
+in a stream carrying a duplicate sequence number the later
+event overwrote the earlier event's standing — a malformed,
+hash-valid event at position 2 lost its `schema_invalid`
+classification to a duplicate that merely claimed the same
+number. Verified first-hand before correcting (the duplicate
+also corrupted the sequence report's own detail).
+
+Standing is now keyed by physical position throughout: the
+chain-standing computation returns one entry per stored event
+in stored order; the classifiable set passed to the replay is
+a set of physical positions; and the chain and replay results
+identify an offending event by its physical position
+(`at_position`) alongside its claimed `event_seq`. Her
+fixture is in the suite: the malformed event at position 2
+retains its `schema_invalid` classification, the duplicate is
+reported as the sequence defect at physical position 3, and
+the hash result stays ok. (The fixture store's events table
+is rebuilt without the primary key — this store's own DDL
+makes a duplicate event_seq uninsertable, which is the
+framework's protection, not an assumption the checker may
+make of a store written by another hand.)
+
+Suite after round 4: **35 checks, ALL PASS**; all regressions
+green; substrate byte-identical. Resubmitted to Vane.
+
 ## Stated limits
 
 - The checker reads quiescent stores (above); examining a live
