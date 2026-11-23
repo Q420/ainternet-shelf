@@ -47,7 +47,8 @@ from .doorway import EXECUTOR_ACTOR  # noqa: F401  (the identity
 
 class Executor:
     def __init__(self, doorway, sandbox_dir, claim_dir=None,
-                 deadline=5.0, executor_id="executor-1"):
+                 deadline=5.0, executor_id="executor-1",
+                 clock=time.monotonic):
         self.doorway = doorway
         self.store = doorway.store
         self.sandbox_dir = sandbox_dir
@@ -55,6 +56,16 @@ class Executor:
             sandbox_dir, ".claims")
         self.deadline = deadline
         self.executor_id = executor_id
+        # The monotonic clock the operation deadline is read
+        # from — a dependency, defaulting to time.monotonic,
+        # so a test can supply a controlled clock and place
+        # the worker deterministically on either side of the
+        # deadline (correction round 4). Only the deadline
+        # reads it: the deadline's instant in execute() and
+        # the worker's recheck. (The claim file's wall-clock
+        # stamp and the flaky operation's own sleep are not
+        # the deadline and stay on the real clock.)
+        self.clock = clock
         os.makedirs(self.sandbox_dir, exist_ok=True)
         os.makedirs(self.claim_dir, exist_ok=True)
 
@@ -241,7 +252,7 @@ class Executor:
         # the monotonic clock: the worker rechecks it after
         # its start report (see run()), so the same instant
         # governs both threads.
-        deadline_at = time.monotonic() + self.deadline
+        deadline_at = self.clock() + self.deadline
 
         def run():
             # The start is the executing thread's own first
@@ -274,7 +285,7 @@ class Executor:
             # timeout path) — uncertain, since a begun-but-
             # unperformed dispatch is not a result or a failure
             # the executor can establish.
-            if time.monotonic() >= deadline_at:
+            if self.clock() >= deadline_at:
                 box["deadline_expired"] = True
                 return
             try:

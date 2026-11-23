@@ -34,6 +34,12 @@ report — a start step blocked while holding the store lock
 past the deadline leaves the start standing but the operation
 unperformed, with exactly one uncertain outcome recorded and
 a history the checker verifies.
+Correction round 4 adds: the worker-finishes-first witness —
+the executor's monotonic clock is an injected dependency, and
+a controlled clock advanced past the deadline between the
+start report and the worker's recheck lands execute()
+deterministically in its caller-records-uncertain branch, a
+path the real clock leaves to a microsecond race.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a2_dispatch.py
 Exits 0 when every check passes.
@@ -1131,6 +1137,116 @@ verdict = run_checker(store)
 dc = verdict["checks"]["dispatch_correspondence"]
 check("T18 the checker reports dispatch_correspondence ok "
       "over the start-then-uncertain history",
+      dc["result"] == "ok", json.dumps(dc))
+
+# -- T19: the worker-finishes-first deadline branch
+# (correction round 4). T17 and T18 witness the caller's
+# timeout path; the other path — the worker completes its
+# start report, finds the deadline already expired at its
+# recheck, and finishes BEFORE the caller's join returns,
+# leaving the caller to record the uncertain outcome
+# itself — is a microsecond race under the real clock.
+# The executor's clock is a dependency, so a controlled
+# clock places the worker deterministically: the start
+# report runs with the clock inside the deadline, and a
+# hook on the start-report path advances the clock past
+# the deadline after the real append, before the worker's
+# recheck reads it. The worker then genuinely finishes —
+# in real time, at once — the real join returns with the
+# worker already dead, and execute() takes its
+# deadline_expired caller branch. The witness for the
+# branch is the outcome's own detail: the caller branch
+# names the start-report ground; the timeout branch's
+# detail ("the operation outlived the deadline") is a
+# different sentence and never appears here.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+base = tempfile.mkdtemp()
+sandbox = os.path.join(base, "sandbox")
+claims = os.path.join(base, "claims")
+
+
+class FakeClock:
+    """A monotonic clock whose reading the test sets."""
+
+    def __init__(self, now):
+        self.now = now
+
+    def __call__(self):
+        return self.now
+
+
+fake = FakeClock(1000.0)
+ex = Executor(d, sandbox, claim_dir=claims, deadline=5.0,
+              executor_id="executor-1", clock=fake)
+res = d.request_tool(itok, "sandbox.write",
+                     {"path": "notes/expired.txt",
+                      "content": "never"}, "req-expired")
+did = res["dispatch_id"]
+performed = []
+orig_perform = ex._perform
+
+
+def counting_perform3(tool, parameters):
+    performed.append(tool)
+    return orig_perform(tool, parameters)
+
+
+ex._perform = counting_perform3
+orig_started = d.record_tool_started
+
+
+def advancing_started(dispatch_id):
+    # The real start report, taken with the clock still
+    # inside the deadline (1000.0 < 1005.0); the clock is
+    # then advanced far past it, so the worker's recheck —
+    # its next clock read — finds the deadline expired.
+    result = orig_started(dispatch_id)
+    fake.now = 2000.0
+    return result
+
+
+d.record_tool_started = advancing_started
+try:
+    summary = ex.execute(did)
+finally:
+    d.record_tool_started = orig_started
+starts = [e for e in events_of(store, "TOOL_STARTED")
+          if e["payload"].get("dispatch_id") == did]
+outcomes = [e for e in events_of(store, "TOOL_OUTCOME")
+            if e["payload"].get("dispatch_id") == did]
+check("T19 with the clock advanced past the deadline "
+      "between the start report and the recheck, the "
+      "worker finishes first and the caller records the "
+      "uncertain outcome — its detail names the "
+      "start-report ground the timeout path never writes",
+      summary["ok"] and summary["outcome"] == "uncertain"
+      and len(outcomes) == 1
+      and "start report completed after the operation "
+      "deadline" in outcomes[0]["payload"].get(
+          "detail", ""),
+      json.dumps(outcomes))
+check("T19 the operation body never ran",
+      performed == []
+      and not os.path.exists(
+          os.path.join(sandbox, "notes", "expired.txt")))
+entry = d.state()["dispatches"][did]
+check("T19 exactly one start stands, before the one "
+      "outcome, and the fold agrees",
+      len(starts) == 1 and len(outcomes) == 1
+      and starts[0]["event_seq"] < outcomes[0]["event_seq"]
+      and entry["outcome"] == "uncertain"
+      and entry["started_seq"] == starts[0]["event_seq"])
+ex2 = Executor(d, sandbox, claim_dir=claims, deadline=2.0,
+               executor_id="executor-2")
+check("T19 the claim stands reported and recovery has "
+      "nothing to redo",
+      ex.claim_phase(did) == "reported"
+      and ex2.recover() == [])
+verdict = run_checker(store)
+dc = verdict["checks"]["dispatch_correspondence"]
+check("T19 the checker reports dispatch_correspondence ok "
+      "over the start-then-caller-uncertain history",
       dc["result"] == "ok", json.dumps(dc))
 
 print()
