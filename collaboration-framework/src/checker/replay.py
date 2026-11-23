@@ -1,0 +1,488 @@
+"""The checker's own replay of the record fold — Piece 7 (§3.10).
+
+An independent implementation of the fold the record service
+performs: starting from the blank state, each recorded event is
+applied in stream order, and the resulting state is the checker's
+reconstruction — the value its projection comparison answers
+with. Nothing here is imported from the framework's record,
+doorway, gates or orchestrator modules; the semantics are
+re-derived from the record's contract (SPEC SHEET §3.1/§3.10,
+R4): the fold applies what the record holds, position-sensitively
+where the record is position-sensitive (a contribution's case
+standing is judged at its own event position), and it invents
+nothing.
+
+A recorded event the fold cannot interpret — an unknown type, or
+a payload whose values are of the wrong type for the fields the
+fold reads, or whose shape its event type requires and lacks —
+halts the replay with a classed `schema_invalid` halt naming the
+position (scope Rev 4, C6). It never escapes as an exception.
+"""
+
+CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
+                       "evidence_boundary", "verification_list",
+                       "account", "authority")
+
+_STATUS_RANK = {"unverified": 0, "declared": 1,
+                "provider-confirmed": 2}
+
+_CASE_ACTS = ("CASE_ISSUED", "CASE_CORRECTED", "CASE_VERIFIED",
+              "CASE_JUDGED", "CASE_NOTIFIED", "CASE_ACKNOWLEDGED")
+
+_KNOWN_TYPES = {
+    "RUN_COMMISSIONED", "SEAT_BOUND", "CONTRIBUTION", "COMMENT",
+    "DISAGREEMENT", "DISAGREEMENT_SETTLED", "GATE_OUTCOME",
+    "FINDING", "RULING", "DISPOSITION", "CERTIFICATION",
+    "CASE_ISSUED", "CASE_CORRECTED", "CASE_VERIFIED", "CASE_JUDGED",
+    "CASE_NOTIFIED", "CASE_ACKNOWLEDGED", "DRIVER_FAILURE",
+    "ONBOARDING", "ESCALATION", "CLAIM_STATUS", "HOLDER_UNAVAILABLE",
+    "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION",
+    "RUN_CLOSED", "ASSEMBLY_PROPOSED", "ASSEMBLY_RECORD",
+    "RUN_READY_FOR_COMPLETION",
+}
+
+
+class SchemaHalt(Exception):
+    """The replay's classed halt: position + what could not be
+    interpreted. Caught by the checker and reported as the
+    `schema_invalid` replay result — never a traceback."""
+
+    def __init__(self, seq, detail):
+        super().__init__(detail)
+        self.seq = seq
+        self.detail = detail
+
+
+def _is_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _shape_problem(ev):
+    """Whether the event's payload lacks the shape its type's fold
+    step requires, or carries a wrongly typed value for a field
+    that step reads. Returns a description, or None."""
+    t = ev["type"]
+    p = ev["payload"]
+    if not isinstance(p, dict):
+        return "payload is not an object"
+    if t not in _KNOWN_TYPES:
+        return f"unknown event type {t!r}"
+
+    def need_str(key):
+        return not isinstance(p.get(key), str)
+
+    def opt_str(key):
+        return key in p and p[key] is not None and \
+            not isinstance(p[key], str)
+
+    if t == "RUN_COMMISSIONED":
+        seats = p.get("seats")
+        if seats is not None:
+            if not isinstance(seats, dict):
+                return "commission seats is not an object"
+            for seat_id, binding in seats.items():
+                if not isinstance(binding, dict) or \
+                        not isinstance(binding.get("role"), str):
+                    return f"commission binding for {seat_id!r} " \
+                        "lacks a role"
+        if "tree" in p and not isinstance(p["tree"], dict):
+            return "commission tree is not an object"
+    elif t == "SEAT_BOUND":
+        if need_str("seat_id") or need_str("role"):
+            return "SEAT_BOUND requires seat_id and role strings"
+    elif t == "ONBOARDING":
+        if need_str("seat_id"):
+            return "ONBOARDING requires a seat_id string"
+        if opt_str("identity_status"):
+            return "ONBOARDING identity_status is not a string"
+    elif t == "CLAIM_STATUS":
+        if not isinstance(p.get("to"), str):
+            return "CLAIM_STATUS requires a 'to' string"
+    elif t in _CASE_ACTS:
+        if need_str("case_id"):
+            return f"{t} requires a case_id string"
+        if not _is_int(p.get("version")):
+            return f"{t} requires an integer version"
+        if opt_str("seat"):
+            return f"{t} seat is not a string"
+    elif t == "DRIVER_FAILURE":
+        if need_str("seat"):
+            return "DRIVER_FAILURE requires a seat string"
+    elif t == "MATERIAL_SEALED":
+        if need_str("material_id"):
+            return "MATERIAL_SEALED requires a material_id string"
+        if "boundary" in p and not isinstance(p["boundary"], list):
+            return "MATERIAL_SEALED boundary is not a list"
+    elif t in ("GATE_OUTCOME", "ESCALATION"):
+        for key in ("paused_set", "released_set"):
+            if key in p and not isinstance(p[key], list):
+                return f"{t} {key} is not a list"
+        if "downstream" in p and not isinstance(p["downstream"],
+                                                dict):
+            return f"{t} downstream is not an object"
+    elif t == "ASSEMBLY_RECORD":
+        gs = p.get("gate_set")
+        if gs is not None and not isinstance(gs, dict):
+            return "ASSEMBLY_RECORD gate_set is not an object"
+    return None
+
+
+def blank_state(run_id=None):
+    return {
+        "run_id": run_id,
+        "lifecycle": "unopened",
+        "lifecycle_seq": None,
+        "seats": {},
+        "onboarding": {},
+        "claims": {},
+        "disagreements": {},
+        "contributions": {},
+        "cases": {},
+        "gates": {},
+        "certifications": [],
+        "findings": [],
+        "rulings": [],
+        "dispositions": [],
+        "escalations": [],
+        "rejections": [],
+        "sealed": {},
+        "stalled": {},
+        "tree": {},
+        "paused": {},
+        "gate_declaration": {},
+        "gates_present": False,
+        "completion_claim_seq": None,
+        "holder_unavailable": [],
+        "commission_seq": None,
+        "assembly_proposals": [],
+        "assembly_records": [],
+        "run_ready_seq": None,
+        "completion_claims": [],
+        "routing_notes": [],
+        "uncased": {},
+        "pre_ack": {},
+        "head_seq": 0,
+    }
+
+
+def _version_route_complete(ver, version):
+    """Whether one case version completed its issuance route:
+    verification and authorisation always; the examiner's
+    sufficiency judgement — or, for a purely representational
+    correction, the examiner notification — between them, in
+    exact order; a version above the first stands on its
+    correction, which precedes the whole route."""
+    if not ver or ver.get("verified") is None or \
+            ver.get("issued") is None:
+        return False
+    if version > 1 and not ver.get("corrected"):
+        return False
+    if not ver["verified"] < ver["issued"]:
+        return False
+    if ver.get("corrected"):
+        cseq = ver.get("corrected_seq")
+        if cseq is None or not cseq < ver["verified"]:
+            return False
+        if ver.get("representational"):
+            return ver.get("notified") is not None and \
+                ver["verified"] < ver["notified"] < ver["issued"]
+        return ver.get("judged") is not None and \
+            ver["verified"] < ver["judged"] < ver["issued"]
+    return ver.get("judged") is not None and \
+        ver["verified"] < ver["judged"] < ver["issued"]
+
+
+def _effective_case(state, seat_id):
+    """The seat's effective case at the fold's current position:
+    the highest version across the seat's case lineages that
+    completed its issuance route (the earliest-standing lineage
+    holding a version tie), with acknowledgement counted only
+    when the seat recorded it after that version's
+    authorisation."""
+    best = None
+    for case_id, entry in state["cases"].items():
+        if entry.get("seat") != seat_id:
+            continue
+        for vstr, ver in entry["versions"].items():
+            v = int(vstr)
+            if not _version_route_complete(ver, v):
+                continue
+            ack_seq = ver.get("acknowledged", {}).get(seat_id)
+            acknowledged = ack_seq is not None and \
+                ver.get("issued") is not None and \
+                ack_seq > ver["issued"]
+            if best is None or v > best["version"]:
+                best = {
+                    "case_id": case_id, "version": v,
+                    "content": ver.get("content"),
+                    "issued_seq": ver.get("issued"),
+                    "corrected": ver.get("corrected", False),
+                    "acknowledged": acknowledged,
+                }
+    return best
+
+
+def _case_standing(state, seat_id, part):
+    """(cased, acknowledged) for (seat, part) over the fold as it
+    stands at the current step — the position-sensitive reading a
+    contribution's provenance requires."""
+    eff = _effective_case(state, seat_id)
+    if eff is None or not eff.get("content"):
+        return False, False
+    if eff["content"].get("part") != part:
+        return False, False
+    return True, bool(eff["acknowledged"])
+
+
+def _apply(state, ev):
+    t = ev["type"]
+    p = ev["payload"]
+    actor = ev["actor"]
+    seq = ev["event_seq"]
+    state["head_seq"] = seq
+
+    if t == "RUN_COMMISSIONED":
+        state["run_id"] = ev.get("run_id", state["run_id"])
+        state["lifecycle"] = "commissioned"
+        state["lifecycle_seq"] = seq
+        state["commission_seq"] = seq
+        state["tree"] = dict(p.get("tree", {}))
+        raw_gates = p.get("gates")
+        state["gates_present"] = raw_gates is not None
+        state["gate_declaration"] = dict(raw_gates) \
+            if isinstance(raw_gates, dict) else {}
+        for seat_id, binding in p.get("seats", {}).items():
+            state["seats"][seat_id] = {
+                "role": binding["role"],
+                "identity_status": binding.get("identity_status",
+                                               "unverified"),
+            }
+    elif t == "SEAT_BOUND":
+        state["seats"][p["seat_id"]] = {
+            "role": p["role"],
+            "identity_status": p.get("identity_status", "unverified"),
+        }
+    elif t == "ONBOARDING":
+        seat = p["seat_id"]
+        rec = state["onboarding"].get(seat)
+        if rec is None:
+            state["onboarding"][seat] = {
+                "declaration": p.get("declaration"),
+                "identity_status": p.get("identity_status",
+                                         "unverified"),
+                "capability": p.get("capability"),
+                "limits": p.get("limits"),
+                "terms_acknowledged": p.get("terms_acknowledged"),
+                "terms_ref": p.get("terms_ref"),
+                "onboarded_seq": seq,
+                "attestation": (
+                    {"event_seq": seq,
+                     "attestation_ref": p["attestation_ref"]}
+                    if p.get("attestation_ref") else None),
+            }
+        elif p.get("attestation_ref"):
+            # An attested restatement raises the status only, and
+            # only on a strict raise; the established record and
+            # the standing attestation provenance are otherwise
+            # untouched.
+            new = p.get("identity_status")
+            if new in _STATUS_RANK and _STATUS_RANK[new] > \
+                    _STATUS_RANK.get(rec["identity_status"], 0):
+                rec["identity_status"] = new
+                rec["attestation"] = {
+                    "event_seq": seq,
+                    "attestation_ref": p["attestation_ref"]}
+    elif t == "CONTRIBUTION":
+        cid = p.get("contribution_id", ev["event_id"])
+        state["contributions"][cid] = {
+            "author": actor, "tree_part": p.get("tree_part")}
+        cased, acknowledged = _case_standing(
+            state, actor, p.get("tree_part"))
+        key = p.get("tree_part") or "(job)"
+        if not cased:
+            state["uncased"].setdefault(key, []).append(cid)
+        elif not acknowledged:
+            state["pre_ack"].setdefault(key, []).append(cid)
+        if p.get("claim_id"):
+            state["claims"][p["claim_id"]] = {
+                "author": actor, "status": "claimed",
+                "subject": cid, "status_seq": seq,
+            }
+    elif t == "DISAGREEMENT":
+        did = p.get("disagreement_id", ev["event_id"])
+        state["disagreements"][did] = {
+            "status": "open", "claim_id": p.get("claim_id"),
+            "by": actor, "status_seq": seq,
+        }
+        claim = state["claims"].get(p.get("claim_id") or "")
+        if claim and claim["status"] in ("claimed", "evidenced"):
+            claim["status"] = "disputed"
+            claim["status_seq"] = seq
+    elif t == "DISAGREEMENT_SETTLED":
+        d = state["disagreements"].get(p.get("disagreement_id")
+                                       or "")
+        if d:
+            d["status"] = "settled"
+            d["status_seq"] = seq
+    elif t == "CLAIM_STATUS":
+        claim = state["claims"].get(p.get("claim_id") or "")
+        if claim:
+            claim["status"] = p["to"]
+            claim["status_seq"] = seq
+    elif t == "GATE_OUTCOME":
+        joint = p.get("joint")
+        state["gates"][joint] = {
+            "outcome": p.get("outcome"), "by": actor,
+            "event_seq": seq,
+        }
+        if p.get("outcome") == "escalate":
+            for part in p.get("paused_set", []):
+                state["paused"][part] = {
+                    "source_seq": seq,
+                    "source_joint": joint,
+                    "downstream": p.get("downstream", {}).get(
+                        part, []),
+                }
+        elif p.get("outcome") == "allow":
+            for part in p.get("paused_set", []) + \
+                    p.get("released_set", []):
+                entry = state["paused"].get(part)
+                if entry is not None and \
+                        entry.get("source_joint") == joint:
+                    state["paused"].pop(part, None)
+    elif t == "ESCALATION":
+        state["escalations"].append({
+            "by": actor, "joint": p.get("joint"), "event_seq": seq})
+        for part in p.get("paused_set", []):
+            state["paused"][part] = {
+                "source_seq": seq,
+                "source_joint": p.get("joint"),
+                "downstream": p.get("downstream", {}).get(part, []),
+            }
+    elif t in _CASE_ACTS:
+        entry = state["cases"].setdefault(
+            p["case_id"], {"version": 0, "seat": None,
+                           "versions": {}})
+        if p.get("seat"):
+            entry["seat"] = p["seat"]
+        ver = entry["versions"].setdefault(str(p["version"]), {
+            "verified": None, "judged": None, "notified": None,
+            "issued": None, "content": None, "corrected": False,
+            "corrected_seq": None, "representational": False,
+            "acknowledged": {},
+        })
+        if t == "CASE_ISSUED":
+            ver["issued"] = seq
+            if ver["content"] is None:
+                ver["content"] = dict(p)
+            entry["version"] = max(entry["version"], p["version"])
+        elif t == "CASE_CORRECTED":
+            # A version's correction is established once, by its
+            # first correction event; a second stands in the
+            # history but replaces nothing.
+            if not ver["corrected"]:
+                ver["corrected"] = True
+                ver["corrected_seq"] = seq
+                ver["representational"] = bool(
+                    p.get("representational"))
+                ver["content"] = dict(p)
+            entry["version"] = max(entry["version"], p["version"])
+        elif t == "CASE_VERIFIED":
+            if ver["verified"] is None:
+                ver["verified"] = seq
+            if ver["content"] is None and \
+                    any(f in p for f in CASE_CONTENT_FIELDS):
+                ver["content"] = dict(p)
+        elif t == "CASE_JUDGED":
+            ver["judged"] = seq
+        elif t == "CASE_NOTIFIED":
+            ver["notified"] = seq
+        elif t == "CASE_ACKNOWLEDGED":
+            ver["acknowledged"][actor] = seq
+    elif t == "DRIVER_FAILURE":
+        state["stalled"][p["seat"]] = {
+            "kind": p.get("kind"), "part": p.get("part"),
+            "event_seq": seq,
+        }
+    elif t == "CERTIFICATION":
+        state["certifications"].append({
+            "by": actor, "coverage": p.get("coverage"),
+            "event_seq": seq})
+        if p.get("closes_run"):
+            for d in state["disagreements"].values():
+                if d["status"] == "open":
+                    d["status"] = "open-at-close"
+                    d["status_seq"] = seq
+            state["lifecycle"] = "certified"
+            state["lifecycle_seq"] = seq
+    elif t == "FINDING":
+        state["findings"].append({"by": actor, "event_seq": seq})
+    elif t == "RULING":
+        state["rulings"].append({
+            "by": actor, "event_seq": seq, "joint": p.get("joint"),
+            "action": p.get("action")})
+    elif t == "DISPOSITION":
+        state["dispositions"].append({"by": actor,
+                                       "event_seq": seq})
+    elif t == "MATERIAL_SEALED":
+        state["sealed"][p["material_id"]] = list(
+            p.get("boundary", []))
+    elif t == "REJECTION":
+        state["rejections"].append({
+            "seat": p.get("seat"),
+            "attempted": p.get("attempted_type"),
+            "ground": p.get("ground"), "event_seq": seq,
+            "part": p.get("part"),
+        })
+    elif t == "HOLDER_UNAVAILABLE":
+        state["holder_unavailable"].append({
+            "joint": p.get("joint"), "by": actor, "event_seq": seq})
+    elif t == "COMPLETION_CLAIMED":
+        state["lifecycle"] = "completion_claimed"
+        state["lifecycle_seq"] = seq
+        state["completion_claim_seq"] = seq
+        state["completion_claims"].append({
+            "event_seq": seq, "by": actor,
+            "tree_part": p.get("tree_part")})
+    elif t == "ASSEMBLY_PROPOSED":
+        state["assembly_proposals"].append({
+            "event_seq": seq, "crew": p.get("crew")})
+    elif t == "ASSEMBLY_RECORD":
+        state["assembly_records"].append({
+            "event_seq": seq, "proposal_seq": p.get("proposal_seq"),
+            "gate_set": dict(p.get("gate_set") or {})})
+    elif t == "RUN_READY_FOR_COMPLETION":
+        state["run_ready_seq"] = seq
+    elif t == "COMMENT":
+        if p.get("routes_disagreement") and p.get("to_gate"):
+            state["routing_notes"].append({
+                "disagreement_id": p.get("routes_disagreement"),
+                "joint": p.get("to_gate"), "event_seq": seq,
+                "by": actor})
+    elif t == "RUN_CLOSED":
+        state["lifecycle"] = "closed"
+        state["lifecycle_seq"] = seq
+    return state
+
+
+def replay_events(events, run_id=None):
+    """Replay the stream. Returns (state, halt): the reconstructed
+    state (None when the replay halted) and the halt as
+    (seq, detail) or None. Each event is shape-checked before it
+    is applied, and the application itself is guarded — a defect
+    the table did not foresee still lands as a classed halt, not
+    an exception."""
+    state = blank_state(run_id)
+    for ev in events:
+        problem = _shape_problem(ev)
+        if problem is not None:
+            return None, (ev.get("event_seq"), problem)
+        try:
+            _apply(state, ev)
+        except SchemaHalt:
+            raise
+        except Exception as exc:  # classed, never a traceback
+            return None, (ev.get("event_seq"),
+                          f"event cannot be applied "
+                          f"({type(exc).__name__})")
+    return state, None

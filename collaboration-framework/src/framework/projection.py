@@ -1,0 +1,203 @@
+"""Framework-side projection exporter — Piece 7 (§3.10).
+
+The framework's half of the checker contract: it folds the record
+(`record.replay`) and exports the resulting state as the comparison
+projection the independent checker answers to. The projection is
+the complete record fold, rendered as plain JSON data (a canonical
+round-trip, so the exported value is exactly the value compared).
+
+This module also holds the framework's copy of the PROJECTION
+SCHEMA: a recursive description of the fold state's shape — every
+top-level field, every nested object's field set, every
+collection's element shape, at every depth. The checker holds its
+own independent copy (`checker.schema`); neither implementation
+reads the other's. The Piece 7 suite witnesses that the two copies
+are canonically identical and that the live fold state, this
+export, and the checker's reconstruction each conform to the
+schema recursively — so a new fold field, at any depth, fails the
+witness until both copies and both implementations cover it
+(scope Rev 4, C3/C4).
+"""
+import json
+
+from fabric.canonical import canonical
+from framework.record import replay
+
+# Schema node vocabulary:
+#   {"t": "any"}                 any JSON value
+#   {"t": "str"} / {"t": "int"} / {"t": "bool"} / {"t": "null"}
+#   {"t": "opt", "v": node}      null, or the node
+#   {"t": "list", "v": node}     a list whose items conform
+#   {"t": "map", "v": node}      an object with arbitrary keys
+#                                whose values conform
+#   {"t": "obj", "f": {k: node}} an object with exactly these keys
+
+_ANY = {"t": "any"}
+_STR = {"t": "str"}
+_INT = {"t": "int"}
+_BOOL = {"t": "bool"}
+
+
+def _opt(v):
+    return {"t": "opt", "v": v}
+
+
+def _list(v):
+    return {"t": "list", "v": v}
+
+
+def _map(v):
+    return {"t": "map", "v": v}
+
+
+def _obj(f):
+    return {"t": "obj", "f": f}
+
+
+_CASE_VERSION = _obj({
+    "verified": _opt(_INT), "judged": _opt(_INT),
+    "notified": _opt(_INT), "issued": _opt(_INT),
+    "content": _opt(_map(_ANY)),
+    "corrected": _BOOL, "corrected_seq": _opt(_INT),
+    "representational": _BOOL, "acknowledged": _map(_INT),
+})
+
+SCHEMA = _obj({
+    "run_id": _opt(_STR),
+    "lifecycle": _STR,
+    "lifecycle_seq": _opt(_INT),
+    "seats": _map(_obj({
+        "role": _STR, "identity_status": _STR})),
+    "onboarding": _map(_obj({
+        "declaration": _ANY, "identity_status": _STR,
+        "capability": _ANY, "limits": _ANY,
+        "terms_acknowledged": _ANY, "terms_ref": _ANY,
+        "onboarded_seq": _INT,
+        "attestation": _opt(_obj({
+            "event_seq": _INT, "attestation_ref": _ANY}))})),
+    "claims": _map(_obj({
+        "author": _STR, "status": _STR, "subject": _STR,
+        "status_seq": _INT})),
+    "disagreements": _map(_obj({
+        "status": _STR, "claim_id": _ANY, "by": _STR,
+        "status_seq": _INT})),
+    "contributions": _map(_obj({
+        "author": _STR, "tree_part": _opt(_STR)})),
+    "cases": _map(_obj({
+        "version": _INT, "seat": _opt(_STR),
+        "versions": _map(_CASE_VERSION)})),
+    "gates": _map(_obj({
+        "outcome": _ANY, "by": _STR, "event_seq": _INT})),
+    "certifications": _list(_obj({
+        "by": _STR, "coverage": _ANY, "event_seq": _INT})),
+    "findings": _list(_obj({"by": _STR, "event_seq": _INT})),
+    "rulings": _list(_obj({
+        "by": _STR, "event_seq": _INT, "joint": _ANY,
+        "action": _ANY})),
+    "dispositions": _list(_obj({"by": _STR, "event_seq": _INT})),
+    "escalations": _list(_obj({
+        "by": _STR, "joint": _ANY, "event_seq": _INT})),
+    "rejections": _list(_obj({
+        "seat": _ANY, "attempted": _ANY, "ground": _ANY,
+        "event_seq": _INT, "part": _ANY})),
+    "sealed": _map(_list(_ANY)),
+    "stalled": _map(_obj({
+        "kind": _ANY, "part": _ANY, "event_seq": _INT})),
+    "tree": _map(_ANY),
+    "paused": _map(_obj({
+        "source_seq": _INT, "source_joint": _ANY,
+        "downstream": _ANY})),
+    "gate_declaration": _map(_ANY),
+    "gates_present": _BOOL,
+    "completion_claim_seq": _opt(_INT),
+    "holder_unavailable": _list(_obj({
+        "joint": _ANY, "by": _STR, "event_seq": _INT})),
+    "commission_seq": _opt(_INT),
+    "assembly_proposals": _list(_obj({
+        "event_seq": _INT, "crew": _ANY})),
+    "assembly_records": _list(_obj({
+        "event_seq": _INT, "proposal_seq": _ANY,
+        "gate_set": _map(_ANY)})),
+    "run_ready_seq": _opt(_INT),
+    "completion_claims": _list(_obj({
+        "event_seq": _INT, "by": _STR, "tree_part": _ANY})),
+    "routing_notes": _list(_obj({
+        "disagreement_id": _ANY, "joint": _ANY,
+        "event_seq": _INT, "by": _STR})),
+    "uncased": _map(_list(_STR)),
+    "pre_ack": _map(_list(_STR)),
+    "head_seq": _INT,
+})
+
+
+def conforms(value, node=None, path=""):
+    """Recursive conformance of a value to the projection schema.
+
+    Returns the list of paths at which the value departs from the
+    schema (empty when it conforms). An object whose key set
+    differs from an "obj" node's field set reports each missing
+    and each unexpected key by path — at any depth.
+    """
+    if node is None:
+        node = SCHEMA
+    t = node["t"]
+    if t == "any":
+        return []
+    if t == "opt":
+        if value is None:
+            return []
+        return conforms(value, node["v"], path)
+    if t == "str":
+        return [] if isinstance(value, str) else [path]
+    if t == "int":
+        ok = isinstance(value, int) and not isinstance(value, bool)
+        return [] if ok else [path]
+    if t == "bool":
+        return [] if isinstance(value, bool) else [path]
+    if t == "null":
+        return [] if value is None else [path]
+    if t == "list":
+        if not isinstance(value, list):
+            return [path]
+        out = []
+        for i, item in enumerate(value):
+            out += conforms(item, node["v"], f"{path}[{i}]")
+        return out
+    if t == "map":
+        if not isinstance(value, dict):
+            return [path]
+        out = []
+        for k, v in value.items():
+            out += conforms(v, node["v"], f"{path}.{k}" if path else k)
+        return out
+    if t == "obj":
+        if not isinstance(value, dict):
+            return [path]
+        out = []
+        fields = node["f"]
+        for k in fields:
+            p = f"{path}.{k}" if path else k
+            if k not in value:
+                out.append(p)
+            else:
+                out += conforms(value[k], fields[k], p)
+        for k in value:
+            if k not in fields:
+                out.append(f"{path}.{k}" if path else k)
+        return out
+    return [path]
+
+
+def project(state):
+    """The comparison projection of a fold state: the state itself,
+    carried through a canonical round-trip so the exported value is
+    plain JSON data, exactly as it will be compared."""
+    return json.loads(canonical(state))
+
+
+def snapshot(store):
+    """The framework's exported projection for a store's run: the
+    record folded by the record service, projected as data. This is
+    the untrusted comparison operand the checker receives (C4) —
+    the checker never treats it as authority."""
+    return project(replay(store))

@@ -1,0 +1,469 @@
+"""Piece 7 tests — the independent checker (SPEC SHEET §3.10:
+R4, R28), per the accepted scope Rev 4
+(src/PIECE7-CHECKER-SCOPE-REV4-2026-11-22.md) and its nine
+acceptance criteria.
+
+Run: PYTHONPATH=src python3 tests/unit/test_piece7_checker.py
+Exits 0 when every check passes.
+"""
+import copy
+import hashlib
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import tempfile
+
+ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
+SRC = os.path.join(ROOT, "src")
+sys.path.insert(0, SRC)
+
+from fabric.canonical import canonical, event_hash  # noqa: E402
+
+from framework import onboarding as ob  # noqa: E402
+from framework import projection  # noqa: E402
+from framework.doorway import Doorway, DoorwayRefusal  # noqa: E402
+from framework.record import (FrameworkStore, CONSTITUTION_HASH,  # noqa: E402
+                              replay)
+
+FAILURES = []
+
+
+def check(name, cond, detail=""):
+    print(("PASS  " if cond else "FAIL  ") + name +
+          (("  " + detail) if detail and not cond else ""))
+    if not cond:
+        FAILURES.append(name)
+
+
+def try_act(d, token, type_, payload):
+    """An act that may be refused: a refusal appends a REJECTION
+    event, which is itself fold breadth both replays share."""
+    try:
+        return d.act(token, type_, payload,
+                     view_seq=d.store.head_seq())
+    except DoorwayRefusal:
+        return None
+
+
+TREE = {"A": ["B", "C"], "B": ["D"], "C": [], "D": []}
+FULL_GATES = {"assembly": "assembly", "completion": "completion",
+              "B": "judgement", "C": "judgement", "D": "judgement"}
+SEATS = {
+    "crew-1": {"role": "crew", "identity_status": "unverified"},
+    "crew-2": {"role": "crew", "identity_status": "unverified"},
+    "orch-1": {"role": "orchestrator",
+               "identity_status": "unverified"},
+    "exam-1": {"role": "examiner", "identity_status": "unverified"},
+    "dir-1": {"role": "director", "identity_status": "unverified"},
+}
+CREW = [{"seat": s, "role": b["role"]} for s, b in SEATS.items()]
+
+
+def fresh(gates=None, tree=None, run_id="run-1"):
+    path = os.path.join(tempfile.mkdtemp(), "run.db")
+    store = FrameworkStore(path)
+    store.insert_run(run_id, CONSTITUTION_HASH)
+    payload = {"run_id": run_id, "tree": tree or TREE,
+               "seats": SEATS}
+    if gates is not None:
+        payload["gates"] = gates
+    store.append("RUN_COMMISSIONED", "dir-1", [], payload)
+    store.commit()
+    d = Doorway(store)
+    tok = {s: d.issue_token(s) for s in SEATS}
+    return store, d, tok
+
+
+def run_checker(store_path, run_id, snapshot):
+    req = {"store_path": store_path, "run_id": run_id,
+           "snapshot": snapshot}
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+               PYTHONPATH=SRC)
+    proc = subprocess.run(
+        [sys.executable, "-B", "-m", "checker"],
+        input=json.dumps(req), capture_output=True, text=True,
+        env=env, cwd=ROOT)
+    return proc, json.loads(proc.stdout)
+
+
+def quiesce(store):
+    """Checkpoint the store's WAL so the checker reads a
+    quiescent record (its immutable read refuses uncheckpointed
+    WAL data by name)."""
+    store._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+
+def expect_all_ok(name, store, run_id="run-1"):
+    quiesce(store)
+    snap = projection.snapshot(store)
+    proc, verdict = run_checker(store.path, run_id, snap)
+    c = verdict["checks"]
+    ok = proc.returncode == 0 and all(
+        c[k]["result"] == "ok" for k in (
+            "run_binding", "chain_hash", "chain_sequence", "replay",
+            "projection_schema", "snapshot_schema",
+            "replay_equality", "seal_correspondence"))
+    check(name, ok, json.dumps(c))
+    return verdict
+
+
+# ============================================================ fixtures
+
+# -- Fixture A: a §3.8-shaped certified run (assembly, judgement
+# gates, onboarding, contributions with a claim, a disagreement
+# with a routing note, completion, certification, close).
+storeA, dA, tokA = fresh(gates=FULL_GATES)
+prop = try_act(dA, tokA["orch-1"], "ASSEMBLY_PROPOSED", {
+    "commission_seq": 1, "tree_ref": 1, "gates_ref": 1,
+    "crew": CREW})
+try_act(dA, tokA["exam-1"], "ASSEMBLY_RECORD", {
+    "proposal_seq": prop["event_seq"],
+    "criteria_mapping": {p: f"criterion-{p}" for p in TREE},
+    "gate_set": dict(FULL_GATES),
+    "identity_weighed": {s: "unverified" for s in SEATS}})
+try_act(dA, tokA["exam-1"], "GATE_OUTCOME",
+        {"joint": "assembly", "outcome": "allow"})
+ob.onboard(dA, tokA["orch-1"], "crew-1", "I am a test model.",
+           identity_status="declared")
+tokA["crew-1"] = dA.issue_token("crew-1")
+for joint in ("B", "C", "D"):
+    try_act(dA, tokA["exam-1"], "GATE_OUTCOME",
+            {"joint": joint, "outcome": "allow"})
+try_act(dA, tokA["crew-1"], "CONTRIBUTION", {
+    "contribution_id": "c-a1", "tree_part": "B", "text": "work",
+    "claim_id": "cl-1"})
+try_act(dA, tokA["crew-2"], "CONTRIBUTION", {
+    "contribution_id": "c-a2", "tree_part": "C", "text": "work"})
+try_act(dA, tokA["exam-1"], "DISAGREEMENT", {
+    "disagreement_id": "dis-1", "claim_id": "cl-1",
+    "text": "the claim overstates the work"})
+try_act(dA, tokA["orch-1"], "COMMENT", {
+    "text": "route to completion", "routes_disagreement": "dis-1",
+    "to_gate": "completion"})
+try_act(dA, tokA["orch-1"], "DISAGREEMENT_SETTLED", {
+    "disagreement_id": "dis-1"})
+try_act(dA, tokA["crew-1"], "COMPLETION_CLAIMED", {"text": "done"})
+try_act(dA, tokA["orch-1"], "RUN_READY_FOR_COMPLETION", {})
+try_act(dA, tokA["exam-1"], "GATE_OUTCOME",
+        {"joint": "completion", "outcome": "allow"})
+try_act(dA, tokA["exam-1"], "CERTIFICATION", {
+    "identity_status": {"crew-1": "declared",
+                        "crew-2": "unverified"}})
+try_act(dA, tokA["dir-1"], "RUN_CLOSED", {})
+
+# -- Fixture B: a case-lifecycle run (record-level case history:
+# issuance route, acknowledgement, a correction to version 2 with
+# its own route, contributions cased then pre-ack then cased, a
+# sealed material, examiner acts). Case events are appended at
+# the record layer: the checker examines records, and the case
+# route's doorway enforcement is Piece 5's tested surface.
+storeB, dB, tokB = fresh(gates=None, run_id="run-1")
+CASE_CONTENT = {
+    "case_id": "case-crew-1", "version": 1, "seat": "crew-1",
+    "assignment": "write part B", "tree": TREE, "part": "B",
+    "evidence_boundary": ["record"], "verification_list": ["v1"],
+    "account": "acct", "authority": "orch-1",
+}
+storeB.append("CASE_VERIFIED", "orch-1", [], dict(CASE_CONTENT))
+storeB.append("CASE_JUDGED", "exam-1", [],
+              {"case_id": "case-crew-1", "version": 1})
+storeB.append("CASE_ISSUED", "orch-1", [],
+              {"case_id": "case-crew-1", "version": 1})
+storeB.append("CASE_ACKNOWLEDGED", "crew-1", [],
+              {"case_id": "case-crew-1", "version": 1})
+storeB.append("CONTRIBUTION", "crew-1", [], {
+    "contribution_id": "c-b1", "tree_part": "B", "text": "work"})
+v2 = dict(CASE_CONTENT, version=2, assignment="write part B, "
+          "revised", representational=False)
+storeB.append("CASE_CORRECTED", "orch-1", [], v2)
+storeB.append("CASE_VERIFIED", "orch-1", [],
+              {"case_id": "case-crew-1", "version": 2})
+storeB.append("CASE_JUDGED", "exam-1", [],
+              {"case_id": "case-crew-1", "version": 2})
+storeB.append("CASE_ISSUED", "orch-1", [],
+              {"case_id": "case-crew-1", "version": 2})
+storeB.append("CONTRIBUTION", "crew-1", [], {
+    "contribution_id": "c-b2", "tree_part": "B", "text": "more"})
+storeB.append("CASE_ACKNOWLEDGED", "crew-1", [],
+              {"case_id": "case-crew-1", "version": 2})
+storeB.append("MATERIAL_SEALED", "exam-1", [], {
+    "material_id": "mat-1", "boundary": ["exam-1"]})
+storeB.append("FINDING", "exam-1", [], {"text": "a finding"})
+storeB.append("RULING", "dir-1", [],
+              {"joint": "B", "action": "proceed"})
+storeB.append("DISPOSITION", "exam-1", [], {"text": "noted"})
+storeB.commit()
+
+# -- Fixture C: onboarding with an attested upgrade, an uncased
+# contribution, an escalation with pauses, a holder-unavailable
+# declaration, a stall, and a recorded refusal.
+storeC, dC, tokC = fresh(gates=FULL_GATES)
+try_act(dC, tokC["crew-1"], "CONTRIBUTION", {
+    "contribution_id": "c-c1", "tree_part": "B", "text": "early"})
+ob.onboard(dC, tokC["orch-1"], "crew-1", "I am a test model.",
+           identity_status="declared")
+ob.attest(dC, tokC["orch-1"], "crew-1", "provider-confirmed",
+          attestation_ref="att/42")
+try_act(dC, tokC["exam-1"], "GATE_OUTCOME",
+        {"joint": "B", "outcome": "escalate"})
+storeC.append("ESCALATION", "dir-1", [], {
+    "joint": "B", "paused_set": ["B"],
+    "downstream": {"B": ["D"]}})
+storeC.append("HOLDER_UNAVAILABLE", "orch-1", [], {"joint": "D"})
+storeC.commit()
+dC.record_driver_failure("crew-2", "no_response", "C")
+try_act(dC, tokC["crew-1"], "CLAIM_STATUS",
+        {"claim_id": "nope", "to": "verified"})
+
+
+# ============================================================ crit. 3
+expect_all_ok("C3 replay equality: §3.8-shaped certified run",
+              storeA)
+expect_all_ok("C3 replay equality: case-lifecycle run", storeB)
+expect_all_ok("C3 replay equality: onboarding/escalation/stall "
+              "run", storeC)
+
+# ============================================================ crit. 1
+proc = subprocess.run(
+    [sys.executable, "-B", "-c",
+     "import sys; sys.path.insert(0, %r); "
+     "import checker.checker, checker.replay, checker.schema; "
+     "print(sorted(m for m in sys.modules "
+     "if m.startswith('framework')))" % SRC],
+    capture_output=True, text=True, env=dict(
+        os.environ, PYTHONDONTWRITEBYTECODE="1"))
+check("C1 import audit: importing the checker loads no "
+      "framework.* module", proc.stdout.strip() == "[]",
+      proc.stdout + proc.stderr)
+import re  # noqa: E402
+
+allowed = {"fabric.canonical", "checker.replay", "checker.schema"}
+stdlib = set(sys.stdlib_module_names)
+imports_ok = True
+for fname in ("checker.py", "replay.py", "schema.py", "__main__.py",
+              "__init__.py"):
+    text = open(os.path.join(SRC, "checker", fname)).read()
+    for mod in re.findall(r"^(?:from|import)\s+([\w.]+)", text, re.M):
+        top = mod.split(".")[0]
+        if mod not in allowed and top not in stdlib and \
+                top != "checker":
+            imports_ok = False
+check("C1 source audit: checker imports only fabric.canonical, "
+      "itself, and stdlib", imports_ok)
+
+# ============================================================ crit. 2
+def tampered_copy(store, mutate):
+    """Copy a store (via SQLite's backup API, so the copy holds
+    the full logical database) and mutate its events table
+    directly, dropping the append-only triggers in the copy —
+    the tamper the chain checks exist to catch."""
+    dst = os.path.join(tempfile.mkdtemp(), "tampered.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    for trig in ("events_no_update", "events_no_delete",
+                 "events_no_replace"):
+        conn.execute(f"DROP TRIGGER IF EXISTS {trig}")
+    mutate(conn)
+    conn.commit()
+    conn.close()
+    return dst
+
+
+quiesce(storeA)
+snapA = projection.snapshot(storeA)
+eventsA = storeA.all_events()
+third = eventsA[2]
+
+
+def mut_hash(conn):
+    row = conn.execute("SELECT payload FROM events WHERE "
+                       "event_seq = ?", (third["event_seq"],)
+                       ).fetchone()
+    p = json.loads(row[0])
+    p["text"] = "tampered"
+    conn.execute("UPDATE events SET payload = ? WHERE "
+                 "event_seq = ?", (json.dumps(p),
+                                   third["event_seq"]))
+
+
+_, v = run_checker(tampered_copy(storeA, mut_hash), "run-1", snapA)
+check("C2 payload tamper: hash_chain_invalid at the position, "
+      "sequence still ok",
+      v["checks"]["chain_hash"]["result"] == "hash_chain_invalid"
+      and v["checks"]["chain_hash"]["at_seq"] == third["event_seq"]
+      and v["checks"]["chain_sequence"]["result"] == "ok",
+      json.dumps(v["checks"]))
+
+
+def mut_seq_only(conn):
+    ev = dict(third)
+    ev["prev_hash"] = "deadbeef"
+    body = {k: ev[k] for k in ev if k != "hash"}
+    ev["hash"] = event_hash(ev["prev_hash"], body)
+    conn.execute("UPDATE events SET prev_hash = ?, hash = ? "
+                 "WHERE event_seq = ?",
+                 (ev["prev_hash"], ev["hash"], third["event_seq"]))
+
+
+_, v = run_checker(tampered_copy(storeA, mut_seq_only), "run-1",
+                   snapA)
+check("C2 linkage defect, hash recomputed: sequence_invalid "
+      "only",
+      v["checks"]["chain_sequence"]["result"] == "sequence_invalid"
+      and v["checks"]["chain_sequence"]["at_seq"]
+      == third["event_seq"]
+      and v["checks"]["chain_hash"]["result"] == "ok",
+      json.dumps(v["checks"]))
+
+
+def mut_both(conn):
+    conn.execute("UPDATE events SET prev_hash = 'deadbeef' WHERE "
+                 "event_seq = ?", (third["event_seq"],))
+
+
+_, v = run_checker(tampered_copy(storeA, mut_both), "run-1", snapA)
+check("C2 both defects: reported independently, both named",
+      v["checks"]["chain_hash"]["result"] == "hash_chain_invalid"
+      and v["checks"]["chain_sequence"]["result"]
+      == "sequence_invalid",
+      json.dumps(v["checks"]))
+
+# ============================================================ crit. 4
+import checker.schema as checker_schema  # noqa: E402
+
+check("C4 the two schema copies are canonically identical",
+      canonical(projection.SCHEMA) == canonical(
+          checker_schema.SCHEMA))
+stateA = replay(storeA)
+check("C4 the live fold state conforms recursively",
+      projection.conforms(stateA) == [],
+      str(projection.conforms(stateA)))
+check("C4 the exported projection conforms recursively",
+      projection.conforms(snapA) == [])
+planted = copy.deepcopy(snapA)
+planted["seats"]["crew-1"]["planted_field"] = True
+bad = projection.conforms(planted)
+check("C4 a planted extra nested field fails the witness, "
+      "named by path", bad == ["seats.crew-1.planted_field"],
+      str(bad))
+plantedB = copy.deepcopy(projection.snapshot(storeB))
+plantedB["cases"]["case-crew-1"]["versions"]["1"]["planted"] = 1
+badB = projection.conforms(plantedB)
+check("C4 a planted field inside a case version fails, named",
+      badB == ["cases.case-crew-1.versions.1.planted"], str(badB))
+_, v = run_checker(storeA.path, "run-1", planted)
+check("C4 the checker reports the planted snapshot as "
+      "nonconforming at the same path",
+      v["checks"]["snapshot_schema"]["result"] == "nonconforming"
+      and v["checks"]["snapshot_schema"]["paths"]
+      == ["seats.crew-1.planted_field"],
+      json.dumps(v["checks"].get("snapshot_schema")))
+
+# ============================================================ crit. 5
+false_snap = copy.deepcopy(snapA)
+false_snap["lifecycle"] = "bogus"
+_, v = run_checker(storeA.path, "run-1", false_snap)
+check("C5 one planted false value is reported by that key only",
+      v["checks"]["replay_equality"]["result"] == "divergent"
+      and v["checks"]["replay_equality"]["divergences"]
+      == ["lifecycle"],
+      json.dumps(v["checks"].get("replay_equality")))
+
+# ============================================================ crit. 6
+storeD, dD, tokD = fresh(gates=None)
+storeD.append("MATERIAL_SEALED", "exam-1", [], {
+    "material_id": "mat-1", "boundary": ["exam-1"]})
+storeD.append("MATERIAL_SEALED", "exam-1", [], {
+    "material_id": "mat-1", "boundary": ["exam-1", "dir-1"]})
+storeD.append("COMMENT", "crew-1", [], {
+    "material_id": "mat-9", "text": "a stray reference"})
+storeD.commit()
+quiesce(storeD)
+_, v = run_checker(storeD.path, "run-1", projection.snapshot(storeD))
+probs = v["checks"]["seal_correspondence"].get("problems", [])
+kinds = sorted(p["kind"] for p in probs)
+check("C6 duplicate sealing and a stray material reference are "
+      "reported by material",
+      v["checks"]["seal_correspondence"]["result"] == "divergent"
+      and kinds == ["duplicate_sealing_events",
+                    "material_reference_on_other_type"]
+      and all("material_id" in p for p in probs),
+      json.dumps(probs))
+
+# ============================================================ crit. 7
+def tree_witness(root):
+    out = {}
+    for base, dirs, files in os.walk(root):
+        dirs[:] = sorted(dirs)
+        for f in sorted(files):
+            p = os.path.join(base, f)
+            out[os.path.relpath(p, root)] = hashlib.sha256(
+                open(p, "rb").read()).hexdigest()
+    return out
+
+
+wstore, wd, wtok = fresh(gates=FULL_GATES)
+try_act(wd, wtok["crew-1"], "CONTRIBUTION", {
+    "contribution_id": "c-w1", "tree_part": "B", "text": "work"})
+wsnap = projection.snapshot(wstore)
+wstore._conn.close()
+store_dir = os.path.dirname(wstore.path)
+before = {"store": tree_witness(store_dir),
+          "src": tree_witness(SRC)}
+proc, v = run_checker(wstore.path, "run-1", wsnap)
+after = {"store": tree_witness(store_dir),
+         "src": tree_witness(SRC)}
+check("C7 filesystem witness: store directory and source tree "
+      "identical before and after",
+      before == after and v["checks"]["replay"]["result"] == "ok",
+      json.dumps({k: (before[k] == after[k]) for k in before}))
+missing = os.path.join(tempfile.mkdtemp(), "nope.db")
+_, v = run_checker(missing, "run-1", None)
+check("C7 a missing store is refused and not created",
+      v["checks"]["store"]["result"] == "store_missing"
+      and not os.path.exists(missing), json.dumps(v["checks"]))
+
+# ============================================================ crit. 8
+storeE, dE, tokE = fresh(gates=None)
+storeE.append("CASE_ISSUED", "orch-1", [], {
+    "case_id": "case-x", "version": "one", "seat": "crew-1"})
+storeE.commit()
+quiesce(storeE)
+# No framework snapshot is supplied here: the framework's own
+# fold has no schema guard and cannot fold this event — which
+# is precisely the gap the checker exists to cover.
+proc, v = run_checker(storeE.path, "run-1", None)
+check("C8 a hash-valid, wrongly typed event produces a classed "
+      "schema_invalid halt, no traceback",
+      proc.returncode == 0
+      and v["checks"]["replay"]["result"] == "schema_invalid"
+      and v["checks"]["chain_hash"]["result"] == "ok"
+      and "Traceback" not in proc.stdout + proc.stderr,
+      json.dumps(v["checks"]) + proc.stderr)
+
+# ============================================================ crit. 9
+proto = os.path.expanduser("~/workspace/loom-prototype")
+mismatch = []
+for sub in ("fabric", "observer"):
+    for base, dirs, files in os.walk(os.path.join(SRC, sub)):
+        dirs[:] = [d for d in dirs if d != "__pycache__"]
+        for f in files:
+            if f.endswith(".pyc"):
+                continue
+            mine = os.path.join(base, f)
+            rel = os.path.relpath(mine, SRC)
+            other = os.path.join(proto, rel)
+            if os.path.exists(other):
+                if open(mine, "rb").read() != open(other,
+                                                   "rb").read():
+                    mismatch.append(rel)
+check("C9 substrate carried files remain byte-identical to the "
+      "pin", mismatch == [], str(mismatch))
+
+print()
+if FAILURES:
+    print(f"{len(FAILURES)} FAILURES: {FAILURES}")
+    sys.exit(1)
+print("ALL CHECKS PASSED")
