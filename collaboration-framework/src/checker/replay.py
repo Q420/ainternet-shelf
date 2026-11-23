@@ -373,6 +373,9 @@ def _shape_problem(ev):
                                    (int, float))):
             return "LOOP_ITERATION deadline_seconds is not a " \
                 "number"
+        for key in ("catalogue_hash", "registry_version"):
+            if bad_opt_str(key):
+                return f"LOOP_ITERATION {key} is not a string"
     elif t == "LOOP_STALLED":
         for key in ("assembly_id", "instance_id", "ground"):
             if need_str(key):
@@ -886,6 +889,8 @@ def _apply(state, ev):
             "deadline_seconds": p.get("deadline_seconds"),
             "cursor_from": p.get("cursor_from"),
             "cursor_to": p.get("cursor_to"),
+            "catalogue_hash": p.get("catalogue_hash"),
+            "registry_version": p.get("registry_version"),
         })
     elif t == "LOOP_STALLED":
         # Piece A3: the first stall stands; a second is

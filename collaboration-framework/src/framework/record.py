@@ -1051,7 +1051,10 @@ def apply_event(state: dict, ev: dict) -> dict:
         # one event per model call, recorded before the call,
         # carrying the activation's binding, the governing
         # bounds as pinned, and the cursor range the iteration's
-        # package presented. The fold collects them per
+        # package presented — and, from Piece A3-CAT, the tool
+        # catalogue's canonical hash and the registry version
+        # it was derived under, where the event carries them.
+        # The fold collects them per
         # activation, in record order; ordering, uniqueness and
         # the ceiling are the checker's correspondence, and the
         # doorway's route enforces them at record time.
@@ -1069,6 +1072,8 @@ def apply_event(state: dict, ev: dict) -> dict:
             "deadline_seconds": p.get("deadline_seconds"),
             "cursor_from": p.get("cursor_from"),
             "cursor_to": p.get("cursor_to"),
+            "catalogue_hash": p.get("catalogue_hash"),
+            "registry_version": p.get("registry_version"),
         })
     elif t == "LOOP_STALLED":
         # Piece A3 (R50): the recorded stop. The first stall

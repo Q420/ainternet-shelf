@@ -99,7 +99,10 @@ SCHEMA = {
                 "step_ceiling": {"t": "opt", "v": {"t": "int"}},
                 "deadline_seconds": {"t": "any"},
                 "cursor_from": {"t": "opt", "v": {"t": "int"}},
-                "cursor_to": {"t": "opt", "v": {"t": "int"}}}}},
+                "cursor_to": {"t": "opt", "v": {"t": "int"}},
+                "catalogue_hash": {"t": "opt", "v": {"t": "str"}},
+                "registry_version": {"t": "opt",
+                                     "v": {"t": "str"}}}}},
             "stalled": {"t": "opt", "v": {"t": "obj", "f": {
                 "ground": {"t": "opt", "v": {"t": "str"}},
                 "event_seq": {"t": "int"},

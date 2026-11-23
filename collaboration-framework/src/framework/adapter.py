@@ -18,7 +18,13 @@ the driver's back.
 - A2. The prompt is rendered from the wake package only —
   role, case, view, reasons, position, and the response
   contract. The doorway token is never in the package, so it
-  is never in the prompt or the provider call.
+  is never in the prompt or the provider call. Piece A3-CAT:
+  where the package carries a tool catalogue (its `tools`
+  field), the catalogue is rendered as its own section of
+  the prompt, its entries verbatim from the package — the
+  adapter invents, renames and supplements nothing, and
+  adds only the section's framing lines. A package without
+  a tools field renders exactly as before.
 - A4. The model answers with one JSON object naming exactly
   one outcome — acknowledge / contribute (its own text) /
   decline (its reason). The adapter validates the ENTIRE
@@ -96,6 +102,34 @@ acknowledgement alone:
 
 Do not invent identifiers, events, or other seats' work. Your \
 contribution text is recorded verbatim under your seat."""
+
+_TOOL_SECTION = (
+    "\n\nYour tool catalogue — the tools your sealed grants "
+    "advertise, with their descriptions, parameters and "
+    "limits. You may request only these tools, under these "
+    "exact names:\n")
+
+
+def _render_prompt(package):
+    """The wake prompt (Piece A3-CAT): the contract, the wake
+    package as structured data, and — where the package
+    carries a tool catalogue — the catalogue in its own
+    section, its entries verbatim from the package. The
+    adapter invents, renames and supplements nothing: the
+    section's framing lines are the only words it adds. A
+    package without a tools field (the seat-driver path)
+    renders byte-identically to before."""
+    tools = package.get("tools") if isinstance(package, dict) \
+        else None
+    if tools is None:
+        return _CONTRACT + "\n\nYour wake package:\n" + \
+            json.dumps(package, indent=1, default=str)
+    body = {key: value for key, value in package.items()
+            if key != "tools"}
+    return _CONTRACT + "\n\nYour wake package:\n" + \
+        json.dumps(body, indent=1, default=str) + \
+        _TOOL_SECTION + json.dumps(tools, indent=1,
+                                   default=str)
 
 
 class AdapterFailure(Exception):
@@ -402,8 +436,7 @@ class OpenAICompatibleAdapter:
                            "passed; the call cannot begin "
                            "within budget")
         self._begin_deadline(budget)
-        prompt = _CONTRACT + "\n\nYour wake package:\n" + \
-            json.dumps(package, indent=1, default=str)
+        prompt = _render_prompt(package)
         content, _provider_model = self._call([
             {"role": "system",
              "content": "You are a seat in a recorded "

@@ -69,6 +69,22 @@ The shape, as the scope settles it:
   ordinal) and bound to the request's contents at
   presentation, so a replay of a request resolves against
   its standing dispatch and never re-executes (R47/R48).
+- Every package carries the worker-facing tool catalogue
+  (Piece A3-CAT): derived at construction from the
+  instance's own sealed assembly record — the grants the
+  doorway enforces — joined with the registry's
+  worker-facing descriptions and parameter schemas, so the
+  worker is told the exact names, parameters and limits of
+  the tools it holds. The catalogue describes authority; it
+  creates none. A granted, registered tool the registry
+  cannot completely describe fails the package's
+  construction closed — an attributable runtime_failure
+  stall, no model call — rather than send a worker in with
+  its tools unnamed. The iteration event records the
+  catalogue's canonical hash and the registry version, and
+  the independent checker reconstructs the expected
+  catalogue from the sealed grants and its own registry
+  copy and compares.
 - The loop's context is a local object, held for the run and
   dropped at return. Evidenced disposal is Piece A5's; here
   the context simply does not outlive the call.
@@ -82,6 +98,9 @@ from __future__ import annotations
 
 import copy
 
+from fabric.canonical import canonical, sha256_hex
+
+from . import tool_policy as _tool_policy
 from .adapter import AdapterFailure
 from .bubble import render_view
 from .doorway import (LOOP_ITERATION_DEADLINE_GROUND,
@@ -93,6 +112,74 @@ __all__ = ["Loop"]
 
 def _is_int(value):
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+class _CatalogueError(Exception):
+    """The tool catalogue for a package cannot be honestly
+    derived (Piece A3-CAT): a granted, registered tool whose
+    registry entry carries no complete worker-facing layer.
+    Raised inside package construction, so the loop's answer
+    is its attributable runtime_failure stall — never a
+    package that leaves a granted tool unnamed."""
+
+
+def _derive_catalogue(grants):
+    """The worker-facing tool catalogue for a sealed grants
+    list (Piece A3-CAT): one entry per granted tool — the
+    first grant of each tool, as the doorway's own grant
+    lookup reads the sealed record — in canonical tool
+    order, carrying the grant's own scope ceiling, bound and
+    side-effect class copied (advertised limits are the
+    grant's values, not a restatement), joined with the
+    registry's worker-facing description and parameter
+    schema under the current registry version. A grant
+    naming an unregistered tool advertises nothing — the
+    doorway refuses such tools, and there is nothing lawful
+    to describe; the distinction from a registered tool with
+    missing metadata stays explicit: that is a registry
+    defect and raises _CatalogueError."""
+    entries = []
+    seen = set()
+    for grant in grants or []:
+        if not isinstance(grant, dict):
+            continue
+        tool = grant.get("tool")
+        if not isinstance(tool, str) or not tool or \
+                tool in seen:
+            continue
+        seen.add(tool)
+        if not _tool_policy.registered(tool):
+            continue
+        facing = _tool_policy.worker_facing(tool)
+        if facing is None:
+            raise _CatalogueError(
+                f"the registry entry for granted tool "
+                f"{tool!r} carries no complete worker-facing "
+                f"description and parameter schema under "
+                f"{_tool_policy.REGISTRY_VERSION}; the "
+                f"catalogue cannot honestly describe the "
+                f"worker's tools (Piece A3-CAT)")
+        entries.append({
+            "tool": tool,
+            "description": facing["description"],
+            "parameters": facing["parameters"],
+            "scope_ceiling": copy.deepcopy(
+                grant.get("scope_ceiling")),
+            "bound": copy.deepcopy(grant.get("bound")),
+            "side_effect_class":
+                grant.get("side_effect_class"),
+        })
+    entries.sort(key=lambda entry: entry["tool"])
+    return entries
+
+
+def _catalogue_hash(catalogue):
+    """The catalogue's canonical hash: SHA-256 over the
+    fabric canonical form of the catalogue itself — the
+    commitment LOOP_ITERATION records (Piece A3-CAT), which
+    the checker verifies by independent reconstruction from
+    the sealed grants and its own registry copy."""
+    return sha256_hex(canonical(catalogue))
 
 
 class Loop:
@@ -262,7 +349,10 @@ class Loop:
             try:
                 ev = doorway.record_loop_iteration(
                     ctx["assembly_id"], iteration,
-                    ctx["cursor"], head)
+                    ctx["cursor"], head,
+                    catalogue_hash=ctx.get("catalogue_hash"),
+                    registry_version=ctx.get(
+                        "registry_version"))
             except DoorwayRefusal as refusal:
                 if refusal.ground == \
                         LOOP_ITERATION_DEADLINE_GROUND:
@@ -361,13 +451,32 @@ class Loop:
         the pinned case view (rendered, boundary-narrowed per
         R11), the record delta since the cursor, the settled
         tool results the delta carries, the instance's full
-        standing dispatch state, and its bounds state.
-        Returns (package, head) — the head the package was
-        frozen at, which is the cursor range's close."""
+        standing dispatch state, its bounds state, and the
+        tool catalogue derived from its sealed grants (Piece
+        A3-CAT) — whose canonical hash and the registry
+        version are stashed on the context for the iteration
+        event to record. Returns (package, head) — the head
+        the package was frozen at, which is the cursor
+        range's close."""
         doorway = self.doorway
         events = doorway.store.all_events()
         state = fold(events, doorway.store.get_run_id())
         head = state["head_seq"]
+        # Piece A3-CAT: the tool catalogue, derived from the
+        # instance's sealed assembly record — the same
+        # generated object the doorway's grant check reads —
+        # so what the package advertises cannot drift from
+        # what the doorway enforces. An undescribable granted
+        # tool raises here, and the run answers with its
+        # runtime_failure stall: no package, no iteration,
+        # no call.
+        generated = doorway._generated_payload(
+            ctx["assembly_id"])
+        catalogue = _derive_catalogue(
+            (generated or {}).get("grants"))
+        ctx["catalogue_hash"] = _catalogue_hash(catalogue)
+        ctx["registry_version"] = \
+            _tool_policy.REGISTRY_VERSION
         seat = ctx["seat"]
         view = render_view(events, seat)
         boundary = ctx["content"].get("evidence_boundary")
@@ -405,6 +514,7 @@ class Loop:
             "case_version": ctx["case_version"],
             "view": view,
             "delta": copy.deepcopy(delta),
+            "tools": catalogue,
             "tool_results": tool_results,
             "standing_dispatches": standing,
             "bounds": {

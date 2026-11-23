@@ -17,15 +17,28 @@ parameters); fail closed; unknown tools, unknown ceiling keys
 and unknown parameters refused. The registry is policy, never
 authority: a registered tool is granted only per worker, per
 case, in the sealed assembly record.
+
+Piece A3-CAT: the registry is held as one view per version —
+`tool-registry-v1` exactly as Piece A2 settled it (no
+worker-facing layer), preserved immutable so a dispatch
+recorded under it is verified under it; `tool-registry-v2`,
+v1's ceiling contract unchanged plus the worker-facing layer
+(a plain description and a parameter schema per tool). Every
+function takes the version it applies; an unknown version
+fails closed, and a version this copy does not hold for
+catalogue reconstruction is an explicit inability to verify,
+never a silent ok.
 """
+import copy
+
 from fabric.canonical import canonical, sha256_hex
 
-REGISTRY_VERSION = "tool-registry-v1"
+REGISTRY_VERSION = "tool-registry-v2"
 
 FLAKY_MODES = ("succeed", "fail", "hang-past-deadline",
                "execute-but-lose-the-report")
 
-_TOOLS = {
+_TOOLS_V1 = {
     "sandbox.write": {
         "ceiling_keys": {"path_prefix"},
         "param_keys": {"path", "content"},
@@ -40,9 +53,127 @@ _TOOLS = {
     },
 }
 
+_TOOLS_V2 = {
+    "sandbox.write": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path", "content"},
+        "description":
+            "Write a text file inside the sandbox: creates "
+            "the file at the given path (with any folders it "
+            "needs) or replaces it, storing exactly the given "
+            "content. Returns the path written and the number "
+            "of bytes stored.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+            {"name": "content", "required": True,
+             "meaning": "the text to store in the file"},
+        ],
+    },
+    "sandbox.read": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path"},
+        "description":
+            "Read a text file inside the sandbox. Returns "
+            "the file's path and its full text content.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+        ],
+    },
+    "sandbox.flaky": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"mode", "path", "content",
+                       "hang_seconds"},
+        "description":
+            "A test tool whose behaviour its mode parameter "
+            "sets, so uncertain outcomes are exercised for "
+            "real: 'succeed' performs (writing the file when "
+            "a path is given) and reports its result; 'fail' "
+            "fails; 'hang-past-deadline' runs past the "
+            "deadline, so its outcome is recorded uncertain; "
+            "'execute-but-lose-the-report' performs the "
+            "operation but its report never arrives, so its "
+            "outcome is recorded uncertain. Returns the mode, "
+            "and the write's result when it wrote.",
+        "parameters": [
+            {"name": "mode", "required": True,
+             "meaning": "one of 'succeed', 'fail', "
+                        "'hang-past-deadline', "
+                        "'execute-but-lose-the-report'"},
+            {"name": "path", "required": False,
+             "meaning": "a file path inside the sandbox to "
+                        "write, for the modes that write"},
+            {"name": "content", "required": False,
+             "meaning": "the text to store when writing"},
+            {"name": "hang_seconds", "required": False,
+             "meaning": "how long the 'hang-past-deadline' "
+                        "mode runs, in seconds (a positive "
+                        "number)"},
+        ],
+    },
+}
 
-def registered(tool) -> bool:
-    return tool in _TOOLS
+_REGISTRIES = {
+    "tool-registry-v1": _TOOLS_V1,
+    "tool-registry-v2": _TOOLS_V2,
+}
+
+_TOOLS = _TOOLS_V2
+
+
+def known_version(version) -> bool:
+    return version in _REGISTRIES
+
+
+def _view(version):
+    if version is None:
+        version = REGISTRY_VERSION
+    return _REGISTRIES.get(version)
+
+
+def registered(tool, version=None) -> bool:
+    view = _view(version)
+    return view is not None and tool in view
+
+
+def worker_facing(tool, version=None):
+    """The tool's worker-facing layer under the named
+    version, or None where the tool is unknown there or its
+    entry carries no complete layer (under v1, always None).
+    The completeness rule is the framework copy's, exactly:
+    a non-empty description and a parameter schema naming
+    exactly the tool's parameters, each with a name, a
+    required flag and a meaning."""
+    view = _view(version)
+    if view is None:
+        return None
+    spec = view.get(tool)
+    if spec is None:
+        return None
+    description = spec.get("description")
+    parameters = spec.get("parameters")
+    if not isinstance(description, str) or \
+            not description.strip() or \
+            not isinstance(parameters, list):
+        return None
+    names = set()
+    for param in parameters:
+        if not isinstance(param, dict) or \
+                set(param) != {"name", "required", "meaning"} \
+                or not isinstance(param.get("name"), str) \
+                or not param["name"] \
+                or not isinstance(param.get("required"), bool) \
+                or not isinstance(param.get("meaning"), str) \
+                or not param["meaning"].strip():
+            return None
+        names.add(param["name"])
+    if names != set(spec["param_keys"]):
+        return None
+    return {"description": description,
+            "parameters": copy.deepcopy(parameters)}
 
 
 def request_fingerprint(tool, parameters) -> str:
@@ -75,13 +206,22 @@ def _path_problem(path, prefix):
     return None
 
 
-def check_ceiling(tool, ceiling, parameters):
+def check_ceiling(tool, ceiling, parameters, version=None):
     """(ok, ground): the recorded request against the grant,
-    under the same contract the doorway applied."""
-    spec = _TOOLS.get(tool)
+    under the named version's view — the contract the doorway
+    applied when the dispatch was recorded (v1 records are
+    verified under v1, never reinterpreted)."""
+    if version is None:
+        version = REGISTRY_VERSION
+    view = _REGISTRIES.get(version)
+    if view is None:
+        return False, (f"registry version {version!r} is not "
+                       f"a version this registry holds; the "
+                       f"ceiling check fails closed")
+    spec = view.get(tool)
     if spec is None:
         return False, (f"tool {tool!r} is not in the tool "
-                       f"registry ({REGISTRY_VERSION}); an "
+                       f"registry ({version}); an "
                        f"unregistered tool is refused")
     if not isinstance(ceiling, dict):
         return False, (f"the grant's scope ceiling for {tool} "

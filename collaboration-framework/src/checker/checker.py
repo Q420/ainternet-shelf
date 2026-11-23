@@ -46,6 +46,7 @@ creates no store, and leaves no artifacts (C7). It imports
 `fabric.canonical` — the record-format and hashing primitive —
 and the standard library only; never a `framework.*` module.
 """
+import copy
 import hashlib
 import json
 import math
@@ -58,7 +59,9 @@ from fabric.canonical import canonical, event_hash, sha256_hex
 from checker.replay import replay_events
 from checker.schema import SCHEMA
 from checker.tool_policy import (REGISTRY_VERSION, check_ceiling,
-                                 request_fingerprint)
+                                 known_version, registered,
+                                 request_fingerprint,
+                                 worker_facing)
 
 _ENVELOPE = ("event_seq", "event_id", "run_id", "type", "actor",
              "affected", "payload", "ts", "prev_hash", "hash")
@@ -599,9 +602,11 @@ def _dispatch_result(events, state):
     at most one start per dispatch, an outcome following its
     dispatch and any standing start, an uncertain dispatch
     needing no start); every dispatch records the registry
-    version that governed it, and it is the version this
-    checker holds — a dispatch governed by another version is
-    not verifiable under this contract; a dispatch's tool is
+    version that governed it, and is verified under that
+    version's own contract — a known historical version is
+    verified as recorded, never reinterpreted under the
+    current one (Piece A3-CAT); a missing or unknown version
+    is reported, never silently accepted; a dispatch's tool is
     its request's tool, and a start's or outcome's instance
     and request identity are its dispatch's established
     identity; and reconciliation applies only to an
@@ -716,7 +721,17 @@ def _dispatch_result(events, state):
                         dispatch_id=did, at_seq=seq,
                         tool=p.get("tool"),
                         request_tool=req["tool"])
-            if p.get("registry_version") != REGISTRY_VERSION:
+            # Piece A3-CAT (settlement (c)): the dispatch is
+            # verified under the version it was recorded
+            # under — a known historical version (v1) is
+            # lawful and verified under its own contract,
+            # never reinterpreted under the current one; a
+            # missing or unknown version is an explicit
+            # divergence (the existing kind), never a silent
+            # ok.
+            version_known = known_version(
+                p.get("registry_version"))
+            if not version_known:
                 problem("dispatch_registry_version_mismatch",
                         dispatch_id=did, at_seq=seq,
                         registry_version=p.get(
@@ -751,11 +766,12 @@ def _dispatch_result(events, state):
                     if not isinstance(trace, str) or not trace:
                         problem("grant_without_authority_trace",
                                 dispatch_id=did, at_seq=seq)
-                    if req is not None:
+                    if req is not None and version_known:
                         ok, ground = check_ceiling(
                             p.get("tool"),
                             grant.get("scope_ceiling"),
-                            req["parameters"])
+                            req["parameters"],
+                            version=p.get("registry_version"))
                         if not ok:
                             problem("dispatch_exceeds_ceiling",
                                     dispatch_id=did, at_seq=seq,
@@ -869,6 +885,52 @@ _LOOP_GROUNDS = ("step_ceiling", "deadline", "provider_failure",
                  "malformed_response", "runtime_failure")
 
 
+def _derive_catalogue(grants, version):
+    """The expected tool catalogue for a sealed grants list
+    under a named registry version (Piece A3-CAT): this
+    checker's independent reconstruction of what the loop's
+    package must have advertised — one entry per granted
+    tool (the first grant of each), in canonical tool order,
+    the grant's own ceiling, bound and side-effect class
+    joined with this copy's worker-facing description and
+    parameter schema for the tool under that version. A
+    grant naming an unregistered tool advertises nothing.
+    Returns (catalogue, None), or (None, ground) where a
+    granted, registered tool carries no complete
+    worker-facing layer under the version — the catalogue
+    the record claims cannot be reconstructed, which is a
+    divergence to report, not a check that passes."""
+    entries = []
+    seen = set()
+    for grant in grants or []:
+        if not isinstance(grant, dict):
+            continue
+        tool = grant.get("tool")
+        if not isinstance(tool, str) or not tool or \
+                tool in seen:
+            continue
+        seen.add(tool)
+        if not registered(tool, version):
+            continue
+        facing = worker_facing(tool, version)
+        if facing is None:
+            return None, (
+                f"granted tool {tool!r} carries no complete "
+                f"worker-facing layer under {version}")
+        entries.append({
+            "tool": tool,
+            "description": facing["description"],
+            "parameters": facing["parameters"],
+            "scope_ceiling": copy.deepcopy(
+                grant.get("scope_ceiling")),
+            "bound": copy.deepcopy(grant.get("bound")),
+            "side_effect_class":
+                grant.get("side_effect_class"),
+        })
+    entries.sort(key=lambda entry: entry["tool"])
+    return entries, None
+
+
 def _loop_result(events, state):
     """Loop correspondence (Piece A3, R49–R51/R55): the bounded
     loop's bookkeeping reconstructed from the events themselves
@@ -898,7 +960,17 @@ def _loop_result(events, state):
     resolved; a delayed report settling it afterwards is
     executor accounting, not instance activity); and no
     instance activity — no iteration, request, dispatch or
-    start — follows a stall. Nothing here runs a model or a
+    start — follows a stall. An iteration carrying a
+    catalogue hash (Piece A3-CAT) is verified against the
+    catalogue independently reconstructed from the
+    activation's sealed grants under this checker's own
+    registry copy at the recorded version: a version this
+    copy does not hold, or a catalogue it cannot derive
+    from the sealed grants, is an explicit divergence —
+    never a silent ok — and a hash that differs from the
+    reconstruction's is a mismatch. An iteration carrying
+    no hash is lawful historical record (pre-A3-CAT) and
+    asks nothing here. Nothing here runs a model or a
     tool (R48)."""
     problems = []
 
@@ -1085,6 +1157,33 @@ def _loop_result(events, state):
                         nxt["cursor_to"] < seq:
                     problem("iteration_event_not_presented",
                             assembly_id=aid, at_seq=seq)
+            # Piece A3-CAT: an iteration carrying a catalogue
+            # hash is verified against the catalogue this
+            # checker independently reconstructs from the
+            # activation's sealed grants, under its own
+            # registry copy at the recorded version.
+            recorded_hash = p.get("catalogue_hash")
+            if recorded_hash is not None:
+                version = p.get("registry_version")
+                if not known_version(version):
+                    problem(
+                        "catalogue_registry_version_unknown",
+                        assembly_id=aid, at_seq=seq,
+                        registry_version=version)
+                else:
+                    gen = generated.get(aid)
+                    grants = (gen["payload"].get("grants")
+                              if gen is not None else None)
+                    expected, ground = _derive_catalogue(
+                        grants, version)
+                    if expected is None:
+                        problem("catalogue_not_derivable",
+                                assembly_id=aid, at_seq=seq,
+                                detail=ground)
+                    elif sha256_hex(canonical(expected)) \
+                            != recorded_hash:
+                        problem("catalogue_hash_mismatch",
+                                assembly_id=aid, at_seq=seq)
         stall = stalls.get(aid)
         if stall is not None:
             for ev in evs:

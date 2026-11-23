@@ -1106,7 +1106,9 @@ class Doorway:
         self._refuse(seat, attempted_type, ground)
 
     def record_loop_iteration(self, assembly_id, iteration,
-                              cursor_from, cursor_to):
+                              cursor_from, cursor_to,
+                              catalogue_hash=None,
+                              registry_version=None):
         """The loop's iteration report (Piece A3, R49): one
         event per model call, recorded before the call it
         accounts, under the loop identity. The route derives
@@ -1123,7 +1125,13 @@ class Doorway:
         (correction round 1): the doorway derives the deadline
         from its anchor here, inside the serialized boundary,
         and refuses the event — counting no iteration — where
-        the deadline has already expired."""
+        the deadline has already expired. Piece A3-CAT: where
+        the loop supplies them, the event also carries the
+        tool catalogue's canonical hash and the registry
+        version it was derived under — the loop's commitment,
+        recorded as presented; the correspondence between the
+        commitment and the sealed grants is the checker's
+        reconstruction, not this route's."""
         with self.store.serialized():
             state = self.state()
             entry = state["assemblies"].get(assembly_id)
@@ -1208,19 +1216,24 @@ class Doorway:
                     f"does not stand within the record (head "
                     f"{state['head_seq']}); a package presents "
                     f"only what stands (R49)")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration": iteration,
+                "step_ceiling": bounds["step_ceiling"],
+                "deadline_seconds":
+                    bounds["deadline_seconds"],
+                "cursor_from": cursor_from,
+                "cursor_to": cursor_to}
+            if catalogue_hash is not None:
+                payload["catalogue_hash"] = catalogue_hash
+                payload["registry_version"] = registry_version
             ev = self.store.append(
-                "LOOP_ITERATION", LOOP_ACTOR, [instance_id], {
-                    "assembly_id": assembly_id,
-                    "instance_id": instance_id,
-                    "activated_seq": entry.get("activated_seq"),
-                    "case_id": entry.get("case_id"),
-                    "case_version": entry.get("case_version"),
-                    "iteration": iteration,
-                    "step_ceiling": bounds["step_ceiling"],
-                    "deadline_seconds":
-                        bounds["deadline_seconds"],
-                    "cursor_from": cursor_from,
-                    "cursor_to": cursor_to})
+                "LOOP_ITERATION", LOOP_ACTOR, [instance_id],
+                payload)
             self.store.commit()
             return ev
 

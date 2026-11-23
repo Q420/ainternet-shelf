@@ -758,7 +758,45 @@ check("T13 the doorway's and the checker's policy copies "
       "agree over the battery",
       agree and fw_policy.REGISTRY_VERSION
       == ck_policy.REGISTRY_VERSION
-      == "tool-registry-v1")
+      == "tool-registry-v2")
+
+# -- T13b (Piece A3-CAT): the agreement holds under each
+# version's own view — the battery re-run under v1 and under
+# v2 in both copies, an unknown version failing closed
+# identically in both — and the worker-facing layer agrees:
+# the same descriptions and parameter schemas in both copies
+# under v2, and no layer at all under v1 (a fact about v1,
+# witnessed, not assumed).
+agree_versioned = all(
+    fw_policy.check_ceiling(t, c, p, version=v)
+    == ck_policy.check_ceiling(t, c, p, version=v)
+    for t, c, p in BATTERY
+    for v in ("tool-registry-v1", "tool-registry-v2"))
+unknown_closed = (
+    fw_policy.check_ceiling("sandbox.read", {}, {"path": "a"},
+                            version="tool-registry-v99")
+    == ck_policy.check_ceiling("sandbox.read", {},
+                               {"path": "a"},
+                               version="tool-registry-v99")
+    and not fw_policy.check_ceiling(
+        "sandbox.read", {}, {"path": "a"},
+        version="tool-registry-v99")[0])
+check("T13b the copies agree under both registry versions, "
+      "and an unknown version fails closed in both",
+      agree_versioned and unknown_closed
+      and fw_policy.known_version("tool-registry-v1")
+      and ck_policy.known_version("tool-registry-v2")
+      and not fw_policy.known_version("tool-registry-v99")
+      and not ck_policy.known_version(None))
+facing_agree = all(
+    fw_policy.worker_facing(t) == ck_policy.worker_facing(t)
+    and fw_policy.worker_facing(t) is not None
+    and fw_policy.worker_facing(t, "tool-registry-v1") is None
+    and ck_policy.worker_facing(t, "tool-registry-v1") is None
+    for t in ("sandbox.write", "sandbox.read", "sandbox.flaky"))
+check("T13b the worker-facing layer agrees between the "
+      "copies under v2, and neither copy has one under v1",
+      facing_agree)
 imports_executor = False
 for fname in os.listdir(os.path.join(SRC, "checker")):
     if fname.endswith(".py"):
@@ -876,7 +914,7 @@ check("T16 every doorway dispatch records the registry "
       "version that governed it",
       len(disp) == 1
       and disp[0]["payload"].get("registry_version")
-      == fw_policy.REGISTRY_VERSION == "tool-registry-v1")
+      == fw_policy.REGISTRY_VERSION == "tool-registry-v2")
 
 
 def append_request(store, iid, rid, tool, params):
@@ -972,6 +1010,37 @@ check("T16 a dispatch governed by a foreign registry "
       "version is reported",
       dc["result"] == "divergent"
       and any(p["kind"] == "dispatch_registry_version_mismatch"
+              for p in dc["problems"]), json.dumps(dc))
+
+# -- T16b (Piece A3-CAT, settlement (c)): a dispatch recorded
+# under v1 is verified under v1 — preserved, never
+# reinterpreted under the current contract. A lawful v1
+# dispatch stands clean; a v1 dispatch whose request exceeds
+# the ceiling is divergent under v1's own contract.
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-hist", "sandbox.write",
+               {"path": "notes/hist.txt", "content": "x"})
+append_dispatch(store, iid, "req-hist", "dispatch-hist",
+                "sandbox.write", version="tool-registry-v1")
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16b a lawful dispatch recorded under v1 verifies "
+      "clean under v1",
+      dc["result"] == "ok", json.dumps(dc))
+
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-hist2", "sandbox.read",
+               {"path": "secret/e.txt"})
+append_dispatch(store, iid, "req-hist2", "dispatch-hist2",
+                "sandbox.read", version="tool-registry-v1")
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16b a v1 dispatch exceeding its ceiling is "
+      "divergent under v1's own contract",
+      dc["result"] == "divergent"
+      and any(p["kind"] == "dispatch_exceeds_ceiling"
               for p in dc["problems"]), json.dumps(dc))
 
 # -- T17: the blocked start (correction round 2). The

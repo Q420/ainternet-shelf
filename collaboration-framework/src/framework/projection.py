@@ -151,7 +151,9 @@ SCHEMA = _obj({
             "iteration": _opt(_INT), "event_seq": _INT,
             "step_ceiling": _opt(_INT), "deadline_seconds": _ANY,
             "cursor_from": _opt(_INT),
-            "cursor_to": _opt(_INT)})),
+            "cursor_to": _opt(_INT),
+            "catalogue_hash": _opt(_STR),
+            "registry_version": _opt(_STR)})),
         "stalled": _opt(_obj({
             "ground": _opt(_STR), "event_seq": _INT,
             "iterations": _opt(_INT)}))})),

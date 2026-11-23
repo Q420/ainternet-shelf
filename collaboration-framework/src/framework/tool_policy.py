@@ -29,19 +29,35 @@ set by its parameters so uncertain outcomes are exercised for
 real. A ceiling is structured data; each tool's checker
 understands only its own constraint keys, and an unknown key —
 in the ceiling or in the parameters — fails closed.
+
+Piece A3-CAT adds the registry's worker-facing layer — a
+plain description and a parameter schema per tool — and with
+it a second registry version. The registry is therefore held
+as one view per version: `tool-registry-v1` is the contract
+exactly as it stood for Piece A2 (ceiling and parameter keys
+only, no worker-facing layer), preserved immutable so a
+dispatch recorded under it is verified under it, never
+reinterpreted under the new contract; `tool-registry-v2` is
+v1's ceiling contract unchanged plus the worker-facing layer.
+Every contract function takes the version it applies; the
+default is the current version, and an unknown version fails
+closed — a version the registry does not hold is a contract
+nobody can verify under.
 """
+import copy
+
 from fabric.canonical import canonical, sha256_hex
 
-# The registry's version identifier: inspectable, and pinned
-# for a run by being recorded in every TOOL_DISPATCHED the
-# doorway issues — the version is part of the dispatch
+# The registry's current version identifier: inspectable, and
+# pinned for a run by being recorded in every TOOL_DISPATCHED
+# the doorway issues — the version is part of the dispatch
 # contract, so which policy governed a historical dispatch is
 # established from the record, not from whatever source
 # happens to be present at replay (Piece A2, correction
 # round 1). Both copies carry it; the suite witnesses that
-# they agree, and the checker refuses to verify a dispatch
-# recorded under a version other than its own.
-REGISTRY_VERSION = "tool-registry-v1"
+# they agree, and the checker verifies each dispatch under
+# the version its record names (Piece A3-CAT settlement (c)).
+REGISTRY_VERSION = "tool-registry-v2"
 
 # sandbox.flaky's modes (scope point 6): the first three are
 # the outcome shapes; the fourth performs the operation and
@@ -50,7 +66,8 @@ REGISTRY_VERSION = "tool-registry-v1"
 FLAKY_MODES = ("succeed", "fail", "hang-past-deadline",
                "execute-but-lose-the-report")
 
-_TOOLS = {
+# The v1 view: the registry exactly as Piece A2 settled it.
+_TOOLS_V1 = {
     "sandbox.write": {
         "ceiling_keys": {"path_prefix"},
         "param_keys": {"path", "content"},
@@ -65,13 +82,149 @@ _TOOLS = {
     },
 }
 
+# The v2 view: v1's ceiling contract, unchanged, plus the
+# worker-facing layer (Piece A3-CAT): a plain description of
+# what the tool does and returns, and a parameter schema —
+# each parameter's name, whether it is required, and its
+# meaning. The parameter lists name exactly the tool's
+# param_keys; the A2 suite's agreement battery witnesses the
+# two copies agree on all of it, under both versions.
+_TOOLS_V2 = {
+    "sandbox.write": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path", "content"},
+        "description":
+            "Write a text file inside the sandbox: creates "
+            "the file at the given path (with any folders it "
+            "needs) or replaces it, storing exactly the given "
+            "content. Returns the path written and the number "
+            "of bytes stored.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+            {"name": "content", "required": True,
+             "meaning": "the text to store in the file"},
+        ],
+    },
+    "sandbox.read": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path"},
+        "description":
+            "Read a text file inside the sandbox. Returns "
+            "the file's path and its full text content.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+        ],
+    },
+    "sandbox.flaky": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"mode", "path", "content",
+                       "hang_seconds"},
+        "description":
+            "A test tool whose behaviour its mode parameter "
+            "sets, so uncertain outcomes are exercised for "
+            "real: 'succeed' performs (writing the file when "
+            "a path is given) and reports its result; 'fail' "
+            "fails; 'hang-past-deadline' runs past the "
+            "deadline, so its outcome is recorded uncertain; "
+            "'execute-but-lose-the-report' performs the "
+            "operation but its report never arrives, so its "
+            "outcome is recorded uncertain. Returns the mode, "
+            "and the write's result when it wrote.",
+        "parameters": [
+            {"name": "mode", "required": True,
+             "meaning": "one of 'succeed', 'fail', "
+                        "'hang-past-deadline', "
+                        "'execute-but-lose-the-report'"},
+            {"name": "path", "required": False,
+             "meaning": "a file path inside the sandbox to "
+                        "write, for the modes that write"},
+            {"name": "content", "required": False,
+             "meaning": "the text to store when writing"},
+            {"name": "hang_seconds", "required": False,
+             "meaning": "how long the 'hang-past-deadline' "
+                        "mode runs, in seconds (a positive "
+                        "number)"},
+        ],
+    },
+}
 
-def registered(tool) -> bool:
-    """Whether the registry knows this tool at all. An
-    unregistered tool is refused at the doorway and divergent
-    in the checker: registration is the precondition of a grant
-    meaning anything."""
-    return tool in _TOOLS
+# One registry view per version, v1 preserved immutable for
+# historical verification (Piece A3-CAT settlement (a)/(c)).
+_REGISTRIES = {
+    "tool-registry-v1": _TOOLS_V1,
+    "tool-registry-v2": _TOOLS_V2,
+}
+
+# The current view: what an unversioned call applies.
+_TOOLS = _TOOLS_V2
+
+
+def known_version(version) -> bool:
+    """Whether the registry holds a view under this version
+    at all. A version nobody holds is unverifiable: callers
+    fail closed or report the inability explicitly, never
+    silently apply another version."""
+    return version in _REGISTRIES
+
+
+def _view(version):
+    """The registry view a call applies: the current version
+    where none is named; None for a version nobody holds."""
+    if version is None:
+        version = REGISTRY_VERSION
+    return _REGISTRIES.get(version)
+
+
+def registered(tool, version=None) -> bool:
+    """Whether the registry knows this tool at all, under the
+    named version (the current version where none is named).
+    An unregistered tool is refused at the doorway and
+    divergent in the checker: registration is the precondition
+    of a grant meaning anything."""
+    view = _view(version)
+    return view is not None and tool in view
+
+
+def worker_facing(tool, version=None):
+    """The tool's worker-facing layer under the named
+    version — {"description": ..., "parameters": [...]} —
+    or None where the tool is unknown under that version or
+    its entry carries no complete layer. v1 entries carry
+    none: under v1 no catalogue can be derived, which is a
+    fact about v1, not a defect in it. The result is a copy;
+    the registry's own data never leaves this module by
+    reference."""
+    view = _view(version)
+    if view is None:
+        return None
+    spec = view.get(tool)
+    if spec is None:
+        return None
+    description = spec.get("description")
+    parameters = spec.get("parameters")
+    if not isinstance(description, str) or \
+            not description.strip() or \
+            not isinstance(parameters, list):
+        return None
+    names = set()
+    for param in parameters:
+        if not isinstance(param, dict) or \
+                set(param) != {"name", "required", "meaning"} \
+                or not isinstance(param.get("name"), str) \
+                or not param["name"] \
+                or not isinstance(param.get("required"), bool) \
+                or not isinstance(param.get("meaning"), str) \
+                or not param["meaning"].strip():
+            return None
+        names.add(param["name"])
+    if names != set(spec["param_keys"]):
+        return None
+    return {"description": description,
+            "parameters": copy.deepcopy(parameters)}
 
 
 def request_fingerprint(tool, parameters) -> str:
@@ -110,16 +263,27 @@ def _path_problem(path, prefix):
     return None
 
 
-def check_ceiling(tool, ceiling, parameters):
+def check_ceiling(tool, ceiling, parameters, version=None):
     """The pure ceiling contract: (ok, ground). Applies the
     named tool's registered checker to the grant's ceiling and
-    the request's parameters. Deterministic, fail-closed, no
-    execution — the same result at the doorway and in the
-    checker, or the piece is wrong."""
-    spec = _TOOLS.get(tool)
+    the request's parameters, under the named version's view
+    (the current version where none is named). Deterministic,
+    fail-closed, no execution — the same result at the doorway
+    and in the checker, or the piece is wrong. The ceiling
+    behaviour is identical under v1 and v2 (A3-CAT changed
+    only the worker-facing layer); a version nobody holds
+    fails closed, naming itself."""
+    if version is None:
+        version = REGISTRY_VERSION
+    view = _REGISTRIES.get(version)
+    if view is None:
+        return False, (f"registry version {version!r} is not "
+                       f"a version this registry holds; the "
+                       f"ceiling check fails closed")
+    spec = view.get(tool)
     if spec is None:
         return False, (f"tool {tool!r} is not in the tool "
-                       f"registry ({REGISTRY_VERSION}); an "
+                       f"registry ({version}); an "
                        f"unregistered tool is refused")
     if not isinstance(ceiling, dict):
         return False, (f"the grant's scope ceiling for {tool} "
