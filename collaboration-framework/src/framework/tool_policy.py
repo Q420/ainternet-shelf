@@ -33,9 +33,14 @@ in the ceiling or in the parameters — fails closed.
 from fabric.canonical import canonical, sha256_hex
 
 # The registry's version identifier: inspectable, and pinned
-# for a run by being named in the record's dispatch history
-# wherever the policy is applied. Both copies carry it; the
-# suite witnesses that they agree.
+# for a run by being recorded in every TOOL_DISPATCHED the
+# doorway issues — the version is part of the dispatch
+# contract, so which policy governed a historical dispatch is
+# established from the record, not from whatever source
+# happens to be present at replay (Piece A2, correction
+# round 1). Both copies carry it; the suite witnesses that
+# they agree, and the checker refuses to verify a dispatch
+# recorded under a version other than its own.
 REGISTRY_VERSION = "tool-registry-v1"
 
 # sandbox.flaky's modes (scope point 6): the first three are

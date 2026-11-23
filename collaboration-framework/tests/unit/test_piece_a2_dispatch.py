@@ -15,6 +15,14 @@ is the examiner's, outcomes the executor's, requests the
 instance's own credential); the checker's dispatch
 correspondence on doorway-bypassing histories; the two policy
 copies' witnessed agreement; and replay executing nothing.
+Correction round 1 adds: the registry version recorded in
+every dispatch and verified by the checker; the checker's
+verification of every event referent (a dispatch's tool
+against its request's, a start's and an outcome's identity
+against its dispatch's); and the start-ordering witness —
+TOOL_STARTED recorded by the executing thread itself, already
+standing in the record at the moment the operation body runs,
+with a failed start report meaning the operation never runs.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a2_dispatch.py
 Exits 0 when every check passes.
@@ -765,6 +773,187 @@ check("T14 the sandbox is byte-identical after a checker run",
       tree_bytes(sandbox) == before
       and verdict["checks"]["dispatch_correspondence"]["result"]
       == "ok")
+
+# -- T15: TOOL_STARTED is the executing thread's own first
+# act (correction round 1). The witness is a probe inside the
+# operation body itself: at the moment the body runs, it reads
+# the record and finds its dispatch's start already standing,
+# the claim already at "begun", and its own side effect not
+# yet made — the start precedes the execution it names, from
+# inside the execution.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+ex, sandbox, claims = make_executor(d)
+res = d.request_tool(itok, "sandbox.write",
+                     {"path": "notes/witness.txt",
+                      "content": "seen"}, "req-witness")
+did = res["dispatch_id"]
+witness = {}
+orig_perform = ex._perform
+
+
+def probing_perform(tool, parameters):
+    started = [e for e in store.all_events()
+               if e["type"] == "TOOL_STARTED"
+               and e["payload"].get("dispatch_id") == did]
+    witness["start_standing"] = len(started) == 1
+    witness["claim_begun"] = ex.claim_phase(did) == "begun"
+    witness["file_absent"] = not os.path.exists(
+        os.path.join(sandbox, "notes", "witness.txt"))
+    return orig_perform(tool, parameters)
+
+
+ex._perform = probing_perform
+summary = ex.execute(did)
+check("T15 at the moment the operation body runs, its start "
+      "already stands in the record",
+      witness == {"start_standing": True, "claim_begun": True,
+                  "file_absent": True}
+      and summary["outcome"] == "result"
+      and read_file(os.path.join(sandbox, "notes",
+                                 "witness.txt")) == "seen",
+      json.dumps(witness))
+
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+ex, sandbox, claims = make_executor(d)
+res = d.request_tool(itok, "sandbox.write",
+                     {"path": "notes/never-started.txt",
+                      "content": "nope"}, "req-nostart")
+did = res["dispatch_id"]
+orig_started = d.record_tool_started
+
+
+def broken_started(dispatch_id):
+    raise RuntimeError("start ledger unavailable")
+
+
+d.record_tool_started = broken_started
+try:
+    summary = ex.execute(did)
+finally:
+    d.record_tool_started = orig_started
+outcomes = events_of(store, "TOOL_OUTCOME")
+check("T15 a start that cannot be recorded: the operation "
+      "never executes, and a failure outcome names the ground",
+      summary["outcome"] == "failure"
+      and not events_of(store, "TOOL_STARTED")
+      and len(outcomes) == 1
+      and outcomes[0]["payload"]["outcome"] == "failure"
+      and "start ledger unavailable"
+      in outcomes[0]["payload"]["detail"]
+      and not os.path.exists(
+          os.path.join(sandbox, "notes", "never-started.txt"))
+      and ex.claim_phase(did) == "reported"
+      and ex.recover() == [])
+
+# -- T16: the recorded dispatch contract is checker-verified
+# (correction round 1) — the registry version stands in every
+# doorway dispatch, and referent mismatches appended past the
+# doorway are reported by dispatch_correspondence.
+store, d, tok, itok, did, sandbox = happy_world()
+disp = events_of(store, "TOOL_DISPATCHED")
+check("T16 every doorway dispatch records the registry "
+      "version that governed it",
+      len(disp) == 1
+      and disp[0]["payload"].get("registry_version")
+      == fw_policy.REGISTRY_VERSION == "tool-registry-v1")
+
+
+def append_request(store, iid, rid, tool, params):
+    store.append("TOOL_REQUESTED", "crew-1", [], {
+        "instance_id": iid, "request_id": rid, "tool": tool,
+        "parameters": params,
+        "fingerprint": fw_policy.request_fingerprint(
+            tool, params)})
+
+
+def append_dispatch(store, iid, rid, did, tool, version="keep"):
+    payload = {"instance_id": iid, "request_id": rid,
+               "dispatch_id": did, "tool": tool}
+    if version == "keep":
+        payload["registry_version"] = fw_policy.REGISTRY_VERSION
+    elif version is not None:
+        payload["registry_version"] = version
+    store.append("TOOL_DISPATCHED", "doorway", [], payload)
+
+
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-y", "sandbox.write",
+               {"path": "notes/b.txt", "content": "x"})
+append_dispatch(store, iid, "req-y", "dispatch-y",
+                "sandbox.read")
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16 a dispatch whose tool differs from its request's "
+      "is reported",
+      dc["result"] == "divergent"
+      and any(p["kind"] == "dispatch_tool_differs_from_request"
+              for p in dc["problems"]), json.dumps(dc))
+
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-z", "sandbox.write",
+               {"path": "notes/c.txt", "content": "x"})
+append_dispatch(store, iid, "req-z", "dispatch-z",
+                "sandbox.write")
+store.append("TOOL_STARTED", "executor", [], {
+    "dispatch_id": "dispatch-z", "instance_id": iid,
+    "request_id": "req-WRONG"})
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16 a start naming a different request than its "
+      "dispatch's is reported",
+      dc["result"] == "divergent"
+      and any(p["kind"] == "start_referent_mismatch"
+              for p in dc["problems"]), json.dumps(dc))
+
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-w", "sandbox.write",
+               {"path": "notes/d.txt", "content": "x"})
+append_dispatch(store, iid, "req-w", "dispatch-w",
+                "sandbox.write")
+store.append("TOOL_OUTCOME", "executor", [], {
+    "dispatch_id": "dispatch-w",
+    "instance_id": "instance-WRONG", "request_id": "req-w",
+    "outcome": "result"})
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16 an outcome naming a different instance than its "
+      "dispatch's is reported",
+      dc["result"] == "divergent"
+      and any(p["kind"] == "outcome_referent_mismatch"
+              for p in dc["problems"]), json.dumps(dc))
+
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-v", "sandbox.write",
+               {"path": "notes/e.txt", "content": "x"})
+append_dispatch(store, iid, "req-v", "dispatch-v",
+                "sandbox.write", version=None)
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16 a dispatch with no registry version recorded is "
+      "reported",
+      dc["result"] == "divergent"
+      and any(p["kind"] == "dispatch_registry_version_mismatch"
+              for p in dc["problems"]), json.dumps(dc))
+
+store, d, tok, itok, did, sandbox = happy_world()
+iid = d.state()["tool_requests"][0]["instance_id"]
+append_request(store, iid, "req-v", "sandbox.write",
+               {"path": "notes/e.txt", "content": "x"})
+append_dispatch(store, iid, "req-v", "dispatch-v",
+                "sandbox.write", version="tool-registry-v99")
+store.commit()
+dc = run_checker(store)["checks"]["dispatch_correspondence"]
+check("T16 a dispatch governed by a foreign registry "
+      "version is reported",
+      dc["result"] == "divergent"
+      and any(p["kind"] == "dispatch_registry_version_mismatch"
+              for p in dc["problems"]), json.dumps(dc))
 
 print()
 if FAILURES:

@@ -556,7 +556,17 @@ class Doorway:
             "TOOL_DISPATCHED", DOORWAY_ACTOR, [instance_id],
             {"instance_id": instance_id,
              "request_id": request_id,
-             "dispatch_id": dispatch_id, "tool": tool})
+             "dispatch_id": dispatch_id, "tool": tool,
+             # The registry version that governed this
+             # dispatch, recorded as part of the dispatch
+             # contract (Piece A2, correction round 1): an
+             # examiner must be able to establish from the
+             # record which policy version was applied, and
+             # the checker verifies the version it holds is
+             # the version that governed — a dispatch under
+             # another version is not verifiable by it.
+             "registry_version":
+                 _tool_policy.REGISTRY_VERSION})
         self.store.commit()
         return {"ok": True, "duplicate": False,
                 "instance_id": instance_id,

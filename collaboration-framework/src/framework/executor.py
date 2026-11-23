@@ -75,6 +75,23 @@ class Executor:
         except (OSError, ValueError):
             return None
 
+    def _fsync_claim_dir(self):
+        """Fsync the claim directory itself, not only the
+        claim file: the file's directory entry is part of the
+        durable single-execution boundary — a claim whose
+        contents survived a crash but whose entry did not
+        would let a recovering executor claim and perform the
+        dispatch a second time. Creation is the only
+        directory-entry change in this store (phases rewrite a
+        claim's contents in place; claims are never renamed or
+        deleted), so creation is where the directory is
+        fsynced."""
+        fd = os.open(self.claim_dir, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
     def claim(self, dispatch_id) -> bool:
         """Take the durable execution claim, atomically: True
         when this executor took it, False when a claim already
@@ -94,6 +111,7 @@ class Executor:
                        "ts": time.time()}, fh)
             fh.flush()
             os.fsync(fh.fileno())
+        self._fsync_claim_dir()
         return True
 
     def _set_phase(self, dispatch_id, phase):
@@ -214,11 +232,26 @@ class Executor:
             return {"ok": True, "dispatch_id": dispatch_id,
                     "outcome": "uncertain"}
         tool, parameters = source
-        self._set_phase(dispatch_id, "begun")
-        self.doorway.record_tool_started(dispatch_id)
         box = {}
 
         def run():
+            # The start is the executing thread's own first
+            # act (correction round 1): TOOL_STARTED means
+            # execution has begun, so it is recorded here —
+            # by the thread that is about to perform the
+            # operation, immediately before it performs it,
+            # with the claim's "begun" transition in the same
+            # sequence — never by the calling thread in
+            # advance, which would claim a beginning that has
+            # not happened. If the start cannot be recorded,
+            # the operation must not execute: the failure is
+            # handed back for an outcome report instead.
+            try:
+                self._set_phase(dispatch_id, "begun")
+                self.doorway.record_tool_started(dispatch_id)
+            except Exception as exc:  # the start report failed
+                box["start_error"] = exc
+                return
             try:
                 box["value"] = self._perform(tool, parameters)
             except Exception as exc:  # the operation's failure
@@ -238,6 +271,23 @@ class Executor:
             self._set_phase(dispatch_id, "reported")
             return {"ok": True, "dispatch_id": dispatch_id,
                     "outcome": "uncertain"}
+        if "start_error" in box:
+            # The start could not be recorded, so the
+            # operation never executed — an outcome without a
+            # start is legitimate, and it is a failure the
+            # executor can establish (nothing was performed),
+            # not uncertainty. The claim stands accounted:
+            # the outcome settles the dispatch, so recovery
+            # leaves it exactly as it stands.
+            self.doorway.record_tool_outcome(
+                dispatch_id, "failure",
+                detail="execution did not begin: the start "
+                       "report failed "
+                       f"({box['start_error']}); the operation "
+                       "was not performed")
+            self._set_phase(dispatch_id, "reported")
+            return {"ok": True, "dispatch_id": dispatch_id,
+                    "outcome": "failure"}
         if "error" in box:
             self.doorway.record_tool_outcome(
                 dispatch_id, "failure",

@@ -148,7 +148,15 @@ class FrameworkStore:
 
     def __init__(self, path: str):
         self.path = path
-        self._conn = sqlite3.connect(path)
+        # check_same_thread=False: the executor's worker thread
+        # records its own TOOL_STARTED through the doorway
+        # (Piece A2, correction round 1) — the start report is
+        # the executing thread's first act, so the connection
+        # cannot be bound to the thread that opened the store.
+        # Callers remain responsible for not driving the
+        # connection concurrently; the executor's calling
+        # thread is parked in join() while its worker records.
+        self._conn = sqlite3.connect(path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute(
             """CREATE TABLE IF NOT EXISTS events (

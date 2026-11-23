@@ -50,7 +50,8 @@ from fabric.canonical import canonical, event_hash, sha256_hex
 
 from checker.replay import replay_events
 from checker.schema import SCHEMA
-from checker.tool_policy import check_ceiling, request_fingerprint
+from checker.tool_policy import (REGISTRY_VERSION, check_ceiling,
+                                 request_fingerprint)
 
 _ENVELOPE = ("event_seq", "event_id", "run_id", "type", "actor",
              "affected", "payload", "ts", "prev_hash", "hash")
@@ -590,7 +591,13 @@ def _dispatch_result(events, state):
     doorway's intent, the executor's starts and outcomes,
     at most one start per dispatch, an outcome following its
     dispatch and any standing start, an uncertain dispatch
-    needing no start); and reconciliation applies only to an
+    needing no start); every dispatch records the registry
+    version that governed it, and it is the version this
+    checker holds — a dispatch governed by another version is
+    not verifiable under this contract; a dispatch's tool is
+    its request's tool, and a start's or outcome's instance
+    and request identity are its dispatch's established
+    identity; and reconciliation applies only to an
     uncertain dispatch, examiner-authorised and
     evidence-referenced. Nothing here executes a tool (R48):
     the policy contract is pure, and this module imports no
@@ -696,6 +703,18 @@ def _dispatch_result(events, state):
             if req is None or req["seq"] > seq:
                 problem("dispatch_without_request",
                         dispatch_id=did, at_seq=seq)
+            if req is not None and \
+                    req["tool"] != p.get("tool"):
+                problem("dispatch_tool_differs_from_request",
+                        dispatch_id=did, at_seq=seq,
+                        tool=p.get("tool"),
+                        request_tool=req["tool"])
+            if p.get("registry_version") != REGISTRY_VERSION:
+                problem("dispatch_registry_version_mismatch",
+                        dispatch_id=did, at_seq=seq,
+                        registry_version=p.get(
+                            "registry_version"),
+                        checker_registry_version=REGISTRY_VERSION)
             if any(d["instance_id"] == iid
                    and d["request_id"] == rid
                    for d in dispatches.values()):
@@ -759,14 +778,19 @@ def _dispatch_result(events, state):
             if d is None or d["seq"] > seq:
                 problem("start_without_dispatch",
                         dispatch_id=did, at_seq=seq)
-            elif d["started_seq"] is not None:
-                problem("second_start", dispatch_id=did,
-                        at_seq=seq)
-            elif d["outcome"] is not None or d["reconciled"]:
-                problem("start_after_outcome",
-                        dispatch_id=did, at_seq=seq)
             else:
-                d["started_seq"] = seq
+                if p.get("instance_id") != d["instance_id"] or \
+                        p.get("request_id") != d["request_id"]:
+                    problem("start_referent_mismatch",
+                            dispatch_id=did, at_seq=seq)
+                if d["started_seq"] is not None:
+                    problem("second_start", dispatch_id=did,
+                            at_seq=seq)
+                elif d["outcome"] is not None or d["reconciled"]:
+                    problem("start_after_outcome",
+                            dispatch_id=did, at_seq=seq)
+                else:
+                    d["started_seq"] = seq
         elif t == "TOOL_OUTCOME":
             did = p.get("dispatch_id")
             if actor != "executor":
@@ -777,6 +801,11 @@ def _dispatch_result(events, state):
                         dispatch_id=did, at_seq=seq,
                         outcome=p.get("outcome"))
             d = dispatches.get(did)
+            if d is not None and d["seq"] <= seq and \
+                    (p.get("instance_id") != d["instance_id"] or
+                     p.get("request_id") != d["request_id"]):
+                problem("outcome_referent_mismatch",
+                        dispatch_id=did, at_seq=seq)
             if d is None or d["seq"] > seq:
                 problem("outcome_without_dispatch",
                         dispatch_id=did, at_seq=seq)
