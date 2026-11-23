@@ -40,7 +40,7 @@
 
 ## Acceptance — the first worker (Stage: agent layer)
 
-- [ ] An assembly is generated, examined, verified, packed and authorised with all acts attributed, and no credential usable before authorisation.
+- [ ] An assembly is generated, verified, examined, packed and authorised with all acts attributed, and no credential usable before authorisation.
 - [ ] An instance onboards at assembly with declaration, provider id and evidence kinds distinct in the record.
 - [ ] The instance works a bounded loop: iterations doorway-adjudicated; a tool request follows R45's sequence end-to-end; an induced timeout records an uncertain outcome (R46) and blocks settled continuation until reconciled.
 - [ ] Skill use is evidenced in the four states by their four mechanisms, with no inference between them.
@@ -66,3 +66,7 @@ Negative cases — the boundaries must hold when crossed:
 ## Correction round 1 (Vane's examination, 2026-11-23 — INDEX 156)
 
 R40 rewritten (order corrected to match design §2; pack a distinct recorded act; continuation assemblies in full). R46 tightened (affected continuation blocked until reconciliation; other parts only on a recorded non-effect determination). R47 rewritten (stable request identity + doorway deduplication; uncertain outcomes keep the grant bound charged). R52 extended (mechanical manifest enforcement before disclosure; rejected attempts recorded). R55 extended (pack and reconciliation named; refused grant checks are recorded events; refusals and unresolved states are first-class checker history). Acceptance checklist gains a negative-cases section (ungranted request refused; grant without authority trace refused; retry causes no second dispatch; unresolved dispatch blocks affected continuation; sealed material denied via read and search under adversarial attempts; revoked credentials refused; replay executes nothing).
+
+## Correction round 2 (Vane's re-examination, 2026-11-23 — INDEX 157)
+
+First acceptance item reordered to R40's sequence (generated, verified, examined, packed, authorised); the design's §10 demonstration chain corrected to match R54 (deaths + reconciliation before continuation issue). **The Rev 6 pair is accepted as the basis for implementation scoping.**
