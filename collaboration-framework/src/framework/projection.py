@@ -139,6 +139,17 @@ SCHEMA = _obj({
         "authorised_seq": _opt(_INT),
         "activated_seq": _opt(_INT),
         "credential": _STR, "grants_present": _BOOL})),
+    "tool_requests": _list(_obj({
+        "instance_id": _opt(_STR), "request_id": _opt(_STR),
+        "fingerprint": _opt(_STR), "tool": _opt(_STR),
+        "requested_seq": _INT, "dispatch_id": _opt(_STR)})),
+    "dispatches": _map(_obj({
+        "instance_id": _opt(_STR), "request_id": _opt(_STR),
+        "tool": _opt(_STR), "dispatch_seq": _INT,
+        "started_seq": _opt(_INT), "outcome": _opt(_STR),
+        "outcome_seq": _opt(_INT), "uncertain_seq": _opt(_INT),
+        "reconciled_seq": _opt(_INT),
+        "reconciled_outcome": _opt(_STR)})),
     "claims": _map(_obj({
         "author": _STR, "status": _STR, "subject": _STR,
         "status_seq": _INT})),

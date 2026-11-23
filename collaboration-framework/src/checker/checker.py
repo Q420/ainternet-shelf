@@ -27,7 +27,13 @@ What it checks, from the record alone:
   snapshot — an untrusted comparison operand, never authority,
   never an input to the replay (C4) — with every divergence
   reported by key path;
-- seal correspondence, bidirectionally (C5).
+- seal correspondence, bidirectionally (C5);
+- assembly correspondence (Piece A1) and dispatch
+  correspondence (Piece A2): each generated instance's
+  lifecycle, and each recorded dispatch against the authority
+  that actually stood, reconstructed from the events — the
+  dispatch check applying the checker's own copy of the pure
+  tool-policy contract and executing nothing (R48).
 
 It opens the store read-only with its own SQL, writes nothing,
 creates no store, and leaves no artifacts (C7). It imports
@@ -44,6 +50,7 @@ from fabric.canonical import canonical, event_hash, sha256_hex
 
 from checker.replay import replay_events
 from checker.schema import SCHEMA
+from checker.tool_policy import check_ceiling, request_fingerprint
 
 _ENVELOPE = ("event_seq", "event_id", "run_id", "type", "actor",
              "affected", "payload", "ts", "prev_hash", "hash")
@@ -559,6 +566,265 @@ def _assembly_result(events, state):
     return {"result": "ok"}
 
 
+# ---------------------------------------------------------- dispatch
+
+_OUTCOME_VOCAB = ("result", "failure", "uncertain")
+
+
+def _dispatch_result(events, state):
+    """Dispatch correspondence (Piece A2, R44–R48/R55): every
+    recorded dispatch reconstructed against the authority that
+    actually stood — not merely that dispatch events exist.
+    From the events themselves: the instance held an active
+    credential at request time (its assembly's activation
+    stands before the request); the grant stood in the judged
+    and packed assembly object (the generated record, named
+    by both acts under its canonical hash); the request's tool
+    and parameters satisfied the grant and the registered
+    ceiling, applying the checker's own copy of the pure
+    policy contract; the authority trace stood in that sealed
+    object; the bound was respected counting dispatches,
+    uncertain included, never refunded; no request identity
+    was reused with different contents; every dispatch, start
+    and outcome carries the correct actor and referent (the
+    doorway's intent, the executor's starts and outcomes,
+    at most one start per dispatch, an outcome following its
+    dispatch and any standing start, an uncertain dispatch
+    needing no start); and reconciliation applies only to an
+    uncertain dispatch, examiner-authorised and
+    evidence-referenced. Nothing here executes a tool (R48):
+    the policy contract is pure, and this module imports no
+    executor."""
+    problems = []
+
+    def problem(kind, **fields):
+        entry = {"kind": kind}
+        entry.update(fields)
+        problems.append(entry)
+
+    seats = state["seats"]
+
+    def role_of(actor):
+        return (seats.get(actor) or {}).get("role")
+
+    generated_by_instance = {}
+    judged_hashes = {}
+    packed_hashes = {}
+    activated_seq = {}
+    for ev in events:
+        t = ev["type"]
+        p = ev["payload"]
+        if t == "ASSEMBLY_GENERATED":
+            generated_by_instance.setdefault(
+                p.get("instance_id"), ev)
+        elif t == "ASSEMBLY_JUDGED":
+            judged_hashes.setdefault(
+                p.get("assembly_id"), []).append(
+                    p.get("record_hash"))
+        elif t == "ASSEMBLY_PACKED":
+            packed_hashes.setdefault(
+                p.get("assembly_id"), []).append(
+                    p.get("record_hash"))
+        elif t == "INSTANCE_ACTIVATED":
+            activated_seq.setdefault(p.get("instance_id"),
+                                     ev["event_seq"])
+
+    def sealed_grants(instance_id):
+        """(grants, sealed): the generated record's grants,
+        and whether the judgement and the pack both name that
+        exact object by its canonical hash — a grant in an
+        unsealed object is not a grant that stood."""
+        ev = generated_by_instance.get(instance_id)
+        if ev is None:
+            return None, False
+        digest = _assembly_record_hash(ev["payload"])
+        aid = ev["payload"].get("assembly_id")
+        sealed = digest in judged_hashes.get(aid, []) and \
+            digest in packed_hashes.get(aid, [])
+        return ev["payload"].get("grants"), sealed
+
+    requests = {}
+    dispatches = {}
+    counts = {}
+    for ev in events:
+        t = ev["type"]
+        p = ev["payload"]
+        seq = ev["event_seq"]
+        actor = ev["actor"]
+        if t == "TOOL_REQUESTED":
+            iid = p.get("instance_id")
+            rid = p.get("request_id")
+            gen = generated_by_instance.get(iid)
+            if gen is None:
+                problem("request_unknown_instance",
+                        instance_id=iid, at_seq=seq)
+            else:
+                if actor != gen["payload"].get("seat"):
+                    problem("request_wrong_actor",
+                            instance_id=iid, at_seq=seq,
+                            actor=actor)
+                active_at = activated_seq.get(iid)
+                if active_at is None or active_at > seq:
+                    problem("request_credential_not_active",
+                            instance_id=iid, at_seq=seq)
+            if p.get("fingerprint") != request_fingerprint(
+                    p.get("tool"), p.get("parameters")):
+                problem("request_fingerprint_mismatch",
+                        instance_id=iid, request_id=rid,
+                        at_seq=seq)
+            key = (iid, rid)
+            if key in requests:
+                if requests[key]["fingerprint"] != \
+                        p.get("fingerprint"):
+                    problem("request_identity_reused",
+                            instance_id=iid, request_id=rid,
+                            at_seq=seq)
+            else:
+                requests[key] = {
+                    "fingerprint": p.get("fingerprint"),
+                    "tool": p.get("tool"),
+                    "parameters": p.get("parameters"),
+                    "seq": seq}
+        elif t == "TOOL_DISPATCHED":
+            did = p.get("dispatch_id")
+            iid = p.get("instance_id")
+            rid = p.get("request_id")
+            if actor != "doorway":
+                problem("dispatch_wrong_actor",
+                        dispatch_id=did, at_seq=seq, actor=actor)
+            req = requests.get((iid, rid))
+            if req is None or req["seq"] > seq:
+                problem("dispatch_without_request",
+                        dispatch_id=did, at_seq=seq)
+            if any(d["instance_id"] == iid
+                   and d["request_id"] == rid
+                   for d in dispatches.values()):
+                problem("second_dispatch_for_request",
+                        dispatch_id=did, at_seq=seq)
+            if did in dispatches:
+                problem("duplicate_dispatch_id",
+                        dispatch_id=did, at_seq=seq)
+            grants, sealed = sealed_grants(iid)
+            if grants is None:
+                problem("dispatch_without_sealed_assembly",
+                        dispatch_id=did, at_seq=seq)
+            else:
+                if not sealed:
+                    problem("grant_not_sealed",
+                            dispatch_id=did, at_seq=seq)
+                grant = next(
+                    (g for g in grants
+                     if isinstance(g, dict)
+                     and g.get("tool") == p.get("tool")), None)
+                if grant is None:
+                    problem("dispatch_without_grant",
+                            dispatch_id=did, at_seq=seq,
+                            tool=p.get("tool"))
+                else:
+                    trace = grant.get("authority_trace")
+                    if not isinstance(trace, str) or not trace:
+                        problem("grant_without_authority_trace",
+                                dispatch_id=did, at_seq=seq)
+                    if req is not None:
+                        ok, ground = check_ceiling(
+                            p.get("tool"),
+                            grant.get("scope_ceiling"),
+                            req["parameters"])
+                        if not ok:
+                            problem("dispatch_exceeds_ceiling",
+                                    dispatch_id=did, at_seq=seq,
+                                    detail=ground)
+                    bound = grant.get("bound")
+                    limit = bound.get("count") if isinstance(
+                        bound, dict) else None
+                    ckey = (iid, p.get("tool"))
+                    counts[ckey] = counts.get(ckey, 0) + 1
+                    if not isinstance(limit, int) or \
+                            isinstance(limit, bool):
+                        problem("grant_bound_not_a_count",
+                                dispatch_id=did, at_seq=seq)
+                    elif counts[ckey] > limit:
+                        problem("dispatch_over_bound",
+                                dispatch_id=did, at_seq=seq)
+            dispatches[did] = {
+                "instance_id": iid, "request_id": rid,
+                "seq": seq, "started_seq": None, "outcome": None,
+                "reconciled": False}
+        elif t == "TOOL_STARTED":
+            did = p.get("dispatch_id")
+            if actor != "executor":
+                problem("start_wrong_actor", dispatch_id=did,
+                        at_seq=seq, actor=actor)
+            d = dispatches.get(did)
+            if d is None or d["seq"] > seq:
+                problem("start_without_dispatch",
+                        dispatch_id=did, at_seq=seq)
+            elif d["started_seq"] is not None:
+                problem("second_start", dispatch_id=did,
+                        at_seq=seq)
+            elif d["outcome"] is not None or d["reconciled"]:
+                problem("start_after_outcome",
+                        dispatch_id=did, at_seq=seq)
+            else:
+                d["started_seq"] = seq
+        elif t == "TOOL_OUTCOME":
+            did = p.get("dispatch_id")
+            if actor != "executor":
+                problem("outcome_wrong_actor", dispatch_id=did,
+                        at_seq=seq, actor=actor)
+            if p.get("outcome") not in _OUTCOME_VOCAB:
+                problem("outcome_value_unknown",
+                        dispatch_id=did, at_seq=seq,
+                        outcome=p.get("outcome"))
+            d = dispatches.get(did)
+            if d is None or d["seq"] > seq:
+                problem("outcome_without_dispatch",
+                        dispatch_id=did, at_seq=seq)
+            elif d["reconciled"]:
+                problem("outcome_after_reconciliation",
+                        dispatch_id=did, at_seq=seq)
+            elif d["outcome"] in ("result", "failure"):
+                problem("duplicate_outcome", dispatch_id=did,
+                        at_seq=seq)
+            elif d["outcome"] == "uncertain" and \
+                    p.get("outcome") == "uncertain":
+                problem("duplicate_outcome", dispatch_id=did,
+                        at_seq=seq)
+            elif p.get("outcome") in _OUTCOME_VOCAB:
+                # A first outcome — or the delayed report
+                # settling a standing uncertainty.
+                d["outcome"] = p.get("outcome")
+        elif t == "TOOL_RECONCILED":
+            did = p.get("dispatch_id")
+            if role_of(actor) != "examiner":
+                problem("reconciliation_wrong_actor",
+                        dispatch_id=did, at_seq=seq, actor=actor)
+            d = dispatches.get(did)
+            if d is None or d["seq"] > seq:
+                problem("reconciliation_without_dispatch",
+                        dispatch_id=did, at_seq=seq)
+            else:
+                if d["reconciled"]:
+                    problem("second_reconciliation",
+                            dispatch_id=did, at_seq=seq)
+                elif d["outcome"] != "uncertain":
+                    problem("reconciliation_not_uncertain",
+                            dispatch_id=did, at_seq=seq)
+                if p.get("outcome") not in ("result", "failure"):
+                    problem("reconciliation_outcome_unknown",
+                            dispatch_id=did, at_seq=seq)
+                evidence = p.get("evidence_ref")
+                if not isinstance(evidence, str) or not evidence:
+                    problem("reconciliation_without_evidence",
+                            dispatch_id=did, at_seq=seq)
+                if d["outcome"] == "uncertain" and \
+                        not d["reconciled"]:
+                    d["reconciled"] = True
+    if problems:
+        return {"result": "divergent", "problems": problems}
+    return {"result": "ok"}
+
+
 # ----------------------------------------------------------- verdict
 
 def check(request):
@@ -630,6 +896,7 @@ def check(request):
         checks["replay_equality"] = {"result": "not_run"}
         checks["seal_correspondence"] = {"result": "not_run"}
         checks["assembly_correspondence"] = {"result": "not_run"}
+        checks["dispatch_correspondence"] = {"result": "not_run"}
     else:
         mine = json.loads(canonical(state))
         bad = _conforms(mine, SCHEMA)
@@ -652,6 +919,8 @@ def check(request):
                 {"result": "divergent", "divergences": divs})
         checks["seal_correspondence"] = _seal_result(events, state)
         checks["assembly_correspondence"] = _assembly_result(
+            events, state)
+        checks["dispatch_correspondence"] = _dispatch_result(
             events, state)
     return verdict
 

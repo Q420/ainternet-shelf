@@ -19,11 +19,13 @@ Seat bindings are read from the record itself (RUN_COMMISSIONED seats
 / SEAT_BOUND events). Onboarding proper (§3.6) is a later piece; this
 doorway consumes the bindings the record carries.
 """
+import copy
 import hashlib
 import secrets
 
 from . import gates as _gates
 from . import orchestrator as _orch
+from . import tool_policy as _tool_policy
 from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
                      GATE_OUTCOMES, assembly_record_hash,
                      declaration_fingerprint, effective_case, fold,
@@ -31,6 +33,15 @@ from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
                      validate_status_transition)
 
 DOORWAY_ACTOR = "doorway"
+
+# Piece A2: the executor's actor identity — machinery with a
+# narrow reporting capability (starts and outcomes against
+# standing dispatches), not a seat and not an authority. Its
+# reports are recorded by the doorway's executor route below,
+# never through the seat act route: no token carries this
+# identity, and a seat act naming one of its event kinds is
+# refused as not a doorway act.
+EXECUTOR_ACTOR = "executor"
 
 # §4 authority matrix — which roles may record which act types.
 # (Claim-status transitions are governed separately by R2; case
@@ -58,6 +69,14 @@ ACT_AUTHORITY = {
     "ASSEMBLY_PACKED": {"orchestrator"},
     "ASSEMBLY_ISSUE_AUTHORISED": {"orchestrator"},
     "INSTANCE_ACTIVATED": {"orchestrator"},
+    # Agent layer (Piece A2, R46): reconciliation is the
+    # examiner's determination alone. The rest of the dispatch
+    # sequence does not travel the seat act route at all:
+    # TOOL_REQUESTED and the doorway's TOOL_DISPATCHED go
+    # through request_tool(), and the executor's TOOL_STARTED /
+    # TOOL_OUTCOME through the executor route — so none of them
+    # appears here, and a seat act naming one is refused.
+    "TOOL_RECONCILED": {"examiner"},
     "RUN_READY_FOR_COMPLETION": {"orchestrator"},
     "DISAGREEMENT": {"crew", "orchestrator", "examiner", "director"},
     "DISAGREEMENT_SETTLED": {"crew", "orchestrator", "examiner",
@@ -224,6 +243,20 @@ class Doorway:
                 self.state(), inst["instance_id"])
             return entry["seat"] if entry else None
         return None
+
+    def _presented_instance(self, token):
+        """The instance id a presented token is an instance
+        credential for, or None when the token is not one the
+        doorway issued to an instance (Piece A2: a tool request
+        is made under the instance's own credential, so the
+        route must know whether the presented token is one —
+        a seat token authenticates as a seat, never as an
+        instance)."""
+        if not token:
+            return None
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        inst = self._instance_tokens.get(digest)
+        return inst["instance_id"] if inst is not None else None
 
     def _assembly_of_instance(self, state, instance_id):
         """The fold's assembly entry for an instance, or None
@@ -408,6 +441,317 @@ class Doorway:
         )
         self.store.commit()
         return ev
+
+    # --------------------------------------- dispatch (Piece A2)
+    def _assembly_entry_of_instance(self, state, instance_id):
+        """(assembly_id, entry) for an instance, or (None, None)
+        — the fold keys assemblies by id, and the dispatch
+        route needs the id as well as the entry."""
+        for assembly_id, entry in state["assemblies"].items():
+            if entry.get("instance_id") == instance_id:
+                return assembly_id, entry
+        return None, None
+
+    def request_tool(self, token, tool, parameters, request_id):
+        """The dispatch sequence's front half (Piece A2,
+        R44–R47): an activated instance, under its own
+        credential, requests a tool — the request is recorded,
+        the doorway checks it against the grants sealed in the
+        instance's assembly record, and on a pass the dispatch
+        intent is recorded by the doorway as mechanism. Only
+        then may execution begin; if recording the intent
+        failed, nothing here would have returned a dispatch.
+
+        A retry — same identity, same fingerprint — resolves
+        against the standing state and records nothing new:
+        the standing dispatch is returned, never a second one.
+        The same identity with different contents is refused
+        and the refusal recorded: an identity cannot change
+        its meaning. A refused grant check is likewise recorded
+        (a REJECTION naming the grant ground, R55), after the
+        request itself has been recorded — the request stands
+        as history either way.
+
+        Returns {"ok": True, "dispatch_id", "duplicate": bool,
+        ...} on a standing dispatch; raises DoorwayRefusal on a
+        refusal (already recorded)."""
+        instance_id = self._presented_instance(token)
+        if instance_id is None:
+            self._refuse(self._presented_seat(token),
+                         "TOOL_REQUESTED",
+                         "a tool request is made under an "
+                         "instance's own credential (R44)")
+        seat_id = self._authenticate(token)
+        if seat_id is None:
+            self._refuse(self._presented_seat(token),
+                         "TOOL_REQUESTED", self._auth_ground(token))
+        if not isinstance(request_id, str) or not request_id:
+            self._refuse(seat_id, "TOOL_REQUESTED",
+                         "a tool request carries its stable "
+                         "request identity (R47)")
+        if not isinstance(parameters, dict):
+            self._refuse(seat_id, "TOOL_REQUESTED",
+                         "a tool request's parameters are an "
+                         "object (R44)")
+        state = self.state()
+        fingerprint = _tool_policy.request_fingerprint(
+            tool, parameters)
+        standing = None
+        for req in state["tool_requests"]:
+            if req["instance_id"] == instance_id and \
+                    req["request_id"] == request_id:
+                standing = req
+                break
+        if standing is not None:
+            if standing["fingerprint"] != fingerprint:
+                self._refuse(
+                    seat_id, "TOOL_REQUESTED",
+                    f"request identity {request_id} already "
+                    f"stands bound to different contents for "
+                    f"instance {instance_id}; an identity "
+                    f"cannot change its meaning (R47)")
+            if standing["dispatch_id"] is not None:
+                entry = state["dispatches"].get(
+                    standing["dispatch_id"]) or {}
+                return {"ok": True, "duplicate": True,
+                        "instance_id": instance_id,
+                        "request_id": request_id,
+                        "dispatch_id": standing["dispatch_id"],
+                        "outcome": entry.get("outcome"),
+                        "reconciled_outcome":
+                            entry.get("reconciled_outcome")}
+            # The request stands recorded but undispatched —
+            # an earlier check refused it. The retry re-runs
+            # the check against the standing request (the grant
+            # object is sealed and bounds never free, so the
+            # outcome is the record's, not a new discretion);
+            # no second TOOL_REQUESTED is recorded.
+        else:
+            ev = self.store.append(
+                "TOOL_REQUESTED", seat_id, [instance_id],
+                {"instance_id": instance_id,
+                 "request_id": request_id, "tool": tool,
+                 "parameters": copy.deepcopy(parameters),
+                 "fingerprint": fingerprint})
+            self.store.commit()
+            state = self.state()
+        # The grant check, against the sealed assembly record.
+        assembly_id, entry = self._assembly_entry_of_instance(
+            state, instance_id)
+        ground = self._dispatch_check(
+            state, assembly_id, entry, instance_id, tool,
+            parameters)
+        if ground is not None:
+            ev = self.store.append(
+                "REJECTION", DOORWAY_ACTOR, [seat_id],
+                {"seat": seat_id,
+                 "attempted_type": "TOOL_DISPATCHED",
+                 "ground": ground,
+                 "instance_id": instance_id,
+                 "request_id": request_id, "tool": tool})
+            self.store.commit()
+            raise DoorwayRefusal(ground)
+        dispatch_id = f"dispatch-{len(state['dispatches']) + 1}"
+        ev = self.store.append(
+            "TOOL_DISPATCHED", DOORWAY_ACTOR, [instance_id],
+            {"instance_id": instance_id,
+             "request_id": request_id,
+             "dispatch_id": dispatch_id, "tool": tool})
+        self.store.commit()
+        return {"ok": True, "duplicate": False,
+                "instance_id": instance_id,
+                "request_id": request_id,
+                "dispatch_id": dispatch_id, "outcome": None,
+                "reconciled_outcome": None}
+
+    def _dispatch_check(self, state, assembly_id, entry,
+                        instance_id, tool, parameters):
+        """Why a dispatch may not be recorded, or None (Piece
+        A2, R44/R47): the grant source is the sealed assembly
+        record — the generated object the judgement and the
+        pack name by hash. A grant outside that object does
+        not exist here; a grant inside it must carry its
+        authority trace; the request must satisfy the grant's
+        ceiling under the registry's pure policy; and the
+        grant's bound counts dispatches — standing dispatches
+        under this grant, whatever their outcomes, uncertain
+        included, never refunded."""
+        if entry is None:
+            return (f"no assembly stands for instance "
+                    f"{instance_id}; no grant can be checked "
+                    f"(R44)")
+        generated = self._generated_payload(assembly_id)
+        grants = (generated or {}).get("grants") or []
+        grant = next((g for g in grants
+                      if isinstance(g, dict)
+                      and g.get("tool") == tool), None)
+        if grant is None:
+            return (f"no grant for tool {tool} stands in the "
+                    f"sealed assembly record of instance "
+                    f"{instance_id}; a grant outside the sealed "
+                    f"record does not exist for the doorway "
+                    f"(R44)")
+        trace = grant.get("authority_trace")
+        if not isinstance(trace, str) or not trace:
+            return (f"the grant for tool {tool} in the sealed "
+                    f"record carries no authority trace; a "
+                    f"grant without a trace was never judged "
+                    f"and packed (R44)")
+        ok, ground = _tool_policy.check_ceiling(
+            tool, grant.get("scope_ceiling"), parameters)
+        if not ok:
+            return f"{ground} (R44)"
+        bound = grant.get("bound")
+        count = bound.get("count") if isinstance(bound, dict) \
+            else None
+        if not isinstance(count, int) or isinstance(count, bool):
+            return (f"the grant for tool {tool} carries no "
+                    f"count bound; the bound check fails "
+                    f"closed (R44)")
+        used = sum(1 for d in state["dispatches"].values()
+                   if d.get("instance_id") == instance_id
+                   and d.get("tool") == tool)
+        if used >= count:
+            return (f"the grant's bound for tool {tool} is "
+                    f"exhausted: {used} of {count} dispatches "
+                    f"stand charged, and no outcome refunds a "
+                    f"dispatch (R47)")
+        return None
+
+    def _executor_refuse(self, attempted_type, dispatch_id,
+                         ground):
+        entry = (self.state()["dispatches"].get(dispatch_id)
+                 or {})
+        seat = None
+        if entry.get("instance_id"):
+            _, assembly = self._assembly_entry_of_instance(
+                self.state(), entry["instance_id"])
+            seat = (assembly or {}).get("seat")
+        self._refuse(seat, attempted_type, ground)
+
+    def record_tool_started(self, dispatch_id):
+        """The executor's start report (Piece A2): execution
+        established as begun for a standing dispatch — begun
+        only, never success or completion. Recorded under the
+        executor identity; this route is the only one that can
+        record it, and it records nothing else."""
+        state = self.state()
+        entry = state["dispatches"].get(dispatch_id)
+        if entry is None:
+            self._executor_refuse(
+                "TOOL_STARTED", dispatch_id,
+                f"no dispatch {dispatch_id} stands in the "
+                f"record; a start answers a standing dispatch "
+                f"(R45)")
+        if entry.get("started_seq") is not None:
+            self._executor_refuse(
+                "TOOL_STARTED", dispatch_id,
+                f"dispatch {dispatch_id} already stands "
+                f"started; there is no second start (R45)")
+        if entry.get("outcome") is not None or \
+                entry.get("reconciled_seq") is not None:
+            self._executor_refuse(
+                "TOOL_STARTED", dispatch_id,
+                f"dispatch {dispatch_id} already stands "
+                f"settled; a start does not follow an outcome "
+                f"(R45)")
+        ev = self.store.append(
+            "TOOL_STARTED", EXECUTOR_ACTOR, [dispatch_id],
+            {"dispatch_id": dispatch_id,
+             "instance_id": entry.get("instance_id"),
+             "request_id": entry.get("request_id")})
+        self.store.commit()
+        return ev
+
+    def record_tool_outcome(self, dispatch_id, outcome,
+                            result=None, detail=None):
+        """The executor's outcome report (Piece A2, R45/R46):
+        result, failure, or uncertain, recorded against a
+        standing dispatch under the executor identity. A
+        settled dispatch takes no further outcome — with the
+        one exception the design names: an uncertain dispatch
+        is not settled, and a delayed report of result or
+        failure attributable to the original dispatch still
+        records as its outcome. A timeout is recorded
+        uncertain, never as non-occurrence."""
+        if outcome not in ("result", "failure", "uncertain"):
+            self._executor_refuse(
+                "TOOL_OUTCOME", dispatch_id,
+                f"outcome {outcome!r} is not in the R46 "
+                f"vocabulary (result, failure, uncertain)")
+        state = self.state()
+        entry = state["dispatches"].get(dispatch_id)
+        if entry is None:
+            self._executor_refuse(
+                "TOOL_OUTCOME", dispatch_id,
+                f"no dispatch {dispatch_id} stands in the "
+                f"record; an outcome is never recorded before "
+                f"its dispatch (R45)")
+        standing = entry.get("outcome")
+        if entry.get("reconciled_seq") is not None:
+            self._executor_refuse(
+                "TOOL_OUTCOME", dispatch_id,
+                f"dispatch {dispatch_id} stands reconciled; "
+                f"the examiner's determination settled it "
+                f"(R46)")
+        if standing in ("result", "failure"):
+            self._executor_refuse(
+                "TOOL_OUTCOME", dispatch_id,
+                f"dispatch {dispatch_id} already stands with "
+                f"outcome {standing}; an outcome is terminal "
+                f"(R46)")
+        if standing == "uncertain" and outcome == "uncertain":
+            self._executor_refuse(
+                "TOOL_OUTCOME", dispatch_id,
+                f"dispatch {dispatch_id} already stands "
+                f"uncertain; uncertainty is recorded once "
+                f"(R46)")
+        payload = {"dispatch_id": dispatch_id,
+                   "instance_id": entry.get("instance_id"),
+                   "request_id": entry.get("request_id"),
+                   "outcome": outcome}
+        if result is not None:
+            payload["result"] = result
+        if detail is not None:
+            payload["detail"] = detail
+        ev = self.store.append("TOOL_OUTCOME", EXECUTOR_ACTOR,
+                               [dispatch_id], payload)
+        self.store.commit()
+        return ev
+
+    def _tool_reconciled_problem(self, state, payload):
+        """Why a TOOL_RECONCILED may not be recorded, or None
+        (Piece A2, R46): the act names a standing dispatch
+        whose outcome stands uncertain — not settled, not
+        already reconciled — establishes its outcome (result
+        or failure), and carries the evidence the
+        determination rests on. The examiner's authority for
+        the act itself is the §4 row checked in act()."""
+        dispatch_id = payload.get("dispatch_id")
+        entry = state["dispatches"].get(dispatch_id or "")
+        if entry is None:
+            return (f"no dispatch {dispatch_id} stands in "
+                    f"the record; a reconciliation answers a "
+                    f"standing dispatch (R46)")
+        if entry.get("reconciled_seq") is not None:
+            return (f"dispatch {dispatch_id} already stands "
+                    f"reconciled; a settled dispatch reconciles "
+                    f"no second time (R46)")
+        if entry.get("outcome") != "uncertain":
+            return (f"dispatch {dispatch_id} stands "
+                    f"{entry.get('outcome') or 'without an outcome'}"
+                    f"; only an uncertain dispatch is "
+                    f"reconciled (R46)")
+        if payload.get("outcome") not in ("result", "failure"):
+            return ("a reconciliation establishes the "
+                    "dispatch's outcome: result or failure "
+                    "(R46)")
+        evidence = payload.get("evidence_ref")
+        if not isinstance(evidence, str) or not evidence:
+            return ("a reconciliation names the evidence its "
+                    "determination rests on (evidence_ref) "
+                    "(R46)")
+        return None
 
     # ------------------------------------------------------------ acts
     def act(self, token, type_, payload, view_seq=None):
@@ -654,6 +998,15 @@ class Doorway:
                      "INSTANCE_ACTIVATED"):
             problem = self._assembly_lifecycle_problem(
                 state, type_, payload)
+            if problem is not None:
+                self._refuse(seat_id, type_, problem, view_seq)
+
+        # Agent layer (Piece A2, R46): a reconciliation names
+        # a standing dispatch whose outcome stands uncertain,
+        # establishes its outcome, and carries its evidence.
+        # Anything else is refused and the refusal recorded.
+        if type_ == "TOOL_RECONCILED":
+            problem = self._tool_reconciled_problem(state, payload)
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
 

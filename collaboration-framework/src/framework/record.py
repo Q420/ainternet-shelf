@@ -59,6 +59,14 @@ EVENT_TYPES = {
     "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
     "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
     "INSTANCE_ACTIVATED",
+    # Agent layer (Piece A2, SPEC Rev 6 R44–R48): the dispatch
+    # sequence. A request is the instance's act; the dispatch
+    # intent is the doorway's, recorded as mechanism on a passed
+    # grant check; the start and the outcome are the executor's
+    # reports under its own constrained identity; reconciliation
+    # is the examiner's determination on an uncertain dispatch.
+    "TOOL_REQUESTED", "TOOL_DISPATCHED", "TOOL_STARTED",
+    "TOOL_OUTCOME", "TOOL_RECONCILED",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -310,6 +318,27 @@ def empty_state(run_id=None) -> dict:
                               # onboarding, kept beside the
                               # per-seat state; neither rewrites
                               # the other)
+        "tool_requests": [],  # the instance tool requests, in
+                              # record order (Piece A2, R47): each
+                              # entry binds (instance_id,
+                              # request_id) to the canonical
+                              # fingerprint of its tool +
+                              # parameters at first presentation,
+                              # and names its dispatch once one
+                              # stands. A retry folds to the
+                              # standing entry; an identity never
+                              # changes its meaning in the fold.
+        "dispatches": {},     # dispatch_id -> the dispatch's
+                              # standing (Piece A2, R45/R46): its
+                              # request binding, the intent's
+                              # position, the start's position
+                              # where one stands, the standing
+                              # outcome and its position, the
+                              # position uncertainty was recorded
+                              # where it was, and the
+                              # reconciliation's position and
+                              # established outcome where the
+                              # examiner has reconciled it
         "assemblies": {},     # assembly_id -> the assembly's
                               # lifecycle standing (Piece A1, R40):
                               # the binding ids, each act's
@@ -856,6 +885,95 @@ def apply_event(state: dict, ev: dict) -> dict:
                     entry["activated_seq"] is None:
                 entry["activated_seq"] = ev["event_seq"]
                 entry["credential"] = "active"
+    elif t == "TOOL_REQUESTED":
+        # Piece A2 (R47): the first presentation binds the
+        # identity — (instance_id, request_id) — to the
+        # fingerprint of its tool and parameters. A later
+        # request event carrying the same identity folds to
+        # the standing entry: the binding the record derives
+        # never changes its meaning. (Whether a re-presentation
+        # with different contents was refused is the doorway's
+        # enforcement; that it must not stand as a second
+        # meaning is the fold's, and the checker verifies the
+        # events themselves.)
+        key = (p.get("instance_id"), p.get("request_id"))
+        if not any((r["instance_id"], r["request_id"]) == key
+                   for r in state["tool_requests"]):
+            state["tool_requests"].append({
+                "instance_id": p.get("instance_id"),
+                "request_id": p.get("request_id"),
+                "fingerprint": p.get("fingerprint"),
+                "tool": p.get("tool"),
+                "requested_seq": ev["event_seq"],
+                "dispatch_id": None,
+            })
+    elif t == "TOOL_DISPATCHED":
+        # Piece A2 (R45): the doorway's recorded intent. The
+        # entry opens in the `intent` state — the event means
+        # the framework authorised and committed a dispatch,
+        # never that execution began. The request it answers
+        # names the dispatch (first dispatch wins the binding;
+        # a second stands in the history for the checker to
+        # report, and never displaces the first).
+        entry = {
+            "instance_id": p.get("instance_id"),
+            "request_id": p.get("request_id"),
+            "tool": p.get("tool"),
+            "dispatch_seq": ev["event_seq"],
+            "started_seq": None, "outcome": None,
+            "outcome_seq": None, "uncertain_seq": None,
+            "reconciled_seq": None, "reconciled_outcome": None,
+        }
+        state["dispatches"][p.get("dispatch_id")] = entry
+        for req in state["tool_requests"]:
+            if (req["instance_id"], req["request_id"]) == \
+                    (p.get("instance_id"), p.get("request_id")) \
+                    and req["dispatch_id"] is None:
+                req["dispatch_id"] = p.get("dispatch_id")
+    elif t == "TOOL_STARTED":
+        # Piece A2: the executor's narrow report — execution
+        # established as begun for this dispatch. First start
+        # wins; a second stands in the history and replaces
+        # nothing.
+        entry = state["dispatches"].get(p.get("dispatch_id")
+                                         or "")
+        if entry is not None and entry["started_seq"] is None:
+            entry["started_seq"] = ev["event_seq"]
+    elif t == "TOOL_OUTCOME":
+        # Piece A2 (R46): the executor's outcome report. The
+        # first outcome stands — with one deliberate exception:
+        # an `uncertain` outcome is not a settlement, so a
+        # later attributable report of result or failure (the
+        # delayed report, distinct from reconciliation) settles
+        # the dispatch, the uncertainty's position preserved
+        # beside it. A settled dispatch — result, failure, or
+        # reconciled — takes no further outcome in the fold.
+        entry = state["dispatches"].get(p.get("dispatch_id")
+                                         or "")
+        if entry is not None:
+            outcome = p.get("outcome")
+            if entry["outcome"] is None:
+                entry["outcome"] = outcome
+                entry["outcome_seq"] = ev["event_seq"]
+                if outcome == "uncertain":
+                    entry["uncertain_seq"] = ev["event_seq"]
+            elif entry["outcome"] == "uncertain" and \
+                    entry["reconciled_seq"] is None and \
+                    outcome in ("result", "failure"):
+                entry["outcome"] = outcome
+                entry["outcome_seq"] = ev["event_seq"]
+    elif t == "TOOL_RECONCILED":
+        # Piece A2 (R46): the examiner's determination settles
+        # an uncertain dispatch — only an uncertain one, and
+        # only once; a settled dispatch reconciles no further
+        # in the fold whatever stands in the history.
+        entry = state["dispatches"].get(p.get("dispatch_id")
+                                         or "")
+        if entry is not None and \
+                entry["outcome"] == "uncertain" and \
+                entry["reconciled_seq"] is None:
+            entry["reconciled_seq"] = ev["event_seq"]
+            entry["reconciled_outcome"] = p.get("outcome")
     elif t == "RUN_READY_FOR_COMPLETION":
         # §3.8 (S5): the orchestrator's readiness declaration —
         # the act the completion gate answers. The crew's claims

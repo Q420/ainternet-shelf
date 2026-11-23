@@ -43,6 +43,9 @@ _KNOWN_TYPES = {
     "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
     "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
     "INSTANCE_ACTIVATED",
+    # Agent layer (Piece A2): the dispatch sequence.
+    "TOOL_REQUESTED", "TOOL_DISPATCHED", "TOOL_STARTED",
+    "TOOL_OUTCOME", "TOOL_RECONCILED",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
@@ -300,6 +303,48 @@ def _shape_problem(ev):
             if bad_opt_str("credential_fingerprint"):
                 return "ASSEMBLY_PACKED " \
                     "credential_fingerprint is not a string"
+    elif t == "TOOL_REQUESTED":
+        # Piece A2: a request names its instance, its stable
+        # request identity, its tool and the fingerprint its
+        # identity binds to; the parameters are the request's
+        # own data, read by the correspondence check, not by
+        # the fold — the fold requires only that they are an
+        # object when present.
+        for key in ("instance_id", "request_id", "tool"):
+            if need_str(key):
+                return f"TOOL_REQUESTED requires a {key} string"
+        if bad_opt_str("fingerprint"):
+            return "TOOL_REQUESTED fingerprint is not a string"
+        if "parameters" in p and not isinstance(p["parameters"],
+                                                dict):
+            return "TOOL_REQUESTED parameters is not an object"
+    elif t == "TOOL_DISPATCHED":
+        for key in ("dispatch_id", "instance_id", "request_id",
+                    "tool"):
+            if need_str(key):
+                return f"TOOL_DISPATCHED requires a {key} string"
+    elif t == "TOOL_STARTED":
+        if need_str("dispatch_id"):
+            return "TOOL_STARTED requires a dispatch_id string"
+        for key in ("instance_id", "request_id"):
+            if bad_opt_str(key):
+                return f"TOOL_STARTED {key} is not a string"
+    elif t == "TOOL_OUTCOME":
+        if need_str("dispatch_id"):
+            return "TOOL_OUTCOME requires a dispatch_id string"
+        if need_str("outcome"):
+            return "TOOL_OUTCOME requires an outcome string"
+        for key in ("instance_id", "request_id", "detail"):
+            if bad_opt_str(key):
+                return f"TOOL_OUTCOME {key} is not a string"
+    elif t == "TOOL_RECONCILED":
+        if need_str("dispatch_id"):
+            return "TOOL_RECONCILED requires a dispatch_id string"
+        if need_str("outcome"):
+            return "TOOL_RECONCILED requires an outcome string"
+        for key in ("instance_id", "request_id", "evidence_ref"):
+            if bad_opt_str(key):
+                return f"TOOL_RECONCILED {key} is not a string"
     return None
 
 
@@ -312,6 +357,8 @@ def blank_state(run_id=None):
         "onboarding": {},
         "instance_onboarding": {},
         "assemblies": {},
+        "tool_requests": [],
+        "dispatches": {},
         "claims": {},
         "disagreements": {},
         "contributions": {},
@@ -718,6 +765,67 @@ def _apply(state, ev):
                     entry["activated_seq"] is None:
                 entry["activated_seq"] = seq
                 entry["credential"] = "active"
+    elif t == "TOOL_REQUESTED":
+        # Piece A2: first presentation binds the identity;
+        # a re-presentation folds to the standing entry.
+        key = (p.get("instance_id"), p.get("request_id"))
+        if not any((r["instance_id"], r["request_id"]) == key
+                   for r in state["tool_requests"]):
+            state["tool_requests"].append({
+                "instance_id": p.get("instance_id"),
+                "request_id": p.get("request_id"),
+                "fingerprint": p.get("fingerprint"),
+                "tool": p.get("tool"),
+                "requested_seq": seq,
+                "dispatch_id": None,
+            })
+    elif t == "TOOL_DISPATCHED":
+        entry = {
+            "instance_id": p.get("instance_id"),
+            "request_id": p.get("request_id"),
+            "tool": p.get("tool"),
+            "dispatch_seq": seq,
+            "started_seq": None, "outcome": None,
+            "outcome_seq": None, "uncertain_seq": None,
+            "reconciled_seq": None, "reconciled_outcome": None,
+        }
+        state["dispatches"][p.get("dispatch_id")] = entry
+        for req in state["tool_requests"]:
+            if (req["instance_id"], req["request_id"]) == \
+                    (p.get("instance_id"), p.get("request_id")) \
+                    and req["dispatch_id"] is None:
+                req["dispatch_id"] = p.get("dispatch_id")
+    elif t == "TOOL_STARTED":
+        entry = state["dispatches"].get(p.get("dispatch_id")
+                                         or "")
+        if entry is not None and entry["started_seq"] is None:
+            entry["started_seq"] = seq
+    elif t == "TOOL_OUTCOME":
+        # First outcome stands; a standing `uncertain` is
+        # settled by a later attributable result/failure (the
+        # delayed report), the uncertainty's position kept.
+        entry = state["dispatches"].get(p.get("dispatch_id")
+                                         or "")
+        if entry is not None:
+            outcome = p.get("outcome")
+            if entry["outcome"] is None:
+                entry["outcome"] = outcome
+                entry["outcome_seq"] = seq
+                if outcome == "uncertain":
+                    entry["uncertain_seq"] = seq
+            elif entry["outcome"] == "uncertain" and \
+                    entry["reconciled_seq"] is None and \
+                    outcome in ("result", "failure"):
+                entry["outcome"] = outcome
+                entry["outcome_seq"] = seq
+    elif t == "TOOL_RECONCILED":
+        entry = state["dispatches"].get(p.get("dispatch_id")
+                                         or "")
+        if entry is not None and \
+                entry["outcome"] == "uncertain" and \
+                entry["reconciled_seq"] is None:
+            entry["reconciled_seq"] = seq
+            entry["reconciled_outcome"] = p.get("outcome")
     elif t == "RUN_READY_FOR_COMPLETION":
         state["run_ready_seq"] = seq
     elif t == "COMMENT":
