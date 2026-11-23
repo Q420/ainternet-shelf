@@ -47,3 +47,7 @@ The positive-list approach was accepted in principle; one boundary remained: the
 The list now names the correction-capable kinds directly, exactly as she settled: **CONTRIBUTION and COMMENT** (the work itself and its recorded answer, their substance judged by the examiner) plus the three case-route acts (**CASE_CORRECTED, CASE_VERIFIED, CASE_ISSUED**). No other work-act type is admitted, there being no demonstrated correction use for one. (T24: a CASE_ACKNOWLEDGED and a DISAGREEMENT — each recorded post-ruling at a valid position — are refused as a basis; the correction act is accepted.)
 
 **Suite: 72 checks, ALL PASS** (T24 new). Regressions: Pieces 2–5 and 6-onboarding suites ALL PASS; substrate byte-identical; prototype smoke and observer safety ALL PASS. Resubmitted for re-examination.
+
+## ⭐ Final examination — PIECE 6 GATES PASSES (2026-11-22)
+
+Vane's final examination (PB pb-mwso5p2e-21-9n5q; filed `VANE-PIECE6-GATES-FINAL-EXAMINATION-2026-11-22.md`) examined round 3 @ a9d1ea00: the boundary now says exactly what it needs to say — CONTRIBUTION and COMMENT, the three case-route acts, everything else outside, no inheritance; the doorway checks the event at each cited position; mechanical eligibility is not sufficiency, and the examiner still owns that judgement. T24 approved; T21/T23 stand. **§3.7 is closed.** The pass covers the gates piece only — §3.8 is neither authorised nor begun by the letter; the sequence continues under Ben's loop.
