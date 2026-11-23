@@ -88,6 +88,22 @@ SCHEMA = {
             "activated_seq": {"t": "opt", "v": {"t": "int"}},
             "credential": {"t": "str"},
             "grants_present": {"t": "bool"}}}},
+        "loop_activations": {"t": "map", "v": {"t": "obj", "f": {
+            "instance_id": {"t": "opt", "v": {"t": "str"}},
+            "activated_seq": {"t": "opt", "v": {"t": "int"}},
+            "case_id": {"t": "opt", "v": {"t": "str"}},
+            "case_version": {"t": "opt", "v": {"t": "int"}},
+            "iterations": {"t": "list", "v": {"t": "obj", "f": {
+                "iteration": {"t": "opt", "v": {"t": "int"}},
+                "event_seq": {"t": "int"},
+                "step_ceiling": {"t": "opt", "v": {"t": "int"}},
+                "deadline_seconds": {"t": "any"},
+                "cursor_from": {"t": "opt", "v": {"t": "int"}},
+                "cursor_to": {"t": "opt", "v": {"t": "int"}}}}},
+            "stalled": {"t": "opt", "v": {"t": "obj", "f": {
+                "ground": {"t": "opt", "v": {"t": "str"}},
+                "event_seq": {"t": "int"},
+                "iterations": {"t": "opt", "v": {"t": "int"}}}}}}}},
         "tool_requests": {"t": "list", "v": {"t": "obj", "f": {
             "instance_id": {"t": "opt", "v": {"t": "str"}},
             "request_id": {"t": "opt", "v": {"t": "str"}},
@@ -144,7 +160,12 @@ SCHEMA = {
                     "authority": {
                         "t": "list", "v": {"t": "str"}},
                     "criteria_mapping": {
-                        "t": "map", "v": {"t": "str"}}},
+                        "t": "map", "v": {"t": "str"}},
+                    "loop_bounds": {"t": "opt", "v": {
+                        "t": "fields", "f": {
+                            "step_ceiling": {"t": "int"},
+                            "deadline_seconds": {"t": "any"}},
+                        "req": []}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

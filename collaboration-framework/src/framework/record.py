@@ -68,6 +68,12 @@ EVENT_TYPES = {
     # is the examiner's determination on an uncertain dispatch.
     "TOOL_REQUESTED", "TOOL_DISPATCHED", "TOOL_STARTED",
     "TOOL_OUTCOME", "TOOL_RECONCILED",
+    # Agent layer (Piece A3, SPEC Rev 6 R49–R51): the bounded
+    # loop's bookkeeping. An iteration is recorded by the loop
+    # machinery under its own constrained identity before the
+    # model call it accounts; a stall is the recorded stop a
+    # bound produces — never a silent one (R50).
+    "LOOP_ITERATION", "LOOP_STALLED",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -378,6 +384,15 @@ def empty_state(run_id=None) -> dict:
                               # stands. A retry folds to the
                               # standing entry; an identity never
                               # changes its meaning in the fold.
+        "loop_activations": {},  # assembly_id -> the
+                              # activation's loop standing (Piece
+                              # A3, R49/R50): the binding ids, the
+                              # recorded iterations in order (each
+                              # with its governing bounds and the
+                              # cursor range its package
+                              # presented), and the stall where one
+                              # stands — the first stall stands; a
+                              # second is history for the checker
         "dispatches": {},     # dispatch_id -> the dispatch's
                               # standing (Piece A2, R45/R46): its
                               # request binding, the intent's
@@ -1024,6 +1039,47 @@ def apply_event(state: dict, ev: dict) -> dict:
                 entry["reconciled_seq"] is None:
             entry["reconciled_seq"] = ev["event_seq"]
             entry["reconciled_outcome"] = p.get("outcome")
+    elif t == "LOOP_ITERATION":
+        # Piece A3 (R49): the loop machinery's bookkeeping —
+        # one event per model call, recorded before the call,
+        # carrying the activation's binding, the governing
+        # bounds as pinned, and the cursor range the iteration's
+        # package presented. The fold collects them per
+        # activation, in record order; ordering, uniqueness and
+        # the ceiling are the checker's correspondence, and the
+        # doorway's route enforces them at record time.
+        entry = state["loop_activations"].setdefault(
+            p.get("assembly_id"), {
+                "instance_id": p.get("instance_id"),
+                "activated_seq": p.get("activated_seq"),
+                "case_id": p.get("case_id"),
+                "case_version": p.get("case_version"),
+                "iterations": [], "stalled": None})
+        entry["iterations"].append({
+            "iteration": p.get("iteration"),
+            "event_seq": ev["event_seq"],
+            "step_ceiling": p.get("step_ceiling"),
+            "deadline_seconds": p.get("deadline_seconds"),
+            "cursor_from": p.get("cursor_from"),
+            "cursor_to": p.get("cursor_to"),
+        })
+    elif t == "LOOP_STALLED":
+        # Piece A3 (R50): the recorded stop. The first stall
+        # stands in the fold; a second stands in the history
+        # for the checker to report, and replaces nothing.
+        entry = state["loop_activations"].setdefault(
+            p.get("assembly_id"), {
+                "instance_id": p.get("instance_id"),
+                "activated_seq": p.get("activated_seq"),
+                "case_id": p.get("case_id"),
+                "case_version": p.get("case_version"),
+                "iterations": [], "stalled": None})
+        if entry["stalled"] is None:
+            entry["stalled"] = {
+                "ground": p.get("ground"),
+                "event_seq": ev["event_seq"],
+                "iterations": p.get("iterations"),
+            }
     elif t == "RUN_READY_FOR_COMPLETION":
         # §3.8 (S5): the orchestrator's readiness declaration —
         # the act the completion gate answers. The crew's claims

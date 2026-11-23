@@ -46,6 +46,8 @@ _KNOWN_TYPES = {
     # Agent layer (Piece A2): the dispatch sequence.
     "TOOL_REQUESTED", "TOOL_DISPATCHED", "TOOL_STARTED",
     "TOOL_OUTCOME", "TOOL_RECONCILED",
+    # Agent layer (Piece A3): the bounded loop's bookkeeping.
+    "LOOP_ITERATION", "LOOP_STALLED",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
@@ -345,6 +347,45 @@ def _shape_problem(ev):
         for key in ("instance_id", "request_id", "evidence_ref"):
             if bad_opt_str(key):
                 return f"TOOL_RECONCILED {key} is not a string"
+    elif t == "LOOP_ITERATION":
+        # Piece A3: an iteration names its activation (assembly
+        # and instance), its number, and the cursor range its
+        # package presented; the binding and bounds fields its
+        # fold step reads carry their contract shapes.
+        for key in ("assembly_id", "instance_id"):
+            if need_str(key):
+                return f"LOOP_ITERATION requires a {key} string"
+        if not _is_int(p.get("iteration")):
+            return "LOOP_ITERATION iteration is not an integer"
+        for key in ("cursor_from", "cursor_to"):
+            if not _is_int(p.get(key)):
+                return f"LOOP_ITERATION {key} is not an integer"
+        for key in ("activated_seq", "case_version",
+                    "step_ceiling"):
+            if bad_opt(key, _is_int):
+                return f"LOOP_ITERATION {key} is not an integer"
+        if bad_opt_str("case_id"):
+            return "LOOP_ITERATION case_id is not a string"
+        if "deadline_seconds" in p and \
+                p["deadline_seconds"] is not None and (
+                    isinstance(p["deadline_seconds"], bool) or
+                    not isinstance(p["deadline_seconds"],
+                                   (int, float))):
+            return "LOOP_ITERATION deadline_seconds is not a " \
+                "number"
+    elif t == "LOOP_STALLED":
+        for key in ("assembly_id", "instance_id", "ground"):
+            if need_str(key):
+                return f"LOOP_STALLED requires a {key} string"
+        if not _is_int(p.get("iterations")):
+            return "LOOP_STALLED iterations is not an integer"
+        for key in ("activated_seq", "case_version"):
+            if bad_opt(key, _is_int):
+                return f"LOOP_STALLED {key} is not an integer"
+        if bad_opt_str("case_id"):
+            return "LOOP_STALLED case_id is not a string"
+        if bad_opt_str("detail"):
+            return "LOOP_STALLED detail is not a string"
     return None
 
 
@@ -357,6 +398,7 @@ def blank_state(run_id=None):
         "onboarding": {},
         "instance_onboarding": {},
         "assemblies": {},
+        "loop_activations": {},
         "tool_requests": [],
         "dispatches": {},
         "claims": {},
@@ -826,6 +868,41 @@ def _apply(state, ev):
                 entry["reconciled_seq"] is None:
             entry["reconciled_seq"] = seq
             entry["reconciled_outcome"] = p.get("outcome")
+    elif t == "LOOP_ITERATION":
+        # Piece A3: the loop's bookkeeping, collected per
+        # activation in record order — the same derivation the
+        # record's fold performs.
+        entry = state["loop_activations"].setdefault(
+            p.get("assembly_id"), {
+                "instance_id": p.get("instance_id"),
+                "activated_seq": p.get("activated_seq"),
+                "case_id": p.get("case_id"),
+                "case_version": p.get("case_version"),
+                "iterations": [], "stalled": None})
+        entry["iterations"].append({
+            "iteration": p.get("iteration"),
+            "event_seq": seq,
+            "step_ceiling": p.get("step_ceiling"),
+            "deadline_seconds": p.get("deadline_seconds"),
+            "cursor_from": p.get("cursor_from"),
+            "cursor_to": p.get("cursor_to"),
+        })
+    elif t == "LOOP_STALLED":
+        # Piece A3: the first stall stands; a second is
+        # history and replaces nothing.
+        entry = state["loop_activations"].setdefault(
+            p.get("assembly_id"), {
+                "instance_id": p.get("instance_id"),
+                "activated_seq": p.get("activated_seq"),
+                "case_id": p.get("case_id"),
+                "case_version": p.get("case_version"),
+                "iterations": [], "stalled": None})
+        if entry["stalled"] is None:
+            entry["stalled"] = {
+                "ground": p.get("ground"),
+                "event_seq": seq,
+                "iterations": p.get("iterations"),
+            }
     elif t == "RUN_READY_FOR_COMPLETION":
         state["run_ready_seq"] = seq
     elif t == "COMMENT":

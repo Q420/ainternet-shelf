@@ -33,7 +33,13 @@ What it checks, from the record alone:
   lifecycle, and each recorded dispatch against the authority
   that actually stood, reconstructed from the events — the
   dispatch check applying the checker's own copy of the pure
-  tool-policy contract and executing nothing (R48).
+  tool-policy contract and executing nothing (R48);
+- loop correspondence (Piece A3): each activation's iteration
+  bookkeeping and recorded stall against the activation and
+  the pinned case bounds that actually stood — numbering,
+  ceiling, cursor chain, stall grounds and count, dispatch
+  accounting closed before the stall, and no instance activity
+  after it.
 
 It opens the store read-only with its own SQL, writes nothing,
 creates no store, and leaves no artifacts (C7). It imports
@@ -854,6 +860,269 @@ def _dispatch_result(events, state):
     return {"result": "ok"}
 
 
+# ------------------------------------------------------------ loop
+
+_LOOP_ACTOR = "loop"
+
+_LOOP_GROUNDS = ("step_ceiling", "deadline", "provider_failure",
+                 "malformed_response", "runtime_failure")
+
+
+def _loop_result(events, state):
+    """Loop correspondence (Piece A3, R49–R51/R55): the bounded
+    loop's bookkeeping reconstructed from the events themselves
+    — every iteration and stall against the activation that
+    actually stood. The activation is the generated assembly's
+    INSTANCE_ACTIVATED; its governing bounds are the loop
+    bounds of the exact case version the assembly record pins
+    (a later case version's bounds govern nothing here). The
+    check verifies: iteration and stall events carry the loop
+    machinery's own actor and no one else's; each binds the
+    standing activation — its instance, its activation event,
+    its pinned case — exactly; iteration numbers are 1, 2, 3,
+    ... with no gap, duplicate or excess over the pinned
+    ceiling; the bounds an iteration names are the pinned
+    bounds; cursor ranges chain without gaps or overlaps, each
+    package's head preceding the iteration event that records
+    it, and each iteration event itself presented in the
+    following iteration's range; a stall names a settled
+    ground and the exact iteration count, and is recorded only
+    after dispatch accounting closed — every dispatch of the
+    instance standing at the stall held an attributable
+    outcome by then (an uncertain outcome is accounted, not
+    resolved; a delayed report settling it afterwards is
+    executor accounting, not instance activity); and no
+    instance activity — no iteration, request, dispatch or
+    start — follows a stall. Nothing here runs a model or a
+    tool (R48)."""
+    problems = []
+
+    def problem(kind, **fields):
+        entry = {"kind": kind}
+        entry.update(fields)
+        problems.append(entry)
+
+    generated = {}
+    activated = {}
+    for ev in events:
+        t = ev["type"]
+        p = ev["payload"]
+        if t == "ASSEMBLY_GENERATED":
+            generated.setdefault(p.get("assembly_id"), ev)
+        elif t == "INSTANCE_ACTIVATED":
+            activated.setdefault(p.get("assembly_id"),
+                                 ev["event_seq"])
+
+    def pinned_bounds(aid):
+        """The loop bounds of the assembly's pinned case
+        version, from this checker's replayed state — or None
+        where the pinned case's content does not stand or
+        carries no bounds."""
+        gen = generated.get(aid)
+        if gen is None:
+            return None
+        case = (state.get("cases") or {}).get(
+            gen["payload"].get("case_id"))
+        ver = ((case or {}).get("versions") or {}).get(
+            str(gen["payload"].get("case_version"))) or {}
+        content = ver.get("content") or {}
+        bounds = content.get("loop_bounds")
+        return bounds if isinstance(bounds, dict) else None
+
+    def binding_problems(kind, ev, aid):
+        """Whether a loop event's binding fields name the
+        standing activation exactly; returns True when a
+        problem was recorded (the event binds nothing)."""
+        p = ev["payload"]
+        gen = generated.get(aid)
+        if gen is None or aid not in activated:
+            problem(f"{kind}_without_activation",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+            return True
+        gp = gen["payload"]
+        if p.get("instance_id") != gp.get("instance_id") or \
+                p.get("case_id") != gp.get("case_id") or \
+                p.get("case_version") != gp.get("case_version"):
+            problem(f"{kind}_binding_mismatch", assembly_id=aid,
+                    at_seq=ev["event_seq"])
+            return True
+        if p.get("activated_seq") != activated[aid]:
+            problem(f"{kind}_activation_mismatch",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+            return True
+        return False
+
+    iterations = {}
+    stalls = {}
+    for ev in events:
+        t = ev["type"]
+        p = ev["payload"]
+        seq = ev["event_seq"]
+        if t == "LOOP_ITERATION":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("iteration_wrong_actor", assembly_id=aid,
+                        at_seq=seq, actor=ev["actor"])
+            if binding_problems("iteration", ev, aid):
+                continue
+            iterations.setdefault(aid, []).append(ev)
+        elif t == "LOOP_STALLED":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("stall_wrong_actor", assembly_id=aid,
+                        at_seq=seq, actor=ev["actor"])
+            if aid in stalls:
+                problem("second_stall", assembly_id=aid,
+                        at_seq=seq)
+            stalls.setdefault(aid, ev)
+            if p.get("ground") not in _LOOP_GROUNDS:
+                problem("stall_ground_unknown", assembly_id=aid,
+                        at_seq=seq, ground=p.get("ground"))
+            binding_problems("stall", ev, aid)
+
+    for aid, evs in iterations.items():
+        bounds = pinned_bounds(aid)
+        ceiling = bounds.get("step_ceiling") \
+            if bounds is not None else None
+        prev_to = None
+        for n, ev in enumerate(evs, start=1):
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if p.get("iteration") != n:
+                problem("iteration_numbering", assembly_id=aid,
+                        at_seq=seq, iteration=p.get("iteration"),
+                        expected=n)
+            if bounds is None:
+                problem("iteration_without_pinned_bounds",
+                        assembly_id=aid, at_seq=seq)
+            else:
+                if p.get("step_ceiling") != ceiling or \
+                        p.get("deadline_seconds") != bounds.get(
+                            "deadline_seconds"):
+                    problem("iteration_bounds_mismatch",
+                            assembly_id=aid, at_seq=seq)
+                if isinstance(ceiling, int) and \
+                        not isinstance(ceiling, bool) and \
+                        n > ceiling:
+                    problem("iteration_over_ceiling",
+                            assembly_id=aid, at_seq=seq,
+                            ceiling=ceiling)
+            if p.get("cursor_to") is None or \
+                    p.get("cursor_from") is None or \
+                    p["cursor_to"] < p["cursor_from"]:
+                problem("cursor_range_invalid", assembly_id=aid,
+                        at_seq=seq)
+            else:
+                # The frozen package's head precedes the event
+                # that records it — the iteration event accounts
+                # a call made from that snapshot, and itself
+                # stands after the head it names.
+                if p["cursor_to"] >= seq:
+                    problem("cursor_head_not_before_event",
+                            assembly_id=aid, at_seq=seq)
+                if prev_to is not None and \
+                        p["cursor_from"] != prev_to:
+                    problem("cursor_chain_broken",
+                            assembly_id=aid, at_seq=seq,
+                            cursor_from=p["cursor_from"],
+                            previous_to=prev_to)
+                prev_to = p["cursor_to"]
+            # The iteration event is itself presented in the
+            # following iteration's range: the next range opens
+            # at this package's head and closes no earlier than
+            # this event.
+            if n < len(evs):
+                nxt = evs[n]["payload"]
+                if nxt.get("cursor_to") is not None and \
+                        nxt["cursor_to"] < seq:
+                    problem("iteration_event_not_presented",
+                            assembly_id=aid, at_seq=seq)
+        stall = stalls.get(aid)
+        if stall is not None:
+            for ev in evs:
+                if ev["event_seq"] > stall["event_seq"]:
+                    problem("iteration_after_stall",
+                            assembly_id=aid,
+                            at_seq=ev["event_seq"])
+
+    # Dispatch standing by instance, for the stall checks:
+    # each dispatch's first outcome position, and whether an
+    # uncertain outcome stood (a delayed settlement afterwards
+    # is accounting, not activity).
+    dispatch_first_outcome = {}
+    dispatch_uncertain = {}
+    for ev in events:
+        p = ev["payload"]
+        if ev["type"] == "TOOL_DISPATCHED":
+            dispatch_first_outcome.setdefault(
+                p.get("dispatch_id"),
+                {"instance_id": p.get("instance_id"),
+                 "dispatch_seq": ev["event_seq"],
+                 "outcome_seq": None})
+        elif ev["type"] == "TOOL_OUTCOME":
+            d = dispatch_first_outcome.get(p.get("dispatch_id"))
+            if d is not None and d["outcome_seq"] is None:
+                d["outcome_seq"] = ev["event_seq"]
+                if p.get("outcome") == "uncertain":
+                    dispatch_uncertain[p.get("dispatch_id")] = \
+                        ev["event_seq"]
+
+    for aid, ev in stalls.items():
+        seq = ev["event_seq"]
+        p = ev["payload"]
+        gen = generated.get(aid)
+        if gen is None:
+            continue  # binding already reported above
+        iid = gen["payload"].get("instance_id")
+        count = len([e for e in iterations.get(aid, [])
+                     if e["event_seq"] < seq])
+        if p.get("iterations") != count:
+            problem("stall_count_mismatch", assembly_id=aid,
+                    at_seq=seq, iterations=p.get("iterations"),
+                    counted=count)
+        # Accounting closed at the stall: every dispatch of
+        # this instance standing by then held an outcome by
+        # then. A dispatch whose uncertainty stood by then and
+        # settles later is accounted — the late settlement is
+        # not a defect and not activity.
+        for did, d in dispatch_first_outcome.items():
+            if d["instance_id"] != iid:
+                continue
+            if d["dispatch_seq"] < seq and \
+                    (d["outcome_seq"] is None or
+                     d["outcome_seq"] > seq):
+                problem("stall_before_accounting_closed",
+                        assembly_id=aid, at_seq=seq,
+                        dispatch_id=did)
+
+    # No instance activity after its activation's stall:
+    # requests, dispatches and starts name the instance
+    # directly. (Outcomes are handled by the accounting rule
+    # above — a first outcome after the stall was already
+    # reported there; a delayed settlement of a standing
+    # uncertainty is permitted and is not activity.)
+    stall_by_instance = {}
+    for aid, ev in stalls.items():
+        gen = generated.get(aid)
+        if gen is not None:
+            stall_by_instance[gen["payload"].get(
+                "instance_id")] = ev["event_seq"]
+    for ev in events:
+        p = ev["payload"]
+        seq = ev["event_seq"]
+        iid = p.get("instance_id")
+        stall_seq = stall_by_instance.get(iid)
+        if stall_seq is None or seq <= stall_seq:
+            continue
+        if ev["type"] in ("TOOL_REQUESTED", "TOOL_DISPATCHED",
+                          "TOOL_STARTED"):
+            problem("instance_activity_after_stall",
+                    type=ev["type"], instance_id=iid, at_seq=seq)
+    if problems:
+        return {"result": "divergent", "problems": problems}
+    return {"result": "ok"}
+
+
 # ----------------------------------------------------------- verdict
 
 def check(request):
@@ -926,6 +1195,7 @@ def check(request):
         checks["seal_correspondence"] = {"result": "not_run"}
         checks["assembly_correspondence"] = {"result": "not_run"}
         checks["dispatch_correspondence"] = {"result": "not_run"}
+        checks["loop_correspondence"] = {"result": "not_run"}
     else:
         mine = json.loads(canonical(state))
         bad = _conforms(mine, SCHEMA)
@@ -951,6 +1221,7 @@ def check(request):
             events, state)
         checks["dispatch_correspondence"] = _dispatch_result(
             events, state)
+        checks["loop_correspondence"] = _loop_result(events, state)
     return verdict
 
 

@@ -21,7 +21,11 @@ doorway consumes the bindings the record carries.
 """
 import copy
 import hashlib
+import json
+import os
 import secrets
+import threading
+import time
 
 from . import gates as _gates
 from . import orchestrator as _orch
@@ -42,6 +46,22 @@ DOORWAY_ACTOR = "doorway"
 # identity, and a seat act naming one of its event kinds is
 # refused as not a doorway act.
 EXECUTOR_ACTOR = "executor"
+
+# Piece A3: the loop's actor identity — machinery with a
+# narrow reporting capability (iteration bookkeeping and
+# stalls against standing activations), distinct from the
+# executor's, not a seat and not an authority. Its reports are
+# recorded by the doorway's loop route below, never through
+# the seat act route: no token carries this identity, and a
+# seat act naming one of its event kinds is refused as not a
+# doorway act.
+LOOP_ACTOR = "loop"
+
+# Piece A3 (R50): the recorded stall's ground vocabulary —
+# the settled set the loop route and the checker both hold.
+LOOP_STALL_GROUNDS = ("step_ceiling", "deadline",
+                      "provider_failure", "malformed_response",
+                      "runtime_failure")
 
 # §4 authority matrix — which roles may record which act types.
 # (Claim-status transitions are governed separately by R2; case
@@ -139,8 +159,29 @@ class DoorwayRefusal(Exception):
 
 
 class Doorway:
-    def __init__(self, store: FrameworkStore):
+    def __init__(self, store: FrameworkStore, anchor_path=None):
         self.store = store
+        # Piece A3 (R49): the doorway's durable activation
+        # anchors — one monotonic reading per activation, taken
+        # at activation and bound to the activation event and
+        # the pinned case, from which every deadline derivation
+        # is computed. Durable beside the store (a JSON file,
+        # fsynced on establishment, in the executor's claim
+        # discipline) so a fresh doorway over the same store
+        # recovers the same anchors: a restart neither pauses
+        # nor resets a deadline, and never grants a fresh one.
+        # A store without a file path keeps its anchors in
+        # memory only — durability is a property of the file
+        # route, and no claim is made for the other.
+        self._anchor_lock = threading.Lock()
+        self._anchors_mem = {}
+        if anchor_path is not None:
+            self._anchor_path = anchor_path
+        elif getattr(store, "path", None) not in (
+                None, "", ":memory:"):
+            self._anchor_path = store.path + ".anchors.json"
+        else:
+            self._anchor_path = None
         self._tokens = {}  # sha256(token) -> seat_id
         self._token_basis = {}  # sha256(token) -> "onboarding" |
         # "commission" (Piece 6, scope F2 as settled)
@@ -452,7 +493,176 @@ class Doorway:
                 return assembly_id, entry
         return None, None
 
-    def request_tool(self, token, tool, parameters, request_id):
+    # ------------------------------------------------------
+    # Piece A3: anchors, pinned bounds, deadline derivation
+
+    def _read_anchors(self):
+        """The doorway's anchor table, read fresh — a removal
+        or replacement of the durable table is visible to the
+        next derivation, never masked by a cache."""
+        if self._anchor_path is None:
+            return dict(self._anchors_mem)
+        try:
+            with open(self._anchor_path, encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _anchor_for(self, activated_seq):
+        if activated_seq is None:
+            return None
+        rec = self._read_anchors().get(str(activated_seq))
+        return rec if isinstance(rec, dict) else None
+
+    def _establish_anchor(self, ev, payload, entry):
+        """Establish the activation anchor: one monotonic
+        reading, taken as the activation is recorded, bound to
+        the activation event's position, the instance, and the
+        assembly's pinned case. Established once and never
+        re-based: a standing anchor for this activation event
+        is left exactly as it stands."""
+        with self._anchor_lock:
+            anchors = self._read_anchors()
+            key = str(ev["event_seq"])
+            if key in anchors:
+                return
+            anchors[key] = {
+                "instance_id": payload.get("instance_id"),
+                "assembly_id": payload.get("assembly_id"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "anchor": time.monotonic(),
+            }
+            if self._anchor_path is None:
+                self._anchors_mem = anchors
+                return
+            with open(self._anchor_path, "w",
+                      encoding="utf-8") as fh:
+                json.dump(anchors, fh)
+                fh.flush()
+                os.fsync(fh.fileno())
+            try:
+                dir_fd = os.open(
+                    os.path.dirname(self._anchor_path) or ".",
+                    os.O_RDONLY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
+            except OSError:
+                pass
+
+    def _pinned_case_content(self, state, entry):
+        """The content of the exact case version the assembly
+        record pins — the version every bound, grant and
+        deadline derivation for this activation reads. A later
+        case version's content governs nothing here (R49)."""
+        case = state["cases"].get(entry.get("case_id")) or {}
+        ver = (case.get("versions") or {}).get(
+            str(entry.get("case_version"))) or {}
+        return ver.get("content")
+
+    def _pinned_loop_bounds(self, state, entry):
+        """The loop bounds the pinned case version carries,
+        normalised — or None where the pinned case carries no
+        well-formed bounds: a step ceiling that is a
+        non-negative integer and a deadline that is a number.
+        Absent or malformed bounds are no bounds: no loop runs
+        and no temporal admission applies (R49, fail closed
+        for the loop itself)."""
+        content = self._pinned_case_content(state, entry)
+        if not isinstance(content, dict):
+            return None
+        bounds = content.get("loop_bounds")
+        if not isinstance(bounds, dict):
+            return None
+        ceiling = bounds.get("step_ceiling")
+        deadline = bounds.get("deadline_seconds")
+        if isinstance(ceiling, bool) or \
+                not isinstance(ceiling, int) or ceiling < 0:
+            return None
+        if isinstance(deadline, bool) or \
+                not isinstance(deadline, (int, float)):
+            return None
+        return {"step_ceiling": ceiling,
+                "deadline_seconds": deadline}
+
+    def _activation_deadline(self, state, entry):
+        """(deadline, problem): the activation's deadline as a
+        monotonic instant, derived by the doorway from its own
+        anchor and the pinned case's deadline — never from a
+        caller-supplied value and never from a record
+        timestamp (R49). deadline is None where the pinned
+        case carries no temporal regime; problem is set where
+        a regime stands but the anchor cannot be established
+        from the durable state — admission then fails closed
+        rather than substituting a clock or a fresh deadline.
+        """
+        bounds = self._pinned_loop_bounds(state, entry)
+        if bounds is None:
+            return None, None
+        rec = self._anchor_for(entry.get("activated_seq"))
+        anchor = rec.get("anchor") if rec else None
+        if rec is None or \
+                rec.get("instance_id") != entry.get(
+                    "instance_id") or \
+                rec.get("case_id") != entry.get("case_id") or \
+                rec.get("case_version") != entry.get(
+                    "case_version") or \
+                isinstance(anchor, bool) or \
+                not isinstance(anchor, (int, float)) or \
+                anchor > time.monotonic():
+            return None, ("the activation anchor cannot be "
+                          "established from the doorway's "
+                          "durable state; temporal admission "
+                          "fails closed (R49)")
+        return anchor + bounds["deadline_seconds"], None
+
+    def pinned_loop_bounds(self, instance_id):
+        """The loop bounds pinned for an instance's activation
+        — the governing bounds the loop enforces — or None
+        where the pinned case carries none."""
+        state = self.state()
+        _, entry = self._assembly_entry_of_instance(
+            state, instance_id)
+        if entry is None:
+            return None
+        return self._pinned_loop_bounds(state, entry)
+
+    def activation_remaining(self, instance_id):
+        """(remaining, problem): the seconds remaining under
+        the instance's activation deadline, derived by the
+        doorway — the value the loop passes to its callable
+        as a call parameter (R49/R51). remaining is None where
+        the pinned case carries no deadline regime; problem is
+        set where the anchor cannot be established."""
+        state = self.state()
+        _, entry = self._assembly_entry_of_instance(
+            state, instance_id)
+        if entry is None or entry.get("activated_seq") is None:
+            return None, ("the instance holds no standing "
+                          "activation")
+        deadline, problem = self._activation_deadline(
+            state, entry)
+        if problem is not None:
+            return None, problem
+        if deadline is None:
+            return None, None
+        return deadline - time.monotonic(), None
+
+    def _activation_stall(self, state, instance_id):
+        """The stall standing against the instance's
+        activation, or None (R50)."""
+        aid, _ = self._assembly_entry_of_instance(
+            state, instance_id)
+        if aid is None:
+            return None
+        loop = state["loop_activations"].get(aid) or {}
+        return loop.get("stalled")
+
+    def request_tool(self, token, tool, parameters, request_id,
+                     budget_hint=None):
         """The dispatch sequence's front half (Piece A2,
         R44–R47): an activated instance, under its own
         credential, requests a tool — the request is recorded,
@@ -494,6 +704,17 @@ class Doorway:
                          "a tool request's parameters are an "
                          "object (R44)")
         state = self.state()
+        # Piece A3 (R50): a stalled activation admits no new
+        # request from its instance — the refusal is recorded
+        # here, before any request stands.
+        stall = self._activation_stall(state, instance_id)
+        if stall is not None:
+            self._refuse(
+                seat_id, "TOOL_REQUESTED",
+                f"the instance's activation stands stalled "
+                f"(ground {stall.get('ground')}); no request is "
+                f"admitted from the instance after a stall "
+                f"(R50)")
         fingerprint = _tool_policy.request_fingerprint(
             tool, parameters)
         standing = None
@@ -541,6 +762,29 @@ class Doorway:
         ground = self._dispatch_check(
             state, assembly_id, entry, instance_id, tool,
             parameters)
+        if ground is not None:
+            ev = self.store.append(
+                "REJECTION", DOORWAY_ACTOR, [seat_id],
+                {"seat": seat_id,
+                 "attempted_type": "TOOL_DISPATCHED",
+                 "ground": ground,
+                 "instance_id": instance_id,
+                 "request_id": request_id, "tool": tool})
+            self.store.commit()
+            raise DoorwayRefusal(ground)
+        # Temporal admission (Piece A3, R49): after the grant
+        # check, before dispatch intent is recorded — ordered
+        # so a refused admission creates no dispatch and leaves
+        # no claim to settle. The doorway derives the deadline
+        # itself from the activation anchor and the pinned
+        # case; a caller-supplied budget value is an
+        # early-refusal hint only — an earlier value refuses
+        # sooner, a later one never extends the derived
+        # deadline, and no caller value can move it. Fail
+        # closed on expiry and on an unestablishable anchor,
+        # refused and recorded as the grant refusal above.
+        ground = self._temporal_admission_problem(
+            state, entry, budget_hint)
         if ground is not None:
             ev = self.store.append(
                 "REJECTION", DOORWAY_ACTOR, [seat_id],
@@ -638,6 +882,36 @@ class Doorway:
                 self.state(), entry["instance_id"])
             seat = (assembly or {}).get("seat")
         self._refuse(seat, attempted_type, ground)
+
+    def _temporal_admission_problem(self, state, entry,
+                                    budget_hint):
+        """Why temporal admission refuses a dispatch, or None
+        (Piece A3, R49). No temporal regime stands where the
+        pinned case carries no loop bounds — admission is then
+        exactly the grant check's, as it was before this piece.
+        """
+        deadline, problem = self._activation_deadline(
+            state, entry)
+        if problem is not None:
+            return problem
+        if deadline is None:
+            return None
+        if time.monotonic() >= deadline:
+            return ("the activation deadline has passed; "
+                    "temporal admission fails closed (R49)")
+        if budget_hint is not None:
+            if isinstance(budget_hint, bool) or \
+                    not isinstance(budget_hint, (int, float)):
+                return ("the caller-supplied remaining budget "
+                        "is not a number; temporal admission "
+                        "fails closed (R49)")
+            if budget_hint <= 0:
+                return ("the caller-supplied remaining budget "
+                        "is exhausted; refused on the "
+                        "early-refusal hint — a later hint "
+                        "would not have extended the deadline "
+                        "(R49)")
+        return None
 
     def record_tool_started(self, dispatch_id):
         """The executor's start report (Piece A2): execution
@@ -746,6 +1020,175 @@ class Doorway:
                 payload["detail"] = detail
             ev = self.store.append("TOOL_OUTCOME", EXECUTOR_ACTOR,
                                    [dispatch_id], payload)
+            self.store.commit()
+            return ev
+
+    # ------------------------------------------------ loop routes
+    # Piece A3 (R49/R50): the loop machinery's reports, in the
+    # executor routes' shape — no seat token carries the loop
+    # identity; the doorway records under it, deriving every
+    # binding from the record itself. A refusal here is
+    # recorded as every refusal at this doorway is.
+
+    def _loop_refuse(self, attempted_type, instance_id, ground):
+        seat = None
+        if instance_id:
+            _, entry = self._assembly_entry_of_instance(
+                self.state(), instance_id)
+            seat = (entry or {}).get("seat")
+        self._refuse(seat, attempted_type, ground)
+
+    def record_loop_iteration(self, assembly_id, iteration,
+                              cursor_from, cursor_to):
+        """The loop's iteration report (Piece A3, R49): one
+        event per model call, recorded before the call it
+        accounts, under the loop identity. The route derives
+        the activation's binding and governing bounds from the
+        record — the loop supplies only its number and the
+        cursor range of the package it froze — and enforces
+        the sequence the checker independently verifies:
+        iterations number from 1 without gaps against a
+        standing, unstalled activation; the count never
+        exceeds the pinned ceiling; cursor ranges chain, each
+        opening where the previous closed, closing no earlier
+        than it opens and no later than the record's head."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["assemblies"].get(assembly_id)
+            if entry is None or \
+                    entry.get("activated_seq") is None:
+                self._loop_refuse(
+                    "LOOP_ITERATION",
+                    (entry or {}).get("instance_id"),
+                    f"no standing activation for assembly "
+                    f"{assembly_id}; an iteration records only "
+                    f"against an activated instance (R49)")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if loop.get("stalled") is not None:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    "the activation stands stalled; no further "
+                    "iteration records (R50)")
+            bounds = self._pinned_loop_bounds(state, entry)
+            if bounds is None:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    "the pinned case carries no loop bounds; "
+                    "no loop runs and no iteration records "
+                    "(R49)")
+            count = len(loop.get("iterations") or [])
+            if iteration != count + 1:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    f"iteration {iteration!r} does not follow "
+                    f"the {count} iterations standing for this "
+                    f"activation; iterations number in order "
+                    f"(R49)")
+            if iteration > bounds["step_ceiling"]:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    f"iteration {iteration} exceeds the pinned "
+                    f"step ceiling {bounds['step_ceiling']}; "
+                    f"the ceiling is a bound, not a target "
+                    f"(R49)")
+            prev_to = None
+            if count:
+                prev_to = loop["iterations"][-1].get(
+                    "cursor_to")
+            if prev_to is not None and cursor_from != prev_to:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    f"the cursor range opens at {cursor_from} "
+                    f"but the previous iteration closed at "
+                    f"{prev_to}; cursor ranges chain without "
+                    f"gaps or overlaps (R49)")
+            if not isinstance(cursor_from, int) or \
+                    not isinstance(cursor_to, int) or \
+                    cursor_to < cursor_from or \
+                    cursor_to > state["head_seq"]:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    f"cursor range {cursor_from}..{cursor_to} "
+                    f"does not stand within the record (head "
+                    f"{state['head_seq']}); a package presents "
+                    f"only what stands (R49)")
+            ev = self.store.append(
+                "LOOP_ITERATION", LOOP_ACTOR, [instance_id], {
+                    "assembly_id": assembly_id,
+                    "instance_id": instance_id,
+                    "activated_seq": entry.get("activated_seq"),
+                    "case_id": entry.get("case_id"),
+                    "case_version": entry.get("case_version"),
+                    "iteration": iteration,
+                    "step_ceiling": bounds["step_ceiling"],
+                    "deadline_seconds":
+                        bounds["deadline_seconds"],
+                    "cursor_from": cursor_from,
+                    "cursor_to": cursor_to})
+            self.store.commit()
+            return ev
+
+    def record_loop_stalled(self, assembly_id, ground,
+                            detail=None):
+        """The loop's stall report (Piece A3, R50): the
+        recorded stop, under the loop identity, valid only
+        against a standing activation that has not already
+        stalled, with a ground from the settled vocabulary —
+        and only once dispatch accounting has closed for the
+        activation: every dispatch of the instance standing in
+        the record holds an attributable outcome or an
+        examiner's reconciliation. A stall recorded earlier
+        would leave an in-flight dispatch's outcome with
+        nowhere lawful to land."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["assemblies"].get(assembly_id)
+            if entry is None or \
+                    entry.get("activated_seq") is None:
+                self._loop_refuse(
+                    "LOOP_STALLED",
+                    (entry or {}).get("instance_id"),
+                    f"no standing activation for assembly "
+                    f"{assembly_id}; a stall records only "
+                    f"against an activated instance (R50)")
+            instance_id = entry.get("instance_id")
+            if ground not in LOOP_STALL_GROUNDS:
+                self._loop_refuse(
+                    "LOOP_STALLED", instance_id,
+                    f"ground {ground!r} is not in the stall "
+                    f"vocabulary (R50)")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if loop.get("stalled") is not None:
+                self._loop_refuse(
+                    "LOOP_STALLED", instance_id,
+                    "the activation already stands stalled; a "
+                    "stall is recorded once (R50)")
+            for did, d in state["dispatches"].items():
+                if d.get("instance_id") == instance_id and \
+                        d.get("outcome") is None and \
+                        d.get("reconciled_seq") is None:
+                    self._loop_refuse(
+                        "LOOP_STALLED", instance_id,
+                        f"dispatch {did} stands without an "
+                        f"outcome; a stall records only after "
+                        f"dispatch accounting has closed for "
+                        f"the activation (R50)")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "ground": ground,
+                "iterations": len(loop.get("iterations") or [])}
+            if detail is not None:
+                payload["detail"] = detail
+            ev = self.store.append(
+                "LOOP_STALLED", LOOP_ACTOR, [instance_id],
+                payload)
             self.store.commit()
             return ev
 
@@ -979,6 +1422,22 @@ class Doorway:
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
 
+        # Piece A3 (R50): a stalled activation admits nothing
+        # further from its instance. The check sits on the
+        # instance credential's own presentation — the seat
+        # acting for itself is unaffected, and no standing A1/A2
+        # history holds a stall, so the rule is inert there.
+        presented = self._presented_instance(token)
+        if presented is not None:
+            stall = self._activation_stall(state, presented)
+            if stall is not None:
+                self._refuse(
+                    seat_id, type_,
+                    f"the instance's activation stands stalled "
+                    f"(ground {stall.get('ground')}); no act is "
+                    f"admitted from the instance after a stall "
+                    f"(R50)", view_seq)
+
         # R18 (Piece 6): identity status discipline. The doorway
         # owns it, as it owns the case classification: a
         # provider-confirmed claim without its attestation
@@ -1102,6 +1561,17 @@ class Doorway:
             affected.append(part)
         ev = self.store.append(type_, seat_id, affected, payload)
         self.store.commit()
+        if type_ == "INSTANCE_ACTIVATED":
+            # Piece A3 (R49): the activation anchor is
+            # established with the activation — one monotonic
+            # reading, bound to this event and the pinned case,
+            # from which every deadline for this activation is
+            # derived. The record's own timestamp is a
+            # wall-clock display value and is never a deadline
+            # basis.
+            entry = state["assemblies"].get(
+                payload.get("assembly_id")) or {}
+            self._establish_anchor(ev, payload, entry)
         return ev
 
     def _gate_checks(self, state, seat_id, type_, payload,

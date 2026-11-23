@@ -27,6 +27,15 @@ the driver's back.
   is ever partially formed. Outcomes cross the boundary in
   the driver's typed shape; a decline is returned as the
   decline outcome, never flattened into an empty list.
+  Piece A3 (R49/R51) extends the outcome set at this same
+  boundary: a contribution may carry tool requests, a
+  tool_requests outcome carries requests alone, and a yield
+  carries a summary alone — terminal outcomes are mutually
+  exclusive, and any combination is malformed whole. The
+  caller may also supply the activation's remaining budget
+  as a call parameter (never in the prompt): the activation
+  deadline governs, the per-call limit only tightens, and a
+  call that cannot begin within budget does not begin.
 - A5. `identify()` asks the model to state what it is and
   returns the declaration verbatim beside the provider-
   reported model identifier from the response metadata —
@@ -65,6 +74,19 @@ else, naming exactly one outcome:
 
 {"outcome": "contribute", "text": "<your contribution, in your own words>"}
 {"outcome": "decline", "reason": "<why you are not contributing>"}
+
+A contribution may also carry tool requests, and tools may be \
+requested on their own (Piece A3):
+
+{"outcome": "contribute", "text": "<your contribution>", \
+"tool_requests": [{"tool": "<tool>", "parameters": {...}}]}
+{"outcome": "tool_requests", "requests": [{"tool": "<tool>", \
+"parameters": {...}}]}
+
+To yield the work, answer with a summary only — a yield \
+carries nothing else:
+
+{"outcome": "yield", "summary": "<what stands>"}
 
 If your case was revised and you have not yet acknowledged the \
 new version, your first answer must instead be the \
@@ -119,12 +141,19 @@ class OpenAICompatibleAdapter:
         self._contribution_counter = 0
 
     # ----------------------------------------------------- deadline
-    def _begin_deadline(self):
+    def _begin_deadline(self, budget=None):
         """Open the operation's TOTAL deadline (A6): one
         absolute point on a monotonic clock covering transport,
         response AND the adapter's own handling, through the
-        final outcome. Begun by every public operation."""
-        self._deadline = time.monotonic() + self.timeout
+        final outcome. Begun by every public operation. A
+        supplied activation budget (Piece A3, R49/R51) only
+        tightens the span: the activation deadline is the
+        governing limit and the per-call limit never extends
+        past it."""
+        span = self.timeout
+        if budget is not None:
+            span = min(span, budget)
+        self._deadline = time.monotonic() + span
         return self._deadline
 
     def _check_deadline(self):
@@ -347,8 +376,27 @@ class OpenAICompatibleAdapter:
         return content, provider_model_id
 
     # --------------------------------------------------------- wake
-    def __call__(self, package):
-        self._begin_deadline()
+    def __call__(self, package, budget=None):
+        """One bounded call. budget (Piece A3, R49/R51) is the
+        activation's remaining budget in seconds, supplied by
+        the caller as a call parameter — it never enters the
+        prompt the model sees. The activation deadline governs:
+        the call's span is the tighter of the per-call limit
+        and the budget, and a call that cannot begin within
+        budget does not begin at all."""
+        if budget is not None:
+            if isinstance(budget, bool) or \
+                    not isinstance(budget, (int, float)):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="the supplied budget is not a number")
+            if budget <= 0:
+                raise AdapterFailure(
+                    "no_response",
+                    detail="the activation deadline has "
+                           "passed; the call cannot begin "
+                           "within budget")
+        self._begin_deadline(budget)
         prompt = _CONTRACT + "\n\nYour wake package:\n" + \
             json.dumps(package, indent=1, default=str)
         content, _provider_model = self._call([
@@ -375,12 +423,21 @@ class OpenAICompatibleAdapter:
                 "payload": {"case_id": package["case_id"],
                             "version": package["case_version"]}}]}
         elif outcome == "contribute":
-            if set(obj) != {"outcome", "text"} or \
+            if set(obj) not in ({"outcome", "text"},
+                                {"outcome", "text",
+                                 "tool_requests"}) or \
                     not isinstance(obj.get("text"), str) or \
                     not obj["text"].strip():
                 raise AdapterFailure(
                     "malformed_response",
                     detail="contribute requires its own text")
+            requests = None
+            if "tool_requests" in obj:
+                # Piece A3: a contribution may carry tool
+                # requests — one response, two kinds of act,
+                # validated whole like everything else here.
+                requests = self._tool_requests(
+                    obj["tool_requests"])
             self._contribution_counter += 1
             part = (package.get("case") or {}).get("part")
             result = {"outcome": "proposals", "proposals": [{
@@ -392,6 +449,31 @@ class OpenAICompatibleAdapter:
                         f"{self._contribution_counter}",
                     "tree_part": part,
                     "text": obj["text"]}}]}
+            if requests is not None:
+                result["tool_requests"] = requests
+        elif outcome == "tool_requests":
+            # Piece A3 (R49): tool requests on their own —
+            # requests only, no contribution, nothing else.
+            if set(obj) != {"outcome", "requests"}:
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="a tool_requests outcome carries "
+                           "its requests and nothing else")
+            result = {"outcome": "tool_requests",
+                      "tool_requests": self._tool_requests(
+                          obj.get("requests"))}
+        elif outcome == "yield":
+            # Piece A3 (R49/R54): a yield carries a summary
+            # only — combined with anything else it is not a
+            # yield, and the whole response is malformed.
+            if set(obj) != {"outcome", "summary"} or \
+                    not isinstance(obj.get("summary"), str) or \
+                    not obj["summary"].strip():
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="a yield carries a summary only")
+            result = {"outcome": "yield",
+                      "summary": obj["summary"]}
         elif outcome == "decline":
             if set(obj) != {"outcome", "reason"} or \
                     not isinstance(obj.get("reason"), str):
@@ -408,6 +490,33 @@ class OpenAICompatibleAdapter:
         # into a failure — nothing succeeds after the deadline.
         self._check_deadline()
         return result
+
+    @staticmethod
+    def _tool_requests(value):
+        """Validate a tool-request list whole (Piece A3): a
+        non-empty list of objects each naming exactly a tool
+        (a non-empty string) and its parameters (an object).
+        Anything else makes the whole response malformed —
+        no request is ever partially formed. Returns the
+        requests in the caller's shape."""
+        if not isinstance(value, list) or not value:
+            raise AdapterFailure(
+                "malformed_response",
+                detail="tool requests are a non-empty list")
+        requests = []
+        for entry in value:
+            if not isinstance(entry, dict) or \
+                    set(entry) != {"tool", "parameters"} or \
+                    not isinstance(entry.get("tool"), str) or \
+                    not entry["tool"] or \
+                    not isinstance(entry.get("parameters"), dict):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="each tool request names exactly a "
+                           "tool and its parameters object")
+            requests.append({"tool": entry["tool"],
+                             "parameters": entry["parameters"]})
+        return requests
 
     # --------------------------------------------------- onboarding
     def identify(self):

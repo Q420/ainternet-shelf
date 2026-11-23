@@ -92,6 +92,11 @@ _CASE_CONTENT = _fields({
     "verification_list": _opt(_list(_STR)),
     "account": _STR, "authority": _list(_STR),
     "criteria_mapping": _map(_STR),
+    # Piece A3 (R49): the loop bounds a case may carry — a
+    # step ceiling and a deadline in seconds (a JSON number,
+    # whole or fractional; the schema has no narrower node).
+    "loop_bounds": _opt(_fields({
+        "step_ceiling": _INT, "deadline_seconds": _ANY})),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({
@@ -139,6 +144,17 @@ SCHEMA = _obj({
         "authorised_seq": _opt(_INT),
         "activated_seq": _opt(_INT),
         "credential": _STR, "grants_present": _BOOL})),
+    "loop_activations": _map(_obj({
+        "instance_id": _opt(_STR), "activated_seq": _opt(_INT),
+        "case_id": _opt(_STR), "case_version": _opt(_INT),
+        "iterations": _list(_obj({
+            "iteration": _opt(_INT), "event_seq": _INT,
+            "step_ceiling": _opt(_INT), "deadline_seconds": _ANY,
+            "cursor_from": _opt(_INT),
+            "cursor_to": _opt(_INT)})),
+        "stalled": _opt(_obj({
+            "ground": _opt(_STR), "event_seq": _INT,
+            "iterations": _opt(_INT)}))})),
     "tool_requests": _list(_obj({
         "instance_id": _opt(_STR), "request_id": _opt(_STR),
         "fingerprint": _opt(_STR), "tool": _opt(_STR),
