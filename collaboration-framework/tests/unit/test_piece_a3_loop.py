@@ -43,7 +43,16 @@ correction): loop_bounds is case content (correction round
 1), named by the commission's recorded briefs, carried by
 office.generate into the issued case, and changed — where a
 test changes it — by office.correct. No case in this suite
-is established by hand-built content.
+is established by hand-built content — except the
+correction-round-2 witnesses (T20), which establish cases
+by direct store appends precisely because the route refuses
+the malformed bounds they carry: the record can still be
+made to hold them, and the strict contract must fail closed
+there too. Round 2 also witnesses (T21) that a seat
+credential cannot assert instance provenance: a
+caller-supplied instance_id is stripped on the seat route,
+so provenance in the record is doorway-established or
+absent.
 
 Run: PYTHONPATH=src python3 tests/unit/test_piece_a3_loop.py
 Exits 0 when every check passes.
@@ -63,6 +72,7 @@ from framework import projection  # noqa: E402
 from framework.adapter import (AdapterFailure,  # noqa: E402
                                OpenAICompatibleAdapter)
 from framework.doorway import (Doorway, DoorwayRefusal,  # noqa: E402
+                               classify_case_change,
                                established_case_content)
 from framework.executor import Executor  # noqa: E402
 from framework.generator import Generator  # noqa: E402
@@ -1164,6 +1174,159 @@ check("T19: expiry immediately after the iteration event "
       len(events_of(store, "LOOP_ITERATION")) == 1 and
       len(stalls) == 1 and
       stalls[0]["payload"]["iterations"] == 1)
+
+# -- T20 (correction round 2): the strict bounds contract
+# everywhere — malformed bounds recorded directly into a
+# case (the route refused them, so the record is built by
+# direct appends, as a malformed history would stand)
+# establish no regime: the loop cannot run on the
+# activation, and the checker names the pinned bounds
+# malformed rather than treating them as a governing
+# contract or as simply no bounds.
+def issue_case_direct(store, office, seat, bounds):
+    """The case lifecycle appended directly to the store —
+    the doorway bypassed — with the given loop_bounds in the
+    verified content. The payloads are the office route's
+    own shapes; only the route is skipped."""
+    content = office.generate(seat)
+    content["loop_bounds"] = bounds
+    store.append("CASE_VERIFIED", "orch-1", [], content)
+    store.append("CASE_JUDGED", "exam-1", [],
+                 {"case_id": f"case-{seat}", "version": 1})
+    store.append("CASE_ISSUED", "orch-1", [],
+                 {"case_id": f"case-{seat}", "version": 1,
+                  "seat": seat})
+    store.commit()
+
+
+def activate_direct(store, d, office, gen, tok, bounds,
+                    seat="crew-1"):
+    """The A1 lifecycle over a directly-established case."""
+    issue_case_direct(store, office, seat, bounds)
+    gen.propose(tok["orch-1"], seat, part="part-A",
+                role_requirements="a careful drafting model")
+    r = gen.generate(tok["orch-1"], seat, identify,
+                     skills=SKILLS, grants=GRANTS)
+    assert r["ok"], r
+    gen.verify(tok["orch-1"], r["assembly_id"])
+    d.act(tok["exam-1"], "ASSEMBLY_JUDGED",
+          gen.judgement(r["assembly_id"]),
+          view_seq=store.head_seq())
+    packed = gen.pack(tok["orch-1"], r["assembly_id"])
+    gen.authorise(tok["orch-1"], r["assembly_id"])
+    gen.activate(tok["orch-1"], r["assembly_id"])
+    return r, packed["instance_token"]
+
+
+MALFORMED_BOUNDS = [
+    ("a zero step ceiling",
+     {"step_ceiling": 0, "deadline_seconds": 60}),
+    ("a zero deadline",
+     {"step_ceiling": 5, "deadline_seconds": 0}),
+    ("a negative deadline",
+     {"step_ceiling": 5, "deadline_seconds": -30}),
+    ("a NaN deadline",
+     {"step_ceiling": 5, "deadline_seconds": float("nan")}),
+    ("an infinite deadline",
+     {"step_ceiling": 5, "deadline_seconds": float("inf")}),
+]
+for label, bad_bounds in MALFORMED_BOUNDS:
+    store, d, office, gen, tok = fresh(bounds=None)
+    r, itok = activate_direct(store, d, office, gen, tok,
+                              bad_bounds)
+    model = Script([contribute()])
+    res = Loop(d, itok, model).run()
+    check(f"T20: malformed pinned bounds ({label}) establish "
+          "no regime — the loop cannot run on the activation, "
+          "no iteration and no stall stand",
+          not res["ok"] and res["outcome"] == "not_run" and
+          len(model.calls) == 0 and
+          len(events_of(store, "LOOP_ITERATION")) == 0 and
+          len(events_of(store, "LOOP_STALLED")) == 0)
+    lc = loop_check(store)
+    kinds = {p["kind"] for p in lc.get("problems", [])}
+    check(f"T20: the checker names the malformed pinned "
+          f"bounds ({label}) divergent — "
+          "pinned_bounds_malformed — rather than a governing "
+          "contract or plain no-bounds",
+          lc["result"] == "divergent" and
+          "pinned_bounds_malformed" in kinds)
+
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+bad_inf = office.correct(
+    tok["orch-1"], "case-crew-1",
+    {"loop_bounds": {"step_ceiling": 3,
+                     "deadline_seconds": float("inf")}})
+check("T20: the office route refuses an infinite deadline "
+      "as it refuses NaN — preflight names the bounds and "
+      "nothing is appended",
+      not bad_inf["ok"] and
+      any("loop_bounds" in p for p in bad_inf["problems"]))
+check("T20: the doorway route refuses an infinite deadline "
+      "too — a correction carrying one does not record, and "
+      "the refusal stands",
+      refused(lambda: d.act(
+          tok["orch-1"], "CASE_CORRECTED",
+          {"case_id": "case-crew-1", "version": 2,
+           "loop_bounds": {"step_ceiling": 3,
+                           "deadline_seconds": float("inf")},
+           "representational": False},
+          view_seq=store.head_seq())) and
+      any("loop_bounds" in e["payload"].get("ground", "")
+          for e in events_of(store, "REJECTION")))
+
+# -- T21 (correction round 2): a seat credential cannot
+# assert instance provenance — a caller-supplied instance_id
+# under the seat's plain credential is stripped before the
+# act records, so the record cannot falsely attribute the
+# act to the (stalled) instance it names; the pair route
+# strips it identically.
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+iid = r["instance_id"]
+res_r = d.request_tool(itok, "sandbox.write",
+                       {"path": "notes/a.txt", "content": "x"},
+                       "req-open")
+d.record_tool_outcome(res_r["dispatch_id"], "uncertain",
+                      detail="accounting witness")
+d.record_loop_stalled(r["assembly_id"], "deadline")
+ev = d.act(tok["crew-1"], "CONTRIBUTION",
+           {"contribution_id": "seat-mislabelled",
+            "tree_part": "part-A",
+            "text": "the seat's own work, mislabelled with "
+                    "the stalled instance's id",
+            "instance_id": iid},
+           view_seq=store.head_seq())
+check("T21: an act under the plain seat credential carrying "
+      "the stalled instance's id still records as the seat's "
+      "own act — with the supplied instance_id stripped, so "
+      "no provenance attributing it to the instance stands",
+      ev["type"] == "CONTRIBUTION" and
+      ev["actor"] == "crew-1" and
+      "instance_id" not in ev["payload"])
+check("T21: the checker does not flag the stripped act — "
+      "the history's loop correspondence is ok, the stall "
+      "notwithstanding",
+      loop_check(store)["result"] == "ok")
+state = d.state()
+current, _v = established_case_content(state, "case-crew-1")
+draft = dict(current)
+draft["version"] = 2
+draft["instance_id"] = iid
+draft["representational"] = not classify_case_change(
+    current, draft)
+ev1, ev2 = d.submit_pair(
+    tok["orch-1"],
+    [("CASE_CORRECTED", draft),
+     ("CASE_VERIFIED", {"case_id": "case-crew-1", "version": 2,
+                        "instance_id": iid})],
+    view_seq=store.head_seq())
+check("T21: the pair route strips a supplied instance_id "
+      "identically — neither recorded half of the correction "
+      "carries it",
+      "instance_id" not in ev1["payload"] and
+      "instance_id" not in ev2["payload"])
 
 print()
 if FAILURES:

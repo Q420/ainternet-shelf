@@ -48,6 +48,7 @@ and the standard library only; never a `framework.*` module.
 """
 import hashlib
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -882,7 +883,11 @@ def _loop_result(events, state):
     its pinned case — exactly; iteration numbers are 1, 2, 3,
     ... with no gap, duplicate or excess over the pinned
     ceiling; the bounds an iteration names are the pinned
-    bounds; cursor ranges chain without gaps or overlaps, each
+    bounds; pinned bounds present in the record but failing
+    the strict contract (positive integer ceiling, finite
+    positive deadline) are divergent in themselves — a case
+    carrying no bounds at all is not; cursor ranges chain
+    without gaps or overlaps, each
     package's head preceding the iteration event that records
     it, and each iteration event itself presented in the
     following iteration's range; a stall names a settled
@@ -928,6 +933,44 @@ def _loop_result(events, state):
         content = ver.get("content") or {}
         bounds = content.get("loop_bounds")
         return bounds if isinstance(bounds, dict) else None
+
+    def pinned_bounds_malformed(aid):
+        """Whether the assembly's pinned case version carries
+        loop_bounds that are present but fail the strict
+        contract (Piece A3, correction round 2): a step
+        ceiling that is a positive integer and a deadline
+        that is a finite, positive number — this checker's
+        own statement of the contract, duplicated as its
+        other contracts are. A case carrying no loop_bounds
+        at all is lawful — no regime stands, and nothing is
+        flagged. Present-but-malformed bounds are divergent:
+        the record claims a governing contract that cannot
+        govern, which is a different thing from no contract,
+        and the doorway's normalisation treating them as
+        no-bounds does not make the record's claim sound."""
+        gen = generated.get(aid)
+        if gen is None:
+            return False
+        case = (state.get("cases") or {}).get(
+            gen["payload"].get("case_id"))
+        ver = ((case or {}).get("versions") or {}).get(
+            str(gen["payload"].get("case_version"))) or {}
+        content = ver.get("content") or {}
+        if content.get("loop_bounds") is None:
+            return False
+        bounds = content.get("loop_bounds")
+        if not isinstance(bounds, dict):
+            return True
+        ceiling = bounds.get("step_ceiling")
+        if isinstance(ceiling, bool) or \
+                not isinstance(ceiling, int) or ceiling <= 0:
+            return True
+        deadline = bounds.get("deadline_seconds")
+        if isinstance(deadline, bool) or \
+                not isinstance(deadline, (int, float)) or \
+                not math.isfinite(deadline) or deadline <= 0:
+            return True
+        return False
 
     def binding_problems(kind, ev, aid):
         """Whether a loop event's binding fields name the
@@ -979,6 +1022,11 @@ def _loop_result(events, state):
                 problem("stall_ground_unknown", assembly_id=aid,
                         at_seq=seq, ground=p.get("ground"))
             binding_problems("stall", ev, aid)
+
+    for aid in activated:
+        if pinned_bounds_malformed(aid):
+            problem("pinned_bounds_malformed", assembly_id=aid,
+                    at_seq=activated[aid])
 
     for aid, evs in iterations.items():
         bounds = pinned_bounds(aid)

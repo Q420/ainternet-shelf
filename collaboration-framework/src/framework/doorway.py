@@ -22,6 +22,7 @@ doorway consumes the bindings the record carries.
 import copy
 import hashlib
 import json
+import math
 import os
 import secrets
 import threading
@@ -72,6 +73,19 @@ LOOP_STALL_GROUNDS = ("step_ceiling", "deadline",
 LOOP_ITERATION_DEADLINE_GROUND = (
     "the activation deadline expired before the iteration "
     "could be recorded; no iteration is counted (R49)")
+
+# Piece A3 (correction round 2): the act types whose payload's
+# instance_id is the act's subject referent, not its author's
+# provenance — the assembly lifecycle acts and an instance's
+# onboarding, where the doorway itself cross-checks the named
+# instance against the record before the act may stand. On
+# every other seat-route act a caller-supplied instance_id is
+# stripped (see act()): provenance in the record is
+# doorway-established or it is not there.
+INSTANCE_REFERENT_ACTS = frozenset({
+    "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
+    "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
+    "ASSEMBLY_ISSUE_AUTHORISED", "INSTANCE_ACTIVATED"})
 
 # §4 authority matrix — which roles may record which act types.
 # (Claim-status transitions are governed separately by R2; case
@@ -170,8 +184,10 @@ def loop_bounds_problem(bounds):
     case carrying none (None here) is a case no loop runs on,
     and that is lawful. When present they must be an object
     with a step_ceiling that is a positive integer and a
-    deadline_seconds that is a positive number: the two values
-    the loop's bounds are made of. Malformed bounds are refused
+    deadline_seconds that is a finite, positive number
+    (correction round 2: infinity is refused here as NaN
+    already was): the two values the loop's bounds are made
+    of. Malformed bounds are refused
     at the office/doorway boundary, never silently stripped —
     a stripped field would leave a case that looks unbounded
     in a different way than it was issued."""
@@ -189,9 +205,10 @@ def loop_bounds_problem(bounds):
     deadline = bounds.get("deadline_seconds")
     if isinstance(deadline, bool) or \
             not isinstance(deadline, (int, float)) or \
+            not math.isfinite(deadline) or \
             not deadline > 0:
         return ("loop_bounds deadline_seconds is not a "
-                "positive number (R49)")
+                "finite positive number (R49)")
     return None
 
 
@@ -609,11 +626,17 @@ class Doorway:
     def _pinned_loop_bounds(self, state, entry):
         """The loop bounds the pinned case version carries,
         normalised — or None where the pinned case carries no
-        well-formed bounds: a step ceiling that is a
-        non-negative integer and a deadline that is a number.
-        Absent or malformed bounds are no bounds: no loop runs
-        and no temporal admission applies (R49, fail closed
-        for the loop itself)."""
+        well-formed bounds. The contract is the strict one,
+        the same the office/doorway route enforces
+        (loop_bounds_problem, correction round 2): a step
+        ceiling that is a positive integer and a deadline
+        that is a finite, positive number. Absent or malformed
+        bounds are no bounds: no loop runs and no temporal
+        admission applies (R49, fail closed for the loop
+        itself) — a zero ceiling, a non-positive deadline,
+        NaN or infinity recorded directly into a case
+        establish no regime, exactly as bounds the route
+        refused could not."""
         content = self._pinned_case_content(state, entry)
         if not isinstance(content, dict):
             return None
@@ -623,10 +646,11 @@ class Doorway:
         ceiling = bounds.get("step_ceiling")
         deadline = bounds.get("deadline_seconds")
         if isinstance(ceiling, bool) or \
-                not isinstance(ceiling, int) or ceiling < 0:
+                not isinstance(ceiling, int) or ceiling <= 0:
             return None
         if isinstance(deadline, bool) or \
-                not isinstance(deadline, (int, float)):
+                not isinstance(deadline, (int, float)) or \
+                not math.isfinite(deadline) or deadline <= 0:
             return None
         return {"step_ceiling": ceiling,
                 "deadline_seconds": deadline}
@@ -1634,8 +1658,25 @@ class Doorway:
         # The doorway's identification governs: a payload
         # naming another instance is overwritten, never
         # trusted. An ordinary seat credential stamps nothing.
+        #
+        # Correction round 2: nor may an ordinary seat
+        # credential *supply* the provenance. A caller-supplied
+        # instance_id on the seat route is stripped before the
+        # act records, so an instance_id in a recorded act
+        # always means the doorway established it — the seat
+        # cannot mint an "instance act" for a stalled (or any)
+        # instance, accidentally or deliberately. The strip
+        # does not reach the acts whose instance_id is their
+        # subject referent — the assembly lifecycle and an
+        # instance's onboarding (INSTANCE_REFERENT_ACTS) —
+        # where the doorway cross-checks the named instance
+        # against the record before the act may stand.
         if presented is not None:
             payload["instance_id"] = presented
+        elif type_ not in INSTANCE_REFERENT_ACTS and not (
+                type_ == "ONBOARDING" and
+                payload.get("subject") == "instance"):
+            payload.pop("instance_id", None)
 
         affected = []
         for key in ("subject_id", "claim_id", "contribution_id",
@@ -2497,6 +2538,15 @@ class Doorway:
                                  view_seq)
         corrected = dict(corrected)
         verified = dict(verified)
+        # Piece A3 (correction round 2): the pair route stands
+        # under the same provenance rule as the single-act
+        # route — a caller-supplied instance_id is stripped, so
+        # no case act can carry instance provenance the doorway
+        # did not establish. Neither payload legitimately names
+        # an instance: the correction names a case, the
+        # verification names a case version.
+        corrected.pop("instance_id", None)
+        verified.pop("instance_id", None)
         if view_seq < state["head_seq"]:
             corrected["stale_basis"] = True
             verified["stale_basis"] = True
