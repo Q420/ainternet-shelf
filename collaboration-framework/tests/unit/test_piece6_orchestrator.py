@@ -366,6 +366,20 @@ check("T9 no other seat wakes on the note",
       not any(r["kind"] == "orchestrator_note"
               for r in (r2.get("reasons") or [])))
 
+# -- T9b (correction round 1): the wake privilege is the
+# orchestrator's authorship, not the addressing. A crew-authored
+# COMMENT addressed to another seat derives no such wake.
+crew_note = A(d, store, tok["crew-2"], "COMMENT",
+              {"on_job": True, "to_seat": "crew-1",
+               "text": "a crew note, addressed but not "
+                       "orchestration"})
+r1 = drv1.wake_cycle()
+check("T9b a crew-authored addressed comment derives no "
+      "orchestrator_note wake",
+      not any(r["kind"] == "orchestrator_note"
+              and r["event_seq"] == crew_note["event_seq"]
+              for r in (r1.get("reasons") or [])))
+
 # -- T10 (acceptance 10): uncased provenance is position-
 # sensitive; the pre-acknowledgement state is a separate fact.
 store, d, tok = fresh(gates=FULL_GATES)
@@ -411,6 +425,56 @@ st = d.state()
 check("T10 a later case never recases the earlier contribution",
       "c-nocase" in st["uncased"].get("C", [])
       and "c-cased" not in st["uncased"].get("C", []))
+
+# -- T11 (correction round 1): provenance selects the EFFECTIVE
+# version at the contribution's position — a superseding
+# version's unacknowledged state governs, not the acknowledged
+# predecessor's.
+store, d, tok = fresh(gates=FULL_GATES)
+open_run(d, store, tok)
+outcome(d, store, tok, "B", "allow")
+CASE_V1 = {"case_id": "case-v", "version": 1, "seat": "crew-1",
+           "part": "B", "assignment": "Build B",
+           "evidence_boundary": [], "verification_list": ["chk"],
+           "account": "crew-1", "authority": "crew defaults"}
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-v", "version": 1})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-v", "version": 1})
+A(d, store, tok["orch-1"], "CASE_ISSUED", dict(CASE_V1))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-v", "version": 1})
+contrib(d, store, tok, "crew-1", "c-v1", "B")
+st = d.state()
+check("T11 under acknowledged v1: cased, not pre-ack",
+      "c-v1" not in st["uncased"].get("B", [])
+      and "c-v1" not in st["pre_ack"].get("B", []))
+CASE_V2 = dict(CASE_V1, version=2,
+               verification_list=["chk", "chk again"],
+               representational=False)
+A(d, store, tok["orch-1"], "CASE_CORRECTED", dict(CASE_V2))
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-v", "version": 2})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-v", "version": 2})
+A(d, store, tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-v", "version": 2})
+contrib(d, store, tok, "crew-1", "c-v2pre", "B")
+st = d.state()
+check("T11 under unacknowledged v2: cased and pre-ack — the "
+      "effective version governs",
+      "c-v2pre" in st["pre_ack"].get("B", [])
+      and "c-v2pre" not in st["uncased"].get("B", []))
+check("T11 supersession never uncases the v1 contribution",
+      "c-v1" not in st["uncased"].get("B", [])
+      and "c-v1" not in st["pre_ack"].get("B", []))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-v", "version": 2})
+contrib(d, store, tok, "crew-1", "c-v2post", "B")
+st = d.state()
+check("T11 after v2 acknowledgement: cased, not pre-ack",
+      "c-v2post" not in st["pre_ack"].get("B", [])
+      and "c-v2post" not in st["uncased"].get("B", []))
 
 print()
 if FAILURES:

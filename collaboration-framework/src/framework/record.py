@@ -310,11 +310,16 @@ def _case_status_at(state, seat_id, part):
     fold AS IT STANDS NOW — which, called from within a fold
     step, is the record as of the event being folded: the
     position-sensitive reading §3.8's uncased derivation needs.
-    Returns (cased, acknowledged): a version issued to the seat
-    whose content names the part, its issuance route complete
-    over the events folded so far; acknowledged when the seat's
-    acknowledgement of that version stands and postdates its
-    authorisation."""
+    Returns (cased, acknowledged).
+
+    The version that governs is the EFFECTIVE one at this
+    position (§3.8 correction round 1): among the seat's issued
+    versions whose content names the part, the highest version
+    (a later issuance of the same version rank breaks the tie).
+    A superseding version's unacknowledged state is the
+    contribution's state — an earlier version's acknowledgement
+    does not carry forward onto its successor."""
+    best = None
     for case_id, entry in state["cases"].items():
         if entry.get("seat") != seat_id:
             continue
@@ -324,12 +329,19 @@ def _case_status_at(state, seat_id, part):
                 continue
             if not version_issued(ver, int(vstr)):
                 continue
-            ack_seq = ver.get("acknowledged", {}).get(seat_id)
-            acknowledged = ack_seq is not None and \
-                ver.get("issued") is not None and \
-                ack_seq > ver["issued"]
-            return True, acknowledged
-    return False, False
+            version = int(vstr)
+            if best is None or version > best[0] or (
+                    version == best[0]
+                    and ver["issued"] > best[1]["issued"]):
+                best = (version, ver)
+    if best is None:
+        return False, False
+    ver = best[1]
+    ack_seq = ver.get("acknowledged", {}).get(seat_id)
+    acknowledged = ack_seq is not None and \
+        ver.get("issued") is not None and \
+        ack_seq > ver["issued"]
+    return True, acknowledged
 
 
 def _subject_changed_parts(payload):

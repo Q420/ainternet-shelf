@@ -80,12 +80,18 @@ def _wake_reasons(events, state, seat_id, case):
                 "by": ev["actor"],
             })
         elif t == "COMMENT":
-            if p.get("to_seat") == seat_id:
-                # §3.8 (S4): an orchestrator's note addressed to
+            if p.get("to_seat") == seat_id and \
+                    (state["seats"].get(ev["actor"]) or {}).get(
+                        "role") == "orchestrator":
+                # §3.8 (S4): an ORCHESTRATOR's note addressed to
                 # this seat is a wake reason, attributable to the
-                # note's event. Only the addressed seat derives
-                # it; the seat's view keeps its existing evidence
-                # boundary — a note grants no access.
+                # note's event. The authorship is the rule, not
+                # the addressing alone: a crew comment addressed
+                # to a seat is a comment, and derives no wake —
+                # waking seats is the orchestrator's conduct,
+                # never a capability addressing confers. Only
+                # the addressed seat derives it; the seat's view
+                # keeps its existing evidence boundary.
                 reasons.append({
                     "kind": "orchestrator_note",
                     "event_seq": ev["event_seq"],
