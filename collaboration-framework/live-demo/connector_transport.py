@@ -61,6 +61,19 @@ can return after expiry: the replacement is synchronous
 with a single return point, and on the expiry path that
 point is never reached.
 
+The helper's own clock (INDEX 213/215). The helper's
+provider request carried its own hardcoded 120s timeout —
+a second clock beneath the adapter's span, which is what
+attempt 4 died on. The helper now takes its request
+timeout from its caller: this transport passes the
+effective remaining allowance (the same remaining time it
+enforces, computed at launch) as NVIDIA_API_TIMEOUT in
+the helper's environment, and the helper honours it when
+set and valid, defaulting to 120s for its ordinary
+callers. The transport's bound remains the hard wall —
+the group is terminated at the caller's deadline whatever
+the helper's internal timeout says.
+
 Request fidelity. The body sent to the helper mirrors the
 adapter's own `_dispatch` byte-for-byte in content:
 {"model": <model>, "messages": <messages>,
@@ -131,6 +144,14 @@ _monotonic = time.monotonic
 _TERM_GRACE_SECONDS = 1.0
 _CONFIRM_WINDOW_SECONDS = 5.0
 _POLL_SECONDS = 0.02
+
+# The bounded length of a diagnostic carried in an
+# AdapterFailure detail (the helper's stderr, a provider
+# error body): long enough to distinguish causes — the
+# full traceback of an ordinary helper failure fits —
+# still a bound, so a pathological error body cannot
+# grow the record without limit (INDEX 215).
+_DIAGNOSTIC_LIMIT = 2000
 
 
 def _group_gone(pgid):
@@ -269,11 +290,42 @@ def install_connector_transport(adapter, helper_path, model):
             raise AdapterFailure(
                 "no_response",
                 detail="total deadline exceeded")
+        # The helper receives the effective allowance as
+        # its own provider-request timeout (INDEX 215):
+        # the same remaining time this transport enforces,
+        # computed here at launch with the same formula
+        # the post-launch recompute below applies —
+        # never the adapter's configured span, never a
+        # fresh allowance. The helper's historical 120s
+        # default would otherwise stand as a second,
+        # hidden clock beneath the caller's deadline
+        # (attempt 4). The transport's own bound stays
+        # the hard wall regardless: the process group is
+        # terminated at the caller's deadline whatever
+        # the helper's internal timeout says, so the
+        # helper can never outlive the deadline it was
+        # handed.
+        if established is not None:
+            helper_timeout = established - _monotonic()
+        else:
+            helper_timeout = bound - (_monotonic()
+                                      - call_started)
+        if helper_timeout <= 0:
+            # The deadline passed between the bound check
+            # and the launch: the helper is not launched,
+            # under the adapter's own expiry kind.
+            raise AdapterFailure(
+                "no_response",
+                detail="total deadline exceeded")
+        helper_env = dict(os.environ)
+        helper_env["NVIDIA_API_TIMEOUT"] = \
+            repr(helper_timeout)
         try:
             proc = _Popen(
                 [sys.executable, helper_path, "chat", model],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, start_new_session=True)
+                stderr=subprocess.PIPE, start_new_session=True,
+                env=helper_env)
         except OSError as exc:
             raise AdapterFailure("provider_error",
                                  detail=type(exc).__name__)
@@ -316,8 +368,8 @@ def install_connector_transport(adapter, helper_path, model):
                 "provider_error",
                 detail=f"connector helper exited "
                        f"{proc.returncode}"
-                       + (f": {detail[:200]}" if detail
-                          else ""))
+                       + (f": {detail[:_DIAGNOSTIC_LIMIT]}"
+                          if detail else ""))
         try:
             parsed = json.loads(out.decode("utf-8", "replace"))
         except ValueError:
@@ -332,7 +384,7 @@ def install_connector_transport(adapter, helper_path, model):
             raise AdapterFailure(
                 "provider_error",
                 detail=f"provider error body: "
-                       f"{str(parsed['error'])[:200]}")
+                       f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}")
         provider_model_id = parsed.get("model")
         try:
             content = parsed["choices"][0]["message"]["content"]
