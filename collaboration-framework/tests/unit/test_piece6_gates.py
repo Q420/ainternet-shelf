@@ -475,6 +475,39 @@ check("T22 the refusal is recorded, naming the part and R21",
       len(d.state()["rejections"]) == before + 1
       and "ZZ" in rejs[-1]["payload"]["ground"])
 
+# -- Correction round 2: eligibility is a positive boundary —
+# a seat-authored act is not thereby a correction act.
+# T23: a FINDING, a HOLDER_UNAVAILABLE, and a DISPOSITION, each
+# recorded by a seat after the ruling at a valid position, are
+# all refused as a basis; the correction act is accepted.
+store, d, tok = fresh()
+outcome(d, store, tok, "assembly", "allow")
+outcome(d, store, tok, "B", "escalate", tree_part="B")
+A(d, store, tok["dir-1"], "RULING",
+  {"joint": "B", "action": "correct as stated"})
+finding = A(d, store, tok["exam-1"], "FINDING",
+            {"text": "examined the defect"})
+check("T23 a basis citing a FINDING is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[finding["event_seq"]])))
+holder = A(d, store, tok["orch-1"], "HOLDER_UNAVAILABLE",
+           {"joint": "C"})
+check("T23 a basis citing a HOLDER_UNAVAILABLE is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[holder["event_seq"]])))
+disp = A(d, store, tok["dir-1"], "DISPOSITION",
+         {"text": "noted for the record"})
+check("T23 a basis citing a DISPOSITION is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[disp["event_seq"]])))
+corr = A(d, store, tok["crew-1"], "COMMENT",
+         {"on_job": True, "text": "the stated correction"})
+ev = outcome(d, store, tok, "B", "allow",
+             correction_basis=[corr["event_seq"]],
+             released_set=["B", "D"])
+check("T23 a basis citing the correction act records",
+      ev["type"] == "GATE_OUTCOME")
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")

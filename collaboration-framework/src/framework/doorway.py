@@ -596,29 +596,30 @@ class Doorway:
                             f"the ruling at seq "
                             f"{ruling['event_seq']} (R24)", view_seq)
                     # The basis must cite correction acts, not
-                    # merely positions (correction round 1): the
-                    # event at each position must be an act a seat
-                    # recorded — never a doorway record (a
-                    # REJECTION, a DRIVER_FAILURE) and never the
-                    # gate machinery's own acts (a GATE_OUTCOME,
-                    # a RULING), on which a judgement cannot rest.
-                    # Eligibility is mechanical; whether the acts
-                    # are a sufficient correction remains the
+                    # merely positions (correction rounds 1–2):
+                    # the event at each position must be of an
+                    # eligible correction-act type — the positive
+                    # boundary in gates.CORRECTION_ACT_TYPES.
+                    # A seat-authored act is not thereby a
+                    # correction act: a FINDING, a DISPOSITION,
+                    # or a HOLDER_UNAVAILABLE performs no
+                    # correction and cannot be cited. Eligibility
+                    # is mechanical; whether the cited acts are
+                    # a sufficient correction remains the
                     # examiner's judgement.
                     if by_seq is None:
                         by_seq = {ev["event_seq"]: ev
                                   for ev in self.store.all_events()}
                     cited = by_seq.get(seq)
                     if cited is None or \
-                            cited["actor"] == DOORWAY_ACTOR or \
-                            cited["type"] in ("GATE_OUTCOME",
-                                              "RULING"):
+                            cited["type"] not in \
+                            _gates.CORRECTION_ACT_TYPES:
                         self._refuse(
                             seat_id, type_,
                             f"correction_basis position {seq} "
                             f"names a {cited['type'] if cited else 'missing'}"
-                            f", not a correction act recorded by "
-                            f"a seat (R24)", view_seq)
+                            f", which is not an eligible "
+                            f"correction act (R24)", view_seq)
             return
         if type_ in _gates.WORK_ACTS:
             if not _gates.assembly_open(state):

@@ -31,3 +31,11 @@ Three findings, each verified first-hand against the source before any fix (her 
 4. **The non-tree witness** she required for the approved R21 decision is added (T22: a contribution naming a part outside the recorded tree is refused, the refusal recorded naming the part and R21).
 
 **Suite: 65 checks, ALL PASS** (T18–T22 new). Regressions: Pieces 2–5 and 6-onboarding suites ALL PASS; substrate byte-identical; prototype smoke and observer safety ALL PASS. Resubmitted for re-examination.
+
+## Correction round 2 (re-examination @ 2c1bbe8b, filed `VANE-PIECE6-GATES-ROUND1-REEXAMINATION-2026-11-22.md`)
+
+Round 1's corrections were all accepted (G7 presence, closed vocabulary + reserved names, the non-tree witness; derivation and completion waiting still approved). One correction remained: the basis eligibility was a negative test (seat-recorded, not a doorway record / GATE_OUTCOME / RULING), which still admitted seat-authored acts that perform no correction — a FINDING, a DISPOSITION, a HOLDER_UNAVAILABLE.
+
+The boundary is now a **positive list**, `gates.CORRECTION_ACT_TYPES`: the acts that perform a correction — the work acts, plus the office route acts that remake a case (CASE_CORRECTED, CASE_VERIFIED, CASE_ISSUED), the case-route eligibility she agreed to preserve. The examiner's own case-route judgements (CASE_JUDGED, CASE_NOTIFIED) are examination acts, not correction acts, and stand outside it, on the same logic that excluded GATE_OUTCOME. The doorway refuses any cited position whose event is outside the list; sufficiency remains the examiner's. (T23: a FINDING, a HOLDER_UNAVAILABLE, and a DISPOSITION — each seat-recorded, post-ruling, at a valid position — are all refused as a basis; the correction act is accepted.)
+
+**Suite: 69 checks, ALL PASS** (T23 new). Regressions: Pieces 2–5 and 6-onboarding suites ALL PASS; substrate byte-identical; prototype smoke and observer safety ALL PASS. Resubmitted for re-examination.

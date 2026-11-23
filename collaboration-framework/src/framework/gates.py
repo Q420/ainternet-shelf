@@ -43,6 +43,24 @@ GATE_PROCESS_ACTS = {
 ASSEMBLY_JOINT = "assembly"
 COMPLETION_JOINT = "completion"
 
+# The correction acts a re-judgement's correction_basis may cite
+# (R23/R24; correction round 2 made the boundary a positive list):
+# the acts that *perform* a correction — the work acts (the work
+# itself, redone or extended by the responsible seat) and the
+# office route acts that remake a case (its correction, its
+# verification, its authorisation), since an assembly correction
+# is performed through §3.5's route. Seat-authored is not the
+# test: examination acts (FINDING, CASE_JUDGED, CASE_NOTIFIED),
+# authority acts (RULING, DISPOSITION), declarations and setup
+# acts (HOLDER_UNAVAILABLE, ESCALATION, ONBOARDING, SEAT_BOUND,
+# MATERIAL_SEALED), the gate machinery's own outcomes, and
+# doorway records are none of them correction acts, however
+# legitimately they stand in the record. Eligibility is
+# mechanical; sufficiency remains the examiner's judgement.
+CORRECTION_ACT_TYPES = WORK_ACTS | {
+    "CASE_CORRECTED", "CASE_VERIFIED", "CASE_ISSUED",
+}
+
 
 # ------------------------------------------------------------ tree
 
