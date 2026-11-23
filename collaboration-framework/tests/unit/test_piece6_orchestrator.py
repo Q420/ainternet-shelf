@@ -16,7 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..",
 from framework import onboarding as ob
 from framework.doorway import Doorway, DoorwayRefusal
 from framework.driver import Driver
-from framework.record import FrameworkStore, CONSTITUTION_HASH
+from framework.record import (FrameworkStore, CONSTITUTION_HASH,
+                              effective_case)
 
 FAILURES = []
 
@@ -423,8 +424,12 @@ A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
 contrib(d, store, tok, "crew-1", "c-cased", "C")
 st = d.state()
 check("T10 a later case never recases the earlier contribution",
-      "c-nocase" in st["uncased"].get("C", [])
-      and "c-cased" not in st["uncased"].get("C", []))
+      "c-nocase" in st["uncased"].get("C", []))
+check("T10 a same-version second lineage does not govern "
+      "while the first stands — the fold follows the driver's "
+      "one effective case (round 3)",
+      "c-cased" in st["uncased"].get("C", [])
+      and effective_case(st, "crew-1")["case_id"] == "case-b")
 
 # -- T11 (correction round 1): provenance selects the EFFECTIVE
 # version at the contribution's position — a superseding
@@ -530,6 +535,68 @@ st = d.state()
 check("T12 after v2 acknowledgement: cased for C, not pre-ack",
       "c-m3c" not in st["pre_ack"].get("C", [])
       and "c-m3c" not in st["uncased"].get("C", []))
+
+# -- T13 (correction round 3): two lineages, different
+# versions, different parts — fold provenance and the driver's
+# effective assignment cannot diverge, because both are the
+# one effective_case selection.
+store, d, tok = fresh(gates=FULL_GATES)
+open_run(d, store, tok)
+outcome(d, store, tok, "B", "allow")
+outcome(d, store, tok, "C", "allow")
+CASE_A1 = {"case_id": "case-a2", "version": 1, "seat": "crew-1",
+           "part": "B", "assignment": "Build B",
+           "evidence_boundary": [], "verification_list": ["chk"],
+           "account": "crew-1", "authority": "crew defaults"}
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-a2", "version": 1})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-a2", "version": 1})
+A(d, store, tok["orch-1"], "CASE_ISSUED", dict(CASE_A1))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-a2", "version": 1})
+CASE_A2 = dict(CASE_A1, version=2,
+               verification_list=["chk", "chk again"],
+               representational=False)
+A(d, store, tok["orch-1"], "CASE_CORRECTED", dict(CASE_A2))
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-a2", "version": 2})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-a2", "version": 2})
+A(d, store, tok["orch-1"], "CASE_ISSUED",
+  {"case_id": "case-a2", "version": 2})
+CASE_C1 = {"case_id": "case-c1", "version": 1, "seat": "crew-1",
+           "part": "C", "assignment": "Build C",
+           "evidence_boundary": [], "verification_list": ["chk"],
+           "account": "crew-1", "authority": "crew defaults"}
+A(d, store, tok["orch-1"], "CASE_VERIFIED",
+  {"case_id": "case-c1", "version": 1})
+A(d, store, tok["exam-1"], "CASE_JUDGED",
+  {"case_id": "case-c1", "version": 1})
+A(d, store, tok["orch-1"], "CASE_ISSUED", dict(CASE_C1))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-c1", "version": 1})
+st = d.state()
+eff = effective_case(st, "crew-1")
+check("T13 the driver's effective case is lineage A at v2",
+      eff["case_id"] == "case-a2" and eff["version"] == 2)
+contrib(d, store, tok, "crew-1", "c-13c", "C")
+contrib(d, store, tok, "crew-1", "c-13b", "B")
+st = d.state()
+check("T13 a contribution on C is uncased — the standing v1 "
+      "for C does not govern while A/v2 is the effective case",
+      "c-13c" in st["uncased"].get("C", []))
+check("T13 a contribution on B is cased under A/v2 and "
+      "pre-ack (v2 unacknowledged)",
+      "c-13b" in st["pre_ack"].get("B", [])
+      and "c-13b" not in st["uncased"].get("B", []))
+A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+  {"case_id": "case-a2", "version": 2})
+contrib(d, store, tok, "crew-1", "c-13b2", "B")
+st = d.state()
+check("T13 after A/v2 acknowledgement: cased, not pre-ack",
+      "c-13b2" not in st["pre_ack"].get("B", [])
+      and "c-13b2" not in st["uncased"].get("B", []))
 
 print()
 if FAILURES:

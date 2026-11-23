@@ -312,47 +312,27 @@ def _case_status_at(state, seat_id, part):
     position-sensitive reading §3.8's uncased derivation needs.
     Returns (cased, acknowledged).
 
-    The version that governs is the EFFECTIVE one at this
-    position, selected the way the driver's effective case is
-    (§3.8 correction rounds 1–2): within each of the seat's
-    case lineages, the highest issued version is that lineage's
-    effective version — selected BEFORE any question of part
-    coverage, so a superseding version that moved the case to
-    another part retires the old version's coverage entirely
-    rather than leaving it effective for its old part. A
-    contribution is cased when some lineage's effective version
-    covers its part (the latest-issued such version governs),
-    and its acknowledgement state is that version's own — an
-    earlier version's acknowledgement never carries forward."""
-    best = None
-    for case_id, entry in state["cases"].items():
-        if entry.get("seat") != seat_id:
-            continue
-        effective = None
-        for vstr, ver in entry["versions"].items():
-            if not version_issued(ver, int(vstr)):
-                continue
-            version = int(vstr)
-            if effective is None or version > effective[0] or (
-                    version == effective[0]
-                    and ver["issued"] > effective[1]["issued"]):
-                effective = (version, ver)
-        if effective is None:
-            continue
-        ver = effective[1]
-        content = ver.get("content") or {}
-        if content.get("part") != part:
-            continue
-        if best is None or ver["issued"] > best["issued"]:
-            best = ver
-    if best is None:
+    The governing case is the seat's EFFECTIVE case at this
+    position — selected by effective_case() itself, run over
+    the fold as it stands at the contribution's own step
+    (§3.8 correction rounds 1–3). One selection rule, shared
+    by the fold and the driver by construction, so the
+    record's account of which case governed a contribution
+    cannot diverge from the case the seat was actually given:
+    the highest issued version across all of the seat's case
+    lineages (the earliest-standing lineage holding a version
+    tie), judged for part coverage and acknowledgement as
+    that version alone. A superseding version — whether a
+    correction within a lineage or a higher version in
+    another — retires what it supersedes entirely, including
+    its coverage of its old part; an earlier version's
+    acknowledgement never carries forward."""
+    eff = effective_case(state, seat_id)
+    if eff is None or not eff.get("content"):
         return False, False
-    ver = best
-    ack_seq = ver.get("acknowledged", {}).get(seat_id)
-    acknowledged = ack_seq is not None and \
-        ver.get("issued") is not None and \
-        ack_seq > ver["issued"]
-    return True, acknowledged
+    if eff["content"].get("part") != part:
+        return False, False
+    return True, bool(eff["acknowledged"])
 
 
 def _subject_changed_parts(payload):
