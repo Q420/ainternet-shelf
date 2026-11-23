@@ -269,6 +269,94 @@ r = Driver(d, "crew-a", tok["crew-a"], adapter()).wake_cycle()
 check("an HTTP error lands as a provider_error failure",
       r["failed"] == "provider_error" and r["recorded"] == [])
 
+# --------------------------- A6: the deadline covers handling, too
+import framework.adapter as adapter_module
+import urllib.request
+from unittest import mock
+
+store, d, tok = fresh_store()
+SCRIPT["crew-a"] = [{"outcome": "contribute", "text": "slow words"}]
+real_extract = adapter_module._extract_json_object
+
+
+def slow_extract(text):
+    time.sleep(0.8)
+    return real_extract(text)
+
+
+with mock.patch.object(adapter_module, "_extract_json_object",
+                       slow_extract):
+    r = Driver(d, "crew-a", tok["crew-a"],
+               adapter(timeout=0.3)).wake_cycle()
+check("A6: response handling that overruns the deadline turns "
+      "the would-be outcome into a no_response failure — nothing "
+      "succeeds after the deadline",
+      r["failed"] == "no_response" and r["recorded"] == [])
+
+slow_adapter = adapter(timeout=0.3)
+
+
+def slow_call(messages):
+    time.sleep(0.8)
+    return ("I am Slow.", "stand-in-model-1")
+
+
+slow_adapter._call = slow_call
+try:
+    slow_adapter.identify()
+    identify_failed = None
+except AdapterFailure as exc:
+    identify_failed = exc.kind
+check("A6: identify()'s handling is under the same deadline",
+      identify_failed == "no_response")
+
+# --------------------------- A6: the read path fails closed
+class _FakeResp:
+    def __init__(self, body, bad_sock=False, no_read1=False):
+        self._body = body
+        self._bad_sock = bad_sock
+        if not no_read1:
+            self.read1 = self._read1
+        sock = mock.Mock()
+        if bad_sock:
+            sock.settimeout.side_effect = RuntimeError("no sock")
+        self.fp = mock.Mock()
+        self.fp.raw._sock = sock
+
+    def _read1(self, n):
+        body, self._body = self._body, b""
+        return body
+
+    def read(self, n=-1):
+        body, self._body = self._body, b""
+        return body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+ENVELOPE = json.dumps(_completion(json.dumps(
+    {"outcome": "contribute", "text": "x"}))).encode()
+for label, fake in (
+        ("no bounded read (read1 unavailable)",
+         _FakeResp(ENVELOPE, no_read1=True)),
+        ("socket timeout cannot be set",
+         _FakeResp(ENVELOPE, bad_sock=True))):
+    a = adapter()
+    with mock.patch.object(urllib.request, "urlopen",
+                           return_value=fake):
+        try:
+            a({"seat": "crew-a", "case_id": "c", "case_version": 1,
+               "case": {"part": "A"}, "position": 1})
+            closed_kind = None
+        except AdapterFailure as exc:
+            closed_kind = exc.kind
+    check(f"A6: the read path fails closed when it has {label}",
+          closed_kind == "provider_error")
+
 # ------------------------------------------- onboarding identity (A5)
 store, d, tok = fresh_store()
 SCRIPT["identify"] = ["I am Stand-In Model 1, provided by the "

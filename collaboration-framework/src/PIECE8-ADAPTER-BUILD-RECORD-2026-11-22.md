@@ -167,3 +167,43 @@ The §3.10 checker runs against it directly.
 
 Suite after round 1: Piece 8, 22 checks, ALL PASS; every
 regression green.
+
+## Examination round 2 (2026-11-22) — the deadline, completed
+
+A4 was accepted and closed. A6 had two gaps left, both real:
+
+1. **The deadline stopped at the transport.** `_call` checked
+   the clock, but extraction, validation and proposal
+   construction in `__call__` (and `identify`'s handling) ran
+   outside it. The deadline is now an operation-level
+   absolute: begun by every public operation
+   (`_begin_deadline`), used by the transport, and checked
+   again after handling, before any outcome returns
+   (`_check_deadline`) — handling that overruns turns the
+   would-be outcome into a no_response failure. The suite
+   witnesses it on the handling path itself: a slow
+   extraction (transport instant) fails the wake as
+   no_response with nothing recorded, and `identify` under a
+   slow call fails the same way.
+2. **The read path could silently lose enforcement.** The
+   `read(n)` fallback is gone — a stream without `read1`
+   fails the call closed (provider_error) — and setting the
+   socket timeout is no longer swallowed: it is set once,
+   before the read loop, and any failure fails the call
+   closed. (Setting it per-iteration, the first attempt,
+   broke real responses: http.client retires the socket when
+   a response completes, so the final iteration's re-set
+   raised on a finished socket. Set-once before the loop is
+   both fail-closed and correct; the per-chunk clock checks
+   bound the total.) Both fail-closed shapes are witnessed
+   with fake response objects.
+
+The exported live record was also verified from the
+receiving side here: decoded from `run-db.b64.txt`, the
+SHA-256 matches the stated hash, and the §3.10 checker run
+against the DECODED copy returns all eight checks ok over
+the run's 14 events. Vane's independent replay remains hers
+to perform at final examination.
+
+Suite after round 2: Piece 8, 26 checks, ALL PASS; every
+regression green.

@@ -116,19 +116,38 @@ class OpenAICompatibleAdapter:
         self.timeout = timeout
         self._contribution_counter = 0
 
+    # ----------------------------------------------------- deadline
+    def _begin_deadline(self):
+        """Open the operation's TOTAL deadline (A6): one
+        absolute point on a monotonic clock covering transport,
+        response AND the adapter's own handling, through the
+        final outcome. Begun by every public operation."""
+        self._deadline = time.monotonic() + self.timeout
+        return self._deadline
+
+    def _check_deadline(self):
+        """Fail the operation if its deadline has passed. A
+        successful adapter outcome after the deadline is
+        impossible: every public operation checks the clock
+        after handling, before returning."""
+        if getattr(self, "_deadline", None) is not None and \
+                time.monotonic() > self._deadline:
+            raise AdapterFailure(
+                "no_response", detail="total deadline exceeded")
+
     # ---------------------------------------------------- transport
     def _call(self, messages):
-        """One provider call under one TOTAL deadline (A6): an
-        absolute point on a monotonic clock, computed before
-        dispatch. Every blocking operation is bounded by the
-        time remaining; the body is read in chunks under the
+        """One provider call under the operation's total
+        deadline. Every blocking operation is bounded by the
+        time remaining; the body is read via read1 under the
         same bound, so a provider drip-feeding inside each
-        socket window cannot hold the call open; and the call
-        never returns successfully after its deadline — the
-        clock is checked again after reading and after
-        parsing. Returns (content, provider_model_id). No
-        retry, ever."""
-        deadline = time.monotonic() + self.timeout
+        socket window cannot hold the call open. The read path
+        FAILS CLOSED: if the stream offers no bounded read, or
+        the socket's timeout cannot be set to the remaining
+        time, the call fails rather than proceeding unbounded.
+        Returns (content, provider_model_id). No retry, ever."""
+        deadline = getattr(self, "_deadline", None) or \
+            self._begin_deadline()
 
         def remaining():
             left = deadline - time.monotonic()
@@ -154,16 +173,28 @@ class OpenAICompatibleAdapter:
                 # read1 returns after at most one socket read, so
                 # control comes back here between drips and the
                 # clock check — not the socket's inactivity
-                # window — is what bounds the total.
-                read_chunk = getattr(resp, "read1", None) or \
-                    (lambda n: resp.read(n))
+                # window — is what bounds the total. There is no
+                # fallback: a stream without a bounded read, or a
+                # socket whose timeout cannot be set, fails the
+                # call closed rather than reading unbounded.
+                read1 = getattr(resp, "read1", None)
+                if read1 is None:
+                    raise AdapterFailure(
+                        "provider_error",
+                        detail="response stream offers no bounded "
+                               "read; failing closed")
+                try:
+                    resp.fp.raw._sock.settimeout(remaining())
+                except AdapterFailure:
+                    raise
+                except Exception:
+                    raise AdapterFailure(
+                        "provider_error",
+                        detail="cannot bound the response "
+                               "read; failing closed")
                 while True:
-                    left = remaining()
-                    try:
-                        resp.fp.raw._sock.settimeout(left)
-                    except Exception:
-                        pass
-                    chunk = read_chunk(65536)
+                    remaining()
+                    chunk = read1(65536)
                     remaining()
                     if not chunk:
                         break
@@ -204,6 +235,7 @@ class OpenAICompatibleAdapter:
 
     # --------------------------------------------------------- wake
     def __call__(self, package):
+        self._begin_deadline()
         prompt = _CONTRACT + "\n\nYour wake package:\n" + \
             json.dumps(package, indent=1, default=str)
         content, _provider_model = self._call([
@@ -213,21 +245,23 @@ class OpenAICompatibleAdapter:
                         "the contract specifies."},
             {"role": "user", "content": prompt}])
         obj = _extract_json_object(content)
+        self._check_deadline()
         if obj is None:
             raise AdapterFailure("malformed_response",
                                  detail="answer is not one JSON "
                                         "object")
         outcome = obj.get("outcome")
+        result = None
         if outcome == "acknowledge":
             if set(obj) != {"outcome"}:
                 raise AdapterFailure(
                     "malformed_response",
                     detail="acknowledge carries extra fields")
-            return {"outcome": "proposals", "proposals": [{
+            result = {"outcome": "proposals", "proposals": [{
                 "type": "CASE_ACKNOWLEDGED",
                 "payload": {"case_id": package["case_id"],
                             "version": package["case_version"]}}]}
-        if outcome == "contribute":
+        elif outcome == "contribute":
             if set(obj) != {"outcome", "text"} or \
                     not isinstance(obj.get("text"), str) or \
                     not obj["text"].strip():
@@ -236,7 +270,7 @@ class OpenAICompatibleAdapter:
                     detail="contribute requires its own text")
             self._contribution_counter += 1
             part = (package.get("case") or {}).get("part")
-            return {"outcome": "proposals", "proposals": [{
+            result = {"outcome": "proposals", "proposals": [{
                 "type": "CONTRIBUTION",
                 "payload": {
                     "contribution_id":
@@ -245,15 +279,22 @@ class OpenAICompatibleAdapter:
                         f"{self._contribution_counter}",
                     "tree_part": part,
                     "text": obj["text"]}}]}
-        if outcome == "decline":
+        elif outcome == "decline":
             if set(obj) != {"outcome", "reason"} or \
                     not isinstance(obj.get("reason"), str):
                 raise AdapterFailure(
                     "malformed_response",
                     detail="decline requires a reason string")
-            return {"outcome": "decline", "reason": obj["reason"]}
-        raise AdapterFailure("malformed_response",
-                             detail=f"unknown outcome {outcome!r}")
+            result = {"outcome": "decline", "reason": obj["reason"]}
+        if result is None:
+            raise AdapterFailure(
+                "malformed_response",
+                detail=f"unknown outcome {outcome!r}")
+        # The deadline governs through the final outcome (A6):
+        # handling that overruns it turns the would-be outcome
+        # into a failure — nothing succeeds after the deadline.
+        self._check_deadline()
+        return result
 
     # --------------------------------------------------- onboarding
     def identify(self):
@@ -262,6 +303,7 @@ class OpenAICompatibleAdapter:
          "provider_model_id": <the provider's reported model
         identifier, verbatim, or None>}. Two attributed claims;
         no verdict is formed here."""
+        self._begin_deadline()
         content, provider_model_id = self._call([
             {"role": "user",
              "content": "You are being onboarded as a seat in a "
@@ -273,5 +315,6 @@ class OpenAICompatibleAdapter:
         if not isinstance(content, str) or not content.strip():
             raise AdapterFailure("malformed_response",
                                  detail="empty identity declaration")
+        self._check_deadline()
         return {"declaration": content,
                 "provider_model_id": provider_model_id}
