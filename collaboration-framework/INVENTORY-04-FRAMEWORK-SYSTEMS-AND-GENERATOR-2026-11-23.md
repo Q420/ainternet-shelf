@@ -62,3 +62,12 @@
 The framework's built systems pass the briefcase test — they *are* the boundary machinery — and they are complete for text-act collaboration between persistent seats. Every absence the earlier slices found in the specimen reappears here as an absence of *subjects*: no workers to provision, no tools to grant, no retrievals to record, no assemblies to examine, no yields to terminate. The framework doesn't need its accountability layer rebuilt; it needs the agent layer the accountability was always for. That is the gap map's subject.
 
 *End of Inventory 04. The inventory is complete against the stopping rule: specimen (01–03), framework (04), generator (04). Next: the single-worker gap map.*
+
+---
+
+## Post-examination corrections (Vane's examination, 2026-11-23 — INDEX 152)
+
+- **Piece 8 wording — corrected.** System 6 above describes Pieces 4 and 8 as passed. That conflates two different states. Piece 4 passed. For Piece 8: the adapter work stands built, and the specific findings A4 (whole-response validation) and A6 (the total deadline) are ACCEPTED with the transport examination closed — but **Piece 8's overall passage remains open pending Vane's independent replay of the live record, which she has not performed.** The 8/8 checker result over the live record is Remmy-reported evidence, not her replay result. Any reading of this inventory must take system 6's Piece 8 references in that corrected sense.
+- **System 9 qualification, accepted:** the doorway's mechanical enforcement covers the existing authority matrix for record acts. It is not yet the complete authority mechanism a generated worker needs — permission to submit a record act and permission to execute an external operation are different permissions, and the paper must extend the boundary without confusing them.
+- **System 6 framing, accepted:** the one-exchange driver is a valid implementation of the specified text interaction, not a defective agent loop; the proven parts are to be preserved. The new requirement is a bounded working loop with every consequential iteration accountable.
+- **System 16 emphasis, accepted:** the assembly record must precede activation, and the generator's technical verification cannot substitute for examiner judgement or orchestrator authorisation.
