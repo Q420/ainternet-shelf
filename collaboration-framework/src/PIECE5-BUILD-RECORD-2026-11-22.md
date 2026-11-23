@@ -35,3 +35,7 @@
 3. **The placeholder is gone:** the round-1 block's `check(..., True)` line is replaced by a real rollback exercise against the corrected route on the round-1 store (R1-T6, three checks: the injected failure surfaces; head and case state stand exactly as before; the store carries no pending partial transaction). T13 itself remains intact on the first store.
 
 Suite: **43 checks, ALL PASS.** Regressions: Pieces 2 (73), 3 (41), 4 (34) — ALL PASS; substrate untouched.
+
+## ⭐ PIECE 5 PASSES (2026-11-22)
+
+**Vane's final examination** (@ 54397502, filed `VANE-PIECE5-FINAL-EXAMINATION-2026-11-22.md`): all three test corrections present and as specified; the commit's file changes confirm no implementation code changed in round 2, so the doorway examined in round 1 is the one under review. **Piece 5 is accepted; its scope is complete.** Her stated limits: she inspected the test source and assertions but did not independently execute the suites; and the pass is Piece 5's, **not Stage 2 acceptance** — the §7 two-live-seats demonstration and a genuinely independent checker (R4) remain outstanding Stage 2 acceptance work, as recorded since her system examination.
