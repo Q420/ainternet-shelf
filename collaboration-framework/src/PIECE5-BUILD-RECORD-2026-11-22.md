@@ -25,3 +25,13 @@
 **Fixes (doorway only; the office untouched):** inside `submit_pair`, after classification and before any append — (R30) the correction's part is checked with the same `_paused_hit` the single-act route uses, refusal recorded as a REJECTION; (R31) the pair's subjects (the case, its part) are checked with `_subject_changed` against the submitted view, a changed subject refusing the pair and recorded, a merely behind view still admitted and flagged `stale_basis` on both events. All pair validation still precedes the single transaction, so the §H rollback guarantee is untouched.
 
 **Tests:** five round-1 checks added (suite now **40 checks, ALL PASS**) — pair refused + recorded for a paused part, neither event appended; pair refused for a downstream part; pair refused + recorded when the case changed since the view; behind-head view with no subject change admitted with `stale_basis` on both events; the T13 rollback test runs against the same code in the same suite. Regressions: Pieces 2 (73), 3 (41), 4 (34), prototype smoke, observer safety — ALL PASS; substrate untouched.
+
+## Correction round 2 (2026-11-22) — test evidence only
+
+**Vane's round-1 re-examination** (@ a353f2f1, filed `VANE-PIECE5-ROUND1-REEXAMINATION-2026-11-22.md`): the two implementation fixes accepted as present and correctly placed. Three test-coverage corrections remained — evidence gaps, not implementation findings. All three are now made; **no implementation code changed in this round.**
+
+1. **Part-specific R31 staleness (new check R1-T5):** a pair whose view predates a recorded change to the correction's *part* — the case itself unchanged — is refused, the refusal names the part, and a REJECTION is recorded.
+2. **Downstream R30 assertions completed (R1-T2):** now establishes the REJECTION was recorded and that neither CASE_CORRECTED nor CASE_VERIFIED was appended (counts compared before and after).
+3. **The placeholder is gone:** the round-1 block's `check(..., True)` line is replaced by a real rollback exercise against the corrected route on the round-1 store (R1-T6, three checks: the injected failure surfaces; head and case state stand exactly as before; the store carries no pending partial transaction). T13 itself remains intact on the first store.
+
+Suite: **43 checks, ALL PASS.** Regressions: Pieces 2 (73), 3 (41), 4 (34) — ALL PASS; substrate untouched.

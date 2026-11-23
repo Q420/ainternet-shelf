@@ -421,13 +421,24 @@ A3(tok3["exam-1"], "GATE_OUTCOME",
 
 A3(tok3["exam-1"], "GATE_OUTCOME",
    {"joint": "j-p2", "outcome": "escalate", "tree_part": "part-A"})
+verified_before = len([ev for ev in store3.all_events()
+                       if ev["type"] == "CASE_VERIFIED" and
+                       ev["payload"].get("case_id") == "case-crew-p"])
+rejections_before = len([ev for ev in store3.all_events()
+                         if ev["type"] == "REJECTION"])
 g = pair_refusal(lambda: office3.correct(
     tok3["orch-1"], "case-crew-p", {"part": "part-B"}))
 check("R1-T2 a correction pair for a part downstream of a pause "
-      "is likewise refused",
+      "is refused and recorded, neither pair event appended",
       g is not None and "R30" in g and
+      len([ev for ev in store3.all_events()
+           if ev["type"] == "REJECTION"]) == rejections_before + 1 and
       [ev for ev in store3.all_events()
-       if ev["type"] == "CASE_CORRECTED"] == [])
+       if ev["type"] == "CASE_CORRECTED"] == [] and
+      len([ev for ev in store3.all_events()
+           if ev["type"] == "CASE_VERIFIED" and
+           ev["payload"].get("case_id") == "case-crew-p"]) ==
+      verified_before)
 A3(tok3["exam-1"], "GATE_OUTCOME",
    {"joint": "j-p2", "outcome": "allow",
     "released_set": ["part-A", "part-B"]})
@@ -464,9 +475,61 @@ check("R1-T4 a behind-head view with no subject change is "
       "admitted, flagged stale_basis on both pair events",
       ev1["payload"].get("stale_basis") is True and
       ev2["payload"].get("stale_basis") is True)
-check("R1-T5 the atomic rollback guarantee stands after the new "
-      "checks (T13 above ran against this same code)",
-      True)
+
+# Round-2 test corrections: part-specific staleness, and a real
+# rollback exercise against the corrected route (T13 stands above
+# on the first store; this is its counterpart on this store).
+p2_content, _ = established_case_content(d3.state(), "case-crew-p")
+view_part = store3.head_seq()
+A3(tok3["crew-p"], "CONTRIBUTION",
+   {"contribution_id": "cp2", "tree_part": "part-A",
+    "text": "work on the case's part, after the pair's view"})
+rejections_before = len([ev for ev in store3.all_events()
+                         if ev["type"] == "REJECTION"])
+g = pair_refusal(lambda: d3.submit_pair(
+    tok3["orch-1"],
+    [("CASE_CORRECTED", dict(p2_content, version=3,
+                             assignment="revised again",
+                             representational=False)),
+     ("CASE_VERIFIED", {"case_id": "case-crew-p", "version": 3})],
+    view_seq=view_part))
+check("R1-T5 a pair whose part changed since its view — the case "
+      "itself unchanged — is refused and recorded (R31)",
+      g is not None and "R31" in g and "part-A" in g and
+      len([ev for ev in store3.all_events()
+           if ev["type"] == "REJECTION"]) == rejections_before + 1 and
+      [ev for ev in store3.all_events()
+       if ev["type"] == "CASE_CORRECTED" and
+       ev["payload"].get("version") == 3] == [])
+
+head_before = store3.head_seq()
+state_before = json.dumps(d3.state()["cases"], sort_keys=True)
+original_append3 = store3.append
+
+
+def exploding_append3(type_, actor, affected, payload):
+    if type_ == "CASE_VERIFIED":
+        raise RuntimeError("injected failure between the appends")
+    return original_append3(type_, actor, affected, payload)
+
+
+store3.append = exploding_append3
+try:
+    office3.correct(tok3["orch-1"], "case-crew-p",
+                    {"assignment": "a change that must not half-land"})
+    raised = False
+except RuntimeError:
+    raised = True
+finally:
+    store3.append = original_append3
+check("R1-T6 a failure inside the corrected route's pair surfaces",
+      raised)
+check("R1-T6 head and case state stand exactly as before the pair",
+      store3.head_seq() == head_before and
+      json.dumps(d3.state()["cases"], sort_keys=True) == state_before)
+A3(tok3["crew-p"], "COMMENT", {"on_job": True, "text": "still here"})
+check("R1-T6 the store carries no pending partial transaction",
+      store3.head_seq() == head_before + 1)
 
 print()
 if FAILURES:
