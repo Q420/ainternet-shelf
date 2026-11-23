@@ -771,6 +771,200 @@ check("T13d a record filling a part its case does not cover "
       and "part" in store.all_events()[-1]["payload"].get(
           "ground", ""))
 
+# -- T14: correction round 2 (Vane's re-examination of the
+# build) — an instance proposal must identify its slot and
+# part at the doorway, a generation must equal its exact
+# proposal in seat and part, and the independent checker must
+# verify the full relationship itself: proposal ↔ record ↔
+# bound case, reconstructed from the events, so a malformed
+# history appended past the doorway is still reported.
+def instance_proposal_payload(d, **kw):
+    """A §3.8-valid proposal payload carrying the instance
+    discriminator, hand-built so a test can omit or vary
+    exactly one field."""
+    cs = d.state()["commission_seq"]
+    payload = {
+        "commission_seq": cs, "tree_ref": cs, "gates_ref": cs,
+        "crew": [{"seat": "crew-1", "role": "crew"}],
+        "proposal_kind": "instance",
+        "role_requirements": "a careful drafting model",
+    }
+    payload.update(kw)
+    return payload
+
+
+# (a) an instance proposal naming no seat slot is refused,
+# the refusal recorded.
+store, d, office, gen, tok = fresh()
+before = len(store.all_events())
+check("T14a an instance proposal without a seat is refused "
+      "at the doorway, the refusal recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_PROPOSED",
+          instance_proposal_payload(d, part="part-A"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION"
+      and "seat slot" in store.all_events()[-1]["payload"].get(
+          "ground", ""))
+
+# (b) an instance proposal naming no part is refused, the
+# refusal recorded.
+store, d, office, gen, tok = fresh()
+before = len(store.all_events())
+check("T14b an instance proposal without a part is refused "
+      "at the doorway, the refusal recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_PROPOSED",
+          instance_proposal_payload(d, seat="crew-1"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION"
+      and "part" in store.all_events()[-1]["payload"].get(
+          "ground", ""))
+
+# (c) an instance proposal naming a non-crew seat, or a seat
+# the record never commissioned, is refused.
+store, d, office, gen, tok = fresh()
+before = len(store.all_events())
+check("T14c an instance proposal for a non-crew seat is "
+      "refused, the refusal recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_PROPOSED",
+          instance_proposal_payload(d, seat="exam-1",
+                                    part="part-A"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION")
+before = len(store.all_events())
+check("T14c an instance proposal for an uncommissioned seat "
+      "is refused, the refusal recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_PROPOSED",
+          instance_proposal_payload(d, seat="ghost-1",
+                                    part="part-A"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION")
+
+# (d) a generation whose seat differs from its proposal's is
+# refused at the doorway, the refusal recorded.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop_ev = gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                      role_requirements="a careful drafting "
+                                        "model")
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+forged = forged_generated(prop_ev["event_seq"],
+                          ob_ev["event_seq"], "part-A")
+forged["seat"] = "crew-2"
+before = len(store.all_events())
+check("T14d a generation filling a different slot than its "
+      "proposal names is refused at the doorway, recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_GENERATED", forged,
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION"
+      and "seat slot" in store.all_events()[-1]["payload"].get(
+          "ground", ""))
+
+# (e) a generation whose part differs from its proposal's is
+# refused at the doorway — here the record's part is its
+# case's own, so only the proposal binding can refuse it.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop_ev = gen.propose(tok["orch-1"], "crew-1", part="part-B",
+                      role_requirements="a careful drafting "
+                                        "model")
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+before = len(store.all_events())
+check("T14e a generation filling a different part than its "
+      "proposal names is refused at the doorway, recorded",
+      refused(lambda: d.act(
+          tok["orch-1"], "ASSEMBLY_GENERATED",
+          forged_generated(prop_ev["event_seq"],
+                           ob_ev["event_seq"], "part-A"),
+          view_seq=store.head_seq()))
+      and len(store.all_events()) == before + 1
+      and store.all_events()[-1]["type"] == "REJECTION"
+      and "proposal names part" in
+      store.all_events()[-1]["payload"].get("ground", ""))
+
+# (f) the checker, on histories appended directly past the
+# doorway: the record's seat must equal its proposal's.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop_ev = gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                      role_requirements="a careful drafting "
+                                        "model")
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+forged = forged_generated(prop_ev["event_seq"],
+                          ob_ev["event_seq"], "part-A")
+forged["seat"] = "crew-2"
+store.append("ASSEMBLY_GENERATED", "orch-1", [], forged)
+store.commit()
+verdict = run_checker(store)
+ac = verdict["checks"]["assembly_correspondence"]
+check("T14f a record whose seat differs from its proposal "
+      "is reported by the checker",
+      ac["result"] == "divergent"
+      and any(p["kind"] == "generated_seat_differs_from_proposal"
+              for p in ac["problems"]), json.dumps(ac))
+
+# (g) the record's part must equal its proposal's.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop_ev = gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                      role_requirements="a careful drafting "
+                                        "model")
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+store.append("ASSEMBLY_GENERATED", "orch-1", [],
+             forged_generated(prop_ev["event_seq"],
+                              ob_ev["event_seq"], "part-B"))
+store.commit()
+verdict = run_checker(store)
+ac = verdict["checks"]["assembly_correspondence"]
+check("T14g a record whose part differs from its proposal "
+      "is reported by the checker",
+      ac["result"] == "divergent"
+      and any(p["kind"] == "generated_part_differs_from_proposal"
+              for p in ac["problems"]), json.dumps(ac))
+
+# (h) the record's part must equal its bound case's
+# established part — here proposal and record agree with each
+# other, so only the case binding can report it.
+store, d, office, gen, tok = fresh()
+issue_case(d, office, tok, "crew-1")
+prop_ev = gen.propose(tok["orch-1"], "crew-1", part="part-B",
+                      role_requirements="a careful drafting "
+                                        "model")
+ob_ev = ob.onboard_instance(
+    d, tok["orch-1"], "crew-1", "inst-crew-1-1",
+    "assembly-crew-1-1", DECL, provider_model_id=PROVIDER_ID)
+store.append("ASSEMBLY_GENERATED", "orch-1", [],
+             forged_generated(prop_ev["event_seq"],
+                              ob_ev["event_seq"], "part-B"))
+store.commit()
+verdict = run_checker(store)
+ac = verdict["checks"]["assembly_correspondence"]
+check("T14h a record whose part differs from its case's "
+      "part is reported by the checker",
+      ac["result"] == "divergent"
+      and any(p["kind"] == "generated_part_differs_from_case"
+              for p in ac["problems"])
+      and not any(
+          p["kind"] == "generated_part_differs_from_proposal"
+          for p in ac["problems"]), json.dumps(ac))
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")

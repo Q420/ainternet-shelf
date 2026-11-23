@@ -365,9 +365,12 @@ def _assembly_result(events, state):
     the generated object, by canonical hash; the generation
     answering an instance proposal, never a run-level one (the
     shared event kind's discriminator, correction round 1);
-    and no activation without the full chain and the record's
-    grants section. An incomplete or incorrectly ordered
-    assembly history is reported, never read as valid."""
+    the record's seat slot and part equalling its exact
+    proposal's, and its part equalling its bound case's
+    established part (correction round 2); and no activation
+    without the full chain and the record's grants section.
+    An incomplete or incorrectly ordered assembly history is
+    reported, never read as valid."""
     problems = []
 
     def problem(kind, **fields):
@@ -449,6 +452,31 @@ def _assembly_result(events, state):
                 prop["payload"].get("proposal_kind") != \
                 "instance":
             problem("generated_answers_run_proposal",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+        # The exact proposal, verified in full (correction
+        # round 2): the record's seat slot and part must equal
+        # its proposal's — reconstructed here from the events,
+        # never trusted to the doorway's refusal at offer time,
+        # which a directly appended history bypasses.
+        if prop is not None:
+            if prop["payload"].get("seat") != p.get("seat"):
+                problem("generated_seat_differs_from_proposal",
+                        assembly_id=aid, at_seq=ev["event_seq"])
+            if prop["payload"].get("part") != p.get("part"):
+                problem("generated_part_differs_from_proposal",
+                        assembly_id=aid, at_seq=ev["event_seq"])
+        # The bound case's established content, from this
+        # checker's own replayed state: the record's part must
+        # be its case's part.
+        case = (state.get("cases") or {}).get(p.get("case_id"))
+        ver = ((case or {}).get("versions") or {}).get(
+            str(p.get("case_version"))) or {}
+        content = ver.get("content")
+        if content is None:
+            problem("generated_case_not_established",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+        elif content.get("part") != p.get("part"):
+            problem("generated_part_differs_from_case",
                     assembly_id=aid, at_seq=ev["event_seq"])
         # The exact onboarding it binds to: an instance
         # onboarding, for this instance and assembly, after the

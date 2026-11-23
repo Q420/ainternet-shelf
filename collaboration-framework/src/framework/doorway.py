@@ -634,13 +634,17 @@ class Doorway:
         # Agent layer (Piece A1, R37–R40): an assembly proposal
         # that names the seat slot it fills (the §3.8 proposal,
         # extended) names a commissioned crew slot and a part of
-        # the recorded tree; the lifecycle acts that follow carry
-        # their own mechanical discipline — the normative order,
-        # the onboarding binding, the judged object's hash, the
+        # the recorded tree; an instance proposal — the payload
+        # discriminator says so — must name both, or it is not a
+        # valid instance proposal at all (correction round 2).
+        # The lifecycle acts that follow carry their own
+        # mechanical discipline — the normative order, the
+        # onboarding binding, the judged object's hash, the
         # credential invariant. Substance — whether an instance
         # is sufficient — remains the examiner's.
         if type_ == "ASSEMBLY_PROPOSED" and \
-                payload.get("seat") is not None:
+                (payload.get("seat") is not None
+                 or payload.get("proposal_kind") == "instance"):
             problem = self._assembly_slot_problem(state, payload)
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
@@ -1055,7 +1059,17 @@ class Doorway:
         be recorded, or None (Piece A1): the slot is a
         commissioned crew seat — a role specification an
         assembly fills — and the part it names is a part of the
-        recorded tree."""
+        recorded tree. An instance proposal must name both its
+        slot and its part; a missing one is not a permissive
+        case but an invalid proposal (correction round 2)."""
+        if payload.get("proposal_kind") == "instance":
+            if payload.get("seat") is None:
+                return ("an instance proposal names the seat "
+                        "slot it fills; this one names none "
+                        "(R37)")
+            if payload.get("part") is None:
+                return ("an instance proposal names the part "
+                        "it fills; this one names none (R37)")
         seat_id = payload.get("seat")
         binding = state["seats"].get(seat_id)
         if binding is None:
@@ -1171,7 +1185,9 @@ class Doorway:
         None (Piece A1, R37/R38): the assembly and its instance
         are new (ids are never reused); the record binds to the
         exact proposal it answers — an instance proposal, never
-        a run-level one (correction round 1) — and to the exact
+        a run-level one (correction round 1), whose seat slot
+        and part the record must equal exactly (correction
+        round 2) — and to the exact
         instance onboarding that precedes it — by position and
         by the declaration's fingerprint, identity claims
         living only in the onboarding event; the case binding
@@ -1209,10 +1225,21 @@ class Doorway:
                     "a run-level proposal; a generation answers "
                     "an instance proposal only — the two share "
                     "an event kind, never a referent (R40)")
-        if proposal["payload"].get("seat") not in (
-                None, payload.get("seat")):
-            return ("the proposal names a different seat slot "
-                    "than the assembly fills (R37)")
+        if proposal["payload"].get("seat") != \
+                payload.get("seat"):
+            return (f"the proposal names seat slot "
+                    f"{proposal['payload'].get('seat')!r}; the "
+                    f"assembly fills {payload.get('seat')!r} — "
+                    f"a generation answers its exact proposal, "
+                    f"and a proposal naming no slot grounds no "
+                    f"generation (R37)")
+        if proposal["payload"].get("part") != \
+                payload.get("part"):
+            return (f"the proposal names part "
+                    f"{proposal['payload'].get('part')!r}; the "
+                    f"assembly fills {payload.get('part')!r} — "
+                    f"a generation answers its exact proposal "
+                    f"(R37)")
         bound = self._event_at(payload.get("onboarding_seq"))
         if bound is None or bound["type"] != "ONBOARDING" or \
                 bound["payload"].get("subject") != "instance":
