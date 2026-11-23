@@ -53,9 +53,13 @@ examination, not passed.
   event; the fold defines no event that clears a stall, and
   the suite says so rather than inventing one.
 - **O5 — sealed by allowlist:** a MATERIAL_SEALED event is
-  represented by a fresh structure carrying only
-  {material_id, boundary, held_by, event_seq} beside the
-  event's own position/type/actor. The original payload
+  represented by a fresh structure carrying exactly the
+  approved fields — {material_id, held_by, event_seq}
+  beside the event's own position, type and actor. (The
+  first submission also carried `ts` and `boundary`;
+  correction round 1 narrowed the representation to
+  exactly this shape — see the round-1 section. This
+  paragraph states the final state.) The original payload
   never crosses. The fixture hides secrets in the expected
   field, an unexpected field, and a nested object; none
   appears in the render structure or the exported page,
