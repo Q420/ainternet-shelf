@@ -473,6 +473,104 @@ except AdapterFailure as failure:
 check("T4: a yield combined with anything is malformed whole "
       "at the adapter", combo_refused)
 
+# INDEX 219: the adapter's deadline semantics — a budget-
+# carrying call is governed EXCLUSIVELY by the budget (the
+# configured timeout is not a subordinate span over it),
+# and a budget-less call keeps the configured timeout as
+# its finite pre-activation fence. The slow stub below
+# answers in 0.8s: slower than the 0.3s configured timeout,
+# far inside a 30s budget.
+def _slow_yield(messages):
+    time.sleep(0.8)
+    return (json.dumps({"outcome": "yield",
+                        "summary": "standing"}), "m")
+
+
+slow_adapter = OpenAICompatibleAdapter(
+    model="m", api_key="x", timeout=0.3)
+slow_adapter._call = _slow_yield
+out = slow_adapter(pkg, budget=30)
+check("T4 (INDEX 219): a budget-carrying call slower than "
+      "the configured timeout but within budget is NOT cut "
+      "at the timeout — the budget governs exclusively",
+      out == {"outcome": "yield", "summary": "standing"})
+
+fenced_adapter = OpenAICompatibleAdapter(
+    model="m", api_key="x", timeout=0.3)
+fenced_adapter._call = _slow_yield
+try:
+    fenced_adapter(pkg)
+    fence_held = False
+except AdapterFailure as failure:
+    fence_held = failure.kind == "no_response"
+check("T4 (INDEX 219): a budget-less call remains bounded "
+      "by the configured timeout — the pre-activation fence",
+      fence_held)
+
+# INDEX 217/219: timing evidence — a loop run produces one
+# call_timings entry per iteration: the stages the chain
+# exposes cross into the entry (the transport's inseparable
+# span labelled in its own data), and a stage the chain
+# does not expose stands as None, unknown, not estimated.
+class TimedScript(Script):
+    """A Script whose transport seam (_call) carries the
+    stage timings of its most recent call, in the connector
+    transport's shape. The loop never invokes _call — it
+    reads the attribute the transport publishes."""
+
+    def __init__(self, steps):
+        super().__init__(steps)
+
+        def _call(messages):
+            raise AssertionError("the loop never calls _call")
+
+        _call.last_call_timings = {
+            "body_preparation_s": 0.001,
+            "helper_launch_s": 0.002,
+            "submission_provider_wait_receipt_s": 0.003,
+            "submission_provider_wait_receipt_note":
+                "submission + provider wait + receipt "
+                "(inseparable through this interface)",
+            "response_parsing_s": 0.0005,
+        }
+        self._call = _call
+
+
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+res = Loop(d, itok, TimedScript([yield_()])).run()
+entries = res.get("call_timings") or []
+check("T4 (INDEX 217/219): the loop result carries one "
+      "call_timings entry for the iteration, its own "
+      "measured stages standing as numbers",
+      res["ok"] and len(entries) == 1 and
+      entries[0]["iteration"] == 1 and
+      isinstance(entries[0]["package_construction_s"], float)
+      and isinstance(entries[0]["total_call_s"], float))
+check("T4 (INDEX 217/219): the transport's stage timings "
+      "cross into the entry with the inseparable stage "
+      "labelled in its own data",
+      len(entries) == 1 and
+      entries[0]["transport_stages"][
+          "submission_provider_wait_receipt_s"] == 0.003 and
+      "inseparable" in entries[0]["transport_stages"][
+          "submission_provider_wait_receipt_note"])
+check("T4 (INDEX 217/219): a stage the chain does not "
+      "expose (rendering, for this callable) stands as "
+      "None — unknown, not estimated",
+      len(entries) == 1 and entries[0]["render_s"] is None)
+
+store, d, office, gen, tok = fresh()
+r, itok = activate(store, d, office, gen, tok)
+res = Loop(d, itok, Script([yield_()])).run()
+entries = res.get("call_timings") or []
+check("T4 (INDEX 217/219): a callable providing no "
+      "transport stages yields an entry with the stages "
+      "None and the absence noted, not estimated",
+      len(entries) == 1 and
+      entries[0]["transport_stages"] is None and
+      "note" in entries[0])
+
 # -- T5: bounds pinning — a mid-activation correction carrying
 # larger bounds governs nothing; the pinned version's ceiling
 # stops the loop.

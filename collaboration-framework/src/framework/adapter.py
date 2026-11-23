@@ -39,9 +39,21 @@ the driver's back.
   carries a summary alone — terminal outcomes are mutually
   exclusive, and any combination is malformed whole. The
   caller may also supply the activation's remaining budget
-  as a call parameter (never in the prompt): the activation
-  deadline governs, the per-call limit only tightens, and a
-  call that cannot begin within budget does not begin.
+  as a call parameter (never in the prompt): a budget-
+  carrying call is governed EXCLUSIVELY by that budget —
+  the remaining activation deadline is its one clock, and
+  the configured per-call timeout plays no part in it
+  (INDEX 219, an adapter deadline-semantics change: the
+  earlier rule, under which the per-call limit only
+  tightened the budget, silently reintroduced a subordinate
+  per-call span over every worker call). The configured
+  timeout survives ONLY as the finite fence for calls
+  carrying no budget — identify() and the other
+  pre-activation calls, made before any activation clock
+  exists. A call that cannot begin within budget does not
+  begin. The adapter also times its own prompt rendering
+  (last_render_s) — timing evidence under INDEX 217/219;
+  it governs nothing.
 - A5. `identify()` asks the model to state what it is and
   returns the declaration verbatim beside the provider-
   reported model identifier from the response metadata —
@@ -178,20 +190,28 @@ class OpenAICompatibleAdapter:
         self._api_key_env = api_key_env
         self.timeout = timeout
         self._contribution_counter = 0
+        # Timing evidence (INDEX 217/219): the prompt-
+        # rendering seconds of the most recent __call__, or
+        # None where no package was rendered (identify()).
+        self.last_render_s = None
 
     # ----------------------------------------------------- deadline
     def _begin_deadline(self, budget=None):
         """Open the operation's TOTAL deadline (A6): one
         absolute point on a monotonic clock covering transport,
         response AND the adapter's own handling, through the
-        final outcome. Begun by every public operation. A
-        supplied activation budget (Piece A3, R49/R51) only
-        tightens the span: the activation deadline is the
-        governing limit and the per-call limit never extends
-        past it."""
-        span = self.timeout
+        final outcome. Begun by every public operation. The
+        span is settled by INDEX 219: a supplied activation
+        budget (Piece A3, R49/R51) governs EXCLUSIVELY — the
+        effective deadline is now + budget and the configured
+        timeout plays no part, so no shorter per-call span can
+        be reintroduced over a worker call; a call carrying no
+        budget (identify(), the pre-activation calls) keeps
+        the finite fence, now + the configured timeout."""
         if budget is not None:
-            span = min(span, budget)
+            span = budget
+        else:
+            span = self.timeout
         self._deadline = time.monotonic() + span
         return self._deadline
 
@@ -419,10 +439,11 @@ class OpenAICompatibleAdapter:
         """One bounded call. budget (Piece A3, R49/R51) is the
         activation's remaining budget in seconds, supplied by
         the caller as a call parameter — it never enters the
-        prompt the model sees. The activation deadline governs:
-        the call's span is the tighter of the per-call limit
-        and the budget, and a call that cannot begin within
-        budget does not begin at all."""
+        prompt the model sees. A budget-carrying call is
+        governed exclusively by that budget (INDEX 219): the
+        remaining activation deadline is its one clock and
+        the configured timeout plays no part. A call that
+        cannot begin within budget does not begin at all."""
         if budget is not None:
             if isinstance(budget, bool) or \
                     not isinstance(budget, (int, float)):
@@ -436,7 +457,10 @@ class OpenAICompatibleAdapter:
                            "passed; the call cannot begin "
                            "within budget")
         self._begin_deadline(budget)
+        self.last_render_s = None
+        render_started = time.monotonic()
         prompt = _render_prompt(package)
+        self.last_render_s = time.monotonic() - render_started
         content, _provider_model = self._call([
             {"role": "system",
              "content": "You are a seat in a recorded "
@@ -563,6 +587,7 @@ class OpenAICompatibleAdapter:
          "provider_model_id": <the provider's reported model
         identifier, verbatim, or None>}. Two attributed claims;
         no verdict is formed here."""
+        self.last_render_s = None
         self._begin_deadline()
         content, provider_model_id = self._call([
             {"role": "user",

@@ -74,6 +74,17 @@ callers. The transport's bound remains the hard wall —
 the group is terminated at the caller's deadline whatever
 the helper's internal timeout says.
 
+Timing stages (INDEX 217/219). The installed callable
+records the stage timings of its most recent call on its
+`last_call_timings` attribute — a plain dict the loop and
+the harness read after the call returns or raises: body
+preparation, helper launch, the communicate span
+(submission, provider wait and receipt — inseparable
+through this interface, and labelled as such in the
+data), and response parsing. On a failure path the
+stages reached stand measured and the rest stand None.
+The timings are evidence only; they govern nothing.
+
 Request fidelity. The body sent to the helper mirrors the
 adapter's own `_dispatch` byte-for-byte in content:
 {"model": <model>, "messages": <messages>,
@@ -262,9 +273,29 @@ def install_connector_transport(adapter, helper_path, model):
     docstring. Returns the replacement callable."""
 
     def connector_call(messages):
+        # Stage timings for this call (INDEX 217/219):
+        # published on the callable before anything can
+        # raise, so a failure path leaves the stages it
+        # reached measured and the rest None. The clock
+        # here is the real monotonic clock, never the
+        # deadline alias the witness patches: these are
+        # measurements, not deadline logic.
+        timings = {
+            "body_preparation_s": None,
+            "helper_launch_s": None,
+            "submission_provider_wait_receipt_s": None,
+            "submission_provider_wait_receipt_note":
+                "submission + provider wait + receipt "
+                "(inseparable through this interface)",
+            "response_parsing_s": None,
+        }
+        connector_call.last_call_timings = timings
+        prep_started = time.monotonic()
         body = json.dumps(
             {"model": model, "messages": messages,
              "temperature": 0.2}).encode("utf-8")
+        timings["body_preparation_s"] = \
+            time.monotonic() - prep_started
         # The bound is the time REMAINING to the adapter's
         # own total deadline: _begin_deadline establishes
         # adapter._deadline before every public operation
@@ -320,6 +351,7 @@ def install_connector_transport(adapter, helper_path, model):
         helper_env = dict(os.environ)
         helper_env["NVIDIA_API_TIMEOUT"] = \
             repr(helper_timeout)
+        launch_started = time.monotonic()
         try:
             proc = _Popen(
                 [sys.executable, helper_path, "chat", model],
@@ -327,8 +359,12 @@ def install_connector_transport(adapter, helper_path, model):
                 stderr=subprocess.PIPE, start_new_session=True,
                 env=helper_env)
         except OSError as exc:
+            timings["helper_launch_s"] = \
+                time.monotonic() - launch_started
             raise AdapterFailure("provider_error",
                                  detail=type(exc).__name__)
+        timings["helper_launch_s"] = \
+            time.monotonic() - launch_started
         # Recompute the remaining time now that the helper
         # exists, BEFORE waiting on it: process creation
         # itself can consume the rest of the deadline, and
@@ -351,49 +387,62 @@ def install_connector_transport(adapter, helper_path, model):
             # procedure as an expiry during the wait.
             # Never returns.
             _expire_and_raise(proc)
+        wait_started = time.monotonic()
         try:
             out, err = proc.communicate(input=body,
                                         timeout=remaining)
         except subprocess.TimeoutExpired:
+            timings["submission_provider_wait_receipt_s"] = \
+                time.monotonic() - wait_started
             # The cancellation boundary: terminate the whole
             # process group and confirm it ended BEFORE
             # raising; an unconfirmed termination is an
             # unresolved transport condition, never a
             # no_response. Nothing returns from this path.
             _expire_and_raise(proc)
-        if proc.returncode != 0:
-            detail = (err or b"").decode(
-                "utf-8", "replace").strip()
-            raise AdapterFailure(
-                "provider_error",
-                detail=f"connector helper exited "
-                       f"{proc.returncode}"
-                       + (f": {detail[:_DIAGNOSTIC_LIMIT]}"
-                          if detail else ""))
+        timings["submission_provider_wait_receipt_s"] = \
+            time.monotonic() - wait_started
+        parse_started = time.monotonic()
         try:
-            parsed = json.loads(out.decode("utf-8", "replace"))
-        except ValueError:
-            raise AdapterFailure(
-                "malformed_response",
-                detail="provider body is not JSON")
-        if not isinstance(parsed, dict):
-            raise AdapterFailure(
-                "malformed_response",
-                detail="provider body is not an object")
-        if parsed.get("error"):
-            raise AdapterFailure(
-                "provider_error",
-                detail=f"provider error body: "
-                       f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}")
-        provider_model_id = parsed.get("model")
-        try:
-            content = parsed["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError):
-            raise AdapterFailure(
-                "malformed_response",
-                detail="no message content in provider "
-                       "response")
-        return content, provider_model_id
+            if proc.returncode != 0:
+                detail = (err or b"").decode(
+                    "utf-8", "replace").strip()
+                raise AdapterFailure(
+                    "provider_error",
+                    detail=f"connector helper exited "
+                           f"{proc.returncode}"
+                           + (f": {detail[:_DIAGNOSTIC_LIMIT]}"
+                              if detail else ""))
+            try:
+                parsed = json.loads(
+                    out.decode("utf-8", "replace"))
+            except ValueError:
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="provider body is not JSON")
+            if not isinstance(parsed, dict):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="provider body is not an object")
+            if parsed.get("error"):
+                raise AdapterFailure(
+                    "provider_error",
+                    detail=f"provider error body: "
+                           f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}")
+            provider_model_id = parsed.get("model")
+            try:
+                content = parsed["choices"][0]["message"][
+                    "content"]
+            except (KeyError, IndexError, TypeError):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="no message content in provider "
+                           "response")
+            return content, provider_model_id
+        finally:
+            timings["response_parsing_s"] = \
+                time.monotonic() - parse_started
 
+    connector_call.last_call_timings = None
     adapter._call = connector_call
     return connector_call

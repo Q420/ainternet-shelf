@@ -17,7 +17,9 @@ The shape, as the scope settles it:
   case carries no bounds is not run, and the refusal happens
   before any model call. The bounds are the pinned version's
   for the whole activation; a later case version's bounds
-  govern nothing here.
+  govern nothing here. Since INDEX 219 the budget the loop
+  supplies governs the callable's calls exclusively — no
+  per-call limit at the adapter tightens it either.
 - The deadline begins at activation, not at loop start: the
   doorway holds a monotonic anchor established at activation,
   and the loop inherits whatever budget remains. A loop that
@@ -85,6 +87,17 @@ The shape, as the scope settles it:
   the independent checker reconstructs the expected
   catalogue from the sealed grants and its own registry
   copy and compares.
+- Timing evidence (INDEX 217/219 — Ben's flags): the loop
+  measures each iteration's package construction directly,
+  times the callable's invocation, and collects the stage
+  timings the chain exposes — the adapter's prompt
+  rendering and, where the transport provides them, its
+  stages — into the result's call_timings, one entry per
+  iteration. Stages are measured, never mined from
+  iteration timestamps; a stage the chain cannot measure
+  stands in the entry as None — unknown, not estimated —
+  and a stage the interface cannot separate is labelled
+  inseparable in the transport's own data.
 - The loop's context is a local object, held for the run and
   dropped at return. Evidenced disposal is Piece A5's; here
   the context simply does not outlive the call.
@@ -97,6 +110,7 @@ shape from an activation's bounded run, and stands unchanged.
 from __future__ import annotations
 
 import copy
+import time
 
 from fabric.canonical import canonical, sha256_hex
 
@@ -302,6 +316,7 @@ class Loop:
             "recorded": [],
             "refused": [],
             "dispatched": [],
+            "call_timings": [],
         }
 
     def _run(self, ctx):
@@ -326,6 +341,7 @@ class Loop:
             # runtime_failure — and counts no iteration: the
             # iteration event is recorded only for a package
             # that stands.
+            package_started = time.monotonic()
             try:
                 package, head = self._build_package(ctx)
             except Exception as exc:  # noqa: BLE001 — the
@@ -334,6 +350,7 @@ class Loop:
                     ctx, "runtime_failure",
                     detail=f"package construction failed: "
                            f"{type(exc).__name__}: {exc}")
+            package_s = time.monotonic() - package_started
             iteration = ctx["iterations"] + 1
 
             # (iii) Record the iteration, with the package's
@@ -391,9 +408,12 @@ class Loop:
             if problem is not None:
                 return self._stall(ctx, "runtime_failure",
                                    detail=problem)
+            call_started = time.monotonic()
             try:
                 raw = self.model(package, budget=remaining)
             except AdapterFailure as failure:
+                self._note_call_timing(ctx, iteration,
+                                       package_s, call_started)
                 # The deadline governs even here: a failure
                 # that arrives after expiry is the deadline's
                 # stop, whatever its kind.
@@ -407,11 +427,15 @@ class Loop:
                     detail=f"{failure.kind}: {failure.detail}")
             except Exception as exc:  # noqa: BLE001 — a
                 # provider-side failure of the callable itself
+                self._note_call_timing(ctx, iteration,
+                                       package_s, call_started)
                 if self._deadline_passed(ctx):
                     return self._stall(ctx, "deadline")
                 return self._stall(
                     ctx, "provider_failure",
                     detail=f"{type(exc).__name__}: {exc}")
+            self._note_call_timing(ctx, iteration, package_s,
+                                   call_started)
             # A response that arrives after the deadline is
             # not validated and not effected: the deadline is
             # the governing bound, and the stop is its.
@@ -432,7 +456,8 @@ class Loop:
                         "iterations": ctx["iterations"],
                         "recorded": ctx["recorded"],
                         "refused": ctx["refused"],
-                        "dispatched": ctx["dispatched"]}
+                        "dispatched": ctx["dispatched"],
+                        "call_timings": ctx["call_timings"]}
             if outcome == "yield":
                 return {"ok": True, "outcome": "yield",
                         "summary": data,
@@ -441,7 +466,8 @@ class Loop:
                         "iterations": ctx["iterations"],
                         "recorded": ctx["recorded"],
                         "refused": ctx["refused"],
-                        "dispatched": ctx["dispatched"]}
+                        "dispatched": ctx["dispatched"],
+                        "call_timings": ctx["call_timings"]}
             self._adjudicate(ctx, data)
 
     # -------------------------------------------------- package
@@ -718,6 +744,39 @@ class Loop:
                     not outcome.get("duplicate"):
                 self.executor.execute(outcome["dispatch_id"])
 
+    # --------------------------------------------------- timing
+    def _note_call_timing(self, ctx, iteration, package_s,
+                          call_started):
+        """Collect one iteration's timing evidence (INDEX
+        217/219): the package-construction seconds the loop
+        measured itself, the callable invocation's total, and
+        the stage timings the chain exposes — the adapter's
+        prompt rendering (its last_render_s, where the
+        callable is the adapter) and the transport's stages
+        (the installed transport callable's last_call_timings,
+        where it provides them). Anything the chain does not
+        expose stands as None — unknown, not estimated — and
+        where the transport stages are absent altogether the
+        entry says so. Measured directly, here, never mined
+        from the iteration event's timestamp."""
+        transport = getattr(self.model, "_call", None)
+        stages = getattr(transport, "last_call_timings", None) \
+            if transport is not None else None
+        entry = {
+            "iteration": iteration,
+            "package_construction_s": package_s,
+            "render_s": getattr(self.model, "last_render_s",
+                                None),
+            "transport_stages": copy.deepcopy(stages)
+            if isinstance(stages, dict) else None,
+            "total_call_s": time.monotonic() - call_started,
+        }
+        if entry["transport_stages"] is None:
+            entry["note"] = (
+                "the callable provided no transport stage "
+                "timings; the transport stages are unknown")
+        ctx["call_timings"].append(entry)
+
     # ---------------------------------------------------- stall
     def _deadline_passed(self, ctx):
         remaining, problem = self.doorway.activation_remaining(
@@ -776,7 +835,8 @@ class Loop:
                 "iterations": ctx["iterations"],
                 "recorded": ctx["recorded"],
                 "refused": ctx["refused"],
-                "dispatched": ctx["dispatched"]}
+                "dispatched": ctx["dispatched"],
+                "call_timings": ctx["call_timings"]}
         try:
             if not self._close_accounting(ctx):
                 base["stall_recorded"] = False

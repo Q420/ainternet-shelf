@@ -86,6 +86,14 @@ to a temp dir. The real provider is never called.
    exactly 0 it is never entered. The original
    real-clock flow is retained alongside the sweep as
    the physical companion.
+9. The helper's own clock (INDEX 215): the transport
+   passes the effective remaining allowance to the
+   helper as NVIDIA_API_TIMEOUT in its environment —
+   under a partially elapsed deadline the stub records
+   the recomputed remainder (~1s of a 2s budget), not
+   the adapter's 30s configured span and not the 2s
+   budget; with no established deadline it records the
+   fallback bound, the configured timeout itself.
 
 Run: PYTHONPATH=src python3 live-demo/test_connector_transport.py
 Exits 0 when every check passes.
@@ -671,6 +679,122 @@ check("8: ~3s later still no outcome exists and the "
       holder8["failure"] is failure8 and
       proc8 is not None and pid_dead(proc8.pid))
 os.environ.pop("STUB_PIDFILE", None)
+
+# -- 9: the helper receives the effective remaining
+# allowance as its own provider-request timeout
+# (INDEX 215) — the recomputed remainder, never the
+# adapter's configured span and never a fresh allowance.
+# The stub records NVIDIA_API_TIMEOUT from its own
+# environment before answering.
+STUB_ENV = '''\
+import json, os, sys
+sys.stdin.buffer.read()
+envfile = os.environ.get("STUB_ENVFILE")
+if envfile:
+    with open(envfile, "w") as fh:
+        fh.write(os.environ.get("NVIDIA_API_TIMEOUT",
+                                "<unset>"))
+print(json.dumps({
+    "id": "chatcmpl-stub", "model": "stub/model-1",
+    "choices": [{"index": 0, "message": {
+        "role": "assistant", "content": %r}}]}))
+''' % YIELD_CONTENT
+ENV_PATH = os.path.join(TMP, "stub_env.py")
+with open(ENV_PATH, "w", encoding="utf-8") as fh:
+    fh.write(STUB_ENV)
+ENVFILE9 = os.path.join(TMP, "helper_timeout.txt")
+os.environ["STUB_ENVFILE"] = ENVFILE9
+
+# 9a: an established deadline, partially elapsed — the
+# helper must receive what REMAINS (~1s of a 2s budget),
+# not the 30s configured span and not the 2s budget.
+adapter9 = OpenAICompatibleAdapter(model="stub/model-1",
+                                   timeout=30.0)
+install_connector_transport(adapter9, ENV_PATH,
+                            "stub/model-1")
+adapter9._begin_deadline(budget=2.0)
+time.sleep(1.0)  # ~half the budget elapses before _call
+adapter9._call([{"role": "user", "content": "hello"}])
+with open(ENVFILE9, encoding="utf-8") as fh:
+    raw9a = fh.read().strip()
+try:
+    value9a = float(raw9a)
+except ValueError:
+    value9a = None
+check("9: the helper's environment carries a numeric "
+      "NVIDIA_API_TIMEOUT",
+      value9a is not None, f"raw={raw9a!r}")
+check("9: under a partially elapsed deadline the value "
+      "is the recomputed remaining allowance (~1s), not "
+      "the configured span (30s) and not the budget (2s)",
+      value9a is not None and 0.4 < value9a < 1.6,
+      f"value={value9a}")
+
+# 9b: no established deadline — the fallback bound is
+# the adapter's configured timeout, and the helper
+# receives that bound (less the moments before launch).
+adapter9b = OpenAICompatibleAdapter(model="stub/model-1",
+                                    timeout=7.0)
+install_connector_transport(adapter9b, ENV_PATH,
+                            "stub/model-1")
+adapter9b._call([{"role": "user", "content": "hello"}])
+with open(ENVFILE9, encoding="utf-8") as fh:
+    raw9b = fh.read().strip()
+try:
+    value9b = float(raw9b)
+except ValueError:
+    value9b = None
+check("9: with no established deadline the helper "
+      "receives the fallback bound — the configured "
+      "timeout, undiminished but for launch moments",
+      value9b is not None and 6.0 < value9b <= 7.0,
+      f"value={value9b}")
+os.environ.pop("STUB_ENVFILE", None)
+
+# -- 10: stage timings (INDEX 217/219) — the installed
+# callable records its most recent call's stages on
+# last_call_timings: measured where the interface allows,
+# the communicate span labelled inseparable in its own
+# data, and on an expiry path the stages reached stand
+# measured with the stages beyond them None.
+adapter10 = OpenAICompatibleAdapter(model="stub/model-1",
+                                    timeout=10.0)
+call10 = install_connector_transport(adapter10, OK_PATH,
+                                     "stub/model-1")
+check("10: before any call the timings attribute stands "
+      "as None", call10.last_call_timings is None)
+adapter10._call([{"role": "user", "content": "hello"}])
+t10 = call10.last_call_timings
+check("10: a completed call leaves every stage measured",
+      isinstance(t10, dict) and
+      all(isinstance(t10[k], float) for k in (
+          "body_preparation_s", "helper_launch_s",
+          "submission_provider_wait_receipt_s",
+          "response_parsing_s")),
+      detail=f"timings={t10}")
+check("10: the communicate span is labelled inseparable "
+      "in its own data",
+      t10 is not None and
+      "inseparable" in t10[
+          "submission_provider_wait_receipt_note"])
+adapter10b = OpenAICompatibleAdapter(model="stub/model-1",
+                                     timeout=0.5)
+call10b = install_connector_transport(adapter10b, SLEEP_PATH,
+                                      "stub/model-1")
+try:
+    adapter10b._call([{"role": "user", "content": "hello"}])
+    expiry10 = None
+except AdapterFailure as failure:
+    expiry10 = failure.kind
+t10b = call10b.last_call_timings
+check("10: on the expiry path the stages reached stand "
+      "measured and parsing stands None",
+      expiry10 == "no_response" and
+      isinstance(t10b, dict) and
+      isinstance(t10b["submission_provider_wait_receipt_s"],
+                 float) and
+      t10b["response_parsing_s"] is None,
+      detail=f"kind={expiry10} timings={t10b}")
 
 shutil.rmtree(TMP, ignore_errors=True)
 print()

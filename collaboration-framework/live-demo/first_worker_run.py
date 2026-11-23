@@ -477,6 +477,17 @@ def main(argv=None):
         "manifest": manifest,
         "loop_result": result,
         "iterations": result.get("iterations"),
+        "call_timings": result.get("call_timings") or [],
+        "call_timings_note":
+            "per-iteration stage timings measured directly "
+            "by the loop, the adapter and the connector "
+            "transport (INDEX 217/219): package construction, "
+            "prompt rendering, and the transport's stages, "
+            "with stages the interface cannot separate "
+            "labelled as such and unmeasured stages null. "
+            "Local cancellation of a helper process never "
+            "proves the upstream provider stopped processing "
+            "its request.",
         "stall": ({"ground": stalls[0]["payload"].get(
                        "ground"),
                    "event_seq": stalls[0]["event_seq"]}
