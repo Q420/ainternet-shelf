@@ -392,6 +392,89 @@ check("T17 a basis naming the post-ruling acts records",
       ev["type"] == "GATE_OUTCOME"
       and ev["payload"]["correction_basis"] == [corr["event_seq"]])
 
+# -- Correction round 1 (examination @ 250c9bf7).
+# T18: G7 — an explicitly empty declaration is a declaration;
+# only a genuinely absent field takes the compatibility path.
+store, d, tok = fresh(gates=None)
+ev = contrib(d, store, tok, "crew-1", "c-t18a", "B")
+check("T18 no gates field: the pre-gates path runs (work records)",
+      ev["type"] == "CONTRIBUTION"
+      and d.state()["gate_set"]["declared"] is False)
+store, d, tok = fresh(gates={})
+gs = d.state()["gate_set"]
+check("T18 an empty declaration derives declared and invalid",
+      gs["declared"] is True and gs["valid"] is False
+      and any("assembly" in d_ for d_ in gs["defects"]))
+check("T18 the empty declaration enforces: work is refused",
+      refused(lambda: contrib(d, store, tok, "crew-1", "c-t18b", "B")))
+check("T18 the empty declaration enforces: ack is refused",
+      refused(lambda: A(d, store, tok["crew-1"], "CASE_ACKNOWLEDGED",
+                        {"case_id": "case-1", "version": 1})))
+
+# T19: an unknown gate kind is a named defect, never ignored.
+weird = dict(GATES)
+weird["X"] = "sentinel"
+store, d, tok = fresh(gates=weird)
+gs = d.state()["gate_set"]
+check("T19 an unknown kind invalidates the set, defect naming it",
+      gs["valid"] is False
+      and any(d_.startswith("X:") and "sentinel" in d_
+              for d_ in gs["defects"]))
+outcome(d, store, tok, "assembly", "allow")
+check("T19 the run stays closed under the malformed set",
+      refused(lambda: contrib(d, store, tok, "crew-1", "c-t19", "B")))
+
+# T20: the assembly gate must stand at its reserved joint name.
+renamed = {"start": "assembly", "completion": "completion",
+           "B": "judgement", "C": "judgement", "D": "judgement"}
+store, d, tok = fresh(gates=renamed)
+gs = d.state()["gate_set"]
+check("T20 a renamed assembly gate invalidates the set",
+      gs["valid"] is False
+      and any(d_.startswith("start:") for d_ in gs["defects"]))
+outcome(d, store, tok, "start", "allow")
+check("T20 an allow at the wrong joint name opens nothing",
+      refused(lambda: contrib(d, store, tok, "crew-1", "c-t20", "B")))
+
+# T21: correction_basis must cite correction acts — a doorway
+# REJECTION or another GATE_OUTCOME at a valid position is
+# refused as a basis; a seat's correction act is accepted.
+store, d, tok = fresh()
+outcome(d, store, tok, "assembly", "allow")
+outcome(d, store, tok, "B", "escalate", tree_part="B")
+A(d, store, tok["dir-1"], "RULING",
+  {"joint": "B", "action": "correct as stated"})
+refused(lambda: A(d, store, tok["crew-1"], "FINDING",
+                  {"text": "not mine"}))
+rej = [ev for ev in store.all_events() if ev["type"] == "REJECTION"]
+rej_seq = rej[-1]["event_seq"]
+check("T21 a basis citing a REJECTION is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[rej_seq])))
+other = outcome(d, store, tok, "C", "correct")
+check("T21 a basis citing another GATE_OUTCOME is refused",
+      refused(lambda: outcome(d, store, tok, "B", "allow",
+                              correction_basis=[other["event_seq"]])))
+corr = A(d, store, tok["crew-1"], "COMMENT",
+         {"on_job": True, "text": "the stated correction"})
+ev = outcome(d, store, tok, "B", "allow",
+             correction_basis=[corr["event_seq"]],
+             released_set=["B", "D"])
+check("T21 a basis citing the correction act records",
+      ev["type"] == "GATE_OUTCOME")
+
+# T22: the non-tree contribution witness (the approved R21
+# decision): a part outside the recorded tree is refused.
+store, d, tok = fresh()
+outcome(d, store, tok, "assembly", "allow")
+before = len(d.state()["rejections"])
+check("T22 a contribution naming a non-tree part is refused",
+      refused(lambda: contrib(d, store, tok, "crew-1", "c-t22", "ZZ")))
+rejs = [ev for ev in store.all_events() if ev["type"] == "REJECTION"]
+check("T22 the refusal is recorded, naming the part and R21",
+      len(d.state()["rejections"]) == before + 1
+      and "ZZ" in rejs[-1]["payload"]["ground"])
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")

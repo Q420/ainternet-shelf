@@ -254,6 +254,12 @@ def empty_state(run_id=None) -> dict:
                               # (R21; Piece 6 gates — the derived
                               # gate_set and waiting states are
                               # computed over this fold by gates.py)
+        "gates_present": False,  # whether the commission carried
+                              # a gates field at all (G7, correction
+                              # round 1: an explicitly empty
+                              # declaration is a declaration — only
+                              # a genuinely absent field takes the
+                              # compatibility path)
         "completion_claim_seq": None,  # event_seq of the latest
                               # COMPLETION_CLAIMED (Piece 6 gates,
                               # §3.8's claim binding by position)
@@ -294,7 +300,14 @@ def apply_event(state: dict, ev: dict) -> dict:
         # R21: the commissioned gate declaration (joint -> kind),
         # carried verbatim; gates.py derives its validity and the
         # waiting states over the fold (Piece 6 gates, §3.1).
-        state["gate_declaration"] = dict(p.get("gates") or {})
+        # Presence is preserved independently of contents (G7,
+        # correction round 1): "gates": {} is an incomplete
+        # declaration that enforces and fails closed; only a
+        # commission with no gates field at all is undeclared.
+        raw_gates = p.get("gates")
+        state["gates_present"] = raw_gates is not None
+        state["gate_declaration"] = dict(raw_gates) \
+            if isinstance(raw_gates, dict) else {}
         for seat_id, binding in p.get("seats", {}).items():
             state["seats"][seat_id] = {
                 "role": binding["role"],

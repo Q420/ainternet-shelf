@@ -87,17 +87,33 @@ def validate_gate_set(tree, declaration):
     fault; an empty list means valid. A gate count alone is not
     a declaration."""
     defects = []
-    kinds = list(declaration.values())
-    n_assembly = kinds.count("assembly")
-    if n_assembly != 1:
-        defects.append(
-            f"assembly gate: {n_assembly} declared, exactly one "
-            f"required (R21)")
-    n_completion = kinds.count("completion")
-    if n_completion != 1:
-        defects.append(
-            f"completion gate: {n_completion} declared, exactly "
-            f"one required (R21)")
+    # The declaration vocabulary is closed (correction round 1):
+    # every entry's kind must be recognized, and a defect names
+    # any that is not — an unknown kind is never silently ignored.
+    for joint, kind in declaration.items():
+        if kind not in ("assembly", "judgement", "completion"):
+            defects.append(
+                f"{joint}: gate kind {kind!r} is not in the "
+                f"declaration vocabulary (assembly, judgement, "
+                f"completion) (R21)")
+    # The assembly and completion gates are queried by their
+    # reserved joint names (assembly_open, completion_ready), so
+    # a gate of either kind declared under any other name cannot
+    # validate — it would be a gate the implementation can never
+    # find (correction round 1).
+    for kind, reserved in (("assembly", ASSEMBLY_JOINT),
+                           ("completion", COMPLETION_JOINT)):
+        named = [joint for joint, k in declaration.items()
+                 if k == kind]
+        if len(named) != 1:
+            defects.append(
+                f"{kind} gate: {len(named)} declared, exactly "
+                f"one required (R21)")
+        elif named[0] != reserved:
+            defects.append(
+                f"{named[0]}: the {kind} gate is declared under "
+                f"a name the implementation cannot query; it is "
+                f"declared at joint {reserved!r} (R21)")
     parts = all_parts(tree)
     roots = root_parts(tree)
     judged = set()
@@ -129,7 +145,11 @@ def enrich(state):
     Pure and idempotent: the same record always derives the
     same derived state."""
     declaration = state.get("gate_declaration") or {}
-    declared = bool(declaration)
+    # G7 (correction round 1): declared is whether the commission
+    # carried a gates field, never whether the field's contents
+    # happen to be non-empty — an explicitly empty declaration
+    # derives as declared and invalid, with named defects.
+    declared = bool(state.get("gates_present"))
     defects = validate_gate_set(state.get("tree") or {},
                                   declaration) if declared else []
     state["gate_set"] = {
@@ -173,7 +193,7 @@ def derive_waiting(state):
         "paused_by_gate": sorted((state.get("paused") or {}).keys()),
     }
     declaration = state.get("gate_declaration") or {}
-    if not declaration:
+    if not (state.get("gate_set") or {}).get("declared"):
         return waiting
     gate_set = state.get("gate_set") or {}
     joints = [ASSEMBLY_JOINT, COMPLETION_JOINT] + sorted(

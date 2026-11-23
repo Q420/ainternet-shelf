@@ -584,6 +584,7 @@ class Doorway:
                         "ruling names the correction acts it "
                         "relies on (correction_basis) (R24)",
                         view_seq)
+                by_seq = None
                 for seq in basis:
                     if not isinstance(seq, int) or \
                             seq <= ruling["event_seq"] or \
@@ -594,6 +595,30 @@ class Doorway:
                             f"does not name a recorded act after "
                             f"the ruling at seq "
                             f"{ruling['event_seq']} (R24)", view_seq)
+                    # The basis must cite correction acts, not
+                    # merely positions (correction round 1): the
+                    # event at each position must be an act a seat
+                    # recorded — never a doorway record (a
+                    # REJECTION, a DRIVER_FAILURE) and never the
+                    # gate machinery's own acts (a GATE_OUTCOME,
+                    # a RULING), on which a judgement cannot rest.
+                    # Eligibility is mechanical; whether the acts
+                    # are a sufficient correction remains the
+                    # examiner's judgement.
+                    if by_seq is None:
+                        by_seq = {ev["event_seq"]: ev
+                                  for ev in self.store.all_events()}
+                    cited = by_seq.get(seq)
+                    if cited is None or \
+                            cited["actor"] == DOORWAY_ACTOR or \
+                            cited["type"] in ("GATE_OUTCOME",
+                                              "RULING"):
+                        self._refuse(
+                            seat_id, type_,
+                            f"correction_basis position {seq} "
+                            f"names a {cited['type'] if cited else 'missing'}"
+                            f", not a correction act recorded by "
+                            f"a seat (R24)", view_seq)
             return
         if type_ in _gates.WORK_ACTS:
             if not _gates.assembly_open(state):

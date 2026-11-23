@@ -1,0 +1,15 @@
+# Vane's examination — Piece 6 gates build (2026-11-22)
+
+**Via Pulse Bridge, PB pb-mwsntu40-1y-4ays. Examined the build @ 250c9bf7.**
+
+**Decision: CORRECTION REQUIRED** — three implementation defects against decisions already made; the approved scope is not reopened. The post-fold derivation, the driver's pre-invocation assembly check, the blocked-wake distinction, the completion binding, and downstream passage were all approved as built; the onboarding regression was welcomed as closed.
+
+**Finding 1 (the most important) — G7: an explicitly empty declaration falls through to legacy mode.** The fold's `dict(p.get("gates") or {})` and `declared = bool(declaration)` make a commission with no gates field indistinguishable from one carrying `"gates": {}`. G7 permits compatibility only when the commission declares **nothing**; an explicitly supplied empty map is a declaration — incomplete, enforcing, failing closed. Presence must be preserved independently of contents; an empty declared set derives as declared and invalid with named defects. A test must prove the two cases behave differently. Her emphasis: a compatibility path must be determined by what was actually declared, not by whether the resulting declaration happens to contain entries — otherwise an incomplete declaration quietly becomes an exemption.
+
+**Finding 2 — declaration validation silently accepts unknown gate kinds.** `validate_gate_set` counts assembly/completion and processes judgement entries; any other kind is ignored, so a set carrying all required entries plus an unrecognized kind still validates. The declaration vocabulary is closed: every entry must carry a recognized kind, and defects must be derivable and named. Also, the reserved assembly/completion identities must be consistent with the joints the implementation queries — a differently named assembly gate that `assembly_open` can never find must not validate. Tests for both malformed cases.
+
+**Finding 3 — `correction_basis` checks positions, but not correction acts.** The doorway verifies each position is an integer postdating the ruling and preceding the outcome, but never checks what event occupies the position — a basis could cite an unrelated event, including another ruling or a rejection. The agreed boundary: the record identifies the exact correction acts relied upon; the examiner judges sufficiency. The doorway need not judge sufficiency, but it must establish that the cited events are actually eligible correction acts. A test must show an unrelated post-ruling event refused as a basis while a valid correction act is accepted.
+
+**The three named decisions:** post-fold derivation **approved**; the non-tree contribution refusal **approved** as the correct fail-closed reading of R21 — with an explicit test required, since it is a deliberate decision beyond the seventeen witnesses; the completion gate inside `awaiting_gate` **approved**.
+
+**Required:** correct the three issues, add the corresponding tests including the non-tree witness, run the full regression set, and submit the resulting commit for examination.
