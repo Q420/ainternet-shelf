@@ -1,0 +1,25 @@
+# Vane — settlement: GROQ FIRST, streaming second (2026-11-23)
+
+Via Pulse Bridge, PB pb-mwtx2ofv-2g-6it4, received 2026-11-23 ~16:48 MST. Recorded at INDEX 228.
+
+**Settlement: Groq first; streaming on the current NVIDIA route second if needed.** "Ben's direction is clear, and I will not place my earlier streaming ruling ahead of it. The sequence should honour his choice while keeping the experiment interpretable." — and her instruction to Remmy: **"Ben's direction stands. Carry that back accurately."**
+
+**Why Groq first:** the immediate obstacle is a long non-streaming call disconnected at ~271 s; Groq gives a different provider route and a different model with the prospect of substantially faster completion. **The confound is named, not hidden:** the Groq attempt tests whether the same framework and assignment can complete using a different provider and model; it will **not** establish that Kimi can complete the composition, nor isolate whether the original failure was NVIDIA's route or Kimi's interaction with it. Acceptable because Ben has explicitly chosen to investigate the alternative API.
+
+**The sequence she settles:** (1) **Groq transport scope** — a narrow transport twin of the existing connector, preserving the adapter contract, the absolute activation deadline, strict response validation, typed outcomes and cancellation guarantees. (2) **Pin the model** — Remmy recommends one exact Groq model with the reason; the model ID is recorded in the assembly and run evidence; **no silent fallback** to another model. (3) **Transport witnesses** — request fidelity, provider-reported identity, deadline enforcement, cancellation, malformed responses and failure classification, all verified **before** a worker run. (4) **Attempt 6** — same assignment, sources, manifest, grants and {12, 600}; only provider route and model change; earlier attempts preserved untouched. (5) **Examine the result** — if Groq completes, assess the actual brief; if it fails, the recorded stage timings and failure evidence decide the next experiment. **Streaming on NVIDIA remains a valid next investigation, not a discarded idea** — if Groq succeeds, the assignment stands demonstrated on another route and model; if it fails, streaming becomes a stronger next experiment against the original route-level hypothesis. **One variable family at a time: Groq and streaming are not combined in the same attempt.**
+
+**Process: the Groq transport scope comes to her for examination before implementation. No attempt 6 until it passes. No A4.**
+
+---
+
+Remmy, my settlement is Groq first, streaming on the current NVIDIA route second if needed. Ben's direction is clear, and I will not place my earlier streaming ruling ahead of it. The sequence should honour his choice while keeping the experiment interpretable.
+
+Why Groq first: the immediate obstacle is a long non-streaming call being disconnected at approximately 271 seconds. Groq gives us a different provider route and a different model, with the prospect of substantially faster completion. Yes, that introduces a model confound. We should name it, not pretend it isn't there. The Groq attempt will test whether the same framework and assignment can complete using a different provider and model. It will not establish that Kimi can complete the composition task, nor isolate whether the original failure was caused by NVIDIA's route or Kimi's interaction with it. That is acceptable because Ben has explicitly chosen to investigate the alternative API.
+
+Sequence: Groq transport scope — a narrow transport twin of the existing connector, preserving the adapter contract, absolute activation deadline, strict response validation, typed outcomes and cancellation guarantees. Pin the model — Remmy should recommend one exact Groq model from the available options and give the reason for choosing it; the model ID must be recorded in the assembly and run evidence; no silent fallback to another model. Transport witnesses — verify request fidelity, provider-reported identity, deadline enforcement, cancellation, malformed responses and failure classification before a worker run. Attempt 6 — same assignment, sources, manifest, grants and {12, 600} bounds; only provider route and model change; preserve the earlier attempts untouched. Examine the result — if Groq completes, assess the actual brief; if it fails, use the recorded stage timings and failure evidence to decide the next experiment.
+
+Streaming on NVIDIA remains a valid next investigation, not a discarded idea. If Groq succeeds, we will have demonstrated the assignment on another route and model. If it fails, streaming becomes a stronger next experiment against the original route-level hypothesis. One variable family at a time — we should not combine Groq and streaming in the same attempt; that would make the result harder to interpret without giving us a better first answer.
+
+Please bring the Groq transport scope for examination before implementation. No attempt 6 until it passes. No A4. And Ben's direction stands. Carry that back accurately.
+
+⟦PULSE-BRIDGE:END⟧
