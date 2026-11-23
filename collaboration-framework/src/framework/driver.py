@@ -37,6 +37,7 @@ or may be added (R29): a wake cycle runs only when invoked.
 """
 from .bubble import render_view
 from .doorway import DoorwayRefusal
+from .gates import assembly_open, enrich
 from .record import EVENT_TYPES, effective_case, fold
 
 
@@ -146,7 +147,7 @@ class Driver:
     # --------------------------------------------------------- wake
     def wake_cycle(self):
         events = self.store.all_events()
-        state = fold(events, self.store.get_run_id())
+        state = enrich(fold(events, self.store.get_run_id()))
         seat = self.seat_id
 
         stalled = state["stalled"].get(seat)
@@ -168,6 +169,21 @@ class Driver:
         if not reasons and not needs_ack:
             return {"seat": seat, "woke": False, "case": case,
                     "reason": "no recorded event calls for this seat"}
+
+        # R22 (Piece 6 gates, §3.5 of the scope; G5 as settled):
+        # the driver checks the assembly state before invoking
+        # the model. A wake attempted while the run is not open
+        # is recorded by the doorway as a REJECTION — an attempted
+        # operation, not a failed model execution.
+        if state["gate_set"]["declared"] and \
+                not assembly_open(state):
+            ev = self.doorway.record_blocked_wake(seat, part)
+            return {"seat": seat, "woke": False, "case": case,
+                    "blocked": "assembly gate (R22)",
+                    "blocked_wake_event": ev["event_seq"],
+                    "reason": "no seat wakes before the assembly "
+                              "gate: the declaration must be valid "
+                              "and the assembly outcome allow (R22)"}
 
         view = render_view(events, seat)
         # R11: never wake with material outside the case's evidence
@@ -245,7 +261,7 @@ class Driver:
             # position, actually received by the model. Only
             # proposals returned from THIS package proceed.
             events2 = self.store.all_events()
-            state2 = fold(events2, self.store.get_run_id())
+            state2 = enrich(fold(events2, self.store.get_run_id()))
             case2 = effective_case(state2, seat) or case
             view = render_view(events2, seat)
             boundary2 = (case2["content"] or {}).get(

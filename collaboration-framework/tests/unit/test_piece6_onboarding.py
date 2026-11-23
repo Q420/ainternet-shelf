@@ -330,6 +330,25 @@ check("T15 the fresh token carries the work on",
       ob.onboarding_record(d, "exam-1")["declaration"]
       == "examiner declaration")
 
+# -- Owed regression (Vane's non-blocking note on the onboarding
+# pass): the expired commission token's refusal is itself
+# recorded as a REJECTION.
+store, d = fresh()
+orch = d.issue_token("orch-1")
+crew_old = d.issue_token("crew-1")
+ob.onboard(d, orch, "crew-1", "decl", identity_status="declared")
+before = len(store.all_events())
+try:
+    d.act(crew_old, "COMMENT", {"on_job": True, "text": "after"},
+          view_seq=store.head_seq())
+    check("T16 expired token refused", False)
+except DoorwayRefusal:
+    check("T16 expired token refused", True)
+evs = store.all_events()
+check("T16 the refusal is recorded as a REJECTION naming the seat",
+      len(evs) == before + 1 and evs[-1]["type"] == "REJECTION"
+      and evs[-1]["payload"].get("seat") == "crew-1")
+
 print()
 if FAILURES:
     print(f"{len(FAILURES)} FAILURES:", *FAILURES, sep="\n  ")

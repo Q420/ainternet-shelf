@@ -1,6 +1,6 @@
 # Piece 6 scope — gates (2026-11-22; revised on examination)
 
-**Stage 2, piece 6, second part: SPEC SHEET §3.7, R21–R25**, with neighbours R30 (pauses), R33 (waiting states), R29 (passage, not turn-taking), R35 (assembly, §3.8's surface). First written for Vane's examination before any code; **this revision incorporates her settlements** (filed `VANE-PIECE6-GATES-SCOPING-REPLIES-2026-11-22.md`) and closes the three gaps she named. One proposal remains open for her approval (the G6 event representation, §3.6) and one boundary is flagged for settlement (G7, §4). Onboarding (§3.6) passed 2026-11-22; gates are next in the approved order.
+**Stage 2, piece 6, second part: SPEC SHEET §3.7, R21–R25**, with neighbours R30 (pauses), R33 (waiting states), R29 (passage, not turn-taking), R35 (assembly, §3.8's surface). First written for Vane's examination before any code; **this revision incorporates her settlements** (filed `VANE-PIECE6-GATES-SCOPING-REPLIES-2026-11-22.md`) and closes the three gaps she named; the second revision incorporated her four corrections from the re-examination. **G6 and G7 are settled** (§3.6, §4), and the scope was **approved to build** on her final examination (filed `VANE-PIECE6-GATES-APPROVAL-2026-11-22.md`). Onboarding (§3.6) passed 2026-11-22; gates are next in the approved order.
 
 **The distinction that governs the whole piece (the examiner's, adopted):** a gate outcome is a *recorded judgement*; a ruling is an *exercise of director authority*; a waiting state is a *derived description* of what the run currently awaits. The three are never interchangeable, however much all three affect whether work can proceed.
 
@@ -50,9 +50,9 @@ The pre-run block lifts on exactly one condition (§3.1, stated identically here
 
 The driver checks the assembly state **before** invoking the model. A wake attempted pre-assembly is recorded by a new doorway method `record_blocked_wake(seat, part)`: a REJECTION under the doorway actor identifying the seat, the attempted wake, the affected part where known, and the R22 ground. A blocked attempt is an attempted operation, not a failed model execution — never a DRIVER_FAILURE.
 
-### 3.6 `holder_unavailable` (R33; G6 — representation proposed for approval)
+### 3.6 `holder_unavailable` (R33; G6 — settled)
 
-The scope's original proposal (a pause-less ESCALATION) is **withdrawn** on the examiner's rejection: an escalation pauses work and requires a ruling (R24), and borrowing the event would give it a second, conflated meaning. **Proposed instead: a new event type `HOLDER_UNAVAILABLE`** — an orchestrator act naming the gate's joint, separately attributable, carrying no pause and requiring no ruling. The fold derives `holder_unavailable` in `state["waiting"]` for that joint from the declaration until a recorded GATE_OUTCOME at that joint clears it — cleared only by a recorded event, as R33 requires. Vocabulary grows by one type, deliberately and on the record (the Piece 4 discipline: vocabulary gaps are settled explicitly, and the examiner's requirement of a distinct representation is what settles this one — subject to her approval of the shape).
+The scope's original proposal (a pause-less ESCALATION) is **withdrawn** on the examiner's rejection: an escalation pauses work and requires a ruling (R24), and borrowing the event would give it a second, conflated meaning. **Settled instead: a new event type `HOLDER_UNAVAILABLE`** — an orchestrator act naming the gate's joint, separately attributable, carrying no pause and requiring no ruling; the examiner approved the representation on re-examination. The fold derives `holder_unavailable` in `state["waiting"]` for that joint from the declaration until a recorded GATE_OUTCOME at that joint clears it — cleared only by a recorded event, as R33 requires. Vocabulary grows by one type, deliberately and on the record (the Piece 4 discipline: vocabulary gaps are settled explicitly, and the examiner's requirement of a distinct representation is what settles this one).
 
 ### 3.7 The act boundary (gap 2 closed)
 
@@ -72,7 +72,7 @@ Every doorway act type is classified. **Work acts** are blocked pre-assembly and
 | COMPLETION_CLAIMED | **the job** (its own sequence is §3.8's) |
 
 Resolution has exactly three outcomes: **a part** (passage checks that part and its gate ancestors, §3.2); **the job** (no judgement gate guards the job as a whole, so no passage block applies — the act touches no part and cannot move work past a joint; the pre-run block still governed it); or **unresolvable** — the subject names nothing the record can resolve (a missing contribution, a claim whose subject contribution carries no recorded part, a case with no established content). **Unresolvable is refused, fail-closed, and the refusal recorded.** No act slips past a gate for want of a field, and no field is invented to make resolution succeed.
-- **Gate-process:** SEAT_BOUND, ONBOARDING, MATERIAL_SEALED, CASE_ISSUED, CASE_VERIFIED, CASE_JUDGED, CASE_NOTIFIED, CASE_CORRECTED (the office route must run for assembly to be judged and corrected), GATE_OUTCOME, FINDING (the examiner's instrument, including examination of the assembly itself), RULING, DISPOSITION, ESCALATION, HOLDER_UNAVAILABLE (proposed). CERTIFICATION and RUN_CLOSED are gate-process **except** that §3.8's completion rule binds them. REJECTION and DRIVER_FAILURE are doorway-recorded, not acts. RUN_COMMISSIONED is store-level, not a doorway act.
+- **Gate-process:** SEAT_BOUND, ONBOARDING, MATERIAL_SEALED, CASE_ISSUED, CASE_VERIFIED, CASE_JUDGED, CASE_NOTIFIED, CASE_CORRECTED (the office route must run for assembly to be judged and corrected), GATE_OUTCOME, FINDING (the examiner's instrument, including examination of the assembly itself), RULING, DISPOSITION, ESCALATION, HOLDER_UNAVAILABLE. CERTIFICATION and RUN_CLOSED are gate-process **except** that §3.8's completion rule binds them. REJECTION and DRIVER_FAILURE are doorway-recorded, not acts. RUN_COMMISSIONED is store-level, not a doorway act.
 
 ### 3.8 The completion gate (gap 1 closed)
 
@@ -86,7 +86,7 @@ The fold derives `state["waiting"]` from **whether passage is permitted, not fro
 
 ## §4 Flags
 
-- **G6's shape** (§3.6): the `HOLDER_UNAVAILABLE` event type — the one proposal awaiting the examiner's approval. Everything else in §3 is settled text.
+- **G6's shape** (§3.6): the `HOLDER_UNAVAILABLE` event type — **settled and approved** on the examiner's re-examination. Everything in §3 is settled text.
 - **G7. The compatibility boundary — SETTLED on re-examination, with her distinction explicit.** Gate enforcement binds runs whose commission **declares** a gate set. A commission carrying no `gates` map is the pre-gates path the Pieces 2–6 suites run on — as with onboarding's conditional binding, the compatibility route is conditional and named. **The Stage 2 end-to-end run must declare a complete gate set. This is not permission for a new run to omit gates, and a declared-but-incomplete set does not fall back to legacy behaviour — it enforces fully and fails closed (§3.1). The compatibility path is only for commissions that declare nothing.** The alternative (enforcement on every run, earlier suites gaining declarations) was the bigger change; the conditional boundary is the settled one.
 - **F3's case-less question** stays carried to §3.8, undecided here, exactly as settled in the onboarding scope. Gate passage gives gated parts a block for a different reason; it does not answer the general question.
 

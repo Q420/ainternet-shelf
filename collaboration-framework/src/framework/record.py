@@ -42,7 +42,7 @@ EVENT_TYPES = {
     "RULING", "DISPOSITION", "CERTIFICATION", "CASE_ISSUED",
     "CASE_CORRECTED", "CASE_VERIFIED", "CASE_JUDGED", "CASE_NOTIFIED",
     "CASE_ACKNOWLEDGED", "DRIVER_FAILURE",
-    "ONBOARDING", "ESCALATION", "CLAIM_STATUS",
+    "ONBOARDING", "ESCALATION", "CLAIM_STATUS", "HOLDER_UNAVAILABLE",
     "COMPLETION_CLAIMED", "MATERIAL_SEALED", "REJECTION", "RUN_CLOSED",
 }
 
@@ -250,6 +250,16 @@ def empty_state(run_id=None) -> dict:
         "tree": {},           # tree_part -> [downstream parts] (R30)
         "paused": {},         # tree_part -> {source_seq, source_joint,
                               #                 downstream}
+        "gate_declaration": {},  # joint -> kind, as commissioned
+                              # (R21; Piece 6 gates — the derived
+                              # gate_set and waiting states are
+                              # computed over this fold by gates.py)
+        "completion_claim_seq": None,  # event_seq of the latest
+                              # COMPLETION_CLAIMED (Piece 6 gates,
+                              # §3.8's claim binding by position)
+        "holder_unavailable": [],  # {joint, by, event_seq} —
+                              # HOLDER_UNAVAILABLE declarations
+                              # (R33; Piece 6 gates, §3.6)
         "head_seq": 0,
     }
 
@@ -281,6 +291,10 @@ def apply_event(state: dict, ev: dict) -> dict:
         # R30: the commissioned tree (part -> downstream dependents)
         # is the record the doorway computes paused sets from.
         state["tree"] = dict(p.get("tree", {}))
+        # R21: the commissioned gate declaration (joint -> kind),
+        # carried verbatim; gates.py derives its validity and the
+        # waiting states over the fold (Piece 6 gates, §3.1).
+        state["gate_declaration"] = dict(p.get("gates") or {})
         for seat_id, binding in p.get("seats", {}).items():
             state["seats"][seat_id] = {
                 "role": binding["role"],
@@ -495,8 +509,13 @@ def apply_event(state: dict, ev: dict) -> dict:
         state["findings"].append({"by": actor,
                                    "event_seq": ev["event_seq"]})
     elif t == "RULING":
+        # Piece 6 gates (§3.4): a ruling names its gate and the
+        # action it permits; the doorway's ruling mechanics and
+        # the derived waiting states read both from the record.
         state["rulings"].append({"by": actor,
-                                  "event_seq": ev["event_seq"]})
+                                  "event_seq": ev["event_seq"],
+                                  "joint": p.get("joint"),
+                                  "action": p.get("action")})
     elif t == "DISPOSITION":
         state["dispositions"].append({"by": actor,
                                        "event_seq": ev["event_seq"]})
@@ -506,10 +525,25 @@ def apply_event(state: dict, ev: dict) -> dict:
         state["rejections"].append({
             "seat": p.get("seat"), "attempted": p.get("attempted_type"),
             "ground": p.get("ground"), "event_seq": ev["event_seq"],
+            "part": p.get("part"),
+        })
+    elif t == "HOLDER_UNAVAILABLE":
+        # R33 (Piece 6 gates, §3.6): an orchestrator's declaration
+        # that a gate's holder is unavailable. It pauses nothing
+        # and requires no ruling; gates.py derives the waiting
+        # state from these declarations, cleared by a recorded
+        # GATE_OUTCOME at the joint.
+        state["holder_unavailable"].append({
+            "joint": p.get("joint"), "by": actor,
+            "event_seq": ev["event_seq"],
         })
     elif t == "COMPLETION_CLAIMED":
         state["lifecycle"] = "completion_claimed"
         state["lifecycle_seq"] = ev["event_seq"]
+        # Piece 6 gates (§3.8): the completion sequence binds by
+        # position — only an outcome recorded after the latest
+        # claim answers it.
+        state["completion_claim_seq"] = ev["event_seq"]
     elif t == "RUN_CLOSED":
         state["lifecycle"] = "closed"
         state["lifecycle_seq"] = ev["event_seq"]

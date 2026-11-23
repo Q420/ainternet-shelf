@@ -22,6 +22,7 @@ doorway consumes the bindings the record carries.
 import hashlib
 import secrets
 
+from . import gates as _gates
 from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
                      GATE_OUTCOMES, fold, validate_status_transition)
 
@@ -52,6 +53,7 @@ ACT_AUTHORITY = {
     "ESCALATION": {"crew", "orchestrator", "examiner"},
     "CLAIM_STATUS": {"crew", "orchestrator", "examiner", "director"},
     "ONBOARDING": {"orchestrator"},
+    "HOLDER_UNAVAILABLE": {"orchestrator"},
     "SEAT_BOUND": {"orchestrator", "director"},
     "MATERIAL_SEALED": {"orchestrator"},
     "RUN_CLOSED": {"orchestrator", "director"},
@@ -105,7 +107,11 @@ class Doorway:
 
     # ------------------------------------------------------------ state
     def state(self):
-        return fold(self.store.all_events(), self.store.get_run_id())
+        # The folded record, enriched with the derived gate state
+        # (Piece 6 gates): gate_set and waiting are pure functions
+        # of the record, computed over the fold by gates.enrich.
+        return _gates.enrich(
+            fold(self.store.all_events(), self.store.get_run_id()))
 
     # ------------------------------------------------------------ tokens
     def issue_token(self, seat_id: str) -> str:
@@ -166,6 +172,18 @@ class Doorway:
         if digest not in self._tokens:
             return None
         return self._token_basis.get(digest)
+
+    def _presented_seat(self, token):
+        """The seat a presented token was issued to, if the
+        doorway issued it at all — named in the record when the
+        token no longer authenticates (an expired commission
+        token, an identity that no longer matches), so the
+        recorded refusal identifies whose act was refused. A
+        token the doorway never issued names no seat."""
+        if not token:
+            return None
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        return self._tokens.get(digest)
 
     def _authenticate(self, token):
         if not token:
@@ -230,13 +248,32 @@ class Doorway:
         self.store.commit()
         return ev
 
+    def record_blocked_wake(self, seat_id, part=None):
+        """R22 (Piece 6 gates, §3.5 of the scope; G5 as settled):
+        a wake attempted before the assembly gate opened the run,
+        recorded by the doorway as a REJECTION — never a
+        DRIVER_FAILURE: a blocked attempt is an attempted
+        operation, not a failed model execution. The record names
+        the seat, the attempted wake, the affected part where
+        known, and the R22 ground."""
+        ev = self.store.append(
+            "REJECTION", DOORWAY_ACTOR, [seat_id],
+            {"seat": seat_id, "attempted_type": "WAKE",
+             "part": part,
+             "ground": "no seat wakes before the assembly gate: "
+                       "the declaration must be valid and the "
+                       "assembly outcome allow (R22)"},
+        )
+        self.store.commit()
+        return ev
+
     # ------------------------------------------------------------ acts
     def act(self, token, type_, payload, view_seq=None):
         """Record one act through the doorway, or refuse it — with
         the refusal itself recorded. Returns the recorded event."""
         seat_id = self._authenticate(token)
         if seat_id is None:
-            self._refuse(None, type_,
+            self._refuse(self._presented_seat(token), type_,
                          "unbound or mismatched identity (R5)", view_seq)
         state = self.state()
         binding = state["seats"].get(seat_id)
@@ -438,6 +475,14 @@ class Doorway:
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
 
+        # R21–R25 (Piece 6 gates): gate enforcement. It binds
+        # only runs whose commission declared a gate set (G7, as
+        # settled); a declared-but-invalid set enforces fully
+        # and fails closed.
+        if state["gate_set"]["declared"]:
+            self._gate_checks(state, seat_id, type_, payload,
+                              view_seq)
+
         # R31: staleness. The act names its subject; if any later
         # event touched that subject, the view it was made from is
         # stale about the thing that matters — reject. Otherwise a
@@ -468,6 +513,126 @@ class Doorway:
         ev = self.store.append(type_, seat_id, affected, payload)
         self.store.commit()
         return ev
+
+    def _gate_checks(self, state, seat_id, type_, payload,
+                     view_seq):
+        """Gate enforcement for a declared run (Piece 6 gates,
+        scope §3.2–§3.8). Refuses — recording the refusal — any
+        act the gates hold. Gate-process acts pass unchecked
+        here (authority, pauses, and their own rules already
+        applied); the completion rule binds CERTIFICATION and
+        RUN_CLOSED; GATE_OUTCOME carries the ruling mechanics;
+        work acts carry the pre-run block and passage."""
+        if type_ in ("CERTIFICATION", "RUN_CLOSED"):
+            # §3.8's completion sequence: certification and
+            # closure require a standing completion claim
+            # answered by the completion gate's allow.
+            if not _gates.completion_ready(state):
+                self._refuse(
+                    seat_id, type_,
+                    "certification and closure require a "
+                    "completion claim answered by the completion "
+                    "gate's allow, recorded after the claim (R21)",
+                    view_seq)
+            return
+        if type_ == "GATE_OUTCOME":
+            joint = payload.get("joint")
+            outcome = payload.get("outcome")
+            ruling = _gates.latest_ruling(state, joint)
+            if outcome == "allow" and ruling is not None and \
+                    ruling.get("action") == "stop that part":
+                # R24 (G3): the latest ruling governs; while a
+                # stop stands as it, no allow records at the gate.
+                self._refuse(
+                    seat_id, type_,
+                    f"the director's ruling against gate {joint} "
+                    f"stands at 'stop that part'; an allow is "
+                    f"refused while it governs (R24)", view_seq)
+            standing = state["gates"].get(joint)
+            if outcome == "allow" and standing is not None and \
+                    standing.get("outcome") == "escalate" and \
+                    not any(r.get("joint") == joint and
+                            r["event_seq"] > standing["event_seq"]
+                            for r in state["rulings"]):
+                # R24: an escalation's pause is ruling-gated. A
+                # ruling never manufactures an allow — it permits
+                # the examiner to record one; without a ruling
+                # against the same gate, the allow is refused.
+                self._refuse(
+                    seat_id, type_,
+                    f"an allow at gate {joint} does not release "
+                    f"an escalation without a director ruling "
+                    f"recorded against the same gate (R24)",
+                    view_seq)
+            if ruling is not None and \
+                    ruling.get("action") == "correct as stated" and \
+                    not (standing is not None and
+                         standing["event_seq"]
+                         > ruling["event_seq"]):
+                # G3's precision: the re-judgement after a
+                # 'correct as stated' ruling names the correction
+                # acts it relies on (correction_basis). The
+                # doorway verifies the positions exist, postdate
+                # the ruling, and precede this outcome; whether
+                # they are a sufficient correction is the
+                # examiner's judgement, never a mechanical claim.
+                basis = payload.get("correction_basis")
+                if not basis:
+                    self._refuse(
+                        seat_id, type_,
+                        "re-judgement after a 'correct as stated' "
+                        "ruling names the correction acts it "
+                        "relies on (correction_basis) (R24)",
+                        view_seq)
+                for seq in basis:
+                    if not isinstance(seq, int) or \
+                            seq <= ruling["event_seq"] or \
+                            seq > state["head_seq"]:
+                        self._refuse(
+                            seat_id, type_,
+                            f"correction_basis position {seq!r} "
+                            f"does not name a recorded act after "
+                            f"the ruling at seq "
+                            f"{ruling['event_seq']} (R24)", view_seq)
+            return
+        if type_ in _gates.WORK_ACTS:
+            if not _gates.assembly_open(state):
+                # §3.3's pre-run block: no seat wakes and no case
+                # is usable until the declaration is valid and
+                # the assembly outcome is allow. Case issuance
+                # is gate-process and is not blocked (G2).
+                self._refuse(
+                    seat_id, type_,
+                    "the run is not open: work waits on a valid "
+                    "gate declaration and the assembly gate's "
+                    "allow (R22)", view_seq)
+            kind, value = _gates.resolve_part(state, seat_id,
+                                              type_, payload)
+            if kind == "unresolvable":
+                # §3.7: fail closed. An act whose subject cannot
+                # be resolved to a part does not slip past the
+                # gate for want of a field.
+                self._refuse(
+                    seat_id, type_,
+                    f"the act's subject cannot be resolved to a "
+                    f"part of the tree ({value}); refused "
+                    f"fail-closed (R21/R22)", view_seq)
+            if kind == "part":
+                if value not in _gates.all_parts(state["tree"]):
+                    self._refuse(
+                        seat_id, type_,
+                        f"tree part {value} is not in the run's "
+                        f"recorded tree (R21)", view_seq)
+                blocker = _gates.passage_blocker(state, value)
+                if blocker is not None:
+                    self._refuse(
+                        seat_id, type_,
+                        f"passage into {value} is held by the "
+                        f"gate at {blocker}: no standing allow "
+                        f"(R22)", view_seq)
+            return
+        # Gate-process acts record under their own rules; the
+        # gates never block the run from reaching judgement.
 
     def _classification_problem(self, state, payload):
         """Why a CASE_CORRECTED may not be recorded, or None (R16,
@@ -580,7 +745,7 @@ class Doorway:
         (_, corrected), (_, verified) = acts
         seat_id = self._authenticate(token)
         if seat_id is None:
-            self._refuse(None, "CASE_CORRECTED",
+            self._refuse(self._presented_seat(token), "CASE_CORRECTED",
                          "unbound or mismatched identity (R5)",
                          view_seq)
         state = self.state()
