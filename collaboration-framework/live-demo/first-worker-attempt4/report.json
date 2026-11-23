@@ -1,0 +1,213 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "model_requested": "moonshotai/kimi-k3.1-pro",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 2,
+  "recorded": [
+   {
+    "event_seq": 17,
+    "event_id": "194818dc-85db-46ea-9631-a31400bcac22",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 16,
+     "catalogue_hash": "cffbd62f79fd9dcbfe434bb2487251058aa2adcaf37a2fd056831bf440c7915b",
+     "registry_version": "tool-registry-v2"
+    },
+    "ts": "2026-11-23T22:32:14Z",
+    "prev_hash": "529591d59ed4cf155b7a86846cfa8c1715149721ebc18b2cb5b68654e86e5315",
+    "hash": "05f4b81009134b4b9a7a2305c5a7c5fda298a19274daa36052ee384e3f20346b"
+   },
+   {
+    "event_seq": 30,
+    "event_id": "66278341-c3e5-446a-9435-c6bba3adda11",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 2,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 29,
+     "catalogue_hash": "cffbd62f79fd9dcbfe434bb2487251058aa2adcaf37a2fd056831bf440c7915b",
+     "registry_version": "tool-registry-v2"
+    },
+    "ts": "2026-11-23T22:33:06Z",
+    "prev_hash": "3a857b791bee11051c62129cb527575c018f9ff7bede3d3abc03ccce117e0f5f",
+    "hash": "16e482c0c14b5a4f73c2524a02817c16163f0e5cfada85dc98b31a3983642660"
+   }
+  ],
+  "refused": [],
+  "dispatched": [
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-1",
+    "dispatch_id": "dispatch-1",
+    "outcome": null,
+    "reconciled_outcome": null
+   },
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-2",
+    "dispatch_id": "dispatch-2",
+    "outcome": null,
+    "reconciled_outcome": null
+   },
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-3",
+    "dispatch_id": "dispatch-3",
+    "outcome": null,
+    "reconciled_outcome": null
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 31,
+   "event_id": "73173b8b-d235-4f5b-86b6-f39b93884a5b",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 16,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 2,
+    "detail": "provider_error: connector helper exited 1: Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\", line 62, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/w"
+   },
+   "ts": "2026-11-23T22:35:07Z",
+   "prev_hash": "16e482c0c14b5a4f73c2524a02817c16163f0e5cfada85dc98b31a3983642660",
+   "hash": "a500d4d97666484ccf801530f8c1f9b995b845f73c30f5c16ffccac616c0a4cf"
+  }
+ },
+ "iterations": 2,
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 31
+ },
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-2",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-2",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-3",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-3",
+   "outcome": "result"
+  }
+ ],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m Kimi, an AI assistant developed and provided by Moonshot AI (\u6708\u4e4b\u6697\u9762). My underlying model is Kimi; I can\u2019t confirm a more specific model version for this deployment.\n\nI can help with discussion, analysis, writing, summarization, translation, brainstorming, programming, debugging, and reasoning through problems. I can work with the context provided in this run and use external tools if they are made available, but I don\u2019t have independent access to systems, files, or live information unless the environment provides them.\n\nMy limits are that I can make mistakes, misunderstand ambiguous instructions, or produce plausible-sounding but incorrect answers. My knowledge may be incomplete or outdated, and I don\u2019t assume persistent memory beyond this conversation unless the host system supplies it. Important, current, or high-stakes information should be verified. I\u2019m an AI, not a human collaborator.",
+  "provider_model_id": "moonshotai/kimi-k3.1-pro",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 31,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ }
+}
