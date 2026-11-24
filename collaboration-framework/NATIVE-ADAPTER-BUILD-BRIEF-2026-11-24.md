@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 3)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 4)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -25,6 +25,13 @@ result plainly: **no positive CAP satisfies N22 under the standing constraints
 and her margin. This is a build-gate conflict, reported for Ben's direction**
 (§3). The brief changes neither the retrieval ceiling nor the margin, and no
 implementation proceeds. Nothing outside §3 and these notes changes.
+
+**Revision note — Rev 4 (2026-11-24):** Ben ruled on the conflict the same day
+(12:58 MST, scope ledger): **CAP = 1; the margin is a cushion, not a wall.**
+The ruling is recorded as an addendum at the end of §3; the derivation and the
+incompatibility finding stand exactly as written. The brief returns to the
+examiner for her recorded position and the brief's disposition under the
+ruling.
 
 **Empirical gates, closed:** P1 passed (INDEX 367 — flag effect measured; delivery
 to the host demonstrated, doorway adjudication **not** demonstrated and therefore
@@ -219,6 +226,26 @@ stands: **CAP is underivable under the current constraints — not zero, not
 one, but blocked, with the block named.** Overflow handling, the translation
 machinery, and every other section of this brief are unaffected and ready;
 they wait on this bound alone.
+
+### Addendum — Ben's ruling (2026-11-24, 12:58 MST)
+
+Ben, as the programme's director, has ruled on the conflict above: **CAP = 1.
+The margin is a cushion, not a wall.** His reasoning, recorded in the scope
+ledger: the complete worst-case request (7,979 tokens at the measured
+conversion) fits within the true envelope — the measured 8,000-token budget;
+the 25% margin's purpose is to absorb estimation error, not to stand as a
+second, lower envelope; and a breach of the true envelope in live running
+fails safe — the provider refuses, the refusal is recorded as a delivery
+failure, the run stalls honestly, and nothing is silently mangled. The
+incompatibility finding above stands unaltered as the derivation's result
+under the margin-as-threshold reading; the ruling changes the margin's
+status, on the director's authority, and is carried to the examiner for her
+recorded position. **The build's cap is therefore CAP = 1**, on the derivation
+above as its basis and this ruling as its authority. The build note records:
+CAP = 1 (Ben's ruling, 2026-11-24); worst case 7,979 of 8,000 tokens at the
+measured conversion, the conversion labelled approximate; a live breach is a
+delivery failure under the standing rules.
+
 
 ## 4. Acceptance — the witnesses (scope §9, mapped)
 
