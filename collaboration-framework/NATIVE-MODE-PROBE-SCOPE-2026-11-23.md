@@ -1,7 +1,10 @@
 # NATIVE-MODE PROBE — SCOPE (2026-11-23)
 
-**Status:** Draft **Rev 5**, for Vane's examination. Rev 5 incorporates
-the final correction of her Rev 4 examination (INDEX 281): §7's sequence
+**Status:** Draft **Rev 6**, for Vane's examination. Rev 6 incorporates
+the binding clarification of her Rev 5 examination (INDEX 283): the
+explicit PROBED → JUDGED → PACKED binding chain, under which the
+generated record is never rewritten (§4, §5, P4). Rev 5 incorporated the
+final correction of her Rev 4 examination (INDEX 281): §7's sequence
 corrected to A1's established lifecycle (the probe stands after
 ASSEMBLY_GENERATED, before ASSEMBLY_VERIFIED), verified against
 `generator.py`'s own stated order, and the checker's aggregate duty made
@@ -187,8 +190,25 @@ evidence-completeness flag, and the retained evidence objects of the
 paragraph above, each with its own integrity hash (the captured bytes
 themselves retained in the record, subject to the ceiling above); the per-dimension counts; the settled
 count; and a **recommended adapter mode** (§5) marked as recommendation,
-not decision. The sealed assembly record binds the probe evidence's hash,
-so packing seals it with everything else. The **independent checker**
+not decision.
+
+**The binding chain (no rewriting of the generated record).** The probe
+stands after ASSEMBLY_GENERATED, whose record carries a canonical hash
+that later acts name; the probe evidence and the selected mode are
+therefore **never inserted into the generated record** — the original
+generated-record hash remains, always, the hash of the original generated
+record. The binding is an explicit extension chain: **ASSEMBLY_PROBED
+identifies the exact generated assembly record it examines (by that
+record's hash) and binds its own evidence hash to it; ASSEMBLY_JUDGED
+identifies the exact probe event and evidence it weighed and records the
+selected mode and its grounds, alongside the generated-record hash;
+ASSEMBLY_PACKED seals the generated record together with those probe and
+judgement bindings, and the adapter consumes the selected mode from that
+sealed, verified assembly package** — never from the generated record
+alone. The independent checker **reconstructs this chain** and rejects
+missing, mismatched, substituted or stale bindings. The chain answers,
+from the record alone: what exactly the examiner judged, and what exactly
+the adapter received. The **independent checker**
 verifies: the probe act stands in its named sequence (§7); the counts
 recompute from the per-trial records in both dimensions; the checker
 **recomputes the sum of each trial's retained provider-body and
@@ -228,9 +248,11 @@ stating the basis for proceeding.** No selected mode, no recorded
 grounds, or an unsupported selection means the governed assembly **cannot
 be packed** — the fail-closed boundary is the absence of an accountable
 judgement, never the probe's silence alone, and there is no permissive
-default. **The selected mode is bound into the sealed assembly record —
-the object the adapter actually consumes.** The adapter reads the mode
-only from that sealed object; it must not be able to choose a mode from a
+default. **The selected mode reaches the adapter only through the §4 binding
+chain**: recorded by ASSEMBLY_JUDGED alongside the generated-record hash,
+and sealed by ASSEMBLY_PACKED into the verified assembly package — the
+object the adapter actually consumes. The adapter reads the mode only
+from that sealed package; it must not be able to choose a mode from a
 prompt, an environment variable, or an unverified model name.
 
 ## 6. The in-work native path (translation boundary)
@@ -291,10 +313,13 @@ P2. The two dimensions are produced and classified distinctly, including
     preserved from the provider's refusal body).
 P3. Five bounded trials reproduce the suite; counts in both dimensions
     recompute; a scripted mixed generation classifies `mixed`.
-P4. The evidence binds to the assembly: sequence, fingerprints, hashes;
-    the checker accepts a sound record and diverges on stale evidence,
-    foreign evidence, count tampering, and an over-ceiling trial retained
-    without an incomplete classification.
+P4. The evidence binds to the assembly: sequence, fingerprints, hashes,
+    and the §4 binding chain; the checker accepts a sound record and
+    diverges on stale evidence, foreign evidence, count tampering, an
+    over-ceiling trial retained without an incomplete classification,
+    and any break in the binding chain — a probe event not bound to the
+    exact generated record, a judgement not identifying the probe
+    evidence it weighed, or a packed package whose bindings mismatch.
 P5. Mode derivation and quorum: 3 settled + strict majority recommends;
     2 settled, or no strict majority, is inconclusive and produces **no
     recommendation**; an inconclusive governed assembly then packs
