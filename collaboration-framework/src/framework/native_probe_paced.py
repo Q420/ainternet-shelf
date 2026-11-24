@@ -64,14 +64,15 @@ INDEX 359):
   5xx, a transport failure — is provider_failed:
   none of those is evidence of the provider
   rejecting a model-generated call. The status
-  boundary is explicit (re-examination correction,
-  INDEX 361): a 429 or a 5xx is a delivery failure
-  WITH PRECEDENCE over the predicate — even a body
-  carrying the tool-refusal code under such a status
-  is provider_failed, because the evidenced refusal
-  shape is an HTTP 400 response-level refusal and a
-  rate-limit or server response is not evidence
-  about a model-generated call.
+  boundary is exact (re-examination corrections,
+  INDEX 361–362): the refusal requires the evidenced
+  HTTP response shape — **HTTP 400** — as well as
+  the tool-refusal code. A 429, a 5xx, a 401, a 413,
+  any other status, and an absent or invalid status
+  are each provider_failed regardless of the code a
+  body carries: none of those responses is the
+  evidenced response-level refusal, and none is
+  evidence about a model-generated call.
 - P2's policy (delivery_of_attribution) is the
   existing attribution-driven taxonomy of the
   native-offer probe, which P2's proposal retains:
@@ -246,9 +247,10 @@ def is_tool_refusal(error_body):
     attempt visibility is a separate fact the
     caller records, never part of this test. The
     predicate reads the body alone; the HTTP-status
-    boundary — 429 and 5xx are delivery failures
-    with precedence — is applied by the delivery
-    policy that calls it."""
+    boundary — the refusal requires HTTP 400, and
+    every other or absent status is a delivery
+    failure — is applied by the delivery policy
+    that calls it."""
     if not isinstance(error_body, str):
         return False
     obj = _probe._json_object(error_body)
@@ -272,18 +274,17 @@ def delivery_of_refusal_predicate(capture):
     rejection), a 429 rate limit, a 5xx server
     error, a transport failure standing as a status
     or diagnostics — is provider_failed; an empty
-    capture is indeterminate. A 429 or a 5xx takes
-    precedence over the refusal predicate: the
-    evidenced refusal shape is an HTTP 400
-    response-level refusal, so a rate-limit or
-    server response carrying the tool-refusal code
-    is still a delivery failure, never a refusal."""
+    capture is indeterminate. The refusal requires
+    the evidenced HTTP response shape exactly: an
+    **HTTP 400** status AND the tool-refusal code.
+    A 429 rate limit and any 5xx server error are
+    explicit delivery failures; a 401, a 413, any
+    other status, and an absent or invalid status
+    are likewise provider_failed — regardless of
+    any code the body carries."""
     if isinstance(capture.get("body"), str):
         return "provider_accepted"
-    status = _http_status(capture)
-    delivery_failure_status = status == 429 or (
-        status is not None and status >= 500)
-    if not delivery_failure_status and is_tool_refusal(
+    if _http_status(capture) == 400 and is_tool_refusal(
             capture.get("error_body")):
         return "provider_refused"
     if isinstance(capture.get("error_body"), str) \

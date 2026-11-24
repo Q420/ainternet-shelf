@@ -223,6 +223,33 @@ ERROR_500_TOOL_REFUSAL_SHAPED = {
         "code": "tool_use_failed"}}),
     "http_status": 500, "diagnostics": None,
     "metadata": {}}
+ERROR_401_TOOL_REFUSAL_SHAPED = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Tool choice is none, but model "
+                   "called a tool",
+        "type": "invalid_request_error",
+        "code": "tool_use_failed"}}),
+    "http_status": 401, "diagnostics": None,
+    "metadata": {}}
+ERROR_413_TOOL_REFUSAL_SHAPED = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Tool choice is none, but model "
+                   "called a tool",
+        "type": "invalid_request_error",
+        "code": "tool_use_failed"}}),
+    "http_status": 413, "diagnostics": None,
+    "metadata": {}}
+ERROR_NO_STATUS_TOOL_REFUSAL_SHAPED = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Tool choice is none, but model "
+                   "called a tool",
+        "type": "invalid_request_error",
+        "code": "tool_use_failed"}}),
+    "http_status": None, "diagnostics": None,
+    "metadata": {}}
 
 
 # ---------------------------------------------------------------
@@ -477,6 +504,28 @@ result = classify(ERROR_500_TOOL_REFUSAL_SHAPED)
 check("a 5xx carrying a tool_use_failed-shaped body "
       "is likewise provider_failed — the server-error "
       "status takes precedence over the predicate",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+result = classify(ERROR_401_TOOL_REFUSAL_SHAPED)
+check("a 401 carrying a tool_use_failed-shaped body "
+      "is provider_failed — the refusal requires the "
+      "evidenced HTTP 400 shape, not the code alone",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+result = classify(ERROR_413_TOOL_REFUSAL_SHAPED)
+check("a 413 carrying a tool_use_failed-shaped body "
+      "is likewise provider_failed — only HTTP 400 "
+      "with the code is the evidenced refusal",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+result = classify(ERROR_NO_STATUS_TOOL_REFUSAL_SHAPED)
+check("a capture with no HTTP status carrying a "
+      "tool_use_failed-shaped body is provider_failed "
+      "— an absent status must not establish a "
+      "refusal either",
       result["delivery"] == "provider_failed"
       and result["attempt_visible"] is None)
 
