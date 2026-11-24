@@ -1,0 +1,140 @@
+{
+ "A_single_call": {
+  "id": "chatcmpl-e2366031-aa40-4bf9-9ebe-71bca8cbeea2",
+  "object": "chat.completion",
+  "created": 1795488730,
+  "model": "openai/gpt-oss-120b",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "reasoning": "The user wants to use probe.lookup to find the lantern's colour. We need to call the function probe.lookup with object \"brass lantern\". Then output result.",
+     "tool_calls": [
+      {
+       "id": "fc_ed3f4c69-89ca-4184-a7ad-e3d811ca72ca",
+       "type": "function",
+       "function": {
+        "name": "probe.lookup",
+        "arguments": "{\"object\":\"brass lantern\"}"
+       }
+      }
+     ]
+    },
+    "logprobs": null,
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "usage": {
+   "queue_time": 0.223043402,
+   "prompt_tokens": 204,
+   "prompt_time": 0.008115511,
+   "completion_tokens": 64,
+   "completion_time": 0.135669271,
+   "total_tokens": 268,
+   "total_time": 0.143784782,
+   "completion_tokens_details": {
+    "reasoning_tokens": 34
+   }
+  },
+  "usage_breakdown": null,
+  "system_fingerprint": "fp_c15aa9c1b7",
+  "x_groq": {
+   "id": "req_01m85qfk2gef39gw0w9q4nscjx",
+   "seed": 153834986
+  },
+  "service_tier": "on_demand"
+ },
+ "B_multi_call": {
+  "id": "chatcmpl-04aac98a-ce98-4a9a-8d30-536fbb36e809",
+  "object": "chat.completion",
+  "created": 1795488731,
+  "model": "openai/gpt-oss-120b",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "reasoning": "We need to use probe.lookup twice, one for brass lantern, one for iron key. The user wants both colours. Use the tool.",
+     "tool_calls": [
+      {
+       "id": "fc_baf5a92a-2e67-4939-9392-40f78fbb913c",
+       "type": "function",
+       "function": {
+        "name": "probe.lookup",
+        "arguments": "{\"object\":\"brass lantern\"}"
+       }
+      }
+     ]
+    },
+    "logprobs": null,
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "usage": {
+   "queue_time": 0.23140817,
+   "prompt_tokens": 211,
+   "prompt_time": 0.009489704,
+   "completion_tokens": 59,
+   "completion_time": 0.12405865,
+   "total_tokens": 270,
+   "total_time": 0.133548354,
+   "completion_tokens_details": {
+    "reasoning_tokens": 29
+   }
+  },
+  "usage_breakdown": null,
+  "system_fingerprint": "fp_5a93aea882",
+  "x_groq": {
+   "id": "req_01m85qfm1ye8f9yegzcbzhsgpt",
+   "seed": 1838995860
+  },
+  "service_tier": "on_demand"
+ },
+ "C_content_plus_call": {
+  "id": "chatcmpl-5f2225f9-007f-4dd7-af3b-77be529ff3ec",
+  "object": "chat.completion",
+  "created": 1795488732,
+  "model": "openai/gpt-oss-120b",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "reasoning": "We need to produce a reply that includes a short sentence saying \"I am ready\" (or similar) and also call probe.note with text 'ready'. Use the tool. The tool is a function call. So we need to output a function call to probe.note with text 'ready'. Also include the sentence. According to format, we can include both. Probably we need to output the sentence and then the function call. The function call is non-executing probe, but we need to call it. So we produce:\n\n\"I am ready.\"\n\nThen a function call: {\"name\":\"probe.note\",\"arguments\":{\"text\":\"ready\"}}. Use the tool.",
+     "tool_calls": [
+      {
+       "id": "fc_cac7e59c-d431-4fc2-b5b8-32d03b8fdc1c",
+       "type": "function",
+       "function": {
+        "name": "probe.note",
+        "arguments": "{\"text\":\"ready\"}"
+       }
+      }
+     ]
+    },
+    "logprobs": null,
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "usage": {
+   "queue_time": 0.085932672,
+   "prompt_tokens": 200,
+   "prompt_time": 0.008048791,
+   "completion_tokens": 161,
+   "completion_time": 0.334387068,
+   "total_tokens": 361,
+   "total_time": 0.342435859,
+   "completion_tokens_details": {
+    "reasoning_tokens": 133
+   }
+  },
+  "usage_breakdown": null,
+  "system_fingerprint": "fp_19b184c447",
+  "x_groq": {
+   "id": "req_01m85qfn15eea9eexahvrnde3s",
+   "seed": 735172762
+  },
+  "service_tier": "on_demand"
+ }
+}
