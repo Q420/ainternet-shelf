@@ -51,7 +51,17 @@ after the previous request's start, the wait computed
 as the shortfall from the actual start timestamps —
 and each trial's request start and applied wait are
 recorded in the evidence, so the spacing is auditable
-from the artifact alone.
+from the artifact alone. The spacing is measured on
+a MONOTONIC clock end to end (the paced release
+examination, INDEX 342): wall-clock time can jump
+under synchronisation or administrative adjustment,
+so it is recorded only as human-readable chronology,
+under its own distinctly named field, and never
+enters the pacing calculation; each trial's monotonic
+start offset is bound into the evidence hash, so the
+actual spacing is reconstructable from the artifact
+alone and cannot rest on a clock that can move
+backwards or forwards.
 
 The baseline is a REPRODUCIBLE REPRESENTATION, in the
 scope's own terms, and the representation is exact
@@ -820,16 +830,26 @@ def _classification(behaviour, delivery, records,
 # Trial evidence and the run.
 # ----------------------------------------------------------------
 
-def trial_evidence(index, capture, request_started_at=None,
+def trial_evidence(index, capture,
+                   request_started_wall_at=None,
+                   request_start_monotonic_offset_seconds=None,
                    pacing_wait_seconds=0.0):
     """One trial's recorded evidence: the classification
     (aggregate and per call), the settled flag — settled
     is evidence-complete, per this scope's definition —
-    the trial's pacing record (the request's start
-    timestamp on the runner's clock, and the pacing wait
-    applied before it — the paced repetition's spacing
-    is auditable from these fields alone), and the
-    retained provider body and diagnostics under
+    the trial's pacing record, in two distinguished
+    parts: request_started_wall_at, the request's start
+    on the WALL clock, recorded for human-readable
+    chronology only and never a pacing measurement;
+    and request_start_monotonic_offset_seconds, the
+    request's start on the MONOTONIC clock expressed
+    as seconds since the run's first request start,
+    together with pacing_wait_seconds (the monotonic
+    time actually spent waiting before it) — the paced
+    repetition's spacing is reconstructable from the
+    monotonic offsets alone, and they are bound into
+    the evidence hash — and the retained provider body
+    and diagnostics under
     the capture ceiling, each with its hash, on the
     assembly probe's retention discipline: the raw
     provider response retained whole, the decoded
@@ -871,7 +891,9 @@ def trial_evidence(index, capture, request_started_at=None,
         status = None
     return {
         "trial": index,
-        "request_started_at": request_started_at,
+        "request_started_wall_at": request_started_wall_at,
+        "request_start_monotonic_offset_seconds":
+            request_start_monotonic_offset_seconds,
         "pacing_wait_seconds": pacing_wait_seconds,
         "behaviour": result["behaviour"],
         "delivery": result["delivery"],
@@ -937,7 +959,8 @@ def summarise_native(trials):
 
 def run_native_trials(raw_call, baseline, modified,
                       comparison, clock=None,
-                      sleeper=None):
+                      sleeper=None, monotonic_clock=None,
+                      wall_clock=None):
     """The bounded trial run: the precondition verified
     first — a failure refuses before any provider
     request, and before any pacing wait — then exactly
@@ -957,16 +980,35 @@ def run_native_trials(raw_call, baseline, modified,
     least MIN_TRIAL_START_INTERVAL_SECONDS after the
     previous request's start. The wait before a trial
     is the shortfall between the floor and the time
-    already elapsed since the previous start — computed
-    from the actual start timestamps, sleeping only
-    that shortfall — so a generation that itself takes
-    time leaves a correspondingly shorter wait, and one
-    longer than the floor leaves none. The first trial
-    starts immediately. Each trial's start timestamp
-    and applied wait are recorded in its evidence. The
-    clock and sleeper are injectable seams (wall clock
-    and time.sleep by default) so the pacing is
-    witnessable without real waiting."""
+    already elapsed since the previous start — sleeping
+    only that shortfall — so a generation that itself
+    takes time leaves a correspondingly shorter wait,
+    and one longer than the floor leaves none. The
+    first trial starts immediately.
+
+    The pacing rests on a MONOTONIC clock end to end
+    (INDEX 342): elapsed time, the start spacing and
+    the recorded start offsets are all monotonic
+    measurements (time.monotonic by default), and
+    after every sleep the elapsed time is re-measured
+    — a sleeper that returns early leaves the runner
+    waiting again until the interval has actually
+    elapsed, never proceeding on a wait that merely
+    was requested. The wall clock (time.time by
+    default) is read once per trial for chronology
+    only, recorded under its own field, and never
+    enters the pacing calculation: a wall-clock jump,
+    forward or backward, cannot shorten or stretch
+    the enforced interval. Each trial records its
+    wall-clock start, its monotonic start offset from
+    the run's first request start, and the monotonic
+    time actually spent waiting before it. The clocks
+    and sleeper are injectable seams so the pacing is
+    witnessable without real waiting; the legacy
+    `clock` seam, where a caller supplies it, serves
+    as both clocks (single-clock witnesses of the
+    pacing arithmetic), while the production defaults
+    are the dual clocks above."""
     problems = check_precondition(
         baseline, modified, comparison)
     if problems:
@@ -974,23 +1016,37 @@ def run_native_trials(raw_call, baseline, modified,
             "the request comparison fails the scope's "
             "precondition; no trial runs: "
             + "; ".join(problems))
-    if clock is None:
-        clock = time.time
+    if monotonic_clock is None:
+        monotonic_clock = clock if clock is not None \
+            else time.monotonic
+    if wall_clock is None:
+        wall_clock = clock if clock is not None \
+            else time.time
     if sleeper is None:
         sleeper = time.sleep
     trials = []
-    previous_start = None
+    first_mono_start = None
+    previous_mono_start = None
     for index in range(1, TRIAL_COUNT + 1):
         wait = 0.0
-        if previous_start is not None:
-            shortfall = \
-                MIN_TRIAL_START_INTERVAL_SECONDS \
-                - (clock() - previous_start)
-            if shortfall > 0:
-                wait = shortfall
-                sleeper(wait)
-        started_at = clock()
-        previous_start = started_at
+        if previous_mono_start is not None:
+            wait_began = monotonic_clock()
+            while True:
+                shortfall = \
+                    MIN_TRIAL_START_INTERVAL_SECONDS \
+                    - (monotonic_clock()
+                       - previous_mono_start)
+                if shortfall <= 0:
+                    break
+                sleeper(shortfall)
+            mono_start = monotonic_clock()
+            wait = mono_start - wait_began
+        else:
+            mono_start = monotonic_clock()
+        if first_mono_start is None:
+            first_mono_start = mono_start
+        previous_mono_start = mono_start
+        wall_start = wall_clock()
         request = copy.deepcopy(modified)
         try:
             capture = raw_call(request)
@@ -1004,7 +1060,9 @@ def run_native_trials(raw_call, baseline, modified,
                 "diagnostics": f"{type(exc).__name__}: {exc}"}
         trials.append(trial_evidence(
             index, capture,
-            request_started_at=started_at,
+            request_started_wall_at=wall_start,
+            request_start_monotonic_offset_seconds=(
+                mono_start - first_mono_start),
             pacing_wait_seconds=wait))
     return trials
 
@@ -1014,7 +1072,9 @@ def run_native_trials(raw_call, baseline, modified,
 # ----------------------------------------------------------------
 
 _TRIAL_HASH_FIELDS = (
-    "trial", "request_started_at", "pacing_wait_seconds",
+    "trial", "request_started_wall_at",
+    "request_start_monotonic_offset_seconds",
+    "pacing_wait_seconds",
     "behaviour", "delivery", "text_form",
     "has_offered_call", "has_unoffered_call",
     "has_malformed_call", "settled", "http_status",

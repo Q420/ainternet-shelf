@@ -32,7 +32,7 @@ request is made anywhere in this suite.
   trials, tool-calling responses included — no
   follow-up generation ever;
 - the paced repetition's pacing (INDEX 340), witnessed
-  on an injected fake clock with no real waiting: the
+  on injected fake clocks with no real waiting: the
   pacing path itself engaged, request starts recorded
   at least 65 seconds apart, the wait before each trial
   the shortfall from the previous start (a generation
@@ -41,6 +41,17 @@ request is made anywhere in this suite.
   waits standing in the written evidence artifact, and
   a tampered comparison still refusing before any
   request — and before any pacing wait;
+- the pacing's clock correctness (INDEX 342): the
+  enforced interval is measured on a monotonic clock
+  end to end — a wall-clock jump, forward or backward,
+  during a wait cannot shorten or distort it; a
+  sleeper that returns early leaves the runner waiting
+  again until the monotonic interval has actually
+  elapsed; the wall clock stands in the evidence under
+  its own chronology field, distinguished from the
+  monotonic start offsets the spacing reconstructs
+  from, and the offsets are bound into the evidence
+  hash;
 - the decision thresholds read as the scope states:
   offered majority locks the door hypothesis in as
   supported, unoffered carriers strengthen the deeper
@@ -99,24 +110,53 @@ class StubRaw:
 
 
 class FakeClock:
-    """An injectable clock/sleeper pair for the pacing
-    witnesses: sleeping advances the clock by the slept
-    amount, instantly — the pacing path is exercised in
-    full, with no real waiting."""
+    """Injectable dual clocks for the pacing witnesses:
+    a wall clock and a monotonic clock that advance
+    together under sleep/advance, but whose wall side
+    can be jumped independently — the distortion the
+    monotonic pacing must be immune to (INDEX 342).
+    Sleeping advances both clocks by the slept amount,
+    instantly: the pacing path is exercised in full,
+    with no real waiting."""
 
     def __init__(self, start=1_700_000_000.0):
-        self.now = start
+        self.wall_now = start
+        self.mono_now = 0.0
         self.sleeps = []
 
-    def time(self):
-        return self.now
+    def wall(self):
+        return self.wall_now
+
+    def monotonic(self):
+        return self.mono_now
 
     def sleep(self, seconds):
         self.sleeps.append(seconds)
-        self.now += seconds
+        self.advance(seconds)
 
     def advance(self, seconds):
-        self.now += seconds
+        self.wall_now += seconds
+        self.mono_now += seconds
+
+    def jump_wall(self, delta):
+        self.wall_now += delta
+
+
+class EarlySleeper:
+    """A sleeper that returns early: each call advances
+    the clocks by at most max_advance seconds, however
+    long a sleep was requested. The runner must not
+    proceed on such a wait — it must measure the
+    monotonic elapsed again and wait further."""
+
+    def __init__(self, clock, max_advance=10.0):
+        self.clock = clock
+        self.max_advance = max_advance
+        self.calls = []
+
+    def __call__(self, seconds):
+        self.calls.append(seconds)
+        self.clock.advance(min(seconds, self.max_advance))
 
 
 class TimedStubRaw(StubRaw):
@@ -329,7 +369,8 @@ def run(captures):
     stub = StubRaw(captures)
     trials = np.run_native_trials(
         stub, baseline, modified, comparison,
-        clock=clock.time, sleeper=clock.sleep)
+        monotonic_clock=clock.monotonic,
+        wall_clock=clock.wall, sleeper=clock.sleep)
     return stub, trials
 
 
@@ -423,20 +464,27 @@ def paced_run(captures, generation_seconds=0.0):
     stub = TimedStubRaw(captures, clock, generation_seconds)
     trials = np.run_native_trials(
         stub, baseline, modified, comparison,
-        clock=clock.time, sleeper=clock.sleep)
+        monotonic_clock=clock.monotonic,
+        wall_clock=clock.wall, sleeper=clock.sleep)
     return clock, stub, trials
 
 
+def offsets(trials):
+    return [t["request_start_monotonic_offset_seconds"]
+            for t in trials]
+
+
 _, _, trials = paced_run(OFFERED_CALL)
-starts = [t["request_started_at"] for t in trials]
+starts = offsets(trials)
 waits = [t["pacing_wait_seconds"] for t in trials]
-check("paced trials record request starts at least the "
-      "65-second floor apart, strictly sequential, the "
-      "first trial starting immediately",
-      waits[0] == 0.0 and all(
+check("paced trials record monotonic request-start "
+      "offsets at least the 65-second floor apart, "
+      "strictly sequential, the first trial starting "
+      "immediately (offset 0)",
+      waits[0] == 0.0 and starts[0] == 0.0 and all(
           b - a >= np.MIN_TRIAL_START_INTERVAL_SECONDS
           for a, b in zip(starts, starts[1:])),
-      f"starts={starts}")
+      f"offsets={starts}")
 check("with an instant generation, the wait before each "
       "later trial is the full interval — the shortfall "
       "from the previous request's start",
@@ -444,7 +492,7 @@ check("with an instant generation, the wait before each "
       f"waits={waits}")
 
 _, _, trials = paced_run(OFFERED_CALL, generation_seconds=20.0)
-starts = [t["request_started_at"] for t in trials]
+starts = offsets(trials)
 waits = [t["pacing_wait_seconds"] for t in trials]
 check("a generation that itself takes 20 seconds leaves "
       "a 45-second wait — the shortfall, not a flat 65 "
@@ -452,17 +500,17 @@ check("a generation that itself takes 20 seconds leaves "
       waits == [0.0, 45.0, 45.0, 45.0, 45.0] and all(
           b - a == 65.0
           for a, b in zip(starts, starts[1:])),
-      f"waits={waits} starts={starts}")
+      f"waits={waits} offsets={starts}")
 
 _, _, trials = paced_run(OFFERED_CALL, generation_seconds=90.0)
-starts = [t["request_started_at"] for t in trials]
+starts = offsets(trials)
 waits = [t["pacing_wait_seconds"] for t in trials]
 check("a generation longer than the floor leaves no "
       "wait at all — the next start is already past it",
       waits == [0.0] * 5 and all(
           b - a == 90.0
           for a, b in zip(starts, starts[1:])),
-      f"waits={waits} starts={starts}")
+      f"waits={waits} offsets={starts}")
 
 _, _, trials = paced_run(OFFERED_CALL, generation_seconds=20.0)
 paced_evidence = np.probe_evidence_object(comparison,
@@ -472,19 +520,22 @@ np.write_outputs(paced_dir, comparison, paced_evidence)
 with open(os.path.join(paced_dir, "probe-evidence.json"),
           encoding="utf-8") as fh:
     written_trials = json.load(fh)["trials"]
-written_starts = [t["request_started_at"]
-                  for t in written_trials]
+written_offsets = [t["request_start_monotonic_offset_seconds"]
+                   for t in written_trials]
 check("the written evidence artifact carries each "
-      "trial's request start and applied wait — the "
-      "spacing verifiable from the artifact alone",
+      "trial's monotonic start offset and applied wait — "
+      "the spacing reconstructable from the artifact "
+      "alone, the wall start standing under its own "
+      "chronology field",
       all(t["pacing_wait_seconds"] == 45.0
           for t in written_trials[1:])
       and written_trials[0]["pacing_wait_seconds"] == 0.0
-      and all(b - a >=
-              np.MIN_TRIAL_START_INTERVAL_SECONDS
-              for a, b in zip(written_starts,
-                              written_starts[1:])),
-      f"starts={written_starts}")
+      and written_offsets == [0.0, 65.0, 130.0, 195.0,
+                              260.0]
+      and all(isinstance(t["request_started_wall_at"],
+                         float)
+              for t in written_trials),
+      f"offsets={written_offsets}")
 
 clock = FakeClock()
 stub = StubRaw(OFFERED_CALL)
@@ -492,7 +543,8 @@ refused = False
 try:
     np.run_native_trials(stub, baseline, modified,
                          diff_tampered,
-                         clock=clock.time,
+                         monotonic_clock=clock.monotonic,
+                         wall_clock=clock.wall,
                          sleeper=clock.sleep)
 except np.NativeProbeRefusal:
     refused = True
@@ -501,6 +553,96 @@ check("the paced runner still refuses on a tampered "
       "before any pacing wait is taken",
       refused and stub.requests == []
       and clock.sleeps == [])
+
+# ---------------------------------------------------------------
+# Clock correctness: the monotonic guarantee (INDEX 342).
+# ---------------------------------------------------------------
+def jumping_run(jump):
+    """A paced run whose wall clock leaps by `jump`
+    seconds during the first wait, while monotonic time
+    advances honestly: the enforced interval must be
+    exactly the monotonic one, undistorted."""
+    clock = FakeClock()
+    state = {"jumped": False}
+
+    def sleeper(seconds):
+        clock.sleep(seconds)
+        if not state["jumped"]:
+            clock.jump_wall(jump)
+            state["jumped"] = True
+
+    stub = TimedStubRaw(OFFERED_CALL, clock, 0.0)
+    trials = np.run_native_trials(
+        stub, baseline, modified, comparison,
+        monotonic_clock=clock.monotonic,
+        wall_clock=clock.wall, sleeper=sleeper)
+    return clock, trials
+
+
+_, trials = jumping_run(600.0)
+wall_starts = [t["request_started_wall_at"]
+               for t in trials]
+check("a wall-clock FORWARD jump of 600 seconds during "
+      "a wait cannot shorten the enforced interval — "
+      "monotonic offsets stay exactly 65 apart and the "
+      "waits stay the full shortfall, while the wall "
+      "starts themselves show the jump the pacing "
+      "ignored",
+      offsets(trials) == [0.0, 65.0, 130.0, 195.0, 260.0]
+      and [t["pacing_wait_seconds"] for t in trials]
+      == [0.0, 65.0, 65.0, 65.0, 65.0]
+      and wall_starts[1] - wall_starts[0] == 665.0,
+      f"offsets={offsets(trials)} wall={wall_starts}")
+
+_, trials = jumping_run(-3600.0)
+wall_starts = [t["request_started_wall_at"]
+               for t in trials]
+check("a wall-clock BACKWARD jump of 3600 seconds "
+      "during a wait does not distort the interval "
+      "either — monotonic offsets and waits unchanged, "
+      "though the wall clock went backwards",
+      offsets(trials) == [0.0, 65.0, 130.0, 195.0, 260.0]
+      and [t["pacing_wait_seconds"] for t in trials]
+      == [0.0, 65.0, 65.0, 65.0, 65.0]
+      and wall_starts[1] < wall_starts[0],
+      f"offsets={offsets(trials)} wall={wall_starts}")
+
+clock = FakeClock()
+early = EarlySleeper(clock, max_advance=10.0)
+stub = TimedStubRaw(OFFERED_CALL, clock, 0.0)
+trials = np.run_native_trials(
+    stub, baseline, modified, comparison,
+    monotonic_clock=clock.monotonic,
+    wall_clock=clock.wall, sleeper=early)
+check("a sleeper that returns early — advancing time "
+      "by at most 10 seconds per call — does not let "
+      "the runner proceed: it waits again until the "
+      "monotonic interval has actually elapsed (many "
+      "sleep calls, every start offset at least 65 "
+      "from the previous, the recorded wait the actual "
+      "monotonic wait)",
+      len(early.calls) > 5
+      and all(b - a >=
+              np.MIN_TRIAL_START_INTERVAL_SECONDS
+              for a, b in zip(offsets(trials),
+                              offsets(trials)[1:]))
+      and trials[1]["pacing_wait_seconds"] >= 65.0,
+      f"calls={early.calls} offsets={offsets(trials)}")
+
+mono_evidence = np.probe_evidence_object(comparison,
+                                         trials)
+check("the monotonic start offsets are bound into "
+      "the evidence hash — an offset altered in the "
+      "artifact no longer verifies under its hash",
+      np.native_evidence_hash(mono_evidence)
+      == mono_evidence["evidence_hash"]
+      and np.native_evidence_hash({
+          **mono_evidence,
+          "trials": [{**mono_evidence["trials"][0],
+                      "request_start_monotonic_offset_seconds":
+                          999.0}]
+          + mono_evidence["trials"][1:]})
+      != mono_evidence["evidence_hash"])
 
 # ---------------------------------------------------------------
 # The durable outputs.
