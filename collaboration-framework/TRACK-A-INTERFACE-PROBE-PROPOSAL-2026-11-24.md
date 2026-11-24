@@ -1,4 +1,12 @@
-# Track A — the interface probe: proposal (2026-11-24)
+# Track A — the interface probe: proposal (2026-11-24; Rev 2, same day)
+
+Rev 2 carries the examiner's three corrections on the first submission
+(INDEX 429): the two conditions now differ in exactly one variable (the
+parameter's declared type — its name `cmd` is identical in both); Stage 2
+states its fixture limitation and the no-call trial rule; and the
+both-settle selection of ARRAY is recorded as a declared selection rule,
+with the settled interface scoped to this tested model, route, and
+construction. Nothing else in the protocol changed.
 
 A probe proposal for examination and separate release, under the accepted
 test programme (INDEX 427) and the environment design Rev 2 §2. It follows
@@ -31,12 +39,16 @@ representation:
   parameters an object with `cmd`, an array of strings (the attempt-8
   shape: a shell invocation with a Python heredoc).
 - **Condition STRING** — the Rev 1 assumption, tested rather than
-  presumed: the same name; parameters an object with `command`, a single
-  string.
+  presumed: the same name, **the same parameter name `cmd`**; its
+  declared type a single string.
 
 Everything else — messages, case material, model pin
 (`openai/gpt-oss-120b`, Groq route), evidence discipline — is identical
-across conditions, so the pair differs in exactly the representation.
+across conditions, so the pair differs in **exactly one variable: the
+declared type and representation of the one parameter**. (Corrected per
+the examiner's controlled-variable finding: the first submission changed
+the parameter's name along with its type, which would have confounded
+any behavioural difference between the conditions.)
 
 ## 3. Predeclared protocol (programme refinement 1 — fixed before any request)
 
@@ -55,10 +67,15 @@ across conditions, so the pair differs in exactly the representation.
 - **Decision criteria, declared now:** a condition's representation is
   **settled** if ≥ 4 of its 5 trials are delivered, and every delivered
   execution-tool call in it is well-formed against the offered schema.
-  If both conditions settle, the interface takes the **ARRAY** form (the
-  evidenced one). If exactly one settles, it takes that form. If neither
-  settles, the interface question stays open and all shapes observed are
-  reported whole — no form is chosen from a split result.
+  If both conditions settle, the interface takes the **ARRAY** form —
+  recorded as this proposal's **declared selection rule** (ARRAY is the
+  form already evidenced by attempt 8), **not** as proof that ARRAY is
+  universally preferred or the only usable interface. If exactly one
+  settles, it takes that form. If neither settles, the interface question
+  stays open and all shapes observed are reported whole — no form is
+  chosen from a split result. Whatever settles, it settles **for this
+  tested model, route, and construction**; it is not a permanent
+  capability guarantee.
 - **Stage 2 (only for a settled form):** 3 trials. Each is a fresh
   two-request exchange: the settled definition is offered; when the model
   calls it, a **simulated result** is returned — an object carrying an
@@ -70,7 +87,18 @@ across conditions, so the pair differs in exactly the representation.
   makes next are **Track C's first runtime-stock evidence**, and whether
   it consumes the simulated result's shape without confusion is the
   result form's first evidence. Confusion, refusal, or a channel-shape
-  response is reported as observed, not repaired.
+  response is reported as observed, not repaired. **Two limitations are
+  stated plainly (the examiner's Stage 2 finding):** the simulated result
+  object is itself only a **candidate fixture** — consuming it without
+  confusion is an observation about that fixture, not proof that it is
+  the result form the model naturally expects or that other forms would
+  not work. And **a Stage 2 trial whose first response contains no
+  execution-tool call simply ends**: the first response is classified
+  under the standing taxonomy (refusal, text contract, malformed,
+  unoffered attempt, or delivery failure), no second request is made,
+  the trial is **not replaced**, and the declared budget is unchanged —
+  the two-request exchange happens only where the model actually calls
+  the tool.
 - **Budget:** at most 16 requests (10 + 3×2), each within the standing
   per-request envelope; the run's wall time is bounded by the pacing
   (≈ 18 minutes worst case). A 429 is a delivery failure, recorded, and
