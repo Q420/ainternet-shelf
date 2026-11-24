@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 5** — Rev 4, plus receipt-side proof and a visible call boundary (INDEX 308): the helper records a phase observation (`pre_response` / `response_received`); `no_response` survives only for `connection_failed_pre_response` on that evidence, the timeout class is withdrawn to `unresolved`, and a mid-read body failure is captured partial-and-incomplete; a loop-owned **CALL_ENTERED** event makes the call boundary a record fact, mutually exclusive with the pre-call terminals.
+
 **Rev 4** — Rev 3, plus the disposition's honesty made enforceable (INDEX 307): three terminal response states (captured / confirmed no_response / unresolved) with a finite failure-class table whose required seam evidence the checker validates, HTTP-error-with-empty-body counted as captured, and the pre-call terminal steps closed to a named finite set validated against the sequence.
 
 **Rev 3** — Rev 2, plus the no-response distinction made mechanical (INDEX 306): RESPONSE_EVIDENCE becomes the iteration's typed response disposition (captured / no_response), owed by every iteration that reaches the call; the failure path's ordering stated case by case; L1 stored as base64 with recomputable hash/count; L5 verdicts total, with explicit `not_reached` states.
@@ -173,3 +175,37 @@ An iteration may terminate without a disposition only at one of these steps, and
 - **`deadline_at_start`** — the activation deadline stood already expired when the iteration began its call step.
 
 The set is closed: the doorway admits no other `terminal_step` value on a disposition-less terminal, and the checker validates the claim against the sequence — the terminal must be the iteration's first and only terminal event, no RESPONSE_EVIDENCE and no dispatch may exist for that iteration, and (for `deadline_at_start`) the recorded deadline and timestamps must be consistent with expiry at the start. A post-call failure relabelled as pre-call fails these checks mechanically: its sequence shows the call step was passed (a disposition is owed), or its step value is outside the set.
+
+---
+
+## Rev 5 — receipt-side proof, and a call boundary the checker can see
+
+### R5-1. `no_response` only where the helper's own phase evidence establishes it
+
+The seam gains the missing observation. The helper's raw path records a **phase observation** on every failure it can report: `phase: "pre_response"` — the opener raised **before any HTTP response object existed** (the pre-response family: connection refused, DNS failure, TLS failure, connect timeout) — or `phase: "response_received"` with the observed `http_status`. The observation travels in the helper's failure output alongside its error kind, as typed fields, not prose.
+
+The class table is revised to describe what the evidence **establishes**:
+
+| Class | Disposition | What the evidence establishes |
+|---|---|---|
+| `connection_failed_pre_response` | `no_response` | the helper's phase observation is `pre_response` **and** its error kind is in the pre-response family **and** the transport observed no status and no envelope. No response object ever existed at the seam; receipt-side non-receipt is established, not inferred. |
+| `timeout_after_send` | `unresolved` | the fence expired and the helper was terminated and confirmed dead with zero stdout. This establishes that the **parent** received nothing. It does **not** establish what the helper received before it died — a killed helper files no phase observation — so the claim is unresolved, honestly. (Rev 4's `timeout_no_response` is withdrawn as a `no_response` class.) |
+| `helper_exit_no_envelope` | `unresolved` | as Rev 4 — the helper died/errored without framing; if its failure output carries a phase observation of `response_received`, the disposition is instead **captured-or-unresolved by what the observation supplies**: a status with no body bytes is recorded as unresolved with the observed status named (the status is a fact; the body is unestablished), never silently upgraded. |
+| `envelope_unparseable`, `termination_unconfirmed`, `transport_internal_error` | `unresolved` | as Rev 4. |
+
+One captured-path completion: where a response object existed and the **body read failed midway**, the helper frames what it has — status, the partial bytes read, and a `body_complete: false` marker on the raw envelope. The disposition is **captured**: L1 = the partial bytes (base64), completeness **false**, byte count = bytes actually read (the full count standing unknown and recorded as such), the verdicts recording the read failure. A partial body is evidence; it is never labelled whole.
+
+Default rule, stated once for the whole table: **where the phase observation is absent, ambiguous, or post-response without a framable body, the disposition is `unresolved`.** Certainty must be earned at the seam or not claimed at all.
+
+### R5-2. CALL_ENTERED — the visible call boundary
+
+The loop records a new loop-owned event, **`CALL_ENTERED`**, immediately before invoking the provider callable for an iteration, naming that iteration's seq. It is a small event with one job: to make "the call was entered" a record fact.
+
+The checker rules become fully mechanical:
+
+- An iteration with **no CALL_ENTERED** may terminate only at a named pre-call step (R4-3's closed set) — and a pre-call terminal on an iteration **with** CALL_ENTERED is a checker failure (mutual exclusivity).
+- An iteration **with CALL_ENTERED** owes exactly one RESPONSE_EVIDENCE disposition (any of the three states) committed before its terminal event; none, or two, is a failure.
+- CALL_ENTERED with a disposition but the disposition's class/evidence pairing invalid (R4-2/R5-1) is a failure, as before.
+- The Rev 2–4 ordering is preserved entire: disposition before dispatch; captured evidence durable (persisted + read-back-verified) before the disposition commits; `unresolved` and `no_response` prohibit dispatch; a failed evidence write is `evidence_capture_failure`.
+
+The three histories her examination named are now distinguishable from the record alone: terminated before the call (no CALL_ENTERED, a named pre-call terminal); call entered, no response (CALL_ENTERED + a `no_response`/`unresolved` disposition with its seam evidence); call returned (CALL_ENTERED + a captured disposition whose artifact the checker can open).
