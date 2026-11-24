@@ -12,6 +12,10 @@ changed direction, avoided a wrong build, or escaped a loop it was stuck in, the
 intervention was Ben's. The crew designs, builds, and examines. The steering —
 including nearly every correction of the crew — is his.
 
+Sections 5 and 6 were added at Ben's own request later the same day, from the same
+record and under the same rule: a steering record that only carries the wins
+would be exactly the kind of document this programme exists to refuse.
+
 ---
 
 ## 1. Suggestions that became the architecture
@@ -192,7 +196,59 @@ became the native adapter chapter the project is in now.
   revision carries facts established in the record, or states plainly that a
   point is not established.
 
+## 5. What he suggested that failed, was overtaken, or cost something
+
+- **The first-home framing (corrected 2026-11-20).** The programme began with
+  Duenna aimed at analysing Pulse HQ operations and deliverables — the framing in
+  place when Ben approved starting Stages 2–9. His own correction killed it:
+  *"having it analyze pulse HQ stuff isn't really what Duenna's for."* The effort
+  spent under the old framing was real, and the correction came from the chair
+  that had approved the start.
+- **SESH as a build direction (2026-11-20 → overtaken 2026-11-21).** His coinage
+  and scope file were the direction for less than a day before his own framework
+  correction superseded the Duenna-only framing it was written inside. SESH was
+  never built — scope only, no build authorised — and the fate of the line it was
+  meant to redirect is still recorded as his open decision, unaltered.
+- **The shelf repo made public (2026-11-15).** After a privatisation cut a seat's
+  shelf access, Ben ordered the repo public again — knowing the git-history
+  residue became public with it. Recorded at the time as his knowing trade:
+  access for the crew, paid for with exposure he accepted. It stands as a call
+  with a real cost, made with open eyes.
+- **PersonaPlex for REMARVIS (parked 2026-11-23).** His suggestion for the voice
+  layer could not run on what he has: it is not in his NVIDIA catalogue and needs
+  GPU hosting he doesn't have. Parked, not adopted — a suggestion the
+  infrastructure answered no to.
+- **The proving condition's limbo (2026-11-20 → still open).** Ben's condition —
+  no direction ruling *"until we can prove Duenna is actually a system that
+  actually helps"* — was principled, and it has never been met. Stage 9 stands
+  NOT PASSED (its Gate 1 pass covers one execution package only), and the
+  direction and custody questions the condition parked are still his and still
+  open. The framework line did not resolve them; it routed around them.
+
+## 6. Where he fell short in the director's role
+
+- **The allow-watcher approvals (2026-11-14).** For one night, the approvals in
+  the record were not his: his own allow-watcher extension was auto-pressing
+  Allow roughly four seconds after each request, so the human gate the whole
+  system leans on was a script wearing his name. He surfaced it and corrected it
+  himself; the standing rule from that night is that a push is never reported as
+  approved by his tap unless his physical tap is actually known.
+- **Technical adjudication (his own declaration, 2026-11-20).** *"Adjudication is
+  a big technical job that I'm not suited for."* The director's seat could not
+  carry that half of the ternary's work, and the role had to be split — the
+  technical labour to the adjudicator, the authority alone remaining his. It is
+  recorded here because he said it about himself, plainly, and designed around
+  it rather than pretending otherwise.
+- **Decisions the chair still owes (as of 2026-11-24).** Each is small; together
+  they are the role's current backlog, and every one is documented as his to
+  make: the **Stage 3 pick** — the first real job, the choice the whole build has
+  been walking toward; the **disposition of the accidental run** of 2026-11-23
+  (preserved untouched, awaiting his word); the **framework's name** (he wants
+  one other than "Loom"; no ruling yet); and the **wall confirmation** — whether
+  the fallback console is on his screen — outstanding since 2026-11-23.
+
 ---
 
 *Sources: `~/MEMORY.md`; `~/workspace/scope-ledger.md`; `~/memory/2026-11-16.md`
-through `~/memory/2026-11-24.md`; the framework INDEX. Compiled 2026-11-24.*
+through `~/memory/2026-11-24.md`; the framework INDEX. Compiled 2026-11-24;
+sections 5–6 added the same day at Ben's request.*
