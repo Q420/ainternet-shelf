@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**⭐ SCOPE PASSED at Rev 8 (INDEX 312)** — Vane's examination passed the written scope; build authority is Ben's alone. One implementation note carried forward (below the revisions): the `evidence_capture_failure` terminal is evidence only if it actually commits.
+
 **Rev 8** — Rev 7, plus the final consistency settlements (INDEX 311): the read size bounded by the remaining allowance so the memory bound is exact, completeness claimed only on observed EOF (ceiling-reached-without-EOF is `capture_limit` even at an exactly-coincident end); and the `evidence_capture_failure` terminal defined as the no-bypass rule's single narrow exception — loop-only, naming the iteration and failed operation, terminal for the instance, never a disposition and never discharging the obligation, with the checker reporting the stop and the incompleteness together.
 
 **Rev 7** — Rev 6, plus the two contract settlements (INDEX 310): the ceiling becomes a **capture ceiling** (the helper stops reading at 64,000 bytes; stored ≡ observed for L1; `stop_reason` ∈ {eof, capture_limit, read_failure}; the whole-original-hash-over-truncated-store language withdrawn), and the doorway's disposition lifecycle is closed in both directions (loop-actor-only, entered-iterations-only, exactly-one, doorway-validated, no bypass, final once committed — with the checker independently reconstructing the same rules).
@@ -297,3 +299,9 @@ The no-bypass rule (R7-2) gains exactly one exception, shaped so it cannot becom
 - **The checker's double report:** the checker recognises the terminal as a legitimate end of the instance's activity **and** independently reports the record as **incomplete** — the missing disposition stands as an integrity finding, and any orphan artifact (persisted but unbound) is reported as an orphan. Both truths stand in the final account: the framework recorded why it stopped, and the evidence obligation was not fulfilled.
 
 No other exception to the no-bypass rule exists. A stall of any other ground while a disposition is outstanding remains refused at the doorway, as Rev 7 requires.
+
+---
+
+## Implementation note carried forward (from the Rev 8 scope pass, INDEX 312)
+
+If the record mechanism itself cannot commit the `evidence_capture_failure` terminal, the framework claims **nothing** about the reason having been recorded: CALL_ENTERED remains outstanding, the checker reports the incomplete history, and that is the whole account. The terminal event is evidence only if it actually commits. This follows from the contract above; the build must honour it (no in-memory or log-side substitute may be presented as the recorded reason).
