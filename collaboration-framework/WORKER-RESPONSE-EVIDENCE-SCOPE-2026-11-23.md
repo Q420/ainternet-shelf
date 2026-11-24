@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 8** — Rev 7, plus the final consistency settlements (INDEX 311): the read size bounded by the remaining allowance so the memory bound is exact, completeness claimed only on observed EOF (ceiling-reached-without-EOF is `capture_limit` even at an exactly-coincident end); and the `evidence_capture_failure` terminal defined as the no-bypass rule's single narrow exception — loop-only, naming the iteration and failed operation, terminal for the instance, never a disposition and never discharging the obligation, with the checker reporting the stop and the incompleteness together.
+
 **Rev 7** — Rev 6, plus the two contract settlements (INDEX 310): the ceiling becomes a **capture ceiling** (the helper stops reading at 64,000 bytes; stored ≡ observed for L1; `stop_reason` ∈ {eof, capture_limit, read_failure}; the whole-original-hash-over-truncated-store language withdrawn), and the doorway's disposition lifecycle is closed in both directions (loop-actor-only, entered-iterations-only, exactly-one, doorway-validated, no bypass, final once committed — with the checker independently reconstructing the same rules).
 
 **Rev 6** — Rev 5, plus the implementable contracts (INDEX 309): the helper's incremental read loop with observed-prefix hash semantics (`hash_subject: observed_bytes`, `total_length: null` when unknown); CALL_ENTERED's meaning defined as the durable crossing of the call-entry boundary (a missing disposition after it is an integrity failure, never a reinterpreted no-response), enforced at the doorway as well as reconstructed by the checker; and the phase-observation contract made exhaustive across all six boundary cases.
@@ -274,3 +276,24 @@ Stated with the same force as R6-2's CALL_ENTERED rules, and enforced **at write
 - The disposition's **outcome, failure class and supporting evidence are validated at the doorway** against the R4-2/R5-1/R7-1 contract (the class↔outcome pairing, the required seam-evidence fields per class, the captured form's artifact hash + layer summaries, the no_response form's three-part agreement). An invalid disposition is refused where it is written, not merely caught later.
 - **No bypass:** while an entered iteration's disposition is outstanding, the doorway refuses any event that advances or closes the work on that instance — the next iteration's events, any dispatch, a yield, a stall, a completion. The obligation cannot be stepped around by moving on.
 - The **checker independently reconstructs all of these constraints** from the record, in its own copy: the doorway prevents an invalid history from being extended; the checker detects a history that nevertheless arrives in an invalid state. Both statements are the design, and neither substitutes for the other.
+
+---
+
+## Rev 8 — the exact bound, and recording the evidence mechanism's own failure
+
+### R8-1. The ceiling is exact, and EOF is observed or not claimed (her point 1)
+
+- The incremental read requests **at most the remaining allowance**: each read's size is `min(chunk_size, ceiling − observed_so_far)`. The helper never holds more than the ceiling — the memory bound is the declared bound, exactly, not the ceiling plus a chunk.
+- **The conservative boundary rule:** `body_complete: true` and `stop_reason: eof` are recorded **only when an EOF (an empty read) is actually observed**. If the observed count reaches the ceiling without an observed EOF, the stop reason is **`capture_limit`** — even if the body in fact ended at precisely that byte. The record claims completeness only on observation, never on arithmetic coincidence.
+
+### R8-2. The `evidence_capture_failure` terminal — a narrow exception that discharges nothing (her point 2)
+
+The no-bypass rule (R7-2) gains exactly one exception, shaped so it cannot become a door:
+
+- **What it is:** a loop-owned terminal event recording that the evidence mechanism itself failed for an entered iteration — the artifact could not be persisted, could not be read-back-verified, or the disposition could not be committed. It names the **iteration** and the **failed operation** (one of `persist`, `verify`, `commit`).
+- **Who and when:** only the **loop actor** may record it, and only for an iteration whose CALL_ENTERED stands and whose disposition is outstanding *because* the named operation failed.
+- **Terminal for the instance:** after it, the doorway refuses everything further on that instance — no dispatch, no yield, no continuation, no subsequent iteration, no completion. The run ends there.
+- **It is not a disposition:** it does not satisfy, replace, or discharge the missing-disposition obligation, and it is never shaped like one (distinct event type, distinct payload; the doorway admits it *instead of* the blocked stall, never *as* a RESPONSE_EVIDENCE).
+- **The checker's double report:** the checker recognises the terminal as a legitimate end of the instance's activity **and** independently reports the record as **incomplete** — the missing disposition stands as an integrity finding, and any orphan artifact (persisted but unbound) is reported as an orphan. Both truths stand in the final account: the framework recorded why it stopped, and the evidence obligation was not fulfilled.
+
+No other exception to the no-bypass rule exists. A stall of any other ground while a disposition is outstanding remains refused at the doorway, as Rev 7 requires.
