@@ -1,0 +1,74 @@
+{
+ "kind": "first probed-mode run, phase 1 \u2014 probe evidence (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "assembly_id": "assembly-crew-1-1",
+ "instance_id": "inst-crew-1-1",
+ "generated_record_hash": "6dfe8b53f8a8c0c2b4c9ebacea06aee3ec1be821160236fb30c2d3bb4a417c7a",
+ "suite": "native-probe-v1",
+ "suite_hash": "37e4cfa0c2073d9eaffff8368ad852db3bd2c65498e80880f6d131874ca6f90f",
+ "route": "groq",
+ "model": "openai/gpt-oss-120b",
+ "fingerprint": "002d3677dcbca52a7568a98f26c6255fadbe72ac3c6caab0adda3925ddf72e32",
+ "evidence_hash": "13429303b62dd9863b97a588e291b7fad7be8e6266f39b7a840765122c4430de",
+ "settled_count": 5,
+ "counts": {
+  "behaviour": {
+   "text_contract": 5,
+   "native_catalogue": 0,
+   "environment_tool_attempt": 0,
+   "mixed": 0,
+   "refusal": 0,
+   "malformed": 0,
+   "no_observable_behaviour": 0
+  },
+  "delivery": {
+   "provider_accepted": 5,
+   "provider_refused": 0,
+   "provider_failed": 0,
+   "indeterminate": 0
+  }
+ },
+ "recommended_mode": "text",
+ "trials": [
+  {
+   "trial": 1,
+   "behaviour": "text_contract",
+   "delivery": "provider_accepted",
+   "payload_form": null,
+   "settled": true,
+   "evidence_complete": true
+  },
+  {
+   "trial": 2,
+   "behaviour": "text_contract",
+   "delivery": "provider_accepted",
+   "payload_form": null,
+   "settled": true,
+   "evidence_complete": true
+  },
+  {
+   "trial": 3,
+   "behaviour": "text_contract",
+   "delivery": "provider_accepted",
+   "payload_form": null,
+   "settled": true,
+   "evidence_complete": true
+  },
+  {
+   "trial": 4,
+   "behaviour": "text_contract",
+   "delivery": "provider_accepted",
+   "payload_form": null,
+   "settled": true,
+   "evidence_complete": true
+  },
+  {
+   "trial": 5,
+   "behaviour": "text_contract",
+   "delivery": "provider_accepted",
+   "payload_form": null,
+   "settled": true,
+   "evidence_complete": true
+  }
+ ]
+}

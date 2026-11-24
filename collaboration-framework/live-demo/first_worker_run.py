@@ -111,6 +111,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -1025,7 +1026,8 @@ def run_probe_phase2(run_dir, receipt_path):
          "decision_receipt_file": "decision-receipt.json",
          "decision_examiner": receipt["examiner"],
          "decision_recording":
-             judgement.get("decision_recording")})
+             judgement.get("decision_recording")},
+        pace_iterations=True)
 
 
 def _stub_probe_captures():
@@ -1320,6 +1322,97 @@ def verify_config_probed():
     }
     print(json.dumps(report, indent=1))
     return 0 if not problems else 1
+
+
+PACING_MIN_INTERVAL_SECONDS = 65.0
+
+
+class IterationPacer:
+    """Pacing at the harness/transport boundary (first
+    live demonstration release examination, INDEX 412,
+    phase-2 matter 1): the wrapper the phase-2 path
+    places around the adapter as the loop's model
+    callable, enforcing at least
+    PACING_MIN_INTERVAL_SECONDS between successive
+    outbound iteration calls.
+
+    The spacing is start-to-start, measured on a
+    monotonic clock at the actual call-start boundary —
+    the moment the wrapped callable is invoked — never
+    inferred from event timestamps. The first call of a
+    run is not delayed; spacing binds successive calls
+    only. The shortfall is re-measured on the monotonic
+    clock after every sleep, as in the paced probe
+    piece, so a sleeper that returns early leaves the
+    boundary unmoved. After the pacing step the
+    activation's absolute deadline — the monotonic
+    deadline the loop hands every call — is rechecked:
+    if it has expired, no provider request is made; the
+    wrapper raises AdapterFailure and the loop takes
+    its standing deadline path. The wrapper paces only:
+    it never retries a request, never alters what is
+    sent, in what order, or how outcomes are handled,
+    and creates no second control loop.
+
+    Transparency: the loop reads and writes adapter
+    state through its model handle (the response-
+    evidence seam, the BD-1 flag staging, render
+    timings). Every attribute read delegates to the
+    wrapped adapter and every attribute write lands on
+    it, so the wrapper is invisible to both sides
+    except for the wait. The clock and sleeper are
+    injectable seams, as in the paced probe piece, so
+    witnesses run on a simulated clock."""
+
+    _OWN = ("_model", "_min_interval",
+            "_monotonic_clock", "_sleeper",
+            "_last_call_start")
+
+    def __init__(self, model,
+                 min_interval=PACING_MIN_INTERVAL_SECONDS,
+                 monotonic_clock=None, sleeper=None):
+        object.__setattr__(self, "_model", model)
+        object.__setattr__(self, "_min_interval",
+                           float(min_interval))
+        object.__setattr__(
+            self, "_monotonic_clock",
+            monotonic_clock if monotonic_clock is not None
+            else time.monotonic)
+        object.__setattr__(
+            self, "_sleeper",
+            sleeper if sleeper is not None else time.sleep)
+        object.__setattr__(self, "_last_call_start", None)
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._model, name)
+
+    def __setattr__(self, name, value):
+        if name in IterationPacer._OWN:
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._model, name, value)
+
+    def __call__(self, package, *args, **kwargs):
+        clock = self._monotonic_clock
+        if self._last_call_start is not None:
+            earliest = self._last_call_start \
+                + self._min_interval
+            while clock() < earliest:
+                self._sleeper(earliest - clock())
+            deadline = kwargs.get("deadline")
+            if deadline is not None \
+                    and clock() >= deadline:
+                raise AdapterFailure(
+                    "no_response",
+                    "the pacing wait carried this call "
+                    "past the activation's absolute "
+                    "deadline; no provider request was "
+                    "made")
+        object.__setattr__(self, "_last_call_start",
+                           clock())
+        return self._model(package, *args, **kwargs)
 
 
 def _build_adapter(route):
@@ -1854,7 +1947,8 @@ def _judge_pack_run(doorway, gen, tok, store, store_path,
                     run_dir, sandbox, route, retrieval,
                     adapter, manifest, manifest_hash,
                     assembly_id, instance_id,
-                    judgement_payload, extra_report):
+                    judgement_payload, extra_report,
+                    pace_iterations=False):
     """The lifecycle from the examiner's judgement onward,
     exactly as the run modes have always carried it:
     judgement, pack, issue authorisation, the executor
@@ -1877,8 +1971,14 @@ def _judge_pack_run(doorway, gen, tok, store, store_path,
     # 5. RUN — the bounded loop, the real model driving.
     # The response-evidence piece: the loop runs under the
     # evidence regime, its store rooted at the run
-    # directory (artifacts in run_dir/responses/).
-    result = Loop(doorway, instance_token, adapter,
+    # directory (artifacts in run_dir/responses/). Under
+    # the demonstration's phase-2 release the loop's model
+    # is the adapter paced at the call-start boundary
+    # (INDEX 412, phase-2 matter 1); every other run mode
+    # hands the loop the adapter exactly as it always has.
+    model = IterationPacer(adapter) if pace_iterations \
+        else adapter
+    result = Loop(doorway, instance_token, model,
                   executor=executor,
                   evidence_store=run_dir).run()
 
