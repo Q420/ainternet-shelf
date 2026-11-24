@@ -1,0 +1,227 @@
+{
+ "runs": [
+  {
+   "run_id": "run-first-worker-1",
+   "constitution_hash": "fde0e5d14b594ba1e3237d140870b6c06468ba3d6a4b15f42ef31f907761ba22",
+   "status": "open"
+  }
+ ],
+ "events": [
+  {
+   "event_seq": 1,
+   "event_id": "be8bdfac-2f5d-424b-a87b-5480e0b20bfc",
+   "run_id": "run-first-worker-1",
+   "type": "RUN_COMMISSIONED",
+   "actor": "dir-1",
+   "affected": "[]",
+   "payload": "{\"run_id\": \"run-first-worker-1\", \"tree\": {\"part-A\": []}, \"seats\": {\"orch-1\": {\"role\": \"orchestrator\", \"identity_status\": \"declared\"}, \"exam-1\": {\"role\": \"examiner\", \"identity_status\": \"declared\"}, \"dir-1\": {\"role\": \"director\", \"identity_status\": \"declared\"}, \"crew-1\": {\"role\": \"crew\", \"identity_status\": \"unverified\"}}, \"briefs\": {\"crew-1\": {\"part\": \"part-A\", \"assignment\": \"Read the source documents in your sandbox: sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md. Write scratch/brief.md: a plain-words brief, at most ~600 words, that a newcomer could read to learn what this framework is, what has actually been proven, what has not been proven, and what remains to be built. Stay accurate to the sources; invent nothing; where the sources disagree with each other, say so.\", \"verification_list\": [\"the brief is accurate to the three named sources, claim by claim\", \"the brief states what has not been proven as plainly as what has\", \"the brief invents nothing the sources do not contain\"], \"evidence_boundary\": \"source manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f; sources: sources/stock-take.md, sources/a3-pass.md, sources/index-tail.md\", \"loop_bounds\": {\"step_ceiling\": 12, \"deadline_seconds\": 600}}}}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "",
+   "hash": "cd08a8ef16efa6798118e4e829a156300e1fb7f2adf31572af54382d629dad61"
+  },
+  {
+   "event_seq": 2,
+   "event_id": "13b44f39-f544-46bf-a2a5-edc7061e88ff",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"source-manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "cd08a8ef16efa6798118e4e829a156300e1fb7f2adf31572af54382d629dad61",
+   "hash": "fa2ed2da99e33432d04944adbe581eeaa16da0975528e1436247a0c367fcfd84"
+  },
+  {
+   "event_seq": 3,
+   "event_id": "3de96df6-51dc-4d91-9f60-44342326a871",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/a3-pass.md sha256:d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "fa2ed2da99e33432d04944adbe581eeaa16da0975528e1436247a0c367fcfd84",
+   "hash": "6250929a05128ec956ef3004e7bcd2a45fe2be05cf26aacd51c433a697fe4b10"
+  },
+  {
+   "event_seq": 4,
+   "event_id": "084501c3-24de-460b-8f4a-eaf53be22e79",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/index-tail.md sha256:eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "6250929a05128ec956ef3004e7bcd2a45fe2be05cf26aacd51c433a697fe4b10",
+   "hash": "2e33bd1c8869b792b30a0459a5e2f7a98ca216ac4d10dd9ba887e36c516dde76"
+  },
+  {
+   "event_seq": 5,
+   "event_id": "a75714cc-7a9f-4df5-8338-9adef45ec335",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/stock-take.md sha256:ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "2e33bd1c8869b792b30a0459a5e2f7a98ca216ac4d10dd9ba887e36c516dde76",
+   "hash": "29bd9445fc3165916c010f5bd26b83a79bbf885f7e5d78467cba6f3a2e1bc4d5"
+  },
+  {
+   "event_seq": 6,
+   "event_id": "f053a895-a62c-4fcb-8c2b-6a6ad6107d26",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1, \"seat\": \"crew-1\", \"account\": \"crew-1\", \"assignment\": \"Read the source documents in your sandbox: sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md. Write scratch/brief.md: a plain-words brief, at most ~600 words, that a newcomer could read to learn what this framework is, what has actually been proven, what has not been proven, and what remains to be built. Stay accurate to the sources; invent nothing; where the sources disagree with each other, say so.\", \"part\": \"part-A\", \"verification_list\": [\"the brief is accurate to the three named sources, claim by claim\", \"the brief states what has not been proven as plainly as what has\", \"the brief invents nothing the sources do not contain\"], \"tree\": {\"part-A\": []}, \"evidence_boundary\": [\"source-manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f\", \"sources/a3-pass.md sha256:d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff\", \"sources/index-tail.md sha256:eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed\", \"sources/stock-take.md sha256:ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7\"], \"authority\": [\"CASE_ACKNOWLEDGED\", \"CLAIM_STATUS\", \"COMMENT\", \"COMPLETION_CLAIMED\", \"CONTRIBUTION\", \"DISAGREEMENT\", \"DISAGREEMENT_SETTLED\", \"ESCALATION\"], \"loop_bounds\": {\"step_ceiling\": 12, \"deadline_seconds\": 600}}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "29bd9445fc3165916c010f5bd26b83a79bbf885f7e5d78467cba6f3a2e1bc4d5",
+   "hash": "ce3652c95e580ec170ef7ba5453a571713928300a264a1e9d8ecf07a20de99dd"
+  },
+  {
+   "event_seq": 7,
+   "event_id": "22eac347-9ab8-42e5-8ca0-f09c3b6fc810",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_JUDGED",
+   "actor": "exam-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "ce3652c95e580ec170ef7ba5453a571713928300a264a1e9d8ecf07a20de99dd",
+   "hash": "8338f487561be734a995370e8baa9ae082361b8e9553cfd4589fa62e0a74752e"
+  },
+  {
+   "event_seq": 8,
+   "event_id": "9949e430-1d68-4dcb-95dd-70ed647f534c",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_ISSUED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1, \"seat\": \"crew-1\"}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "8338f487561be734a995370e8baa9ae082361b8e9553cfd4589fa62e0a74752e",
+   "hash": "458850e3196193af66383b769e545e25f4a32c10179f915945831c9eb6ccd234"
+  },
+  {
+   "event_seq": 9,
+   "event_id": "380a50ac-f40c-44d4-8940-0516864edb01",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PROPOSED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"commission_seq\": 1, \"tree_ref\": 1, \"gates_ref\": 1, \"crew\": [{\"seat\": \"crew-1\", \"role\": \"crew\"}], \"proposal_kind\": \"instance\", \"seat\": \"crew-1\", \"part\": \"part-A\", \"role_requirements\": \"a model able to read three source documents and write a short, accurate, plain-words brief\"}",
+   "ts": "2026-11-24T01:40:05Z",
+   "prev_hash": "458850e3196193af66383b769e545e25f4a32c10179f915945831c9eb6ccd234",
+   "hash": "983a0eaf0fcb64dd9828c43aaf514a1ef338b2ba022f627c737d5ce87cc39383"
+  },
+  {
+   "event_seq": 10,
+   "event_id": "bf1d51b8-70e4-4c4d-b78b-6d6e355563e5",
+   "run_id": "run-first-worker-1",
+   "type": "ONBOARDING",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"subject\": \"instance\", \"seat_id\": \"crew-1\", \"instance_id\": \"inst-crew-1-1\", \"assembly_id\": \"assembly-crew-1-1\", \"declaration\": \"I\\u2019m ChatGPT, a large language model built on OpenAI\\u2019s GPT\\u20114 architecture. I\\u2019m provided and maintained by OpenAI.\\n\\n**What I can do**\\n- Understand and generate natural\\u2011language text across many topics.\\n- Answer questions, explain concepts, and offer reasoning or step\\u2011by\\u2011step solutions.\\n- Summarize, translate, and rewrite text in different styles or tones.\\n- Help with coding tasks, including writing, debugging, and explaining code snippets.\\n- Generate ideas, outlines, and drafts for creative or professional writing.\\n- Perform basic calculations, data\\u2011analysis reasoning, and logical inference.\\n\\n**What I can\\u2019t do**\\n- Access the internet, real\\u2011time data, or any external databases beyond my training.\\n- Retrieve or store personal data about you unless you share it in the conversation.\\n- Execute code, browse websites, or interact with external software directly.\\n- Provide medical, legal, financial, or other professional advice that requires a licensed expert; I can only offer general information.\\n- Generate content that is illegal, hateful, harassing, or intended to cause harm.\\n- Guarantee that every response is 100\\u202f% accurate; I may produce errors or outdated information (my knowledge is current up to June\\u202f2024).\", \"identity_status\": \"declared\", \"capability\": null, \"limits\": null, \"terms_acknowledged\": null, \"terms_ref\": null, \"provider_model_id\": \"openai/gpt-oss-120b\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "983a0eaf0fcb64dd9828c43aaf514a1ef338b2ba022f627c737d5ce87cc39383",
+   "hash": "6b7634ab0b553797d91082ebacb7e88b86bbb8dfab6f0b3dea6828d0549a8e2f"
+  },
+  {
+   "event_seq": 11,
+   "event_id": "25cc6bca-7fe5-470c-8a05-c0f29cea31af",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_GENERATED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"seat\": \"crew-1\", \"part\": \"part-A\", \"case_id\": \"case-crew-1\", \"case_version\": 1, \"proposal_seq\": 9, \"onboarding_seq\": 10, \"declaration_fingerprint\": \"502e0ce87bbc9a237f1b2171eb763baac7a8a6e143e951a7f583978688d5ca11\", \"model_selection\": {\"basis\": \"a model able to read three source documents and write a short, accurate, plain-words brief\", \"requested\": \"openai/gpt-oss-120b\"}, \"skills\": [], \"grants\": [{\"tool\": \"sandbox.list\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.search\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read_range\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.write\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"write\", \"bound\": {\"count\": 4}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.list\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.search\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read_range\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}], \"catalogue_contract\": \"retrieval-v3\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "6b7634ab0b553797d91082ebacb7e88b86bbb8dfab6f0b3dea6828d0549a8e2f",
+   "hash": "b2fae2ccbd10217ab84feab59ee00c4f7ba4aaee572b7d5ffcf22e80e19e3d1c"
+  },
+  {
+   "event_seq": 12,
+   "event_id": "8d9b6b40-1829-4383-91aa-db3df4e0e3b2",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "b2fae2ccbd10217ab84feab59ee00c4f7ba4aaee572b7d5ffcf22e80e19e3d1c",
+   "hash": "b7c1252f9c6ab2c5ac76e844e656fb6103b33569bfa8b38f9b9f94f4c0ffc085"
+  },
+  {
+   "event_seq": 13,
+   "event_id": "44a8285d-2cbd-468b-ab68-af27b9e369c3",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_JUDGED",
+   "actor": "exam-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"515d0ba057175ac92e6f89cc951c1a831ff92398f033bb1ee7c2071058cc5cb5\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "b7c1252f9c6ab2c5ac76e844e656fb6103b33569bfa8b38f9b9f94f4c0ffc085",
+   "hash": "ade9cd4c02b2ca1e32bfadd7c6be47f4047a830f5ffb5fb37aca92ec76f3dbe0"
+  },
+  {
+   "event_seq": 14,
+   "event_id": "cb9efdf3-bfff-466a-9201-ae175afd881d",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PACKED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"515d0ba057175ac92e6f89cc951c1a831ff92398f033bb1ee7c2071058cc5cb5\", \"credential_fingerprint\": \"9c042d46e678bcfa1e8b682f333dba7b69e1168984c6c5be2237dde0e3ae58d6\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "ade9cd4c02b2ca1e32bfadd7c6be47f4047a830f5ffb5fb37aca92ec76f3dbe0",
+   "hash": "1f11211a53a4425cb97f391899a37e920fb7370704759ae3ed7487c1ede7d4a4"
+  },
+  {
+   "event_seq": 15,
+   "event_id": "4560a336-9246-4a07-931d-936cdd952194",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_ISSUE_AUTHORISED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "1f11211a53a4425cb97f391899a37e920fb7370704759ae3ed7487c1ede7d4a4",
+   "hash": "8c8f970abff4436d427abfc1b74fd11aae9db1f3c28ff3f855c5a67ea218f876"
+  },
+  {
+   "event_seq": 16,
+   "event_id": "ee93ae93-8e91-4ad3-b88d-8ff8399a4d6e",
+   "run_id": "run-first-worker-1",
+   "type": "INSTANCE_ACTIVATED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "8c8f970abff4436d427abfc1b74fd11aae9db1f3c28ff3f855c5a67ea218f876",
+   "hash": "0b36fff2f8f72b5a8151853922eaf26d2b435dcb5b4b2b0b0b1f7117f96d564f"
+  },
+  {
+   "event_seq": 17,
+   "event_id": "c6c6e8c0-dcb5-4155-a644-df7655bcfc16",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_ITERATION",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 16, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"step_ceiling\": 12, \"deadline_seconds\": 600, \"cursor_from\": 16, \"cursor_to\": 16, \"catalogue_hash\": \"4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398\", \"registry_version\": \"tool-registry-v3\"}",
+   "ts": "2026-11-24T01:40:07Z",
+   "prev_hash": "0b36fff2f8f72b5a8151853922eaf26d2b435dcb5b4b2b0b0b1f7117f96d564f",
+   "hash": "c9233a4b7d391c1668eed2c284b0a393ff9b1467e13897a80ebcf2801abbc4d4"
+  },
+  {
+   "event_seq": 18,
+   "event_id": "733f33d0-2ea9-4995-9b9d-6968e0911e31",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 16, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"ground\": \"provider_failure\", \"iterations\": 1, \"detail\": \"provider_error: connector helper exited 1: Traceback (most recent call last):\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\\\", line 88, in <module>\\n    sys.exit(main())\\n             ^^^^^^\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\\\", line 81, in main\\n    print(json.dumps(call(req)))\\n                     ^^^^^^^^^\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\\\", line 60, in call\\n    with opener.open(request, timeout=request_timeout()) as response:\\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 521, in open\\n    response = meth(req, response)\\n               ^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 630, in http_response\\n    response = self.parent.error(\\n               ^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 559, in error\\n    return self._call_chain(*args)\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 492, in _call_chain\\n    result = func(*args)\\n             ^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 639, in http_error_default\\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\\nurllib.error.HTTPError: HTTP Error 400: Bad Request\"}",
+   "ts": "2026-11-24T01:40:08Z",
+   "prev_hash": "c9233a4b7d391c1668eed2c284b0a393ff9b1467e13897a80ebcf2801abbc4d4",
+   "hash": "66e0ea7f16ed25f69469fbe8efff6ae412279de5fde2b60730729cc4f2657c21"
+  }
+ ]
+}

@@ -1,0 +1,174 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "worker_route": "groq",
+ "retrieval_mode": true,
+ "brief_sandbox_path": "scratch/brief.md",
+ "model_pinned": "openai/gpt-oss-120b",
+ "model_requested": "openai/gpt-oss-120b",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 1,
+  "recorded": [
+   {
+    "event_seq": 17,
+    "event_id": "c6c6e8c0-dcb5-4155-a644-df7655bcfc16",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 16,
+     "catalogue_hash": "4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398",
+     "registry_version": "tool-registry-v3"
+    },
+    "ts": "2026-11-24T01:40:07Z",
+    "prev_hash": "0b36fff2f8f72b5a8151853922eaf26d2b435dcb5b4b2b0b0b1f7117f96d564f",
+    "hash": "c9233a4b7d391c1668eed2c284b0a393ff9b1467e13897a80ebcf2801abbc4d4"
+   }
+  ],
+  "refused": [],
+  "dispatched": [],
+  "call_timings": [
+   {
+    "iteration": 1,
+    "package_construction_s": 0.0011963949996243173,
+    "render_s": 0.0004477319998841267,
+    "transport_stages": {
+     "body_preparation_s": 8.792199969320791e-05,
+     "helper_launch_s": 0.0012550040000860463,
+     "submission_provider_wait_receipt_s": 1.0904257980000693,
+     "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+     "response_parsing_s": 3.183799981343327e-05
+    },
+    "total_call_s": 1.0924286230001599
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 18,
+   "event_id": "733f33d0-2ea9-4995-9b9d-6968e0911e31",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 16,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 1,
+    "detail": "provider_error: connector helper exited 1: Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 88, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 81, in main\n    print(json.dumps(call(req)))\n                     ^^^^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 60, in call\n    with opener.open(request, timeout=request_timeout()) as response:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 400: Bad Request"
+   },
+   "ts": "2026-11-24T01:40:08Z",
+   "prev_hash": "c9233a4b7d391c1668eed2c284b0a393ff9b1467e13897a80ebcf2801abbc4d4",
+   "hash": "66e0ea7f16ed25f69469fbe8efff6ae412279de5fde2b60730729cc4f2657c21"
+  }
+ },
+ "iterations": 1,
+ "call_timings": [
+  {
+   "iteration": 1,
+   "package_construction_s": 0.0011963949996243173,
+   "render_s": 0.0004477319998841267,
+   "transport_stages": {
+    "body_preparation_s": 8.792199969320791e-05,
+    "helper_launch_s": 0.0012550040000860463,
+    "submission_provider_wait_receipt_s": 1.0904257980000693,
+    "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+    "response_parsing_s": 3.183799981343327e-05
+   },
+   "total_call_s": 1.0924286230001599
+  }
+ ],
+ "call_timings_note": "per-iteration stage timings measured directly by the loop, the adapter and the connector transport (INDEX 217/219): package construction, prompt rendering, and the transport's stages, with stages the interface cannot separate labelled as such and unmeasured stages null. Local cancellation of a helper process never proves the upstream provider stopped processing its request.",
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 18
+ },
+ "dispatches": [],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m ChatGPT, a large language model built on OpenAI\u2019s GPT\u20114 architecture. I\u2019m provided and maintained by OpenAI.\n\n**What I can do**\n- Understand and generate natural\u2011language text across many topics.\n- Answer questions, explain concepts, and offer reasoning or step\u2011by\u2011step solutions.\n- Summarize, translate, and rewrite text in different styles or tones.\n- Help with coding tasks, including writing, debugging, and explaining code snippets.\n- Generate ideas, outlines, and drafts for creative or professional writing.\n- Perform basic calculations, data\u2011analysis reasoning, and logical inference.\n\n**What I can\u2019t do**\n- Access the internet, real\u2011time data, or any external databases beyond my training.\n- Retrieve or store personal data about you unless you share it in the conversation.\n- Execute code, browse websites, or interact with external software directly.\n- Provide medical, legal, financial, or other professional advice that requires a licensed expert; I can only offer general information.\n- Generate content that is illegal, hateful, harassing, or intended to cause harm.\n- Guarantee that every response is 100\u202f% accurate; I may produce errors or outdated information (my knowledge is current up to June\u202f2024).",
+  "provider_model_id": "openai/gpt-oss-120b",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 18,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ }
+}
