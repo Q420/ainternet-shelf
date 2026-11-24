@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 7)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 8)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -73,6 +73,15 @@ completion an operating expectation — the construction sets no completion
 ceiling) and aligns the operative block's one matching phrase. Nothing else
 changes.
 
+**Revision note — Rev 8 (2026-11-24):** the examiner's Rev 7 examination
+(INDEX 387) required the final consistency pass: the accounting's §3 stated
+the predicted refusal categorically, §5 promised a fresh window, and this
+brief's assumption A3 still called the composition bounded by the assignment.
+Rev 8 makes §3 conditional throughout (the model *predicts*; the zone is a
+prediction, not a demonstrated boundary), restates §5 on the residual-Used
+assumption with its failure mode explicit, and aligns A3 with the accounting
+(requested size; no completion ceiling configured). Nothing else changes.
+
 ## Operative dispositions — what governs the build (Rev 6)
 
 Read first. The sections after this block preserve the full history of the
@@ -101,9 +110,11 @@ this block, **this block governs implementation**.
   on the account, requests strictly sequential — an operating condition the
   programme controls. (A2) ≥ 65 s between request starts, with residual
   Used treated as ≈ 0 — an **assumption**, supported by five admissions at
-  that spacing but not proven by them. (A3) completions stay in the
-  evidenced range (tool-call responses under ~100 tokens; the composition
-  bounded by the assignment).
+  that spacing but not proven by them. (A3) completions stay near the
+  evidenced range — an operating expectation, not a bound: tool-call
+  responses measured under ~100 tokens; the composition's ~600 words are
+  the assignment's *requested* size, and no completion-token ceiling is
+  configured anywhere in the construction.
 - **Failure and rollover contract (operative).** A provider refusal — at
   admission or otherwise — is recorded under the response-evidence regime
   as a delivery failure, never as a response, never disguised as a success.

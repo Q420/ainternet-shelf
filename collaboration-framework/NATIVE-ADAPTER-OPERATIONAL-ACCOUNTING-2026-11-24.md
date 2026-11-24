@@ -57,28 +57,32 @@ Established from the account's own mouth, not the published table:
 
 The worst-case next prompt remains **7,979 tokens** (4,388 measured fixed +
 ≈ 3,591 converted growth from a ceiling-sized 12,000-byte result; the
-conversion labelled approximate, as before). Charged at admission:
-Requested ≈ 7,979 × 1.033 ≈ **8,242 > 8,000** — **refused at admission, even
-in a fresh window.** The same result holds on the additive reading
-(7,979 + 145 = 8,124). So at the absolute worst case the request does not run:
-it is refused whole, before generation, recorded as a delivery failure, and
-the work rolls over to the next agent with the record intact — the failure
-mode Ben's ruling accepts. Stated accurately (examiner's correction,
-INDEX 382): this refusal is a **credible, evidenced hypothesis**, extrapolated
-from one admission sample — not a demonstrated fact. The safety does not
-depend on the prediction: if the worst-case request were admitted instead,
-it would run well inside the per-request bounds (context window 131,072),
-and its completion would enter the window's Used, which the pacing
-assumption in §4 addresses. Either branch is inside the contract; the
-hypothesis only predicts which branch the worst case takes.
+conversion labelled approximate, as before). Charged at admission on the
+§2 model: Requested ≈ 7,979 × 1.033 ≈ **8,242 > 8,000** — so the model
+**predicts refusal at admission, even in a fresh window**. The same
+prediction holds on the additive reading (7,979 + 145 = 8,124). Stated
+accurately (examiner's corrections, INDEX 382/385): this refusal is a
+**credible, evidenced hypothesis**, extrapolated from one admission
+sample — not a demonstrated fact. In conditional form, what the prediction
+says is: *if* the model holds at the worst case, the request does not run —
+refused whole, before generation, recorded as a delivery failure, and the
+work rolls over to the next agent with the record intact, the failure mode
+Ben's ruling accepts. The safety does not depend on the prediction: if the
+worst-case request were admitted instead, it would run well inside the
+documented context window (131,072), and its completion would enter the
+window's Used, which the pacing assumption in §4 addresses. Either branch
+is inside the contract; the hypothesis only predicts which branch the
+worst case takes.
 
-The refusal zone is narrow. Admission in a fresh window needs Requested
-≤ 8,000, i.e. a prompt of ≈ 7,744 tokens, i.e. a result content of
-**≈ 11,000 bytes** at the measured conversion. Results from 0 to ~11,000 of
-the 12,000-byte ceiling are admitted; only the top ~1,000 bytes of the
-permitted result range lands in the refusal zone. (Approximate, as the
-conversion is approximate; the zone's existence and rough size are robust
-across the conversion's plausible range.)
+On the same model, the predicted refusal zone is narrow. Admission in a
+fresh window would need Requested ≤ 8,000, i.e. a prompt of ≈ 7,744 tokens,
+i.e. a result content of **≈ 11,000 bytes** at the measured conversion — so
+results from 0 to ~11,000 of the 12,000-byte ceiling are predicted admitted,
+and only the top ~1,000 bytes of the permitted range is predicted to land
+in the refusal zone. The zone is a prediction from the same extrapolation,
+not a demonstrated boundary between admitted and refused results; its rough
+size is robust across the conversion's plausible range, its exact edge is
+not measured.
 
 ## 4. Completion and concurrent-usage accounting
 
@@ -119,8 +123,11 @@ per-request envelope — there is no such envelope at 8,000 — but because:
    refusal, whenever it occurs, is a recorded delivery failure under the
    standing evidence discipline, never a disguised success; if the request
    is admitted instead, it runs as compared in point 1 above;
-3. the refusal zone is only the top ~1,000 bytes of the permitted result
-   range, under a pacing discipline that gives every request a fresh window;
+3. the predicted refusal zone is only the top ~1,000 bytes of the
+   permitted result range (§3 — a prediction, not a demonstrated boundary),
+   under a pacing discipline that operates on the residual-Used assumption
+   of §2, whose failure, if it comes, arrives as an admission refusal: a
+   recorded delivery failure under point 4's rollover contract;
 4. resumption is the briefcase's designed function: the record carries the
    work's exact state, completed side effects are not replayed (dispatches
    are recorded before effects and checked on continuation, per the standing
