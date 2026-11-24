@@ -305,6 +305,25 @@ execution.
   the discovery seam simulated as failed against a live launch, the
   command's marker file does not exist, the gate file was never
   created, and nothing from the launch survives.
+- **Rig integrity (Track G closure, 2026-11-24).** The in-tree rig
+  instruments — `rig/reaper.py` and `rig/preflight.py` — live in the
+  worker's own tree, writable by the room uid, and every execution
+  runs under the tree's reaper copy: a hostile worker could rewrite
+  the reaper its *next* execution runs under (Track G finding
+  `g-reaper-tamper`). Before every execution, host-side, alongside
+  the storage and discovery preconditions, `Room.run()` verifies
+  each instrument's current SHA-256 against the hash recorded in
+  the room's stock manifest at creation. A changed, missing,
+  unreadable, or unrecorded instrument refuses the execution with
+  the failed precondition `rig-integrity`; the tamper is recorded
+  in the room state as a rig-integrity event (file, expected hash,
+  actual hash or absence) and in the refused execution's record.
+  Refusal + record is the contract: nothing silently restores the
+  file — an operator, or a fresh stocking, does. Negative/positive
+  test (Track G): a forged reaper refuses the next execution with
+  both hashes on record and the command's marker never written;
+  after the operator restores the genuine reaper, execution
+  proceeds cleanly.
 2. **Storage: a sized tmpfs backs the tree** (declared:
    `storage_bytes`, default 512 MiB). Evaluated in order: (i) a
    fixed-size backing image via loop mount — **impossible on this

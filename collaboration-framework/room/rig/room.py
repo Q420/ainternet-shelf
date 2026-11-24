@@ -107,6 +107,17 @@ the LIVE mount table at execution time — the tree's actual current
 backing mount, bound to the mount identity and declared size
 recorded at creation — not against the label the state recorded:
 a removed, replaced, or changed mount refuses execution.
+The in-tree rig instruments (rig/reaper.py, rig/preflight.py) are
+also verified before every execution, host-side, against the hashes
+recorded in the room's stock manifest at creation: they live in the
+worker's own tree, writable by the room uid, so a hostile worker
+can rewrite the reaper its next execution runs under (Track G
+finding g-reaper-tamper). A changed, missing, or unreadable
+instrument refuses execution with the failed precondition
+"rig-integrity"; the tamper is recorded in the room state as a
+rig-integrity event (file, expected hash, actual hash or absence).
+Nothing silently restores the file — an operator, or a fresh
+stocking, does.
 
 Identity: each room gets its OWN uid/gid, allocated per room and
 recorded in its state; the tree is owned by that uid, mode 0700.
@@ -872,6 +883,67 @@ class Room:
                       f"{entry['major_minor']}, total size {total} "
                       "bytes")
 
+    # The rig's own instruments, stocked into every tree at creation
+    # and trusted by later executions: the reaper runs the command
+    # and reports its CPU; the preflight is the room's smoke probe.
+    RIG_INSTRUMENTS = ("rig/reaper.py", "rig/preflight.py")
+
+    def _verify_rig_integrity(self):
+        """Verify the in-tree rig instruments against the stock
+        manifest recorded at creation.
+
+        The instruments live in the worker's own tree, writable by
+        the room uid — a hostile worker can rewrite the reaper its
+        NEXT execution runs under (Track G finding g-reaper-tamper:
+        a forged reaper reported cpu_seconds 0.0 and duly ran).
+        They are therefore verified host-side before every
+        execution: each instrument's current SHA-256 must equal the
+        hash recorded in the room's stock manifest at creation. A
+        changed, missing, unreadable, or unrecorded instrument
+        fails closed. Returns (ok, detail, report); the report is
+        the rig-integrity record carried by a refusal and preserved
+        in the room state."""
+        files = []
+        bad = []
+        for rel in self.RIG_INSTRUMENTS:
+            expected = self.stock_manifest.get(rel)
+            actual = None
+            try:
+                actual = hashlib.sha256(
+                    (self.tree / rel).read_bytes()).hexdigest()
+            except FileNotFoundError:
+                status = "missing"
+            except OSError as exc:
+                status = f"unreadable ({exc})"
+            else:
+                if expected is None:
+                    status = "unrecorded in the stock manifest"
+                elif actual == expected:
+                    status = "ok"
+                else:
+                    status = "changed"
+            entry = {"file": rel, "expected_sha256": expected,
+                     "actual_sha256": actual, "status": status}
+            files.append(entry)
+            if status != "ok":
+                bad.append(entry)
+        report = {"checked_at": time.time(), "ok": not bad,
+                  "files": files}
+        if not bad:
+            return True, ("rig instruments verified against the "
+                          "stock manifest"), report
+        parts = "; ".join(
+            f"{e['file']}: {e['status']} (expected "
+            f"{(e['expected_sha256'] or 'none')[:16]}…, actual "
+            f"{(e['actual_sha256'] or 'absent')[:16]}…)"
+            for e in bad)
+        return False, (
+            "the in-tree rig instruments do not match the stock "
+            f"manifest recorded at creation — {parts}; execution "
+            "is refused, and the instruments are NOT silently "
+            "restored (an operator, or a fresh stocking, restores "
+            "them)"), report
+
     @staticmethod
     def _kill_launch_tree(proc):
         """Kill a launcher and everything it spawned (used when a
@@ -922,11 +994,14 @@ class Room:
         The call is serialised against every other execution of this
         room by a per-room lock held for the whole call — the envelope
         boundary is the worker run (see the module docstring). Before
-        anything launches, two preconditions fail closed: a recorded
+        anything launches, three preconditions fail closed: a recorded
         CPU-ledger failure blocks the call (the ledger is authority
-        and never defaults), and the storage precondition is verified
+        and never defaults), the storage precondition is verified
         against the LIVE mount table (the tree's actual backing
-        mount and declared size, not the recorded label). The
+        mount and declared size, not the recorded label), and the
+        in-tree rig instruments are verified against the stock
+        manifest recorded at creation (a rewritten reaper must not
+        run the next execution). The
         command runs under the in-room reaper and starts only once
         the room's namespace has been discovered and the warden
         engaged; if discovery fails the launch is terminated with the
@@ -965,6 +1040,20 @@ class Room:
                         f"against the live mount table: {detail}; "
                         "execution without the verified aggregate "
                         "storage ceiling is refused")
+                    self._record_execution(argv, result, time.time())
+                    return result
+                # fail closed: the in-tree rig instruments are
+                # verified against the stock manifest recorded at
+                # creation — a worker that rewrote the reaper (or
+                # the preflight) in an earlier execution must not
+                # have its forgery run the next one. The tamper is
+                # recorded in the room state as a rig-integrity
+                # event; nothing silently restores the file.
+                ok, detail, integrity = self._verify_rig_integrity()
+                if not ok:
+                    result = self._refused_result(
+                        argv, "rig-integrity", detail)
+                    result["rig_integrity"] = integrity
                     self._record_execution(argv, result, time.time())
                     return result
                 return self._run_locked(argv, timeout, budget)
@@ -1195,6 +1284,7 @@ class Room:
             "refusal_kind": result.get("refusal_kind"),
             "failed_precondition": result.get("failed_precondition"),
             "refusal_reason": result.get("refusal_reason"),
+            "rig_integrity": result.get("rig_integrity"),
             "envelope_termination": result["envelope_termination"],
             "pressure_events": result["pressure_events"],
             "peak_aggregate_rss_bytes": result["peak_aggregate_rss_bytes"],
@@ -1211,6 +1301,13 @@ class Room:
         })
         state.setdefault("pressure_events", []).extend(
             result["pressure_events"])
+        integrity = result.get("rig_integrity")
+        if integrity is not None and not integrity.get("ok", True):
+            state.setdefault("rig_integrity_events", []).append({
+                "at": t0,
+                "argv": [str(a) for a in argv],
+                "files": integrity.get("files", []),
+            })
         try:
             ledger = state.setdefault("cpu_ledger", {
                 "boundary": "per worker run",
