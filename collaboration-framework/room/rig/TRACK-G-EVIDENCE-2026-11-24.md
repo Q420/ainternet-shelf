@@ -180,3 +180,53 @@ works.
   next execution trusts — is exactly the reaper finding above; other
   in-tree trust (the stocked `preflight.py` copy) shares the
   proposed fix.
+
+---
+
+**Addendum — 2026-11-24 (examiner's return on gates 2–3): two
+test assertions strengthened.** Gate 2 and the reaper-integrity
+correction were accepted. Track G was returned for one focused
+correction — two assertions in `test_track_g.py` did not enforce
+the claims their checks reported:
+
+1. **`g-conf-malformed`** reported the empty-argv result but its
+   pass condition asserted only the invalid shell (rc ≠ 0) and the
+   missing binary (rc 127). It now also asserts the empty-argument
+   invocation's actual outcome: a **returned** result (no
+   exception), **rc 1**, **not refused**, and **no
+   failed_precondition** — the recorded-execution shape `Room.run`
+   produces for it. If empty-argv behaviour changes, this check
+   fails.
+2. **`g-conf-hugeargv`** passed on `huge_desc is not None`, which
+   either branch (returned result *or* raised refusal) satisfies —
+   the check would have passed had the 4 MiB argument executed. It
+   now asserts the concrete refusal: the call **raises `OSError`
+   with `errno == E2BIG`** from the launcher, returns no result,
+   and the room state's execution count is **unchanged** by the
+   attempt (`exec_records 22->22` on the verification runs) —
+   while the 100 KiB argument still executes (rc 0, length
+   reported).
+
+No checks were added, removed, or split — the suite still stands
+at 22 checks; the same two checks assert more. `room.py` is
+untouched by this correction.
+
+*Negative demonstration (scratch copies only, never the shipped
+file; each mutation run otherwise green — 21 passed, 1 failed of
+22, the failure specific to the mutated check):*
+
+- Empty-argv slot replaced by a successful invocation
+  (`python3 -c pass`, rc 0): **`g-conf-malformed` FAILS**
+  (`empty: rc=0`). Under the old pass condition this run would
+  have passed.
+- The 4 MiB argument shrunk to 100 KiB so it executes:
+  **`g-conf-hugeargv` FAILS** (`huge: returned rc=0`,
+  `exec_records 22->23` — a result was returned and an execution
+  record *was* added). Under the old pass condition this run
+  would have passed.
+
+*Final verification on the shipped tree:* Track G **22 passed,
+0 failed of 22**, twice; rig **34 passed, 0 failed of 34**; no
+leftovers (the suites' own cleanup checks pass in every run).
+Status: the focused correction is made; gate 3's closure is the
+examiner's to confirm.

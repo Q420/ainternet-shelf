@@ -61,6 +61,7 @@ carries the per-attack table.
 Offline only. Exit code is nonzero if any check fails.
 """
 
+import errno
 import hashlib
 import json
 import os
@@ -649,7 +650,10 @@ def main():
             empty_desc = f"raised {type(exc).__name__}: {exc}"
         check("g-conf-malformed: invalid shell / missing binary / empty "
               "argv are recorded results, not hangs",
-              bad_shell["rc"] != 0 and no_bin["rc"] == 127,
+              bad_shell["rc"] != 0 and no_bin["rc"] == 127
+              and empty is not None and empty["rc"] == 1
+              and not empty.get("refused")
+              and empty.get("failed_precondition") is None,
               f"shell_rc={bad_shell['rc']} missing_rc={no_bin['rc']} "
               f"empty: {empty_desc}")
 
@@ -684,6 +688,10 @@ def main():
             ["/usr/bin/python3", "-c",
              "import sys; print(len(sys.argv[1]))", "x" * 100_000],
             timeout=30)
+        execs_before = len(json.loads(
+            demo.state_path.read_text())["executions"])
+        huge = None
+        huge_exc = None
         huge_desc = None
         try:
             huge = demo.run(
@@ -691,12 +699,19 @@ def main():
                 timeout=30)
             huge_desc = f"returned rc={huge['rc']}"
         except OSError as exc:
+            huge_exc = exc
             huge_desc = f"launcher refused: {type(exc).__name__}: {exc}"
+        execs_after = len(json.loads(
+            demo.state_path.read_text())["executions"])
         check("g-conf-hugeargv: a 100 KiB argument runs; a 4 MiB argument "
               "is refused before anything executes",
               big_ok["rc"] == 0 and "100000" in big_ok["stdout"]
-              and huge_desc is not None,
-              f"big_rc={big_ok['rc']} huge: {huge_desc}")
+              and huge is None
+              and huge_exc is not None
+              and huge_exc.errno == errno.E2BIG
+              and execs_after == execs_before,
+              f"big_rc={big_ok['rc']} huge: {huge_desc} "
+              f"exec_records {execs_before}->{execs_after}")
 
         # --- the room still works ----------------------------------------------
         res = run_sh(demo, "sha256sum sources/stock-take.md", timeout=30)
