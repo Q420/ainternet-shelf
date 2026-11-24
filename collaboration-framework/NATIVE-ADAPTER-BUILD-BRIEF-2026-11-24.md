@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 8)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 9)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -82,6 +82,16 @@ prediction, not a demonstrated boundary), restates §5 on the residual-Used
 assumption with its failure mode explicit, and aligns A3 with the accounting
 (requested size; no completion ceiling configured). Nothing else changes.
 
+**Revision note — Rev 9 (2026-11-24):** the examiner's Rev 8 examination
+(INDEX 389) confirmed all prior corrections present and required one final
+precision correction: the accounting's §2 refusal sentence is now qualified
+as describing a **TPM admission refusal** specifically (the rollover contract
+covers provider refusals generally without claiming that timing for all of
+them), and §3's admitted branch distinguishes the estimated prompt's context
+fit from completion length, which no configured ceiling bounds. The brief's
+operative block carries the same completion distinction. Nothing else
+changes.
+
 ## Operative dispositions — what governs the build (Rev 6)
 
 Read first. The sections after this block preserve the full history of the
@@ -123,12 +133,12 @@ this block, **this block governs implementation**.
   and continues the work; dispatches already recorded with outcomes are
   never replayed, so completed side effects are never repeated. **This
   contract does not depend on the refusal hypothesis:** if the worst-case
-  request is refused, the contract applies; if it is admitted, it runs well
-  inside the documented context window (131,072 tokens), with its
-  serialized size comfortably below the one observed byte-size refusal
-  point (134,844 bytes — a comparison, not a proven byte bound),
-  and its completion enters the window's Used, which assumption A2
-  addresses — and if A2 fails on some later request, that refusal is again
+  request is refused, the contract applies; if it is admitted, its estimated
+  prompt sits well inside the documented context window (131,072 tokens)
+  and its serialized size comfortably below the one observed byte-size
+  refusal point (134,844 bytes — a comparison, not a proven byte bound);
+  its completion, bounded by no configured ceiling, enters the window's
+  Used, which assumption A2 addresses — and if A2 fails on some later request, that refusal is again
   the contract's delivery failure, not a breach of it.
 
 ## 1. What is built

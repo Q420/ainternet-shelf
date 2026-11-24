@@ -38,8 +38,13 @@ Established from the account's own mouth, not the published table:
 - **Requested ≈ the prompt, plus a small provider-side allowance:** for the
   request whose prompt the provider's own usage later measured at 4,388
   tokens, Requested was 4,533 — a ratio of ≈ 1.033 (one evidenced sample;
-  treated as approximate). A refusal therefore happens **at admission, whole,
-  before any generation or effect** — the cleanest failure the system has.
+  treated as approximate). A **TPM admission refusal** therefore happens
+  **at admission, whole, before any generation or effect** — the cleanest
+  failure the system has. The qualification is deliberate: that timing is
+  established for refusals under the TPM admission test described here, not
+  for every provider refusal whatever its cause — a 413 or a 400 has its
+  own shape. The rollover contract (§5) covers provider refusals generally
+  without claiming they all occur before generation.
 - **The window decays continuously:** retry-after figures of ~6–7 seconds to
   free a few hundred tokens show a sliding window, not a fixed minute reset.
   Under the standing pacing discipline (≥ 65 s between request starts), the
@@ -68,9 +73,11 @@ says is: *if* the model holds at the worst case, the request does not run —
 refused whole, before generation, recorded as a delivery failure, and the
 work rolls over to the next agent with the record intact, the failure mode
 Ben's ruling accepts. The safety does not depend on the prediction: if the
-worst-case request were admitted instead, it would run well inside the
-documented context window (131,072), and its completion would enter the
-window's Used, which the pacing assumption in §4 addresses. Either branch
+worst-case request were admitted instead, its estimated prompt would sit
+well inside the documented context window (131,072) — the prompt's fit is
+what that comparison supports; the completion's length is bounded by no
+configured ceiling (§4, A3), and its tokens would enter the window's Used,
+which the pacing assumption in §4 addresses. Either branch
 is inside the contract; the hypothesis only predicts which branch the
 worst case takes.
 
