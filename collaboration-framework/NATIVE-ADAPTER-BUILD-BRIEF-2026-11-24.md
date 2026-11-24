@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 4)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 5)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -32,6 +32,15 @@ The ruling is recorded as an addendum at the end of §3; the derivation and the
 incompatibility finding stand exactly as written. The brief returns to the
 examiner for her recorded position and the brief's disposition under the
 ruling.
+
+**Revision note — Rev 5 (2026-11-24):** the examiner accepted Ben's authority
+and CAP = 1, withdrew her margin-as-gate reading, and flagged one technical
+premise: TPM is a rate limit, not a per-request envelope (INDEX 380). She is
+right; §3's sentence to that effect is corrected in place, and the narrow
+operational accounting she required — admission semantics from the account's
+own refusal statements, completion and rate-window accounting — is filed as
+`NATIVE-ADAPTER-OPERATIONAL-ACCOUNTING-2026-11-24.md` and governs how CAP = 1
+is safely operated. No other change.
 
 **Empirical gates, closed:** P1 passed (INDEX 367 — flag effect measured; delivery
 to the host demonstrated, doorway adjudication **not** demonstrated and therefore
@@ -147,9 +156,15 @@ from what is converted, and states the outcome plainly.
 The complete worst-case next request — fixed standing request plus the growth
 one response's calls generate — must fit within **75% of the envelope**. The
 envelope is the account's measured provider budget: **8,000 tokens per minute**
-(free plan; INDEX 260 and the 429 bodies in evidence), which a request whose
-prompt exceeds it cannot be sent under at any pacing. The threshold is therefore
-**6,000 tokens**.
+(free plan; INDEX 260 and the 429 bodies in evidence). The threshold is
+therefore **6,000 tokens**. *(Rev 5 correction: TPM is a per-minute rate
+limit, not a per-request prompt maximum; the derivation below stands as the
+margin test the examiner set, and the corrected provider semantics — admission
+accounting, completion and window accounting — are carried in
+`NATIVE-ADAPTER-OPERATIONAL-ACCOUNTING-2026-11-24.md`, which governs how
+CAP = 1 is safely operated. The sentence that once stood here, claiming a
+request whose prompt exceeds the budget cannot be sent at any pacing, is
+withdrawn.)*
 
 ### The quantities, and what kind of knowledge each is
 
