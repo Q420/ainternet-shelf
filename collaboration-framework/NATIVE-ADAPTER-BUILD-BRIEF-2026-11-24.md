@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 2)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -8,6 +8,16 @@ reconciled with the examiner at INDEX 368–369. **Scope:** `NATIVE-ADAPTER-SCOP
 nothing to it and relaxes nothing in it. Where the scope's own header says the build
 waits on a separate decision, that decision is the 04:34 authorisation; the scope
 text is not edited to say so (the ledger and INDEX 368 carry the sequence).
+
+**Revision note — Rev 2 (2026-11-24):** the examiner's brief examination
+(INDEX 374) resolved BD-1 (accepted, with two conditions, now folded into §2) and
+BD-2 (agreed), and rejected §3's derivation: the 36,000-byte retrieval aggregate
+is a ceiling on admitted retrieved *content*, not a demonstrated envelope for the
+whole next package, and four different quantities had been charged against it.
+Section 3 is rewritten on the measurement she required — the limits separated,
+the standing `_build_package` construction measured, the provider-facing token
+budget as the evidenced envelope, her 25% margin applied. **The corrected
+derivation yields CAP = 1** (§3 (iii)). Nothing else in the brief changes.
 
 **Empirical gates, closed:** P1 passed (INDEX 367 — flag effect measured; delivery
 to the host demonstrated, doorway adjudication **not** demonstrated and therefore
@@ -90,7 +100,13 @@ The build therefore proposes that a native-judged assembly's requests carry the
 flag, so §3's machinery governs real calls rather than provider corpses. This is a
 request-construction property of native mode, recorded in the iteration's request
 commitments like the rest of the construction; it changes where an unoffered call
-is stopped, never whether it may take effect.
+is stopped, never whether it may take effect. **Examiner's disposition
+(INDEX 374): ACCEPTED**, with two conditions the build carries: (i) the flag's
+state is recorded in the iteration's **exact request commitment**, beside the
+rest of the construction the commitment already binds; (ii) the build's witnesses
+**test both cases** — a native request constructed with the flag enabled and one
+with it disabled — so the commitment and the body can never drift apart silently.
+Her framing stands in the brief: this is delivery, not permission.
 
 **BD-2 — The `failed_generation` translation-input seam (N36 reading (b)) is NOT
 built.** N36(b) reserved that seam to the examiner's explicit ruling; her results
@@ -98,84 +114,149 @@ examination (INDEX 367) did not rule it in, and under BD-1 the delivered path is
 the live one. If she rules it in — for assemblies or routes where the flag cannot
 be carried — it returns as a named addition with its own witnesses. The build as
 briefed records a provider refusal under the standing evidence classes and infers
-nothing from it beyond what N36 (c)/(d) allow.
+nothing from it beyond what N36 (c)/(d) allow. **Examiner's disposition
+(INDEX 374): AGREED** — the seam is not built; provider evidence is preserved
+without promotion into a call.
 
-## 3. The call-cap derivation (N22 — the build gate)
+## 3. The call-cap derivation (N22 — the build gate) — Rev 2, corrected
 
-Measurements taken 2026-11-24 from the live code and the retained records.
-Canonical byte counts use the framework's own canonical form throughout.
+Rev 1 of this section charged four different quantities against the retrieval
+aggregate ceiling and called it the package envelope. The examiner rejected that
+(INDEX 374): `RETRIEVAL_AGGREGATE_CEILING` bounds retrieved *content* admitted by
+the doorway; it does not, by itself, bound a package. This section is the
+measurement she required: the limits separated, the standing construction
+measured, the worst case shown for the relevant assembly, and her margin —
+**25%**, the cap to fit within 75% of the envelope — applied. Measurements taken
+2026-11-24 from the live code and the retained records; canonical byte counts use
+the framework's own canonical form throughout.
 
-### (i) Per-call processing and recording cost
+### The limits, separated
 
-| Item | Bytes | Source |
-|---|---|---|
-| Translation-record entry, presented call | 302 | constructed on N32's field set with real-shaped values (provider call ID from P1 evidence; 64-hex arguments hash) |
-| Translation-record entry, refused call | 301 | same construction |
-| Translation-record entry, overflow call (no arguments hash, N22) | 224 | same construction |
-| TOOL_REQUESTED event | 614 | measured, attempt-3 record (n=3: 614/611/614) |
-| TOOL_DISPATCHED event | 551 | measured, attempt-3 record (n=3) |
-| TOOL_STARTED event | 474 | measured, attempt-3 record (n=3) |
-| TOOL_OUTCOME event, non-content overhead | ≤ 969 | measured, attempt-3 record (totals 12,885 / 5,369 less contents 11,916 / 4,651; the third, pre-regime 42,279 event is excluded — its content predates the retrieval ceilings) |
-| REJECTION event (doorway-refused chain) | 701 | measured, attempt-2 record (n=3) |
+- **L1 — Retrieved content (doorway admission).** Per-result ceiling **12,000**
+  bytes; aggregate **36,000** bytes of retrieved content per package window
+  (`RETRIEVAL_RESULT_CEILING` / `RETRIEVAL_AGGREGATE_CEILING`, enforced at
+  admission in `Doorway._retrieval_aggregate_problem`). This constrains retrieval
+  content only. It is not a package limit and is not used as one anywhere below.
+- **L2 — The package construction.** `Loop._build_package` imposes **no total
+  size ceiling** of its own. A package grows by what the record gives it: case,
+  catalogue, delta, tool_results, standing dispatches, bounds. Stated plainly, as
+  the examiner required: the construction affords no envelope; the envelope comes
+  from the provider-facing limits.
+- **L3 — Provider byte size.** Groq refused a 134,844-byte body with HTTP 413
+  (attempt 6). That is an evidenced refusal point, not a measured limit; the
+  route's actual byte limit is not in evidence and is not used.
+- **L4 — Provider token budget (the binding envelope).** The account's measured
+  limit is **8,000 tokens per minute** (INDEX 260; the 429 bodies in evidence).
+  A request whose prompt alone exceeds the minute budget cannot be sent at any
+  pacing — the budget is consumed by the request itself. This is evidenced both
+  ways: five large requests inside one minute never reached the model
+  (INDEX 339), and the same requests succeeded at ≥65-second spacing
+  (INDEX 352). The standing worker-shaped request measures **4,388 prompt
+  tokens** by the provider's own usage accounting (paced native-offer trial 1)
+  and **19,135 bytes** serialized (the baseline request regenerated through the
+  probe's construction path and verified byte-exact against the record —
+  15,413 bytes, hash `72f6297d…` — plus the offered-definitions span of
+  3,713 bytes) — a measured conversion of **≈ 4.36 bytes per token** for this
+  content shape. L4 is the envelope the cap is derived against.
 
-Per presented-and-dispatched call, the adjudication chain is therefore
-614 + 551 + 474 + 969 = **2,608 bytes of record plus its result content**, and its
-translation entry adds 302. A doorway-refused presented call costs 614 + 701 =
-1,315 plus its entry. A translation-refused call costs its entry (~301) and no
-chain. Processing time is dominated by these durable appends (at most four chain
-appends plus one batched translation-record event per response); extraction,
-resolution and validation are in-memory over small objects, and all handling time
-already stands inside the activation deadline (N18) — no separate time bound is
-proposed.
+### (i) Fixed package overhead and per-call costs, measured
 
-### (ii) The next-package envelope
+Fixed overhead of the governed construction, from the retrieval piece's R5
+measurements (shelf artifact, hash-verified; each rendered request is the real
+loop package rendered through the adapter, components as exact serialized spans):
 
-The standing package construction (`Loop._build_package`) carries one iteration's
-outcomes two ways: the `tool_results` entries (full result) and the delta's event
-copies — for governed retrieval outcomes the delta copy is single-carriage stubbed
-(content removed, provenance kept). The framework's standing, examined bound on
-what one package window carries in retrieved content is the doorway's aggregate
-admission ceiling: **36,000 bytes** (`RETRIEVAL_AGGREGATE_CEILING`, with the
-per-result ceiling **12,000**, `RETRIEVAL_RESULT_CEILING`). This brief takes
-36,000 bytes as the envelope for one iteration's **total** carriage — results
-content, carriage entries, and the delta those calls generate — the only standing
-per-package bound the framework has.
-
-Worst case per presented-and-dispatched call, at the per-result ceiling:
-
-| Carriage | Bytes |
+| Component | Bytes |
 |---|---|
-| `tool_results` entry (146 overhead measured on the standing entry shape + 12,000 content) | 12,146 |
-| Delta copies of its chain (614 + 551 + 474 + 969; outcome content stubbed under single carriage) | 2,608 |
-| Share of the translation-record event (302 entry + event envelope ≈ 450 ÷ CAP) | ≈ 527 at CAP 2 |
-| **Total per call** | **≈ 15,281** |
+| Case view and assignment | 1,242 |
+| Tool catalogue (governed v3) | 5,516 |
+| Provenance and dispatch material, iteration 1 (no outcomes yet) | 2,227 |
+| Remaining framework overhead (contract, framing, system message, skeleton) | 1,846 |
+| **Iteration-1 serialized request, total** | **10,831** |
 
-A refusal's carriage is far smaller (N16 error entry measured at 301 bytes on the
-longest template; a doorway refusal adds its 1,315-byte chain to the delta) — the
-dispatched-maximum case is the binding one, so the cap is set on it.
+The native worker request adds the offered definitions (3,713 bytes) and the
+native contract material, reaching the measured 19,135 bytes / 4,388 tokens
+above — that figure, not the R5 total, is the fixed base for a native run,
+because it is the request the pinned route has actually carried.
 
-### (iii) The arithmetic and the proposed cap
+Per-call recording cost (unchanged from Rev 1; measured from the attempt-2/3
+records and N32's field set): translation-record entry **302** bytes presented /
+301 refused / 224 overflow; adjudication chain per presented call TOOL_REQUESTED
+614 + TOOL_DISPATCHED 551 + TOOL_STARTED 474 + TOOL_OUTCOME non-content overhead
+≤ 969 = **2,608** bytes; doorway-refused chain 614 + 701 = 1,315. Processing time
+is dominated by these durable appends and stands inside the activation deadline
+(N18); no separate time bound is proposed.
 
-- CAP = 3 → worst case ≈ 45,843 bytes > 36,000. **Does not fit.**
-- **CAP = 2 → worst case ≈ 30,562 bytes ≤ 36,000, headroom 5,438 bytes (≈ 15%). Fits.**
-- CAP = 1 → ≈ 15,281 bytes (a ≈ 25%-margin rule would land here).
+Record-delta growth in real packages (R5): the provenance-and-dispatch span grew
+2,227 → 6,799 → 7,403 bytes across iterations of a scripted multi-dispatch run —
+delta growth is real and per-call: one dispatched call contributes its chain
+(2,608 bytes, its outcome's content stubbed under single carriage) plus a
+standing-dispatch entry (≈ 150 bytes) to every subsequent package's window until
+the cursor passes it.
 
-**Proposed: CAP = 2**, the largest count whose unmitigated worst case fits the
-standing envelope. Two honest qualifications, for the examination: (1) the content
-component (12,000 of each 15,281) is itself hard-bounded by the doorway's aggregate
-admission for retrieval-governed assemblies — a dispatch that would breach the
-aggregate is refused before execution and its carriage collapses to the refusal
-shape — so the arithmetic worst case overstates what a governed run can actually
-carry; the cap is nevertheless set on the unmitigated arithmetic, because the cap
-must hold for assemblies that admission does not govern. (2) If the examiner
-requires a 25% margin against the envelope, the same derivation yields CAP = 1;
-the margin is hers to set (N22 (iii)), and this brief will take her figure without
-argument.
+### (ii) Per-call growth of the next request — worst case
 
-Overflow beyond CAP is refused `call_cap_exceeded` exactly as N22 settles: provider
-call ID, name as emitted, provider ordinal recorded; arguments never parsed,
-validated or converted; an N16 error result in the next package; never a silent
-truncation.
+One presented-and-dispatched call, its result at the L1 per-result ceiling,
+grows the next request by:
+
+| Growth | Bytes |
+|---|---|
+| `tool_results` carriage entry (146 measured overhead + 12,000 content) | 12,146 |
+| Delta copies of its chain (614 + 551 + 474 + 969; content stubbed) | 2,608 |
+| Translation-record event share (302 entry + ≈ 450 event envelope) | ≈ 752 |
+| Standing-dispatch entry | ≈ 150 |
+| **Total per call** | **≈ 15,656 bytes ≈ 3,591 tokens** at 4.36 B/token |
+
+A refusal's growth is far smaller (N16 error entry measured at 301 bytes; a
+doorway refusal adds its 1,315-byte chain to the delta). The dispatched-maximum
+case binds, so the cap is set on it — as before, but now against the envelope
+that actually governs.
+
+### (iii) The arithmetic, the margin, and the cap
+
+Fixed base (measured): **4,388 tokens**. Per-call worst-case growth (measured):
+**3,591 tokens**. Envelope (L4): **8,000 tokens**. The examiner's margin: the
+cap's worst case must fit within **75%** of the envelope — 6,000 tokens.
+
+- **CAP = 2:** response-generated growth 2 × 3,591 = **7,182 tokens — 90% of the
+  envelope**, beyond the 75% line on the growth reading; total request
+  4,388 + 7,182 = **11,570 tokens — beyond the entire budget** on the total
+  reading. Fails both.
+- **CAP = 1:** response-generated growth **3,591 tokens — 45% of the envelope**,
+  within the 75% line on the growth reading; total request 4,388 + 3,591 =
+  **7,979 tokens — within the budget**, at its edge.
+
+**CAP = 1.** It is the largest count the measured envelope supports under the
+examiner's margin, on the only reading of the margin a cap can answer for: the
+growth a single response is permitted to generate. The total-request reading is
+shown, not hidden: at the absolute worst case (a result at the full 12,000-byte
+ceiling) a CAP = 1 request stands at ≈ 7,979 of 8,000 tokens. That residual is
+not the cap's to fix — it is a standing property of the per-result ceiling
+itself, which this scope may not change (N44), which the doorway's aggregate
+admission already rations, and which the text path carries identically today.
+The first demonstration's pacing plan (N51) must treat a near-ceiling result as
+a rate-limit risk; a 429 there is a delivery failure under the standing rules,
+never an observation. If the examiner judges the margin must bind the total
+request at the worst case, the honest consequence is recorded here in advance:
+no positive cap satisfies it while the 12,000-byte per-result ceiling stands,
+and the binding constraint then belongs to that ceiling — a different piece's
+settled bound, outside this scope — not to the call cap.
+
+**Scope of the cap.** The derivation is run for the relevant assembly: the
+governed first-worker assembly on the pinned model and route (fixed request
+4,388 tokens; catalogue 5,516 bytes; retrieval results bounded by L1). CAP is a
+named constant of the native translation boundary, and the build note records
+the **formula**, not only the number: CAP is the largest count whose measured
+per-call growth keeps response-generated growth within 75% of the provider
+budget, for the assembly's measured fixed base. An assembly whose fixed request
+is materially larger must re-derive before it is judged native; it does not
+inherit the number. For assemblies whose tools return small results (no
+retrieval), the governed worst case is conservative — the cap holds with room
+they do not need.
+
+Overflow beyond CAP is refused `call_cap_exceeded` exactly as N22 settles:
+provider call ID, name as emitted, provider ordinal recorded; arguments never
+parsed, validated or converted; an N16 error result in the next package; never
+a silent truncation.
 
 ## 4. Acceptance — the witnesses (scope §9, mapped)
 
