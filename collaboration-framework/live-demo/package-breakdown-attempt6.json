@@ -1,0 +1,125 @@
+{
+ "kind": "package breakdown \u2014 first-worker attempt 6, iteration 2 (the composition request Groq refused with HTTP 413); measurement only, nothing sent to any provider",
+ "recorded_at": "2026-11-24T00:29:45.106658+00:00",
+ "method": "Iteration 2's package was reconstructed with the loop's own Loop._build_package against a copy of attempt 6's store, the copy's record filtered to iteration 2's recorded cursor_to (the frozen head the package was built at; verified: the builder's returned head equals it), following live-demo/chain_simulation.py's proven technique (INDEX 218). The copy was verified event-for-event identical to live-demo/first-worker-attempt6/run-export.json before use, so the export is the source of record. The package was rendered through the framework adapter exactly as a real call renders it (adapter.__call__), with the Groq connector transport installed as attempt 6 ran it; the transport's helper subprocess was replaced by a fake inside this process only, which captured the serialized body the transport built and answered with canned provider JSON. The helper POSTs that body verbatim, so the captured body is the final serialized request. Components were attributed by exact serialized spans: each component's bytes are the length its text contributes inside the body's JSON strings (json.dumps escaping is per-character, so escaped lengths add exactly over any partition). Component 5 was computed as the remainder AND independently summed from its known parts (contract, framing, system message, body skeleton, package-dump skeleton); the residual is stated.",
+ "source": {
+  "attempt6_run_export": "live-demo/first-worker-attempt6/run-export.json",
+  "attempt6_store_copy_verified_against_export": true,
+  "frozen_head_event_seq": 29,
+  "cursor_from": 16,
+  "cursor_to": 29,
+  "record_event_count": 31,
+  "seconds_remaining": {
+   "value": 598.0,
+   "provenance": "record-derived, the chain_simulation deviation: the pinned deadline_seconds (600) minus the recorded activation-to-iteration-2 timestamp interval (2s); the live monotonic remainder cannot be re-read from a finished process. Its rendered digits may differ from the live value's by a few bytes; this is the reconstruction's one known inexact field."
+  },
+  "model": "openai/gpt-oss-120b",
+  "route": "Groq via live-demo/groq_connector_transport.py (body built by the transport, POSTed verbatim by the helper)"
+ },
+ "source_revision_sha256": {
+  "src/framework/loop.py": "2c6f79b2984b62b1708438120df789f0e4ff7dd10c1acd664d6dbd08a1ed6706",
+  "src/framework/adapter.py": "dbe5d07298596d03043f14da1699ad28a98ecfd6d86bf397d3ebde8736c2b05f",
+  "src/framework/bubble.py (render_view, supplementary)": "f5aa46c408ebb4b65a28f6ca29a5015e07d6479091b8e07409c70b42f0e7c085",
+  "live-demo/groq_connector_transport.py (body construction, supplementary)": "58ed426ffae117cffe30204d4ba5b99dc9eb45506c0455fb6072f0684446186f"
+ },
+ "components": {
+  "1_retrieved_source_content": {
+   "label": "retrieved source content (the three tool results' content as carried in the request \u2014 each source is carried TWICE: once inside delta's TOOL_OUTCOME payload and once in tool_results)",
+   "bytes": 117682,
+   "percent_of_final": 87.43
+  },
+  "2_case_view_and_assignment": {
+   "label": "case view and assignment (the package's 'case' value: the pinned case content, whole serialized span)",
+   "bytes": 1589,
+   "percent_of_final": 1.18
+  },
+  "3_tool_catalogue": {
+   "label": "tool catalogue (the package's 'tools' section, whole serialized span)",
+   "bytes": 1183,
+   "percent_of_final": 0.88
+  },
+  "4_provenance_and_dispatch_material": {
+   "label": "provenance and dispatch material (view, delta, tool_results, standing_dispatches, bounds and the seat/role/instance/case labels \u2014 the record-derived values, minus the source content counted in component 1)",
+   "bytes": 12305,
+   "percent_of_final": 9.14
+  },
+  "5_framework_and_package_overhead": {
+   "label": "remaining framework/package overhead (the response contract and framing lines, the system message, the request body's JSON skeleton, and the package dump's inter-value structure: braces, key labels, separators, indentation)",
+   "bytes": 1846,
+   "percent_of_final": 1.37
+  },
+  "6_final_serialized_request": {
+   "label": "final serialized request size (the whole body)",
+   "bytes": 134605,
+   "percent_of_final": 100.0
+  }
+ },
+ "component_detail": {
+  "prompt_bytes_as_body_content": 134382,
+  "package_dump_chars": 129373,
+  "tools_dump_chars": 1063,
+  "contract_chars": 1122,
+  "system_message_chars": 89,
+  "body_skeleton_bytes": 134,
+  "package_dump_skeleton_escaped_bytes": 219,
+  "component_5_independent_sum": 1846,
+  "component_5_residual": 0,
+  "per_source_content": [
+   {
+    "content_chars": 11916,
+    "bytes_in_delta": 12320,
+    "bytes_in_tool_results": 12320,
+    "bytes_carried_total": 24640
+   },
+   {
+    "content_chars": 4651,
+    "bytes_in_delta": 4807,
+    "bytes_in_tool_results": 4807,
+    "bytes_carried_total": 9614
+   },
+   {
+    "content_chars": 40612,
+    "bytes_in_delta": 41714,
+    "bytes_in_tool_results": 41714,
+    "bytes_carried_total": 83428
+   }
+  ],
+  "top_level_value_spans_escaped": {
+   "seat": 10,
+   "role": 8,
+   "instance_id": 17,
+   "case": 1589,
+   "case_id": 15,
+   "case_version": 1,
+   "view": 1480,
+   "delta": 68138,
+   "tool_results": 59607,
+   "standing_dispatches": 574,
+   "bounds": 135,
+   "position": 2
+  }
+ },
+ "reconciliation": {
+  "historical_simulation_bytes": 134844,
+  "simulation_body_reproduced_bytes": 134844,
+  "simulation_reproduction_matches": true,
+  "minus_appended_override_ask_bytes": 234,
+  "attempt4_as_a_real_call_bytes": 134610,
+  "attempt6_measured_bytes": 134605,
+  "record_difference_attempt6_minus_attempt4": -5,
+  "attempt4_components": {
+   "1_retrieved_source_content": 117682,
+   "2_case_view_and_assignment": 1589,
+   "3_tool_catalogue": 1183,
+   "4_provenance_and_dispatch_material": 12305,
+   "5_framework_and_package_overhead": 1851,
+   "6_final_serialized_request": 134610
+  },
+  "model_name_length_difference": 5
+ },
+ "deviations": [
+  "bounds.seconds_remaining is the record-derived value (see source.seconds_remaining) \u2014 the same disclosed deviation as INDEX 218's simulation; every other field is re-derived by the framework's own code from the record.",
+  "The reconstruction is built against a filtered copy of the record, not the live store; the loop's construction itself is unmodified and no run directory was touched.",
+  "Component attribution convention: the 'case' and 'tools' sections are attributed as whole serialized spans (their internal JSON structure rides with them); the record-derived values are attributed as whole spans minus the source-content tokens, which are counted in component 1 wherever the request carries them (delta and tool_results). The package dump's inter-value structure (braces, top-level key labels, separators, indentation) is component 5."
+ ]
+}
