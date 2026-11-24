@@ -1047,12 +1047,16 @@ def run_native_trials(raw_call, baseline, modified,
     waiting again until the interval has actually
     elapsed, never proceeding on a wait that merely
     was requested. The wall clock (time.time by
-    default) is read once per trial, at the call
-    boundary beside the monotonic stamp, for chronology
+    default) is read once per trial, immediately
+    before the monotonic stamp, for chronology
     only, recorded under its own field, and never
     enters the pacing calculation: a wall-clock jump,
     forward or backward, cannot shorten or stretch
-    the enforced interval. Each trial records its
+    the enforced interval. The wall clock is read
+    once per trial immediately BEFORE the monotonic
+    stamp, so the stamp — not the chronology read —
+    is the final operation before the invocation
+    (INDEX 349). Each trial records its
     wall-clock start, its monotonic start offset from
     the run's first request start, and
     pacing_wait_phase_seconds — the monotonic elapsed
@@ -1094,6 +1098,7 @@ def run_native_trials(raw_call, baseline, modified,
         # invocation.
         request = _prepare_request(modified)
         wait = 0.0
+        wait_began = None
         if previous_boundary_start is not None:
             wait_began = monotonic_clock()
             while True:
@@ -1104,18 +1109,20 @@ def run_native_trials(raw_call, baseline, modified,
                 if shortfall <= 0:
                     break
                 sleeper(shortfall)
-            boundary_start = monotonic_clock()
+        # The wall clock is read for chronology BEFORE
+        # the monotonic stamp (INDEX 349): the stamp is
+        # the final operation before the invocation, so
+        # the recorded start is immediately before the
+        # call itself — not immediately before a
+        # chronology read. The wall value never enters
+        # the pacing calculation.
+        wall_start = wall_clock()
+        boundary_start = monotonic_clock()
+        if wait_began is not None:
             wait = boundary_start - wait_began
-        else:
-            boundary_start = monotonic_clock()
         if first_boundary_start is None:
             first_boundary_start = boundary_start
         previous_boundary_start = boundary_start
-        # The wall clock is read at the same boundary,
-        # beside the monotonic stamp: both recorded
-        # starts describe the call boundary, each on
-        # its own clock.
-        wall_start = wall_clock()
         try:
             capture = raw_call(request)
             if not isinstance(capture, dict):

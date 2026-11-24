@@ -731,6 +731,54 @@ check("the recorded monotonic offsets ARE the "
       f"waits={[t['pacing_wait_phase_seconds'] for t in prep_trials]}")
 
 # ---------------------------------------------------------------
+# INDEX 349: the monotonic stamp is the FINAL
+# operation before invocation — the chronology
+# (wall) read happens before it, never between the
+# stamp and the call. Witnessed with a wall read
+# that itself COSTS monotonic time (a slow
+# chronology read, 7 fake seconds): if anything
+# sat between the stamp and the invocation, the
+# stub's recorded entry instants would fall after
+# the recorded offsets by that cost; with the
+# stamp last, they are exactly equal. (Under the
+# pre-correction order — stamp, then wall read,
+# then invoke — the offsets would read 65 while
+# the entry instants read 72: the witness
+# discriminates the ordering.)
+# ---------------------------------------------------------------
+slow_clock = FakeClock()
+slow_stub = BoundaryStubRaw(OFFERED_CALL, slow_clock)
+WALL_READ_COST = 7.0
+
+
+def costly_wall():
+    slow_clock.advance(WALL_READ_COST)
+    return slow_clock.wall()
+
+
+slow_trials = np.run_native_trials(
+    slow_stub, baseline, modified, comparison,
+    monotonic_clock=slow_clock.monotonic,
+    wall_clock=costly_wall, sleeper=slow_clock.sleep)
+slow_gaps = [b - a for a, b in zip(
+    slow_stub.entry_starts, slow_stub.entry_starts[1:])]
+check("the monotonic stamp is the final operation "
+      "before invocation (INDEX 349): with a wall "
+      "read that itself costs 7 fake seconds, the "
+      "recorded offsets still EQUAL the stub's "
+      "recorded entry instants exactly — nothing, "
+      "not even the chronology read, sits between "
+      "the stamp and the call — and every entry "
+      "gap holds the 65-second floor",
+      offsets(slow_trials)
+      == [e - slow_stub.entry_starts[0]
+          for e in slow_stub.entry_starts]
+      and all(gap >= np.MIN_TRIAL_START_INTERVAL_SECONDS
+              for gap in slow_gaps),
+      f"offsets={offsets(slow_trials)} "
+      f"entries={slow_stub.entry_starts}")
+
+# ---------------------------------------------------------------
 # The durable outputs.
 # ---------------------------------------------------------------
 _, trials = run(TWO_CALLS)
