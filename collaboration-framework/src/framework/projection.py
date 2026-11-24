@@ -155,10 +155,18 @@ SCHEMA = _obj({
             "cursor_from": _opt(_INT),
             "cursor_to": _opt(_INT),
             "catalogue_hash": _opt(_STR),
-            "registry_version": _opt(_STR)})),
+            "registry_version": _opt(_STR),
+            "call_entered_seq": _opt(_INT),
+            "disposition_seq": _opt(_INT),
+            "disposition_outcome": _opt(_STR)})),
         "stalled": _opt(_obj({
             "ground": _opt(_STR), "event_seq": _INT,
-            "iterations": _opt(_INT)}))})),
+            "iterations": _opt(_INT),
+            "terminal_step": _opt(_STR)})),
+        "evidence_failed": _opt(_obj({
+            "event_seq": _INT,
+            "iteration_seq": _opt(_INT),
+            "operation": _opt(_STR)}))})),
     "tool_requests": _list(_obj({
         "instance_id": _opt(_STR), "request_id": _opt(_STR),
         "fingerprint": _opt(_STR), "tool": _opt(_STR),

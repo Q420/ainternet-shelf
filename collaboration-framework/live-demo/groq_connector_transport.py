@@ -184,6 +184,26 @@ Failure-kind mapping (mirroring `_dispatch`):
 - expiry with termination unconfirmed — including any
   failure to establish the group's identity or emptiness
   -> transport_unresolved (a new kind, used only here).
+
+The worker evidence path (response-evidence piece,
+WORKER-RESPONSE-EVIDENCE-SCOPE Rev 8). The worker call
+above now travels the helper's BOUNDED raw mode
+(`chat-raw-bounded`): the helper reads the provider body
+incrementally under the 64,000-byte capture ceiling and
+frames the exact observed bytes with their completeness
+(body_complete / stop_reason) and, on a pre-response
+failure, its phase observation. This transport parses
+that envelope itself: the provider body it frames is
+the evidence's L1, published on the adapter as
+`last_response_evidence` and carried by every
+AdapterFailure the call raises, so the loop can persist
+and disposition the very answer it worked on. The
+failure kinds above are unchanged; what each failure
+carries is new. The probe's raw call below is NOT on
+this path: it keeps the unbounded `chat-raw` mode and
+its own capture contract, exactly as INDEX 295 settled
+it — the helper preserves whole bodies for the probe,
+and the probe alone truncates.
 """
 
 from __future__ import annotations
@@ -295,6 +315,55 @@ def _terminate_and_confirm(proc):
         time.sleep(_POLL_SECONDS)
 
 
+def _worker_seam():
+    """A fresh seam observation for the worker evidence
+    path (response-evidence piece): the shape
+    framework.evidence derives dispositions and artifacts
+    from — provenance, the observed status, the L1 bytes
+    exactly as observed, the capture's completeness
+    facts, the phase observation, and the seam's failure
+    facts. Nothing observed yet when this is built."""
+    return {
+        "provenance": "groq_helper_raw_bounded",
+        "http_status": None, "l1_bytes": None,
+        "body_complete": None, "stop_reason": None,
+        "read_error_kind": None,
+        "phase": {"phase": None, "error_kind": None,
+                  "http_status": None},
+        "seam": {"failure_class": None, "diagnostic": None,
+                 "helper_exit": None, "stderr": None,
+                 "stdout_bytes": None,
+                 "stdout_sha256": None,
+                 "termination_confirmed": None,
+                 "fence": None},
+        "provider_model_id": None, "content": None}
+
+
+def _timeout_seam(confirmed):
+    """The seam observation of a deadline expiry on the
+    worker path: the fence expired; where the helper's
+    termination was confirmed, the class is
+    timeout_after_send — which establishes what the
+    PARENT received, not what the helper may already
+    have received, and so supports only an unresolved
+    disposition (response-evidence scope R5-1); where
+    termination is unconfirmed, termination_unconfirmed
+    (R4-2)."""
+    seam = _worker_seam()
+    if confirmed is False:
+        seam["seam"]["failure_class"] = \
+            "termination_unconfirmed"
+    else:
+        # Confirmed termination — or no helper was ever
+        # launched (confirmed None: the deadline stood
+        # expired before the call could begin).
+        seam["seam"]["failure_class"] = "timeout_after_send"
+    seam["seam"]["fence"] = "adapter_deadline"
+    seam["seam"]["termination_confirmed"] = confirmed
+    seam["seam"]["diagnostic"] = "total deadline exceeded"
+    return seam
+
+
 def _expire_and_raise(proc):
     """The cancellation boundary, shared by BOTH expiry
     paths — the deadline reached while waiting on the
@@ -319,7 +388,8 @@ def _expire_and_raise(proc):
             pass
         raise AdapterFailure(
             "no_response",
-            detail="total deadline exceeded")
+            detail="total deadline exceeded",
+            evidence=_timeout_seam(True))
     for stream in (proc.stdin, proc.stdout, proc.stderr):
         try:
             stream.close()
@@ -328,7 +398,8 @@ def _expire_and_raise(proc):
     raise AdapterFailure(
         "transport_unresolved",
         detail="helper process termination could "
-               "not be confirmed after the deadline")
+               "not be confirmed after the deadline",
+        evidence=_timeout_seam(False))
 
 
 def install_groq_connector_transport(adapter, helper_path=None, model=None):
@@ -415,7 +486,8 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
             # adapter's own expiry kind and detail.
             raise AdapterFailure(
                 "no_response",
-                detail="total deadline exceeded")
+                detail="total deadline exceeded",
+                evidence=_timeout_seam(None))
         # The helper receives the effective allowance as
         # its own provider-request timeout (INDEX 215):
         # the same remaining time this transport enforces,
@@ -442,22 +514,31 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
             # under the adapter's own expiry kind.
             raise AdapterFailure(
                 "no_response",
-                detail="total deadline exceeded")
+                detail="total deadline exceeded",
+                evidence=_timeout_seam(None))
         helper_env = dict(os.environ)
         helper_env["GROQ_API_TIMEOUT"] = \
             repr(helper_timeout)
         launch_started = time.monotonic()
         try:
             proc = _Popen(
-                [sys.executable, helper_path, "chat", model],
+                [sys.executable, helper_path,
+                 "chat-raw-bounded", model],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, start_new_session=True,
                 env=helper_env)
         except OSError as exc:
             timings["helper_launch_s"] = \
                 time.monotonic() - launch_started
+            seam = _worker_seam()
+            seam["seam"]["failure_class"] = \
+                "transport_internal_error"
+            seam["seam"]["diagnostic"] = \
+                f"the helper could not be started: " \
+                f"{type(exc).__name__}"
             raise AdapterFailure("provider_error",
-                                 detail=type(exc).__name__)
+                                 detail=type(exc).__name__,
+                                 evidence=seam)
         timings["helper_launch_s"] = \
             time.monotonic() - launch_started
         # Recompute the remaining time now that the helper
@@ -500,39 +581,179 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
         parse_started = time.monotonic()
         try:
             if proc.returncode != 0:
+                # The helper died or errored without
+                # framing a bounded envelope: the seam
+                # establishes the exit and its stderr, and
+                # nothing provider-side (response-evidence
+                # scope R5-1: helper_exit_no_envelope,
+                # unresolved).
                 detail = (err or b"").decode(
                     "utf-8", "replace").strip()
+                seam = _worker_seam()
+                seam["seam"]["failure_class"] = \
+                    "helper_exit_no_envelope"
+                seam["seam"]["helper_exit"] = proc.returncode
+                seam["seam"]["stderr"] = \
+                    detail[:_DIAGNOSTIC_LIMIT]
+                seam["seam"]["diagnostic"] = \
+                    f"connector helper exited {proc.returncode}"
                 raise AdapterFailure(
                     "provider_error",
                     detail=f"connector helper exited "
                            f"{proc.returncode}"
                            + (f": {detail[:_DIAGNOSTIC_LIMIT]}"
-                              if detail else ""))
+                              if detail else ""),
+                    evidence=seam)
+            envelope = None
             try:
-                parsed = json.loads(
+                envelope = json.loads(
                     out.decode("utf-8", "replace"))
             except ValueError:
+                envelope = None
+            if not isinstance(envelope, dict) or \
+                    envelope.get("phase") not in (
+                        "pre_response", "response_received") \
+                    or "status" not in envelope or \
+                    "body_b64" not in envelope:
+                # The helper's output is not a bounded raw
+                # envelope: what it produced is recorded by
+                # count and hash, and nothing about a
+                # provider response is claimed from it
+                # (envelope_unparseable, unresolved).
+                seam = _worker_seam()
+                seam["seam"]["failure_class"] = \
+                    "envelope_unparseable"
+                seam["seam"]["stdout_bytes"] = len(out or b"")
+                seam["seam"]["stdout_sha256"] = \
+                    hashlib.sha256(out or b"").hexdigest()
+                seam["seam"]["diagnostic"] = \
+                    "the helper's output was not a bounded " \
+                    "raw envelope"
                 raise AdapterFailure(
                     "malformed_response",
-                    detail="provider body is not JSON")
+                    detail="provider body is not JSON",
+                    evidence=seam)
+            if envelope["phase"] == "pre_response":
+                # The helper's own phase observation: the
+                # opener failed before any response object
+                # existed. Carried to the loop verbatim —
+                # the disposition derivation tests it
+                # against the promotion rule's three parts.
+                seam = _worker_seam()
+                seam["phase"] = {
+                    "phase": "pre_response",
+                    "error_kind": envelope.get("error_kind"),
+                    "http_status": None}
+                seam["seam"]["diagnostic"] = \
+                    "the provider connection failed before " \
+                    "a response was received: " \
+                    f"{envelope.get('error_kind')}"
+                raise AdapterFailure(
+                    "provider_error",
+                    detail="connection failed before a "
+                           "response was received: "
+                           f"{envelope.get('error_kind')}",
+                    evidence=seam)
+            status = envelope["status"]
+            raw_b64 = envelope.get("body_b64")
+            raw_bytes = None
+            if isinstance(raw_b64, str):
+                try:
+                    raw_bytes = base64.b64decode(
+                        raw_b64, validate=True)
+                except ValueError:
+                    raw_bytes = None
+            if raw_bytes is None or \
+                    not isinstance(status, int) or \
+                    isinstance(status, bool):
+                seam = _worker_seam()
+                seam["seam"]["failure_class"] = \
+                    "envelope_unparseable"
+                seam["seam"]["stdout_bytes"] = len(out or b"")
+                seam["seam"]["stdout_sha256"] = \
+                    hashlib.sha256(out or b"").hexdigest()
+                seam["seam"]["diagnostic"] = \
+                    "the bounded envelope's body did not " \
+                    "decode"
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="provider body is not JSON",
+                    evidence=seam)
+            # A response stands observed: the seam's
+            # capture is the provider body exactly as the
+            # helper framed it — the observed bytes, their
+            # completeness and the reason the capture
+            # stopped — published on the adapter for the
+            # loop's evidence sequence BEFORE any
+            # interpretation, and carried by every failure
+            # raised from here.
+            seam = _worker_seam()
+            seam["http_status"] = status
+            seam["l1_bytes"] = raw_bytes
+            seam["body_complete"] = \
+                bool(envelope.get("body_complete"))
+            seam["stop_reason"] = envelope.get("stop_reason")
+            seam["read_error_kind"] = \
+                envelope.get("read_error_kind")
+            seam["phase"] = {
+                "phase": "response_received",
+                "error_kind": None, "http_status": status}
+            adapter.last_response_evidence = seam
+            if status >= 400:
+                # An HTTP error is a response: its body is
+                # the captured L1, and the failure is the
+                # adapter's provider_error for its status.
+                raise AdapterFailure(
+                    "provider_error",
+                    detail=f"HTTP {status}",
+                    evidence=seam)
+            try:
+                parsed = json.loads(
+                    raw_bytes.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="provider body is not JSON",
+                    evidence=seam)
             if not isinstance(parsed, dict):
                 raise AdapterFailure(
                     "malformed_response",
-                    detail="provider body is not an object")
+                    detail="provider body is not an object",
+                    evidence=seam)
             if parsed.get("error"):
                 raise AdapterFailure(
                     "provider_error",
                     detail=f"provider error body: "
-                           f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}")
+                           f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}",
+                    evidence=seam)
             provider_model_id = parsed.get("model")
+            seam["provider_model_id"] = provider_model_id
             try:
-                content = parsed["choices"][0]["message"][
-                    "content"]
+                message = parsed["choices"][0]["message"]
             except (KeyError, IndexError, TypeError):
                 raise AdapterFailure(
                     "malformed_response",
                     detail="no message content in provider "
-                           "response")
+                           "response",
+                    evidence=seam)
+            if not isinstance(message, dict):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="no message content in provider "
+                           "response",
+                    evidence=seam)
+            # The full message is retained on the adapter,
+            # exactly as the built-in _dispatch retains it
+            # (the native path's translation reads it).
+            adapter._last_message = message
+            content = message.get("content")
+            if content is None and not message.get("tool_calls"):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="no message content in provider "
+                           "response",
+                    evidence=seam)
+            seam["content"] = content
             return content, provider_model_id
         finally:
             timings["response_parsing_s"] = \

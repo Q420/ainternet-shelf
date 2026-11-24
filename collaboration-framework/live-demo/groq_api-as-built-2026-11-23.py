@@ -12,6 +12,14 @@ Usage:
                                             # {"status": <actual HTTP status>,
                                             #  "body_b64": <base64 of the exact
                                             #   response body bytes>}
+  groq_api.py chat-raw-bounded MODEL < body.json
+                                            # same POST, framed BOUNDED raw
+                                            # result for the worker response-
+                                            # evidence path: the body read
+                                            # incrementally under a 64,000-byte
+                                            # capture ceiling, with body_complete
+                                            # / stop_reason and a phase
+                                            # observation (see call_raw_bounded).
 """
 import base64
 import json
@@ -136,6 +144,148 @@ def call_raw(request):
         return error.code, error.read()
 
 
+# The worker response-evidence capture ceiling (WORKER-
+# RESPONSE-EVIDENCE-SCOPE Rev 7/8): the largest body the
+# bounded raw path undertakes to hold whole. The read
+# stops AT the ceiling — the memory bound and the
+# evidence bound are the same bound, exactly.
+RAW_CAPTURE_CEILING = 64000
+_RAW_CHUNK = 65536
+
+
+def _read_bounded(stream, ceiling=RAW_CAPTURE_CEILING):
+    """Read a response body incrementally under the
+    capture ceiling (response-evidence scope R6-1/R7-1/
+    R8-1): a chunk loop in which every read requests at
+    most the REMAINING allowance — min(chunk, ceiling -
+    observed) — so the accumulated buffer can never
+    exceed the ceiling. Returns (data, body_complete,
+    stop_reason, read_error_kind):
+
+    - an empty read is an observed EOF: the ONLY ground
+      for body_complete=True / stop_reason="eof";
+    - reaching the ceiling without an observed EOF stops
+      deliberately: stop_reason="capture_limit",
+      body_complete=False — even if the body in fact
+      ended at precisely that byte (completeness is
+      claimed only on observation, never on arithmetic
+      coincidence, R8-1);
+    - a read that raises midway frames what was
+      accumulated: stop_reason="read_failure",
+      body_complete=False, and the read error's kind.
+    """
+    buf = bytearray()
+    while True:
+        remaining = ceiling - len(buf)
+        if remaining <= 0:
+            return bytes(buf), False, "capture_limit", None
+        try:
+            chunk = stream.read(min(_RAW_CHUNK, remaining))
+        except Exception as exc:  # a read failure midway:
+            # the accumulated bytes are the evidence
+            return bytes(buf), False, "read_failure", \
+                type(exc).__name__
+        if not chunk:
+            return bytes(buf), True, "eof", None
+        buf.extend(chunk)
+
+
+def _pre_response_kind(exc):
+    """The error kind of a failure raised before any
+    response object existed: for a URLError, the kind of
+    its reason (ConnectionRefusedError, gaierror,
+    SSLError, TimeoutError, ...) where the reason is an
+    exception; otherwise the exception's own kind."""
+    reason = getattr(exc, "reason", None)
+    if isinstance(reason, BaseException):
+        return type(reason).__name__
+    return type(exc).__name__
+
+
+def call_raw_bounded(request, ceiling=RAW_CAPTURE_CEILING):
+    """The bounded raw call for the worker response-
+    evidence path (WORKER-RESPONSE-EVIDENCE-SCOPE Revs
+    5-8). The same surrogate-credentialed request as
+    call_raw(), but the result is a dict carrying the
+    seam's own observations, never an interpretation:
+
+    - "status": the actual HTTP status, or None where no
+      response object ever existed;
+    - "body_b64": base64 of the exact bytes observed
+      (the whole body where the read completed; the
+      observed prefix where it did not), or None where
+      no response object existed;
+    - "body_complete" / "stop_reason": per _read_bounded
+      — "eof" only on an observed empty read,
+      "capture_limit" at the ceiling without one,
+      "read_failure" on a mid-read failure (whose kind
+      stands in "read_error_kind");
+    - "phase": the phase observation — "pre_response"
+      where the opener raised before any HTTP response
+      object existed (with "error_kind" naming the
+      failure's kind), or "response_received" with the
+      observed status where a response object existed.
+      HTTPError IS a response object: its status is
+      observed and its error body is read by the same
+      incremental loop.
+
+    A failure of the helper itself before any of this
+    can be framed (a crash, a kill) produces no result
+    at all — the caller sees the helper's exit, and no
+    observation is fabricated for it.
+    """
+    request.add_header("User-Agent", "Groq/Python 1.0 (Pulse HQ Marni)")
+    add_surrogate_to_request(request, "custom.groq", allowed_hosts=[HOST])
+    opener = urllib.request.build_opener(NoRedirect())
+    try:
+        response = opener.open(request,
+                               timeout=request_timeout())
+    except urllib.error.HTTPError as error:
+        # HTTPError is itself a response object: its
+        # status stands observed, and its error body is
+        # read by the same incremental loop.
+        status = error.code
+        try:
+            data, complete, stop, read_kind = _read_bounded(
+                error, ceiling)
+        finally:
+            try:
+                error.close()
+            except Exception:
+                pass
+        return {"status": status,
+                "body_b64": base64.b64encode(data).decode("ascii"),
+                "body_complete": complete,
+                "stop_reason": stop,
+                "read_error_kind": read_kind,
+                "phase": "response_received",
+                "error_kind": None}
+    except Exception as exc:  # the opener raised before
+        # any response object existed — the pre-response
+        # phase, observed at this seam and nowhere else.
+        return {"status": None, "body_b64": None,
+                "body_complete": False, "stop_reason": None,
+                "read_error_kind": None,
+                "phase": "pre_response",
+                "error_kind": _pre_response_kind(exc)}
+    try:
+        status = response.getcode()
+        data, complete, stop, read_kind = _read_bounded(
+            response, ceiling)
+    finally:
+        try:
+            response.close()
+        except Exception:
+            pass
+    return {"status": status,
+            "body_b64": base64.b64encode(data).decode("ascii"),
+            "body_complete": complete,
+            "stop_reason": stop,
+            "read_error_kind": read_kind,
+            "phase": "response_received",
+            "error_kind": None}
+
+
 def main():
     args = sys.argv[1:]
     if not args:
@@ -167,6 +317,20 @@ def main():
         print(json.dumps({
             "status": status,
             "body_b64": base64.b64encode(raw).decode("ascii")}))
+        return 0
+    if args[0] == "chat-raw-bounded" and len(args) == 2:
+        body = sys.stdin.buffer.read()
+        req = urllib.request.Request(
+            f"{BASE}/chat/completions",
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        # The bounded envelope IS the result, framed
+        # whole: a pre-response failure is a framed
+        # observation (status/body null, phase
+        # pre_response), not a helper error.
+        print(json.dumps(call_raw_bounded(req)))
         return 0
     print(__doc__)
     return 2

@@ -47,7 +47,19 @@ What it checks, from the record alone:
   the pinned case bounds that actually stood — numbering,
   ceiling, cursor chain, stall grounds and count, dispatch
   accounting closed before the stall, and no instance activity
-  after it.
+  after it;
+- response evidence (response-evidence piece, Rev 8): inside
+  loop correspondence, each governed activation's call
+  boundaries and dispositions reconstructed — CALL_ENTERED
+  exactly once per entered iteration, exactly one disposition
+  per entered iteration (a missing one an integrity failure,
+  never reinterpreted, and reported beside an evidence
+  failure terminal that discharges nothing), outcome/class/
+  evidence pairing re-derived from the filed artifact, every
+  layer hash recomputed from the stored base64, no dispatch
+  inside the entered-but-undispositioned window, and any
+  on-disk artifact bound by no disposition reported as an
+  orphan.
 
 It opens the store read-only with its own SQL, writes nothing,
 creates no store, and leaves no artifacts (C7). It imports
@@ -1632,6 +1644,35 @@ _RETRIEVAL_CONTRACT = "retrieval-v3"
 _GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
                                  _RETRIEVAL_CONTRACT)
 
+# Response-evidence piece (WORKER-RESPONSE-EVIDENCE-SCOPE
+# Rev 8): the disposition contract's tables — this
+# checker's own copies, reconstructed independently of
+# the doorway's and the loop's, as its other contracts
+# are. The one class a no_response disposition may name;
+# the pre-response error-kind family its seam evidence
+# must carry; the classes an unresolved disposition may
+# name; the closed pre-call terminal steps; the failed
+# operations an evidence failure terminal may name.
+_EVIDENCE_NO_RESPONSE_CLASS = "connection_failed_pre_response"
+_EVIDENCE_PRE_RESPONSE_KINDS = frozenset({
+    "ConnectionRefusedError", "ConnectionResetError",
+    "ConnectionAbortedError", "BrokenPipeError",
+    "gaierror", "SSLError", "SSLCertVerificationError",
+    "TimeoutError", "socket.timeout", "URLError",
+    "RemoteDisconnected", "EOFError",
+})
+_EVIDENCE_UNRESOLVED_CLASSES = frozenset({
+    "timeout_after_send", "helper_exit_no_envelope",
+    "envelope_unparseable", "termination_unconfirmed",
+    "transport_internal_error",
+})
+_EVIDENCE_PRE_CALL_STEPS = frozenset({
+    "package_construction", "deadline_at_start"})
+_EVIDENCE_FAILURE_OPERATIONS = frozenset({
+    "persist", "verify", "commit"})
+_EVIDENCE_OUTCOMES = ("captured", "no_response",
+                      "unresolved")
+
 
 def _derive_catalogue(grants, version, per_grant=False):
     """The expected tool catalogue for a sealed grants list
@@ -1691,7 +1732,7 @@ def _derive_catalogue(grants, version, per_grant=False):
     return entries, None
 
 
-def _loop_result(events, state):
+def _loop_result(events, state, run_dir=None):
     """Loop correspondence (Piece A3, R49–R51/R55): the bounded
     loop's bookkeeping reconstructed from the events themselves
     — every iteration and stall against the activation that
@@ -1844,6 +1885,9 @@ def _loop_result(events, state):
 
     iterations = {}
     stalls = {}
+    entered = {}
+    dispositions = {}
+    evidence_failures = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -1869,6 +1913,39 @@ def _loop_result(events, state):
                 problem("stall_ground_unknown", assembly_id=aid,
                         at_seq=seq, ground=p.get("ground"))
             binding_problems("stall", ev, aid)
+        elif t == "CALL_ENTERED":
+            # Response-evidence piece: the call boundary —
+            # the loop machinery's own actor, bound to the
+            # standing activation exactly, like its other
+            # bookkeeping.
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("call_entered_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("call_entered", ev, aid):
+                continue
+            entered.setdefault(aid, []).append(ev)
+        elif t == "RESPONSE_EVIDENCE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("disposition_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("disposition", ev, aid):
+                continue
+            dispositions.setdefault(aid, []).append(ev)
+        elif t == "EVIDENCE_CAPTURE_FAILED":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("evidence_failure_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if aid in evidence_failures:
+                problem("evidence_failure_duplicate",
+                        assembly_id=aid, at_seq=seq)
+            evidence_failures.setdefault(aid, []).append(ev)
+            binding_problems("evidence_failure", ev, aid)
 
     for aid in activated:
         if pinned_bounds_malformed(aid):
@@ -2107,6 +2184,455 @@ def _loop_result(events, state):
             # other lawful work is not the instance's.
             problem("instance_act_after_stall",
                     type=ev["type"], instance_id=iid, at_seq=seq)
+
+    # --------------------------------------- response evidence
+    # Response-evidence piece (WORKER-RESPONSE-EVIDENCE-
+    # SCOPE Rev 8): the disposition obligation, reconstructed
+    # from the record alone — never from the loop's word.
+    # An activation is governed where any of the piece's
+    # events stand for it; a governed activation's every
+    # entered iteration owes exactly one disposition,
+    # committed before its terminal and before any dispatch
+    # from its answer; a missing disposition is an integrity
+    # failure, never reinterpreted as a legitimate
+    # no-response. The doorway's rules (loop actor only,
+    # entered iterations only, exactly one, validated,
+    # final, no bypass) are reconstructed here in this
+    # checker's own copy: the doorway prevents an invalid
+    # history from being extended; this check detects one
+    # that nevertheless arrives. Captured dispositions are
+    # verified against the filed artifacts in the run
+    # directory — hashes recomputed from the stored bytes,
+    # the layer identity chain re-derived — and an artifact
+    # no committed disposition binds is an orphan: reported,
+    # and licensing nothing.
+    def artifact_problems(aid, ev, iseq):
+        """Verify one captured disposition against its
+        filed artifact: the file the run directory holds
+        for the iteration, its hash, its binding fields,
+        its layer hashes recomputed from its stored bytes,
+        and the identity chain L1 → L2 → L3 → L4 → the
+        adapter verdict's content hash."""
+        p = ev["payload"]
+        seq = ev["event_seq"]
+        claimed = p.get("artifact_sha256")
+        if run_dir is None:
+            problem("evidence_artifact_unverifiable",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+            return
+        path = os.path.join(run_dir, "responses",
+                            f"iteration-{iseq}.json")
+        if not os.path.exists(path):
+            problem("evidence_artifact_missing",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+            return
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read()
+        except OSError:
+            problem("evidence_artifact_unreadable",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+            return
+        if sha256_hex(data) != claimed:
+            problem("evidence_artifact_hash_mismatch",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+            return
+        try:
+            artifact = json.loads(data.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            problem("evidence_artifact_unreadable",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+            return
+        gen = generated.get(aid)
+        if not isinstance(artifact, dict) or \
+                artifact.get("assembly_id") != aid or \
+                artifact.get("iteration_seq") != iseq or \
+                (gen is not None and artifact.get(
+                    "instance_id") != gen["payload"].get(
+                    "instance_id")) or \
+                artifact.get("run_id") != state.get("run_id"):
+            problem("evidence_artifact_binding_mismatch",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+            return
+        layers = artifact.get("layers") or {}
+        l1 = layers.get("L1") or {}
+        raw = None
+        try:
+            import base64 as _b64
+            raw = _b64.b64decode(l1.get("data_b64") or "",
+                                 validate=True)
+        except Exception:
+            raw = None
+        if raw is None:
+            problem("evidence_layer_unreadable",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq, layer="L1")
+            return
+        if len(raw) != l1.get("byte_count") or \
+                sha256_hex(raw) != l1.get("sha256"):
+            problem("evidence_layer_hash_mismatch",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq, layer="L1")
+        # The agreement rule (R7-1): hash subject, retained
+        # bytes, completeness and the stop reason describe
+        # the same bytes. A prefix hash presented as a
+        # whole-body hash while the capture stands
+        # incomplete — a total length claimed, a subject
+        # other than the observed bytes — is a failure.
+        if l1.get("hash_subject") != "observed_bytes" or \
+                l1.get("complete") != \
+                (l1.get("stop_reason") == "eof") or \
+                (l1.get("complete") and
+                 l1.get("total_length") != len(raw)) or \
+                (not l1.get("complete") and
+                 (l1.get("total_length") is not None or
+                  l1.get("stop_reason") not in
+                  ("capture_limit", "read_failure"))):
+            problem("evidence_layer_inconsistent",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq, layer="L1")
+        summaries = {"L1": {
+            "byte_count": l1.get("byte_count"),
+            "sha256": l1.get("sha256"),
+            "complete": l1.get("complete"),
+            "hash_subject": l1.get("hash_subject"),
+            "total_length": l1.get("total_length"),
+            "stop_reason": l1.get("stop_reason")}}
+        envelope = None
+        message = None
+        for name in ("L2", "L3"):
+            layer = layers.get(name) or {}
+            if layer.get("present"):
+                obj = layer.get("envelope") \
+                    if name == "L2" else layer.get("message")
+                if name == "L2":
+                    envelope = obj
+                else:
+                    message = obj
+                if not isinstance(obj, dict) or \
+                        sha256_hex(canonical(obj)) != \
+                        layer.get("canonical_sha256") or \
+                        len(canonical(obj)) != \
+                        layer.get("canonical_byte_count"):
+                    problem("evidence_layer_hash_mismatch",
+                            assembly_id=aid, at_seq=seq,
+                            iteration_seq=iseq, layer=name)
+                summaries[name] = {
+                    "present": True,
+                    "canonical_sha256":
+                        layer.get("canonical_sha256"),
+                    "canonical_byte_count":
+                        layer.get("canonical_byte_count")}
+            else:
+                if not layer.get("reason"):
+                    problem("evidence_layer_inconsistent",
+                            assembly_id=aid, at_seq=seq,
+                            iteration_seq=iseq, layer=name)
+                summaries[name] = {
+                    "present": False,
+                    "reason": layer.get("reason")}
+        # The identity chain: L3 is the message inside L2,
+        # recomputed from the envelope itself.
+        if envelope is not None and message is not None:
+            chained = None
+            try:
+                candidate = envelope["choices"][0]["message"]
+                if isinstance(candidate, dict):
+                    chained = candidate
+            except (KeyError, IndexError, TypeError):
+                chained = None
+            if chained != message:
+                problem("evidence_layer_chain_mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq, layer="L3")
+        l4 = layers.get("L4") or {}
+        if l4.get("present"):
+            text = l4.get("text")
+            if not isinstance(text, str) or \
+                    sha256_hex(text.encode("utf-8")) != \
+                    l4.get("sha256") or \
+                    len(text.encode("utf-8")) != \
+                    l4.get("byte_count"):
+                problem("evidence_layer_hash_mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq, layer="L4")
+            if message is not None and \
+                    message.get("content") != text:
+                problem("evidence_layer_chain_mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq, layer="L4")
+            summaries["L4"] = {
+                "present": True,
+                "byte_count": l4.get("byte_count"),
+                "sha256": l4.get("sha256")}
+        else:
+            if not l4.get("reason"):
+                problem("evidence_layer_inconsistent",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq, layer="L4")
+            summaries["L4"] = {"present": False,
+                               "reason": l4.get("reason")}
+        l5 = layers.get("L5") or {}
+        adapter_v = l5.get("adapter_verdict")
+        loop_v = l5.get("loop_verdict")
+        if not isinstance(adapter_v, dict) or \
+                adapter_v.get("state") not in (
+                    "outcome", "failure", "not_reached") or \
+                not isinstance(loop_v, dict) or \
+                loop_v.get("state") not in (
+                    "validated", "malformed", "not_reached"):
+            problem("evidence_verdict_invalid",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+        else:
+            summaries["L5"] = {
+                "adapter_verdict_state": adapter_v["state"],
+                "loop_verdict_state": loop_v["state"]}
+            # The verdict's content is the artifact's L4:
+            # the hash the adapter verdict records is the
+            # hash of the exact content it consumed (W-a's
+            # identity chain, closed at L5).
+            if adapter_v.get("state") in ("outcome",
+                                          "failure"):
+                expected = l4.get("sha256") \
+                    if l4.get("present") else None
+                if adapter_v.get("content_hash") != expected:
+                    problem(
+                        "evidence_verdict_content_mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq)
+        if p.get("layers") != summaries:
+            problem("evidence_summary_mismatch",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+
+    def disposition_problems(aid, ev, iseq, bound):
+        """The disposition's own contract (R4-1/R5-1):
+        outcome, class and evidence in agreement — the
+        doorway's validation, reconstructed."""
+        p = ev["payload"]
+        seq = ev["event_seq"]
+        outcome = p.get("outcome")
+        if outcome not in _EVIDENCE_OUTCOMES:
+            problem("disposition_outcome_unknown",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq, outcome=outcome)
+            return
+        if outcome == "captured":
+            bound.add(iseq)
+            if p.get("failure_class") is not None:
+                problem("disposition_class_mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq)
+            artifact_problems(aid, ev, iseq)
+            return
+        if p.get("artifact_sha256") is not None:
+            problem("disposition_artifact_unexpected",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+        if outcome == "no_response":
+            se = p.get("seam_evidence")
+            if p.get("failure_class") != \
+                    _EVIDENCE_NO_RESPONSE_CLASS or \
+                    not isinstance(se, dict) or \
+                    se.get("phase") != "pre_response" or \
+                    se.get("error_kind") not in \
+                    _EVIDENCE_PRE_RESPONSE_KINDS or \
+                    se.get("observed_status") is not None:
+                problem("disposition_evidence_invalid",
+                        assembly_id=aid, at_seq=seq,
+                        iteration_seq=iseq)
+            return
+        # unresolved
+        failure_class = p.get("failure_class")
+        if failure_class == _EVIDENCE_NO_RESPONSE_CLASS:
+            problem("disposition_underclaimed",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+        elif failure_class not in \
+                _EVIDENCE_UNRESOLVED_CLASSES:
+            problem("disposition_class_unknown",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq,
+                    failure_class=failure_class)
+        se = p.get("seam_evidence")
+        if not isinstance(se, dict) or not se:
+            problem("disposition_evidence_missing",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq)
+
+    bound_iterations = set()
+    governed_aids = set(entered) | set(dispositions) | \
+        set(evidence_failures)
+    for aid in governed_aids:
+        iters = iterations.get(aid, [])
+        iter_by_seq = {ev["event_seq"]: ev for ev in iters}
+        entered_map = {}
+        for ev in entered.get(aid, []):
+            p = ev["payload"]
+            iseq = p.get("iteration_seq")
+            target = iter_by_seq.get(iseq)
+            if target is None:
+                problem("call_entered_without_iteration",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        iteration_seq=iseq)
+                continue
+            if p.get("iteration") != \
+                    target["payload"].get("iteration"):
+                problem("call_entered_iteration_mismatch",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        iteration_seq=iseq)
+            if iseq in entered_map:
+                problem("call_entered_duplicate",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        iteration_seq=iseq)
+            entered_map.setdefault(iseq, ev)
+        disp_map = {}
+        for ev in dispositions.get(aid, []):
+            p = ev["payload"]
+            iseq = p.get("iteration_seq")
+            if iseq not in iter_by_seq:
+                problem("disposition_without_iteration",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        iteration_seq=iseq)
+                continue
+            if iseq not in entered_map:
+                problem("disposition_without_call_entered",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        iteration_seq=iseq)
+            if iseq in disp_map:
+                problem("disposition_duplicate",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        iteration_seq=iseq)
+            disp_map.setdefault(iseq, ev)
+        failures_by_iter = {}
+        for ev in evidence_failures.get(aid, []):
+            p = ev["payload"]
+            if p.get("operation") not in \
+                    _EVIDENCE_FAILURE_OPERATIONS:
+                problem("evidence_failure_operation_unknown",
+                        assembly_id=aid, at_seq=ev["event_seq"],
+                        operation=p.get("operation"))
+            failures_by_iter.setdefault(
+                p.get("iteration_seq"), ev)
+        stall = stalls.get(aid)
+        if stall is not None and \
+                stall["payload"].get("terminal_step") is not None \
+                and stall["payload"]["terminal_step"] not in \
+                _EVIDENCE_PRE_CALL_STEPS:
+            problem("terminal_step_unknown", assembly_id=aid,
+                    at_seq=stall["event_seq"],
+                    terminal_step=stall["payload"]["terminal_step"])
+        for idx, iev in enumerate(iters):
+            iseq = iev["event_seq"]
+            if iseq in entered_map:
+                disp = disp_map.get(iseq)
+                if disp is None:
+                    # The double report (R8-2): an evidence
+                    # failure terminal naming this iteration
+                    # is recognised below as the instance's
+                    # end — and the missing disposition
+                    # stands here regardless, an integrity
+                    # failure that is never reinterpreted.
+                    problem("disposition_missing",
+                            assembly_id=aid,
+                            at_seq=entered_map[iseq]["event_seq"],
+                            iteration_seq=iseq,
+                            evidence_failure=iseq in
+                            failures_by_iter)
+                else:
+                    disposition_problems(
+                        aid, disp, iseq, bound_iterations)
+            elif idx != len(iters) - 1 or stall is None or \
+                    stall["payload"].get("terminal_step") not in \
+                    _EVIDENCE_PRE_CALL_STEPS:
+                # An unentered iteration in a governed
+                # activation is lawful only as the final
+                # iteration, answered by a stall naming its
+                # pre-call step (R4-3/R5-2 mutual
+                # exclusivity, reconstructed).
+                problem("iteration_without_call_boundary",
+                        assembly_id=aid, at_seq=iseq,
+                        iteration_seq=iseq)
+        # No dispatch without durable evidence: a dispatch
+        # of the instance standing after an iteration's
+        # call boundary and before its disposition (or
+        # with none) is a failure, whatever the doorway
+        # admitted.
+        gen = generated.get(aid)
+        iid = gen["payload"].get("instance_id") \
+            if gen is not None else None
+        if iid is not None:
+            for iseq, cev in entered_map.items():
+                disp = disp_map.get(iseq)
+                dseq = disp["event_seq"] if disp is not None \
+                    else None
+                for ev in events:
+                    if ev["type"] not in ("TOOL_REQUESTED",
+                                          "TOOL_DISPATCHED"):
+                        continue
+                    if ev["payload"].get("instance_id") != iid:
+                        continue
+                    if cev["event_seq"] < ev["event_seq"] and \
+                            (dseq is None or
+                             ev["event_seq"] < dseq):
+                        problem("dispatch_before_disposition",
+                                assembly_id=aid,
+                                at_seq=ev["event_seq"],
+                                iteration_seq=iseq)
+        # The evidence failure terminal ends the instance:
+        # nothing of the instance's stands after it.
+        for ev in evidence_failures.get(aid, []):
+            fseq = ev["event_seq"]
+            for other in events:
+                if other["event_seq"] <= fseq:
+                    continue
+                op = other["payload"]
+                if op.get("assembly_id") == aid and \
+                        other["type"] in (
+                            "LOOP_ITERATION", "CALL_ENTERED",
+                            "RESPONSE_EVIDENCE", "LOOP_STALLED",
+                            "EVIDENCE_CAPTURE_FAILED"):
+                    problem("activity_after_evidence_failure",
+                            assembly_id=aid,
+                            at_seq=other["event_seq"],
+                            type=other["type"])
+                elif iid is not None and \
+                        op.get("instance_id") == iid and \
+                        other["type"] in ("TOOL_REQUESTED",
+                                          "TOOL_DISPATCHED",
+                                          "TOOL_STARTED"):
+                    problem("activity_after_evidence_failure",
+                            assembly_id=aid,
+                            at_seq=other["event_seq"],
+                            type=other["type"])
+
+    # Orphan artifacts (R2-2): a file in the run's evidence
+    # store that no committed captured disposition binds
+    # licenses nothing and is reported as what it is.
+    if run_dir is not None:
+        responses_dir = os.path.join(run_dir, "responses")
+        if os.path.isdir(responses_dir):
+            for name in sorted(os.listdir(responses_dir)):
+                if not name.startswith("iteration-") or \
+                        not name.endswith(".json"):
+                    continue
+                try:
+                    orphan_seq = int(
+                        name[len("iteration-"):-len(".json")])
+                except ValueError:
+                    continue
+                if orphan_seq not in bound_iterations:
+                    problem("evidence_artifact_orphan",
+                            iteration_seq=orphan_seq,
+                            artifact=name)
+
     if problems:
         return {"result": "divergent", "problems": problems}
     return {"result": "ok"}
@@ -2210,7 +2736,10 @@ def check(request):
             events, state)
         checks["dispatch_correspondence"] = _dispatch_result(
             events, state)
-        checks["loop_correspondence"] = _loop_result(events, state)
+        checks["loop_correspondence"] = _loop_result(
+            events, state,
+            run_dir=os.path.dirname(os.path.abspath(path))
+            if path else None)
     return verdict
 
 

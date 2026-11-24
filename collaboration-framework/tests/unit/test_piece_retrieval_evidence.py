@@ -192,7 +192,24 @@ def main():
         print("stub: no scripted response for call %d" % idx,
               file=sys.stderr)
         return 3
-    sys.stdout.write(json.dumps(script[idx]))
+    if len(sys.argv) > 1 and sys.argv[1] == \\
+            "chat-raw-bounded":
+        # The worker transport's bounded raw mode (the
+        # response-evidence piece): the scripted
+        # completion framed as the provider body inside
+        # the bounded envelope the real helper prints.
+        import base64
+        body = json.dumps(script[idx])
+        sys.stdout.write(json.dumps({
+            "status": 200,
+            "body_b64": base64.b64encode(
+                body.encode("utf-8")).decode("ascii"),
+            "body_complete": True, "stop_reason": "eof",
+            "read_error_kind": None,
+            "phase": "response_received",
+            "error_kind": None}))
+    else:
+        sys.stdout.write(json.dumps(script[idx]))
     sys.stdout.flush()
     return 0
 

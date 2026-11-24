@@ -49,6 +49,10 @@ _KNOWN_TYPES = {
     "TOOL_OUTCOME", "TOOL_RECONCILED",
     # Agent layer (Piece A3): the bounded loop's bookkeeping.
     "LOOP_ITERATION", "LOOP_STALLED",
+    # Response-evidence piece (Rev 8): the call boundary,
+    # the response disposition, and the evidence failure
+    # terminal.
+    "CALL_ENTERED", "RESPONSE_EVIDENCE", "EVIDENCE_CAPTURE_FAILED",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",
@@ -397,6 +401,62 @@ def _shape_problem(ev):
             return "LOOP_STALLED case_id is not a string"
         if bad_opt_str("detail"):
             return "LOOP_STALLED detail is not a string"
+        if bad_opt_str("terminal_step"):
+            return "LOOP_STALLED terminal_step is not a string"
+    elif t == "CALL_ENTERED":
+        # Response-evidence piece: the call boundary names
+        # its activation and the iteration event it answers.
+        for key in ("assembly_id", "instance_id"):
+            if need_str(key):
+                return f"CALL_ENTERED requires a {key} string"
+        for key in ("iteration", "iteration_seq"):
+            if not _is_int(p.get(key)):
+                return f"CALL_ENTERED {key} is not an integer"
+        for key in ("activated_seq", "case_version"):
+            if bad_opt(key, _is_int):
+                return f"CALL_ENTERED {key} is not an integer"
+        if bad_opt_str("case_id"):
+            return "CALL_ENTERED case_id is not a string"
+    elif t == "RESPONSE_EVIDENCE":
+        # Response-evidence piece: the disposition names
+        # its iteration and its outcome; the outcome's own
+        # fields are the correspondence check's, over this
+        # shape.
+        for key in ("assembly_id", "instance_id", "outcome"):
+            if need_str(key):
+                return f"RESPONSE_EVIDENCE requires a {key} string"
+        for key in ("iteration", "iteration_seq"):
+            if not _is_int(p.get(key)):
+                return f"RESPONSE_EVIDENCE {key} is not an integer"
+        for key in ("activated_seq", "case_version"):
+            if bad_opt(key, _is_int):
+                return f"RESPONSE_EVIDENCE {key} is not an integer"
+        for key in ("case_id", "failure_class", "artifact_sha256",
+                    "provenance"):
+            if bad_opt_str(key):
+                return f"RESPONSE_EVIDENCE {key} is not a string"
+        if bad_opt("http_status", _is_int):
+            return "RESPONSE_EVIDENCE http_status is not an integer"
+        for key in ("seam_evidence", "layers"):
+            if key in p and p[key] is not None and \
+                    not isinstance(p[key], dict):
+                return f"RESPONSE_EVIDENCE {key} is not an object"
+    elif t == "EVIDENCE_CAPTURE_FAILED":
+        # Response-evidence piece (R8-2): the terminal
+        # names its iteration and the failed operation.
+        for key in ("assembly_id", "instance_id", "operation"):
+            if need_str(key):
+                return f"EVIDENCE_CAPTURE_FAILED requires a {key} string"
+        for key in ("iteration", "iteration_seq"):
+            if not _is_int(p.get(key)):
+                return f"EVIDENCE_CAPTURE_FAILED {key} is not an integer"
+        for key in ("activated_seq", "case_version"):
+            if bad_opt(key, _is_int):
+                return f"EVIDENCE_CAPTURE_FAILED {key} is not an integer"
+        if bad_opt_str("case_id"):
+            return "EVIDENCE_CAPTURE_FAILED case_id is not a string"
+        if bad_opt_str("detail"):
+            return "EVIDENCE_CAPTURE_FAILED detail is not a string"
     return None
 
 
@@ -895,7 +955,8 @@ def _apply(state, ev):
                 "activated_seq": p.get("activated_seq"),
                 "case_id": p.get("case_id"),
                 "case_version": p.get("case_version"),
-                "iterations": [], "stalled": None})
+                "iterations": [], "stalled": None,
+                "evidence_failed": None})
         entry["iterations"].append({
             "iteration": p.get("iteration"),
             "event_seq": seq,
@@ -905,7 +966,52 @@ def _apply(state, ev):
             "cursor_to": p.get("cursor_to"),
             "catalogue_hash": p.get("catalogue_hash"),
             "registry_version": p.get("registry_version"),
+            "call_entered_seq": None,
+            "disposition_seq": None,
+            "disposition_outcome": None,
         })
+    elif t == "CALL_ENTERED":
+        # Response-evidence piece: the call boundary marks
+        # the iteration entry it names; the first stands.
+        entry = state["loop_activations"].get(
+            p.get("assembly_id"))
+        if entry is not None:
+            for it in entry["iterations"]:
+                if it["event_seq"] == p.get("iteration_seq"):
+                    if it["call_entered_seq"] is None:
+                        it["call_entered_seq"] = seq
+                    break
+    elif t == "RESPONSE_EVIDENCE":
+        # Response-evidence piece: the first disposition
+        # stands; a second replaces nothing.
+        entry = state["loop_activations"].get(
+            p.get("assembly_id"))
+        if entry is not None:
+            for it in entry["iterations"]:
+                if it["event_seq"] == p.get("iteration_seq"):
+                    if it["disposition_seq"] is None:
+                        it["disposition_seq"] = seq
+                        it["disposition_outcome"] = \
+                            p.get("outcome")
+                    break
+    elif t == "EVIDENCE_CAPTURE_FAILED":
+        # Response-evidence piece (R8-2): the first
+        # evidence failure terminal stands; it discharges
+        # no disposition obligation.
+        entry = state["loop_activations"].setdefault(
+            p.get("assembly_id"), {
+                "instance_id": p.get("instance_id"),
+                "activated_seq": p.get("activated_seq"),
+                "case_id": p.get("case_id"),
+                "case_version": p.get("case_version"),
+                "iterations": [], "stalled": None,
+                "evidence_failed": None})
+        if entry["evidence_failed"] is None:
+            entry["evidence_failed"] = {
+                "event_seq": seq,
+                "iteration_seq": p.get("iteration_seq"),
+                "operation": p.get("operation"),
+            }
     elif t == "LOOP_STALLED":
         # Piece A3: the first stall stands; a second is
         # history and replaces nothing.
@@ -915,12 +1021,14 @@ def _apply(state, ev):
                 "activated_seq": p.get("activated_seq"),
                 "case_id": p.get("case_id"),
                 "case_version": p.get("case_version"),
-                "iterations": [], "stalled": None})
+                "iterations": [], "stalled": None,
+                "evidence_failed": None})
         if entry["stalled"] is None:
             entry["stalled"] = {
                 "ground": p.get("ground"),
                 "event_seq": seq,
                 "iterations": p.get("iterations"),
+                "terminal_step": p.get("terminal_step"),
             }
     elif t == "RUN_READY_FOR_COMPLETION":
         state["run_ready_seq"] = seq

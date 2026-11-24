@@ -120,8 +120,32 @@ DECLARATION = ("I am StubModel 1.0, provided by "
                "StubProvider for tests.")
 YIELD_CONTENT = json.dumps(
     {"outcome": "yield", "summary": "the stub stands"})
+# The worker stubs below answer the helper's bounded
+# raw mode (the response-evidence piece): invoked as
+# `chat-raw-bounded`, each frames its provider body in
+# the bounded envelope the real helper prints — status,
+# body_b64 of the exact bytes, body_complete, stop_reason
+# and the phase observation. Invoked any other way they
+# print the body bare, as they always have.
+EMIT = '''\
+def emit(body, status=200):
+    import base64
+    if "chat-raw-bounded" in sys.argv:
+        print(json.dumps({
+            "status": status,
+            "body_b64": base64.b64encode(
+                body.encode("utf-8")).decode("ascii"),
+            "body_complete": True, "stop_reason": "eof",
+            "read_error_kind": None,
+            "phase": "response_received",
+            "error_kind": None}))
+    else:
+        print(body)
+'''
+
 STUB_OK = '''\
 import json, os, sys
+''' + EMIT + '''\
 raw = sys.stdin.buffer.read()
 rec = os.environ.get("STUB_RECORD")
 if rec:
@@ -136,7 +160,7 @@ if b"State your identity" in raw:
     content = %r
 else:
     content = %r
-print(json.dumps({
+emit(json.dumps({
     "id": "chatcmpl-stub", "model": %r,
     "choices": [{"index": 0, "message": {
         "role": "assistant", "content": content}}]}))
@@ -144,6 +168,7 @@ print(json.dumps({
 
 STUB_SLEEP = '''\
 import json, os, sys, time
+''' + EMIT + '''\
 pidfile = os.environ.get("STUB_PIDFILE")
 if pidfile:
     with open(pidfile, "w") as fh:
@@ -155,7 +180,7 @@ if envrec:
                                 "<unset>"))
 sys.stdin.buffer.read()
 time.sleep(10)
-print(json.dumps({
+emit(json.dumps({
     "id": "chatcmpl-stub", "model": %r,
     "choices": [{"index": 0, "message": {
         "role": "assistant", "content": %r}}]}))
@@ -176,25 +201,28 @@ print("this is not json at all")
 
 STUB_NOCHOICES = '''\
 import json, sys
+''' + EMIT + '''\
 sys.stdin.buffer.read()
-print(json.dumps({"model": %r, "unexpected": True}))
+emit(json.dumps({"model": %r, "unexpected": True}))
 ''' % PIN
 
 STUB_ERRORBODY = '''\
 import json, sys
+''' + EMIT + '''\
 sys.stdin.buffer.read()
-print(json.dumps({"error": {"message": "provider says no",
+emit(json.dumps({"error": {"message": "provider says no",
                              "code": "stub_error"}}))
 '''
 
 STUB_WRONG_MODEL = '''\
 import json, sys
+''' + EMIT + '''\
 raw = sys.stdin.buffer.read()
 if b"State your identity" in raw:
     content = %r
 else:
     content = %r
-print(json.dumps({
+emit(json.dumps({
     "id": "chatcmpl-stub", "model": "some/other-model",
     "choices": [{"index": 0, "message": {
         "role": "assistant", "content": content}}]}))

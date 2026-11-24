@@ -140,6 +140,7 @@ import time
 
 from fabric.canonical import canonical, sha256_hex
 
+from . import evidence as _evidence
 from . import tool_policy as _tool_policy
 from .adapter import AdapterFailure
 from .bubble import render_view
@@ -161,6 +162,20 @@ class _CatalogueError(Exception):
     Raised inside package construction, so the loop's answer
     is its attributable runtime_failure stall — never a
     package that leaves a granted tool unnamed."""
+
+
+class _EvidenceFailure(Exception):
+    """The response-evidence mechanism itself failed for
+    an entered iteration (response-evidence piece, R8-2):
+    the artifact could not be persisted or read-back-
+    verified, or the disposition could not be committed.
+    Carries the failed operation (persist / verify /
+    commit), which the evidence failure terminal names."""
+
+    def __init__(self, operation, detail):
+        super().__init__(detail)
+        self.operation = operation
+        self.detail = detail
 
 
 def _derive_catalogue(grants, version=None, per_grant=False):
@@ -266,11 +281,23 @@ class Loop:
     """
 
     def __init__(self, doorway, instance_token, model,
-                 executor=None):
+                 executor=None, evidence_store=None):
         self.doorway = doorway
         self.token = instance_token
         self.model = model
         self.executor = executor
+        # Response-evidence piece: the evidence store's
+        # root (the run directory; artifacts land in its
+        # responses/ subdirectory under the store
+        # contract). Where a store is given, the loop runs
+        # the evidence sequence — CALL_ENTERED before each
+        # call, the seam's evidence persisted and the
+        # disposition committed before any effect of the
+        # answer. Where none is given (the historical
+        # scripted callables, which are not provider seams
+        # and produce no evidence), the loop runs exactly
+        # as it always has.
+        self.evidence_store = evidence_store
 
     # ------------------------------------------------------ run
     def run(self):
@@ -401,7 +428,16 @@ class Loop:
                 return self._stall(ctx, "runtime_failure",
                                    detail=problem)
             if remaining is not None and remaining <= 0:
-                return self._stall(ctx, "deadline")
+                # Response-evidence piece (R4-3): under the
+                # evidence regime this stall answers the
+                # iteration that never began — its pre-call
+                # step is the deadline standing expired at
+                # its start.
+                return self._stall(
+                    ctx, "deadline",
+                    terminal_step="deadline_at_start"
+                    if self.evidence_store is not None
+                    else None)
 
             # (ii) Construct and freeze the package from a
             # snapshot. A failure here is the loop's own —
@@ -416,7 +452,10 @@ class Loop:
                 return self._stall(
                     ctx, "runtime_failure",
                     detail=f"package construction failed: "
-                           f"{type(exc).__name__}: {exc}")
+                           f"{type(exc).__name__}: {exc}",
+                    terminal_step="package_construction"
+                    if self.evidence_store is not None
+                    else None)
             package_s = time.monotonic() - package_started
             iteration = ctx["iterations"] + 1
 
@@ -440,7 +479,11 @@ class Loop:
             except DoorwayRefusal as refusal:
                 if refusal.ground == \
                         LOOP_ITERATION_DEADLINE_GROUND:
-                    return self._stall(ctx, "deadline")
+                    return self._stall(
+                        ctx, "deadline",
+                        terminal_step="deadline_at_start"
+                        if self.evidence_store is not None
+                        else None)
                 return self._stall(
                     ctx, "runtime_failure",
                     detail=f"the iteration could not be "
@@ -452,6 +495,20 @@ class Loop:
             # after that head and is presented in the next
             # iteration's delta.
             ctx["cursor"] = head
+
+            # Response-evidence piece: where an evidence
+            # store stands, the call runs the evidence
+            # sequence — the call boundary, the seam's
+            # evidence persisted and dispositioned before
+            # any effect — in _call_governed, which returns
+            # a terminal result or "continue" after
+            # adjudication.
+            if self.evidence_store is not None:
+                governed = self._call_governed(
+                    ctx, package, iteration, ev, package_s)
+                if governed != "continue":
+                    return governed
+                continue
 
             # (iv) Invoke the callable, with the activation's
             # remaining budget as a call parameter — outside
@@ -556,6 +613,405 @@ class Loop:
                         "dispatched": ctx["dispatched"],
                         "call_timings": ctx["call_timings"]}
             self._adjudicate(ctx, data)
+
+    # --------------------------------- response evidence
+    def _call_governed(self, ctx, package, iteration,
+                       iteration_ev, package_s):
+        """One iteration's call under the response-evidence
+        regime (WORKER-RESPONSE-EVIDENCE-SCOPE Rev 8), in
+        the scope's one exact sequence (R2-3 as revised):
+        CALL_ENTERED records the durable crossing of the
+        call-entry boundary; the callable is invoked; the
+        seam's evidence is persisted (where a response was
+        captured) and the RESPONSE_EVIDENCE disposition is
+        committed — ahead of the post-call deadline stall
+        and ahead of any dispatch; only then do validation's
+        outcomes take effect. A failure of the evidence
+        mechanism itself ends the run at the
+        evidence_capture_failure terminal (R8-2). Returns a
+        terminal result dict, or "continue" after a
+        proposals outcome has been adjudicated."""
+        doorway = self.doorway
+        iteration_seq = iteration_ev["event_seq"]
+        try:
+            doorway.record_call_entered(
+                ctx["assembly_id"], iteration, iteration_seq)
+        except DoorwayRefusal as refusal:
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=f"the call boundary could not be "
+                       f"recorded: {refusal.ground}")
+        deadline, problem = doorway.activation_deadline(
+            ctx["instance_id"])
+        if problem is not None:
+            # The call cannot be invoked at all — the
+            # anchor failed between the recording decision
+            # and the call. The entered iteration still owes
+            # its disposition: the seam observed nothing,
+            # and nothing about receipt is established.
+            seam = _evidence.empty_seam("loop")
+            seam["seam"]["failure_class"] = \
+                "transport_internal_error"
+            seam["seam"]["diagnostic"] = problem
+            try:
+                self._settle_evidence(
+                    ctx, iteration_seq, seam,
+                    _evidence.adapter_verdict(
+                        "not_reached",
+                        reason="the call could not be "
+                               "invoked; no interpretation "
+                               "began"),
+                    _evidence.loop_verdict(
+                        "not_reached",
+                        reason="the call could not be "
+                               "invoked; no outcome stood "
+                               "to validate"))
+            except _EvidenceFailure as fail:
+                return self._evidence_failure_result(
+                    ctx, iteration_seq, fail)
+            return self._stall(ctx, "runtime_failure",
+                               detail=problem)
+        remaining = deadline - time.monotonic() \
+            if deadline is not None else None
+        # The callable's evidence channel opens empty for
+        # this call: whatever stands there afterwards is
+        # this call's seam observation, or nothing.
+        if hasattr(self.model, "last_response_evidence"):
+            try:
+                self.model.last_response_evidence = None
+            except Exception:
+                pass
+        call_started = time.monotonic()
+        try:
+            if ctx.get("adapter_mode") is not None:
+                raw = self.model(
+                    package, budget=remaining,
+                    deadline=deadline,
+                    mode=ctx["adapter_mode"])
+            else:
+                raw = self.model(package, budget=remaining,
+                                 deadline=deadline)
+        except AdapterFailure as failure:
+            self._note_call_timing(ctx, iteration, package_s,
+                                   call_started)
+            seam = self._seam_from_failure(failure)
+            adapter_v = seam.pop("adapter_verdict", None) or \
+                self._verdict_from_failure(failure, seam)
+            try:
+                self._settle_evidence(
+                    ctx, iteration_seq, seam, adapter_v,
+                    _evidence.loop_verdict(
+                        "not_reached",
+                        reason="the adapter stage produced "
+                               "no outcome to validate"))
+            except _EvidenceFailure as fail:
+                return self._evidence_failure_result(
+                    ctx, iteration_seq, fail)
+            if self._deadline_passed(ctx):
+                return self._stall(ctx, "deadline")
+            if failure.kind == "malformed_response":
+                return self._stall(ctx, "provider_failure",
+                                   detail=failure.detail)
+            return self._stall(
+                ctx, "provider_failure",
+                detail=f"{failure.kind}: {failure.detail}")
+        except Exception as exc:  # noqa: BLE001 — a
+            # provider-side failure of the callable itself
+            self._note_call_timing(ctx, iteration, package_s,
+                                   call_started)
+            seam = getattr(self.model,
+                           "last_response_evidence", None)
+            if not isinstance(seam, dict):
+                seam = _evidence.empty_seam("loop")
+                seam["seam"]["failure_class"] = \
+                    "transport_internal_error"
+                seam["seam"]["diagnostic"] = \
+                    f"{type(exc).__name__}: {exc}"
+            try:
+                self._settle_evidence(
+                    ctx, iteration_seq, seam,
+                    _evidence.adapter_verdict(
+                        "not_reached",
+                        reason="the callable failed outside "
+                               "its interpretation: "
+                               f"{type(exc).__name__}"),
+                    _evidence.loop_verdict(
+                        "not_reached",
+                        reason="the adapter stage produced "
+                               "no outcome to validate"))
+            except _EvidenceFailure as fail:
+                return self._evidence_failure_result(
+                    ctx, iteration_seq, fail)
+            if self._deadline_passed(ctx):
+                return self._stall(ctx, "deadline")
+            return self._stall(
+                ctx, "provider_failure",
+                detail=f"{type(exc).__name__}: {exc}")
+        self._note_call_timing(ctx, iteration, package_s,
+                               call_started)
+        seam = getattr(self.model, "last_response_evidence",
+                       None)
+        if not isinstance(seam, dict):
+            # The callable answered but its seam produced
+            # no evidence observation at all: nothing about
+            # the answer may take effect — the disposition
+            # records the seam's silence as unresolved, and
+            # the run stops as a provider failure.
+            seam = _evidence.empty_seam("unknown")
+            seam["seam"]["failure_class"] = \
+                "transport_internal_error"
+            seam["seam"]["diagnostic"] = (
+                "the callable produced no response "
+                "evidence; the answer's effects are not "
+                "admitted")
+            try:
+                self._settle_evidence(
+                    ctx, iteration_seq, seam,
+                    _evidence.adapter_verdict(
+                        "not_reached",
+                        reason="the seam recorded no "
+                               "adapter verdict"),
+                    _evidence.loop_verdict(
+                        "not_reached",
+                        reason="no response evidence stood "
+                               "to validate against"))
+            except _EvidenceFailure as fail:
+                return self._evidence_failure_result(
+                    ctx, iteration_seq, fail)
+            return self._stall(
+                ctx, "provider_failure",
+                detail="the callable produced no response "
+                       "evidence; the answer's effects are "
+                       "not admitted")
+        # Whole-response validation is effect-free: it
+        # runs here so the artifact's loop verdict stands
+        # complete before the disposition commits. Its
+        # outcomes take effect only after the disposition.
+        outcome, data = self._validate(raw)
+        if outcome == "malformed":
+            loop_v = _evidence.loop_verdict(
+                "malformed", detail=data)
+        else:
+            loop_v = _evidence.loop_verdict(
+                "validated", outcome=outcome)
+        adapter_v = seam.get("adapter_verdict") or \
+            self._verdict_from_outcome(seam, raw)
+        try:
+            disposition, disp_outcome = self._settle_evidence(
+                ctx, iteration_seq, seam, adapter_v, loop_v)
+        except _EvidenceFailure as fail:
+            return self._evidence_failure_result(
+                ctx, iteration_seq, fail)
+        ctx["recorded"].append(disposition)
+        if disp_outcome != "captured":
+            # A returned answer whose seam captured no
+            # response (or could not establish one): the
+            # disposition prohibits every effect, and the
+            # run stops — the seam and the answer disagree,
+            # and the seam governs.
+            return self._stall(
+                ctx, "provider_failure",
+                detail=f"the response disposition stands "
+                       f"{disp_outcome}; the answer's "
+                       f"effects are not admitted")
+        # The evidence stands durable and bound; the
+        # deadline governs from here, exactly as it
+        # governs the ungoverned path — a response that
+        # arrived after expiry is captured and bound
+        # first (R2-3), and only then does the deadline
+        # stall proceed, with the evidence attached.
+        if self._deadline_passed(ctx):
+            return self._stall(ctx, "deadline")
+        if outcome == "malformed":
+            return self._stall(ctx, "malformed_response",
+                               detail=data)
+        if outcome == "decline":
+            return {"ok": True, "outcome": "decline",
+                    "reason": data,
+                    "instance_id": ctx["instance_id"],
+                    "assembly_id": ctx["assembly_id"],
+                    "iterations": ctx["iterations"],
+                    "recorded": ctx["recorded"],
+                    "refused": ctx["refused"],
+                    "dispatched": ctx["dispatched"],
+                    "call_timings": ctx["call_timings"]}
+        if outcome == "yield":
+            return {"ok": True, "outcome": "yield",
+                    "summary": data,
+                    "instance_id": ctx["instance_id"],
+                    "assembly_id": ctx["assembly_id"],
+                    "iterations": ctx["iterations"],
+                    "recorded": ctx["recorded"],
+                    "refused": ctx["refused"],
+                    "dispatched": ctx["dispatched"],
+                    "call_timings": ctx["call_timings"]}
+        self._adjudicate(ctx, data)
+        return "continue"
+
+    def _seam_from_failure(self, failure):
+        """The seam observation an AdapterFailure carries:
+        the failure's own attached evidence where the seam
+        supplied it, else the callable's published
+        evidence, else a seam synthesised from the
+        failure's kind under the scope's class table —
+        a deadline expiry with confirmed termination is
+        timeout_after_send (unresolved: it establishes
+        what the parent received, not what the provider
+        sent, R5-1); an unconfirmed termination is
+        termination_unconfirmed; anything else is the
+        transport's internal error. Nothing here promotes
+        an uncertain history to no_response."""
+        seam = getattr(failure, "evidence", None)
+        if not isinstance(seam, dict):
+            seam = getattr(self.model,
+                           "last_response_evidence", None)
+        if isinstance(seam, dict):
+            return seam
+        seam = _evidence.empty_seam("adapter")
+        if failure.kind == "no_response":
+            seam["seam"]["failure_class"] = \
+                "timeout_after_send"
+            seam["seam"]["fence"] = "adapter_deadline"
+            seam["seam"]["termination_confirmed"] = True
+            seam["seam"]["diagnostic"] = failure.detail
+        elif failure.kind == "transport_unresolved":
+            seam["seam"]["failure_class"] = \
+                "termination_unconfirmed"
+            seam["seam"]["diagnostic"] = failure.detail
+        else:
+            seam["seam"]["failure_class"] = \
+                "transport_internal_error"
+            seam["seam"]["diagnostic"] = \
+                f"{failure.kind}: {failure.detail}"
+        return seam
+
+    @staticmethod
+    def _verdict_from_failure(failure, seam):
+        """The adapter verdict for a failure the seam did
+        not already verdict (R3-3, total): a malformed
+        response is a parsing failure over a received
+        answer — its content hash is L4's, where L4
+        stands; every other failure means interpretation
+        could not begin, and stands not_reached with the
+        reason named."""
+        if failure.kind == "malformed_response":
+            content_hash = None
+            if seam.get("l1_bytes") is not None:
+                l4 = _evidence.derive_layers(
+                    seam["l1_bytes"])["L4"]
+                if l4.get("present"):
+                    content_hash = l4["sha256"]
+            return _evidence.adapter_verdict(
+                "failure", kind=failure.kind,
+                detail=failure.detail,
+                content_hash=content_hash)
+        return _evidence.adapter_verdict(
+            "not_reached",
+            reason=f"interpretation could not begin: "
+                   f"{failure.kind}: {failure.detail}")
+
+    @staticmethod
+    def _verdict_from_outcome(seam, raw):
+        """The adapter verdict for a returned outcome the
+        seam did not already verdict: the typed outcome
+        the adapter produced, with the hash of the exact
+        content it consumed — L4's hash, where L4 stands
+        (the identity chain W-a proves: the verdict's
+        content is the artifact's L4)."""
+        content_hash = None
+        if seam.get("l1_bytes") is not None:
+            l4 = _evidence.derive_layers(
+                seam["l1_bytes"])["L4"]
+            if l4.get("present"):
+                content_hash = l4["sha256"]
+        return _evidence.adapter_verdict(
+            "outcome",
+            kind=raw.get("outcome")
+            if isinstance(raw, dict) else None,
+            content_hash=content_hash)
+
+    def _settle_evidence(self, ctx, iteration_seq, seam,
+                         adapter_v, loop_v):
+        """Persist the artifact (where a response was
+        captured) and commit the iteration's disposition,
+        in that order — durable before effects (R2-3).
+        Returns (disposition event, outcome). Raises
+        _EvidenceFailure naming the failed operation:
+        persist/verify from the store, commit from the
+        doorway's refusal."""
+        outcome, failure_class, seam_evidence = \
+            _evidence.derive_disposition(seam)
+        artifact_sha256 = None
+        layers = None
+        if outcome == "captured":
+            binding = {
+                "run_id": self.doorway.store.get_run_id(),
+                "assembly_id": ctx["assembly_id"],
+                "instance_id": ctx["instance_id"],
+                "iteration_seq": iteration_seq,
+                "iteration": ctx["iterations"]}
+            artifact = _evidence.build_artifact(
+                binding, seam,
+                {"adapter": adapter_v, "loop": loop_v})
+            try:
+                _path, artifact_sha256 = \
+                    _evidence.persist_artifact(
+                        self.evidence_store, artifact)
+            except _evidence.EvidenceStoreError as exc:
+                raise _EvidenceFailure(exc.operation,
+                                       exc.detail)
+            layers = _evidence.layer_summaries(artifact)
+        try:
+            ev = self.doorway.record_response_evidence(
+                ctx["assembly_id"], iteration_seq, outcome,
+                failure_class=failure_class,
+                seam_evidence=seam_evidence,
+                artifact_sha256=artifact_sha256,
+                layers=layers,
+                provenance=seam.get("provenance"),
+                http_status=seam.get("http_status"))
+        except DoorwayRefusal as refusal:
+            raise _EvidenceFailure("commit", refusal.ground)
+        return ev, outcome
+
+    def _evidence_failure_result(self, ctx, iteration_seq,
+                                 fail):
+        """The run's answer to an evidence mechanism
+        failure (R8-2): record the evidence_capture_failure
+        terminal — the one terminal the doorway admits
+        while a disposition is outstanding — and end the
+        run. Where the record mechanism itself cannot
+        commit even that terminal, the implementation note
+        governs: nothing is claimed — the result says the
+        reason was not recorded, and CALL_ENTERED stands
+        outstanding for the checker to report."""
+        base = {"ok": False, "outcome": "stalled",
+                "ground": "evidence_capture_failure",
+                "operation": fail.operation,
+                "detail": fail.detail,
+                "instance_id": ctx["instance_id"],
+                "assembly_id": ctx["assembly_id"],
+                "iterations": ctx["iterations"],
+                "recorded": ctx["recorded"],
+                "refused": ctx["refused"],
+                "dispatched": ctx["dispatched"],
+                "call_timings": ctx["call_timings"]}
+        try:
+            ev = self.doorway.record_evidence_capture_failure(
+                ctx["assembly_id"], iteration_seq,
+                fail.operation, detail=fail.detail)
+        except Exception as exc:  # noqa: BLE001 — the
+            # record mechanism itself unavailable: claim
+            # nothing (the Rev 8 implementation note)
+            base["evidence_failure_recorded"] = False
+            base["reason"] = (
+                f"the evidence failure terminal could not "
+                f"be recorded ({type(exc).__name__}: "
+                f"{exc}); no recorded reason is claimed")
+            return base
+        base["evidence_failure_recorded"] = True
+        base["evidence_failure_event"] = ev
+        return base
 
     # -------------------------------------------------- package
     def _build_package(self, ctx):
@@ -967,11 +1423,15 @@ class Loop:
             for d in state["dispatches"].values()
             if d.get("instance_id") == ctx["instance_id"])
 
-    def _stall(self, ctx, ground, detail=None):
+    def _stall(self, ctx, ground, detail=None,
+               terminal_step=None):
         """Record the stall — after dispatch accounting has
         closed. Where the record mechanism itself is
         unavailable, fail closed and say so: no stall is
-        claimed that was not recorded."""
+        claimed that was not recorded. Under the response-
+        evidence regime a pre-call stall names its
+        terminal_step (R4-3), passed through to the
+        doorway's route."""
         base = {"ok": False, "outcome": "stalled",
                 "ground": ground,
                 "instance_id": ctx["instance_id"],
@@ -989,7 +1449,8 @@ class Loop:
                     "no stall is claimed (R50)")
                 return base
             ev = self.doorway.record_loop_stalled(
-                ctx["assembly_id"], ground, detail=detail)
+                ctx["assembly_id"], ground, detail=detail,
+                terminal_step=terminal_step)
         except Exception as exc:  # noqa: BLE001 — the record
             # mechanism itself unavailable: fail closed, claim
             # nothing

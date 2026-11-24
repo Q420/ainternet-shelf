@@ -77,6 +77,41 @@ LOOP_ITERATION_DEADLINE_GROUND = (
     "the activation deadline expired before the iteration "
     "could be recorded; no iteration is counted (R49)")
 
+# Response-evidence piece (WORKER-RESPONSE-EVIDENCE-SCOPE
+# Rev 8): the disposition contract's tables, held here as
+# the doorway's own copy — the loop derives dispositions
+# from the seam (framework.evidence) and this route
+# validates them at write time against these tables; the
+# checker reconstructs the same rules from its third copy.
+# The one class a no_response disposition may name, and
+# the pre-response error-kind family its seam evidence
+# must carry (R5-1/R6-3: phase observation + kind in the
+# family + the transport's agreement, all three).
+RESPONSE_NO_RESPONSE_CLASS = "connection_failed_pre_response"
+RESPONSE_PRE_RESPONSE_KINDS = frozenset({
+    "ConnectionRefusedError", "ConnectionResetError",
+    "ConnectionAbortedError", "BrokenPipeError",
+    "gaierror", "SSLError", "SSLCertVerificationError",
+    "TimeoutError", "socket.timeout", "URLError",
+    "RemoteDisconnected", "EOFError",
+})
+# The classes an unresolved disposition may name (R4-2
+# as revised by R5-1).
+RESPONSE_UNRESOLVED_CLASSES = frozenset({
+    "timeout_after_send", "helper_exit_no_envelope",
+    "envelope_unparseable", "termination_unconfirmed",
+    "transport_internal_error",
+})
+# The closed set of pre-call terminal steps (R4-3): an
+# iteration may terminate without a disposition only at
+# one of these, named in its terminal's payload.
+PRE_CALL_TERMINAL_STEPS = frozenset({
+    "package_construction", "deadline_at_start"})
+# The failed operations an evidence-capture-failure
+# terminal may name (R8-2).
+EVIDENCE_FAILURE_OPERATIONS = frozenset({
+    "persist", "verify", "commit"})
+
 # Piece A3 (correction round 2): the act types whose payload's
 # instance_id is the act's subject referent, not its author's
 # provenance — the assembly lifecycle acts and an instance's
@@ -812,6 +847,20 @@ class Doorway:
                 f"(ground {stall.get('ground')}); no request is "
                 f"admitted from the instance after a stall "
                 f"(R50)")
+        # Response-evidence piece (R7-2): no bypass — a
+        # request may not be admitted while an entered
+        # iteration's response disposition is outstanding
+        # for this instance; the obligation cannot be
+        # stepped around by dispatching.
+        _aid, outstanding = self._instance_outstanding(
+            state, instance_id)
+        if outstanding is not None:
+            self._refuse(
+                seat_id, "TOOL_REQUESTED",
+                "an entered iteration's response "
+                "disposition stands outstanding for this "
+                "instance; no dispatch is admitted while "
+                "it is owed (R7-2)")
         fingerprint = _tool_policy.request_fingerprint(
             tool, parameters)
         standing = None
@@ -1390,6 +1439,412 @@ class Doorway:
             seat = (entry or {}).get("seat")
         self._refuse(seat, attempted_type, ground)
 
+    @staticmethod
+    def _outstanding_iteration(loop_entry):
+        """The iteration entry of a loop activation whose
+        call was entered but whose response disposition is
+        still owed (response-evidence piece, R6-2/R7-2),
+        or None. An evidence failure terminal standing for
+        the activation does not discharge the obligation —
+        it ends the instance, which the routes check
+        separately — so this reads the disposition alone."""
+        for it in (loop_entry or {}).get("iterations") or []:
+            if it.get("call_entered_seq") is not None and \
+                    it.get("disposition_seq") is None:
+                return it
+        return None
+
+    def _instance_outstanding(self, state, instance_id):
+        """(assembly_id, iteration entry) where the named
+        instance's activation owes a response disposition,
+        else (None, None): the no-bypass test the act and
+        tool-request routes apply (R7-2)."""
+        assembly_id, entry = \
+            self._assembly_entry_of_instance(state, instance_id)
+        if entry is None:
+            return None, None
+        loop = state["loop_activations"].get(assembly_id) or {}
+        return assembly_id, self._outstanding_iteration(loop)
+
+    def record_call_entered(self, assembly_id, iteration,
+                            iteration_seq):
+        """The loop's call-boundary report (response-
+        evidence piece, R5-2/R6-2): recorded immediately
+        before the provider callable is invoked, under the
+        loop identity. CALL_ENTERED means the framework
+        durably crossed the call-entry boundary and
+        committed to invoking the callable for that
+        iteration — never proof the callable executed.
+        The route admits it only for the latest recorded
+        iteration of a standing, unstalled, un-evidence-
+        failed activation, only once per iteration, and
+        never after a stall: whichever of the boundary and
+        a pre-call terminal stands first, the other is
+        refused (mutual exclusivity, enforced in
+        record_loop_stalled as well)."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["assemblies"].get(assembly_id)
+            if entry is None or \
+                    entry.get("activated_seq") is None:
+                self._loop_refuse(
+                    "CALL_ENTERED",
+                    (entry or {}).get("instance_id"),
+                    f"no standing activation for assembly "
+                    f"{assembly_id}; a call boundary records "
+                    f"only against an activated instance")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if loop.get("stalled") is not None:
+                self._loop_refuse(
+                    "CALL_ENTERED", instance_id,
+                    "the activation stands stalled; no call "
+                    "boundary records after a terminal")
+            if loop.get("evidence_failed") is not None:
+                self._loop_refuse(
+                    "CALL_ENTERED", instance_id,
+                    "the activation stands ended by an "
+                    "evidence capture failure; nothing "
+                    "further records for it (R8-2)")
+            iterations = loop.get("iterations") or []
+            target = None
+            for it in iterations:
+                if it.get("event_seq") == iteration_seq:
+                    target = it
+                    break
+            if target is None or \
+                    target.get("iteration") != iteration or \
+                    not iterations or \
+                    iterations[-1] is not target:
+                self._loop_refuse(
+                    "CALL_ENTERED", instance_id,
+                    f"iteration_seq {iteration_seq!r} does "
+                    f"not name the activation's latest "
+                    f"recorded iteration {iteration!r}; a "
+                    f"call boundary binds an existing "
+                    f"iteration (R6-2)")
+            if target.get("call_entered_seq") is not None:
+                self._loop_refuse(
+                    "CALL_ENTERED", instance_id,
+                    "the iteration already stands entered; "
+                    "at most one call boundary per iteration "
+                    "(R6-2)")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration": iteration,
+                "iteration_seq": iteration_seq}
+            ev = self.store.append(
+                "CALL_ENTERED", LOOP_ACTOR, [instance_id],
+                payload)
+            self.store.commit()
+            return ev
+
+    def record_response_evidence(self, assembly_id,
+                                 iteration_seq, outcome,
+                                 failure_class=None,
+                                 seam_evidence=None,
+                                 artifact_sha256=None,
+                                 layers=None, provenance=None,
+                                 http_status=None):
+        """The loop's response disposition (response-
+        evidence piece, R3-1/R4-1/R7-2): the iteration's
+        typed terminal response state, admitted only from
+        this loop route, only for an iteration whose
+        CALL_ENTERED stands, exactly once — a second,
+        whether identical, supplementary or contradictory,
+        is refused, and a committed disposition is final.
+        The outcome, its failure class and its supporting
+        evidence are validated HERE, at write time,
+        against the scope's contract (the class↔outcome
+        pairing of R4-2/R5-1; the captured form's artifact
+        hash and layer summaries; the no_response form's
+        three-part agreement) — not deferred to the
+        checker, which reconstructs the same rules."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["assemblies"].get(assembly_id)
+            if entry is None or \
+                    entry.get("activated_seq") is None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE",
+                    (entry or {}).get("instance_id"),
+                    f"no standing activation for assembly "
+                    f"{assembly_id}; a disposition records "
+                    f"only against an activated instance")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if loop.get("stalled") is not None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE", instance_id,
+                    "the activation stands stalled; no "
+                    "disposition records after a terminal")
+            if loop.get("evidence_failed") is not None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE", instance_id,
+                    "the activation stands ended by an "
+                    "evidence capture failure; a disposition "
+                    "recorded now would masquerade as the "
+                    "obligation discharged (R8-2)")
+            target = None
+            for it in loop.get("iterations") or []:
+                if it.get("event_seq") == iteration_seq:
+                    target = it
+                    break
+            if target is None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE", instance_id,
+                    f"iteration_seq {iteration_seq!r} names "
+                    f"no recorded iteration of this "
+                    f"activation; a disposition binds an "
+                    f"existing iteration (R7-2)")
+            if target.get("call_entered_seq") is None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE", instance_id,
+                    "the iteration stands without a call "
+                    "boundary; a disposition is admitted "
+                    "only for an entered iteration (R7-2)")
+            if target.get("disposition_seq") is not None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE", instance_id,
+                    "the iteration already stands "
+                    "dispositioned; exactly one disposition "
+                    "per entered iteration, final once "
+                    "committed (R7-2)")
+            problem = self._disposition_problem(
+                outcome, failure_class, seam_evidence,
+                artifact_sha256, layers)
+            if problem is not None:
+                self._loop_refuse(
+                    "RESPONSE_EVIDENCE", instance_id, problem)
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration": target.get("iteration"),
+                "iteration_seq": iteration_seq,
+                "outcome": outcome}
+            if failure_class is not None:
+                payload["failure_class"] = failure_class
+            if seam_evidence is not None:
+                payload["seam_evidence"] = seam_evidence
+            if artifact_sha256 is not None:
+                payload["artifact_sha256"] = artifact_sha256
+            if layers is not None:
+                payload["layers"] = layers
+            if provenance is not None:
+                payload["provenance"] = provenance
+            if http_status is not None:
+                payload["http_status"] = http_status
+            ev = self.store.append(
+                "RESPONSE_EVIDENCE", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
+    @staticmethod
+    def _disposition_problem(outcome, failure_class,
+                             seam_evidence, artifact_sha256,
+                             layers):
+        """Why a response disposition may not stand, or
+        None (response-evidence piece): the doorway's copy
+        of the class↔outcome pairing and the required
+        evidence per form (R4-2/R5-1/R7-1). A diagnostic
+        string alone is never a basis — the class and its
+        typed evidence fields are mandatory."""
+        if outcome == "captured":
+            if failure_class is not None:
+                return ("a captured disposition names no "
+                        "failure class; a response was "
+                        "received (R4-1)")
+            if not isinstance(artifact_sha256, str) or \
+                    len(artifact_sha256) != 64:
+                return ("a captured disposition carries "
+                        "its artifact's sha256; captured "
+                        "with no artifact is refused (R4-2)")
+            if not isinstance(layers, dict) or \
+                    not isinstance(layers.get("L1"), dict):
+                return ("a captured disposition carries "
+                        "the per-layer summaries, L1 first "
+                        "(R2-3)")
+            l1 = layers["L1"]
+            if not isinstance(l1.get("byte_count"), int) \
+                    or isinstance(l1.get("byte_count"), bool) \
+                    or not isinstance(l1.get("sha256"), str) \
+                    or len(l1.get("sha256") or "") != 64 \
+                    or not isinstance(l1.get("complete"),
+                                      bool) \
+                    or l1.get("hash_subject") != \
+                    "observed_bytes":
+                return ("the captured L1 summary must "
+                        "carry its observed byte count, "
+                        "the sha256 of exactly those "
+                        "bytes, its completeness, and "
+                        "hash_subject observed_bytes "
+                        "(R6-1/R7-1)")
+            if l1.get("complete"):
+                if l1.get("stop_reason") != "eof" or \
+                        l1.get("total_length") != \
+                        l1.get("byte_count"):
+                    return ("a complete L1 stands only on "
+                            "an observed EOF, its total "
+                            "length its observed count "
+                            "(R8-1)")
+            else:
+                if l1.get("stop_reason") not in (
+                        "capture_limit", "read_failure") \
+                        or l1.get("total_length") is not None:
+                    return ("an incomplete L1 names its "
+                            "stop reason (capture_limit or "
+                            "read_failure) and leaves its "
+                            "total length unknown (R7-1)")
+            return None
+        if outcome == "no_response":
+            if failure_class != RESPONSE_NO_RESPONSE_CLASS:
+                return (f"a no_response disposition names "
+                        f"the one permitted class "
+                        f"{RESPONSE_NO_RESPONSE_CLASS} "
+                        f"(R5-1)")
+            if not isinstance(seam_evidence, dict) or \
+                    seam_evidence.get("phase") != \
+                    "pre_response" or \
+                    seam_evidence.get("error_kind") not in \
+                    RESPONSE_PRE_RESPONSE_KINDS or \
+                    seam_evidence.get("observed_status") \
+                    is not None:
+                return ("no_response requires the "
+                        "three-part agreement: the "
+                        "helper's pre_response phase "
+                        "observation, an error kind in the "
+                        "pre-response family, and no "
+                        "observed status (R5-1/R6-3)")
+            if artifact_sha256 is not None:
+                return ("a no_response disposition "
+                        "carries no artifact; nothing "
+                        "exists to file (R3-1)")
+            return None
+        if outcome == "unresolved":
+            if failure_class not in \
+                    RESPONSE_UNRESOLVED_CLASSES:
+                return (f"an unresolved disposition names "
+                        f"a class from the unresolved table "
+                        f"(R4-2/R5-1); {failure_class!r} "
+                        f"does not stand there — and a "
+                        f"no_response-supporting class "
+                        f"under an unresolved outcome "
+                        f"underclaims, which is refused "
+                        f"likewise")
+            if not isinstance(seam_evidence, dict) or \
+                    not seam_evidence:
+                return ("an unresolved disposition "
+                        "carries its seam evidence; a "
+                        "diagnostic string alone is no "
+                        "basis (R4-2)")
+            if artifact_sha256 is not None:
+                return ("an unresolved disposition "
+                        "carries no artifact (R4-1)")
+            return None
+        return (f"outcome {outcome!r} is not a response "
+                f"disposition outcome; the outcomes are "
+                f"captured, no_response and unresolved "
+                f"(R4-1)")
+
+    def record_evidence_capture_failure(self, assembly_id,
+                                        iteration_seq,
+                                        operation,
+                                        detail=None):
+        """The evidence mechanism's own failure terminal
+        (response-evidence piece, R8-2): the no-bypass
+        rule's single narrow exception. Recorded by this
+        loop route only, for an iteration whose
+        CALL_ENTERED stands and whose disposition is
+        outstanding BECAUSE the named operation failed —
+        the artifact could not be persisted, could not be
+        read-back-verified, or the disposition could not
+        be committed. It is terminal for the instance:
+        after it, the doorway refuses everything further
+        on the activation. It is NOT a disposition: it
+        does not satisfy, replace or discharge the
+        missing-disposition obligation, and it is never
+        shaped like one."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["assemblies"].get(assembly_id)
+            if entry is None or \
+                    entry.get("activated_seq") is None:
+                self._loop_refuse(
+                    "EVIDENCE_CAPTURE_FAILED",
+                    (entry or {}).get("instance_id"),
+                    f"no standing activation for assembly "
+                    f"{assembly_id}; an evidence failure "
+                    f"records only against an activated "
+                    f"instance (R8-2)")
+            instance_id = entry.get("instance_id")
+            if operation not in \
+                    EVIDENCE_FAILURE_OPERATIONS:
+                self._loop_refuse(
+                    "EVIDENCE_CAPTURE_FAILED", instance_id,
+                    f"operation {operation!r} is not a "
+                    f"failed evidence operation; the "
+                    f"operations are persist, verify and "
+                    f"commit (R8-2)")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if loop.get("stalled") is not None:
+                self._loop_refuse(
+                    "EVIDENCE_CAPTURE_FAILED", instance_id,
+                    "the activation stands stalled; the "
+                    "evidence failure terminal is not a "
+                    "second terminal (R8-2)")
+            if loop.get("evidence_failed") is not None:
+                self._loop_refuse(
+                    "EVIDENCE_CAPTURE_FAILED", instance_id,
+                    "the activation already stands ended "
+                    "by an evidence capture failure (R8-2)")
+            target = None
+            for it in loop.get("iterations") or []:
+                if it.get("event_seq") == iteration_seq:
+                    target = it
+                    break
+            if target is None or \
+                    target.get("call_entered_seq") is None:
+                self._loop_refuse(
+                    "EVIDENCE_CAPTURE_FAILED", instance_id,
+                    "the named iteration stands without a "
+                    "call boundary; the evidence failure "
+                    "terminal answers an entered iteration "
+                    "whose disposition is outstanding "
+                    "(R8-2)")
+            if target.get("disposition_seq") is not None:
+                self._loop_refuse(
+                    "EVIDENCE_CAPTURE_FAILED", instance_id,
+                    "the named iteration stands "
+                    "dispositioned; no evidence obligation "
+                    "is outstanding for it (R8-2)")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration": target.get("iteration"),
+                "iteration_seq": iteration_seq,
+                "operation": operation}
+            if detail is not None:
+                payload["detail"] = detail
+            ev = self.store.append(
+                "EVIDENCE_CAPTURE_FAILED", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
     def record_loop_iteration(self, assembly_id, iteration,
                               cursor_from, cursor_to,
                               catalogue_hash=None,
@@ -1436,6 +1891,24 @@ class Doorway:
                     "LOOP_ITERATION", instance_id,
                     "the activation stands stalled; no further "
                     "iteration records (R50)")
+            if loop.get("evidence_failed") is not None:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    "the activation stands ended by an "
+                    "evidence capture failure; no further "
+                    "iteration records (R8-2)")
+            # Response-evidence piece (R7-2): no bypass —
+            # a further iteration may not record while a
+            # previous entered iteration's disposition is
+            # outstanding; the obligation cannot be stepped
+            # around by moving on.
+            if self._outstanding_iteration(loop) is not None:
+                self._loop_refuse(
+                    "LOOP_ITERATION", instance_id,
+                    "a previous iteration's response "
+                    "disposition stands outstanding; no "
+                    "further iteration records while it is "
+                    "owed (R7-2)")
             bounds = self._pinned_loop_bounds(state, entry)
             if bounds is None:
                 self._loop_refuse(
@@ -1523,7 +1996,7 @@ class Doorway:
             return ev
 
     def record_loop_stalled(self, assembly_id, ground,
-                            detail=None):
+                            detail=None, terminal_step=None):
         """The loop's stall report (Piece A3, R50): the
         recorded stop, under the loop identity, valid only
         against a standing activation that has not already
@@ -1533,7 +2006,21 @@ class Doorway:
         the record holds an attributable outcome or an
         examiner's reconciliation. A stall recorded earlier
         would leave an in-flight dispatch's outcome with
-        nowhere lawful to land."""
+        nowhere lawful to land.
+
+        Response-evidence piece: while an entered
+        iteration's disposition is outstanding, EVERY stall
+        is refused (R7-2's no-bypass) — the single exception
+        is not a stall at all but the EVIDENCE_CAPTURE_FAILED
+        terminal, admitted by its own route. A stall may
+        carry terminal_step naming the pre-call step it
+        answers (R4-3's closed set); a terminal_step stall
+        and a standing call boundary for the iteration it
+        answers are mutually exclusive here as in the
+        checker, and where the activation's record shows the
+        call boundary regime in force (an earlier iteration
+        stands entered) a final iteration without a boundary
+        may terminate only under a named step."""
         with self.store.serialized():
             state = self.state()
             entry = state["assemblies"].get(assembly_id)
@@ -1558,6 +2045,56 @@ class Doorway:
                     "LOOP_STALLED", instance_id,
                     "the activation already stands stalled; a "
                     "stall is recorded once (R50)")
+            if loop.get("evidence_failed") is not None:
+                self._loop_refuse(
+                    "LOOP_STALLED", instance_id,
+                    "the activation stands ended by an "
+                    "evidence capture failure; no stall "
+                    "records after that terminal (R8-2)")
+            if self._outstanding_iteration(loop) is not None:
+                self._loop_refuse(
+                    "LOOP_STALLED", instance_id,
+                    "an entered iteration's response "
+                    "disposition stands outstanding; no "
+                    "stall records while it is owed — the "
+                    "only terminal admitted in that state "
+                    "is the evidence capture failure "
+                    "(R7-2/R8-2)")
+            if terminal_step is not None and \
+                    terminal_step not in PRE_CALL_TERMINAL_STEPS:
+                self._loop_refuse(
+                    "LOOP_STALLED", instance_id,
+                    f"terminal_step {terminal_step!r} is "
+                    f"not a pre-call step; the set is "
+                    f"closed (R4-3)")
+            iterations = loop.get("iterations") or []
+            if iterations:
+                # Mutual exclusivity is per iteration
+                # (R5-2): a terminal_step names the step
+                # the CURRENT iteration died at — either
+                # the final recorded iteration, standing
+                # without a call boundary, or an iteration
+                # that never recorded at all. An entered
+                # iteration is never answered by one: an
+                # entered-undispositioned final iteration
+                # was already refused above (its only
+                # terminal is the evidence failure), and an
+                # entered-and-dispositioned one is complete
+                # — the step names its successor.
+                last = iterations[-1]
+                governed = any(
+                    it.get("call_entered_seq") is not None
+                    for it in iterations)
+                if governed and \
+                        last.get("call_entered_seq") is None \
+                        and terminal_step is None:
+                    self._loop_refuse(
+                        "LOOP_STALLED", instance_id,
+                        "the final iteration stands "
+                        "without a call boundary in an "
+                        "activation under the call-boundary "
+                        "regime; its terminal must name "
+                        "its pre-call step (R4-3)")
             for did, d in state["dispatches"].items():
                 if d.get("instance_id") == instance_id and \
                         d.get("outcome") is None and \
@@ -1578,6 +2115,8 @@ class Doorway:
                 "iterations": len(loop.get("iterations") or [])}
             if detail is not None:
                 payload["detail"] = detail
+            if terminal_step is not None:
+                payload["terminal_step"] = terminal_step
             ev = self.store.append(
                 "LOOP_STALLED", LOOP_ACTOR, [instance_id],
                 payload)
@@ -1627,6 +2166,22 @@ class Doorway:
             self._refuse(self._presented_seat(token), type_,
                          self._auth_ground(token), view_seq)
         state = self.state()
+        # Response-evidence piece (R7-2): no bypass — an
+        # act under an instance's own credential may not
+        # be admitted while that instance's entered
+        # iteration owes its response disposition; the
+        # obligation cannot be stepped around by acting.
+        presented_instance = self._presented_instance(token)
+        if presented_instance is not None:
+            _aid, outstanding = self._instance_outstanding(
+                state, presented_instance)
+            if outstanding is not None:
+                self._refuse(
+                    seat_id, type_,
+                    "an entered iteration's response "
+                    "disposition stands outstanding for "
+                    "this instance; no act is admitted "
+                    "while it is owed (R7-2)", view_seq)
         binding = state["seats"].get(seat_id)
         if binding is None:
             self._refuse(seat_id, type_,

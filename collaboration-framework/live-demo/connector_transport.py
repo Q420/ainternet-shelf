@@ -227,6 +227,56 @@ def _terminate_and_confirm(proc):
         time.sleep(_POLL_SECONDS)
 
 
+def _worker_seam():
+    """A fresh seam observation for this transport's
+    evidence path (response-evidence piece). This helper
+    has no raw mode — its stdout is the helper's own
+    re-serialization of the provider response — so the
+    capture is labelled for exactly what it is
+    (provenance nvidia_helper_serialized, the
+    transformation named in capture_representation),
+    never as the provider's raw bytes."""
+    return {
+        "provenance": "nvidia_helper_serialized",
+        "capture_representation": {
+            "form": "helper_serialized_json",
+            "transformation":
+                "the helper's own re-serialization of "
+                "the provider response (response.json()); "
+                "the provider's raw bytes were never "
+                "observable at this seam"},
+        "http_status": None, "l1_bytes": None,
+        "body_complete": None, "stop_reason": None,
+        "read_error_kind": None,
+        "phase": {"phase": None, "error_kind": None,
+                  "http_status": None},
+        "seam": {"failure_class": None, "diagnostic": None,
+                 "helper_exit": None, "stderr": None,
+                 "stdout_bytes": None,
+                 "stdout_sha256": None,
+                 "termination_confirmed": None,
+                 "fence": None},
+        "provider_model_id": None, "content": None}
+
+
+def _timeout_seam(confirmed):
+    """The seam observation of a deadline expiry on this
+    path: the fence expired (timeout_after_send — what
+    the PARENT received, supporting only an unresolved
+    disposition), or the helper's termination could not
+    be confirmed (termination_unconfirmed)."""
+    seam = _worker_seam()
+    if confirmed is False:
+        seam["seam"]["failure_class"] = \
+            "termination_unconfirmed"
+    else:
+        seam["seam"]["failure_class"] = "timeout_after_send"
+    seam["seam"]["fence"] = "adapter_deadline"
+    seam["seam"]["termination_confirmed"] = confirmed
+    seam["seam"]["diagnostic"] = "total deadline exceeded"
+    return seam
+
+
 def _expire_and_raise(proc):
     """The cancellation boundary, shared by BOTH expiry
     paths — the deadline reached while waiting on the
@@ -251,7 +301,8 @@ def _expire_and_raise(proc):
             pass
         raise AdapterFailure(
             "no_response",
-            detail="total deadline exceeded")
+            detail="total deadline exceeded",
+            evidence=_timeout_seam(True))
     for stream in (proc.stdin, proc.stdout, proc.stderr):
         try:
             stream.close()
@@ -260,7 +311,8 @@ def _expire_and_raise(proc):
     raise AdapterFailure(
         "transport_unresolved",
         detail="helper process termination could "
-               "not be confirmed after the deadline")
+               "not be confirmed after the deadline",
+        evidence=_timeout_seam(False))
 
 
 def install_connector_transport(adapter, helper_path, model):
@@ -320,7 +372,8 @@ def install_connector_transport(adapter, helper_path, model):
             # adapter's own expiry kind and detail.
             raise AdapterFailure(
                 "no_response",
-                detail="total deadline exceeded")
+                detail="total deadline exceeded",
+                evidence=_timeout_seam(None))
         # The helper receives the effective allowance as
         # its own provider-request timeout (INDEX 215):
         # the same remaining time this transport enforces,
@@ -347,7 +400,8 @@ def install_connector_transport(adapter, helper_path, model):
             # under the adapter's own expiry kind.
             raise AdapterFailure(
                 "no_response",
-                detail="total deadline exceeded")
+                detail="total deadline exceeded",
+                evidence=_timeout_seam(None))
         helper_env = dict(os.environ)
         helper_env["NVIDIA_API_TIMEOUT"] = \
             repr(helper_timeout)
@@ -361,8 +415,15 @@ def install_connector_transport(adapter, helper_path, model):
         except OSError as exc:
             timings["helper_launch_s"] = \
                 time.monotonic() - launch_started
+            seam = _worker_seam()
+            seam["seam"]["failure_class"] = \
+                "transport_internal_error"
+            seam["seam"]["diagnostic"] = \
+                f"the helper could not be started: " \
+                f"{type(exc).__name__}"
             raise AdapterFailure("provider_error",
-                                 detail=type(exc).__name__)
+                                 detail=type(exc).__name__,
+                                 evidence=seam)
         timings["helper_launch_s"] = \
             time.monotonic() - launch_started
         # Recompute the remaining time now that the helper
@@ -407,37 +468,69 @@ def install_connector_transport(adapter, helper_path, model):
             if proc.returncode != 0:
                 detail = (err or b"").decode(
                     "utf-8", "replace").strip()
+                seam = _worker_seam()
+                seam["seam"]["failure_class"] = \
+                    "helper_exit_no_envelope"
+                seam["seam"]["helper_exit"] = proc.returncode
+                seam["seam"]["stderr"] = \
+                    detail[:_DIAGNOSTIC_LIMIT]
+                seam["seam"]["diagnostic"] = \
+                    f"connector helper exited {proc.returncode}"
                 raise AdapterFailure(
                     "provider_error",
                     detail=f"connector helper exited "
                            f"{proc.returncode}"
                            + (f": {detail[:_DIAGNOSTIC_LIMIT]}"
-                              if detail else ""))
+                              if detail else ""),
+                    evidence=seam)
+            # The helper's complete stdout stands observed:
+            # it is the capture — complete as the helper's
+            # product, its provenance and transformation
+            # named in the seam, no provider status
+            # observable at this seam. Published on the
+            # adapter BEFORE interpretation, and carried by
+            # every failure raised from here.
+            seam = _worker_seam()
+            seam["l1_bytes"] = out or b""
+            seam["body_complete"] = True
+            seam["stop_reason"] = "eof"
+            seam["phase"] = {"phase": "response_received",
+                             "error_kind": None,
+                             "http_status": None}
+            adapter.last_response_evidence = seam
             try:
                 parsed = json.loads(
                     out.decode("utf-8", "replace"))
             except ValueError:
                 raise AdapterFailure(
                     "malformed_response",
-                    detail="provider body is not JSON")
+                    detail="provider body is not JSON",
+                    evidence=seam)
             if not isinstance(parsed, dict):
                 raise AdapterFailure(
                     "malformed_response",
-                    detail="provider body is not an object")
+                    detail="provider body is not an object",
+                    evidence=seam)
             if parsed.get("error"):
                 raise AdapterFailure(
                     "provider_error",
                     detail=f"provider error body: "
-                           f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}")
+                           f"{str(parsed['error'])[:_DIAGNOSTIC_LIMIT]}",
+                    evidence=seam)
             provider_model_id = parsed.get("model")
+            seam["provider_model_id"] = provider_model_id
             try:
-                content = parsed["choices"][0]["message"][
-                    "content"]
+                message = parsed["choices"][0]["message"]
+                content = message["content"]
             except (KeyError, IndexError, TypeError):
                 raise AdapterFailure(
                     "malformed_response",
                     detail="no message content in provider "
-                           "response")
+                           "response",
+                    evidence=seam)
+            if isinstance(message, dict):
+                adapter._last_message = message
+            seam["content"] = content
             return content, provider_model_id
         finally:
             timings["response_parsing_s"] = \

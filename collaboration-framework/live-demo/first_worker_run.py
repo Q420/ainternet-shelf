@@ -1656,8 +1656,12 @@ def _judge_pack_run(doorway, gen, tok, store, store_path,
     instance_token = packed["instance_token"]
 
     # 5. RUN — the bounded loop, the real model driving.
+    # The response-evidence piece: the loop runs under the
+    # evidence regime, its store rooted at the run
+    # directory (artifacts in run_dir/responses/).
     result = Loop(doorway, instance_token, adapter,
-                  executor=executor).run()
+                  executor=executor,
+                  evidence_store=run_dir).run()
 
     # 6. REPORT — derived matter, labelled as such; the
     # checker finding and any accuracy judgement are

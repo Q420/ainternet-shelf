@@ -75,6 +75,16 @@ EVENT_TYPES = {
     # model call it accounts; a stall is the recorded stop a
     # bound produces — never a silent one (R50).
     "LOOP_ITERATION", "LOOP_STALLED",
+    # Response-evidence piece (WORKER-RESPONSE-EVIDENCE-SCOPE
+    # Rev 8): the call boundary, the iteration's response
+    # disposition, and the evidence mechanism's own failure
+    # terminal. CALL_ENTERED is the loop's durable crossing
+    # of the call-entry boundary (R5-2/R6-2); RESPONSE_EVIDENCE
+    # is the disposition every entered iteration owes exactly
+    # one of (R3-1/R4-1); EVIDENCE_CAPTURE_FAILED records the
+    # evidence mechanism's own failure — terminal for the
+    # instance, and never a disposition (R8-2).
+    "CALL_ENTERED", "RESPONSE_EVIDENCE", "EVIDENCE_CAPTURE_FAILED",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -1077,7 +1087,8 @@ def apply_event(state: dict, ev: dict) -> dict:
                 "activated_seq": p.get("activated_seq"),
                 "case_id": p.get("case_id"),
                 "case_version": p.get("case_version"),
-                "iterations": [], "stalled": None})
+                "iterations": [], "stalled": None,
+                "evidence_failed": None})
         entry["iterations"].append({
             "iteration": p.get("iteration"),
             "event_seq": ev["event_seq"],
@@ -1087,7 +1098,60 @@ def apply_event(state: dict, ev: dict) -> dict:
             "cursor_to": p.get("cursor_to"),
             "catalogue_hash": p.get("catalogue_hash"),
             "registry_version": p.get("registry_version"),
+            "call_entered_seq": None,
+            "disposition_seq": None,
+            "disposition_outcome": None,
         })
+    elif t == "CALL_ENTERED":
+        # Response-evidence piece (R5-2/R6-2): the call
+        # boundary for one iteration. The fold marks the
+        # iteration entry the payload names (by its
+        # LOOP_ITERATION event seq); the first boundary
+        # stands — a second is history for the checker.
+        entry = state["loop_activations"].get(
+            p.get("assembly_id"))
+        if entry is not None:
+            for it in entry["iterations"]:
+                if it["event_seq"] == p.get("iteration_seq"):
+                    if it["call_entered_seq"] is None:
+                        it["call_entered_seq"] = ev["event_seq"]
+                    break
+    elif t == "RESPONSE_EVIDENCE":
+        # Response-evidence piece (R3-1/R7-2): the
+        # iteration's response disposition. The first
+        # disposition stands in the fold; a second is
+        # history for the checker to report, and replaces
+        # nothing — a committed disposition is final.
+        entry = state["loop_activations"].get(
+            p.get("assembly_id"))
+        if entry is not None:
+            for it in entry["iterations"]:
+                if it["event_seq"] == p.get("iteration_seq"):
+                    if it["disposition_seq"] is None:
+                        it["disposition_seq"] = ev["event_seq"]
+                        it["disposition_outcome"] = \
+                            p.get("outcome")
+                    break
+    elif t == "EVIDENCE_CAPTURE_FAILED":
+        # Response-evidence piece (R8-2): the evidence
+        # mechanism's own failure terminal. The first
+        # stands; it discharges no disposition obligation
+        # — the named iteration's entry keeps its missing
+        # disposition, for the checker to report.
+        entry = state["loop_activations"].setdefault(
+            p.get("assembly_id"), {
+                "instance_id": p.get("instance_id"),
+                "activated_seq": p.get("activated_seq"),
+                "case_id": p.get("case_id"),
+                "case_version": p.get("case_version"),
+                "iterations": [], "stalled": None,
+                "evidence_failed": None})
+        if entry["evidence_failed"] is None:
+            entry["evidence_failed"] = {
+                "event_seq": ev["event_seq"],
+                "iteration_seq": p.get("iteration_seq"),
+                "operation": p.get("operation"),
+            }
     elif t == "LOOP_STALLED":
         # Piece A3 (R50): the recorded stop. The first stall
         # stands in the fold; a second stands in the history
@@ -1098,12 +1162,14 @@ def apply_event(state: dict, ev: dict) -> dict:
                 "activated_seq": p.get("activated_seq"),
                 "case_id": p.get("case_id"),
                 "case_version": p.get("case_version"),
-                "iterations": [], "stalled": None})
+                "iterations": [], "stalled": None,
+                "evidence_failed": None})
         if entry["stalled"] is None:
             entry["stalled"] = {
                 "ground": p.get("ground"),
                 "event_seq": ev["event_seq"],
                 "iterations": p.get("iterations"),
+                "terminal_step": p.get("terminal_step"),
             }
     elif t == "RUN_READY_FOR_COMPLETION":
         # §3.8 (S5): the orchestrator's readiness declaration —

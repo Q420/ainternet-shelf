@@ -89,10 +89,24 @@ if b"State your identity" in raw:
     content = %r
 else:
     content = %r
-print(json.dumps({
+body = json.dumps({
     "id": "chatcmpl-stub", "model": %r,
     "choices": [{"index": 0, "message": {
-        "role": "assistant", "content": content}}]}))
+        "role": "assistant", "content": content}}]})
+if argv and argv[0] == "chat-raw-bounded":
+    # The worker path's bounded raw mode (the
+    # response-evidence piece): the body framed in the
+    # bounded envelope the real helper prints.
+    print(json.dumps({
+        "status": 200,
+        "body_b64": base64.b64encode(
+            body.encode("utf-8")).decode("ascii"),
+        "body_complete": True, "stop_reason": "eof",
+        "read_error_kind": None,
+        "phase": "response_received",
+        "error_kind": None}))
+else:
+    print(body)
 ''' % (PIN, DECLARATION, YIELD_CONTENT, PIN)
 
 TMP = tempfile.mkdtemp(prefix="probe-receipt-witness-")

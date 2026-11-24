@@ -99,6 +99,7 @@ the driver's back.
 
 from __future__ import annotations
 
+import hashlib
 import http.client
 import json
 import os
@@ -178,12 +179,20 @@ class AdapterFailure(Exception):
     helper process's termination after the deadline could
     not be confirmed. That kind names a transport failure,
     not an adapter outcome. The driver records it as a
-    DRIVER_FAILURE; it is never an outcome."""
+    DRIVER_FAILURE; it is never an outcome.
 
-    def __init__(self, kind, detail=None):
+    Response-evidence piece: a failure may also carry the
+    seam's response-evidence observation (`evidence`) —
+    the response the failure arose from, where one was
+    observed — so the loop can persist and disposition
+    the very answer that failed, instead of recording a
+    verdict over a discarded response."""
+
+    def __init__(self, kind, detail=None, evidence=None):
         super().__init__(kind)
         self.kind = kind
         self.detail = detail
+        self.evidence = evidence
 
 
 def _extract_json_object(text):
@@ -231,6 +240,18 @@ class OpenAICompatibleAdapter:
         # rendering seconds of the most recent __call__, or
         # None where no package was rendered (identify()).
         self.last_render_s = None
+        # Response-evidence piece: the seam observation of
+        # the most recent __call__ — the captured response
+        # (or the seam's failure facts where none was
+        # observed), with the adapter's verdict recorded
+        # into it — published for the loop's evidence
+        # sequence, and attached to any AdapterFailure the
+        # call raises. None where the call's seam supplied
+        # no observation (a replaced _call that captures
+        # nothing).
+        self.last_response_evidence = None
+        self._last_evidence = None
+        self._exchange_status = None
 
     # ----------------------------------------------------- deadline
     def _begin_deadline(self, budget=None, deadline=None):
@@ -418,6 +439,7 @@ class OpenAICompatibleAdapter:
                     "no_response", detail="total deadline exceeded")
             return left
 
+        self._exchange_status = None
         key = self._api_key or os.environ.get(self._api_key_env)
         payload = json.dumps(payload_obj).encode("utf-8")
         conn, path = self._open_connection(remaining)
@@ -432,6 +454,11 @@ class OpenAICompatibleAdapter:
                 conn.sock.settimeout(remaining())
             resp = conn.getresponse()
             status = resp.status
+            # Response-evidence piece: from here a response
+            # object exists at this seam — the phase fact
+            # the evidence synthesis in __call__ reads when
+            # a later phase of the exchange fails.
+            self._exchange_status = status
             chunks = []
             read1 = getattr(resp, "read1", None)
             if read1 is None:
@@ -493,6 +520,36 @@ class OpenAICompatibleAdapter:
         if tools:
             payload["tools"] = tools
         status, raw = self._exchange(payload, deadline)
+        # Response-evidence piece: the seam's capture of
+        # this response, taken before any interpretation —
+        # the response text this transport received (the
+        # built-in exchange decodes the body as UTF-8; the
+        # capture's provenance names that seam honestly),
+        # retained whole whatever the interpretation below
+        # concludes, HTTP errors included.
+        self._last_evidence = {
+            "provenance": "adapter_builtin_text",
+            "capture_representation":
+                "the response text the built-in exchange "
+                "received (its body decoded as UTF-8), "
+                "base64 of its UTF-8 bytes in L1",
+            "http_status": status,
+            "l1_bytes": raw.encode("utf-8"),
+            "body_complete": True,
+            "stop_reason": "eof",
+            "read_error_kind": None,
+            "phase": {"phase": "response_received",
+                      "error_kind": None,
+                      "http_status": status},
+            "seam": {"failure_class": None,
+                     "diagnostic": None, "helper_exit": None,
+                     "stderr": None, "stdout_bytes": None,
+                     "stdout_sha256": None,
+                     "termination_confirmed": None,
+                     "fence": None},
+            "provider_model_id": None,
+            "content": None,
+        }
         if status >= 400:
             raise AdapterFailure(
                 "provider_error", detail=f"HTTP {status}")
@@ -517,6 +574,10 @@ class OpenAICompatibleAdapter:
                                         "provider response")
         self._last_message = message
         content = message.get("content")
+        if self._last_evidence is not None:
+            self._last_evidence["provider_model_id"] = \
+                provider_model_id
+            self._last_evidence["content"] = content
         if content is None and not message.get("tool_calls"):
             raise AdapterFailure("malformed_response",
                                  detail="no message content in "
@@ -569,6 +630,170 @@ class OpenAICompatibleAdapter:
     # --------------------------------------------------------- wake
     def __call__(self, package, budget=None, deadline=None,
                  mode=None):
+        """One bounded call, with the response-evidence
+        piece's capture wrapped around it: the seam's
+        observation of the call — the captured response
+        and the adapter's verdict over it — is finalised
+        onto `last_response_evidence` and attached to any
+        AdapterFailure the call raises, so the loop's
+        evidence sequence can persist and disposition the
+        very answer the call worked on. The typed outcome
+        and the failure kinds are exactly _call_typed's;
+        the wrapper interprets nothing."""
+        self.last_response_evidence = None
+        self._last_evidence = None
+        self._exchange_status = None
+        try:
+            result = self._call_typed(
+                package, budget=budget, deadline=deadline,
+                mode=mode)
+        except AdapterFailure as failure:
+            evidence = failure.evidence or \
+                self._finalise_evidence(failure=failure)
+            if evidence is not None:
+                self.last_response_evidence = evidence
+                if failure.evidence is None:
+                    failure.evidence = evidence
+            raise
+        evidence = self._finalise_evidence(result=result)
+        if evidence is not None:
+            self.last_response_evidence = evidence
+        return result
+
+    def _finalise_evidence(self, result=None, failure=None):
+        """Record the adapter's verdict into the seam's
+        observation of this call and return it (response-
+        evidence piece; the verdict total per R3-3). The
+        seam is _dispatch's capture where the built-in
+        transport ran; where the exchange itself failed
+        before any capture, the observation is synthesised
+        from what this seam established — a status the
+        exchange observed, a pre-response connection
+        failure it raised, a deadline expiry. Where a
+        replaced _call supplied no observation at all,
+        None stands: no evidence is fabricated for a seam
+        that captured nothing."""
+        seam = self._last_evidence
+        if seam is None:
+            # A replaced _call's own capture (the connector
+            # transports): the verdict is recorded into the
+            # transport's seam, exactly as into the built-in
+            # one's — the seam differs, the discipline does
+            # not.
+            seam = self.last_response_evidence
+        if seam is None:
+            if failure is None:
+                return None
+            if failure.kind == "no_response":
+                seam = {
+                    "provenance": "adapter_builtin_text",
+                    "http_status": None, "l1_bytes": None,
+                    "body_complete": None, "stop_reason": None,
+                    "read_error_kind": None,
+                    "phase": {"phase": None,
+                              "error_kind": None,
+                              "http_status": None},
+                    "seam": {"failure_class":
+                             "timeout_after_send",
+                             "diagnostic": failure.detail,
+                             "helper_exit": None,
+                             "stderr": None,
+                             "stdout_bytes": None,
+                             "stdout_sha256": None,
+                             "termination_confirmed":
+                                 getattr(self,
+                                         "_worker_terminated",
+                                         None),
+                             "fence": "adapter_deadline"},
+                    "provider_model_id": None, "content": None}
+            elif self._exchange_status is not None:
+                # A response object existed; the exchange
+                # failed after it. The status is a fact;
+                # the body is unestablished at this seam.
+                seam = {
+                    "provenance": "adapter_builtin_text",
+                    "http_status": self._exchange_status,
+                    "l1_bytes": None, "body_complete": None,
+                    "stop_reason": None, "read_error_kind": None,
+                    "phase": {"phase": "response_received",
+                              "error_kind": None,
+                              "http_status":
+                                  self._exchange_status},
+                    "seam": {"failure_class":
+                             "transport_internal_error",
+                             "diagnostic":
+                                 f"{failure.kind}: "
+                                 f"{failure.detail}",
+                             "helper_exit": None,
+                             "stderr": None,
+                             "stdout_bytes": None,
+                             "stdout_sha256": None,
+                             "termination_confirmed": None,
+                             "fence": None},
+                    "provider_model_id": None, "content": None}
+            elif failure.kind == "provider_error":
+                # The exchange raised before any response
+                # object existed at this seam — its own
+                # pre-response observation, error kind the
+                # exception's name _exchange recorded.
+                seam = {
+                    "provenance": "adapter_builtin_text",
+                    "http_status": None, "l1_bytes": None,
+                    "body_complete": None, "stop_reason": None,
+                    "read_error_kind": None,
+                    "phase": {"phase": "pre_response",
+                              "error_kind": failure.detail,
+                              "http_status": None},
+                    "seam": {"failure_class": None,
+                             "diagnostic": failure.detail,
+                             "helper_exit": None,
+                             "stderr": None,
+                             "stdout_bytes": None,
+                             "stdout_sha256": None,
+                             "termination_confirmed": None,
+                             "fence": None},
+                    "provider_model_id": None, "content": None}
+            else:
+                return None
+        content = seam.get("content")
+        content_hash = None
+        if isinstance(content, str):
+            content_hash = hashlib.sha256(
+                content.encode("utf-8")).hexdigest()
+        if failure is not None:
+            if failure.kind == "malformed_response":
+                verdict = {"state": "failure",
+                           "kind": failure.kind,
+                           "detail": failure.detail,
+                           "content_hash": content_hash,
+                           "reason": None}
+            elif failure.kind == "provider_error" and \
+                    seam.get("http_status") is not None:
+                verdict = {"state": "not_reached",
+                           "kind": None, "detail": None,
+                           "content_hash": None,
+                           "reason": f"provider HTTP error "
+                                     f"{seam['http_status']}"}
+            else:
+                verdict = {"state": "not_reached",
+                           "kind": None, "detail": None,
+                           "content_hash": None,
+                           "reason": f"interpretation could "
+                                     f"not begin: "
+                                     f"{failure.kind}: "
+                                     f"{failure.detail}"}
+        else:
+            verdict = {"state": "outcome",
+                       "kind": result.get("outcome")
+                       if isinstance(result, dict) else None,
+                       "detail": None,
+                       "content_hash": content_hash,
+                       "reason": None}
+        seam["adapter_verdict"] = verdict
+        return seam
+
+    def _call_typed(self, package, budget=None, deadline=None,
+                    mode=None):
         """One bounded call. budget (Piece A3, R49/R51) is the
         activation's remaining budget in seconds, supplied by
         the caller as a call parameter — it never enters the
