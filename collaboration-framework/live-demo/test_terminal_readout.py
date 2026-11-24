@@ -89,6 +89,27 @@ with tempfile.TemporaryDirectory() as tmp:
     check("redaction: non-secret parameters still summarised",
           "sources/x.md" in md)
 
+# 2b. Redaction at depth: a secret beyond the depth limit, including a
+# nested-list path, must not serialise (Vane round 3, INDEX 445).
+with tempfile.TemporaryDirectory() as tmp:
+    export = Path(tmp) / "run-export.json"
+    events = [
+        {"type": "TOOL_REQUESTED", "payload": {
+            "tool": "sandbox.read", "request_id": "req-10",
+            "parameters": {"a": {"b": {"c": {"d": {"api_key": SECRET}}}}}}},
+        {"type": "TOOL_REQUESTED", "payload": {
+            "tool": "sandbox.read", "request_id": "req-11",
+            "parameters": {"x": [[[{"token": SECRET}]]]}}},
+    ]
+    export.write_text(json.dumps({"events": events}))
+    out = Path(tmp) / "readout.md"
+    proc = run_tool("render", str(export), "-o", str(out))
+    md = out.read_text() if out.exists() else ""
+    check("depth-limit redaction: deep secret appears nowhere",
+          proc.returncode == 0 and SECRET not in md)
+    check("depth-limit redaction: omission marker shown instead",
+          "omitted at depth limit" in md)
+
 # 3. Watch: termination finalises; malformed line is visible and counted.
 with tempfile.TemporaryDirectory() as tmp:
     stream = Path(tmp) / "events.jsonl"
@@ -133,6 +154,22 @@ with tempfile.TemporaryDirectory() as tmp:
     check("watch finalises on the producer's explicit close line",
           proc.returncode == 0 and "producer closed the stream" in md
           and "## Analysis summary" in md)
+
+# 5. Watch: redaction applies through the live path too (INDEX 445).
+with tempfile.TemporaryDirectory() as tmp:
+    stream = Path(tmp) / "events.jsonl"
+    live = [
+        {"type": "TOOL_OUTCOME", "payload": {
+            "outcome": "result",
+            "result": {"content": "ok", "meta": {"token": SECRET}}}},
+        EVENTS[-1],
+    ]
+    stream.write_text("\n".join(json.dumps(e) for e in live) + "\n")
+    out = Path(tmp) / "watch.md"
+    proc = run_tool("watch", str(stream), "-o", str(out), "--idle-seconds", "2")
+    md = out.read_text() if out.exists() else ""
+    check("watch redaction: secret never reaches the live transcript",
+          proc.returncode == 0 and SECRET not in md and "[redacted]" in md)
 
 print(f"\nTERMINAL READOUT TESTS: {executed - len(failures)} passed, "
       f"{len(failures)} failed, of {executed} executed")

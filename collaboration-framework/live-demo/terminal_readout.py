@@ -63,19 +63,34 @@ def short(value):
 
 
 def redact(value, depth=0):
-    """Recursively redact secret-shaped values, bounded in depth/breadth."""
+    """Recursively redact secret-shaped values, bounded in depth/breadth.
+
+    At the depth limit a compound value is NEVER serialised uninspected:
+    it is replaced by an omission marker. (Serialising the subtree at the
+    limit would reintroduce exactly the secrets the redactor exists to
+    keep out — Vane's round-3 finding, INDEX 445.) Scalar leaves render
+    as-is: each was reached through a key its parent already checked.
+    """
     if isinstance(value, dict):
         out = {}
         for i, (key, val) in enumerate(value.items()):
             if i >= 12:
                 out["…"] = f"+{len(value) - 12} more keys"
                 break
-            out[key] = "[redacted]" if SECRET_KEY.search(str(key)) else (
-                redact(val, depth + 1) if depth < 3 else short(val))
+            if SECRET_KEY.search(str(key)):
+                out[key] = "[redacted]"
+            elif isinstance(val, (dict, list)) and depth >= 3:
+                out[key] = "[nested content omitted at depth limit]"
+            else:
+                out[key] = redact(val, depth + 1)
         return out
     if isinstance(value, list):
-        items = [redact(v, depth + 1) if depth < 3 else short(v)
-                 for v in value[:6]]
+        items = []
+        for v in value[:6]:
+            if isinstance(v, (dict, list)) and depth >= 3:
+                items.append("[nested content omitted at depth limit]")
+            else:
+                items.append(redact(v, depth + 1))
         if len(value) > 6:
             items.append(f"+{len(value) - 6} more")
         return items
