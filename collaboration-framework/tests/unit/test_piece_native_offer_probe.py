@@ -13,6 +13,12 @@ request is made anywhere in this suite.
 - a tampered baseline field fails the precondition,
   and the trial runner refuses before ANY provider
   request (the counting stub records zero requests);
+- the comparison's own commitments are verified in
+  full, not asserted: a recorded diff entry altered
+  (differing_paths left correct), a tampered
+  definitions_sha256, and a tampered recorded
+  catalogue source hash each fail the precondition
+  and refuse before any provider request;
 - classification: an offered call with well-formed
   arguments is offered_tool_call; an offered call with
   malformed arguments is malformed, never a success;
@@ -215,6 +221,55 @@ except np.NativeProbeRefusal:
 check("the runner refuses on the failed precondition "
       "before ANY provider request",
       refused and stub.requests == [])
+
+
+def expect_refusal(name, tampered_comparison, marker):
+    """A comparison artifact with one commitment
+    tampered must fail the strengthened precondition —
+    the problem naming the commitment — and the runner
+    must refuse before ANY provider request (the
+    counting stub records zero requests)."""
+    problems = np.check_precondition(
+        baseline, modified, tampered_comparison)
+    stub = StubRaw(OFFERED_CALL)
+    refused = False
+    try:
+        np.run_native_trials(stub, baseline, modified,
+                             tampered_comparison)
+    except np.NativeProbeRefusal:
+        refused = True
+    check(name,
+          any(marker in p for p in problems)
+          and refused and stub.requests == [],
+          "; ".join(problems)[:120])
+
+
+diff_tampered = copy.deepcopy(comparison)
+diff_tampered["diff"][0]["modified"]["sha256"] = "f" * 64
+expect_refusal(
+    "a recorded diff entry altered (a side's hash "
+    "flipped) while differing_paths stays correct fails "
+    "the precondition and refuses before any request",
+    diff_tampered, "diff entries")
+
+defs_tampered = copy.deepcopy(comparison)
+defs_tampered["definitions_sha256"] = "f" * 64
+expect_refusal(
+    "a tampered definitions_sha256 — no longer the "
+    "canonical hash of the modified request's tools "
+    "field — fails the precondition and refuses before "
+    "any request",
+    defs_tampered, "definitions hash")
+
+catalogue_tampered = copy.deepcopy(comparison)
+catalogue_tampered["catalogue_source"][
+    "catalogue_hash"] = "f" * 64
+expect_refusal(
+    "a tampered recorded catalogue source hash — no "
+    "longer agreeing with the baseline construction's "
+    "catalogue commitment — fails the precondition and "
+    "refuses before any request",
+    catalogue_tampered, "catalogue source hash")
 
 # ---------------------------------------------------------------
 # Classification, on stub captures.

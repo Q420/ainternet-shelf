@@ -535,11 +535,17 @@ def check_precondition(baseline, modified, comparison):
     """The scope's precondition, checked — never
     asserted: the comparison must be a comparison OF
     THESE requests (its hashes recompute), its recorded
-    diff must be the recomputed diff, every differing
-    path must sit under an allowed tool-presentation
-    field, and the intervention must actually be present
-    (the tools field must differ). Returns the list of
-    problems; empty is a pass."""
+    diff must equal the recomputed diff in full — every
+    entry, both sides' presence and canonical hashes —
+    its recorded definitions hash must equal the
+    canonical hash of the modified request's actual
+    tools field, its recorded catalogue source hash
+    must agree with the baseline construction's
+    catalogue commitment, every differing path must sit
+    under an allowed tool-presentation field, and the
+    intervention must actually be present (the tools
+    field must differ). Returns the list of problems;
+    empty is a pass."""
     problems = []
     if comparison.get("baseline_sha256") != \
             sha256_hex(canonical(baseline)):
@@ -557,6 +563,31 @@ def check_precondition(baseline, modified, comparison):
         problems.append(
             "the comparison's recorded diff is not the "
             "recomputed diff of these requests")
+    if comparison.get("diff") != diff:
+        problems.append(
+            "the comparison's recorded diff entries do "
+            "not equal the recomputed diff in full — "
+            "every path, and both sides' presence and "
+            "canonical hashes")
+    if comparison.get("definitions_sha256") != \
+            sha256_hex(canonical(modified.get("tools"))):
+        problems.append(
+            "the comparison's recorded definitions hash "
+            "does not equal the canonical hash of the "
+            "modified request's actual tools field")
+    catalogue_source = comparison.get("catalogue_source")
+    if not isinstance(catalogue_source, dict):
+        catalogue_source = {}
+    construction = comparison.get("baseline_construction")
+    if not isinstance(construction, dict):
+        construction = {}
+    if not catalogue_source.get("catalogue_hash") or \
+            catalogue_source.get("catalogue_hash") != \
+            construction.get("catalogue_hash"):
+        problems.append(
+            "the comparison's recorded catalogue source "
+            "hash does not agree with the baseline "
+            "construction's catalogue commitment")
     tops = {_top_segment(e["path"]) for e in diff}
     for top in sorted(tops):
         if top not in ALLOWED_DIFF_PATHS:
