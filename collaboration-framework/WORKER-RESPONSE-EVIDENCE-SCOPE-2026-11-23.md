@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 6** — Rev 5, plus the implementable contracts (INDEX 309): the helper's incremental read loop with observed-prefix hash semantics (`hash_subject: observed_bytes`, `total_length: null` when unknown); CALL_ENTERED's meaning defined as the durable crossing of the call-entry boundary (a missing disposition after it is an integrity failure, never a reinterpreted no-response), enforced at the doorway as well as reconstructed by the checker; and the phase-observation contract made exhaustive across all six boundary cases.
+
 **Rev 5** — Rev 4, plus receipt-side proof and a visible call boundary (INDEX 308): the helper records a phase observation (`pre_response` / `response_received`); `no_response` survives only for `connection_failed_pre_response` on that evidence, the timeout class is withdrawn to `unresolved`, and a mid-read body failure is captured partial-and-incomplete; a loop-owned **CALL_ENTERED** event makes the call boundary a record fact, mutually exclusive with the pre-call terminals.
 
 **Rev 4** — Rev 3, plus the disposition's honesty made enforceable (INDEX 307): three terminal response states (captured / confirmed no_response / unresolved) with a finite failure-class table whose required seam evidence the checker validates, HTTP-error-with-empty-body counted as captured, and the pre-call terminal steps closed to a named finite set validated against the sequence.
@@ -209,3 +211,40 @@ The checker rules become fully mechanical:
 - The Rev 2–4 ordering is preserved entire: disposition before dispatch; captured evidence durable (persisted + read-back-verified) before the disposition commits; `unresolved` and `no_response` prohibit dispatch; a failed evidence write is `evidence_capture_failure`.
 
 The three histories her examination named are now distinguishable from the record alone: terminated before the call (no CALL_ENTERED, a named pre-call terminal); call entered, no response (CALL_ENTERED + a `no_response`/`unresolved` disposition with its seam evidence); call returned (CALL_ENTERED + a captured disposition whose artifact the checker can open).
+
+---
+
+## Rev 6 — read contract, CALL_ENTERED semantics, the exhaustive phase table
+
+### R6-1. The incremental read contract (her point 1)
+
+The helper's raw path reads **incrementally**: a chunk loop (`read(65536)` until an empty chunk) accumulating into a byte buffer, on **both** the success path and the HTTP-error path. The single-call `read()` is retired from the raw path.
+
+- Read completes (empty chunk): the envelope frames the accumulated bytes with `body_complete: true`.
+- A read raises midway: the helper frames **the accumulated bytes** with the observed status and `body_complete: false`. The failure kind of the read error is recorded in the envelope's diagnostics field.
+- The evidence semantics are then exact, and the artifact/disposition record all three facts separately: **`observed_bytes`** (count + sha256 of the bytes actually observed — the hash's subject is the observed prefix, labelled as such: `hash_subject: "observed_bytes"`), **`total_length: null`** (unknown — never silently set to the observed count), and **`body_complete: false`**. The checker recomputes the hash from the stored base64 and compares it against the *observed* count/hash only; a disposition whose hash is presented as a whole-body hash while `body_complete` stands false is a checker failure. L1's completeness flag (Rev 1 §3) is this `body_complete` value, carried through unchanged.
+
+### R6-2. What CALL_ENTERED proves — and the doorway's enforcement (her point 2)
+
+**Semantics, stated once and binding:** CALL_ENTERED means **the framework durably crossed the call-entry boundary and committed to invoking the callable** for that iteration. It is not, and is never read as, proof that the callable executed or that provider-side execution began. The commit→invoke interval is named in the scope so no reader has to discover it: if the process dies inside it, the record holds CALL_ENTERED with no disposition — and that state is an **integrity failure** (the checker reports it; the run's record is incomplete), **never** retrospectively interpreted as a legitimate no-response. The disposition obligation is owed by the boundary crossing, not by the call's completion.
+
+**Doorway enforcement (at write time, not only in reconstruction):**
+- CALL_ENTERED is admitted only from the **loop actor**, only bound to an **existing iteration** of an activated instance, and **at most once** per iteration — a second is refused at the doorway.
+- CALL_ENTERED and a pre-call terminal for the same iteration are **mutually exclusive at the doorway**: whichever stands first, the other is refused.
+- A dispatch, yield or post-call terminal for an iteration whose CALL_ENTERED stands but whose disposition does not is refused at the doorway — the obligation is enforced where events are written, not merely audited later.
+- The checker independently reconstructs all four rules from the record (its own copy, as established); doorway and checker agreeing is the design, not a redundancy.
+
+### R6-3. The phase-observation contract, exhaustive (her point 3)
+
+The helper's raw path behaves exactly as follows at each boundary — the complete table:
+
+| Boundary | Helper behaviour | Observation emitted | Disposition it can support |
+|---|---|---|---|
+| Opener raises before any response object exists (connection refused, DNS, TLS, connect timeout) | no response object; nothing to read | `phase: pre_response`, the error kind, no status | `no_response` via `connection_failed_pre_response` — **only** with the transport's agreement (no status observed, no envelope) |
+| HTTPError raised by the opener | **the error is itself a response object**: status = `error.code`; the error body is read by the incremental loop | `phase: response_received`, the status | `captured` (status + body as read; `body_complete` per the read) |
+| Response object returned; body read completes | incremental loop to EOF | `phase: response_received`, the status | `captured`, `body_complete: true` |
+| Response object returned; **body read fails midway** | frame the accumulated bytes | `phase: response_received`, the status, `body_complete: false`, the read error kind | `captured` partial (R6-1 semantics) |
+| HTTPError; **error-body read fails midway** | frame the accumulated error-body bytes | as above, on the error path | `captured` partial |
+| Helper fails before it can emit a trustworthy phase observation (crash, kill, unparseable failure output) | no observation exists | **none** | **`unresolved`** — always; no exception class, diagnostic, or transport-side inference promotes this history to `no_response` |
+
+The promotion rule, stated for the whole piece: `no_response` requires **all three** — the helper's `pre_response` observation, an error kind in the pre-response family, and the transport's agreement (no status, no envelope). Anything less is `unresolved` (or `captured`, where a response object supplied status/bytes).
