@@ -54,8 +54,15 @@ Requested ≈ 7,979 × 1.033 ≈ **8,242 > 8,000** — **refused at admission, e
 in a fresh window.** The same result holds on the additive reading
 (7,979 + 145 = 8,124). So at the absolute worst case the request does not run:
 it is refused whole, before generation, recorded as a delivery failure, and
-the work rolls over to the next agent with the record intact — precisely the
-failure mode Ben's ruling accepts, now demonstrated rather than asserted.
+the work rolls over to the next agent with the record intact — the failure
+mode Ben's ruling accepts. Stated accurately (examiner's correction,
+INDEX 382): this refusal is a **credible, evidenced hypothesis**, extrapolated
+from one admission sample — not a demonstrated fact. The safety does not
+depend on the prediction: if the worst-case request were admitted instead,
+it would run well inside the per-request bounds (context window 131,072),
+and its completion would enter the window's Used, which the pacing
+assumption in §4 addresses. Either branch is inside the contract; the
+hypothesis only predicts which branch the worst case takes.
 
 The refusal zone is narrow. Admission in a fresh window needs Requested
 ≤ 8,000, i.e. a prompt of ≈ 7,744 tokens, i.e. a result content of
@@ -90,9 +97,11 @@ per-request envelope — there is no such envelope at 8,000 — but because:
 
 1. the per-request bounds that do exist (context window; byte size) are an
    order of magnitude above anything this construction produces;
-2. the rate window refuses oversize requests **at admission, before any
-   effect**, and the refusal is a recorded delivery failure under the
-   standing evidence discipline — never a disguised success;
+2. on the evidenced admission model, an oversize request is predicted to
+   be refused **at admission, before any effect** (hypothesis, §3) — and a
+   refusal, whenever it occurs, is a recorded delivery failure under the
+   standing evidence discipline, never a disguised success; if the request
+   is admitted instead, it runs within the per-request bounds above;
 3. the refusal zone is only the top ~1,000 bytes of the permitted result
    range, under a pacing discipline that gives every request a fresh window;
 4. resumption is the briefcase's designed function: the record carries the

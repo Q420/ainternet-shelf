@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 5)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 6)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -50,6 +50,62 @@ obligation is therefore carried into this build's account verbatim in substance:
 evidence; no live multi-call response was observed.**
 
 ---
+
+**Revision note — Rev 6 (2026-11-24):** the examiner accepted the operational
+accounting as a bounded analysis and required the brief's operative language
+reconciled with it (INDEX 382): the one-sample admission ratio is an
+extrapolation, the worst-case refusal a credible hypothesis rather than a
+demonstrated fact, the pacing evidence does not prove Used ≈ 0, and the
+brief's historical findings must be marked superseded or governing so a
+builder cannot read contradictory instructions. Rev 6 adds the
+**Operative dispositions** block below, which governs implementation; the
+accounting is corrected at the same points. Ben's ruling and CAP = 1 stand
+and are not reopened. No other change.
+
+## Operative dispositions — what governs the build (Rev 6)
+
+Read first. The sections after this block preserve the full history of the
+brief, including findings that no longer govern. Where they conflict with
+this block, **this block governs implementation**.
+
+- **CAP = 1** (Ben's ruling, recorded in the §3 addendum). Governs.
+- **The margin is a cushion, not a gate** (Ben's ruling). §3's derivation
+  under the margin-as-threshold reading is preserved as the record of the
+  conflict; its conclusion — no positive CAP under that reading — is
+  **superseded as an operative gate** by the ruling. It is not deleted and
+  not re-argued.
+- **The technical premise inside the ruling's recorded reasoning** — that
+  7,979 tokens "fits within" an 8,000-token envelope — is **superseded** by
+  the operational accounting: TPM is a per-minute rate limit, not a
+  per-request envelope. The ruling stands; its premise is read in the
+  accounting's corrected form.
+- **The worst-case admission refusal is a credible fail-safe hypothesis,
+  not a demonstrated fact.** Provider-reported facts: the admission model
+  (Used + Requested against 8,000) and two refusal bodies. Measured fact:
+  one request's prompt (4,388 tokens, provider usage). **Extrapolation:**
+  the Requested ratio (≈ 1.033) rests on that one sample; applied to the
+  estimated 7,979-token worst case it predicts refusal at admission. The
+  build does not depend on the prediction — see the contract below.
+- **Operating assumptions, stated as assumptions:** (A1) one run at a time
+  on the account, requests strictly sequential — an operating condition the
+  programme controls. (A2) ≥ 65 s between request starts, with residual
+  Used treated as ≈ 0 — an **assumption**, supported by five admissions at
+  that spacing but not proven by them. (A3) completions stay in the
+  evidenced range (tool-call responses under ~100 tokens; the composition
+  bounded by the assignment).
+- **Failure and rollover contract (operative).** A provider refusal — at
+  admission or otherwise — is recorded under the response-evidence regime
+  as a delivery failure, never as a response, never disguised as a success.
+  The record as committed is the work's exact state. Continuation proceeds
+  from the record by the briefcase pattern: a fresh package reads the state
+  and continues the work; dispatches already recorded with outcomes are
+  never replayed, so completed side effects are never repeated. **This
+  contract does not depend on the refusal hypothesis:** if the worst-case
+  request is refused, the contract applies; if it is admitted, it runs well
+  inside the per-request bounds (context window 131,072 tokens; byte size),
+  and its completion enters the window's Used, which assumption A2
+  addresses — and if A2 fails on some later request, that refusal is again
+  the contract's delivery failure, not a breach of it.
 
 ## 1. What is built
 
