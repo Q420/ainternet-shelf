@@ -162,6 +162,102 @@
    "ts": "2026-11-24T05:51:47Z",
    "prev_hash": "8339ea062cf0e7f0cc9156b9a9dd7896ee0f8bf191e85fa5043c5552763fbba4",
    "hash": "114122ee692f85046df5216cf95c435412979cc1eecef35169851ad253d490d3"
+  },
+  {
+   "event_seq": 14,
+   "event_id": "9eb17a80-fa77-41ee-bbbe-1719ae71c697",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_JUDGED",
+   "actor": "exam-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"61ad734d475958cff9d97f81e465ad189ed63e5f35630c52b47c1710937130cb\", \"probe_seq\": 12, \"probe_evidence_hash\": \"6c453bc5110256715c14d28f5a5f9a8d690d7d2104e091ec3eea33be38d01563\", \"adapter_mode\": \"text\", \"mode_grounds\": \"Examiner judgement on this assembly's five settled, evidence-complete trials. Three trials were text_contract \\u00d7 provider_accepted, one was environment_tool_attempt \\u00d7 provider_refused, and one was malformed \\u00d7 provider_accepted. The three valid text-contract observations form a strict majority and meet the probe's recommendation rule. The refused environment-tool attempt is not evidence of native capability. The accepted malformed response is a genuine negative observation about text-contract reliability and is retained as such; it does not establish native capability. No trial demonstrated native catalogue behaviour. Text is therefore the best-supported mode for this exact assembly, route, pinned model and configuration. This judgement does not establish universal model behaviour or guarantee text-contract compliance. Malformed and unrecognised responses must continue to fail closed under the governed response-evidence regime.\", \"decision_receipt_hash\": \"26c5512728b08d1a30e87fab7ee42789d42c4a66351d14e9112dad5c51940e85\", \"decision_examiner\": \"Vane\", \"decision_recording\": \"harness-recorded from the examiner decision receipt; the examiner token authenticates the recording act, not the examiner's identity\"}",
+   "ts": "2026-11-24T08:00:30Z",
+   "prev_hash": "114122ee692f85046df5216cf95c435412979cc1eecef35169851ad253d490d3",
+   "hash": "d9b056658852287b54a1599bfe2cb73cbcbb9af151a1ca0fc454e682bf2cf1c4"
+  },
+  {
+   "event_seq": 15,
+   "event_id": "5dc4eff7-09cb-40dc-b0ae-7addd8df6d70",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PACKED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"61ad734d475958cff9d97f81e465ad189ed63e5f35630c52b47c1710937130cb\", \"credential_fingerprint\": \"8580447dc4013f2b151a940921308864e9e289056dc372487b3ee45d2cc69ef5\", \"probe_evidence_hash\": \"6c453bc5110256715c14d28f5a5f9a8d690d7d2104e091ec3eea33be38d01563\", \"adapter_mode\": \"text\"}",
+   "ts": "2026-11-24T08:00:30Z",
+   "prev_hash": "d9b056658852287b54a1599bfe2cb73cbcbb9af151a1ca0fc454e682bf2cf1c4",
+   "hash": "c6153f9ced4faad69ca0a853251a95df30298a6899ea28b34a7a46db6e06f4ac"
+  },
+  {
+   "event_seq": 16,
+   "event_id": "4039978c-b6d5-4e6f-9cca-5c3f261f7a50",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_ISSUE_AUTHORISED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T08:00:30Z",
+   "prev_hash": "c6153f9ced4faad69ca0a853251a95df30298a6899ea28b34a7a46db6e06f4ac",
+   "hash": "d5747e240a9d11a3271717a17c09b1195765968eaa915efbfa52dd85c6f56a03"
+  },
+  {
+   "event_seq": 17,
+   "event_id": "85e2823c-604f-48e6-9cd4-0687b6a4e955",
+   "run_id": "run-first-worker-1",
+   "type": "INSTANCE_ACTIVATED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T08:00:30Z",
+   "prev_hash": "d5747e240a9d11a3271717a17c09b1195765968eaa915efbfa52dd85c6f56a03",
+   "hash": "7be0de4c5d853db6a996ffcabaf90cfa8081b09a5ec3b7cb95ea3544bb5ddeb4"
+  },
+  {
+   "event_seq": 18,
+   "event_id": "74e185cd-ed6d-47e7-bb63-382fd01a001c",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_ITERATION",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"step_ceiling\": 12, \"deadline_seconds\": 600, \"cursor_from\": 17, \"cursor_to\": 17, \"catalogue_hash\": \"4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398\", \"registry_version\": \"tool-registry-v3\", \"evidence_governed\": true}",
+   "ts": "2026-11-24T08:00:30Z",
+   "prev_hash": "7be0de4c5d853db6a996ffcabaf90cfa8081b09a5ec3b7cb95ea3544bb5ddeb4",
+   "hash": "2b3ae6c95a26440b45ded34d66ed6506c278d1fff5b1afb7058b68daa1f02f1d"
+  },
+  {
+   "event_seq": 19,
+   "event_id": "98bbaf2d-c3b1-4114-9333-c1039333af63",
+   "run_id": "run-first-worker-1",
+   "type": "CALL_ENTERED",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"iteration_seq\": 18}",
+   "ts": "2026-11-24T08:00:30Z",
+   "prev_hash": "2b3ae6c95a26440b45ded34d66ed6506c278d1fff5b1afb7058b68daa1f02f1d",
+   "hash": "dd308643ab64761fed3e0ceb836a1b842dc229af5762b26195c04ca456ea655c"
+  },
+  {
+   "event_seq": 20,
+   "event_id": "74e5d383-d138-49f8-8f1f-adb554a2d50c",
+   "run_id": "run-first-worker-1",
+   "type": "RESPONSE_EVIDENCE",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"iteration_seq\": 18, \"outcome\": \"captured\", \"artifact_sha256\": \"cdae339f1ac7b09f7bfffa55199f223f80b90eb810294736b124978bb12f5686\", \"layers\": {\"L1\": {\"byte_count\": 275, \"sha256\": \"3eee3626816312f9484857c86a8928a242f37d3c585cb72881a4b6b668f76e30\", \"complete\": true, \"body_complete\": true, \"hash_subject\": \"observed_bytes\", \"total_length\": 275, \"stop_reason\": \"eof\", \"read_error_kind\": null}, \"L2\": {\"present\": true, \"canonical_sha256\": \"c127b5a87803e322c80e76dfcc669dd8b1cce4d18f136985841a210421cc5b10\", \"canonical_byte_count\": 264}, \"L3\": {\"present\": false, \"reason\": \"the envelope carries no assistant message object\"}, \"L4\": {\"present\": false, \"reason\": \"no assistant message stands\"}, \"L5\": {\"adapter_verdict_state\": \"not_reached\", \"loop_verdict_state\": \"not_reached\"}}, \"provenance\": \"groq_helper_raw_bounded\", \"http_status\": 400}",
+   "ts": "2026-11-24T08:00:31Z",
+   "prev_hash": "dd308643ab64761fed3e0ceb836a1b842dc229af5762b26195c04ca456ea655c",
+   "hash": "01ad3d15d81e5b25ce0f9828d2bf50c65b52391839024ebfc8c231e2c3e695f4"
+  },
+  {
+   "event_seq": 21,
+   "event_id": "0c33b710-9aa4-4bff-b89b-c982defbcb3e",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"ground\": \"provider_failure\", \"iterations\": 1, \"detail\": \"provider_error: HTTP 400\"}",
+   "ts": "2026-11-24T08:00:31Z",
+   "prev_hash": "01ad3d15d81e5b25ce0f9828d2bf50c65b52391839024ebfc8c231e2c3e695f4",
+   "hash": "f06ec55118d6f478e6d3567a436ec4b1f11f3d7c76a472abf0b955dc38eb077c"
   }
  ]
 }

@@ -1,0 +1,12 @@
+{
+  "run_id": "run-first-worker-1",
+  "assembly_id": "assembly-crew-1-1",
+  "generated_record_hash": "61ad734d475958cff9d97f81e465ad189ed63e5f35630c52b47c1710937130cb",
+  "probed_seq": 12,
+  "probe_evidence_hash": "6c453bc5110256715c14d28f5a5f9a8d690d7d2104e091ec3eea33be38d01563",
+  "fingerprint": "002d3677dcbca52a7568a98f26c6255fadbe72ac3c6caab0adda3925ddf72e32",
+  "adapter_mode": "text",
+  "examiner": "Vane",
+  "mode_grounds": "Examiner judgement on this assembly's five settled, evidence-complete trials. Three trials were text_contract × provider_accepted, one was environment_tool_attempt × provider_refused, and one was malformed × provider_accepted. The three valid text-contract observations form a strict majority and meet the probe's recommendation rule. The refused environment-tool attempt is not evidence of native capability. The accepted malformed response is a genuine negative observation about text-contract reliability and is retained as such; it does not establish native capability. No trial demonstrated native catalogue behaviour. Text is therefore the best-supported mode for this exact assembly, route, pinned model and configuration. This judgement does not establish universal model behaviour or guarantee text-contract compliance. Malformed and unrecognised responses must continue to fail closed under the governed response-evidence regime.",
+  "decided_at": "2026-11-24T05:53:00Z"
+}
