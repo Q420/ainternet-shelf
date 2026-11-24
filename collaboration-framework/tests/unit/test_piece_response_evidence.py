@@ -80,7 +80,12 @@ adapter/doorway/checker:
   iteration event and the call boundary is divergent);
   and the terminal-step conditions (a deadline_at_start
   stamped before its deadline, a package_construction
-  under the wrong ground — each divergent).
+  under the wrong ground — each divergent);
+- the re-examination correction (INDEX 316): a negative
+  L1 byte_count refused at the doorway — the count's
+  type check admitted any integer, and a forged total
+  length agreeing with a negative count satisfied every
+  other relation.
 
 Every run is established through the office's real route
 (the A3 scaffolding); the evidence store root is the run
@@ -1148,6 +1153,14 @@ check("ceiling: completeness fields that disagree "
           asm, it_seq, "captured",
           artifact_sha256="b" * 64,
           layers=l1_of(body_complete=False))))
+check("ceiling: a negative L1 byte_count is refused at "
+      "the doorway — a count of observed bytes cannot "
+      "name fewer than none, however consistently the "
+      "forged total length agrees with it (INDEX 316)",
+      refused(lambda: d.record_response_evidence(
+          asm, it_seq, "captured",
+          artifact_sha256="b" * 64,
+          layers=l1_of(byte_count=-1, total_length=-1))))
 
 store, d, asm, it_seq = entered_iteration()
 d.record_response_evidence(
@@ -1275,6 +1288,20 @@ for name, mutate, big in (
           f"evidence_layer_inconsistent",
           "evidence_layer_inconsistent" in kinds,
           f"kinds={kinds}")
+
+
+def mut_negative_byte_count(l1):
+    l1.update(byte_count=-1, total_length=-1)
+
+
+store = forged_run(mut_negative_byte_count)
+kinds = {p["kind"] for p in loop_problems(store)}
+check("ceiling (checker): a forged artifact claiming a "
+      "negative byte_count is divergent against its "
+      "actual bytes — the count can never equal the "
+      "length of what was filed (INDEX 316)",
+      "evidence_layer_hash_mismatch" in kinds,
+      f"kinds={kinds}")
 
 # ============================================================
 # Correction 2 (INDEX 314) — the commit-failure path

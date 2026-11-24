@@ -25,13 +25,24 @@ INDEX 253's gaps, companion to test_piece_retrieval.py
   the attribution is proven against the capture itself:
   re-rendering the package parsed out of the captured body
   reproduces the captured bytes exactly. The five captured
-  sizes are then reconciled against the artifact's five
-  reconstructed sizes: a difference beyond the disclosed
+  sizes are then reconciled against the GOVERNED
+  baseline's five measured sizes (live-demo/retrieval-
+  governed-measurements.json — an independent governed
+  capture of this same sequence, produced under Vane's
+  W1 ruling, INDEX 316): a difference beyond the disclosed
   rendering variance — the live seconds_remaining digits,
   a few bytes — FAILS the witness with the difference
-  named. The capture results are written to
-  live-demo/retrieval-r5-capture.json. No provider call is
-  made: the stub is the receiving end.
+  named. The original R5 artifact (live-demo/retrieval-
+  r5-measurements.json) remains the ungoverned historical
+  measurement, kept exactly as it stands; it is no longer
+  the reconciliation reference, because a governed run's
+  packages legitimately carry the two evidence events
+  (CALL_ENTERED and RESPONSE_EVIDENCE) per iteration —
+  real request content, measured in the governed
+  baseline, not treated as noise. The capture results
+  are written to live-demo/retrieval-r5-capture.json.
+  No provider call is made: the stub is the receiving
+  end.
 
 - WITNESS 2 — integrated receipt continuity, one sequence
   through the real loop with a scripted worker: (a) a
@@ -148,6 +159,11 @@ TOLERANCE = 10
 
 MEASUREMENTS_PATH = os.path.join(
     ROOT, "live-demo", "retrieval-r5-measurements.json")
+# The governed baseline (INDEX 316): W1's reconciliation
+# reference. The R5 artifact above remains the ungoverned
+# historical measurement, untouched.
+GOVERNED_MEASUREMENTS_PATH = os.path.join(
+    ROOT, "live-demo", "retrieval-governed-measurements.json")
 CAPTURE_PATH = os.path.join(
     ROOT, "live-demo", "retrieval-r5-capture.json")
 MAXCONFIG_PATH = os.path.join(
@@ -407,8 +423,9 @@ def test_w1_dispatcher_capture():
           identify_body["messages"][0]["content"]
           and identify_body["model"] == base._MODEL)
 
-    with open(MEASUREMENTS_PATH, encoding="utf-8") as fh:
-        artifact = json.load(fh)
+    with open(GOVERNED_MEASUREMENTS_PATH,
+              encoding="utf-8") as fh:
+        baseline = json.load(fh)
     expected_tool_results = [0, 1, 1, 2, 2]
     records = []
     all_reconciled = True
@@ -423,7 +440,7 @@ def test_w1_dispatcher_capture():
         attribution_exact = m["body"].encode("utf-8") == raw
         components = m["components"]
         residual = total - sum(components.values())
-        art = artifact["requests"][i]
+        art = baseline["requests"][i]
         diffs = {
             "serialized_bytes": total - art["serialized_bytes"]}
         for key, value in components.items():
@@ -449,8 +466,8 @@ def test_w1_dispatcher_capture():
             "package_iteration": package["bounds"]["iteration"],
             "tool_results_carried":
                 len(package["tool_results"]),
-            "artifact_bytes": art["serialized_bytes"],
-            "differences_vs_artifact": diffs,
+            "baseline_bytes": art["serialized_bytes"],
+            "differences_vs_baseline": diffs,
             "reconciled_within_variance": reconciled,
         })
         check(f"W1 iteration {i + 1}: the captured body is "
@@ -465,20 +482,21 @@ def test_w1_dispatcher_capture():
               and obj["messages"][0]["content"] == base._SYSTEM,
               f"captured {total}, residual {residual}")
     check("W1 the five captured sizes reconcile with the "
-          "artifact's five reconstructed sizes — each within "
-          "the disclosed seconds_remaining variance, the "
-          "deterministic components exact",
+          "governed baseline's five measured sizes — each "
+          "within the disclosed seconds_remaining variance, "
+          "the deterministic components exact",
           all_reconciled and deterministic_exact,
           json.dumps([(r["iteration"], r["captured_bytes"],
-                       r["artifact_bytes"],
-                       r["differences_vs_artifact"]
+                       r["baseline_bytes"],
+                       r["differences_vs_baseline"]
                        ["serialized_bytes"]) for r in records]))
 
     capture = {
         "artifact": "retrieval-r5-capture",
         "scope": "RETRIEVAL-SCOPE-2026-11-23 Rev 5 — witness "
                  "R5 at the dispatcher boundary (INDEX 253, "
-                 "gap 1)",
+                 "gap 1); reconciliation against the governed "
+                 "baseline (INDEX 316)",
         "method": "The scripted R5 sequence run through the "
                   "real loop with the real adapter and the "
                   "real Groq connector transport in the path; "
@@ -497,8 +515,10 @@ def test_w1_dispatcher_capture():
                   "the re-render is byte-identical to the "
                   "capture, so the breakdown is the captured "
                   "body's own. Reconciliation is against "
-                  "live-demo/retrieval-r5-measurements.json "
-                  "as read at run time; the only tolerated "
+                  "live-demo/retrieval-governed-measurements"
+                  ".json as read at run time — the governed "
+                  "baseline produced under Vane's W1 ruling "
+                  "(INDEX 316); the only tolerated "
                   "difference is the disclosed rendering "
                   "variance (the live seconds_remaining "
                   "digits), bounded at "

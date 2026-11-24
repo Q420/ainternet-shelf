@@ -1,0 +1,76 @@
+{
+ "artifact": "retrieval-governed-measurements",
+ "scope": "RETRIEVAL-SCOPE-2026-11-23 Rev 5 \u2014 witness R5's sequence under the response-evidence regime (WORKER-RESPONSE-EVIDENCE-SCOPE-2026-11-23 Rev 8); produced under Vane's W1 ruling (INDEX 316): re-measure under governance",
+ "provenance": "This artifact is the GOVERNED baseline for Witness 1's cross-artifact reconciliation in tests/unit/test_piece_retrieval_evidence.py. It supersedes nothing. live-demo/retrieval-r5-measurements.json remains exactly as it stands \u2014 the original UNGOVERNED R5 measurement, kept as the historical record of that regime. The growth over the R5 sizes is the two evidence events (CALL_ENTERED and RESPONSE_EVIDENCE) standing in each later package's delta: real request content, measured here, not treated as noise or explained away.",
+ "method": "An independent governed capture: the scripted R5 sequence (list -> search -> read_range + notebook write -> scratch read-back + re-pull -> yield, over the same fixture corpus) run through the real loop with the real adapter and the real Groq connector transport in the path, the loop governed \u2014 evidence_store passed, so every iteration records CALL_ENTERED and its RESPONSE_EVIDENCE disposition before any effect \u2014 with the provider side replaced by a stub helper substituted through the transport's GROQ_HELPER_PATH env override, which records the exact request body bytes it receives on stdin and returns canned chat-completion responses scripted per call (identify() first, then the five iterations). No provider call was made. Each captured body is attributed with the R5 artifact's own span method (measure_request): the package is parsed out of the captured prompt and re-rendered; the re-render is byte-identical to the capture, so the breakdown is the captured body's own. Components are exact serialized spans of the final body, as in the R5 artifact: retrieved_content = the JSON literal of each tool result's content, counted once (single carriage); case_view_and_assignment = the case span; tool_catalogue = the tools-section dump; provenance_and_dispatch = the view, delta, tool_results, standing-dispatch, bounds and position spans minus the retrieved content literals \u2014 under governance the delta span carries the evidence events; remaining_overhead = the remainder (contract, framing, system message, body skeleton). Components sum to the serialized size; residual is stated per request.",
+ "model": "openai/gpt-oss-120b",
+ "r5_ungoverned_serialized_bytes": [
+  12864,
+  17604,
+  18523,
+  21237,
+  22126
+ ],
+ "requests": [
+  {
+   "iteration": 1,
+   "serialized_bytes": 12868,
+   "components": {
+    "retrieved_content": 0,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 2226,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 2,
+   "serialized_bytes": 20252,
+   "components": {
+    "retrieved_content": 163,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 9447,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 3,
+   "serialized_bytes": 21167,
+   "components": {
+    "retrieved_content": 474,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 10051,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 4,
+   "serialized_bytes": 23886,
+   "components": {
+    "retrieved_content": 121,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 13123,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 5,
+   "serialized_bytes": 24774,
+   "components": {
+    "retrieved_content": 208,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 13924,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  }
+ ]
+}

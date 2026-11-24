@@ -1697,6 +1697,22 @@ class Doorway:
                         "bytes, its completeness, and "
                         "hash_subject observed_bytes "
                         "(R6-1/R7-1)")
+            # A count of observed bytes cannot be
+            # negative: the type check above admits any
+            # integer, and a fabricated summary carrying
+            # a negative count (its total length forged
+            # to match) would otherwise pass every
+            # relation below — the equality and ceiling
+            # checks are all consistent with a negative
+            # count. Refused at write time (build
+            # re-examination, INDEX 316); the checker
+            # independently rejects such an artifact
+            # against its actual bytes.
+            if l1.get("byte_count") < 0:
+                return ("the captured L1 summary's byte "
+                        "count is a count of observed "
+                        "bytes; a negative count names no "
+                        "observation (R6-1/R7-1)")
             # The duplicated completeness fields must
             # agree: the summary carries the artifact's
             # body_complete beside its complete, and a
