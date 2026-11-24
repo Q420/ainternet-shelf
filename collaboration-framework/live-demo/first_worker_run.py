@@ -459,6 +459,29 @@ def _manifest_identity_problem(manifest_hash):
     return None
 
 
+def _staged_source_problem(manifest, sandbox):
+    """Why the staged sources under sandbox do not stand
+    as the manifest says, or None: every manifest entry's
+    file must stand under sandbox and hash to the entry's
+    sha256. The fresh path runs this after issue, before
+    activation; phase 2 runs it against the phase-1
+    sandbox after the manifest identity check (INDEX
+    324) — the manifest hash proves the manifest is the
+    pinned manifest, while this proves the files the
+    worker will actually read still match it. A missing
+    file is a problem in its own right, named as such:
+    _sha256_file would raise on it rather than refuse."""
+    for entry in manifest["sources"]:
+        staged = os.path.join(sandbox, entry["path"])
+        if not os.path.exists(staged):
+            return (f"staged {entry['path']} is missing "
+                    f"from the sandbox")
+        if _sha256_file(staged) != entry["sha256"]:
+            return (f"staged {entry['path']} no longer "
+                    f"hashes to the manifest")
+    return None
+
+
 def stage(run_dir, root=ROOT):
     """Stage the sandbox and the source manifest under
     run_dir. Returns (manifest, manifest_hash). Idempotent:
@@ -960,6 +983,21 @@ def run_probe_phase2(run_dir, receipt_path):
         manifest_hash)
     if identity_problem is not None:
         print(f"ABORT: {identity_problem}",
+              file=sys.stderr)
+        return 1
+    # The staged files themselves (INDEX 324): the
+    # manifest hash proves the standing manifest IS the
+    # pinned manifest; it does not prove the files under
+    # the phase-1 sandbox still match it — between the
+    # phases they could change while manifest.json
+    # stands untouched. Re-verify every entry against
+    # its staged file here — after the manifest
+    # identity, before the adapter is built, any
+    # judgement is recorded or anything activates.
+    staged_problem = _staged_source_problem(
+        manifest, os.path.join(run_dir, "sandbox"))
+    if staged_problem is not None:
+        print(f"ABORT: {staged_problem}",
               file=sys.stderr)
         return 1
     adapter = _build_adapter("groq")
@@ -1534,12 +1572,11 @@ def _run_fresh(run_dir, route, retrieval, probed, phase1):
               f"{(content or {}).get('loop_bounds')}, not the "
               f"scoped {BOUNDS}", file=sys.stderr)
         return 1
-    for entry in manifest["sources"]:
-        staged = os.path.join(sandbox, entry["path"])
-        if _sha256_file(staged) != entry["sha256"]:
-            print(f"ABORT: staged {entry['path']} no longer "
-                  f"hashes to the manifest", file=sys.stderr)
-            return 1
+    staged_problem = _staged_source_problem(manifest,
+                                            sandbox)
+    if staged_problem is not None:
+        print(f"ABORT: {staged_problem}", file=sys.stderr)
+        return 1
     print("pre-activation verification: manifest hash in the "
           "issued case's evidence boundary; bounds as scoped; "
           "staged sources hash to the manifest")

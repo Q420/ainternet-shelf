@@ -25,6 +25,18 @@ corrections (INDEX 322):
    stands — with the receipt's retention standing,
    proving the refusal is the manifest check's.
 
+3. The phase-2 staged-file verification (INDEX 324):
+   the manifest hash proves the manifest is the pinned
+   manifest, not that the files under the phase-1
+   sandbox still match it. A phase-1 directory whose
+   staged source is altered after phase 1 — manifest
+   .json untouched — refuses phase 2 (the refusal
+   names the file) with no judgement and no
+   activation; a directory whose staged source is
+   deleted refuses the same way. Run A serves as the
+   control: its untampered directory passed the gate,
+   its record carrying the judgement and activation.
+
 The real provider is never called: the stub helper
 answers `chat` (identify), `chat-raw` (the probe's
 five trials, natively) and `chat-raw-bounded` (the
@@ -37,7 +49,9 @@ Run: PYTHONPATH=src python3 \
 Exits 0 when every check passes.
 """
 
+import contextlib
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -386,7 +400,97 @@ check("phase 2 refuses a run directory whose standing "
           DIR_C, "decision-receipt.json")),
       f"rc={rc} judged={len(judged_c)}")
 
-for suffix in (SUFFIX_A, SUFFIX_B, SUFFIX_C):
+# ====== Phase-2 staged-file verification (324) =====
+# The control: run A's directory was never touched
+# between its phases, and its phase 2 completed — its
+# record carries the judgement and the activation,
+# which stand only past the staged-file gate.
+types_a = [e["type"] for e in store_a.all_events()]
+check("control: run A's untampered directory passed "
+      "the phase-2 staged-file gate — the judgement "
+      "and the activation stand in its record",
+      "ASSEMBLY_JUDGED" in types_a and
+      "INSTANCE_ACTIVATED" in types_a,
+      f"judged={'ASSEMBLY_JUDGED' in types_a} "
+      f"activated={'INSTANCE_ACTIVATED' in types_a}")
+
+
+def staged_entry_path(run_dir):
+    """The first manifest entry's staged file, under
+    the run directory's sandbox."""
+    with open(os.path.join(run_dir, "manifest.json"),
+              encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    entry_path = manifest["sources"][0]["path"]
+    return entry_path, os.path.join(
+        run_dir, "sandbox", entry_path)
+
+
+def phase2_capturing(run_dir):
+    """Phase 2 in-process with stderr captured, so the
+    refusal's own words can be checked."""
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        rc = harness.run_probe_phase2(
+            run_dir, build_receipt(
+                run_dir, "witness: the probe's "
+                         "recommendation"))
+    return rc, err.getvalue()
+
+
+def judged_or_activated(run_dir):
+    store = FrameworkStore(
+        os.path.join(run_dir, "run.db"))
+    types = [e["type"] for e in store.all_events()]
+    return ("ASSEMBLY_JUDGED" in types,
+            "INSTANCE_ACTIVATED" in types)
+
+
+SUFFIX_D = "witnessrelD"
+DIR_D = run_dir_for(SUFFIX_D)
+proc = phase1(SUFFIX_D)
+check("run D: phase 1 completes against the stub "
+      "helper", proc.returncode == 0,
+      f"rc={proc.returncode} "
+      f"stderr={proc.stderr.strip()[:200]}")
+entry_path_d, staged_d = staged_entry_path(DIR_D)
+with open(staged_d, "ab") as fh:
+    fh.write(b"\naltered after phase 1\n")
+rc, err_d = phase2_capturing(DIR_D)
+check("phase 2 refuses a staged source altered after "
+      "phase 1, manifest.json untouched — rc 1, and "
+      "the refusal names the altered file",
+      rc == 1 and entry_path_d in err_d,
+      f"rc={rc} stderr={err_d.strip()[:200]}")
+judged_d, activated_d = judged_or_activated(DIR_D)
+check("run D: no ASSEMBLY_JUDGED and no activation "
+      "stand after the staged-file refusal",
+      not judged_d and not activated_d,
+      f"judged={judged_d} activated={activated_d}")
+
+SUFFIX_E = "witnessrelE"
+DIR_E = run_dir_for(SUFFIX_E)
+proc = phase1(SUFFIX_E)
+check("run E: phase 1 completes against the stub "
+      "helper", proc.returncode == 0,
+      f"rc={proc.returncode} "
+      f"stderr={proc.stderr.strip()[:200]}")
+entry_path_e, staged_e = staged_entry_path(DIR_E)
+os.remove(staged_e)
+rc, err_e = phase2_capturing(DIR_E)
+check("phase 2 refuses a staged source missing after "
+      "phase 1 — rc 1, and the refusal names the "
+      "missing file",
+      rc == 1 and entry_path_e in err_e,
+      f"rc={rc} stderr={err_e.strip()[:200]}")
+judged_e, activated_e = judged_or_activated(DIR_E)
+check("run E: no ASSEMBLY_JUDGED and no activation "
+      "stand after the missing-file refusal",
+      not judged_e and not activated_e,
+      f"judged={judged_e} activated={activated_e}")
+
+for suffix in (SUFFIX_A, SUFFIX_B, SUFFIX_C,
+               SUFFIX_D, SUFFIX_E):
     shutil.rmtree(run_dir_for(suffix),
                   ignore_errors=True)
 shutil.rmtree(TMP, ignore_errors=True)
