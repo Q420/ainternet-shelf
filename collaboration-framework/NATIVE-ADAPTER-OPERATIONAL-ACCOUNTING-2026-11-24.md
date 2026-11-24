@@ -11,8 +11,9 @@ ceiling, or the margin.
 The examiner is right, and the brief's phrasing is corrected by this accounting:
 **8,000 TPM is an organization-level per-minute rate limit, not a per-request
 prompt maximum.** The per-request bounds are different quantities: the model's
-documented context window (131,072 tokens) and the provider's byte-size refusal
-(evidenced at 134,844 bytes, HTTP 413, attempt 6). A 7,979-token prompt is not
+documented context window (131,072 tokens), and one observed byte-size
+refusal point (HTTP 413 at 134,844 bytes, attempt 6) — an observed point,
+not a proven maximum request-body size. A 7,979-token prompt is not
 "inside a hard per-request envelope," and §3's sentence to that effect is
 withdrawn (brief Rev 5 note). What governs a large request in practice is the
 rate window's **admission accounting**, which the account itself states —
@@ -41,9 +42,16 @@ Established from the account's own mouth, not the published table:
   before any generation or effect** — the cleanest failure the system has.
 - **The window decays continuously:** retry-after figures of ~6–7 seconds to
   free a few hundred tokens show a sliding window, not a fixed minute reset.
-  Under the standing pacing discipline (≥ 65 s between request starts), Used
-  stands at ≈ 0 for each request — evidenced directly: the paced repetition's
-  five requests were all admitted at exactly that spacing (INDEX 352).
+  Under the standing pacing discipline (≥ 65 s between request starts), the
+  residual Used at each request is treated as ≈ 0 — **an operating
+  assumption, not a measurement.** The evidence supports the assumption
+  without proving it: the paced repetition's five requests were all admitted
+  at exactly that spacing (INDEX 352), but five admissions expose no residual
+  Used value, and the only Used figures in evidence are the provider-reported
+  ones inside refusal bodies (4,324 and 4,152, §2 above). If the assumption
+  fails on some request — residual Used higher than expected — the
+  consequence is an admission refusal, which is the contract's recorded
+  delivery failure (§5), not a breach of it.
 
 ## 3. CAP = 1's worst case under the corrected semantics
 
@@ -76,15 +84,21 @@ across the conversion's plausible range.)
 
 - **Completions are small in this work's evidenced range** — 69 and 81 tokens
   for tool-call responses (provider usage, paced trials 1–2; reasoning tokens
-  are counted inside completion tokens). The largest completion the standing
-  assignment can produce is the composition itself, bounded by the assignment
-  at ~600 words (≈ 800 tokens plus reasoning).
+  are counted inside completion tokens). The largest completion expected is
+  the composition itself: the assignment *requests* ~600 words (≈ 800 tokens
+  plus reasoning). That is a requested output size, **not a bound** — the
+  construction sets no completion-token ceiling (no `max_tokens` anywhere in
+  the adapter, loop, probe, or harness), so the figure stands as an operating
+  expectation, and an unexpectedly long completion would simply consume more
+  of the window's Used for subsequent requests, under the assumption below.
 - **Completions enter the window's Used for subsequent requests** (the
-  evidenced Used figures sit at the scale of one prior request's total), and
-  the ≥ 65 s pacing decays Used to ≈ 0 before the next request — so
-  completions do not compound across a run's iterations. Admission of the
-  current request is charged on Requested (prompt-based, §2), before its
-  completion exists.
+  provider-reported Used figures sit at the scale of one prior request's
+  total). Whether the ≥ 65 s pacing returns the residual Used to ≈ 0 before
+  the next request is the operating assumption stated in §2 — under it,
+  completions are not expected to compound across a run's iterations, but
+  non-compounding is an expectation under an assumption, **not an established
+  fact**. Admission of the current request is charged on Requested
+  (prompt-based, §2), before its completion exists.
 - **Concurrent usage:** this accounting holds under the programme's standing
   operating condition — one run at a time on this account, requests strictly
   sequential. No other traffic shares the window during a run. Stated as a
@@ -95,13 +109,16 @@ across the conversion's plausible range.)
 CAP = 1 is safely governed not because a worst-case request fits inside a
 per-request envelope — there is no such envelope at 8,000 — but because:
 
-1. the per-request bounds that do exist (context window; byte size) are an
-   order of magnitude above anything this construction produces;
+1. the one documented per-request bound — the 131,072-token context
+   window — sits an order of magnitude above anything this construction
+   produces, and the worst case's serialized size sits comfortably below
+   the one observed byte-size refusal point (134,844 bytes): a comparison
+   against an observed point, not a proven byte bound;
 2. on the evidenced admission model, an oversize request is predicted to
    be refused **at admission, before any effect** (hypothesis, §3) — and a
    refusal, whenever it occurs, is a recorded delivery failure under the
    standing evidence discipline, never a disguised success; if the request
-   is admitted instead, it runs within the per-request bounds above;
+   is admitted instead, it runs as compared in point 1 above;
 3. the refusal zone is only the top ~1,000 bytes of the permitted result
    range, under a pacing discipline that gives every request a fresh window;
 4. resumption is the briefcase's designed function: the record carries the

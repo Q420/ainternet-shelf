@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 6)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 7)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -62,6 +62,17 @@ builder cannot read contradictory instructions. Rev 6 adds the
 accounting is corrected at the same points. Ben's ruling and CAP = 1 stand
 and are not reopened. No other change.
 
+**Revision note — Rev 7 (2026-11-24):** the examiner's Rev 6 examination
+(INDEX 385) found the brief reconciled but the accounting still carrying
+three overclaims: residual Used presented as evidenced rather than assumed;
+the observed 413 refusal point treated as a byte bound; the assignment's
+requested length treated as a completion bound. Rev 7 corrects the accounting
+at exactly those points (residual Used an operating assumption, distinguished
+from provider-reported values; the 413 a comparison point, not a bound; the
+completion an operating expectation — the construction sets no completion
+ceiling) and aligns the operative block's one matching phrase. Nothing else
+changes.
+
 ## Operative dispositions — what governs the build (Rev 6)
 
 Read first. The sections after this block preserve the full history of the
@@ -102,7 +113,9 @@ this block, **this block governs implementation**.
   never replayed, so completed side effects are never repeated. **This
   contract does not depend on the refusal hypothesis:** if the worst-case
   request is refused, the contract applies; if it is admitted, it runs well
-  inside the per-request bounds (context window 131,072 tokens; byte size),
+  inside the documented context window (131,072 tokens), with its
+  serialized size comfortably below the one observed byte-size refusal
+  point (134,844 bytes — a comparison, not a proven byte bound),
   and its completion enters the window's Used, which assumption A2
   addresses — and if A2 fails on some later request, that refusal is again
   the contract's delivery failure, not a breach of it.
