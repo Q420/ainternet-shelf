@@ -239,7 +239,8 @@ fails safe — the provider refuses, the refusal is recorded as a delivery
 failure, the run stalls honestly, and nothing is silently mangled. Ben added:
 a stalled run that leaves a proper record is resumable by design — the
 briefcase tells the next agent exactly how to finish the task; the worst case
-is a handoff, not a dead end. The
+is a handoff, not a dead end. In Ben's compression: it can act as a token
+rollover — the budget binds a letter, not the job. The
 incompatibility finding above stands unaltered as the derivation's result
 under the margin-as-threshold reading; the ruling changes the margin's
 status, on the director's authority, and is carried to the examiner for her

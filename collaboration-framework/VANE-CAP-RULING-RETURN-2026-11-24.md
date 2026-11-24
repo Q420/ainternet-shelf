@@ -17,7 +17,8 @@ the provider refuses, the refusal is recorded as a delivery failure, the run
 stalls honestly — nothing is silently mangled, no wrong result ships. And a
 stalled run that leaves a proper record is resumable by design: the briefcase
 tells the next agent exactly how to finish the task. The worst case is a
-handoff, not a dead end.
+handoff, not a dead end — in Ben's words, it can act as a token rollover:
+the budget binds a letter, not the job.
 
 The ruling changes the margin's status, not the arithmetic. The build's cap is
 CAP = 1 on that authority, with the worst case and the conversion's approximate
