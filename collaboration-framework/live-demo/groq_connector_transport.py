@@ -97,6 +97,53 @@ credential itself, which is the entire point of the route.
 (Proxy headers likewise do not apply; the helper owns its
 own connection to the one registered host.)
 
+Native-mode staging (native-mode probe piece, INDEX 289
+release preparation). In native mode the adapter stages
+its offered definitions on the instance for the one call
+(`adapter._pending_tools` — adapter A8: the staging exists
+precisely so the `_call(messages)` seam keeps its shape),
+and `_dispatch` reads them from there. A transport that
+replaces `_call` must therefore read the staging itself:
+where definitions stand staged, this transport's body
+carries them as its "tools" field, exactly as staged, and
+a staged tool choice (`adapter._pending_tool_choice`,
+where one is staged) as "tool_choice". Where nothing is
+staged, the body is byte-identical to the historical
+construction above — the text path is untouched.
+
+The probe raw call (same release preparation). The probe
+stage's capture sits BELOW the adapter's response
+interpretation, but the adapter's own `probe_raw_call()`
+rides its built-in `_exchange` transport — the
+environment-key route this harness never uses — and
+cannot travel the connector route as built: it never
+passes through the replaced `_call` seam.
+`install_groq_connector_raw_call` therefore provides the
+raw call at this layer, against the same capture contract
+the adapter's own probe call honours (framework.probe's
+raw-call protocol): the request serialized exactly as
+given; on success the helper's stdout as the body (the
+provider's response object as the helper returns it — the
+helper parses and re-serialises, so byte-identity with
+the provider's wire bytes is not claimed) with the HTTP
+status recorded as 200 (the helper reports no status on
+success; a returned body means the provider answered
+successfully); on an HTTP error, the status the helper
+names and the provider's error body AS THE HELPER
+RETAINS IT in its failure (INDEX 261/262: read bounded,
+collapsed to one line) extracted from that failure, with
+the helper's full stderr retained separately as the
+capture's diagnostics object — the diagnostic output is
+never presented as the provider body. The subprocess
+discipline is this module's own: the helper in its own
+process group, bounded by the adapter's configured
+timeout — the fence the adapter's own probe call runs
+under, no activation clock existing at assembly time —
+terminated and confirmed on expiry, the expiry itself
+becoming the capture's diagnostic rather than an
+exception, exactly as the adapter's probe call turns its
+transport failures into captures.
+
 Failure-kind mapping (mirroring `_dispatch`):
 - helper exits non-zero (its HTTP and connection errors
   surface as an uncaught exception and a non-zero exit)
@@ -126,6 +173,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -306,9 +354,23 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
         }
         connector_call.last_call_timings = timings
         prep_started = time.monotonic()
-        body = json.dumps(
-            {"model": model, "messages": messages,
-             "temperature": 0.2}).encode("utf-8")
+        request_obj = {"model": model, "messages": messages,
+                       "temperature": 0.2}
+        # Native-mode staging (see this module's docstring):
+        # the adapter stages its offered definitions on the
+        # instance for this one call; a transport replacing
+        # _call reads the staging itself, exactly as
+        # _dispatch does. Nothing staged -> the body is the
+        # historical construction, byte for byte.
+        staged_tools = getattr(adapter, "_pending_tools",
+                               None)
+        if staged_tools:
+            request_obj["tools"] = staged_tools
+        staged_choice = getattr(adapter,
+                                "_pending_tool_choice", None)
+        if staged_choice is not None:
+            request_obj["tool_choice"] = staged_choice
+        body = json.dumps(request_obj).encode("utf-8")
         timings["body_preparation_s"] = \
             time.monotonic() - prep_started
         # The bound is the time REMAINING to the adapter's
@@ -461,3 +523,147 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
     connector_call.last_call_timings = None
     adapter._call = connector_call
     return connector_call
+
+
+# The helper's retained provider-error line (INDEX
+# 261/262): the helper turns a provider HTTP error into a
+# RuntimeError naming the status and carrying the error
+# body it read (bounded, collapsed to one line), which
+# reaches this layer as the final line of its traceback on
+# stderr. The pattern extracts exactly that status and
+# that retained body — nothing else in the traceback is
+# the provider's.
+_PROVIDER_ERROR_RE = re.compile(
+    r"provider error: HTTP (\d+): (.*)")
+
+
+def install_groq_connector_raw_call(adapter, helper_path=None,
+                                    model=None):
+    """Provide the probe stage's raw call over this
+    transport (see this module's docstring for why it
+    lives here and not in the adapter): a callable taking
+    the probe's request object exactly as the suite builds
+    it and returning the raw capture the probe's protocol
+    defines — {"body", "error_body", "http_status",
+    "diagnostics", "metadata"} — with capture sitting
+    below every layer of response interpretation. Nothing
+    here parses outcomes or classifies; the probe stage
+    does that over what this returns. A transport failure
+    is itself a capture (its kind as the diagnostic),
+    never an exception, exactly as the adapter's own
+    probe_raw_call turns its failures into captures.
+
+    The helper path resolution and the model default
+    mirror install_groq_connector_transport's. The bound
+    is the adapter's configured timeout — the fence the
+    adapter's own probe call runs under (a probe is a
+    pre-activation assembly act; no activation clock
+    exists for it) — enforced by this module's own
+    process-group termination, confirmed before the
+    capture is returned."""
+    if helper_path is None:
+        helper_path = os.environ.get(
+            "GROQ_HELPER_PATH") or os.path.expanduser(
+            "~/workspace/custom-connectors/custom.groq/bin/"
+            "groq_api.py")
+    if model is None:
+        model = adapter.model
+
+    def connector_raw_call(request):
+        body = json.dumps(request).encode("utf-8")
+        bound = float(adapter.timeout)
+        helper_env = dict(os.environ)
+        helper_env["GROQ_API_TIMEOUT"] = repr(bound)
+        try:
+            proc = _Popen(
+                [sys.executable, helper_path, "chat", model],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, start_new_session=True,
+                env=helper_env)
+        except OSError as exc:
+            return {"body": None, "error_body": None,
+                    "http_status": None,
+                    "diagnostics": f"provider_error: "
+                                   f"{type(exc).__name__}",
+                    "metadata": {}}
+        try:
+            out, err = proc.communicate(input=body,
+                                        timeout=bound)
+        except subprocess.TimeoutExpired:
+            # The cancellation boundary, in capture form:
+            # terminate the helper's whole process group
+            # and confirm it ended; the expiry — confirmed
+            # or unresolved — is the capture's diagnostic.
+            try:
+                confirmed = _terminate_and_confirm(proc)
+            except Exception:
+                confirmed = False
+            if confirmed:
+                try:
+                    proc.communicate(timeout=2.0)  # drain
+                except Exception:
+                    pass
+                return {"body": None, "error_body": None,
+                        "http_status": None,
+                        "diagnostics": "no_response: total "
+                                       "deadline exceeded",
+                        "metadata": {}}
+            for stream in (proc.stdin, proc.stdout,
+                           proc.stderr):
+                try:
+                    stream.close()
+                except Exception:
+                    pass
+            return {"body": None, "error_body": None,
+                    "http_status": None,
+                    "diagnostics": "transport_unresolved: "
+                                   "helper process "
+                                   "termination could not "
+                                   "be confirmed after the "
+                                   "deadline",
+                    "metadata": {}}
+        out_text = out.decode("utf-8", "replace")
+        err_text = err.decode("utf-8", "replace")
+        diagnostics = err_text if err_text.strip() else None
+        if proc.returncode == 0:
+            parsed = None
+            try:
+                parsed = json.loads(out_text)
+            except ValueError:
+                parsed = None
+            if isinstance(parsed, dict) and \
+                    parsed.get("error"):
+                # An OpenAI-style error body carried on a
+                # successful helper exit: the provider's
+                # error object, retained as the error body.
+                return {"body": None, "error_body": out_text,
+                        "http_status": None,
+                        "diagnostics": diagnostics,
+                        "metadata": {}}
+            metadata = {}
+            if isinstance(parsed, dict):
+                for key in ("id", "model"):
+                    if parsed.get(key) is not None:
+                        metadata[key] = parsed[key]
+            return {"body": out_text, "error_body": None,
+                    "http_status": 200,
+                    "diagnostics": diagnostics,
+                    "metadata": metadata}
+        # A non-zero helper exit. Where the failure is the
+        # helper's retained provider error, its status and
+        # the error body it retained are extracted; the
+        # full stderr stands separately as the diagnostics
+        # object either way.
+        match = _PROVIDER_ERROR_RE.search(err_text)
+        if match:
+            return {"body": None,
+                    "error_body": match.group(2).strip(),
+                    "http_status": int(match.group(1)),
+                    "diagnostics": err_text,
+                    "metadata": {}}
+        return {"body": None, "error_body": None,
+                "http_status": None,
+                "diagnostics": err_text,
+                "metadata": {}}
+
+    return connector_raw_call

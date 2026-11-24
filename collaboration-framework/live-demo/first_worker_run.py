@@ -60,7 +60,25 @@ and the sealed grants. The historical configuration —
 this mode's absence — is attempts 1–6 exactly as they
 ran. `--verify-config` runs the mode's dry self-check:
 the assembly inputs built and asserted in a throwaway
-directory, with no activation and no provider call. The adapter's transport,
+directory, with no activation and no provider call.
+
+The probed mode (native-mode probe piece, INDEX 285/289)
+is a further configuration of the retrieval mode —
+PROBED=1 (any other PROBED value refuses), defined only
+on the Groq route with RETRIEVAL=1 — and it runs in TWO
+PHASES, because the examiner's judgement stands between
+them in the lifecycle: `--probe-phase1` assembles with
+the probe contract declared, runs the probe stage (five
+live trials over the Groq connector transport's raw
+call), records construction verification naming the
+probe evidence, and stops BEFORE judgement, exporting
+the record and writing probe-evidence.json;
+`--probe-phase2 <mode> <grounds-file>` reopens that run
+directory, records the examiner's judgement (the mode —
+text or native — and its grounds, read from the file),
+and carries the assembly through packing, authorisation,
+activation and the loop exactly as the retrieval mode
+runs it. The adapter's transport,
 however, is NOT the environment-variable key route: attempt
 1 died on it before activation (the key it surfaced was
 rejected, HTTP 401 — INDEX 191). The run's calls are
@@ -87,6 +105,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 sys.path.insert(0, SRC)
 
+from framework import probe as probe_module  # noqa: E402
 from framework import projection  # noqa: E402
 from framework import tool_policy  # noqa: E402
 from framework.adapter import (AdapterFailure,  # noqa: E402
@@ -106,6 +125,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from connector_transport import (  # noqa: E402
     install_connector_transport)
 from groq_connector_transport import (  # noqa: E402
+    install_groq_connector_raw_call,
     install_groq_connector_transport)
 
 RUN_ID = "run-first-worker-1"
@@ -160,6 +180,24 @@ def resolve_retrieval_mode(raw):
         f"(expected unset for the historical configuration, "
         f"or '1' for the attempt-7 retrieval mode); "
         f"refusing to run")
+
+
+def resolve_probed_mode(raw):
+    """The probed-mode flag (PROBED), in the same
+    fail-closed discipline: unset or empty preserves the
+    unprobed configurations; "1" selects the probed mode
+    (defined only on the Groq route with the retrieval
+    mode — the caller refuses it elsewhere); any other
+    value is refused, so a typo can never silently change
+    the experiment."""
+    if raw is None or raw == "":
+        return False
+    if raw == "1":
+        return True
+    raise ValueError(
+        f"PROBED={raw!r} is not a recognised value "
+        f"(expected unset for the unprobed configurations, "
+        f"or '1' for the probed mode); refusing to run")
 
 
 class ModelPinMismatchError(Exception):
@@ -623,10 +661,488 @@ def verify_config():
     return 0 if not problems else 1
 
 
+def _finish_probe_phase1(store, store_path, run_dir,
+                         doorway, assembly_id, instance_id,
+                         generated, probe_result):
+    """Phase 1's close: export the record as it stands
+    (generated, probed, verified — unjudged), write
+    probe-evidence.json (the ASSEMBLY_PROBED payload's
+    essentials; derived matter, labelled as such), and
+    print the plain summary the examiner's judgement will
+    answer to. No judgement, no packing, no activation,
+    no loop."""
+    export_store(store_path,
+                 os.path.join(run_dir, "run-export.json"))
+    probed = doorway._probed_payload(assembly_id) or {}
+    trials = [
+        {"trial": t.get("trial"),
+         "behaviour": t.get("behaviour"),
+         "delivery": t.get("delivery"),
+         "payload_form": t.get("payload_form"),
+         "settled": t.get("settled"),
+         "evidence_complete": t.get("evidence_complete")}
+        for t in probed.get("trials") or []]
+    evidence = {
+        "kind": "first probed-mode run, phase 1 — probe "
+                "evidence (derived matter, not record)",
+        "run_id": RUN_ID,
+        "assembly_id": assembly_id,
+        "instance_id": instance_id,
+        "generated_record_hash":
+            (generated or {}).get("record_hash"),
+        "suite": probed.get("suite"),
+        "suite_hash": probed.get("suite_hash"),
+        "route": probed.get("route"),
+        "model": probed.get("model"),
+        "fingerprint": probed.get("fingerprint"),
+        "evidence_hash": probed.get("evidence_hash"),
+        "settled_count": probed.get("settled_count"),
+        "counts": probed.get("counts"),
+        "recommended_mode": probed.get("recommended_mode"),
+        "trials": trials,
+    }
+    evidence_path = os.path.join(run_dir,
+                                 "probe-evidence.json")
+    with open(evidence_path, "w", encoding="utf-8") as fh:
+        json.dump(evidence, fh, indent=1)
+    counts = probed.get("counts") or {}
+    print("probe phase 1 complete — the assembly stands "
+          "generated, probed and verified; no judgement "
+          "recorded, nothing packed or activated")
+    print(f"probe trials: settled "
+          f"{probed.get('settled_count')} of {len(trials)}; "
+          f"behaviour {counts.get('behaviour')}; delivery "
+          f"{counts.get('delivery')}")
+    print(f"recommended mode: "
+          f"{probed.get('recommended_mode')}")
+    print(f"probe evidence hash: "
+          f"{probed.get('evidence_hash')}")
+    print(f"probe evidence: {evidence_path}")
+    return 0
+
+
+def run_probe_phase2(run_dir, mode, grounds):
+    """Phase 2: reopen a phase-1 run directory and carry
+    its assembly from the examiner's judgement to the
+    finished run, exactly as the retrieval mode runs it.
+    Refuses — before recording anything — where the store
+    does not stand exactly as phase 1 left it: a probe
+    must stand, no judgement may stand yet, and nothing
+    may stand activated."""
+    store_path = os.path.join(run_dir, "run.db")
+    if not os.path.exists(store_path):
+        print(f"ABORT: no phase-1 run store stands at "
+              f"{store_path}; run --probe-phase1 first",
+              file=sys.stderr)
+        return 1
+    store = FrameworkStore(store_path)
+    doorway = Doorway(store)
+    gen = Generator(doorway)
+    tok = {s: doorway.issue_token(s)
+           for s in ("orch-1", "exam-1", "dir-1", "crew-1")}
+    state = doorway.state()
+    assemblies = state.get("assemblies") or {}
+    if len(assemblies) != 1:
+        print(f"ABORT: the record carries "
+              f"{len(assemblies)} assemblies, not the one "
+              f"phase 1 assembles; refusing to run",
+              file=sys.stderr)
+        return 1
+    assembly_id, entry = next(iter(assemblies.items()))
+    instance_id = entry.get("instance_id")
+    event_types = [e["type"] for e in store.all_events()]
+    if "ASSEMBLY_PROBED" not in event_types:
+        print("ABORT: no ASSEMBLY_PROBED stands in the "
+              "record; this run directory is not a phase-1 "
+              "probed run", file=sys.stderr)
+        return 1
+    if "ASSEMBLY_JUDGED" in event_types:
+        print("ABORT: an ASSEMBLY_JUDGED already stands "
+              "in the record; phase 2 records the "
+              "judgement exactly once", file=sys.stderr)
+        return 1
+    if "INSTANCE_ACTIVATED" in event_types:
+        print("ABORT: the instance already stands "
+              "activated; this run has already been "
+              "carried through phase 2", file=sys.stderr)
+        return 1
+    with open(os.path.join(run_dir, "manifest.json"),
+              encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    manifest_hash = _sha256_bytes(json.dumps(
+        manifest, sort_keys=True,
+        separators=(",", ":")).encode("utf-8"))
+    adapter = _build_adapter("groq")
+    judgement = gen.judgement(
+        assembly_id, adapter_mode=mode,
+        mode_grounds=grounds)
+    if judgement is None:
+        print("ABORT: the judgement payload cannot be "
+              "computed; the generated record does not "
+              "stand", file=sys.stderr)
+        return 1
+    probed = doorway._probed_payload(assembly_id) or {}
+    print(f"probe phase 2 — the examiner's judgement: "
+          f"mode {mode!r}, on the standing probe evidence "
+          f"{probed.get('evidence_hash')}")
+    return _judge_pack_run(
+        doorway, gen, tok, store, store_path, run_dir,
+        os.path.join(run_dir, "sandbox"), "groq", True,
+        adapter, manifest, manifest_hash, assembly_id,
+        instance_id, judgement,
+        {"probed_mode": True, "adapter_mode": mode})
+
+
+def _stub_probe_captures():
+    """The probed verify-config's scripted raw captures:
+    five captures in the probe protocol's shape — a
+    native-catalogue answer, a text-contract answer, the
+    commentary hybrid the provider refuses to deliver
+    (the empirical run's shape, INDEX 274), then the two
+    again — so the dry run exercises the probe stage's
+    classification of every shape that matters without
+    any provider call."""
+    native_body = json.dumps({
+        "id": "chatcmpl-probe-verify",
+        "model": GROQ_MODEL_PIN,
+        "choices": [{"index": 0, "message": {
+            "role": "assistant", "content": None,
+            "tool_calls": [{
+                "id": "fc_verify1", "type": "function",
+                "function": {
+                    "name": "probe.lookup",
+                    "arguments": json.dumps(
+                        {"object": "brass lantern"})}}]}}]})
+    text_body = json.dumps({
+        "id": "chatcmpl-probe-verify",
+        "model": GROQ_MODEL_PIN,
+        "choices": [{"index": 0, "message": {
+            "role": "assistant",
+            "content": json.dumps({
+                "outcome": "tool_requests",
+                "tool_requests": [{
+                    "tool": "probe.lookup",
+                    "parameters": {
+                        "object": "brass lantern"}}]})}}]})
+    hybrid_error = json.dumps({"error": {
+        "message": "attempted to call tool 'commentary' "
+                   "which was not in request.tools",
+        "code": "tool_use_failed",
+        "failed_generation": json.dumps({
+            "name": "commentary",
+            "arguments": json.dumps({"tool_requests": [{
+                "tool": "probe.lookup",
+                "parameters": {
+                    "object": "brass lantern"}}]})})}})
+    accepted = {"http_status": 200, "error_body": None,
+                "diagnostics": None,
+                "metadata": {"id": "chatcmpl-probe-verify",
+                             "model": GROQ_MODEL_PIN}}
+    return [
+        dict(accepted, body=native_body),
+        dict(accepted, body=text_body),
+        {"body": None, "error_body": hybrid_error,
+         "http_status": 400,
+         "diagnostics": "stub helper: provider error "
+                        "(scripted capture)",
+         "metadata": {}},
+        dict(accepted, body=native_body),
+        dict(accepted, body=text_body),
+    ]
+
+
+def verify_config_probed():
+    """The dry self-check for the probed mode: the
+    retrieval configuration's assembly path, plus
+    generation under the probe contract, the probe stage
+    run against a STUB raw call (scripted captures — no
+    provider call of any kind), and construction
+    verification naming the probe evidence. Asserts the
+    record's event sequence (GENERATED -> PROBED ->
+    VERIFIED, and nothing past it) and the probe
+    payload's shape, with no judgement, no packing and
+    no activation. Prints the outcome as JSON; returns
+    0 or 1."""
+    problems = []
+
+    def expect(label, cond):
+        if not cond:
+            problems.append(label)
+        return cond
+
+    tmp = tempfile.mkdtemp(prefix="first-worker-verify-"
+                                 "probed-")
+    run_dir = os.path.join(tmp, "run")
+    os.makedirs(run_dir)
+    manifest, manifest_hash = stage(run_dir)
+    store = FrameworkStore(os.path.join(run_dir, "run.db"))
+    store.insert_run(RUN_ID, CONSTITUTION_HASH)
+    store.append("RUN_COMMISSIONED", "dir-1", [], {
+        "run_id": RUN_ID,
+        "tree": {"part-A": []},
+        "seats": {
+            "orch-1": {"role": "orchestrator",
+                       "identity_status": "declared"},
+            "exam-1": {"role": "examiner",
+                       "identity_status": "declared"},
+            "dir-1": {"role": "director",
+                      "identity_status": "declared"},
+            "crew-1": {"role": "crew",
+                       "identity_status": "unverified"},
+        },
+        "briefs": {"crew-1": _commission_brief(
+            ASSIGNMENT_RETRIEVAL, manifest_hash)},
+    })
+    store.commit()
+    doorway = Doorway(store)
+    office = Office(doorway)
+    gen = Generator(doorway)
+    tok = {s: doorway.issue_token(s)
+           for s in ("orch-1", "exam-1", "dir-1", "crew-1")}
+    _act(doorway, tok["orch-1"], "MATERIAL_SEALED", {
+        "material_id": f"source-manifest sha256:"
+                       f"{manifest_hash}",
+        "boundary": ["crew-1"]})
+    for entry in manifest["sources"]:
+        _act(doorway, tok["orch-1"], "MATERIAL_SEALED", {
+            "material_id": f"{entry['path']} "
+                           f"sha256:{entry['sha256']}",
+            "boundary": ["crew-1"]})
+    issued = office.issue_new(tok["orch-1"], "crew-1")
+    if not expect("the case issues through the office route",
+                  bool(issued.get("ok"))):
+        print(json.dumps({"verify_config": "failed",
+                          "problems": problems}, indent=1))
+        return 1
+    _act(doorway, tok["exam-1"], "CASE_JUDGED",
+         {"case_id": issued["case_id"],
+          "version": issued["version"]})
+    office.authorise(tok["orch-1"], issued["case_id"],
+                     issued["version"])
+    content, _version = established_case_content(
+        doorway.state(), issued["case_id"])
+    content = content or {}
+    boundary = content.get("evidence_boundary") or []
+    expect("the issued case's evidence boundary identifies "
+           "the source manifest hash",
+           any(manifest_hash in str(item) for item in boundary))
+    expect("the issued case carries the scoped bounds "
+           "{12, 600}",
+           content.get("loop_bounds") == BOUNDS)
+    assignment = content.get("assignment") or ""
+    expect("the issued case's assignment names "
+           "scratch/brief.md exactly",
+           BRIEF_SANDBOX_PATH in assignment)
+    gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                role_requirements="a model able to read three "
+                                  "source documents and write "
+                                  "a short, accurate, "
+                                  "plain-words brief")
+    generated = gen.generate(
+        tok["orch-1"], "crew-1",
+        {"declaration": "verify-config stub identity (no "
+                        "provider call is made by this check)",
+         "provider_model_id": GROQ_MODEL_PIN},
+        skills=[], grants=GRANTS_RETRIEVAL,
+        model_requested=GROQ_MODEL_PIN, retrieval=True,
+        probe=True)
+    if not expect("generation succeeds under the stub "
+                  "identity", bool(generated.get("ok"))):
+        print(json.dumps({"verify_config": "failed",
+                          "problems": problems}, indent=1))
+        return 1
+    assembly_id = generated["assembly_id"]
+    sealed = doorway._generated_payload(assembly_id) or {}
+    expect("the sealed record declares the retrieval "
+           "contract",
+           sealed.get("catalogue_contract")
+           == tool_policy.RETRIEVAL_CATALOGUE_CONTRACT)
+    expect("the sealed record declares the probe "
+           "contract",
+           sealed.get("probe_contract")
+           == probe_module.PROBE_CONTRACT)
+    sealed_pairs = sorted(
+        (g.get("tool"),
+         (g.get("scope_ceiling") or {}).get("path_prefix"))
+        for g in sealed.get("grants") or [])
+    expected_pairs = sorted(
+        (g["tool"], g["scope_ceiling"]["path_prefix"])
+        for g in GRANTS_RETRIEVAL)
+    expect("the sealed grants are exactly the two-path set",
+           sealed_pairs == expected_pairs)
+    expect("a sealed write grant's scope covers "
+           "scratch/brief.md under the v3 ceiling contract",
+           _write_grant_problem(sealed.get("grants")) is None)
+    captures = _stub_probe_captures()
+    scripted = iter(captures)
+
+    def stub_raw_call(request):
+        return next(scripted)
+
+    probed_result = gen.probe(
+        tok["orch-1"], assembly_id, stub_raw_call,
+        route="groq", model=GROQ_MODEL_PIN)
+    expect("the probe stage records against the stub raw "
+           "call", bool(probed_result.get("ok")))
+    probed = doorway._probed_payload(assembly_id) or {}
+    trials = probed.get("trials") or []
+    expect("the probe payload carries five trials",
+           len(trials) == 5)
+    behaviours = [t.get("behaviour") for t in trials]
+    expect("the scripted native answers classify "
+           "native_catalogue (x2)",
+           behaviours.count("native_catalogue") == 2)
+    expect("the scripted text answers classify "
+           "text_contract (x2)",
+           behaviours.count("text_contract") == 2)
+    hybrid = trials[2] if len(trials) > 2 else {}
+    expect("the scripted hybrid classifies as "
+           "environment_tool_attempt x provider_refused "
+           "with payload_form text_contract_json",
+           hybrid.get("behaviour") ==
+           "environment_tool_attempt" and
+           hybrid.get("delivery") == "provider_refused" and
+           hybrid.get("payload_form") ==
+           "text_contract_json")
+    expect("all five scripted trials settle",
+           probed.get("settled_count") == 5)
+    expect("the split scripted distribution recommends no "
+           "mode (2 native, 2 text, 1 refused attempt — "
+           "no strict majority of the settled)",
+           probed.get("recommended_mode") is None)
+    expect("the probe payload's fingerprint is the Groq "
+           "configuration's fingerprint",
+           probed.get("fingerprint") ==
+           probe_module.configuration_fingerprint(
+               "groq", GROQ_MODEL_PIN))
+    expect("the probe payload's evidence hash recomputes "
+           "from the payload",
+           probed.get("evidence_hash") ==
+           probe_module.evidence_hash(probed))
+    gen.verify(tok["orch-1"], assembly_id)
+    events = store.all_events()
+    seqs = {}
+    for e in events:
+        seqs.setdefault(e["type"], e["event_seq"])
+    order = [seqs.get(t) for t in (
+        "ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",
+        "ASSEMBLY_VERIFIED")]
+    expect("the event sequence runs ASSEMBLY_GENERATED "
+           "-> ASSEMBLY_PROBED -> ASSEMBLY_VERIFIED in "
+           "that order",
+           all(s is not None for s in order) and
+           order == sorted(order))
+    verified = [e for e in events
+                if e["type"] == "ASSEMBLY_VERIFIED"]
+    expect("the construction verification names the probe "
+           "evidence hash",
+           bool(verified) and
+           verified[0]["payload"].get(
+               "probe_evidence_hash") ==
+           probed.get("evidence_hash"))
+    event_types = [e["type"] for e in events]
+    for absent in ("ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
+                   "ASSEMBLY_ISSUE_AUTHORISED",
+                   "INSTANCE_ACTIVATED", "LOOP_ITERATION"):
+        expect(f"no {absent} stands in the record (the "
+               f"check stops before judgement)",
+               absent not in event_types)
+    report = {
+        "verify_config": "ok" if not problems else "failed",
+        "mode": "probed (WORKER_ROUTE=groq, RETRIEVAL=1, "
+                "PROBED=1)",
+        "manifest_hash": manifest_hash,
+        "sealed_catalogue_contract":
+            sealed.get("catalogue_contract"),
+        "sealed_probe_contract": sealed.get("probe_contract"),
+        "probe": {
+            "suite": probed.get("suite"),
+            "fingerprint": probed.get("fingerprint"),
+            "evidence_hash": probed.get("evidence_hash"),
+            "settled_count": probed.get("settled_count"),
+            "counts": probed.get("counts"),
+            "recommended_mode":
+                probed.get("recommended_mode"),
+            "trials": [
+                {"trial": t.get("trial"),
+                 "behaviour": t.get("behaviour"),
+                 "delivery": t.get("delivery"),
+                 "payload_form": t.get("payload_form")}
+                for t in trials],
+        },
+        "event_sequence": [
+            e["type"] for e in events
+            if e["type"].startswith("ASSEMBLY_")],
+        "judgement_recorded": False,
+        "activation_performed": False,
+        "provider_call_made": False,
+        "problems": problems,
+    }
+    print(json.dumps(report, indent=1))
+    return 0 if not problems else 1
+
+
+def _build_adapter(route):
+    """The run's adapter, configured as the Piece 8 live
+    harness configures it (endpoint / model / timeout from
+    the environment), with its transport then carried
+    through the registered connector helper (INDEX
+    191/192): the environment-variable key route is not
+    used by this harness — attempt 1 was rejected on it
+    before activation — and the connector credential in
+    the Secure Vault is the sanctioned route. The
+    adapter's contract, strict validation, outcome typing
+    and deadline behaviour are unchanged; only _call's
+    transport is replaced, under the examiner's
+    cancellation boundary (connector_transport.py). On
+    the Groq route the model is PINNED (the pin overrides
+    ADAPTER_MODEL for the run) and the transport is the
+    Groq twin, through the Groq connector helper
+    (GROQ_HELPER_PATH overridable for witnesses)."""
+    if route == "groq":
+        adapter = OpenAICompatibleAdapter(
+            endpoint=os.environ.get("ADAPTER_ENDPOINT",
+                                    GROQ_ENDPOINT),
+            model=GROQ_MODEL_PIN,
+            timeout=float(os.environ.get("ADAPTER_TIMEOUT",
+                                         "120")))
+        install_groq_connector_transport(
+            adapter,
+            os.environ.get("GROQ_HELPER_PATH",
+                           GROQ_CONNECTOR_HELPER),
+            adapter.model)
+        return adapter
+    adapter = OpenAICompatibleAdapter(
+        endpoint=os.environ.get(
+            "ADAPTER_ENDPOINT",
+            "https://integrate.api.nvidia.com/v1/chat/"
+            "completions"),
+        model=os.environ.get("ADAPTER_MODEL",
+                             MODEL_DEFAULT),
+        timeout=float(os.environ.get("ADAPTER_TIMEOUT",
+                                     "120")))
+    install_connector_transport(adapter, CONNECTOR_HELPER,
+                                adapter.model)
+    return adapter
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     verify_only = "--verify-config" in argv
     argv = [a for a in argv if a != "--verify-config"]
+    phase1 = "--probe-phase1" in argv
+    argv = [a for a in argv if a != "--probe-phase1"]
+    phase2 = None
+    if "--probe-phase2" in argv:
+        at = argv.index("--probe-phase2")
+        following = argv[at + 1:]
+        if len(following) < 2:
+            print("ABORT: --probe-phase2 takes a mode and "
+                  "a grounds file: --probe-phase2 <mode> "
+                  "<grounds-file>", file=sys.stderr)
+            return 2
+        phase2 = (following[0], following[1])
+        argv = argv[:at] + following[2:]
     # Route and mode selection first, before any staging or
     # assembly work (INDEX 230, correction 3): an invalid
     # value refuses outright and nothing is staged.
@@ -635,6 +1151,8 @@ def main(argv=None):
             os.environ.get("WORKER_ROUTE"))
         retrieval = resolve_retrieval_mode(
             os.environ.get("RETRIEVAL"))
+        probed = resolve_probed_mode(
+            os.environ.get("PROBED"))
     except ValueError as exc:
         print(f"ABORT: {exc}", file=sys.stderr)
         return 2
@@ -644,7 +1162,26 @@ def main(argv=None):
               "route (WORKER_ROUTE=groq); refusing to run",
               file=sys.stderr)
         return 2
+    if probed and not (route == "groq" and retrieval):
+        print("ABORT: PROBED=1 selects the probed mode, "
+              "which is defined on the Groq route with the "
+              "retrieval mode (WORKER_ROUTE=groq, "
+              "RETRIEVAL=1); refusing to run",
+              file=sys.stderr)
+        return 2
+    if (phase1 or phase2 is not None) and not probed:
+        print("ABORT: --probe-phase1 / --probe-phase2 "
+              "require the probed mode (PROBED=1); refusing "
+              "to run", file=sys.stderr)
+        return 2
+    if phase1 and phase2 is not None:
+        print("ABORT: --probe-phase1 and --probe-phase2 "
+              "are distinct invocations; refusing to run",
+              file=sys.stderr)
+        return 2
     if verify_only:
+        if probed:
+            return verify_config_probed()
         if not retrieval:
             print("ABORT: --verify-config verifies the "
                   "retrieval mode's configuration; set "
@@ -654,6 +1191,35 @@ def main(argv=None):
         return verify_config()
     name = "first-worker" + (f"-{argv[0]}" if argv else "")
     run_dir = os.path.join(ROOT, "live-demo", name)
+    if phase2 is not None:
+        mode, grounds_path = phase2
+        if mode not in probe_module.ADAPTER_MODES:
+            print(f"ABORT: --probe-phase2 mode {mode!r} is "
+                  f"not an adapter mode (the modes are "
+                  f"{probe_module.ADAPTER_MODES}); refusing "
+                  f"to run", file=sys.stderr)
+            return 2
+        try:
+            with open(grounds_path, encoding="utf-8") as fh:
+                grounds = fh.read().strip()
+        except OSError as exc:
+            print(f"ABORT: the grounds file cannot be "
+                  f"read: {exc}", file=sys.stderr)
+            return 2
+        if not grounds:
+            print("ABORT: the grounds file is empty; a "
+                  "judgement under the probe regime stands "
+                  "on stated grounds", file=sys.stderr)
+            return 2
+        return run_probe_phase2(run_dir, mode, grounds)
+    if probed and not phase1:
+        print("ABORT: PROBED=1 runs in two phases "
+              "(--probe-phase1, then --probe-phase2 <mode> "
+              "<grounds-file>); there is no single-"
+              "invocation probed run, because the "
+              "examiner's judgement stands between the "
+              "phases", file=sys.stderr)
+        return 2
     store_path = os.path.join(run_dir, "run.db")
     if os.path.exists(store_path):
         print(f"refusing to overwrite the existing run store "
@@ -661,6 +1227,21 @@ def main(argv=None):
               f"for a fresh directory", file=sys.stderr)
         return 1
     os.makedirs(run_dir, exist_ok=True)
+    return _run_fresh(run_dir, route, retrieval, probed,
+                      phase1)
+
+
+def _run_fresh(run_dir, route, retrieval, probed, phase1):
+    """A fresh run directory's front flow: staging,
+    commission, issue, pre-activation verification and
+    assembly — and, in the probed mode, the probe stage
+    and construction verification. The unprobed
+    configurations finish from the judgement onward
+    through _judge_pack_run; the probed mode's phase 1
+    stops before judgement (_finish_probe_phase1), and
+    its phase 2 reopens the directory and finishes the
+    same way (run_probe_phase2)."""
+    store_path = os.path.join(run_dir, "run.db")
     sandbox = os.path.join(run_dir, "sandbox")
 
     # 1. STAGE — sources fixed by manifest before anything
@@ -774,47 +1355,10 @@ def main(argv=None):
               f"{BRIEF_SANDBOX_PATH}; the configured write "
               "grant's scope covers it")
 
-    # The adapter, configured as the Piece 8 live harness
-    # configures it (endpoint / model / timeout from the
-    # environment), with its transport then carried through
-    # the registered connector helper (INDEX 191/192): the
-    # environment-variable key route is not used by this
-    # harness — attempt 1 was rejected on it before
-    # activation — and the connector credential in the
-    # Secure Vault is the sanctioned route. The adapter's
-    # contract, strict validation, outcome typing and
-    # deadline behaviour are unchanged; only _call's
-    # transport is replaced, under the examiner's
-    # cancellation boundary (connector_transport.py).
-    if route == "groq":
-        # The Groq route: the model is PINNED (the pin
-        # overrides ADAPTER_MODEL for the run) and the
-        # transport is the Groq twin, through the Groq
-        # connector helper (GROQ_HELPER_PATH overridable
-        # for witnesses).
-        adapter = OpenAICompatibleAdapter(
-            endpoint=os.environ.get("ADAPTER_ENDPOINT",
-                                    GROQ_ENDPOINT),
-            model=GROQ_MODEL_PIN,
-            timeout=float(os.environ.get("ADAPTER_TIMEOUT",
-                                         "120")))
-        install_groq_connector_transport(
-            adapter,
-            os.environ.get("GROQ_HELPER_PATH",
-                           GROQ_CONNECTOR_HELPER),
-            adapter.model)
-    else:
-        adapter = OpenAICompatibleAdapter(
-            endpoint=os.environ.get(
-                "ADAPTER_ENDPOINT",
-                "https://integrate.api.nvidia.com/v1/chat/"
-                "completions"),
-            model=os.environ.get("ADAPTER_MODEL",
-                                 MODEL_DEFAULT),
-            timeout=float(os.environ.get("ADAPTER_TIMEOUT",
-                                         "120")))
-        install_connector_transport(adapter, CONNECTOR_HELPER,
-                                    adapter.model)
+    # The adapter and its connector transport (see
+    # _build_adapter): the sanctioned credential route,
+    # never the environment-variable key route.
+    adapter = _build_adapter(route)
 
     # 4. ASSEMBLE — the full A1 lifecycle. identify() is the
     # adapter's own identity call; skills are honestly empty
@@ -835,7 +1379,7 @@ def main(argv=None):
             skills=[],
             grants=GRANTS_RETRIEVAL if retrieval else GRANTS,
             model_requested=adapter.model,
-            retrieval=retrieval)
+            retrieval=retrieval, probe=probed)
     except ModelPinMismatchError as mismatch:
         # The pre-activation stop (INDEX 230, correction 2):
         # record the abort and its reason, export the record
@@ -902,9 +1446,61 @@ def main(argv=None):
                   f"the deliverable: {grant_problem}",
                   file=sys.stderr)
             return 1
+    probe_result = None
+    if probed:
+        # The probe stage (probe scope §2): five bounded
+        # trials against the pinned model, captured below
+        # interpretation over the Groq connector
+        # transport's raw call — the adapter's own
+        # probe_raw_call rides its built-in transport and
+        # cannot travel this route (see
+        # groq_connector_transport.py). The stage records
+        # ASSEMBLY_PROBED between generation and
+        # verification, binding its evidence to the exact
+        # generated record; nothing it captures is
+        # dispatched or executed, and no tool results are
+        # sent back.
+        raw_call = install_groq_connector_raw_call(
+            adapter,
+            os.environ.get("GROQ_HELPER_PATH",
+                           GROQ_CONNECTOR_HELPER),
+            adapter.model)
+        probe_result = gen.probe(
+            tok["orch-1"], assembly_id, raw_call,
+            route="groq", model=GROQ_MODEL_PIN)
     gen.verify(tok["orch-1"], assembly_id)
+    if phase1:
+        # Phase 1 stops here — before judgement, whose
+        # mode and grounds are the examiner's, supplied in
+        # phase 2. The record as it stands is exported and
+        # the probe evidence written beside it.
+        return _finish_probe_phase1(
+            store, store_path, run_dir, doorway,
+            assembly_id, instance_id, generated,
+            probe_result)
+    return _judge_pack_run(
+        doorway, gen, tok, store, store_path, run_dir,
+        sandbox, route, retrieval, adapter, manifest,
+        manifest_hash, assembly_id, instance_id,
+        gen.judgement(assembly_id), None)
+
+
+def _judge_pack_run(doorway, gen, tok, store, store_path,
+                    run_dir, sandbox, route, retrieval,
+                    adapter, manifest, manifest_hash,
+                    assembly_id, instance_id,
+                    judgement_payload, extra_report):
+    """The lifecycle from the examiner's judgement onward,
+    exactly as the run modes have always carried it:
+    judgement, pack, issue authorisation, the executor
+    constructed before activation, activation, the bounded
+    loop, and the report. Under the probe regime the
+    judgement payload is the caller's — computed by
+    gen.judgement with the examiner's mode and grounds —
+    and the loop reads the mode from the packed act
+    itself, so nothing here selects or overrides it."""
     _act(doorway, tok["exam-1"], "ASSEMBLY_JUDGED",
-         gen.judgement(assembly_id))
+         judgement_payload)
     packed = gen.pack(tok["orch-1"], assembly_id)
     gen.authorise(tok["orch-1"], assembly_id)
     executor = Executor(doorway, sandbox,
@@ -995,6 +1591,8 @@ def main(argv=None):
         "event_count": len(events),
         "checker": verdict.get("checks"),
     }
+    if extra_report:
+        report.update(extra_report)
     report_path = os.path.join(run_dir, "report.json")
     with open(report_path, "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=1)

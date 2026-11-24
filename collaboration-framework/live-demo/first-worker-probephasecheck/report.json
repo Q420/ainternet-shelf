@@ -1,0 +1,174 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "worker_route": "groq",
+ "retrieval_mode": true,
+ "brief_sandbox_path": "scratch/brief.md",
+ "model_pinned": "openai/gpt-oss-120b",
+ "model_requested": "openai/gpt-oss-120b",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 1,
+  "recorded": [
+   {
+    "event_seq": 17,
+    "event_id": "02032379-21b2-4114-9ced-5a272fc2917e",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 16,
+     "catalogue_hash": "4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398",
+     "registry_version": "tool-registry-v3"
+    },
+    "ts": "2026-11-24T03:24:10Z",
+    "prev_hash": "b086d500d37537729c599a31ac34d0a283576dccf1758c3bb8907756796bb3fc",
+    "hash": "6106cbd35d148617af5e443edcfb8cabd8e16aef995c12eaf34c195984f5ec96"
+   }
+  ],
+  "refused": [],
+  "dispatched": [],
+  "call_timings": [
+   {
+    "iteration": 1,
+    "package_construction_s": 0.0016579670000282931,
+    "render_s": 0.0006270399999266374,
+    "transport_stages": {
+     "body_preparation_s": 0.00020543800019368064,
+     "helper_launch_s": 0.000949904999743012,
+     "submission_provider_wait_receipt_s": 1.2221110069999668,
+     "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+     "response_parsing_s": 2.719999974942766e-05
+    },
+    "total_call_s": 1.2241492749999452
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 18,
+   "event_id": "38e164c7-f539-46f2-ad3d-528b2dd6c27e",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 16,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 1,
+    "detail": "provider_error: connector helper exited 1: Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 100, in call\n    with opener.open(request,\n         ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 400: Bad Request\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 131, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 124, in main\n    print(json.dumps(call(req)))\n                     ^^^^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 104, in call\n    raise _provider_error(error) from error\nRuntimeError: provider error: HTTP 400: {\"error\":{\"message\":\"Tool choice is none, but model called a tool\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"container.exec\\\", \\\"arguments\\\": {\\\"cmd\\\":[\\\"bash\\\",\\\"lc\\\",\\\"python - \\u003c\\u003c 'PY'\\\\nprint('test')\\\\nPY\\\"]}}\"}}"
+   },
+   "ts": "2026-11-24T03:24:11Z",
+   "prev_hash": "6106cbd35d148617af5e443edcfb8cabd8e16aef995c12eaf34c195984f5ec96",
+   "hash": "6ed44e7261a3ba6f87ab9ef9824c9e52d5a177bd0c58a6b35d912d6f6c97c859"
+  }
+ },
+ "iterations": 1,
+ "call_timings": [
+  {
+   "iteration": 1,
+   "package_construction_s": 0.0016579670000282931,
+   "render_s": 0.0006270399999266374,
+   "transport_stages": {
+    "body_preparation_s": 0.00020543800019368064,
+    "helper_launch_s": 0.000949904999743012,
+    "submission_provider_wait_receipt_s": 1.2221110069999668,
+    "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+    "response_parsing_s": 2.719999974942766e-05
+   },
+   "total_call_s": 1.2241492749999452
+  }
+ ],
+ "call_timings_note": "per-iteration stage timings measured directly by the loop, the adapter and the connector transport (INDEX 217/219): package construction, prompt rendering, and the transport's stages, with stages the interface cannot separate labelled as such and unmeasured stages null. Local cancellation of a helper process never proves the upstream provider stopped processing its request.",
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 18
+ },
+ "dispatches": [],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m ChatGPT, a large language model built on OpenAI\u2019s GPT\u20114 architecture. I\u2019m provided and maintained by OpenAI.\n\n**What I can do**\n- Understand and generate natural\u2011language text across many topics.\n- Answer questions, explain concepts, and carry out informal tutoring.\n- Summarize, translate, and rewrite text in different styles or tones.\n- Help with programming tasks: write, debug, and explain code in many languages.\n- Perform basic calculations, reason through puzzles, and work through step\u2011by\u2011step problems.\n- Generate creative content such as stories, poems, or brainstorming ideas.\n- Assist with drafting emails, reports, outlines, and other written documents.\n\n**What I can\u2019t do**\n- Access the internet, real\u2011time data, or external databases unless the information is supplied in the conversation.\n- View or manipulate files, images, or other media unless they\u2019re provided in a supported format.\n- Provide personal data about private individuals or perform actions that would violate privacy or security policies.\n- Execute code, run simulations, or interact with external systems directly.\n- Guarantee absolute factual accuracy; I may generate plausible\u2011sounding but incorrect information (hallucinations).\n- Offer professional advice that requires a licensed expert (e.g., medical, legal, financial) beyond general informational guidance.\n\nMy knowledge is current up to June\u202f2024, and I operate within the usage policies set by OpenAI.",
+  "provider_model_id": "openai/gpt-oss-120b",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 18,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ }
+}

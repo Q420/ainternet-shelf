@@ -51,6 +51,20 @@ Route selection: unset -> NVIDIA, "groq" -> Groq, any
    other non-empty value refuses (unit level), and a
    harness subprocess with a typo'd WORKER_ROUTE exits
    non-zero having staged nothing.
+W10 native-mode staging (INDEX 289 release preparation):
+   definitions the adapter staged on its instance cross
+   the transport as the body's tools field, exactly as
+   staged, with a staged tool choice as tool_choice;
+   with nothing staged the body is byte-identical to the
+   pre-change construction and carries no tools field.
+W11 the probe raw call over this transport: a success
+   returns the provider body as received with status
+   and metadata; a provider HTTP error (a stub helper
+   failing in the real helper's shape) yields the status
+   and the retained error body as distinct objects from
+   the diagnostics, and the refused commentary-hybrid
+   capture classifies as the attempt-8 shape under the
+   framework probe's own classification.
 
 Run: PYTHONPATH=src python3 \
     live-demo/test_groq_connector_transport.py
@@ -178,6 +192,31 @@ print(json.dumps({
         "role": "assistant", "content": content}}]}))
 ''' % (DECLARATION, YIELD_CONTENT)
 
+# A helper failing the way the REAL helper fails on a
+# provider HTTP error (INDEX 261/262): a traceback on
+# stderr whose final line is the RuntimeError carrying
+# the status and the retained error body — here the
+# commentary-hybrid refusal of the empirical probe run.
+STUB_RAWERR = '''\
+import json, sys
+sys.stdin.buffer.read()
+body = {"error": {
+    "message": "attempted to call tool 'commentary' which "
+               "was not in request.tools",
+    "code": "tool_use_failed",
+    "failed_generation": json.dumps({
+        "name": "commentary",
+        "arguments": json.dumps({"tool_requests": [
+            {"tool": "probe.lookup",
+             "parameters": {"object": "brass lantern"}}]})})}}
+sys.stderr.write("Traceback (most recent call last):\\n")
+sys.stderr.write("  File \\"groq_api.py\\", line 104, "
+                 "in call\\n")
+sys.stderr.write("RuntimeError: provider error: "
+                 "HTTP 400: " + json.dumps(body) + "\\n")
+sys.exit(1)
+'''
+
 TMP = tempfile.mkdtemp(prefix="groq-transport-witness-")
 PATHS = {}
 for name, body in (("ok", STUB_OK), ("sleep", STUB_SLEEP),
@@ -185,7 +224,8 @@ for name, body in (("ok", STUB_OK), ("sleep", STUB_SLEEP),
                    ("notjson", STUB_NOTJSON),
                    ("nochoices", STUB_NOCHOICES),
                    ("errorbody", STUB_ERRORBODY),
-                   ("wrongmodel", STUB_WRONG_MODEL)):
+                   ("wrongmodel", STUB_WRONG_MODEL),
+                   ("rawerr", STUB_RAWERR)):
     p = os.path.join(TMP, f"stub_{name}.py")
     with open(p, "w", encoding="utf-8") as fh:
         fh.write(body)
@@ -736,6 +776,114 @@ try:
 finally:
     urllib.request.build_opener = real_build_opener
     helper_mod.add_surrogate_to_request = real_surrogate
+
+# -- W10: native-mode staging crosses the transport
+# (INDEX 289 release preparation). The adapter stages
+# its offered definitions on the instance for the one
+# call (adapter A8); this transport — which replaces
+# _call — must read the staging itself.
+os.environ["STUB_RECORD"] = RECORD
+adapter10 = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+install_groq_connector_transport(adapter10, PATHS["ok"],
+                                 PIN)
+DEFS10 = [{"type": "function", "function": {
+    "name": "probe.lookup",
+    "description": "Look up a named object (stub def).",
+    "parameters": {"type": "object",
+                   "properties": {
+                       "object": {"type": "string"}},
+                   "required": ["object"]}}}]
+adapter10._pending_tools = DEFS10
+adapter10._call(MESSAGES)
+adapter10._pending_tools = None
+with open(RECORD, "rb") as fh:
+    sent10 = json.loads(fh.read().decode("utf-8"))
+check("W10: with definitions staged, the body the helper "
+      "received carries exactly those definitions as its "
+      "tools field", sent10.get("tools") == DEFS10)
+check("W10: the staged body carries the adapter's own "
+      "fields unchanged and no tool_choice stands in it",
+      sent10.get("model") == PIN and
+      sent10.get("messages") == MESSAGES and
+      sent10.get("temperature") == 0.2 and
+      "tool_choice" not in sent10)
+adapter10._call(MESSAGES)
+with open(RECORD, "rb") as fh:
+    raw10b = fh.read()
+check("W10: with nothing staged the body is byte-"
+      "identical to the pre-change construction and "
+      "carries no tools field",
+      raw10b == expected_body and
+      "tools" not in json.loads(raw10b.decode("utf-8")))
+adapter10._pending_tools = DEFS10
+adapter10._pending_tool_choice = "auto"
+adapter10._call(MESSAGES)
+adapter10._pending_tools = None
+adapter10._pending_tool_choice = None
+with open(RECORD, "rb") as fh:
+    sent10c = json.loads(fh.read().decode("utf-8"))
+check("W10: a staged tool choice crosses as the body's "
+      "tool_choice field, beside the staged definitions",
+      sent10c.get("tool_choice") == "auto" and
+      sent10c.get("tools") == DEFS10)
+os.environ.pop("STUB_RECORD", None)
+
+# -- W11: the probe raw call over this transport. The
+# adapter's own probe_raw_call rides its built-in
+# _exchange and cannot travel this route; the transport
+# layer's raw call is witnessed here against stub
+# helpers, and its captures are read by the framework
+# probe's own classification.
+from framework import probe as probe_module  # noqa: E402
+from groq_connector_transport import (  # noqa: E402
+    install_groq_connector_raw_call)
+adapter11 = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
+raw_call11 = install_groq_connector_raw_call(
+    adapter11, PATHS["ok"], PIN)
+request11 = probe_module.build_request(PIN)
+capture11 = raw_call11(request11)
+body11 = None
+try:
+    body11 = json.loads(capture11.get("body") or "")
+except ValueError:
+    body11 = None
+check("W11: a successful raw call returns the provider "
+      "body as received, status 200, and no error body",
+      isinstance(body11, dict) and
+      capture11.get("http_status") == 200 and
+      capture11.get("error_body") is None,
+      f"status={capture11.get('http_status')}")
+check("W11: the raw capture's metadata names the "
+      "provider-reported model id",
+      (capture11.get("metadata") or {}).get("model") ==
+      PIN)
+raw_call11b = install_groq_connector_raw_call(
+    adapter11, PATHS["rawerr"], PIN)
+capture11b = raw_call11b(request11)
+check("W11: on a provider HTTP error the capture names "
+      "the status the helper reported",
+      capture11b.get("http_status") == 400,
+      f"status={capture11b.get('http_status')}")
+check("W11: the capture's error body is the provider's "
+      "error body as the helper retained it, and no body "
+      "stands beside it",
+      isinstance(capture11b.get("error_body"), str) and
+      "commentary" in capture11b["error_body"] and
+      capture11b.get("body") is None)
+check("W11: the diagnostics object is the helper's own "
+      "output, distinct from the error body it carried",
+      isinstance(capture11b.get("diagnostics"), str) and
+      "Traceback" in capture11b["diagnostics"] and
+      capture11b["diagnostics"] !=
+      capture11b.get("error_body"))
+check("W11: the refused hybrid capture classifies "
+      "under the probe's own classification as the "
+      "attempt-8 shape — environment_tool_attempt x "
+      "provider_refused, payload_form text_contract_json",
+      probe_module.classify_capture(capture11b) ==
+      ("environment_tool_attempt", "provider_refused",
+       "text_contract_json"),
+      f"classified={probe_module.classify_capture(capture11b)}")
 
 shutil.rmtree(TMP, ignore_errors=True)
 print()
