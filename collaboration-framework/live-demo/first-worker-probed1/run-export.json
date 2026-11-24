@@ -1,0 +1,167 @@
+{
+ "runs": [
+  {
+   "run_id": "run-first-worker-1",
+   "constitution_hash": "fde0e5d14b594ba1e3237d140870b6c06468ba3d6a4b15f42ef31f907761ba22",
+   "status": "open"
+  }
+ ],
+ "events": [
+  {
+   "event_seq": 1,
+   "event_id": "9a1f907f-ef50-41dd-b875-7825f0611b03",
+   "run_id": "run-first-worker-1",
+   "type": "RUN_COMMISSIONED",
+   "actor": "dir-1",
+   "affected": "[]",
+   "payload": "{\"run_id\": \"run-first-worker-1\", \"tree\": {\"part-A\": []}, \"seats\": {\"orch-1\": {\"role\": \"orchestrator\", \"identity_status\": \"declared\"}, \"exam-1\": {\"role\": \"examiner\", \"identity_status\": \"declared\"}, \"dir-1\": {\"role\": \"director\", \"identity_status\": \"declared\"}, \"crew-1\": {\"role\": \"crew\", \"identity_status\": \"unverified\"}}, \"briefs\": {\"crew-1\": {\"part\": \"part-A\", \"assignment\": \"Read the source documents in your sandbox: sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md. Write scratch/brief.md: a plain-words brief, at most ~600 words, that a newcomer could read to learn what this framework is, what has actually been proven, what has not been proven, and what remains to be built. Stay accurate to the sources; invent nothing; where the sources disagree with each other, say so.\", \"verification_list\": [\"the brief is accurate to the three named sources, claim by claim\", \"the brief states what has not been proven as plainly as what has\", \"the brief invents nothing the sources do not contain\"], \"evidence_boundary\": \"source manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f; sources: sources/stock-take.md, sources/a3-pass.md, sources/index-tail.md\", \"loop_bounds\": {\"step_ceiling\": 12, \"deadline_seconds\": 600}}}}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "",
+   "hash": "69cc80663479d09e78573903e8dd0178a00f8bcf1445172cfb8d716562964723"
+  },
+  {
+   "event_seq": 2,
+   "event_id": "8ab0dbe9-c4e6-4774-8d4f-379ef4f59b75",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"source-manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "69cc80663479d09e78573903e8dd0178a00f8bcf1445172cfb8d716562964723",
+   "hash": "761748391501fac8311acd219d81395eecc98f6c7ae5b10a74f006b59f58dcd3"
+  },
+  {
+   "event_seq": 3,
+   "event_id": "d63e6731-fa5b-43af-aa6b-fb996b6cad55",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/a3-pass.md sha256:d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "761748391501fac8311acd219d81395eecc98f6c7ae5b10a74f006b59f58dcd3",
+   "hash": "fd29ee3effa2efce3cb594d6810ea3fe6b2b5675628d57a5e5671f78c0f9b360"
+  },
+  {
+   "event_seq": 4,
+   "event_id": "1fed6c1c-24bf-4024-82b5-76def43fd520",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/index-tail.md sha256:eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "fd29ee3effa2efce3cb594d6810ea3fe6b2b5675628d57a5e5671f78c0f9b360",
+   "hash": "bbf807040388186c1cce4b201542ac8971ab4fcacaa34bcfafbd8b8b3ac0cfd2"
+  },
+  {
+   "event_seq": 5,
+   "event_id": "e6a19874-095a-4a5a-94aa-b438fd1757fb",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/stock-take.md sha256:ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "bbf807040388186c1cce4b201542ac8971ab4fcacaa34bcfafbd8b8b3ac0cfd2",
+   "hash": "c452608513296f211f273bd101897551ceabaa77b2bdd577f1ade839a0283e1f"
+  },
+  {
+   "event_seq": 6,
+   "event_id": "010da255-3200-489b-af67-5713b34c4835",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1, \"seat\": \"crew-1\", \"account\": \"crew-1\", \"assignment\": \"Read the source documents in your sandbox: sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md. Write scratch/brief.md: a plain-words brief, at most ~600 words, that a newcomer could read to learn what this framework is, what has actually been proven, what has not been proven, and what remains to be built. Stay accurate to the sources; invent nothing; where the sources disagree with each other, say so.\", \"part\": \"part-A\", \"verification_list\": [\"the brief is accurate to the three named sources, claim by claim\", \"the brief states what has not been proven as plainly as what has\", \"the brief invents nothing the sources do not contain\"], \"tree\": {\"part-A\": []}, \"evidence_boundary\": [\"source-manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f\", \"sources/a3-pass.md sha256:d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff\", \"sources/index-tail.md sha256:eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed\", \"sources/stock-take.md sha256:ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7\"], \"authority\": [\"CASE_ACKNOWLEDGED\", \"CLAIM_STATUS\", \"COMMENT\", \"COMPLETION_CLAIMED\", \"CONTRIBUTION\", \"DISAGREEMENT\", \"DISAGREEMENT_SETTLED\", \"ESCALATION\"], \"loop_bounds\": {\"step_ceiling\": 12, \"deadline_seconds\": 600}}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "c452608513296f211f273bd101897551ceabaa77b2bdd577f1ade839a0283e1f",
+   "hash": "7b6d6537a100b622d5e21b13da8267e590ea9dc5f4517e1630218a16addf03f4"
+  },
+  {
+   "event_seq": 7,
+   "event_id": "20f5ce22-e72e-4831-a0a3-1a843606d772",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_JUDGED",
+   "actor": "exam-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "7b6d6537a100b622d5e21b13da8267e590ea9dc5f4517e1630218a16addf03f4",
+   "hash": "1f4a65a9334a9f69a987c8b210551adabd994fbf54cf24c003328922bf4fa2eb"
+  },
+  {
+   "event_seq": 8,
+   "event_id": "c49c6dda-7e34-4bde-b305-14fd25e923b1",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_ISSUED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1, \"seat\": \"crew-1\"}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "1f4a65a9334a9f69a987c8b210551adabd994fbf54cf24c003328922bf4fa2eb",
+   "hash": "dec263c4b554a9276808e09fad32cd25af7a2428dc57b4036b067f045d8cfc51"
+  },
+  {
+   "event_seq": 9,
+   "event_id": "1a405a41-b5bc-43cc-85c5-195da990f0f0",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PROPOSED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"commission_seq\": 1, \"tree_ref\": 1, \"gates_ref\": 1, \"crew\": [{\"seat\": \"crew-1\", \"role\": \"crew\"}], \"proposal_kind\": \"instance\", \"seat\": \"crew-1\", \"part\": \"part-A\", \"role_requirements\": \"a model able to read three source documents and write a short, accurate, plain-words brief\"}",
+   "ts": "2026-11-24T04:03:17Z",
+   "prev_hash": "dec263c4b554a9276808e09fad32cd25af7a2428dc57b4036b067f045d8cfc51",
+   "hash": "8e054022214573327e8923cdd3f289d625b1b39561a18f411d6e16ba5378d8fd"
+  },
+  {
+   "event_seq": 10,
+   "event_id": "defe73e7-c8d7-45b9-ab15-8b1e489907ec",
+   "run_id": "run-first-worker-1",
+   "type": "ONBOARDING",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"subject\": \"instance\", \"seat_id\": \"crew-1\", \"instance_id\": \"inst-crew-1-1\", \"assembly_id\": \"assembly-crew-1-1\", \"declaration\": \"I\\u2019m ChatGPT, a large language model built on OpenAI\\u2019s GPT\\u20114 architecture. I\\u2019m provided and hosted by OpenAI.\\n\\n**What I can do**\\n- Understand and generate natural\\u2011language text across many topics.\\n- Answer questions, explain concepts, and engage in conversation.\\n- Summarize, translate, and rewrite text.\\n- Help with brainstorming, outlining, and drafting written material.\\n- Write, review, and debug code snippets in a variety of programming languages.\\n- Perform basic reasoning, calculations, and problem\\u2011solving.\\n- Generate creative content such as stories, poems, or dialogue.\\n\\n**What I can\\u2019t do**\\n- Access the internet, real\\u2011time data, or external databases (I can\\u2019t browse or fetch live information).\\n- Retrieve or store personal data about you unless you share it in the conversation; I don\\u2019t retain memory between sessions.\\n- Execute code or run programs; I can only simulate or suggest code.\\n- Provide professional advice that requires a licensed expert (e.g., medical, legal, financial) beyond general informational guidance.\\n- Guarantee absolute factual accuracy; my responses are based on patterns in training data up to my knowledge cutoff (June\\u202f2024) and may contain errors or outdated information.\\n\\nIn short, I\\u2019m a text\\u2011based AI assistant designed to help with information, writing, coding, and reasoning tasks, within the limits of my training data and offline operation.\", \"identity_status\": \"declared\", \"capability\": null, \"limits\": null, \"terms_acknowledged\": null, \"terms_ref\": null, \"provider_model_id\": \"openai/gpt-oss-120b\"}",
+   "ts": "2026-11-24T04:03:18Z",
+   "prev_hash": "8e054022214573327e8923cdd3f289d625b1b39561a18f411d6e16ba5378d8fd",
+   "hash": "85182091c6be2d01a0a3dce44aaaea837974df7648b756416fb6c1a74959e21b"
+  },
+  {
+   "event_seq": 11,
+   "event_id": "f1556d6b-2a26-4d5d-9cf3-8fc05d720999",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_GENERATED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"seat\": \"crew-1\", \"part\": \"part-A\", \"case_id\": \"case-crew-1\", \"case_version\": 1, \"proposal_seq\": 9, \"onboarding_seq\": 10, \"declaration_fingerprint\": \"36998378c3adb7f44c7890b289c3adf7039f5a98a17931c07ccc81202359f2ec\", \"model_selection\": {\"basis\": \"a model able to read three source documents and write a short, accurate, plain-words brief\", \"requested\": \"openai/gpt-oss-120b\"}, \"skills\": [], \"grants\": [{\"tool\": \"sandbox.list\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.search\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read_range\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read\", \"scope_ceiling\": {\"path_prefix\": \"sources\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.write\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"write\", \"bound\": {\"count\": 4}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.list\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.search\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read_range\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}, {\"tool\": \"sandbox.read\", \"scope_ceiling\": {\"path_prefix\": \"scratch\"}, \"side_effect_class\": \"read\", \"bound\": {\"count\": 12}, \"authority_trace\": \"ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; Ben's authorisation (INDEX 256); the examiner's release examination (INDEX 257)\"}], \"catalogue_contract\": \"retrieval-v3\", \"probe_contract\": \"native-probe-v1\"}",
+   "ts": "2026-11-24T04:03:18Z",
+   "prev_hash": "85182091c6be2d01a0a3dce44aaaea837974df7648b756416fb6c1a74959e21b",
+   "hash": "ad20bec56fea555b8ea51d16dd36ae60d919d1a0c3ee34ea3d0793507b3b358f"
+  },
+  {
+   "event_seq": 12,
+   "event_id": "ed3bfb88-3288-4f25-a581-840779579508",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PROBED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"generated_record_hash\": \"ccb664fecee05b11ddf86f2dcd8f0076a577faacf004902ea67562f1123f8bb3\", \"suite\": \"native-probe-v1\", \"suite_hash\": \"37e4cfa0c2073d9eaffff8368ad852db3bd2c65498e80880f6d131874ca6f90f\", \"route\": \"groq\", \"model\": \"openai/gpt-oss-120b\", \"fingerprint\": \"002d3677dcbca52a7568a98f26c6255fadbe72ac3c6caab0adda3925ddf72e32\", \"trials\": [{\"trial\": 1, \"behaviour\": \"text_contract\", \"delivery\": \"provider_accepted\", \"payload_form\": null, \"settled\": true, \"provider_body\": \"{\\\"id\\\":\\\"chatcmpl-18bc3f55-d912-45ea-8d72-25729a3ec348\\\",\\\"object\\\":\\\"chat.completion\\\",\\\"created\\\":1795493000,\\\"model\\\":\\\"openai/gpt-oss-120b\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"message\\\":{\\\"role\\\":\\\"assistant\\\",\\\"content\\\":\\\"{\\\\\\\"outcome\\\\\\\":\\\\\\\"tool_requests\\\\\\\",\\\\\\\"tool_requests\\\\\\\":[{\\\\\\\"tool\\\\\\\":\\\\\\\"probe.lookup\\\\\\\",\\\\\\\"parameters\\\\\\\":{\\\\\\\"object\\\\\\\":\\\\\\\"brass lantern\\\\\\\"}}]}\\\",\\\"reasoning\\\":\\\"We need to follow contract: reply with exactly one JSON object, no other text, of the form {\\\\\\\"outcome\\\\\\\": \\\\\\\"tool_requests\\\\\\\", \\\\\\\"tool_requests\\\\\\\": [{\\\\\\\"tool\\\\\\\": \\\\\\\"probe.lookup\\\\\\\", \\\\\\\"parameters\\\\\\\": {\\\\\\\"object\\\\\\\": \\\\\\\"brass lantern\\\\\\\"}}]}. So we output that JSON.\\\"},\\\"logprobs\\\":null,\\\"finish_reason\\\":\\\"stop\\\"}],\\\"usage\\\":{\\\"queue_time\\\":0.082586701,\\\"prompt_tokens\\\":356,\\\"prompt_time\\\":0.095962607,\\\"completion_tokens\\\":93,\\\"completion_time\\\":0.192883575,\\\"total_tokens\\\":449,\\\"total_time\\\":0.288846182,\\\"completion_tokens_details\\\":{\\\"reasoning_tokens\\\":59}},\\\"usage_breakdown\\\":null,\\\"system_fingerprint\\\":\\\"fp_93703442d9\\\",\\\"x_groq\\\":{\\\"id\\\":\\\"req_01m85vhx2qe8yawgmqb0s0xddx\\\",\\\"seed\\\":451496700},\\\"service_tier\\\":\\\"on_demand\\\"}\\n\", \"provider_body_bytes\": 1011, \"provider_body_sha256\": \"95963d15051d955be100cd12b4dec2ce54aade404bf51231febea99da62a1c58\", \"provider_body_complete\": true, \"http_status\": 200, \"metadata\": {\"id\": \"chatcmpl-18bc3f55-d912-45ea-8d72-25729a3ec348\", \"model\": \"openai/gpt-oss-120b\"}, \"metadata_sha256\": \"8f9b1ef35b4079e325e8f8c2715001550af4518a3b15460068d8bd4cc5f7cba9\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 1011, \"evidence_complete\": true}, {\"trial\": 2, \"behaviour\": \"text_contract\", \"delivery\": \"provider_accepted\", \"payload_form\": null, \"settled\": true, \"provider_body\": \"{\\\"id\\\":\\\"chatcmpl-26e2bf95-f1b1-4ae5-80c0-10e3c3f9f720\\\",\\\"object\\\":\\\"chat.completion\\\",\\\"created\\\":1795493001,\\\"model\\\":\\\"openai/gpt-oss-120b\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"message\\\":{\\\"role\\\":\\\"assistant\\\",\\\"content\\\":\\\"{\\\\\\\"outcome\\\\\\\":\\\\\\\"tool_requests\\\\\\\",\\\\\\\"tool_requests\\\\\\\":[{\\\\\\\"tool\\\\\\\":\\\\\\\"probe.lookup\\\\\\\",\\\\\\\"parameters\\\\\\\":{\\\\\\\"object\\\\\\\":\\\\\\\"brass lantern\\\\\\\"}}]}\\\",\\\"reasoning\\\":\\\"We need to follow contract: reply with exactly one JSON object, no other text, of the form {\\\\\\\"outcome\\\\\\\": \\\\\\\"tool_requests\\\\\\\", \\\\\\\"tool_requests\\\\\\\": [{\\\\\\\"tool\\\\\\\": \\\\\\\"probe.lookup\\\\\\\", \\\\\\\"parameters\\\\\\\": {\\\\\\\"object\\\\\\\": \\\\\\\"brass lantern\\\\\\\"}}]}. So we output that JSON.\\\"},\\\"logprobs\\\":null,\\\"finish_reason\\\":\\\"stop\\\"}],\\\"usage\\\":{\\\"queue_time\\\":0.12423247,\\\"prompt_tokens\\\":356,\\\"prompt_time\\\":0.089752014,\\\"completion_tokens\\\":93,\\\"completion_time\\\":0.193054121,\\\"total_tokens\\\":449,\\\"total_time\\\":0.282806135,\\\"completion_tokens_details\\\":{\\\"reasoning_tokens\\\":59}},\\\"usage_breakdown\\\":null,\\\"system_fingerprint\\\":\\\"fp_9241e9962b\\\",\\\"x_groq\\\":{\\\"id\\\":\\\"req_01m85vhxwher6a7q5vfn7hpy70\\\",\\\"seed\\\":492720065},\\\"service_tier\\\":\\\"on_demand\\\"}\\n\", \"provider_body_bytes\": 1010, \"provider_body_sha256\": \"42fe80e0bc06e12a1f7c542f7b73bae68ef55fc11e53c18bc2558507563d2968\", \"provider_body_complete\": true, \"http_status\": 200, \"metadata\": {\"id\": \"chatcmpl-26e2bf95-f1b1-4ae5-80c0-10e3c3f9f720\", \"model\": \"openai/gpt-oss-120b\"}, \"metadata_sha256\": \"47421dd5c0030ba305a4f92d209fb3a3914da18c365dea8ab5e9f16ef4863195\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 1010, \"evidence_complete\": true}, {\"trial\": 3, \"behaviour\": \"text_contract\", \"delivery\": \"provider_accepted\", \"payload_form\": null, \"settled\": true, \"provider_body\": \"{\\\"id\\\":\\\"chatcmpl-fe11dac2-6bf3-4751-b1d9-c5f11e8961f5\\\",\\\"object\\\":\\\"chat.completion\\\",\\\"created\\\":1795493002,\\\"model\\\":\\\"openai/gpt-oss-120b\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"message\\\":{\\\"role\\\":\\\"assistant\\\",\\\"content\\\":\\\"{\\\\\\\"outcome\\\\\\\":\\\\\\\"tool_requests\\\\\\\",\\\\\\\"tool_requests\\\\\\\":[{\\\\\\\"tool\\\\\\\":\\\\\\\"probe.lookup\\\\\\\",\\\\\\\"parameters\\\\\\\":{\\\\\\\"object\\\\\\\":\\\\\\\"brass lantern\\\\\\\"}}]}\\\",\\\"reasoning\\\":\\\"We need to follow contract: reply with exactly one JSON object, no other text, of the form {\\\\\\\"outcome\\\\\\\": \\\\\\\"tool_requests\\\\\\\", \\\\\\\"tool_requests\\\\\\\": [{\\\\\\\"tool\\\\\\\": \\\\\\\"probe.lookup\\\\\\\", \\\\\\\"parameters\\\\\\\": {\\\\\\\"object\\\\\\\": \\\\\\\"brass lantern\\\\\\\"}}]}. So we output that JSON.\\\"},\\\"logprobs\\\":null,\\\"finish_reason\\\":\\\"stop\\\"}],\\\"usage\\\":{\\\"queue_time\\\":0.076773466,\\\"prompt_tokens\\\":356,\\\"prompt_time\\\":0.020027316,\\\"completion_tokens\\\":93,\\\"completion_time\\\":0.195269471,\\\"total_tokens\\\":449,\\\"total_time\\\":0.215296787,\\\"completion_tokens_details\\\":{\\\"reasoning_tokens\\\":59}},\\\"usage_breakdown\\\":null,\\\"system_fingerprint\\\":\\\"fp_8655ddce88\\\",\\\"x_groq\\\":{\\\"id\\\":\\\"req_01m85vhyvqe1mb56xptxzsmvnh\\\",\\\"seed\\\":495664637},\\\"service_tier\\\":\\\"on_demand\\\"}\\n\", \"provider_body_bytes\": 1011, \"provider_body_sha256\": \"1c624b9dccac0dc3a83c9fbb6c82499e21b251ff5fe01dbbb91180924f15188c\", \"provider_body_complete\": true, \"http_status\": 200, \"metadata\": {\"id\": \"chatcmpl-fe11dac2-6bf3-4751-b1d9-c5f11e8961f5\", \"model\": \"openai/gpt-oss-120b\"}, \"metadata_sha256\": \"a1ee329e2d6d617e36bbcf5b74d30709cbd84968b33227a257bb393358f75e9b\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 1011, \"evidence_complete\": true}, {\"trial\": 4, \"behaviour\": \"environment_tool_attempt\", \"delivery\": \"provider_refused\", \"payload_form\": \"text_contract_json\", \"settled\": true, \"provider_body\": \"{\\\"error\\\":{\\\"message\\\":\\\"Tool call validation failed: tool call validation failed: attempted to call tool 'commentary' which was not in request.tools\\\",\\\"type\\\":\\\"invalid_request_error\\\",\\\"code\\\":\\\"tool_use_failed\\\",\\\"failed_generation\\\":\\\"{\\\\\\\"name\\\\\\\": \\\\\\\"commentary\\\\\\\", \\\\\\\"arguments\\\\\\\": {\\\\\\\"outcome\\\\\\\":\\\\\\\"tool_requests\\\\\\\",\\\\\\\"tool_requests\\\\\\\":[{\\\\\\\"tool\\\\\\\":\\\\\\\"probe.lookup\\\\\\\",\\\\\\\"parameters\\\\\\\":{\\\\\\\"object\\\\\\\":\\\\\\\"brass lantern\\\\\\\"}}]}}\\\"}}\\n\", \"provider_body_bytes\": 396, \"provider_body_sha256\": \"b4e723cdf433267980a1102ec6e3ed7d8e1d99bf02077b269f0ff2c9e8a5f27d\", \"provider_body_complete\": true, \"http_status\": 400, \"metadata\": {}, \"metadata_sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 396, \"evidence_complete\": true}, {\"trial\": 5, \"behaviour\": \"text_contract\", \"delivery\": \"provider_accepted\", \"payload_form\": null, \"settled\": true, \"provider_body\": \"{\\\"id\\\":\\\"chatcmpl-be8306e7-f919-44ff-b528-a6c14be2c279\\\",\\\"object\\\":\\\"chat.completion\\\",\\\"created\\\":1795493004,\\\"model\\\":\\\"openai/gpt-oss-120b\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"message\\\":{\\\"role\\\":\\\"assistant\\\",\\\"content\\\":\\\"{\\\\\\\"outcome\\\\\\\":\\\\\\\"tool_requests\\\\\\\",\\\\\\\"tool_requests\\\\\\\":[{\\\\\\\"tool\\\\\\\":\\\\\\\"probe.lookup\\\\\\\",\\\\\\\"parameters\\\\\\\":{\\\\\\\"object\\\\\\\":\\\\\\\"brass lantern\\\\\\\"}}]}\\\",\\\"reasoning\\\":\\\"We need to follow contract: reply with exactly one JSON object, no other text, of the form {\\\\\\\"outcome\\\\\\\": \\\\\\\"tool_requests\\\\\\\", \\\\\\\"tool_requests\\\\\\\": [{\\\\\\\"tool\\\\\\\": \\\\\\\"probe.lookup\\\\\\\", \\\\\\\"parameters\\\\\\\": {\\\\\\\"object\\\\\\\": \\\\\\\"brass lantern\\\\\\\"}}]}. So we output that JSON.\\\"},\\\"logprobs\\\":null,\\\"finish_reason\\\":\\\"stop\\\"}],\\\"usage\\\":{\\\"queue_time\\\":0.147566567,\\\"prompt_tokens\\\":356,\\\"prompt_time\\\":0.015664477,\\\"completion_tokens\\\":93,\\\"completion_time\\\":0.192857779,\\\"total_tokens\\\":449,\\\"total_time\\\":0.208522256,\\\"completion_tokens_details\\\":{\\\"reasoning_tokens\\\":59}},\\\"usage_breakdown\\\":null,\\\"system_fingerprint\\\":\\\"fp_4200b3f836\\\",\\\"x_groq\\\":{\\\"id\\\":\\\"req_01m85vj0pveqhb3g7bx51nt8jc\\\",\\\"seed\\\":2071769425},\\\"service_tier\\\":\\\"on_demand\\\"}\\n\", \"provider_body_bytes\": 1012, \"provider_body_sha256\": \"b2d06aef272c8047bb10a5b9fa25b074309504df206592d091cbf73f2fb57ec9\", \"provider_body_complete\": true, \"http_status\": 200, \"metadata\": {\"id\": \"chatcmpl-be8306e7-f919-44ff-b528-a6c14be2c279\", \"model\": \"openai/gpt-oss-120b\"}, \"metadata_sha256\": \"d939c3108501ce2bfa5e6201d4597b7e99933e6acffb542f141c939c96f1c590\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 1012, \"evidence_complete\": true}], \"counts\": {\"behaviour\": {\"text_contract\": 4, \"native_catalogue\": 0, \"environment_tool_attempt\": 1, \"mixed\": 0, \"refusal\": 0, \"malformed\": 0, \"no_observable_behaviour\": 0}, \"delivery\": {\"provider_accepted\": 4, \"provider_refused\": 1, \"provider_failed\": 0, \"indeterminate\": 0}}, \"settled_count\": 5, \"recommended_mode\": \"text\", \"evidence_hash\": \"59d1b38e0900a2daad6b0175e6f2fdaae18b99028df774fa2ad1226a7da261c0\"}",
+   "ts": "2026-11-24T04:03:23Z",
+   "prev_hash": "ad20bec56fea555b8ea51d16dd36ae60d919d1a0c3ee34ea3d0793507b3b358f",
+   "hash": "9b54339beec2a756094c305012720f9c480dca8e7a6cf2e952cc243ab95bfc60"
+  },
+  {
+   "event_seq": 13,
+   "event_id": "e6890116-b8f9-41ba-94fd-2ea00e5ad316",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"probe_evidence_hash\": \"59d1b38e0900a2daad6b0175e6f2fdaae18b99028df774fa2ad1226a7da261c0\"}",
+   "ts": "2026-11-24T04:03:23Z",
+   "prev_hash": "9b54339beec2a756094c305012720f9c480dca8e7a6cf2e952cc243ab95bfc60",
+   "hash": "08636b7bfd3394d8a1c1309c584dd7d1eafe9eedc0fb71b31bca4d6124955759"
+  }
+ ]
+}
