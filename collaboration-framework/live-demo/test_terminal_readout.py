@@ -1,47 +1,41 @@
 #!/usr/bin/env python3
-"""Focused verification for terminal_readout.py (Vane's correction round,
-INDEX 441): full call IDs, argument summaries, live-watch finalisation,
-malformed-line visibility, end-of-stream without a termination event.
-Run: python3 live-demo/test_terminal_readout.py — exits non-zero on failure.
+"""Focused verification for terminal_readout.py (Vane's correction rounds,
+INDEX 441/443): full call IDs, argument summaries, recursive redaction of
+arguments and results, live-watch finalisation only on an unambiguous
+completion condition, idle never finalising, malformed-line visibility,
+producer-closed finalisation. The report counts the checks it actually
+executed. Run: python3 live-demo/test_terminal_readout.py.
 """
 import json
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 HERE = Path(__file__).parent
 TOOL = HERE / "terminal_readout.py"
 NATIVE1 = HERE / "first-worker-native1"
 FULL_ID = "fc_5f4344e5-2273-4f7f-89b9-d4173ee6c42a"
+SECRET = "s3cr3t-value-12345"
 failures = []
+executed = 0
 
 
 def check(name, condition, detail=""):
-    print(("PASS " if condition else "FAIL ") + name + (f" — {detail}" if detail and not condition else ""))
+    global executed
+    executed += 1
+    print(("PASS " if condition else "FAIL ") + name
+          + (f" — {detail}" if detail and not condition else ""))
     if not condition:
         failures.append(name)
 
 
-def run_tool(*argv):
+def run_tool(*argv, timeout=60):
     return subprocess.run([sys.executable, str(TOOL), *argv],
-                          capture_output=True, text=True, timeout=60)
+                          capture_output=True, text=True, timeout=timeout)
 
 
-# 1. Render: full IDs, argument summary, stall, summary.
-with tempfile.TemporaryDirectory() as tmp:
-    out = Path(tmp) / "readout.md"
-    proc = run_tool("render", str(NATIVE1), "-o", str(out))
-    md = out.read_text() if out.exists() else ""
-    check("render exits 0", proc.returncode == 0, proc.stderr[-200:])
-    check("render keeps the full provider call ID", FULL_ID in md)
-    check("render shows the requested argument summary",
-          "sources/stock-take.md" in md and "requested" in md)
-    check("render shows the stall with its ground",
-          "stalled" in md and "provider_failure" in md)
-    check("render writes an analysis summary", "## Analysis summary" in md)
-
-# 2. Watch: termination event finalises; malformed line is visible.
 EVENTS = [
     {"type": "CALL_ENTERED", "payload": {"iteration": 1}},
     {"type": "TRANSLATION_RECORDED", "payload": {"calls": [
@@ -57,6 +51,45 @@ EVENTS = [
     {"type": "LOOP_STALLED", "payload": {
         "ground": "provider_failure", "detail": "provider_error: HTTP 400"}},
 ]
+
+# 1. Render of the real native1 export.
+with tempfile.TemporaryDirectory() as tmp:
+    out = Path(tmp) / "readout.md"
+    proc = run_tool("render", str(NATIVE1), "-o", str(out))
+    md = out.read_text() if out.exists() else ""
+    check("render exits 0", proc.returncode == 0, proc.stderr[-200:])
+    check("render keeps the full provider call ID", FULL_ID in md)
+    check("render shows the requested argument summary",
+          "sources/stock-take.md" in md and "requested" in md)
+    check("render shows the stall with its ground",
+          "stalled" in md and "provider_failure" in md)
+    check("render writes an analysis summary", "## Analysis summary" in md)
+
+# 2. Redaction: nested secrets in parameters and in results never render.
+with tempfile.TemporaryDirectory() as tmp:
+    export = Path(tmp) / "run-export.json"
+    events = [
+        {"type": "TOOL_REQUESTED", "payload": {
+            "tool": "sandbox.read", "request_id": "req-9",
+            "parameters": {"path": "sources/x.md",
+                           "options": {"api_key": SECRET,
+                                       "nested": [{"password": SECRET}]}}}},
+        {"type": "TOOL_OUTCOME", "payload": {
+            "outcome": "result",
+            "result": {"content": "ok", "meta": {"token": SECRET}}}},
+    ]
+    export.write_text(json.dumps({"events": events}))
+    out = Path(tmp) / "readout.md"
+    proc = run_tool("render", str(export), "-o", str(out))
+    md = out.read_text() if out.exists() else ""
+    check("redaction: secret value appears nowhere in the transcript",
+          proc.returncode == 0 and SECRET not in md)
+    check("redaction: [redacted] marks both arguments and results",
+          md.count("[redacted]") >= 2)
+    check("redaction: non-secret parameters still summarised",
+          "sources/x.md" in md)
+
+# 3. Watch: termination finalises; malformed line is visible and counted.
 with tempfile.TemporaryDirectory() as tmp:
     stream = Path(tmp) / "events.jsonl"
     lines = [json.dumps(e) for e in EVENTS]
@@ -75,17 +108,32 @@ with tempfile.TemporaryDirectory() as tmp:
     check("watch counts the malformed line in the summary",
           "readout_problem:malformed_line: 1" in md)
 
-# 3. Watch: end-of-stream without a termination event still finalises.
+# 4. Watch: idle does NOT finalise; the producer's close line does.
 with tempfile.TemporaryDirectory() as tmp:
     stream = Path(tmp) / "events.jsonl"
     stream.write_text(json.dumps(EVENTS[0]) + "\n")
     out = Path(tmp) / "watch.md"
-    proc = run_tool("watch", str(stream), "-o", str(out), "--idle-seconds", "1")
+    proc = subprocess.Popen(
+        [sys.executable, str(TOOL), "watch", str(stream), "-o", str(out),
+         "--idle-seconds", "1"],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    time.sleep(3)
+    still_running = proc.poll() is None
+    md_idle = out.read_text() if out.exists() else ""
+    check("watch stays open through idle silence (no false finalisation)",
+          still_running and "## Analysis summary" not in md_idle
+          and "still watching" in md_idle)
+    with stream.open("a") as fh:
+        fh.write(json.dumps({"type": "READOUT_STREAM_CLOSED"}) + "\n")
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
     md = out.read_text() if out.exists() else ""
-    check("watch finalises at end-of-stream without a termination event",
-          proc.returncode == 0 and "no termination event" in md
+    check("watch finalises on the producer's explicit close line",
+          proc.returncode == 0 and "producer closed the stream" in md
           and "## Analysis summary" in md)
 
-print(f"\nTERMINAL READOUT TESTS: {6 + 5 + 1 - len(failures)} passed, "
-      f"{len(failures)} failed")
+print(f"\nTERMINAL READOUT TESTS: {executed - len(failures)} passed, "
+      f"{len(failures)} failed, of {executed} executed")
 sys.exit(1 if failures else 0)

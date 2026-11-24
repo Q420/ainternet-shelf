@@ -14,19 +14,25 @@ Modes:
   watch <events.jsonl> [-o OUT.md] [--idle-seconds N]
       Follow a JSONL event stream (one event object per line), printing
       each tool-relevant line as it arrives and appending it to OUT.md,
-      flushed per line. Finalises — closes the Markdown fence, writes the
-      analysis summary, records the ending — when the run's termination
-      event arrives, when the stream stays at end-of-file for
-      --idle-seconds (default 30), or on interruption. A malformed line
-      is surfaced as a visible readout problem, never silently skipped.
+      flushed per line. Watch finalises — closes the Markdown fence,
+      writes the analysis summary, records the ending — ONLY on an
+      unambiguous completion condition: the run's recorded termination
+      event, the producer's explicit close line (a JSON line
+      {"type": "READOUT_STREAM_CLOSED"} or the bare marker
+      __READOUT_STREAM_CLOSED__), or interruption of the readout itself.
+      Silence is never treated as an ending: after --idle-seconds
+      (default 30) without a line, watch notes that it is still watching
+      and keeps watching. A malformed line is surfaced as a visible
+      readout problem, never silently skipped.
 
-Faithfulness rules (Vane, INDEX 440): a call appears when observed, with
-requested / refused / dispatched / completed / failed as distinct
+Faithfulness rules (Vane, INDEX 440/441): a call appears when observed,
+with requested / refused / dispatched / completed / failed as distinct
 states; a stalled or interrupted run leaves a readable ending; the
 summary states recorded facts only; live and saved views derive from the
 same event sequence. Provider call IDs are retained in full — they are
-identifiers, not decoration. Argument summaries are bounded and redact
-values under secret-shaped keys.
+identifiers, not decoration. Argument and result summaries are bounded
+and recursively redacted: a value under a secret-shaped key, at any
+depth, never reaches the terminal or the transcript.
 """
 import argparse
 import json
@@ -38,6 +44,7 @@ from pathlib import Path
 
 MAX_FIELD = 160
 SECRET_KEY = re.compile(r"(token|password|secret|api[_-]?key|credential)", re.I)
+CLOSE_MARKER = "__READOUT_STREAM_CLOSED__"
 
 # Event types that make up the tool-call story of a run.
 STORY = {
@@ -55,17 +62,29 @@ def short(value):
     return text if len(text) <= MAX_FIELD else text[: MAX_FIELD - 1] + "…"
 
 
-def summarize_params(params):
-    """Bounded, redacted one-line summary of requested parameters."""
-    if not isinstance(params, dict):
-        return short(params)
-    parts = []
-    for key in sorted(params):
-        if SECRET_KEY.search(str(key)):
-            parts.append(f"{key}=[redacted]")
-        else:
-            parts.append(f"{key}={short(params[key])[:60]}")
-    return "{" + ", ".join(parts) + "}"
+def redact(value, depth=0):
+    """Recursively redact secret-shaped values, bounded in depth/breadth."""
+    if isinstance(value, dict):
+        out = {}
+        for i, (key, val) in enumerate(value.items()):
+            if i >= 12:
+                out["…"] = f"+{len(value) - 12} more keys"
+                break
+            out[key] = "[redacted]" if SECRET_KEY.search(str(key)) else (
+                redact(val, depth + 1) if depth < 3 else short(val))
+        return out
+    if isinstance(value, list):
+        items = [redact(v, depth + 1) if depth < 3 else short(v)
+                 for v in value[:6]]
+        if len(value) > 6:
+            items.append(f"+{len(value) - 6} more")
+        return items
+    return value
+
+
+def summarize(value):
+    """Bounded, recursively redacted one-line summary of any payload value."""
+    return short(redact(value))
 
 
 def payload_of(event):
@@ -105,7 +124,7 @@ def call_lines(event_type, p):
             stats[f"call:{name}"] += 1
     elif event_type == "TOOL_REQUESTED":
         name = p.get("tool") or p.get("name") or p.get("tool_name", "?")
-        params = summarize_params(p.get("parameters", ""))
+        params = summarize(p.get("parameters", ""))
         lines.append(f"  requested · {name} · {short(p.get('request_id', ''))} · {params}")
     elif event_type == "TOOL_DISPATCHED":
         name = p.get("tool") or p.get("name") or p.get("tool_name", "?")
@@ -115,8 +134,8 @@ def call_lines(event_type, p):
         lines.append("  started")
     elif event_type == "TOOL_OUTCOME":
         outcome = p.get("outcome", p.get("status", ""))
-        result = p.get("result", p.get("summary", ""))
-        lines.append(f"  ✓ outcome · {short(outcome)} · {short(result)}")
+        result = summarize(p.get("result", p.get("summary", "")))
+        lines.append(f"  ✓ outcome · {short(outcome)} · {result}")
         stats[f"outcome:{short(outcome)}"] += 1
     elif event_type in TERMINATIONS:
         reason = p.get("ground") or p.get("reason") or p.get("termination", "")
@@ -177,11 +196,20 @@ def cmd_render(args):
     return 0
 
 
+def is_close_line(raw):
+    if raw.strip() == CLOSE_MARKER:
+        return True
+    try:
+        return json.loads(raw).get("type") == "READOUT_STREAM_CLOSED"
+    except (json.JSONDecodeError, AttributeError):
+        return False
+
+
 def cmd_watch(args):
     src = Path(args.source)
     out_path = Path(args.output) if args.output else src.with_suffix(".readout.md")
     stats = Counter()
-    ending = None
+    done = False
 
     def finalise(md, ending_line):
         md.write(ending_line + "\n```\n")
@@ -195,20 +223,30 @@ def cmd_watch(args):
         try:
             with src.open() as stream:
                 idle = 0.0
+                idle_noted = False
                 line_no = 0
-                while ending is None:
+                while not done:
                     raw = stream.readline()
                     if not raw:
-                        if idle >= args.idle_seconds:
-                            ending = ("■ end of stream · no termination event "
-                                      "in the record")
-                            finalise(md, ending)
-                            break
+                        if idle >= args.idle_seconds and not idle_noted:
+                            note = (f"· still watching · no events for "
+                                    f"{args.idle_seconds:g}s — silence is "
+                                    f"not an ending")
+                            print(note, flush=True)
+                            md.write(note + "\n")
+                            md.flush()
+                            idle_noted = True
                         time.sleep(0.25)
                         idle += 0.25
                         continue
                     idle = 0.0
+                    idle_noted = False
                     line_no += 1
+                    if is_close_line(raw):
+                        finalise(md, "■ end of stream · the producer "
+                                     "closed the stream")
+                        done = True
+                        break
                     try:
                         event = json.loads(raw)
                     except json.JSONDecodeError:
@@ -230,8 +268,9 @@ def cmd_watch(args):
                         md.write(text + "\n")
                     md.flush()
                     if etype in TERMINATIONS:
-                        ending = "■ end of stream · run terminated in the record"
-                        finalise(md, ending)
+                        finalise(md, "■ end of stream · run terminated "
+                                     "in the record")
+                        done = True
         except KeyboardInterrupt:
             finalise(md, "■ end of stream · readout interrupted — the run's "
                          "record continues without this view")
