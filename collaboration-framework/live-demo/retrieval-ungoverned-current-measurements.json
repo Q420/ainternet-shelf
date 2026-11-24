@@ -1,0 +1,69 @@
+{
+ "artifact": "retrieval-ungoverned-current-measurements",
+ "scope": "RETRIEVAL-SCOPE-2026-11-23 Rev 5 \u2014 witness R5's sequence under the current catalogue, without the response-evidence regime; produced for the INDEX 318 attribution (Vane's final examination of the response-evidence piece, path 1)",
+ "provenance": "This artifact is an independent UNGOVERNED capture of witness R5's scripted sequence under the CURRENT tool catalogue (7,554 bytes), made 2026-11-23 for the INDEX 318 attribution. It was produced by Witness 1's own machinery step for step \u2014 the same scripted sequence over the same fixture corpus, the real loop, the real adapter and the real Groq connector transport, the stub helper on the provider side \u2014 with the loop run WITHOUT an evidence store, so no CALL_ENTERED or RESPONSE_EVIDENCE events stand in its packages and no iteration carries the governed mark. One construction note, stated plainly: the adapter publishes the response-evidence seam from construction, and the loop refuses a seam-publishing callable without a store (the INDEX 314/315 omission closure), so the adapter stood behind a plain delegate callable \u2014 the only form in which the current loop runs a provider callable ungoverned, its legacy path. The adapter, the transport installed on it, the renderer and the sequence are W1's own; the loop's regime is the only difference. It supersedes nothing. The historical R5 artifact (live-demo/retrieval-r5-measurements.json, tool catalogue 5,516 bytes) is a NON-EQUIVALENT comparison for these figures: the catalogue changed between the two measurements (5,516 \u2192 7,554 bytes, the per-grant catalogue derivation), so differences against that artifact mix the catalogue change with any governance effect and cannot isolate either. The equivalent ungoverned comparison for the governed baseline (live-demo/retrieval-governed-measurements.json) is THIS artifact: same catalogue, same machinery, the evidence regime the only difference.",
+ "method": "An independent ungoverned capture: the scripted R5 sequence (list -> search -> read_range + notebook write -> scratch read-back + re-pull -> yield, over the same fixture corpus) run through the real loop with the real adapter and the real Groq connector transport in the path, the loop UNGOVERNED \u2014 no evidence_store passed, so its iterations record no CALL_ENTERED and no RESPONSE_EVIDENCE; the adapter stood behind a plain delegate callable, the loop's legacy path, because the loop refuses a seam-publishing callable without a store (INDEX 314/315) \u2014 with the provider side replaced by a stub helper substituted through the transport's GROQ_HELPER_PATH env override, which records the exact request body bytes it receives on stdin and returns canned chat-completion responses scripted per call (identify() first, then the five iterations). No provider call was made. Each captured body is attributed with the R5 artifact's own span method (measure_request): the package is parsed out of the captured prompt and re-rendered; the re-render is byte-identical to the capture, so the breakdown is the captured body's own. Components are exact serialized spans of the final body, as in the R5 artifact: retrieved_content = the JSON literal of each tool result's content, counted once (single carriage); case_view_and_assignment = the case span; tool_catalogue = the tools-section dump; provenance_and_dispatch = the view, delta, tool_results, standing-dispatch, bounds and position spans minus the retrieved content literals; remaining_overhead = the remainder (contract, framing, system message, body skeleton). Components sum to the serialized size; residual is stated per request.",
+ "model": "openai/gpt-oss-120b",
+ "requests": [
+  {
+   "iteration": 1,
+   "serialized_bytes": 12868,
+   "components": {
+    "retrieved_content": 0,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 2226,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 2,
+   "serialized_bytes": 17604,
+   "components": {
+    "retrieved_content": 163,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 6799,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 3,
+   "serialized_bytes": 18523,
+   "components": {
+    "retrieved_content": 474,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 7407,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 4,
+   "serialized_bytes": 21237,
+   "components": {
+    "retrieved_content": 121,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 10474,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  },
+  {
+   "iteration": 5,
+   "serialized_bytes": 22125,
+   "components": {
+    "retrieved_content": 208,
+    "case_view_and_assignment": 1242,
+    "tool_catalogue": 7554,
+    "provenance_and_dispatch": 11275,
+    "remaining_overhead": 1846
+   },
+   "residual": 0
+  }
+ ]
+}
