@@ -333,9 +333,11 @@ def layer_summaries(artifact):
     out["L1"] = {"byte_count": l1["byte_count"],
                  "sha256": l1["sha256"],
                  "complete": l1["complete"],
+                 "body_complete": l1["body_complete"],
                  "hash_subject": l1["hash_subject"],
                  "total_length": l1["total_length"],
-                 "stop_reason": l1["stop_reason"]}
+                 "stop_reason": l1["stop_reason"],
+                 "read_error_kind": l1["read_error_kind"]}
     for name in ("L2", "L3"):
         layer = layers[name]
         if layer["present"]:

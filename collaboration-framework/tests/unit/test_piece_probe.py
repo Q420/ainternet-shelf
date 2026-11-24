@@ -940,7 +940,9 @@ def run_loop_world(judge_mode, specs):
     SPECS[:] = list(specs)
     adapter = stub_adapter()
     result = Loop(w["d"], w["instance_token"], adapter,
-                  executor=w["executor"]).run()
+                  executor=w["executor"],
+                  evidence_store=os.path.dirname(
+                      w["store"].path)).run()
     return w, result
 
 
@@ -1028,7 +1030,9 @@ def test_p7():
         (200, text_resp({"outcome": "yield",
                          "summary": "done"}))]
     result = Loop(w["d"], w["instance_token"], stub_adapter(),
-                  executor=w["executor"]).run()
+                  executor=w["executor"],
+                  evidence_store=os.path.dirname(
+                      w["store"].path)).run()
     store = w["store"]
     rejections = [e for e in events_of(store, "REJECTION")
                   if e["payload"].get("attempted_type")
@@ -1058,7 +1062,9 @@ def test_p10_loop():
         (200, text_resp({"outcome": "yield",
                          "summary": "done"}))]
     result = Loop(w["d"], w["instance_token"], stub_adapter(),
-                  executor=w["executor"]).run()
+                  executor=w["executor"],
+                  evidence_store=os.path.dirname(
+                      w["store"].path)).run()
     store = w["store"]
     rejections = [e for e in events_of(store, "REJECTION")
                   if e["payload"].get("attempted_type")

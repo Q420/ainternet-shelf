@@ -1672,6 +1672,13 @@ _EVIDENCE_FAILURE_OPERATIONS = frozenset({
     "persist", "verify", "commit"})
 _EVIDENCE_OUTCOMES = ("captured", "no_response",
                       "unresolved")
+# The capture ceiling (R7-1/R8-1), this checker's own
+# copy: the largest body the evidence contract
+# undertakes to hold whole, against which the artifact's
+# boundary claims are arithmetically verified — eof only
+# below it, capture_limit only exactly at it,
+# read_failure only below it with its error kind.
+_EVIDENCE_CAPTURE_CEILING = 64000
 
 
 def _derive_catalogue(grants, version, per_grant=False):
@@ -2190,7 +2197,13 @@ def _loop_result(events, state, run_dir=None):
     # SCOPE Rev 8): the disposition obligation, reconstructed
     # from the record alone — never from the loop's word.
     # An activation is governed where any of the piece's
-    # events stand for it; a governed activation's every
+    # events stand for it — or where any of its iterations
+    # carries the governed mark the loop records in the
+    # iteration event itself (build examination, INDEX 314):
+    # the mark stands from the activation's first iteration,
+    # so a death between the iteration event and the call
+    # boundary is governed history, not an escape from
+    # reconstruction. A governed activation's every
     # entered iteration owes exactly one disposition,
     # committed before its terminal and before any dispatch
     # from its answer; a missing disposition is an integrity
@@ -2297,13 +2310,43 @@ def _loop_result(events, state, run_dir=None):
             problem("evidence_layer_inconsistent",
                     assembly_id=aid, at_seq=seq,
                     iteration_seq=iseq, layer="L1")
+        # The ceiling boundary arithmetic (build
+        # examination, INDEX 314): the claims are checked,
+        # not the helper's behaviour — the duplicated
+        # completeness fields must agree, and the stop
+        # reason must stand in its one permitted relation
+        # to the observed count: eof strictly below the
+        # ceiling, capture_limit exactly at it,
+        # read_failure below it with the read-error kind
+        # the claim names.
+        observed = l1.get("byte_count")
+        if l1.get("body_complete") != l1.get("complete") or \
+                not isinstance(observed, int) or \
+                isinstance(observed, bool) or \
+                (l1.get("stop_reason") == "eof" and
+                 observed >= _EVIDENCE_CAPTURE_CEILING) or \
+                (l1.get("stop_reason") == "capture_limit"
+                 and observed !=
+                 _EVIDENCE_CAPTURE_CEILING) or \
+                (l1.get("stop_reason") == "read_failure"
+                 and (observed >=
+                      _EVIDENCE_CAPTURE_CEILING or
+                      not isinstance(
+                          l1.get("read_error_kind"), str)
+                      or not l1.get("read_error_kind"))):
+            problem("evidence_layer_inconsistent",
+                    assembly_id=aid, at_seq=seq,
+                    iteration_seq=iseq, layer="L1",
+                    detail="ceiling boundary arithmetic")
         summaries = {"L1": {
             "byte_count": l1.get("byte_count"),
             "sha256": l1.get("sha256"),
             "complete": l1.get("complete"),
+            "body_complete": l1.get("body_complete"),
             "hash_subject": l1.get("hash_subject"),
             "total_length": l1.get("total_length"),
-            "stop_reason": l1.get("stop_reason")}}
+            "stop_reason": l1.get("stop_reason"),
+            "read_error_kind": l1.get("read_error_kind")}}
         envelope = None
         message = None
         for name in ("L2", "L3"):
@@ -2470,6 +2513,30 @@ def _loop_result(events, state, run_dir=None):
     bound_iterations = set()
     governed_aids = set(entered) | set(dispositions) | \
         set(evidence_failures)
+    # The governed mark (INDEX 314): an activation any of
+    # whose iteration events declares the evidence regime
+    # is governed from that iteration onward, even where
+    # no call boundary, disposition or failure terminal
+    # ever followed it.
+    for _aid, _evs in iterations.items():
+        if any(ev["payload"].get("evidence_governed")
+               for ev in _evs):
+            governed_aids.add(_aid)
+    event_by_seq = {ev["event_seq"]: ev for ev in events}
+
+    def ts_seconds(ts):
+        """An event timestamp as epoch seconds, or None
+        where it does not parse — the record's timestamps
+        are second-resolution UTC, and the deadline
+        condition below is judged with that resolution's
+        slack, never more finely than the record speaks."""
+        try:
+            from datetime import datetime, timezone
+            return datetime.strptime(
+                ts, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc).timestamp()
+        except (ValueError, TypeError):
+            return None
     for aid in governed_aids:
         iters = iterations.get(aid, [])
         iter_by_seq = {ev["event_seq"]: ev for ev in iters}
@@ -2529,6 +2596,65 @@ def _loop_result(events, state, run_dir=None):
             problem("terminal_step_unknown", assembly_id=aid,
                     at_seq=stall["event_seq"],
                     terminal_step=stall["payload"]["terminal_step"])
+        if stall is not None and \
+                stall["payload"].get("terminal_step") in \
+                _EVIDENCE_PRE_CALL_STEPS:
+            # The claimed condition, not only the name
+            # (Rev 4; build examination, INDEX 314): a
+            # pre-call step is a claim about why the call
+            # was never entered, and the record must bear
+            # it out. deadline_at_start claims the
+            # activation deadline had passed before the
+            # answered iteration could begin: its ground
+            # is the deadline's, and its timestamp must
+            # not precede the deadline the record itself
+            # fixes — the activation event's timestamp
+            # plus the pinned deadline_seconds, judged
+            # with one second of slack for the timestamps'
+            # resolution (a stall stamped clearly before
+            # its deadline cannot be a deadline stall;
+            # finer judgement than the record's resolution
+            # is not claimed). package_construction claims
+            # the loop's own construction failure: its
+            # ground is runtime_failure and its recorded
+            # detail names the package construction
+            # failure. (The sequence half of both claims —
+            # no call boundary for the answered iteration —
+            # is enforced in the per-iteration pass below
+            # and by the missing-disposition report.)
+            sp = stall["payload"]
+            step = sp["terminal_step"]
+            condition_ok = True
+            if step == "deadline_at_start":
+                if sp.get("ground") != "deadline":
+                    condition_ok = False
+                else:
+                    bounds = pinned_bounds(aid)
+                    dl = bounds.get("deadline_seconds") \
+                        if isinstance(bounds, dict) else None
+                    act_ev = event_by_seq.get(
+                        activated.get(aid))
+                    if act_ev is not None and \
+                            isinstance(dl, (int, float)) \
+                            and not isinstance(dl, bool):
+                        a = ts_seconds(act_ev["ts"])
+                        s = ts_seconds(stall["ts"])
+                        if a is not None and \
+                                s is not None and \
+                                s + 1 < a + dl:
+                            condition_ok = False
+            else:  # package_construction
+                detail = sp.get("detail")
+                if sp.get("ground") != "runtime_failure" \
+                        or not isinstance(detail, str) \
+                        or "package construction" \
+                        not in detail:
+                    condition_ok = False
+            if not condition_ok:
+                problem("terminal_step_condition_invalid",
+                        assembly_id=aid,
+                        at_seq=stall["event_seq"],
+                        terminal_step=step)
         for idx, iev in enumerate(iters):
             iseq = iev["event_seq"]
             if iseq in entered_map:

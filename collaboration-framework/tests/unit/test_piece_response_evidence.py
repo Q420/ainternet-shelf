@@ -58,7 +58,29 @@ adapter/doorway/checker:
   hand-appended violations: a duplicate disposition, a
   CALL_ENTERED for an unrecorded iteration, a missing
   artifact, an orphan artifact bound by no disposition,
-  and a tampered layer.
+  and a tampered layer;
+- the build-examination corrections (INDEX 314): the
+  ceiling boundary arithmetic enforced at the doorway
+  and independently in the checker (capture_limit below
+  the ceiling, eof at exactly the ceiling, read_failure
+  at/past it or without its error kind, disagreeing
+  completeness fields — each refused at write time and
+  each divergent in a forged artifact); the commit-
+  failure path under fault injection (a store whose
+  commit actually raises on the disposition commit: the
+  terminal stands with operation commit, the failed
+  disposition stands nowhere, and where the rollback
+  also fails no terminal is claimed and the checker
+  reports the outstanding obligation); the omission
+  bypass closed (a provider-seam callable without an
+  evidence store is refused before any iteration, a
+  plain scripted callable runs ungoverned as before,
+  governed iterations carry the mark from their first
+  event, and a governed activation dying between the
+  iteration event and the call boundary is divergent);
+  and the terminal-step conditions (a deadline_at_start
+  stamped before its deadline, a package_construction
+  under the wrong ground — each divergent).
 
 Every run is established through the office's real route
 (the A3 scaffolding); the evidence store root is the run
@@ -74,6 +96,7 @@ import base64
 import hashlib
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -857,9 +880,10 @@ check("doorway: a no_response disposition under any "
                          "observed_status": None})))
 LAYERS = {
     "L1": {"byte_count": 3, "sha256": "a" * 64,
-           "complete": True,
+           "complete": True, "body_complete": True,
            "hash_subject": "observed_bytes",
-           "total_length": 3, "stop_reason": "eof"},
+           "total_length": 3, "stop_reason": "eof",
+           "read_error_kind": None},
     "L2": {"present": False}, "L3": {"present": False},
     "L4": {"present": False},
     "L5": {"adapter_verdict_state": "outcome",
@@ -1049,6 +1073,430 @@ check("W-f: the built-in seam dispositions captured, "
       and wf_seam["adapter_verdict"]["content_hash"]
       == hashlib.sha256(YIELD.encode("utf-8")).hexdigest())
 wf_server.shutdown()
+
+# ============================================================
+# Correction 1 (INDEX 314) — the ceiling boundary
+# arithmetic at the doorway: each false claim refused at
+# write time; the true claims admitted.
+# ============================================================
+def entered_iteration():
+    store, d, office, gen, tok = fresh()
+    r, token = activate(store, d, office, gen, tok)
+    asm = r["assembly_id"]
+    it_ev = d.record_loop_iteration(asm, 1, 12, 12)
+    d.record_call_entered(asm, 1, it_ev["event_seq"])
+    return store, d, asm, it_ev["event_seq"]
+
+
+def l1_of(**kw):
+    l1 = {"byte_count": 3, "sha256": "a" * 64,
+          "complete": True, "body_complete": True,
+          "hash_subject": "observed_bytes",
+          "total_length": 3, "stop_reason": "eof",
+          "read_error_kind": None}
+    l1.update(kw)
+    return {"L1": l1, "L2": {"present": False},
+            "L3": {"present": False},
+            "L4": {"present": False},
+            "L5": {"adapter_verdict_state": "outcome",
+                   "loop_verdict_state": "validated"}}
+
+
+store, d, asm, it_seq = entered_iteration()
+check("ceiling: capture_limit claimed BELOW the ceiling "
+      "is refused at the doorway — the limit stops a "
+      "capture only at exactly 64,000",
+      refused(lambda: d.record_response_evidence(
+          asm, it_seq, "captured",
+          artifact_sha256="b" * 64,
+          layers=l1_of(byte_count=100, complete=False,
+                       body_complete=False,
+                       total_length=None,
+                       stop_reason="capture_limit"))))
+check("ceiling: eof with complete claimed AT exactly "
+      "the ceiling is refused — no EOF could have been "
+      "observed there",
+      refused(lambda: d.record_response_evidence(
+          asm, it_seq, "captured",
+          artifact_sha256="b" * 64,
+          layers=l1_of(byte_count=ev.CAPTURE_CEILING,
+                       total_length=ev.CAPTURE_CEILING))))
+check("ceiling: read_failure claimed AT the ceiling is "
+      "refused — at the limit the capture stopped at the "
+      "limit, not at a failed read",
+      refused(lambda: d.record_response_evidence(
+          asm, it_seq, "captured",
+          artifact_sha256="b" * 64,
+          layers=l1_of(byte_count=ev.CAPTURE_CEILING,
+                       complete=False, body_complete=False,
+                       total_length=None,
+                       stop_reason="read_failure",
+                       read_error_kind=
+                       "ConnectionResetError"))))
+check("ceiling: read_failure without its read-error "
+      "kind is refused — the kind is part of the claim",
+      refused(lambda: d.record_response_evidence(
+          asm, it_seq, "captured",
+          artifact_sha256="b" * 64,
+          layers=l1_of(byte_count=100, complete=False,
+                       body_complete=False,
+                       total_length=None,
+                       stop_reason="read_failure"))))
+check("ceiling: completeness fields that disagree "
+      "(complete true, body_complete false) are refused",
+      refused(lambda: d.record_response_evidence(
+          asm, it_seq, "captured",
+          artifact_sha256="b" * 64,
+          layers=l1_of(body_complete=False))))
+
+store, d, asm, it_seq = entered_iteration()
+d.record_response_evidence(
+    asm, it_seq, "captured", artifact_sha256="b" * 64,
+    layers=l1_of(byte_count=ev.CAPTURE_CEILING,
+                 complete=False, body_complete=False,
+                 total_length=None,
+                 stop_reason="capture_limit"),
+    provenance="groq_helper_raw_bounded", http_status=200)
+check("ceiling: capture_limit at exactly the ceiling "
+      "is admitted — the true claim stands",
+      disposition_of(store, 1) is not None
+      and disposition_of(store, 1)["outcome"] == "captured")
+
+store, d, asm, it_seq = entered_iteration()
+d.record_response_evidence(
+    asm, it_seq, "captured", artifact_sha256="b" * 64,
+    layers=l1_of(byte_count=100, complete=False,
+                 body_complete=False, total_length=None,
+                 stop_reason="read_failure",
+                 read_error_kind="ConnectionResetError"),
+    provenance="groq_helper_raw_bounded", http_status=200)
+check("ceiling: read_failure below the ceiling with "
+      "its error kind is admitted",
+      disposition_of(store, 1) is not None
+      and disposition_of(store, 1)["outcome"] == "captured")
+
+# ============================================================
+# Correction 1 (INDEX 314) — the same arithmetic in the
+# checker, over forged artifacts whose dispositions were
+# hand-appended past the doorway.
+# ============================================================
+def forged_run(mutate, big=False):
+    store, d, office, gen, tok = fresh()
+    r, token = activate(store, d, office, gen, tok)
+    asm = r["assembly_id"]
+    it_ev = d.record_loop_iteration(asm, 1, 12, 12)
+    iseq = it_ev["event_seq"]
+    d.record_call_entered(asm, 1, iseq)
+    if big:
+        body = provider_body(
+            {"role": "assistant",
+             "content": YIELD + " " + ("x" * 70000)})
+        body = body[:ev.CAPTURE_CEILING]
+        seam = seam_for(body, complete=False,
+                        stop="capture_limit", content=None)
+        content_hash = None
+    else:
+        body = provider_body(
+            {"role": "assistant", "content": YIELD})
+        seam = seam_for(body)
+        content_hash = ev.derive_layers(body)["L4"]["sha256"]
+    artifact = ev.build_artifact(
+        {"run_id": "run-1", "assembly_id": asm,
+         "instance_id": r["instance_id"],
+         "iteration_seq": iseq, "iteration": 1},
+        seam,
+        {"adapter": ev.adapter_verdict(
+            "outcome", kind="yield",
+            content_hash=content_hash),
+         "loop": ev.loop_verdict("validated",
+                                 outcome="yield")})
+    mutate(artifact["layers"]["L1"])
+    directory = os.path.join(os.path.dirname(store.path),
+                             "responses")
+    os.makedirs(directory, exist_ok=True)
+    with open(os.path.join(
+            directory, f"iteration-{iseq}.json"),
+            "wb") as fh:
+        fh.write(canonical(artifact))
+    base = binding_payload(store, r, "LOOP_ITERATION")
+    store.append("RESPONSE_EVIDENCE", "loop",
+                 [r["instance_id"]], {
+                     "assembly_id": asm,
+                     "instance_id": r["instance_id"],
+                     "activated_seq":
+                         base["activated_seq"],
+                     "case_id": base["case_id"],
+                     "case_version": base["case_version"],
+                     "iteration": 1, "iteration_seq": iseq,
+                     "outcome": "captured",
+                     "artifact_sha256": hashlib.sha256(
+                         canonical(artifact)).hexdigest(),
+                     "layers": ev.layer_summaries(artifact),
+                     "provenance":
+                         "groq_helper_raw_bounded",
+                     "http_status": 200})
+    store.commit()
+    return store
+
+
+def mut_capture_limit_below(l1):
+    l1.update(complete=False, body_complete=False,
+              stop_reason="capture_limit", total_length=None)
+
+
+def mut_eof_at_ceiling(l1):
+    l1.update(complete=True, body_complete=True,
+              stop_reason="eof",
+              total_length=ev.CAPTURE_CEILING)
+
+
+def mut_read_failure_at_ceiling(l1):
+    l1.update(stop_reason="read_failure",
+              read_error_kind="ConnectionResetError")
+
+
+def mut_completeness_disagree(l1):
+    l1.update(body_complete=False)
+
+
+for name, mutate, big in (
+        ("capture_limit below the ceiling",
+         mut_capture_limit_below, False),
+        ("eof complete at exactly the ceiling",
+         mut_eof_at_ceiling, True),
+        ("read_failure at the ceiling",
+         mut_read_failure_at_ceiling, True),
+        ("completeness fields disagreeing",
+         mut_completeness_disagree, False)):
+    store = forged_run(mutate, big=big)
+    kinds = {p["kind"] for p in loop_problems(store)}
+    check(f"ceiling (checker): a forged artifact claiming "
+          f"{name} is divergent, named "
+          f"evidence_layer_inconsistent",
+          "evidence_layer_inconsistent" in kinds,
+          f"kinds={kinds}")
+
+# ============================================================
+# Correction 2 (INDEX 314) — the commit-failure path
+# under fault injection: the store's commit ACTUALLY
+# raises on the disposition commit (not a validation
+# refusal).
+# ============================================================
+def arm_commit_bomb(store, break_rollback=False):
+    """One-shot fault injection over a real store: the
+    commit that follows a RESPONSE_EVIDENCE append
+    raises an OperationalError, once; later commits pass.
+    With break_rollback, rollback raises too — the
+    transaction cannot be returned to a known state."""
+    orig_append = store.append
+    orig_commit = store.commit
+    orig_rollback = store.rollback
+    state = {"last_type": None, "armed": True}
+
+    def append(type_, actor, affected, payload):
+        ev_ = orig_append(type_, actor, affected, payload)
+        state["last_type"] = type_
+        return ev_
+
+    def commit():
+        if state["armed"] and \
+                state["last_type"] == "RESPONSE_EVIDENCE":
+            state["armed"] = False
+            raise sqlite3.OperationalError(
+                "injected commit failure")
+        return orig_commit()
+
+    def rollback():
+        if break_rollback:
+            raise sqlite3.OperationalError(
+                "injected rollback failure")
+        return orig_rollback()
+
+    store.append = append
+    store.commit = commit
+    store.rollback = rollback
+    return state
+
+
+def yield_script():
+    return EvidenceScript([
+        (seam_for(provider_body(
+            {"role": "assistant", "content": YIELD})),
+         {"outcome": "yield",
+          "summary": "the brief stands"})])
+
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+arm_commit_bomb(store)
+result = run_governed(store, d, token, yield_script())
+fails = events_of(store, "EVIDENCE_CAPTURE_FAILED")
+check("commit fault: a store commit raising on the "
+      "disposition commit routes to the evidence "
+      "terminal with operation commit, recorded",
+      result.get("ground") == "evidence_capture_failure"
+      and result.get("operation") == "commit"
+      and result.get("evidence_failure_recorded") is True
+      and len(fails) == 1
+      and fails[0]["payload"]["operation"] == "commit",
+      f"result={result}")
+check("commit fault: the failed disposition stands "
+      "NOWHERE in the record (rolled back, never "
+      "committed alongside the terminal) — and the "
+      "checker reports the missing disposition beside "
+      "the terminal",
+      events_of(store, "RESPONSE_EVIDENCE") == []
+      and any(p["kind"] == "disposition_missing"
+              for p in loop_problems(store)),
+      f"problems={loop_problems(store)}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+arm_commit_bomb(store, break_rollback=True)
+result = run_governed(store, d, token, yield_script())
+check("commit fault (unrecoverable): where the "
+      "rollback also fails, NO terminal is recorded and "
+      "none is claimed — the result says so plainly",
+      result.get("ground") == "evidence_capture_failure"
+      and result.get("evidence_failure_recorded") is False
+      and events_of(store, "EVIDENCE_CAPTURE_FAILED") == [],
+      f"result={result}")
+# The poisoned connection still holds the phantom
+# transaction open; release it with the store class's own
+# rollback (bypassing the injected instance attribute) —
+# the run is over, and what the checker may judge is the
+# durable file, which never contained the disposition.
+FrameworkStore.rollback(store)
+check("commit fault (unrecoverable): the checker sees "
+      "the outstanding CALL_ENTERED obligation — the "
+      "history stands incomplete, reported as such",
+      any(p["kind"] == "disposition_missing"
+          for p in loop_problems(store)),
+      f"problems={loop_problems(store)}")
+
+# ============================================================
+# Correction 3 (INDEX 314) — the omission bypass closed:
+# a provider seam without a store is refused before any
+# iteration; a plain scripted callable runs ungoverned
+# as before; governed iterations carry the mark.
+# ============================================================
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+adapter = OpenAICompatibleAdapter(model=PROVIDER_ID,
+                                  timeout=30.0)
+result = Loop(d, token, adapter).run()
+check("omission: a provider adapter (a seam-publishing "
+      "callable) without an evidence store is refused "
+      "before any iteration — not_run, nothing recorded",
+      result.get("outcome") == "not_run"
+      and "evidence" in result.get("reason", "")
+      and events_of(store, "LOOP_ITERATION") == [],
+      f"result={result}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+result = Loop(d, token, yield_script()).run()
+check("omission: a scripted callable PUBLISHING a seam "
+      "without a store is refused the same way — the "
+      "seam, not the callable's pedigree, governs",
+      result.get("outcome") == "not_run"
+      and events_of(store, "LOOP_ITERATION") == [],
+      f"result={result}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+
+
+def plain_model(package, budget=None, deadline=None):
+    return {"outcome": "yield", "summary": "legacy path"}
+
+
+result = Loop(d, token, plain_model).run()
+iters = events_of(store, "LOOP_ITERATION")
+check("omission: a plain scripted callable (no seam) "
+      "runs ungoverned exactly as before — and its "
+      "iterations carry NO governed mark",
+      result.get("outcome") == "yield"
+      and len(iters) == 1
+      and "evidence_governed" not in iters[0]["payload"],
+      f"result={result}")
+check("omission: the checker is all-ok over the legacy "
+      "ungoverned run — the regime was never owed",
+      loop_problems(store) == [],
+      f"problems={loop_problems(store)}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+result = run_governed(store, d, token, yield_script())
+iters = events_of(store, "LOOP_ITERATION")
+check("omission: a governed run's iteration carries "
+      "the governed mark in its payload from its first "
+      "event",
+      result.get("outcome") == "yield"
+      and iters
+      and iters[0]["payload"].get("evidence_governed")
+      is True,
+      f"payload={iters and iters[0]['payload']}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+asm = r["assembly_id"]
+d.record_loop_iteration(asm, 1, 12, 12,
+                        evidence_governed=True)
+kinds = {p["kind"] for p in loop_problems(store)}
+check("omission: a governed activation dying between "
+      "the iteration event and the call boundary (no "
+      "boundary, no disposition, no stall) is divergent "
+      "— the mark makes the regime owed from the start",
+      "iteration_without_call_boundary" in kinds,
+      f"kinds={kinds}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+asm = r["assembly_id"]
+_version = loop_module._tool_policy.REGISTRY_VERSION
+_catalogue = loop_module._derive_catalogue(GRANTS, _version)
+d.record_loop_iteration(
+    asm, 1, 12, 12,
+    catalogue_hash=loop_module._catalogue_hash(_catalogue),
+    registry_version=_version)
+check("omission: the same unmarked shape is a legacy "
+      "path's — outside the regime, not divergent",
+      loop_problems(store) == [],
+      f"problems={loop_problems(store)}")
+
+# ============================================================
+# Correction 4 (INDEX 314) — the checker validates the
+# terminal-step CONDITION, not only the name.
+# ============================================================
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+asm = r["assembly_id"]
+d.record_loop_iteration(asm, 1, 12, 12,
+                        evidence_governed=True)
+d.record_loop_stalled(asm, "deadline",
+                      terminal_step="deadline_at_start")
+kinds = {p["kind"] for p in loop_problems(store)}
+check("terminal step: a deadline_at_start stamped "
+      "seconds after activation under a 60-second "
+      "deadline is divergent — its timestamp precedes "
+      "the deadline it claims had passed",
+      "terminal_step_condition_invalid" in kinds,
+      f"kinds={kinds}")
+
+store, d, office, gen, tok = fresh()
+r, token = activate(store, d, office, gen, tok)
+asm = r["assembly_id"]
+d.record_loop_iteration(asm, 1, 12, 12,
+                        evidence_governed=True)
+d.record_loop_stalled(asm, "deadline",
+                      terminal_step="package_construction")
+kinds = {p["kind"] for p in loop_problems(store)}
+check("terminal step: a package_construction claimed "
+      "under a deadline ground (no construction failure "
+      "in its detail) is divergent",
+      "terminal_step_condition_invalid" in kinds,
+      f"kinds={kinds}")
 
 print()
 if FAILURES:

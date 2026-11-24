@@ -111,6 +111,14 @@ PRE_CALL_TERMINAL_STEPS = frozenset({
 # terminal may name (R8-2).
 EVIDENCE_FAILURE_OPERATIONS = frozenset({
     "persist", "verify", "commit"})
+# The capture ceiling (R7-1/R8-1): the largest body the
+# evidence contract undertakes to hold whole. The
+# boundary arithmetic is enforced here, at write time,
+# against the disposition's own claims — not inferred
+# from the helper's behaviour: eof stands only below
+# the ceiling, capture_limit only exactly at it, and
+# read_failure only below it with its error kind named.
+RESPONSE_CAPTURE_CEILING = 64000
 
 # Piece A3 (correction round 2): the act types whose payload's
 # instance_id is the act's subject referent, not its author's
@@ -1689,14 +1697,39 @@ class Doorway:
                         "bytes, its completeness, and "
                         "hash_subject observed_bytes "
                         "(R6-1/R7-1)")
+            # The duplicated completeness fields must
+            # agree: the summary carries the artifact's
+            # body_complete beside its complete, and a
+            # summary in which they disagree — or in
+            # which the duplicate is absent, so agreement
+            # cannot be established — is invalid.
+            if l1.get("body_complete") != \
+                    l1.get("complete"):
+                return ("the captured L1 summary's "
+                        "body_complete and complete must "
+                        "agree; a summary whose duplicated "
+                        "completeness fields disagree (or "
+                        "leave one unspoken) is invalid "
+                        "(R7-1)")
+            # The ceiling boundary arithmetic, enforced
+            # against the summary's own claims (build
+            # examination, INDEX 314): the stop reason
+            # and the observed count must stand in the
+            # one relation the capture contract permits.
+            count = l1.get("byte_count")
             if l1.get("complete"):
                 if l1.get("stop_reason") != "eof" or \
-                        l1.get("total_length") != \
-                        l1.get("byte_count"):
+                        l1.get("total_length") != count:
                     return ("a complete L1 stands only on "
                             "an observed EOF, its total "
                             "length its observed count "
                             "(R8-1)")
+                if count >= RESPONSE_CAPTURE_CEILING:
+                    return ("a complete L1 stands only "
+                            "below the capture ceiling: at "
+                            "the ceiling no EOF could have "
+                            "been observed, so completeness "
+                            "there is unclaimable (R8-1)")
             else:
                 if l1.get("stop_reason") not in (
                         "capture_limit", "read_failure") \
@@ -1705,6 +1738,32 @@ class Doorway:
                             "stop reason (capture_limit or "
                             "read_failure) and leaves its "
                             "total length unknown (R7-1)")
+                if l1.get("stop_reason") == \
+                        "capture_limit" and \
+                        count != RESPONSE_CAPTURE_CEILING:
+                    return ("a capture_limit L1 stands "
+                            "only at exactly the capture "
+                            "ceiling; a capture that stopped "
+                            "below it stopped for another "
+                            "reason (R7-1/R8-1)")
+                if l1.get("stop_reason") == \
+                        "read_failure":
+                    if count >= RESPONSE_CAPTURE_CEILING:
+                        return ("a read_failure L1 stands "
+                                "only below the capture "
+                                "ceiling; at or past it the "
+                                "capture stopped at the "
+                                "limit, not at a failed read "
+                                "(R7-1/R8-1)")
+                    if not isinstance(
+                            l1.get("read_error_kind"),
+                            str) or \
+                            not l1.get("read_error_kind"):
+                        return ("a read_failure L1 names "
+                                "the read error kind its "
+                                "capture failed with; the "
+                                "kind is part of the claim "
+                                "(R6-1)")
             return None
         if outcome == "no_response":
             if failure_class != RESPONSE_NO_RESPONSE_CLASS:
@@ -1848,7 +1907,8 @@ class Doorway:
     def record_loop_iteration(self, assembly_id, iteration,
                               cursor_from, cursor_to,
                               catalogue_hash=None,
-                              registry_version=None):
+                              registry_version=None,
+                              evidence_governed=False):
         """The loop's iteration report (Piece A3, R49): one
         event per model call, recorded before the call it
         accounts, under the loop identity. The route derives
@@ -1871,7 +1931,17 @@ class Doorway:
         version it was derived under — the loop's commitment,
         recorded as presented; the correspondence between the
         commitment and the sealed grants is the checker's
-        reconstruction, not this route's."""
+        reconstruction, not this route's. Response-evidence
+        piece (build examination, INDEX 314): where the loop
+        runs under the evidence regime it declares so here —
+        evidence_governed stands in the iteration's payload
+        from this first event of the iteration, so the
+        activation's governed state is durable from the
+        start and a death between this event and the call
+        boundary cannot slip the regime; the checker governs
+        every activation any iteration of which carries the
+        mark. An unmarked iteration is a legacy scripted
+        path's, and stays outside the regime."""
         with self.store.serialized():
             state = self.state()
             entry = state["assemblies"].get(assembly_id)
@@ -1989,6 +2059,8 @@ class Doorway:
             if catalogue_hash is not None:
                 payload["catalogue_hash"] = catalogue_hash
                 payload["registry_version"] = registry_version
+            if evidence_governed:
+                payload["evidence_governed"] = True
             ev = self.store.append(
                 "LOOP_ITERATION", LOOP_ACTOR, [instance_id],
                 payload)

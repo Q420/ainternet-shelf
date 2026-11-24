@@ -363,7 +363,9 @@ def test_w1_dispatcher_capture():
         groq_transport.install_groq_connector_transport(adapter)
         store, d, tok, itok, ex, _sandbox = world_adapter(
             adapter.identify)
-        result = Loop(d, itok, adapter, executor=ex).run()
+        result = Loop(d, itok, adapter, executor=ex,
+                      evidence_store=os.path.dirname(
+                          store.path)).run()
     finally:
         for key, value in saved_env.items():
             if value is None:
@@ -996,7 +998,9 @@ def test_w4_maxconfig_capture():
         groq_transport.install_groq_connector_transport(adapter)
         store, d, tok, itok, ex, _sandbox = world_maxconfig(
             adapter.identify)
-        result = Loop(d, itok, adapter, executor=ex).run()
+        result = Loop(d, itok, adapter, executor=ex,
+                      evidence_store=os.path.dirname(
+                          store.path)).run()
     finally:
         for key, value in saved_env.items():
             if value is None:

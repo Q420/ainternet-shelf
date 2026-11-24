@@ -170,12 +170,22 @@ class _EvidenceFailure(Exception):
     the artifact could not be persisted or read-back-
     verified, or the disposition could not be committed.
     Carries the failed operation (persist / verify /
-    commit), which the evidence failure terminal names."""
+    commit), which the evidence failure terminal names.
 
-    def __init__(self, operation, detail):
+    terminal_recordable (build examination, INDEX 314):
+    False where a failed disposition commit could not be
+    returned to a known transaction state — the failure
+    terminal may not then be attempted, because a partial
+    disposition left pending could be committed alongside
+    it; the run stops claiming nothing, and CALL_ENTERED
+    stands outstanding for the checker."""
+
+    def __init__(self, operation, detail,
+                 terminal_recordable=True):
         super().__init__(detail)
         self.operation = operation
         self.detail = detail
+        self.terminal_recordable = terminal_recordable
 
 
 def _derive_catalogue(grants, version=None, per_grant=False):
@@ -293,10 +303,18 @@ class Loop:
         # the evidence sequence — CALL_ENTERED before each
         # call, the seam's evidence persisted and the
         # disposition committed before any effect of the
-        # answer. Where none is given (the historical
-        # scripted callables, which are not provider seams
-        # and produce no evidence), the loop runs exactly
-        # as it always has.
+        # answer. Where none is given, the loop runs
+        # exactly as it always has — but only for a
+        # callable that is not a provider seam: a callable
+        # publishing the seam (the adapter's
+        # last_response_evidence channel, which the
+        # transports fill) is a provider callable, and
+        # running one without a store would silently
+        # ungovern a real worker (build examination,
+        # INDEX 314). run() refuses that pairing, fail
+        # closed, before any iteration; a plain scripted
+        # callable — no seam channel — is the genuinely
+        # legacy path and runs ungoverned as before.
         self.evidence_store = evidence_store
 
     # ------------------------------------------------------ run
@@ -312,6 +330,24 @@ class Loop:
         activation, no bounds, an unestablishable anchor, an
         already-stalled activation) — in which case nothing is
         recorded and no model call is made."""
+        if self.evidence_store is None and \
+                hasattr(self.model, "last_response_evidence"):
+            # Bypass by omission, closed (build
+            # examination, INDEX 314): the callable is a
+            # provider seam — it publishes response
+            # evidence — and no evidence store stands to
+            # receive it. The loop refuses rather than
+            # take the ungoverned path: a missing store
+            # must not silently turn a real worker into an
+            # ungoverned one. Nothing is recorded and no
+            # call is made; the refusal is the result.
+            return {"ok": False, "outcome": "not_run",
+                    "reason": "the callable publishes a "
+                              "provider response-evidence "
+                              "seam but no evidence store "
+                              "was given; a provider worker "
+                              "does not run ungoverned "
+                              "(response-evidence piece)"}
         ctx = self._open_context()
         if isinstance(ctx, dict) and "not_run" in ctx:
             return ctx["not_run"]
@@ -475,7 +511,9 @@ class Loop:
                     ctx["cursor"], head,
                     catalogue_hash=ctx.get("catalogue_hash"),
                     registry_version=ctx.get(
-                        "registry_version"))
+                        "registry_version"),
+                    evidence_governed=self.evidence_store
+                    is not None)
             except DoorwayRefusal as refusal:
                 if refusal.ground == \
                         LOOP_ITERATION_DEADLINE_GROUND:
@@ -938,7 +976,12 @@ class Loop:
         Returns (disposition event, outcome). Raises
         _EvidenceFailure naming the failed operation:
         persist/verify from the store, commit from the
-        doorway's refusal."""
+        doorway's refusal — or from the doorway's own
+        storage/transaction failure (build examination,
+        INDEX 314): a commit that raises inside the
+        doorway's route is the same commit failure,
+        routed the same way, once the transaction stands
+        in a known state again."""
         outcome, failure_class, seam_evidence = \
             _evidence.derive_disposition(seam)
         artifact_sha256 = None
@@ -972,6 +1015,39 @@ class Loop:
                 http_status=seam.get("http_status"))
         except DoorwayRefusal as refusal:
             raise _EvidenceFailure("commit", refusal.ground)
+        except Exception as exc:  # noqa: BLE001 — a
+            # storage or transaction failure inside the
+            # doorway's route (its store.commit() raising
+            # is the named case): the disposition append
+            # may stand pending in an open transaction.
+            # Before the failure terminal may be attempted,
+            # the transaction must stand in a KNOWN state —
+            # rolled back, the partial disposition
+            # discarded — so the failed disposition can
+            # never later be committed alongside the
+            # terminal. Where even the rollback fails, the
+            # state is not known: the failure is raised as
+            # not terminal-recordable, and the run stops
+            # claiming nothing (INDEX 314, on R8-2).
+            try:
+                self.doorway.store.rollback()
+            except Exception as rb_exc:  # noqa: BLE001
+                raise _EvidenceFailure(
+                    "commit",
+                    f"the disposition commit failed "
+                    f"({type(exc).__name__}: {exc}) and "
+                    f"the transaction could not be rolled "
+                    f"back to a known state "
+                    f"({type(rb_exc).__name__}: {rb_exc}); "
+                    f"no evidence failure terminal is "
+                    f"recorded and none is claimed",
+                    terminal_recordable=False)
+            raise _EvidenceFailure(
+                "commit",
+                f"the disposition commit failed in the "
+                f"record store ({type(exc).__name__}: "
+                f"{exc}); the transaction was rolled back "
+                f"and the disposition stands nowhere")
         return ev, outcome
 
     def _evidence_failure_result(self, ctx, iteration_seq,
@@ -996,6 +1072,22 @@ class Loop:
                 "refused": ctx["refused"],
                 "dispatched": ctx["dispatched"],
                 "call_timings": ctx["call_timings"]}
+        if not fail.terminal_recordable:
+            # The disposition commit failed and its
+            # transaction could not be returned to a known
+            # state (INDEX 314): attempting the terminal
+            # here could commit the failed disposition
+            # alongside it. Stop instead, claiming nothing
+            # — CALL_ENTERED stands outstanding, and the
+            # checker reports the incomplete history.
+            base["evidence_failure_recorded"] = False
+            base["reason"] = (
+                "the disposition commit failed and the "
+                "transaction could not be returned to a "
+                "known state; no evidence failure terminal "
+                "was attempted and no recorded reason is "
+                "claimed")
+            return base
         try:
             ev = self.doorway.record_evidence_capture_failure(
                 ctx["assembly_id"], iteration_seq,
