@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 3** — Rev 2, plus the no-response distinction made mechanical (INDEX 306): RESPONSE_EVIDENCE becomes the iteration's typed response disposition (captured / no_response), owed by every iteration that reaches the call; the failure path's ordering stated case by case; L1 stored as base64 with recomputable hash/count; L5 verdicts total, with explicit `not_reached` states.
+
 **Rev 2** — revised at Vane's scope examination (INDEX 305): L1 provenance made exact (the Groq worker path moves to the raw helper mode so L1 is the provider body, not a re-serialization); the durable-store contract specified; one exact event/failure sequence, with evidence capture placed ahead of the post-call deadline stall; W-a strengthened to prove the layers' identity chain, with the five response-shape cases added.
 
 Drafted by Remmy at Vane's request (INDEX 303), for her scope examination. The piece answers the gap the first probed-mode run exposed (INDEX 301): the loop recorded a parse verdict — "answer is not one JSON object" — while the answer itself was discarded at the transport seam. **Boundary (hers, standing): no rerun, no change to the selected text mode, grants, bounds or assignment. This scope authorises nothing; the build waits on her scope pass and Ben's tap.**
@@ -104,3 +106,30 @@ W-a is strengthened: the stub answers in text mode with a native-shaped response
 - **W-k:** a transport failure with **no** response body (no artifact; the stall's diagnostic stands alone; the checker accepts the absence as the no-response state).
 
 All other Rev 1 provisions stand as written (the five-layer object as amended by R2-1, the ceiling and whole-original hashes, the `evidence_capture_failure` ground, the contents discipline, the checker rules as extended by R2-2/R2-3, and the §7 boundary).
+
+---
+
+## Rev 3 — the no-response distinction, made mechanical
+
+### R3-1. Every iteration reaches a recorded terminal response state (her point 1, her favoured design)
+
+RESPONSE_EVIDENCE gains a typed outcome, and the event becomes the iteration's **response disposition** — recorded in both of its forms at the same sequence position (Rev 2 §R2-3 steps 4–5):
+
+- **`outcome: "captured"`** — a response exists. The artifact-bearing form of Rev 2, unchanged: artifact persisted and read-back-verified first, then the event commits, bound to the iteration and the artifact hash.
+- **`outcome: "no_response"`** — the call was invoked and the transport observed no response. **No artifact** (nothing exists to file, and none is fabricated). The event carries, from the transport seam's own observation at call time: the **transport failure class** (a typed value — e.g. `helper_exit`, `no_envelope`, `timeout_or_unresolved_termination`, `provider_http_error_without_body` where the seam can establish that) and the diagnostic text. This is a positive recorded claim made at the seam when the call returns, not an inference drawn later from an absence.
+
+**The universality rule (doorway + checker):** the loop's sequence invokes the provider call at a named step. Every iteration that passes that step owes exactly one RESPONSE_EVIDENCE — in one of its two forms — committed before the iteration's terminal event (its stall, yield or continuation). Iterations that terminate **before** the call step do so only at named pre-call steps whose terminal payloads identify the step (package construction, deadline-at-start); those are the only iterations without a disposition, and they are distinguishable by their recorded step, never by silence. The checker enforces: a post-call terminal (provider failure, deadline-after-call, parse stall, `evidence_capture_failure`, any dispatch, a yield) with **no** preceding RESPONSE_EVIDENCE for its iteration is a failure; **two** dispositions for one iteration is a failure; a `no_response` disposition followed by any dispatch from that iteration is a failure. A missing state is therefore mechanically a defect, exactly as required.
+
+### R3-2. The failure path's ordering, explicit (her point 2)
+
+The Rev 2 ordering binds failures with the same force as successes, stated case by case:
+
+- **HTTP error with a body:** the raw seam returns status + body — that is a response. Captured (L1 = the error body) and bound **before** any deadline stall; the verdicts record the HTTP failure (R3-3).
+- **Malformed / undecodable envelope:** L1 is retained whole **before** the parsing failure is recorded; the failure's record points at the evidence that exhibits it.
+- **Transport failure, no response:** the `no_response` disposition (R3-1) is recorded at the same sequence position a captured disposition would occupy — before the stall.
+- **Evidence that cannot be persisted:** `evidence_capture_failure`, full stop — a simultaneous deadline expiry does not absorb it, outrank it, or rename it. The deadline never becomes a way for an answer to escape the evidence contract, on any path.
+
+### R3-3. The two precision points (her point 3)
+
+- **L1 storage representation:** the artifact stores L1 as **base64 of the raw bytes**, alongside the byte count and the sha256 of the raw bytes — both independently recomputable from the stored representation by the checker or any reader. Arbitrary binary and invalid-UTF-8 bodies are therefore retainable exactly; the strict-UTF-8 decode remains a *derived-layer* act (L2), whose failure is recorded, never a storage constraint.
+- **L5 verdict states are total:** both verdict fields are **always present** in the evidence object, each taking a typed value. The adapter verdict is `not_reached` when parsing cannot begin (no envelope, transport HTTP failure, undecodable body) — with the reason named — rather than absent. The loop validation verdict is `not_reached` whenever the adapter stage produced no dispatchable outcome to validate. A missing verdict field is a malformed evidence object (checker failure), never a synonym for incomplete evidence.
