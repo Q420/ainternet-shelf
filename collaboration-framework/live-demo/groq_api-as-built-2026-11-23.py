@@ -13,6 +13,7 @@ import json
 import math
 import os
 import sys
+import urllib.error
 import urllib.request
 
 sys.path.insert(0, "/opt/muse/skills/custom-connector-setup/bin")
@@ -28,6 +29,13 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 DEFAULT_TIMEOUT = 120
+
+# The most of a provider HTTP error body this helper reads
+# and retains in the failure it reports (INDEX 261's narrow
+# diagnostic correction): enough to carry the provider's own
+# explanation, bounded so a failure stays a bounded
+# diagnostic downstream.
+ERROR_BODY_LIMIT = 2000
 
 
 def request_timeout():
@@ -51,14 +59,49 @@ def request_timeout():
     return DEFAULT_TIMEOUT
 
 
+def _provider_error(error):
+    """The failure a provider HTTP error becomes: a
+    RuntimeError carrying the HTTP status and the provider's
+    own error body, read bounded (at most ERROR_BODY_LIMIT
+    bytes), decoded leniently and collapsed to a single
+    line — so the provider's explanation survives into the
+    caller's diagnostics instead of being discarded at this
+    boundary (INDEX 261). An empty body is stated plainly;
+    a body that cannot be read is stated plainly too, and
+    never lets a secondary read failure replace the
+    provider error itself."""
+    status = error.code
+    try:
+        raw = error.read(ERROR_BODY_LIMIT)
+    except Exception:
+        return RuntimeError(
+            f"provider error: HTTP {status}: the provider's "
+            "error body could not be read")
+    if raw is None:
+        raw = b""
+    text = raw if isinstance(raw, str) else raw.decode(
+        "utf-8", errors="replace")
+    text = " ".join(text.split())[:ERROR_BODY_LIMIT]
+    if not text:
+        return RuntimeError(
+            f"provider error: HTTP {status}: the provider "
+            "returned no error body")
+    return RuntimeError(
+        f"provider error: HTTP {status}: {text}")
+
+
 def call(request):
     # Groq's edge refuses the Python library's default client signature
     # (Cloudflare error 1010, found 2026-10-25). Name the client honestly.
     request.add_header("User-Agent", "Groq/Python 1.0 (Pulse HQ Marni)")
     add_surrogate_to_request(request, "custom.groq", allowed_hosts=[HOST])
     opener = urllib.request.build_opener(NoRedirect())
-    with opener.open(request, timeout=request_timeout()) as response:
-        return read_json_response(response)
+    try:
+        with opener.open(request,
+                         timeout=request_timeout()) as response:
+            return read_json_response(response)
+    except urllib.error.HTTPError as error:
+        raise _provider_error(error) from error
 
 
 def main():

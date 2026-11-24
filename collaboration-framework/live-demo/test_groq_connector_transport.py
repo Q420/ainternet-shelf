@@ -40,6 +40,13 @@ W8 the identity-pin refusal path: the harness's own
    run aborts before activation, the mismatch recorded
    in report.json, and the record carries no
    INSTANCE_ACTIVATED event.
+W9 the REAL helper's HTTP error path (INDEX 261's
+   narrow diagnostic correction): a provider HTTP
+   error's body is read bounded and retained in the
+   failure the helper reports — populated, over-limit,
+   empty and unreadable bodies exercised against the
+   helper module directly and through call() with a
+   stubbed opener. The network is never touched.
 Route selection: unset -> NVIDIA, "groq" -> Groq, any
    other non-empty value refuses (unit level), and a
    harness subprocess with a typo'd WORKER_ROUTE exits
@@ -52,6 +59,7 @@ Exits 0 when every check passes.
 
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -60,6 +68,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
+import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -582,6 +592,150 @@ check("W8: no worker call followed the mismatch (no "
       "LOOP_ITERATION in the record)",
       "LOOP_ITERATION" not in event_types8)
 shutil.rmtree(w8_dir, ignore_errors=True)
+
+# -- W9: the REAL helper retains the provider's HTTP
+# error body (INDEX 261). helper_mod is the real
+# groq_api.py, imported in the W6b section above.
+CHAT_URL = ("https://api.groq.com/openai/v1/"
+            "chat/completions")
+
+
+def http_error(body, code):
+    return urllib.error.HTTPError(
+        CHAT_URL, code, "error", {}, io.BytesIO(body))
+
+
+# (1) A populated error body: status + body text retained.
+payload9 = json.dumps(
+    {"error": {"message": "model overloaded, try again",
+               "code": "overloaded"}},
+    indent=1).encode("utf-8")
+failure9a = helper_mod._provider_error(
+    http_error(payload9, 400))
+check("W9: a populated error body produces a "
+      "RuntimeError", isinstance(failure9a, RuntimeError),
+      f"type={type(failure9a).__name__}")
+check("W9: the failure names the HTTP status",
+      "400" in str(failure9a), f"msg={str(failure9a)[:80]}")
+check("W9: the failure retains the error body's text",
+      "model overloaded, try again" in str(failure9a))
+check("W9: the retained body is collapsed to a single "
+      "line", "\n" not in str(failure9a))
+
+# (2) Bounding: an over-limit body is retained only up
+# to the helper's named limit.
+failure9b = helper_mod._provider_error(http_error(
+    b"x" * (helper_mod.ERROR_BODY_LIMIT + 5000), 413))
+check("W9: an over-limit error body is retained only "
+      "up to ERROR_BODY_LIMIT",
+      ("x" * helper_mod.ERROR_BODY_LIMIT) in
+      str(failure9b) and
+      ("x" * (helper_mod.ERROR_BODY_LIMIT + 1)) not in
+      str(failure9b),
+      f"limit={helper_mod.ERROR_BODY_LIMIT}")
+
+# (3) An empty error body: same kind, status named, the
+# absence stated plainly.
+failure9c = helper_mod._provider_error(
+    http_error(b"", 429))
+check("W9: an empty error body produces the same "
+      "exception kind, naming the status and stating "
+      "that no error body was returned",
+      type(failure9c) is type(failure9a) and
+      "429" in str(failure9c) and
+      "no error body" in str(failure9c),
+      f"msg={failure9c}")
+
+
+# (4) An unreadable error body: the failure still
+# carries the status with the could-not-be-read
+# statement — no secondary exception escapes.
+class UnreadableBody:
+    def read(self, *args):
+        raise OSError("patched: body unreadable")
+
+    def close(self):
+        pass
+
+
+failure9d = helper_mod._provider_error(
+    urllib.error.HTTPError(CHAT_URL, 500, "error", {},
+                           UnreadableBody()))
+check("W9: an unreadable error body produces the same "
+      "exception kind, naming the status and stating "
+      "the body could not be read",
+      type(failure9d) is type(failure9a) and
+      "500" in str(failure9d) and
+      "could not be read" in str(failure9d),
+      f"msg={failure9d}")
+
+# Integration through call(): the opener is stubbed to
+# raise the provider error, the surrogate step is
+# stubbed out — the network is never touched.
+real_build_opener = urllib.request.build_opener
+real_surrogate = helper_mod.add_surrogate_to_request
+
+
+class RaisingOpener:
+    def __init__(self, error):
+        self._error = error
+
+    def open(self, request, timeout=None):
+        raise self._error
+
+
+class FakeResponse:
+    def __init__(self, payload):
+        self._buf = io.BytesIO(payload)
+
+    def read(self, size=-1):
+        return self._buf.read(size)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+class OkOpener:
+    def open(self, request, timeout=None):
+        return FakeResponse(json.dumps(
+            {"id": "chatcmpl-w9", "model": PIN}).encode())
+
+
+try:
+    helper_mod.add_surrogate_to_request = (
+        lambda *args, **kwargs: None)
+    urllib.request.build_opener = (
+        lambda *args, **kwargs: RaisingOpener(
+            http_error(payload9, 400)))
+    raised9 = None
+    try:
+        helper_mod.call(urllib.request.Request(
+            CHAT_URL, data=b"{}", method="POST"))
+    except RuntimeError as exc:
+        raised9 = exc
+    check("W9: through call(), a provider HTTP error "
+          "surfaces as a RuntimeError carrying the "
+          "status and the body's text — never the raw "
+          "HTTPError",
+          raised9 is not None and
+          not isinstance(raised9, urllib.error.HTTPError)
+          and "400" in str(raised9) and
+          "model overloaded, try again" in str(raised9),
+          f"raised={raised9}")
+    urllib.request.build_opener = (
+        lambda *args, **kwargs: OkOpener())
+    result9 = helper_mod.call(urllib.request.Request(
+        CHAT_URL, data=b"{}", method="POST"))
+    check("W9: through call(), a successful response "
+          "still returns the parsed JSON unchanged",
+          result9 == {"id": "chatcmpl-w9", "model": PIN},
+          f"result={result9}")
+finally:
+    urllib.request.build_opener = real_build_opener
+    helper_mod.add_surrogate_to_request = real_surrogate
 
 shutil.rmtree(TMP, ignore_errors=True)
 print()
