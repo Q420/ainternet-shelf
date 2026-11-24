@@ -1,0 +1,176 @@
+{
+ "model": "openai/gpt-oss-120b",
+ "suite": "native-probe-v1-empirical-preview",
+ "trials": [
+  {
+   "trial": 1,
+   "behaviour": "native_catalogue",
+   "delivery": "provider_accepted",
+   "tool_names": [
+    "probe.lookup"
+   ],
+   "raw_sha256": "d9d664e3a191b439868ea86ecde34662ae6075c8bd253e5d3f7e3ccabd809940",
+   "raw": {
+    "id": "chatcmpl-2a6ccad8-45d2-4cb6-9a69-4d0b8db1eaa7",
+    "object": "chat.completion",
+    "created": 1795486645,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "reasoning": "We need to follow contract: first request tool via JSON. Then after receiving result, we give final answer via {\"contribution\": \"...\"}.\n\nSo we output JSON request.",
+       "tool_calls": [
+        {
+         "id": "fc_62717b54-dd98-438d-a57d-537a269cdd88",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\":\"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+     }
+    ],
+    "usage": {
+     "queue_time": 0.114856122,
+     "prompt_tokens": 311,
+     "prompt_time": 0.012698972,
+     "completion_tokens": 66,
+     "completion_time": 0.137236547,
+     "total_tokens": 377,
+     "total_time": 0.149935519,
+     "completion_tokens_details": {
+      "reasoning_tokens": 36
+     }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8655ddce88",
+    "x_groq": {
+     "id": "req_01m85nfygnen1ab4yb91h9wgdk",
+     "seed": 2140130076
+    },
+    "service_tier": "on_demand"
+   }
+  },
+  {
+   "trial": 2,
+   "behaviour": "text_contract",
+   "delivery": "provider_accepted",
+   "tool_names": null,
+   "raw_sha256": "416e1ed5e2db6c035dbf32fa815a41d1313d200a7e58dd60c2a56c862ee99b79",
+   "raw": {
+    "id": "chatcmpl-a0c457ea-81a6-4b9e-9c14-84383e68a57f",
+    "object": "chat.completion",
+    "created": 1795486645,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "{\"tool_requests\": [{\"tool\": \"probe.lookup\", \"parameters\": {\"object\": \"brass lantern\"}}]}",
+       "reasoning": "We need to follow contract: first request tool via JSON. Then after receiving result, we answer. So we output JSON with tool request."
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "queue_time": 0.076844618,
+     "prompt_tokens": 311,
+     "prompt_time": 0.015523601,
+     "completion_tokens": 61,
+     "completion_time": 0.126601687,
+     "total_tokens": 372,
+     "total_time": 0.142125288,
+     "completion_tokens_details": {
+      "reasoning_tokens": 29
+     }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_e5b4e54fbb",
+    "x_groq": {
+     "id": "req_01m85nfzgjefmsqg1grj6s4n1a",
+     "seed": 946931943
+    },
+    "service_tier": "on_demand"
+   }
+  },
+  {
+   "trial": 3,
+   "behaviour": "no_observable_behaviour",
+   "delivery": "provider_failed",
+   "tool_names": null,
+   "raw_sha256": "fc2396598cb68c9216ba268b561fdc8449d33a2d0f8737cd9c0b0deac5cceb56",
+   "raw": "Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 100, in call\n    with opener.open(request,\n         ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 400: Bad Request\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 131, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 124, in main\n    print(json.dumps(call(req)))\n                     ^^^^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 104, in call\n    raise _provider_error(error) from error\nRuntimeError: provider error: HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'commentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"commentary\\\", \\\"arguments\\\": {\\\"tool_requests\\\": [{\\\"tool\\\": \\\"probe.lookup\\\", \\\"parameters\\\": {\\\"object\\\": \\\"brass lantern\\\"}}]}}\"}}"
+  },
+  {
+   "trial": 4,
+   "behaviour": "no_observable_behaviour",
+   "delivery": "provider_failed",
+   "tool_names": null,
+   "raw_sha256": "fc2396598cb68c9216ba268b561fdc8449d33a2d0f8737cd9c0b0deac5cceb56",
+   "raw": "Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 100, in call\n    with opener.open(request,\n         ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 400: Bad Request\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 131, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 124, in main\n    print(json.dumps(call(req)))\n                     ^^^^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 104, in call\n    raise _provider_error(error) from error\nRuntimeError: provider error: HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'commentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"commentary\\\", \\\"arguments\\\": {\\\"tool_requests\\\": [{\\\"tool\\\": \\\"probe.lookup\\\", \\\"parameters\\\": {\\\"object\\\": \\\"brass lantern\\\"}}]}}\"}}"
+  },
+  {
+   "trial": 5,
+   "behaviour": "native_catalogue",
+   "delivery": "provider_accepted",
+   "tool_names": [
+    "probe.lookup"
+   ],
+   "raw_sha256": "6b3cbd87498f52eed96884e9f8a41246825742b65254ddf0a4d75916386c6a1e",
+   "raw": {
+    "id": "chatcmpl-1fed5670-fb83-4f0f-b0fc-2d4656365d0e",
+    "object": "chat.completion",
+    "created": 1795486648,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "reasoning": "We need to follow contract: first request tool via JSON. Then after receiving result, we give final answer via {\"contribution\": \"...\"}.\n\nSo we need to output JSON with tool request.",
+       "tool_calls": [
+        {
+         "id": "fc_88f6b5e7-f029-4c27-858d-8e68fd8195c9",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\":\"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+     }
+    ],
+    "usage": {
+     "queue_time": 0.168050374,
+     "prompt_tokens": 311,
+     "prompt_time": 0.019906722,
+     "completion_tokens": 70,
+     "completion_time": 0.149735528,
+     "total_tokens": 381,
+     "total_time": 0.16964225,
+     "completion_tokens_details": {
+      "reasoning_tokens": 40
+     }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_4a7bb72c24",
+    "x_groq": {
+     "id": "req_01m85ng1tfebb8xwaz13wsyb4k",
+     "seed": 1088548541
+    },
+    "service_tier": "on_demand"
+   }
+  }
+ ]
+}
