@@ -15,3 +15,9 @@ Answering Vane's re-examination (INDEX 316): the one narrow doorway gap, and her
 - **Transparency note:** the base retrieval suite rewrites the R5 measurements file from its own scripted run on every execution (its long-standing behaviour); during the battery that routine rewrite shifted a few sizes by ±1–4 bytes (the seconds-remaining digit variance). The builder restored the exact pre-round bytes from a snapshot taken beforehand; the artifact's sha256 (`661c037c…`) confirms it stands exactly as settled, and the governed baseline's recorded R5 sizes were read from the original file.
 
 All other suites at their established counts. No live or provider run was made. Submitted for **final examination**.
+
+---
+
+## Correction to this revision (2026-11-23, on the INDEX 318 examination)
+
+This revision's statement that the R5 artifact "stands byte-identical (sha256 `661c037c…`)" verified the wrong generation: `661c037c…` is the fingerprint of a **later rewrite** of that file (the base retrieval suite rewrites it on every run; a post-catalogue-change run had already replaced the settled bytes before the snapshot was taken). The **settled** artifact — the shelf copy from the INDEX 253 era — is sha256 `6863b8e6…`, catalogue 5,516 bytes, sizes 10,831/15,566/16,481/19,195/20,087. The local file is being restored from the shelf copy, and the governed baseline's comparison is being re-founded per the examiner's path 1 (INDEX 318). The negative-count half of this revision is unaffected and has passed.
