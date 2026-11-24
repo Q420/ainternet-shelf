@@ -46,7 +46,21 @@ An existing run.db is never overwritten — the script refuses.
 Configuration is by environment, as in the Piece 8 live
 harness: ADAPTER_ENDPOINT (default the NVIDIA endpoint),
 ADAPTER_MODEL (default moonshotai/kimi-k3.1-pro),
-ADAPTER_TIMEOUT (default 120). The adapter's transport,
+ADAPTER_TIMEOUT (default 120).
+
+The attempt-7 retrieval mode (ATTEMPT7-RELEASE-PROPOSAL-
+2026-11-23.md; INDEX 256/257) is a distinct configuration
+of this same harness, selected by WORKER_ROUTE=groq with
+RETRIEVAL=1 (any other RETRIEVAL value refuses): the
+assembly declares the retrieval contract, the grants are
+the two-path set, and the case's assignment names the
+deliverable's exact path, scratch/brief.md, which the
+pre-activation verification checks against the configured
+and the sealed grants. The historical configuration —
+this mode's absence — is attempts 1–6 exactly as they
+ran. `--verify-config` runs the mode's dry self-check:
+the assembly inputs built and asserted in a throwaway
+directory, with no activation and no provider call. The adapter's transport,
 however, is NOT the environment-variable key route: attempt
 1 died on it before activation (the key it surfaced was
 rejected, HTTP 401 — INDEX 191). The run's calls are
@@ -67,12 +81,14 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 sys.path.insert(0, SRC)
 
 from framework import projection  # noqa: E402
+from framework import tool_policy  # noqa: E402
 from framework.adapter import (AdapterFailure,  # noqa: E402
                                OpenAICompatibleAdapter)
 from framework.doorway import (Doorway,  # noqa: E402
@@ -124,6 +140,25 @@ def resolve_worker_route(raw):
     raise ValueError(
         f"WORKER_ROUTE={raw!r} is not a recognised route "
         f"(expected unset for the NVIDIA route, or 'groq'); "
+        f"refusing to run")
+
+
+def resolve_retrieval_mode(raw):
+    """The attempt-7 retrieval mode flag (RETRIEVAL),
+    fail-closed in the route selection's discipline: unset
+    or empty preserves the historical configuration;
+    "1" selects the retrieval mode (defined on the Groq
+    route — the caller refuses it elsewhere); any other
+    value is refused, so a typo can never silently change
+    the experiment."""
+    if raw is None or raw == "":
+        return False
+    if raw == "1":
+        return True
+    raise ValueError(
+        f"RETRIEVAL={raw!r} is not a recognised value "
+        f"(expected unset for the historical configuration, "
+        f"or '1' for the attempt-7 retrieval mode); "
         f"refusing to run")
 
 
@@ -196,6 +231,100 @@ GRANTS = [
      "side_effect_class": "write", "bound": {"count": 4},
      "authority_trace": TRACE},
 ]
+
+# The attempt-7 retrieval configuration (ATTEMPT7-RELEASE-
+# PROPOSAL-2026-11-23.md; Ben's authorisation, INDEX 256;
+# the examiner's release examination, INDEX 257). A
+# distinct mode — RETRIEVAL=1 on the Groq route — and the
+# historical configuration above stands exactly as it was.
+# The assembly declares the retrieval contract; the grants
+# are the proposal's two-path set: the retrieval tools
+# under the sources scope (the sealed evidence) and under
+# the scratch scope (the worker's own desk), and the write
+# grant under scratch alone. The scope prefixes are the
+# registry's exact scope names — the doorway's retrieval
+# admission matches a grant's prefix to the authority
+# path's scope by equality, so "sources"/"scratch" here
+# are load-bearing spellings, not style. The case's
+# assignment names the deliverable's exact path,
+# scratch/brief.md (INDEX 257, blocker 2): the worker is
+# instructed to write where its grants permit, and the
+# harness collects the brief from that path.
+RETRIEVAL_TRACE = ("ATTEMPT7-RELEASE-PROPOSAL-2026-11-23.md; "
+                   "Ben's authorisation (INDEX 256); the "
+                   "examiner's release examination "
+                   "(INDEX 257)")
+ASSIGNMENT_RETRIEVAL = (
+    "Read the source documents in your sandbox: "
+    "sources/stock-take.md, sources/a3-pass.md, and "
+    "sources/index-tail.md. Write scratch/brief.md: a "
+    "plain-words brief, at most ~600 words, that a newcomer "
+    "could read to learn what this framework is, what has "
+    "actually been proven, what has not been proven, and "
+    "what remains to be built. Stay accurate to the "
+    "sources; invent nothing; where the sources disagree "
+    "with each other, say so.")
+BRIEF_SANDBOX_PATH = "scratch/brief.md"
+
+
+def _retrieval_grant(tool, prefix, count):
+    return {"tool": tool,
+            "scope_ceiling": {"path_prefix": prefix},
+            "side_effect_class":
+                "write" if tool == "sandbox.write" else "read",
+            "bound": {"count": count},
+            "authority_trace": RETRIEVAL_TRACE}
+
+
+GRANTS_RETRIEVAL = (
+    [_retrieval_grant(tool, "sources", 12)
+     for tool in ("sandbox.list", "sandbox.search",
+                  "sandbox.read_range", "sandbox.read")]
+    + [_retrieval_grant("sandbox.write", "scratch", 4)]
+    + [_retrieval_grant(tool, "scratch", 12)
+       for tool in ("sandbox.list", "sandbox.search",
+                    "sandbox.read_range", "sandbox.read")])
+
+
+def _commission_brief(assignment, manifest_hash):
+    """The crew brief the commission carries, in either
+    mode: the assignment (the mode's own text), the
+    verification list, the evidence boundary naming the
+    manifest hash and the three source paths, and the
+    scoped bounds."""
+    return {
+        "part": "part-A",
+        "assignment": assignment,
+        "verification_list": list(VERIFICATION_LIST),
+        "evidence_boundary":
+            f"source manifest sha256:{manifest_hash}; "
+            "sources: sources/stock-take.md, "
+            "sources/a3-pass.md, sources/index-tail.md",
+        "loop_bounds": dict(BOUNDS),
+    }
+
+
+def _write_grant_problem(grants):
+    """Why the grant set cannot lawfully receive the
+    deliverable, or None (INDEX 257, blocker 2): some
+    sandbox.write grant's scope ceiling must admit
+    scratch/brief.md under the v3 ceiling contract — the
+    same pure check the doorway applies — so the case's
+    instruction and the sealed authority cannot disagree
+    about where the brief may be written."""
+    for grant in grants or []:
+        if not isinstance(grant, dict) or \
+                grant.get("tool") != "sandbox.write":
+            continue
+        ok, _ground = tool_policy.check_ceiling(
+            "sandbox.write", grant.get("scope_ceiling"),
+            {"path": BRIEF_SANDBOX_PATH, "content": "x"},
+            version=tool_policy.RETRIEVAL_REGISTRY_VERSION)
+        if ok:
+            return None
+    return ("no sandbox.write grant's scope covers "
+            f"{BRIEF_SANDBOX_PATH}; the case instructs the "
+            "worker to write where no grant permits")
 
 # (filed document in the project root, staged name, provenance)
 SOURCES = [
@@ -333,17 +462,196 @@ def export_store(store_path, out_path):
     return len(events)
 
 
+def verify_config():
+    """The dry self-check for the retrieval mode (INDEX
+    257, blocker 2): builds the attempt-7 assembly inputs —
+    staging, commission, sealing, the office issue and its
+    pre-activation verification, and generation under a
+    stub identity — in a throwaway directory, asserting the
+    release configuration without activating and without
+    any provider call. The stub identity is a plain mapping
+    (the generator accepts one), so no adapter exists here
+    at all. Asserts: the issued case's assignment names
+    scratch/brief.md exactly (and not the historical
+    deliverable instruction); the sealed record declares
+    the retrieval contract and carries exactly the two-path
+    grant set; a sealed write grant's scope covers
+    scratch/brief.md under the v3 ceiling contract; the
+    collection path is the sandbox's scratch/brief.md; and
+    no activation or iteration stands in the record.
+    Prints the outcome as JSON; returns 0 or 1."""
+    problems = []
+
+    def expect(label, cond):
+        if not cond:
+            problems.append(label)
+        return cond
+
+    tmp = tempfile.mkdtemp(prefix="first-worker-verify-")
+    run_dir = os.path.join(tmp, "run")
+    os.makedirs(run_dir)
+    sandbox = os.path.join(run_dir, "sandbox")
+    manifest, manifest_hash = stage(run_dir)
+    store = FrameworkStore(os.path.join(run_dir, "run.db"))
+    store.insert_run(RUN_ID, CONSTITUTION_HASH)
+    store.append("RUN_COMMISSIONED", "dir-1", [], {
+        "run_id": RUN_ID,
+        "tree": {"part-A": []},
+        "seats": {
+            "orch-1": {"role": "orchestrator",
+                       "identity_status": "declared"},
+            "exam-1": {"role": "examiner",
+                       "identity_status": "declared"},
+            "dir-1": {"role": "director",
+                      "identity_status": "declared"},
+            "crew-1": {"role": "crew",
+                       "identity_status": "unverified"},
+        },
+        "briefs": {"crew-1": _commission_brief(
+            ASSIGNMENT_RETRIEVAL, manifest_hash)},
+    })
+    store.commit()
+    doorway = Doorway(store)
+    office = Office(doorway)
+    gen = Generator(doorway)
+    tok = {s: doorway.issue_token(s)
+           for s in ("orch-1", "exam-1", "dir-1", "crew-1")}
+    _act(doorway, tok["orch-1"], "MATERIAL_SEALED", {
+        "material_id": f"source-manifest sha256:"
+                       f"{manifest_hash}",
+        "boundary": ["crew-1"]})
+    for entry in manifest["sources"]:
+        _act(doorway, tok["orch-1"], "MATERIAL_SEALED", {
+            "material_id": f"{entry['path']} "
+                           f"sha256:{entry['sha256']}",
+            "boundary": ["crew-1"]})
+    issued = office.issue_new(tok["orch-1"], "crew-1")
+    if not expect("the case issues through the office route",
+                  bool(issued.get("ok"))):
+        print(json.dumps({"verify_config": "failed",
+                          "problems": problems}, indent=1))
+        return 1
+    _act(doorway, tok["exam-1"], "CASE_JUDGED",
+         {"case_id": issued["case_id"],
+          "version": issued["version"]})
+    office.authorise(tok["orch-1"], issued["case_id"],
+                     issued["version"])
+    content, _version = established_case_content(
+        doorway.state(), issued["case_id"])
+    content = content or {}
+    boundary = content.get("evidence_boundary") or []
+    expect("the issued case's evidence boundary identifies "
+           "the source manifest hash",
+           any(manifest_hash in str(item) for item in boundary))
+    expect("the issued case carries the scoped bounds "
+           "{12, 600}",
+           content.get("loop_bounds") == BOUNDS)
+    assignment = content.get("assignment") or ""
+    expect("the issued case's assignment names "
+           "scratch/brief.md exactly",
+           BRIEF_SANDBOX_PATH in assignment)
+    expect("the issued case's assignment does not carry "
+           "the historical deliverable instruction",
+           "Write brief.md" not in assignment)
+    gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                role_requirements="a model able to read three "
+                                  "source documents and write "
+                                  "a short, accurate, "
+                                  "plain-words brief")
+    generated = gen.generate(
+        tok["orch-1"], "crew-1",
+        {"declaration": "verify-config stub identity (no "
+                        "provider call is made by this check)",
+         "provider_model_id": GROQ_MODEL_PIN},
+        skills=[], grants=GRANTS_RETRIEVAL,
+        model_requested=GROQ_MODEL_PIN, retrieval=True)
+    if not expect("generation succeeds under the stub "
+                  "identity", bool(generated.get("ok"))):
+        print(json.dumps({"verify_config": "failed",
+                          "problems": problems}, indent=1))
+        return 1
+    sealed = doorway._generated_payload(
+        generated["assembly_id"]) or {}
+    expect("the sealed record declares the retrieval "
+           "contract",
+           sealed.get("catalogue_contract")
+           == tool_policy.RETRIEVAL_CATALOGUE_CONTRACT)
+    sealed_pairs = sorted(
+        (g.get("tool"),
+         (g.get("scope_ceiling") or {}).get("path_prefix"))
+        for g in sealed.get("grants") or [])
+    expected_pairs = sorted(
+        (g["tool"], g["scope_ceiling"]["path_prefix"])
+        for g in GRANTS_RETRIEVAL)
+    expect("the sealed grants are exactly the two-path set "
+           "(retrieval tools under sources and scratch; the "
+           "write grant under scratch)",
+           sealed_pairs == expected_pairs)
+    expect("a sealed write grant's scope covers "
+           "scratch/brief.md under the v3 ceiling contract",
+           _write_grant_problem(sealed.get("grants")) is None)
+    collection = os.path.join(sandbox, *BRIEF_SANDBOX_PATH
+                              .split("/"))
+    expect("the collection path is the run sandbox's "
+           "scratch/brief.md",
+           os.path.relpath(collection, sandbox)
+           == os.path.join("scratch", "brief.md"))
+    events = store.all_events()
+    expect("no activation stands in the record (the check "
+           "does not activate)",
+           not any(e["type"] == "INSTANCE_ACTIVATED"
+                   for e in events))
+    expect("no loop iteration stands in the record (the "
+           "check does not run)",
+           not any(e["type"] == "LOOP_ITERATION"
+                   for e in events))
+    report = {
+        "verify_config": "ok" if not problems else "failed",
+        "mode": "attempt-7 retrieval (WORKER_ROUTE=groq, "
+                "RETRIEVAL=1)",
+        "manifest_hash": manifest_hash,
+        "case_assignment_names": BRIEF_SANDBOX_PATH,
+        "sealed_catalogue_contract":
+            sealed.get("catalogue_contract"),
+        "sealed_grant_pairs": [list(p) for p in sealed_pairs],
+        "collection_path": "sandbox/" + BRIEF_SANDBOX_PATH,
+        "activation_performed": False,
+        "provider_call_made": False,
+        "problems": problems,
+    }
+    print(json.dumps(report, indent=1))
+    return 0 if not problems else 1
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    # Route selection first, before any staging or assembly
-    # work (INDEX 230, correction 3): an invalid value
-    # refuses outright and nothing is staged.
+    verify_only = "--verify-config" in argv
+    argv = [a for a in argv if a != "--verify-config"]
+    # Route and mode selection first, before any staging or
+    # assembly work (INDEX 230, correction 3): an invalid
+    # value refuses outright and nothing is staged.
     try:
         route = resolve_worker_route(
             os.environ.get("WORKER_ROUTE"))
+        retrieval = resolve_retrieval_mode(
+            os.environ.get("RETRIEVAL"))
     except ValueError as exc:
         print(f"ABORT: {exc}", file=sys.stderr)
         return 2
+    if retrieval and route != "groq":
+        print("ABORT: RETRIEVAL=1 selects the attempt-7 "
+              "retrieval mode, which is defined on the Groq "
+              "route (WORKER_ROUTE=groq); refusing to run",
+              file=sys.stderr)
+        return 2
+    if verify_only:
+        if not retrieval:
+            print("ABORT: --verify-config verifies the "
+                  "retrieval mode's configuration; set "
+                  "WORKER_ROUTE=groq and RETRIEVAL=1",
+                  file=sys.stderr)
+            return 2
+        return verify_config()
     name = "first-worker" + (f"-{argv[0]}" if argv else "")
     run_dir = os.path.join(ROOT, "live-demo", name)
     store_path = os.path.join(run_dir, "run.db")
@@ -366,16 +674,9 @@ def main(argv=None):
     # manifest hash and the three source paths.
     store = FrameworkStore(store_path)
     store.insert_run(RUN_ID, CONSTITUTION_HASH)
-    brief = {
-        "part": "part-A",
-        "assignment": ASSIGNMENT,
-        "verification_list": list(VERIFICATION_LIST),
-        "evidence_boundary":
-            f"source manifest sha256:{manifest_hash}; "
-            "sources: sources/stock-take.md, "
-            "sources/a3-pass.md, sources/index-tail.md",
-        "loop_bounds": dict(BOUNDS),
-    }
+    brief = _commission_brief(
+        ASSIGNMENT_RETRIEVAL if retrieval else ASSIGNMENT,
+        manifest_hash)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -450,6 +751,28 @@ def main(argv=None):
     print("pre-activation verification: manifest hash in the "
           "issued case's evidence boundary; bounds as scoped; "
           "staged sources hash to the manifest")
+    if retrieval:
+        # The retrieval mode's additions (INDEX 257,
+        # blocker 2): the case itself must instruct the
+        # deliverable's exact path, and the configured
+        # grants must be able to receive it — verified here,
+        # before assembly, and again against the sealed
+        # record after generation (below).
+        case_assignment = (content or {}).get(
+            "assignment") or ""
+        if BRIEF_SANDBOX_PATH not in case_assignment:
+            print("ABORT: the issued case's assignment does "
+                  f"not name {BRIEF_SANDBOX_PATH}: "
+                  f"{case_assignment!r}", file=sys.stderr)
+            return 1
+        grant_problem = _write_grant_problem(GRANTS_RETRIEVAL)
+        if grant_problem is not None:
+            print(f"ABORT: {grant_problem}", file=sys.stderr)
+            return 1
+        print("pre-activation verification (retrieval "
+              "mode): the issued case's assignment names "
+              f"{BRIEF_SANDBOX_PATH}; the configured write "
+              "grant's scope covers it")
 
     # The adapter, configured as the Piece 8 live harness
     # configures it (endpoint / model / timeout from the
@@ -509,8 +832,10 @@ def main(argv=None):
     try:
         generated = gen.generate(
             tok["orch-1"], "crew-1", identify_callable,
-            skills=[], grants=GRANTS,
-            model_requested=adapter.model)
+            skills=[],
+            grants=GRANTS_RETRIEVAL if retrieval else GRANTS,
+            model_requested=adapter.model,
+            retrieval=retrieval)
     except ModelPinMismatchError as mismatch:
         # The pre-activation stop (INDEX 230, correction 2):
         # record the abort and its reason, export the record
@@ -557,6 +882,26 @@ def main(argv=None):
         return 1
     assembly_id = generated["assembly_id"]
     instance_id = generated["instance_id"]
+    if retrieval:
+        # The sealed record itself, still before activation:
+        # it must declare the retrieval contract, and a
+        # sealed write grant's scope must cover the
+        # deliverable's path (INDEX 257, blocker 2).
+        sealed = doorway._generated_payload(assembly_id) or {}
+        if sealed.get("catalogue_contract") != \
+                tool_policy.RETRIEVAL_CATALOGUE_CONTRACT:
+            print("ABORT: the sealed assembly record does "
+                  "not declare the retrieval contract: "
+                  f"{sealed.get('catalogue_contract')!r}",
+                  file=sys.stderr)
+            return 1
+        grant_problem = _write_grant_problem(
+            sealed.get("grants"))
+        if grant_problem is not None:
+            print(f"ABORT: the sealed grants cannot receive "
+                  f"the deliverable: {grant_problem}",
+                  file=sys.stderr)
+            return 1
     gen.verify(tok["orch-1"], assembly_id)
     _act(doorway, tok["exam-1"], "ASSEMBLY_JUDGED",
          gen.judgement(assembly_id))
@@ -590,7 +935,8 @@ def main(argv=None):
          "outcome": outcomes.get(e["payload"].get(
              "dispatch_id"))}
         for e in events if e["type"] == "TOOL_DISPATCHED"]
-    brief_path = os.path.join(sandbox, "brief.md")
+    brief_rel = BRIEF_SANDBOX_PATH if retrieval else "brief.md"
+    brief_path = os.path.join(sandbox, *brief_rel.split("/"))
     brief_exists = os.path.exists(brief_path)
     brief_words = None
     if brief_exists:
@@ -609,6 +955,8 @@ def main(argv=None):
         "run_id": RUN_ID,
         "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
         "worker_route": route,
+        "retrieval_mode": retrieval,
+        "brief_sandbox_path": brief_rel,
         "model_pinned": (GROQ_MODEL_PIN if route == "groq"
                          else None),
         "model_requested": adapter.model,

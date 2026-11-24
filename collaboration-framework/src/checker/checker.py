@@ -1245,7 +1245,7 @@ _GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
                                  _RETRIEVAL_CONTRACT)
 
 
-def _derive_catalogue(grants, version):
+def _derive_catalogue(grants, version, per_grant=False):
     """The expected tool catalogue for a sealed grants list
     under a named registry version (Piece A3-CAT): this
     checker's independent reconstruction of what the loop's
@@ -1259,17 +1259,29 @@ def _derive_catalogue(grants, version):
     granted, registered tool carries no complete
     worker-facing layer under the version — the catalogue
     the record claims cannot be reconstructed, which is a
-    divergence to report, not a check that passes."""
+    divergence to report, not a check that passes.
+
+    The attempt-7 release correction (INDEX 257, blocker
+    1) adds the per_grant parameter, applied where the
+    sealed record declares the retrieval contract: that
+    regime grants the same tools under two authority
+    scopes, and the expected catalogue carries one entry
+    per grant — both scopes, in canonical tool order
+    (grants of one tool in sealed order) — exactly as the
+    loop derives it. Any other declaration keeps the
+    first-grant reconstruction exactly as it stood."""
     entries = []
     seen = set()
     for grant in grants or []:
         if not isinstance(grant, dict):
             continue
         tool = grant.get("tool")
-        if not isinstance(tool, str) or not tool or \
-                tool in seen:
+        if not isinstance(tool, str) or not tool:
             continue
-        seen.add(tool)
+        if not per_grant:
+            if tool in seen:
+                continue
+            seen.add(tool)
         if not registered(tool, version):
             continue
         facing = worker_facing(tool, version)
@@ -1592,8 +1604,17 @@ def _loop_result(events, state):
                     gen = generated.get(aid)
                     grants = (gen["payload"].get("grants")
                               if gen is not None else None)
+                    # The retrieval contract's assemblies
+                    # are catalogued per grant (INDEX 257):
+                    # the reconstruction follows the sealed
+                    # declaration, as the loop's derivation
+                    # follows the doorway's governed test.
+                    per_grant = gen is not None and \
+                        gen["payload"].get(
+                            "catalogue_contract") == \
+                        _RETRIEVAL_CONTRACT
                     expected, ground = _derive_catalogue(
-                        grants, version)
+                        grants, version, per_grant=per_grant)
                     if expected is None:
                         problem("catalogue_not_derivable",
                                 assembly_id=aid, at_seq=seq,

@@ -53,9 +53,55 @@ INDEX 253's gaps, companion to test_piece_retrieval.py
   from the record and the rendered packages, not from
   the script's intentions.
 
+- WITNESS 3 — the two-scope catalogue (INDEX 257,
+  blocker 1). The attempt-7 configuration grants each
+  retrieval tool twice — sources scope and scratch
+  scope — and the doorway enforces both, but the
+  catalogue's first-grant derivation advertised only
+  one. The correction derives the catalogue per grant
+  for retrieval-governed assemblies (every other
+  assembly's derivation is unchanged). This witness
+  proves, over an assembly sealed with the release
+  proposal's two-path grant set: both scopes stand in
+  the actual wake package's catalogue, one entry per
+  grant; a source pull against a non-manifest path is
+  refused; a scratch pull stands on the scratch grant;
+  neither scope admits the other path (assemblies
+  sealed with only one scope refuse the other path's
+  pulls); and the catalogue commitment recorded in
+  LOOP_ITERATION is the per-grant catalogue's hash,
+  which the independent checker reconstructs — the
+  record replays clean.
+
+- WITNESS 4 — the maximum-configuration envelope
+  capture (INDEX 257, blocker 3's evidence half). The
+  admission bound, derived from the doorway's own
+  mechanics: every admitted retrieval reserves up to
+  the 12,000-byte per-result ceiling against the
+  package window's 36,000-byte aggregate, so at most
+  three full-ceiling retrievals can stand admitted
+  into one package. A scripted sequence fills the
+  window to the ceiling — three read_range pulls of
+  just under 12,000 bytes each from a fixture file,
+  a fourth retrieval refused at admission, and a
+  scratch write in the same response — run through
+  the real loop, adapter and Groq connector transport
+  with the stub-helper capture of Witness 1. The
+  largest resulting body (the next package, carrying
+  the three results) is captured at the transport
+  boundary and written to
+  live-demo/retrieval-maxconfig-capture.json with its
+  component breakdown (residual zero), the provenance
+  component split into model-facing and record-only
+  sub-spans by the same span method, and a token
+  measurement set against the model's published
+  131,072-token context window. No provider call is
+  made: the stub is the receiving end.
+
 Run: PYTHONPATH=src python3 tests/unit/test_piece_retrieval_evidence.py
 Exits 0 when every check passes.
 """
+import copy
 import hashlib
 import importlib.util
 import json
@@ -70,10 +116,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import test_piece_retrieval as base  # noqa: E402
 
-from fabric.canonical import sha256_hex  # noqa: E402
+from fabric.canonical import canonical, sha256_hex  # noqa: E402
 from framework.adapter import (OpenAICompatibleAdapter,  # noqa: E402
                                _CONTRACT, _TOOL_SECTION)
-from framework.loop import Loop  # noqa: E402
+from framework.loop import (Loop,  # noqa: E402
+                            _derive_catalogue as
+                            _loop_derive_catalogue)
 
 _spec = importlib.util.spec_from_file_location(
     "groq_connector_transport",
@@ -102,6 +150,24 @@ MEASUREMENTS_PATH = os.path.join(
     ROOT, "live-demo", "retrieval-r5-measurements.json")
 CAPTURE_PATH = os.path.join(
     ROOT, "live-demo", "retrieval-r5-capture.json")
+MAXCONFIG_PATH = os.path.join(
+    ROOT, "live-demo", "retrieval-maxconfig-capture.json")
+
+# The release proposal's two-path grant set (ATTEMPT7-
+# RELEASE-PROPOSAL-2026-11-23.md): the retrieval tools
+# under each authority scope, the write grant under
+# scratch alone — the configuration Witnesses 3 and 4
+# are sealed with.
+RELEASE_GRANTS = (
+    [base._grant(tool, "sources")
+     for tool in ("sandbox.list", "sandbox.search",
+                  "sandbox.read_range", "sandbox.read")]
+    + [base._grant("sandbox.write", "scratch")]
+    + [base._grant(tool, "scratch")
+       for tool in ("sandbox.list", "sandbox.search",
+                    "sandbox.read_range", "sandbox.read")])
+RETRIEVAL_TOOLS = ("sandbox.list", "sandbox.search",
+                   "sandbox.read_range", "sandbox.read")
 
 # ------------------------------------------------------------ stub
 STUB_SOURCE = '''\
@@ -653,9 +719,556 @@ def test_w2_receipt_continuity():
           and repulled["authority_path"] == "source")
 
 
+# ---------------------------------------------------------- W3
+def test_w3_two_scope_catalogue():
+    # The loop world: the catalogue in the actual wake
+    # package, and the commitment the checker reconstructs.
+    store, d, tok, itok, ex, _sandbox = base.world(
+        grants=RELEASE_GRANTS)
+    seen = {}
+
+    def capture(package):
+        seen["tools"] = package["tools"]
+        return base.yield_()
+
+    script = base.Script([capture])
+    result = Loop(d, itok, script, executor=ex).run()
+    check("W3 the two-path run completes (one wake package, "
+          "then yield)",
+          result["outcome"] == "yield"
+          and result["iterations"] == 1, str(result)[:90])
+    by_tool = {}
+    for entry in seen["tools"]:
+        by_tool.setdefault(entry["tool"], []).append(
+            (entry["scope_ceiling"] or {}).get("path_prefix"))
+    check("W3 (i) the wake package's catalogue carries BOTH "
+          "authorised scopes for each retrieval tool — one "
+          "entry per grant, nine entries for the nine grants",
+          all(sorted(by_tool.get(tool, []))
+              == ["scratch", "sources"]
+              for tool in RETRIEVAL_TOOLS)
+          and by_tool.get("sandbox.write") == ["scratch"]
+          and len(seen["tools"]) == len(RELEASE_GRANTS) == 9,
+          json.dumps(by_tool))
+    gen_ev = base.events_of(store, "ASSEMBLY_GENERATED")[0]
+    grants = gen_ev["payload"]["grants"]
+    per_grant = _loop_derive_catalogue(
+        grants, "tool-registry-v3", per_grant=True)
+    first_only = _loop_derive_catalogue(
+        grants, "tool-registry-v3")
+    recorded = {e["payload"].get("catalogue_hash")
+                for e in base.events_of(store, "LOOP_ITERATION")}
+    check("W3 (v) the recorded catalogue commitment is the "
+          "per-grant catalogue's hash — not the first-grant-"
+          "only derivation's, which would hide one scope",
+          recorded == {sha256_hex(canonical(per_grant))}
+          and sha256_hex(canonical(per_grant))
+          != sha256_hex(canonical(first_only)),
+          json.dumps(sorted(recorded))[:80])
+    verdict = base.run_checker(store)
+    check("W3 (v) the record replays clean under the "
+          "independent checker — its own per-grant "
+          "reconstruction agrees with the recorded "
+          "commitment",
+          all(c["result"] == "ok"
+              for c in verdict["checks"].values()),
+          json.dumps({k: v["result"] for k, v in
+                      verdict["checks"].items()}))
+
+    # The dispatch behaviour over the same grant set,
+    # exercised directly at the doorway.
+    store2, d2, tok2, itok2, ex2, _sb2 = base.world(
+        grants=RELEASE_GRANTS)
+    check("W3 (ii) a source pull against a non-manifest "
+          "path is refused — the source grant alone does "
+          "not admit it",
+          base.refused(lambda: d2.request_tool(
+              itok2, "sandbox.read_range",
+              {"path": "sources/unsealed.md", "start_line": 1,
+               "end_line": 1}, "w3-unsealed")))
+    base.dispatch_and_execute(
+        d2, ex2, itok2, "sandbox.write",
+        {"path": "scratch/desk.md",
+         "content": "desk note\n"}, "w3-write")
+    out = base.dispatch_and_execute(
+        d2, ex2, itok2, "sandbox.read_range",
+        {"path": "scratch/desk.md", "start_line": 1,
+         "end_line": 1}, "w3-scratch-read")
+    o = base.outcome_of(store2, out["dispatch_id"])
+    check("W3 (iii) a scratch pull stands on the scratch "
+          "grant, recorded on the scratch authority path",
+          o["outcome"] == "result"
+          and o["result"]["authority_path"] == "scratch"
+          and o["result"]["content"] == "desk note\n")
+    out = base.dispatch_and_execute(
+        d2, ex2, itok2, "sandbox.read_range",
+        {"path": "sources/alpha.md", "start_line": 5,
+         "end_line": 9}, "w3-source-read")
+    o = base.outcome_of(store2, out["dispatch_id"])
+    check("W3 a source pull stands on the source path in "
+          "the same assembly — the two paths stay distinct",
+          o["outcome"] == "result"
+          and o["result"]["authority_path"] == "source")
+
+    # Neither scope admits the other: assemblies sealed
+    # with only one scope refuse the other path's pulls —
+    # the doorway matches the grant to the path's scope,
+    # not merely to the tool.
+    src_only = [base._grant(tool, "sources")
+                for tool in RETRIEVAL_TOOLS]
+    _s3, d3, _t3, itok3, _e3, _sb3 = base.world(
+        grants=src_only)
+    check("W3 (iv) with only source grants sealed, a "
+          "scratch-aimed pull is refused — the source scope "
+          "does not admit the other path",
+          base.refused(lambda: d3.request_tool(
+              itok3, "sandbox.read_range",
+              {"path": "scratch/desk.md", "start_line": 1,
+               "end_line": 1}, "w3-cross-a")))
+    scr_only = [base._grant("sandbox.write", "scratch")] + \
+        [base._grant(tool, "scratch")
+         for tool in RETRIEVAL_TOOLS]
+    _s4, d4, _t4, itok4, _e4, _sb4 = base.world(
+        grants=scr_only)
+    check("W3 (iv) with only scratch grants sealed, a "
+          "source-aimed pull against a sealed source is "
+          "refused — the scratch scope does not admit the "
+          "other path",
+          base.refused(lambda: d4.request_tool(
+              itok4, "sandbox.read_range",
+              {"path": "sources/alpha.md", "start_line": 5,
+               "end_line": 9}, "w3-cross-b")))
+
+
+# ---------------------------------------------------------- W4
+def _maxseg_line(marker, filler):
+    line = f"{marker} " + filler * (11900 - len(marker) - 1)
+    assert len(line.encode("utf-8")) == 11900
+    return line
+
+
+MAXSEG_TEXT = ("# Maxseg Fixture\n"
+               + _maxseg_line("MAXSEG-ONE", "a") + "\n"
+               + _maxseg_line("MAXSEG-TWO", "b") + "\n"
+               + _maxseg_line("MAXSEG-THREE", "c") + "\n")
+MAXSEG_BYTES = MAXSEG_TEXT.encode("utf-8")
+SEGMENT_CONTENT_BYTES = 11901  # one segment line + its newline
+
+
+def world_maxconfig(identify_callable):
+    """world_adapter()'s construction, step for step, with
+    the maximum-configuration corpus (the fixture file
+    sources/maxseg.md sealed alongside the base corpus)
+    and the release proposal's two-path grant set."""
+    corpus = dict(base.CORPUS)
+    corpus["sources/maxseg.md"] = MAXSEG_BYTES
+    base_dir = tempfile.mkdtemp()
+    sandbox = os.path.join(base_dir, "sandbox")
+    for rel, data in list(corpus.items()) \
+            + list(base.UNSEALED.items()):
+        full = os.path.join(sandbox, rel)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, "wb") as fh:
+            fh.write(data)
+    store, d, office, gen, tok = base.fresh(base.BOUNDS)
+    for rel, data in corpus.items():
+        digest = hashlib.sha256(data).hexdigest()
+        d.act(tok["orch-1"], "MATERIAL_SEALED",
+              {"material_id": f"{rel} sha256:{digest}",
+               "boundary": ["crew-1"]},
+              view_seq=store.head_seq())
+    r = office.issue_new(tok["orch-1"], "crew-1")
+    assert r["ok"], r
+    d.act(tok["exam-1"], "CASE_JUDGED",
+          {"case_id": "case-crew-1", "version": 1},
+          view_seq=store.head_seq())
+    office.authorise(tok["orch-1"], "case-crew-1", 1)
+    gen.propose(tok["orch-1"], "crew-1", part="part-A",
+                role_requirements="a careful drafting model")
+    r = gen.generate(tok["orch-1"], "crew-1", identify_callable,
+                     skills=base.SKILLS, grants=RELEASE_GRANTS,
+                     retrieval=True)
+    assert r["ok"], r
+    gen.verify(tok["orch-1"], r["assembly_id"])
+    d.act(tok["exam-1"], "ASSEMBLY_JUDGED",
+          gen.judgement(r["assembly_id"]),
+          view_seq=store.head_seq())
+    packed = gen.pack(tok["orch-1"], r["assembly_id"])
+    gen.authorise(tok["orch-1"], r["assembly_id"])
+    gen.activate(tok["orch-1"], r["assembly_id"])
+    ex = base.Executor(d, sandbox,
+                       claim_dir=os.path.join(base_dir, "claims"),
+                       deadline=5.0)
+    return store, d, tok, packed["instance_token"], ex, sandbox
+
+
+def _dump_at_depth(value, depth):
+    """value's indented dump as it renders embedded at
+    `depth` in the package dump: the standalone dump with
+    every line break followed by `depth` extra spaces (the
+    same construction as the framework's span embedding).
+    The witness proves the depth empirically by
+    differencing the rendered body."""
+    return json.dumps(value, indent=1, default=str).replace(
+        "\n", "\n" + " " * depth)
+
+
+def test_w4_maxconfig_capture():
+    from framework import tool_policy
+    check("W4 the per-package dispatch bound is derived "
+          "from the admission mechanics, not assumed: every "
+          "admitted retrieval reserves up to the 12,000-byte "
+          "per-result ceiling against the package window's "
+          "36,000-byte aggregate, so at most 3 full-ceiling "
+          "retrievals can stand admitted into one package",
+          tool_policy.RETRIEVAL_RESULT_CEILING == 12000
+          and tool_policy.RETRIEVAL_AGGREGATE_CEILING == 36000
+          and tool_policy.RETRIEVAL_AGGREGATE_CEILING
+          // tool_policy.RETRIEVAL_RESULT_CEILING == 3)
+
+    tmp = tempfile.mkdtemp()
+    capture_dir = os.path.join(tmp, "captures")
+    os.makedirs(capture_dir)
+    stub_path = os.path.join(tmp, "stub_helper.py")
+    with open(stub_path, "w", encoding="utf-8") as fh:
+        fh.write(STUB_SOURCE)
+    # The scripted sequence that reaches the maximum: one
+    # response whose three segment pulls settle just under
+    # the ceiling each (35,703 bytes of content in total),
+    # a fourth retrieval that admission must refuse (the
+    # reservation is the ceiling, not the pull's size —
+    # the fourth pull is one short line), and a scratch
+    # write in the same response.
+    responses = [
+        _completion(base.DECL, base.PROVIDER_ID),
+        _completion(_tool_content(
+            ("sandbox.read_range",
+             {"path": "sources/maxseg.md", "start_line": 2,
+              "end_line": 2}),
+            ("sandbox.read_range",
+             {"path": "sources/maxseg.md", "start_line": 3,
+              "end_line": 3}),
+            ("sandbox.read_range",
+             {"path": "sources/maxseg.md", "start_line": 4,
+              "end_line": 4}),
+            ("sandbox.read_range",
+             {"path": "sources/maxseg.md", "start_line": 1,
+              "end_line": 1}),
+            ("sandbox.write",
+             {"path": "scratch/maxnote.md",
+              "content": "maxconfig note: the window "
+                         "filled.\n"})),
+            base._MODEL),
+        _completion(_outcome_content(
+            {"outcome": "yield", "summary": "the work stands"}),
+            base._MODEL),
+    ]
+    script_path = os.path.join(tmp, "responses.json")
+    with open(script_path, "w", encoding="utf-8") as fh:
+        json.dump(responses, fh)
+
+    adapter = OpenAICompatibleAdapter(model=base._MODEL,
+                                      timeout=120.0)
+    saved_env = {k: os.environ.get(k) for k in
+                 ("GROQ_HELPER_PATH", "STUB_SCRIPT",
+                  "STUB_CAPTURE_DIR")}
+    os.environ["GROQ_HELPER_PATH"] = stub_path
+    os.environ["STUB_SCRIPT"] = script_path
+    os.environ["STUB_CAPTURE_DIR"] = capture_dir
+    try:
+        groq_transport.install_groq_connector_transport(adapter)
+        store, d, tok, itok, ex, _sandbox = world_maxconfig(
+            adapter.identify)
+        result = Loop(d, itok, adapter, executor=ex).run()
+    finally:
+        for key, value in saved_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    check("W4 the maximum-configuration run yields in 2 "
+          "iterations (identify + the filling response + "
+          "the yielding response are the three calls)",
+          result["outcome"] == "yield"
+          and result["iterations"] == 2
+          and sorted(n for n in os.listdir(capture_dir)
+                     if n.endswith(".bin"))
+          == [f"call-{i:03d}.bin" for i in range(3)],
+          str(result)[:90])
+    outcomes = [e["payload"]
+                for e in base.events_of(store, "TOOL_OUTCOME")]
+    dispatches = [e["payload"]
+                  for e in base.events_of(store, "TOOL_DISPATCHED")]
+    dispatch_tool = {p.get("dispatch_id"): p.get("tool")
+                     for p in dispatches}
+    settled = [o for o in outcomes
+               if o.get("outcome") == "result"
+               and dispatch_tool.get(o.get("dispatch_id"))
+               == "sandbox.read_range"
+               and (o.get("result") or {})
+               .get("authority_path") == "source"]
+    settled_total = sum(o["result"]["content_bytes"]
+                        for o in settled)
+    check("W4 exactly three retrievals stand admitted and "
+          "settled, filling the window to 35,703 bytes — "
+          "under the 36,000 aggregate, with less than one "
+          "ceiling's room to spare",
+          len(settled) == 3
+          and settled_total == 3 * SEGMENT_CONTENT_BYTES
+          == 35703
+          and settled_total
+          <= tool_policy.RETRIEVAL_AGGREGATE_CEILING
+          < settled_total
+          + tool_policy.RETRIEVAL_RESULT_CEILING,
+          f"settled_total={settled_total}")
+    rejections = [e["payload"]
+                  for e in base.events_of(store, "REJECTION")
+                  if e["payload"].get("attempted_type")
+                  == "TOOL_DISPATCHED"]
+    check("W4 the fourth retrieval is refused at admission "
+          "— the refusal names the 36,000 aggregate and the "
+          "remaining allowance, and no fourth dispatch "
+          "stands",
+          len(rejections) == 1
+          and "36000" in rejections[0].get("ground", "")
+          and "297" in rejections[0].get("ground", "")
+          and sum(1 for p in dispatches
+                  if p.get("tool") == "sandbox.read_range") == 3,
+          json.dumps(rejections)[:160])
+    write_out = [o for o in outcomes
+                 if dispatch_tool.get(o.get("dispatch_id"))
+                 == "sandbox.write"]
+    check("W4 the scratch write in the same response is "
+          "dispatched and settled after the refusal — the "
+          "refusal stops the one request, not the response",
+          sum(1 for p in dispatches
+              if p.get("tool") == "sandbox.write") == 1
+          and len(write_out) == 1
+          and write_out[0].get("outcome") == "result")
+
+    # The largest body is the second iteration's request:
+    # the package carrying the three settled results.
+    bodies = {}
+    for name in sorted(os.listdir(capture_dir)):
+        with open(os.path.join(capture_dir, name), "rb") as fh:
+            bodies[name] = fh.read()
+    largest = max(bodies, key=lambda n: len(bodies[n]))
+    raw = bodies[largest]
+    check("W4 the largest captured body is the package "
+          "carrying the three results (call-002)",
+          largest == "call-002.bin", largest)
+    body = json.loads(raw)
+    package = _parse_package(body["messages"][1]["content"])
+    m = base.measure_request(package)
+    check("W4 the captured body's components attribute "
+          "byte-exactly by the span method, residual zero",
+          m["body"].encode("utf-8") == raw
+          and m["residual"] == 0,
+          f"residual={m['residual']}")
+    retrieved = m["components"]["retrieved_content"]
+    body_text = raw.decode("utf-8")
+    check("W4 the retrieved content actually carried is "
+          "35,703 content bytes (component within the "
+          "36,000 aggregate) and single-carried: each "
+          "segment's unique marker appears exactly once in "
+          "the body",
+          retrieved <= tool_policy.RETRIEVAL_AGGREGATE_CEILING
+          and all(body_text.count(marker) == 1
+                  for marker in ("MAXSEG-ONE", "MAXSEG-TWO",
+                                 "MAXSEG-THREE")),
+          f"retrieved_component={retrieved}")
+
+    # The provenance split, by the same span method: the
+    # delta's full span carries every event's complete
+    # rendering; within it, the single-carriage receipt
+    # stubs are the model-facing part (the worker sees the
+    # receipts); the remainder is record-only rendering
+    # (hash-chain links, timestamps, actor attributions,
+    # the full event envelopes). The stub spans are taken
+    # at their embedding depth in the prompt dump and the
+    # depth is proven by differencing.
+    delta_span = base._esc(base._embedded_span(package["delta"]))
+    stubbed = copy.deepcopy(package)
+    stub_spans = []
+    for original, replaced in zip(package["delta"],
+                                  stubbed["delta"]):
+        res = (original["payload"] or {}).get("result")
+        if isinstance(res, dict) \
+                and res.get("single_carriage") is True:
+            stub_spans.append(
+                base._esc(_dump_at_depth(res, 4)))
+            replaced["payload"]["result"] = {}
+    body_without_stubs = base.measure_request(
+        stubbed)["body"].encode("utf-8")
+    provenance = m["components"]["provenance_and_dispatch"]
+    record_only = delta_span - sum(stub_spans)
+    model_facing = provenance - record_only
+    check("W4 the provenance component splits exactly: "
+          "model-facing (view, dispatches, receipts) plus "
+          "record-only (the delta's full event renderings) "
+          "equals the component, both halves positive, and "
+          "the receipt-stub spans are proven at their "
+          "embedding depth by differencing the body",
+          len(stub_spans) == 3
+          and model_facing + record_only == provenance
+          and model_facing > 0 and record_only > 0
+          and len(raw) - len(body_without_stubs)
+          == sum(s - 2 for s in stub_spans),
+          f"model_facing={model_facing} "
+          f"record_only={record_only} "
+          f"provenance={provenance}")
+
+    # The token measurement.
+    try:
+        import tiktoken
+        encoding = tiktoken.get_encoding("o200k_base")
+        prompt_tokens = len(encoding.encode(body_text))
+        token_method = ("tiktoken, o200k_base encoding, "
+                        "counted over the serialized request "
+                        "body")
+    except ImportError:
+        prompt_tokens = -(-len(raw) // 4)
+        token_method = ("ESTIMATE — tiktoken is not "
+                        "available in this environment and "
+                        "nothing was installed: ceil("
+                        "serialized bytes / 4), the standard "
+                        "rough chars-per-token divisor, "
+                        "labelled an estimate wherever used")
+    completion_allowance = 1200
+    context_window = 131072
+    check("W4 the token measurement: prompt tokens plus the "
+          "1,200-token completion allowance sit far inside "
+          "the model's published 131,072-token context "
+          "window",
+          prompt_tokens + completion_allowance < context_window,
+          f"prompt_tokens={prompt_tokens} "
+          f"total={prompt_tokens + completion_allowance}")
+
+    artifact = {
+        "artifact": "attempt-7 maximum-configuration "
+                    "envelope capture (INDEX 257, blocker "
+                    "3 — the evidence half)",
+        "captured_at": "tests/unit/"
+                       "test_piece_retrieval_evidence.py "
+                       "Witness 4 (this suite regenerates "
+                       "this file on every run)",
+        "method": {
+            "run": "a scripted worker response whose three "
+                   "read_range pulls over the fixture file "
+                   "sources/maxseg.md settle just under the "
+                   "per-result ceiling each, a fourth "
+                   "retrieval refused at admission, and a "
+                   "scratch write — through the real loop, "
+                   "the real adapter and the real Groq "
+                   "connector transport, with the response "
+                   "served by the stub helper of Witness 1; "
+                   "no provider call was made",
+            "capture_point": "the serialized request body "
+                             "at the transport boundary "
+                             "(the connector helper's "
+                             "stdin), exactly as in "
+                             "Witness 1",
+            "largest_body": "call-002 — the second "
+                            "iteration's package, the first "
+                            "package carrying the three "
+                            "settled results",
+            "attribution": "the span method of the R5 "
+                           "measurement (base.measure_"
+                           "request): each component is the "
+                           "body span of its rendered "
+                           "element; the components sum to "
+                           "the body with residual zero",
+            "provenance_split": "the provenance component "
+                                "is the body span of the "
+                                "package's delta plus its "
+                                "tool_results; the delta's "
+                                "own span minus the receipt-"
+                                "stub spans (the single-"
+                                "carriage stubs, at their "
+                                "embedding depth, proven by "
+                                "differencing the body) is "
+                                "the record-only part; the "
+                                "remainder of the component "
+                                "is model-facing",
+            "tokens": token_method,
+        },
+        "assumptions": [
+            "the admission bound: every admitted retrieval "
+            "reserves up to the 12,000-byte per-result "
+            "ceiling against the package window's "
+            "36,000-byte aggregate (the doorway's own "
+            "mechanics, doorway._retrieval_aggregate_"
+            "problem), so at most 3 full-ceiling "
+            "retrievals can stand admitted into one "
+            "package; this capture constructs that maximum",
+            "the fixture's three segments settle at 11,901 "
+            "content bytes each (an 11,900-byte line plus "
+            "its newline), 35,703 in total — the largest "
+            "settled total the admission rule allows under "
+            "the ceiling reservation",
+            "the completion allowance is 1,200 tokens: a "
+            "brief of at most ~600 words with margin, per "
+            "the release examination",
+            "the context window is the published figure "
+            "for openai/gpt-oss-120b, 131,072 tokens "
+            "(INDEX 257); the organisation's actual "
+            "account limits are NOT established by this "
+            "artifact — that half of blocker 3 stands "
+            "separately",
+            "provenance model-facing means: the view, the "
+            "standing dispatches, the bounds and the "
+            "receipt stubs the worker actually sees; "
+            "record-only means: the delta's full event "
+            "renderings beyond those stubs — hash-chain "
+            "links, timestamps, actor attributions and "
+            "the complete event envelopes, which the "
+            "record retains in full",
+        ],
+        "captured_request_bytes": len(raw),
+        "components": m["components"],
+        "attribution_residual": m["residual"],
+        "retrieved_content": {
+            "settled_content_bytes": settled_total,
+            "carried_component_bytes": retrieved,
+            "aggregate_ceiling":
+                tool_policy.RETRIEVAL_AGGREGATE_CEILING,
+            "per_result_ceiling":
+                tool_policy.RETRIEVAL_RESULT_CEILING,
+            "max_admitted_retrievals_per_package": 3,
+            "single_carriage": "each retrieved segment's "
+                               "unique marker appears "
+                               "exactly once in the body",
+        },
+        "provenance_split": {
+            "provenance_and_dispatch": provenance,
+            "model_facing": model_facing,
+            "record_only": record_only,
+        },
+        "tokens": {
+            "method": token_method,
+            "prompt_tokens": prompt_tokens,
+            "completion_allowance_tokens":
+                completion_allowance,
+            "total_tokens": prompt_tokens
+            + completion_allowance,
+            "published_context_window_tokens":
+                context_window,
+        },
+    }
+    with open(MAXCONFIG_PATH, "w", encoding="utf-8") as fh:
+        json.dump(artifact, fh, indent=1)
+        fh.write("\n")
+    check("W4 the capture artifact is written to "
+          "live-demo/retrieval-maxconfig-capture.json",
+          os.path.exists(MAXCONFIG_PATH))
+
+
 def main():
     test_w1_dispatcher_capture()
     test_w2_receipt_continuity()
+    test_w3_two_scope_catalogue()
+    test_w4_maxconfig_capture()
     print()
     if FAILURES:
         print(f"{len(FAILURES)} FAILURES:")

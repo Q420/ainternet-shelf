@@ -99,7 +99,10 @@ The shape, as the scope settles it:
   assembly's declared contract: an assembly declaring the
   retrieval contract is catalogued under registry v3 (the
   version its iterations record and its dispatches are
-  governed by), and its retrieval results are carried
+  governed by) — per grant, not per tool, so the two
+  authority paths' scopes both stand advertised (the
+  attempt-7 release correction, INDEX 257) — and its
+  retrieval results are carried
   exactly once per package — in tool_results, with their
   provenance — while the delta's rendering of the same
   outcome carries the provenance without the content
@@ -160,7 +163,7 @@ class _CatalogueError(Exception):
     package that leaves a granted tool unnamed."""
 
 
-def _derive_catalogue(grants, version=None):
+def _derive_catalogue(grants, version=None, per_grant=False):
     """The worker-facing tool catalogue for a sealed grants
     list (Piece A3-CAT): one entry per granted tool — the
     first grant of each tool, as the doorway's own grant
@@ -180,7 +183,23 @@ def _derive_catalogue(grants, version=None):
     assembly declaring the retrieval contract is catalogued
     under v3 — the version its dispatches are governed by —
     and any other assembly under the current version,
-    exactly as before."""
+    exactly as before.
+
+    The attempt-7 release correction (INDEX 257, blocker
+    1) adds the per_grant parameter, passed only for a
+    retrieval-governed assembly: the retrieval regime's two
+    authority paths grant the same tools twice — once under
+    the sources scope, once under the scratch scope — and
+    the doorway enforces both, so a first-grant-only
+    catalogue would advertise only one of the two scopes
+    the worker actually holds (which one depending on
+    sealed order). Under per_grant the derivation emits one
+    entry per grant — the tool joined with that grant's own
+    ceiling, bound and side-effect class — so both
+    authorised scopes stand in the catalogue, in canonical
+    tool order (grants of one tool in sealed order, as the
+    doorway reads them). Every other assembly keeps the
+    first-grant derivation exactly as it stood."""
     if version is None:
         version = _tool_policy.REGISTRY_VERSION
     entries = []
@@ -189,10 +208,12 @@ def _derive_catalogue(grants, version=None):
         if not isinstance(grant, dict):
             continue
         tool = grant.get("tool")
-        if not isinstance(tool, str) or not tool or \
-                tool in seen:
+        if not isinstance(tool, str) or not tool:
             continue
-        seen.add(tool)
+        if not per_grant:
+            if tool in seen:
+                continue
+            seen.add(tool)
         if not _tool_policy.registered(tool, version):
             continue
         facing = _tool_policy.worker_facing(tool, version)
@@ -552,8 +573,13 @@ class Loop:
         governed = doorway._retrieval_governed(generated)
         version = _tool_policy.RETRIEVAL_REGISTRY_VERSION \
             if governed else _tool_policy.REGISTRY_VERSION
+        # A governed assembly's catalogue is per grant (the
+        # attempt-7 release correction, INDEX 257): its two
+        # authority paths grant the same tools under two
+        # scopes, and both scopes are the worker's to see.
         catalogue = _derive_catalogue(
-            (generated or {}).get("grants"), version)
+            (generated or {}).get("grants"), version,
+            per_grant=governed)
         ctx["catalogue_hash"] = _catalogue_hash(catalogue)
         ctx["registry_version"] = version
         seat = ctx["seat"]
