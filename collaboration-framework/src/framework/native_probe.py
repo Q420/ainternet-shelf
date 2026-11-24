@@ -61,7 +61,17 @@ enters the pacing calculation; each trial's monotonic
 start offset is bound into the evidence hash, so the
 actual spacing is reconstructable from the artifact
 alone and cannot rest on a clock that can move
-backwards or forwards.
+backwards or forwards. The start itself is stamped
+at the CALL BOUNDARY (the paced release examination,
+INDEX 347): each trial's request is prepared first,
+the wait then runs against the previous trial's
+call-boundary start, and the monotonic start is
+stamped immediately before the raw call is invoked —
+the closest practical measurement of entry into the
+raw-call seam — so preparation overhead, however it
+varies between trials, cannot leave the recorded
+offsets satisfied while the actual invocation starts
+sit closer together.
 
 The baseline is a REPRODUCIBLE REPRESENTATION, in the
 scope's own terms, and the representation is exact
@@ -833,7 +843,7 @@ def _classification(behaviour, delivery, records,
 def trial_evidence(index, capture,
                    request_started_wall_at=None,
                    request_start_monotonic_offset_seconds=None,
-                   pacing_wait_seconds=0.0):
+                   pacing_wait_phase_seconds=0.0):
     """One trial's recorded evidence: the classification
     (aggregate and per call), the settled flag — settled
     is evidence-complete, per this scope's definition —
@@ -843,12 +853,22 @@ def trial_evidence(index, capture,
     chronology only and never a pacing measurement;
     and request_start_monotonic_offset_seconds, the
     request's start on the MONOTONIC clock expressed
-    as seconds since the run's first request start,
-    together with pacing_wait_seconds (the monotonic
-    time actually spent waiting before it) — the paced
-    repetition's spacing is reconstructable from the
-    monotonic offsets alone, and they are bound into
-    the evidence hash — and the retained provider body
+    as seconds since the run's first request start —
+    the start stamped at the call boundary, after
+    request preparation, immediately before the raw
+    call is invoked — together with
+    pacing_wait_phase_seconds: the monotonic elapsed
+    interval from the beginning of the trial's wait
+    phase (which begins after preparation) to that
+    call-boundary stamp, which is the time the wait
+    phase actually occupied on the monotonic clock,
+    including re-measurement between sleeps — not
+    necessarily time spent inside the sleeper alone,
+    and excluding both preparation and generation
+    time. The paced repetition's spacing is
+    reconstructable from the monotonic offsets alone,
+    and they are bound into the evidence hash — and
+    the retained provider body
     and diagnostics under
     the capture ceiling, each with its hash, on the
     assembly probe's retention discipline: the raw
@@ -894,7 +914,8 @@ def trial_evidence(index, capture,
         "request_started_wall_at": request_started_wall_at,
         "request_start_monotonic_offset_seconds":
             request_start_monotonic_offset_seconds,
-        "pacing_wait_seconds": pacing_wait_seconds,
+        "pacing_wait_phase_seconds":
+            pacing_wait_phase_seconds,
         "behaviour": result["behaviour"],
         "delivery": result["delivery"],
         "calls": result["calls"],
@@ -957,6 +978,19 @@ def summarise_native(trials):
     return counts, settled, reading
 
 
+def _prepare_request(modified):
+    """The runner's request-preparation step: a deep
+    copy of the admitted modified request, so a trial's
+    invocation can never mutate the standing request
+    the comparison describes. Preparation runs BEFORE
+    the trial's wait phase (INDEX 347), so its cost —
+    however it varies from trial to trial — sits
+    outside both the enforced start interval and the
+    recorded wait, and the interval is measured purely
+    between call-boundary stamps."""
+    return copy.deepcopy(modified)
+
+
 def run_native_trials(raw_call, baseline, modified,
                       comparison, clock=None,
                       sleeper=None, monotonic_clock=None,
@@ -986,6 +1020,24 @@ def run_native_trials(raw_call, baseline, modified,
     and one longer than the floor leaves none. The
     first trial starts immediately.
 
+    The enforced interval runs between CALL-BOUNDARY
+    starts (INDEX 347). Each trial is sequenced:
+    prepare the request first; then the wait phase,
+    which waits the shortfall measured from the
+    previous trial's call-boundary start; then stamp
+    the monotonic start immediately before invoking
+    the raw call — the closest practical measurement
+    of entry into the raw-call seam — and invoke. The
+    recorded start offsets are therefore the invocation
+    starts themselves, and preparation overhead,
+    however it varies between trials, is inside the
+    interval budget (it consumes elapsed time the
+    wait then tops up) but can never compress the
+    actual spacing between invocations below the
+    floor: the wait is not measured until preparation
+    is complete, and nothing but the invocation
+    follows the stamp.
+
     The pacing rests on a MONOTONIC clock end to end
     (INDEX 342): elapsed time, the start spacing and
     the recorded start offsets are all monotonic
@@ -995,20 +1047,26 @@ def run_native_trials(raw_call, baseline, modified,
     waiting again until the interval has actually
     elapsed, never proceeding on a wait that merely
     was requested. The wall clock (time.time by
-    default) is read once per trial for chronology
+    default) is read once per trial, at the call
+    boundary beside the monotonic stamp, for chronology
     only, recorded under its own field, and never
     enters the pacing calculation: a wall-clock jump,
     forward or backward, cannot shorten or stretch
     the enforced interval. Each trial records its
     wall-clock start, its monotonic start offset from
-    the run's first request start, and the monotonic
-    time actually spent waiting before it. The clocks
-    and sleeper are injectable seams so the pacing is
-    witnessable without real waiting; the legacy
-    `clock` seam, where a caller supplies it, serves
-    as both clocks (single-clock witnesses of the
-    pacing arithmetic), while the production defaults
-    are the dual clocks above."""
+    the run's first request start, and
+    pacing_wait_phase_seconds — the monotonic elapsed
+    interval from the beginning of its wait phase
+    (after preparation) to its call-boundary stamp:
+    the time the wait phase actually occupied,
+    including re-measurement between sleeps, not
+    necessarily time inside the sleeper alone. The
+    clocks and sleeper are injectable seams so the
+    pacing is witnessable without real waiting; the
+    legacy `clock` seam, where a caller supplies it,
+    serves as both clocks (single-clock witnesses of
+    the pacing arithmetic), while the production
+    defaults are the dual clocks above."""
     problems = check_precondition(
         baseline, modified, comparison)
     if problems:
@@ -1025,29 +1083,39 @@ def run_native_trials(raw_call, baseline, modified,
     if sleeper is None:
         sleeper = time.sleep
     trials = []
-    first_mono_start = None
-    previous_mono_start = None
+    first_boundary_start = None
+    previous_boundary_start = None
     for index in range(1, TRIAL_COUNT + 1):
+        # Prepare first (INDEX 347): the request is
+        # built before the wait phase, so preparation
+        # overhead — however it varies — is elapsed
+        # time inside the interval budget, never time
+        # hidden between the start stamp and the
+        # invocation.
+        request = _prepare_request(modified)
         wait = 0.0
-        if previous_mono_start is not None:
+        if previous_boundary_start is not None:
             wait_began = monotonic_clock()
             while True:
                 shortfall = \
                     MIN_TRIAL_START_INTERVAL_SECONDS \
                     - (monotonic_clock()
-                       - previous_mono_start)
+                       - previous_boundary_start)
                 if shortfall <= 0:
                     break
                 sleeper(shortfall)
-            mono_start = monotonic_clock()
-            wait = mono_start - wait_began
+            boundary_start = monotonic_clock()
+            wait = boundary_start - wait_began
         else:
-            mono_start = monotonic_clock()
-        if first_mono_start is None:
-            first_mono_start = mono_start
-        previous_mono_start = mono_start
+            boundary_start = monotonic_clock()
+        if first_boundary_start is None:
+            first_boundary_start = boundary_start
+        previous_boundary_start = boundary_start
+        # The wall clock is read at the same boundary,
+        # beside the monotonic stamp: both recorded
+        # starts describe the call boundary, each on
+        # its own clock.
         wall_start = wall_clock()
-        request = copy.deepcopy(modified)
         try:
             capture = raw_call(request)
             if not isinstance(capture, dict):
@@ -1062,8 +1130,8 @@ def run_native_trials(raw_call, baseline, modified,
             index, capture,
             request_started_wall_at=wall_start,
             request_start_monotonic_offset_seconds=(
-                mono_start - first_mono_start),
-            pacing_wait_seconds=wait))
+                boundary_start - first_boundary_start),
+            pacing_wait_phase_seconds=wait))
     return trials
 
 
@@ -1074,7 +1142,7 @@ def run_native_trials(raw_call, baseline, modified,
 _TRIAL_HASH_FIELDS = (
     "trial", "request_started_wall_at",
     "request_start_monotonic_offset_seconds",
-    "pacing_wait_seconds",
+    "pacing_wait_phase_seconds",
     "behaviour", "delivery", "text_form",
     "has_offered_call", "has_unoffered_call",
     "has_malformed_call", "settled", "http_status",

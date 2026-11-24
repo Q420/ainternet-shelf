@@ -476,7 +476,7 @@ def offsets(trials):
 
 _, _, trials = paced_run(OFFERED_CALL)
 starts = offsets(trials)
-waits = [t["pacing_wait_seconds"] for t in trials]
+waits = [t["pacing_wait_phase_seconds"] for t in trials]
 check("paced trials record monotonic request-start "
       "offsets at least the 65-second floor apart, "
       "strictly sequential, the first trial starting "
@@ -493,7 +493,7 @@ check("with an instant generation, the wait before each "
 
 _, _, trials = paced_run(OFFERED_CALL, generation_seconds=20.0)
 starts = offsets(trials)
-waits = [t["pacing_wait_seconds"] for t in trials]
+waits = [t["pacing_wait_phase_seconds"] for t in trials]
 check("a generation that itself takes 20 seconds leaves "
       "a 45-second wait — the shortfall, not a flat 65 "
       "after completion — and starts stay 65 apart",
@@ -504,7 +504,7 @@ check("a generation that itself takes 20 seconds leaves "
 
 _, _, trials = paced_run(OFFERED_CALL, generation_seconds=90.0)
 starts = offsets(trials)
-waits = [t["pacing_wait_seconds"] for t in trials]
+waits = [t["pacing_wait_phase_seconds"] for t in trials]
 check("a generation longer than the floor leaves no "
       "wait at all — the next start is already past it",
       waits == [0.0] * 5 and all(
@@ -527,9 +527,9 @@ check("the written evidence artifact carries each "
       "the spacing reconstructable from the artifact "
       "alone, the wall start standing under its own "
       "chronology field",
-      all(t["pacing_wait_seconds"] == 45.0
+      all(t["pacing_wait_phase_seconds"] == 45.0
           for t in written_trials[1:])
-      and written_trials[0]["pacing_wait_seconds"] == 0.0
+      and written_trials[0]["pacing_wait_phase_seconds"] == 0.0
       and written_offsets == [0.0, 65.0, 130.0, 195.0,
                               260.0]
       and all(isinstance(t["request_started_wall_at"],
@@ -589,7 +589,7 @@ check("a wall-clock FORWARD jump of 600 seconds during "
       "starts themselves show the jump the pacing "
       "ignored",
       offsets(trials) == [0.0, 65.0, 130.0, 195.0, 260.0]
-      and [t["pacing_wait_seconds"] for t in trials]
+      and [t["pacing_wait_phase_seconds"] for t in trials]
       == [0.0, 65.0, 65.0, 65.0, 65.0]
       and wall_starts[1] - wall_starts[0] == 665.0,
       f"offsets={offsets(trials)} wall={wall_starts}")
@@ -602,7 +602,7 @@ check("a wall-clock BACKWARD jump of 3600 seconds "
       "either — monotonic offsets and waits unchanged, "
       "though the wall clock went backwards",
       offsets(trials) == [0.0, 65.0, 130.0, 195.0, 260.0]
-      and [t["pacing_wait_seconds"] for t in trials]
+      and [t["pacing_wait_phase_seconds"] for t in trials]
       == [0.0, 65.0, 65.0, 65.0, 65.0]
       and wall_starts[1] < wall_starts[0],
       f"offsets={offsets(trials)} wall={wall_starts}")
@@ -626,7 +626,7 @@ check("a sleeper that returns early — advancing time "
               np.MIN_TRIAL_START_INTERVAL_SECONDS
               for a, b in zip(offsets(trials),
                               offsets(trials)[1:]))
-      and trials[1]["pacing_wait_seconds"] >= 65.0,
+      and trials[1]["pacing_wait_phase_seconds"] >= 65.0,
       f"calls={early.calls} offsets={offsets(trials)}")
 
 mono_evidence = np.probe_evidence_object(comparison,
@@ -643,6 +643,92 @@ check("the monotonic start offsets are bound into "
                           999.0}]
           + mono_evidence["trials"][1:]})
       != mono_evidence["evidence_hash"])
+
+# ---------------------------------------------------------------
+# Measurement boundary: the start is stamped at the
+# call boundary, after preparation (INDEX 347). The
+# preparation step's COST is simulated exactly as
+# TimedStubRaw simulates generation cost and
+# EarlySleeper simulates a faulty sleeper: the real
+# preparation is wrapped so each call advances the
+# fake clock by a deliberately VARIABLE amount before
+# delegating to it. The runner's sequencing, waiting,
+# stamping and invoking are the production code
+# throughout.
+# ---------------------------------------------------------------
+class BoundaryStubRaw(StubRaw):
+    """A StubRaw that records the monotonic instant
+    each invocation actually enters the raw-call seam,
+    so the witness can compare the runner's recorded
+    starts against the invocation starts themselves."""
+
+    def __init__(self, captures, clock):
+        super().__init__(captures)
+        self.clock = clock
+        self.entry_starts = []
+
+    def __call__(self, request):
+        self.entry_starts.append(self.clock.monotonic())
+        return super().__call__(request)
+
+
+PREP_SCHEDULE = [0.0, 40.0, 5.0, 50.0, 10.0]
+prep_clock = FakeClock()
+prep_stub = BoundaryStubRaw(OFFERED_CALL, prep_clock)
+real_prepare = np._prepare_request
+prep_costs = []
+
+
+def costly_prepare(modified):
+    cost = PREP_SCHEDULE[len(prep_costs)]
+    prep_costs.append(cost)
+    prep_clock.advance(cost)
+    return real_prepare(modified)
+
+
+np._prepare_request = costly_prepare
+try:
+    prep_trials = np.run_native_trials(
+        prep_stub, baseline, modified, comparison,
+        monotonic_clock=prep_clock.monotonic,
+        wall_clock=prep_clock.wall,
+        sleeper=prep_clock.sleep)
+finally:
+    np._prepare_request = real_prepare
+
+entry_gaps = [b - a for a, b in zip(
+    prep_stub.entry_starts, prep_stub.entry_starts[1:])]
+check("deliberately variable pre-call preparation "
+      "overhead (0/40/5/50/10 fake seconds across "
+      "consecutive trials) cannot compress the spacing "
+      "at the call boundary — every consecutive pair "
+      "of ACTUAL invocation starts, recorded by the "
+      "stub as it is entered, is at least the "
+      "65-second floor apart",
+      prep_costs == PREP_SCHEDULE
+      and len(set(PREP_SCHEDULE)) > 1
+      and len(prep_stub.entry_starts) == 5
+      and all(gap >= np.MIN_TRIAL_START_INTERVAL_SECONDS
+              for gap in entry_gaps),
+      f"entries={prep_stub.entry_starts} gaps={entry_gaps}")
+check("the recorded monotonic offsets ARE the "
+      "invocation starts — each offset equals the "
+      "stub's recorded entry instant from the first "
+      "entry — and the recorded wait is the shortfall "
+      "measured AFTER preparation: preparation time "
+      "sits inside the interval budget but outside "
+      "the wait phase (waits 25/60/15/55 against "
+      "preparation costs 40/5/50/10, instant "
+      "generation)",
+      offsets(prep_trials)
+      == [e - prep_stub.entry_starts[0]
+          for e in prep_stub.entry_starts]
+      and [t["pacing_wait_phase_seconds"]
+           for t in prep_trials]
+      == [0.0, 25.0, 60.0, 15.0, 55.0],
+      f"offsets={offsets(prep_trials)} "
+      f"entries={prep_stub.entry_starts} "
+      f"waits={[t['pacing_wait_phase_seconds'] for t in prep_trials]}")
 
 # ---------------------------------------------------------------
 # The durable outputs.
