@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 4** — Rev 3, plus the disposition's honesty made enforceable (INDEX 307): three terminal response states (captured / confirmed no_response / unresolved) with a finite failure-class table whose required seam evidence the checker validates, HTTP-error-with-empty-body counted as captured, and the pre-call terminal steps closed to a named finite set validated against the sequence.
+
 **Rev 3** — Rev 2, plus the no-response distinction made mechanical (INDEX 306): RESPONSE_EVIDENCE becomes the iteration's typed response disposition (captured / no_response), owed by every iteration that reaches the call; the failure path's ordering stated case by case; L1 stored as base64 with recomputable hash/count; L5 verdicts total, with explicit `not_reached` states.
 
 **Rev 2** — revised at Vane's scope examination (INDEX 305): L1 provenance made exact (the Groq worker path moves to the raw helper mode so L1 is the provider body, not a re-serialization); the durable-store contract specified; one exact event/failure sequence, with evidence capture placed ahead of the post-call deadline stall; W-a strengthened to prove the layers' identity chain, with the five response-shape cases added.
@@ -133,3 +135,41 @@ The Rev 2 ordering binds failures with the same force as successes, stated case 
 
 - **L1 storage representation:** the artifact stores L1 as **base64 of the raw bytes**, alongside the byte count and the sha256 of the raw bytes — both independently recomputable from the stored representation by the checker or any reader. Arbitrary binary and invalid-UTF-8 bodies are therefore retainable exactly; the strict-UTF-8 decode remains a *derived-layer* act (L2), whose failure is recorded, never a storage constraint.
 - **L5 verdict states are total:** both verdict fields are **always present** in the evidence object, each taking a typed value. The adapter verdict is `not_reached` when parsing cannot begin (no envelope, transport HTTP failure, undecodable body) — with the reason named — rather than absent. The loop validation verdict is `not_reached` whenever the adapter stage produced no dispatchable outcome to validate. A missing verdict field is a malformed evidence object (checker failure), never a synonym for incomplete evidence.
+
+---
+
+## Rev 4 — the disposition must not overclaim
+
+### R4-1. Three terminal response states, each saying only what the seam established
+
+The disposition's outcome is one of exactly three values:
+
+- **`captured`** — a response was received. This includes **every HTTP status, errors included, and an empty body**: an HTTP error with no body is a captured response whose L1 is the empty byte sequence (count 0, the empty hash), its status recorded, its verdicts recording the HTTP failure. A status observed at the seam can never be disposed as anything else.
+- **`no_response`** — **confirmed**: the seam's evidence positively establishes that no provider response was **received** (receipt-side fact; whether the provider processed anything is not claimed). Permitted only with a supporting failure class from R4-2 whose required evidence stands in the disposition.
+- **`unresolved`** — the seam cannot establish whether a response was received. This is a first-class, honest terminal state, not a loophole: the iteration is accounted for (the disposition exists, with its class and evidence), **no dispatch may follow it**, and the iteration terminates with the unresolved state named in its stall. A run ending on an unresolved disposition is complete as a record and failed as work — the same standing as a provider failure, with its own name.
+
+`no_envelope` is an **unresolved** class (the helper framed nothing; what happened provider-side is not established). Rev 3's `provider_http_error_without_body` example is withdrawn — that is a captured response.
+
+### R4-2. The failure vocabulary — permitted classes, required evidence, checker enforcement
+
+Each non-captured disposition names one class from this finite table; each class names the seam evidence the disposition must carry. **A diagnostic string is never, by itself, a basis** — the class and its evidence fields are mandatory typed fields, and the checker rejects a disposition whose class does not support its outcome or whose required evidence is absent.
+
+| Class | Outcome it supports | Required seam evidence in the disposition |
+|---|---|---|
+| `connection_failed` | `no_response` | the helper's transport-error report: its error kind (connection-level, e.g. URLError reason class) and the absence of any observed HTTP status |
+| `timeout_no_response` | `no_response` | the call fence that expired, the transport's termination record (terminated **and confirmed dead**), and zero stdout bytes received from the helper |
+| `helper_exit_no_envelope` | `unresolved` | the helper's exit status and its stderr diagnostic (the helper died or errored without framing a response; provider-side state unestablished) |
+| `envelope_unparseable` | `unresolved` | the helper produced output that is not a well-formed envelope (byte count + hash of what was produced) |
+| `termination_unconfirmed` | `unresolved` | the transport could not confirm the helper's termination (the INDEX 232/262 unresolved-termination state) |
+| `transport_internal_error` | `unresolved` | the transport's own failure class before any seam observation could be made |
+
+The checker validates the pairing mechanically: outcome `no_response` with a class outside the supporting set, or with its evidence fields missing, is a failure; outcome `unresolved` with a `no_response`-supporting class is a failure (the stronger claim was available and not taken — the record must not underclaim either); outcome `captured` with no artifact is a failure (as Rev 2/3 already required).
+
+### R4-3. The pre-call terminal steps — a finite named set, validated
+
+An iteration may terminate without a disposition only at one of these steps, and its terminal payload must carry `terminal_step` naming it:
+
+- **`package_construction`** — the iteration's package could not be constructed/committed.
+- **`deadline_at_start`** — the activation deadline stood already expired when the iteration began its call step.
+
+The set is closed: the doorway admits no other `terminal_step` value on a disposition-less terminal, and the checker validates the claim against the sequence — the terminal must be the iteration's first and only terminal event, no RESPONSE_EVIDENCE and no dispatch may exist for that iteration, and (for `deadline_at_start`) the recorded deadline and timestamps must be consistent with expiry at the start. A post-call failure relabelled as pre-call fails these checks mechanically: its sequence shows the call step was passed (a disposition is owed), or its step value is outside the set.
