@@ -69,18 +69,19 @@ axis (provider_refused) and the attempt_visible flag
 carrying reading (b)'s fact. The readings count the
 two shapes separately, exactly as the proposal
 states them. Delivery follows P1's own policy in the shared
-core (delivery_of_refusal_predicate): provider_
-refused only where the error body IS the provider's
-response-level tool refusal — its error object's
-code is "tool_use_failed" — so a refusal without an
-attributable attempt is provider_refused with
-attempt_visible "no", the proposal's distinct
-observation, not a delivery failure; while an
-unrelated 400, a 401 authentication failure, a 413
-payload-size rejection, a 429, a 5xx or a transport
-failure is provider_failed, never a refusal —
-none of those is evidence of the provider
-rejecting a model-generated call.
+core (delivery_of_refusal_predicate): P1 classifies
+a refusal only when the response is HTTP 400 and
+the error code is "tool_use_failed" — the evidenced
+response-level tool-refusal shape, whole — so a
+refusal without an attributable attempt is
+provider_refused with attempt_visible "no", the
+proposal's distinct observation, not a delivery
+failure; while an unrelated 400, a 401 authentication
+failure, a 413 payload-size rejection, a 429, a 5xx,
+a transport failure, or a capture with no HTTP
+status is provider_failed, never a refusal, whatever
+code its body carries — none of those is evidence
+of the provider rejecting a model-generated call.
 """
 
 from __future__ import annotations
