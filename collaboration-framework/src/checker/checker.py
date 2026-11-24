@@ -620,9 +620,13 @@ def _checker_classify(records, catalogue, instance_id,
         entries.append(entry)
         if call_id is not None and call_id not in seen_ids:
             seen_ids[call_id] = ordinal
-        if ordinal > _CHECKER_CALL_CAP:
-            entry["refusal_class"] = "call_cap_exceeded"
-            continue
+        # Call-ID integrity before the cap, as in the
+        # loop's classification (build-examination
+        # correction, INDEX 403): an overflow call with a
+        # missing or duplicated ID is malformed_call —
+        # the checker states the order independently, so
+        # a loop that masked the ID defect behind the cap
+        # would diverge here.
         if call_id is None:
             entry["refusal_class"] = "malformed_call"
             entry["refusal_detail"] = "its call ID was absent"
@@ -631,6 +635,9 @@ def _checker_classify(records, catalogue, instance_id,
             entry["refusal_class"] = "malformed_call"
             entry["refusal_detail"] = \
                 "its call ID was duplicated"
+            continue
+        if ordinal > _CHECKER_CALL_CAP:
+            entry["refusal_class"] = "call_cap_exceeded"
             continue
         if record["name"] is None:
             entry["refusal_class"] = "malformed_call"
@@ -1993,6 +2000,8 @@ def _loop_result(events, state, run_dir=None):
 
     generated = {}
     activated = {}
+    judged_modes = {}
+    packed_modes = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -2001,6 +2010,12 @@ def _loop_result(events, state, run_dir=None):
         elif t == "INSTANCE_ACTIVATED":
             activated.setdefault(p.get("assembly_id"),
                                  ev["event_seq"])
+        elif t == "ASSEMBLY_JUDGED":
+            judged_modes.setdefault(p.get("assembly_id"),
+                                    p.get("adapter_mode"))
+        elif t == "ASSEMBLY_PACKED":
+            packed_modes.setdefault(p.get("assembly_id"),
+                                    p.get("adapter_mode"))
 
     def pinned_bounds(aid):
         """The loop bounds of the assembly's pinned case
@@ -2959,10 +2974,15 @@ def _loop_result(events, state, run_dir=None):
     # translation record standing before it; no record
     # silently lacking adjudication — every presented call
     # answered by exactly its request, dispatched or
-    # doorway-refused, in emitted order. A native iteration
-    # is known by its own commitment: the iteration event
-    # of a native-judged assembly carries the request's
-    # disable_tool_validation state (BD-1).
+    # doorway-refused, in emitted order. An assembly's
+    # native mode is read from its sealed acts — the
+    # examiner's ASSEMBLY_JUDGED mode decision and the
+    # ASSEMBLY_PACKED that carries it (build-examination
+    # correction, INDEX 403) — never from an iteration's
+    # own fields: every iteration of a natively-sealed
+    # assembly owes a boolean disable_tool_validation
+    # commitment (BD-1), and a missing commitment cannot
+    # conceal the translation obligation.
     def load_artifact(iseq, claimed):
         """The filed artifact for an iteration, read and
         hash-verified against the disposition that binds
@@ -2985,6 +3005,16 @@ def _loop_result(events, state, run_dir=None):
             return json.loads(data.decode("utf-8"))
         except (ValueError, UnicodeDecodeError):
             return None
+
+    def sealed_native(aid):
+        """Whether the assembly's sealed mode is native:
+        the examiner's judgement and the pack both name
+        native. The derivation stands on the sealed acts
+        alone — an iteration's fields neither make its
+        assembly native nor excuse it from the native
+        obligations."""
+        return judged_modes.get(aid) == "native" and \
+            packed_modes.get(aid) == "native"
 
     for aid in set(iterations) | set(translations):
         gen = generated.get(aid)
@@ -3028,12 +3058,32 @@ def _loop_result(events, state, run_dir=None):
 
             tev = tev_by_iter.get(iseq)
             disp = disp_by_iter.get(iseq)
+            if sealed_native(aid):
+                # Every iteration of a natively-sealed
+                # assembly owes its flag commitment
+                # (BD-1): absent, the iteration's request
+                # state stands uncommitted; present but not
+                # a boolean, it commits nothing readable.
+                # Either is divergent in itself — and
+                # neither conceals the translation
+                # obligation judged below.
+                if "disable_tool_validation" not in ip:
+                    problem(
+                        "native_flag_commitment_missing",
+                        assembly_id=aid, at_seq=iseq,
+                        iteration_seq=iseq)
+                elif not isinstance(
+                        ip["disable_tool_validation"], bool):
+                    problem(
+                        "native_flag_commitment_not_boolean",
+                        assembly_id=aid, at_seq=iseq,
+                        iteration_seq=iseq)
             if tev is None:
                 # No record stands for this iteration: a
-                # native-marked iteration that nevertheless
+                # native iteration that nevertheless
                 # dispatched, or a captured response whose
                 # calls stand unrecorded, diverges.
-                if "disable_tool_validation" in ip and \
+                if sealed_native(aid) and \
                         iid is not None and any(
                             ev["type"] == "TOOL_REQUESTED"
                             and ev["payload"].get(
@@ -3043,11 +3093,11 @@ def _loop_result(events, state, run_dir=None):
                     problem("dispatch_without_translation",
                             assembly_id=aid, at_seq=iseq,
                             iteration_seq=iseq)
-                if "disable_tool_validation" in ip and \
+                if sealed_native(aid) and \
                         disp is not None and \
                         disp["payload"].get("outcome") == \
                         "captured":
-                    # A native-judged iteration only: a
+                    # A natively-sealed iteration only: a
                     # text-judged iteration's native-shaped
                     # content is the malformed stall the
                     # evidence checks already account — it
@@ -3070,7 +3120,7 @@ def _loop_result(events, state, run_dir=None):
                 continue
             tp = tev["payload"]
             tseq = tev["event_seq"]
-            if "disable_tool_validation" not in ip:
+            if not sealed_native(aid):
                 problem("translation_without_native_iteration",
                         assembly_id=aid, at_seq=tseq,
                         iteration_seq=iseq)

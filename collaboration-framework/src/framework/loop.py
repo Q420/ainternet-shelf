@@ -601,20 +601,27 @@ class Loop:
             # BD-1 (native adapter piece): under a native-
             # judged assembly, the iteration's commitment
             # also records the disable_tool_validation
-            # state of its request construction — read from
-            # the callable's own construction (the adapter's
-            # attribute), so the commitment and the body the
-            # adapter builds cannot drift apart silently. A
-            # callable exposing no such state stands under
-            # the build's settled construction: enabled. A
-            # text-judged assembly records nothing — its
-            # iteration events are exactly as before.
+            # state of its request construction. The state
+            # is read ONCE, here — a per-iteration snapshot
+            # (build-examination correction, INDEX 403):
+            # the snapshot is what the commitment records,
+            # and the same snapshot is staged into the
+            # call's request construction below, so the
+            # committed state and the transmitted state are
+            # one value, not two reads of a mutable
+            # attribute that could drift apart between
+            # them. A callable exposing no such state
+            # stands under the build's settled construction:
+            # enabled. A text-judged assembly records
+            # nothing — its iteration events are exactly as
+            # before.
             native_flag = None
             if ctx.get("adapter_mode") == "native":
                 flag = getattr(self.model,
                                "disable_tool_validation", True)
                 native_flag = flag if isinstance(flag, bool) \
                     else True
+            ctx["flag_snapshot"] = native_flag
             try:
                 ev = doorway.record_loop_iteration(
                     ctx["assembly_id"], iteration,
@@ -694,6 +701,7 @@ class Loop:
                                    detail=problem)
             remaining = deadline - time.monotonic() \
                 if deadline is not None else None
+            self._stage_flag_snapshot(ctx)
             call_started = time.monotonic()
             try:
                 if ctx.get("adapter_mode") is not None:
@@ -777,6 +785,22 @@ class Loop:
                 self._adjudicate(ctx, data)
 
     # --------------------------------- response evidence
+    def _stage_flag_snapshot(self, ctx):
+        """Hand the iteration's disable_tool_validation
+        snapshot to the callable's request construction,
+        where the callable exposes the staging seam
+        (BD-1, build-examination correction INDEX 403):
+        the value the iteration's commitment records is
+        the value the transmitted request carries — the
+        callable's own mutable attribute is not read
+        again at construction time. A callable exposing
+        no seam is handed nothing; its construction is
+        its own, exactly as before."""
+        stage = getattr(self.model,
+                        "stage_disable_tool_validation", None)
+        if callable(stage):
+            stage(ctx.get("flag_snapshot"))
+
     def _call_governed(self, ctx, package, iteration,
                        iteration_ev, package_s):
         """One iteration's call under the response-evidence
@@ -843,6 +867,7 @@ class Loop:
                 self.model.last_response_evidence = None
             except Exception:
                 pass
+        self._stage_flag_snapshot(ctx)
         call_started = time.monotonic()
         try:
             if ctx.get("adapter_mode") is not None:
@@ -1683,10 +1708,11 @@ class Loop:
     def _classify_native(self, ctx, records):
         """Phase (i) of the native preflight: classify every
         individuable call in emitted order, each on its own
-        merits — call-ID integrity (N6), closed-world
-        resolution against this package's catalogue (N7),
-        the pure schema validation (N8), and the per-response
-        cap (N22) — producing the translation record's entry
+        merits — call-ID integrity (N6) first, then the
+        per-response cap (N22), then closed-world
+        resolution against this package's catalogue (N7)
+        and the pure schema validation (N8) — producing
+        the translation record's entry
         set and the converted requests, in emitted order.
         No call's verdict waits on or is contaminated by
         another's. Returns (entries, converted): one entry
@@ -1720,12 +1746,15 @@ class Loop:
             entries.append(entry)
             if call_id is not None and call_id not in seen_ids:
                 seen_ids[call_id] = ordinal
-            if ordinal > CALL_CAP:
-                # Overflow (N22): identity and ordinal are
-                # recorded; the arguments are not processed
-                # — not parsed, not validated, not converted.
-                entry["refusal_class"] = "call_cap_exceeded"
-                continue
+            # Call-ID integrity (N6) is judged BEFORE the
+            # cap (build-examination correction, INDEX
+            # 403): a missing or duplicated ID is the
+            # call's first defect, and an overflow call
+            # carrying one is malformed_call, never masked
+            # as a cap refusal. The cap still precedes
+            # name resolution, argument parsing and schema
+            # validation — an overflow call's arguments
+            # are never processed.
             if call_id is None:
                 entry["refusal_class"] = "malformed_call"
                 entry["refusal_detail"] = \
@@ -1735,6 +1764,12 @@ class Loop:
                 entry["refusal_class"] = "malformed_call"
                 entry["refusal_detail"] = \
                     "its call ID was duplicated"
+                continue
+            if ordinal > CALL_CAP:
+                # Overflow (N22): identity and ordinal are
+                # recorded; the arguments are not processed
+                # — not parsed, not validated, not converted.
+                entry["refusal_class"] = "call_cap_exceeded"
                 continue
             if record["name"] is None:
                 entry["refusal_class"] = "malformed_call"

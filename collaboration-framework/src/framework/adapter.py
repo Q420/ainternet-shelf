@@ -279,16 +279,24 @@ class OpenAICompatibleAdapter:
         # unoffered call is delivered to the framework's
         # own resolver rather than refused at the provider.
         # The flag is a request-construction property of
-        # native mode; the loop records its state in the
-        # iteration's commitment (the LOOP_ITERATION
-        # event), reading it from this attribute, so the
-        # commitment and the constructed body cannot drift
-        # apart silently. Disabled, the field is omitted
-        # from the request — the provider's default
-        # condition the P1 probe measured.
+        # native mode. The loop reads this attribute ONCE
+        # per iteration — a snapshot — records the snapshot
+        # in the iteration's commitment (the LOOP_ITERATION
+        # event), and stages the same snapshot back through
+        # stage_disable_tool_validation for the call's
+        # construction (build-examination correction,
+        # INDEX 403): the committed state and the
+        # transmitted state are the one snapshot value,
+        # never two reads of this mutable attribute. A
+        # caller that stages nothing stands under this
+        # attribute's settled state, as before. Disabled,
+        # the field is omitted from the request — the
+        # provider's default condition the P1 probe
+        # measured.
         self.disable_tool_validation = \
             bool(disable_tool_validation)
         self._pending_disable_tool_validation = None
+        self._staged_disable_tool_validation = None
         # The interface mode (probe scope §6): the constructor
         # value is the default only — a call under a sealed
         # package's judged mode passes that mode per call, and
@@ -695,6 +703,20 @@ class OpenAICompatibleAdapter:
                 "diagnostics": None,
                 "metadata": metadata}
 
+    def stage_disable_tool_validation(self, value):
+        """Stage the disable_tool_validation state the
+        next call is to carry (BD-1): the loop hands the
+        iteration's snapshot — the very value its
+        commitment records — and the next call's request
+        construction consumes exactly that value, never a
+        fresh read of this instance's mutable attribute.
+        The stage is consumed by the one call: a later
+        call that stages nothing stands under the
+        constructor's settled state. Staging None stages
+        nothing."""
+        self._staged_disable_tool_validation = \
+            None if value is None else bool(value)
+
     # --------------------------------------------------------- wake
     def __call__(self, package, budget=None, deadline=None,
                  mode=None):
@@ -895,6 +917,11 @@ class OpenAICompatibleAdapter:
         carries the examined native contract wording (N30).
         A response without tool calls is read on the text
         path exactly as before."""
+        # BD-1: the staged flag snapshot is consumed by
+        # this call, whatever its outcome — a stage never
+        # leaks into a later call.
+        staged_flag = self._staged_disable_tool_validation
+        self._staged_disable_tool_validation = None
         effective_mode = self.mode if mode is None else mode
         if effective_mode not in ("text", "native"):
             raise AdapterFailure(
@@ -940,8 +967,11 @@ class OpenAICompatibleAdapter:
         # transport that does not stage definitions simply
         # makes the text offer, and the response is read on
         # the text path. BD-1's flag is staged the same way:
-        # the state this construction carries for the call,
-        # from the constructor's settled state.
+        # the state this construction carries for the call is
+        # the snapshot staged for it — the value the
+        # iteration's commitment records — and only where
+        # nothing was staged, the constructor's settled
+        # state (build-examination correction, INDEX 403).
         self._pending_tools = None
         self._pending_disable_tool_validation = None
         if effective_mode == "native":
@@ -949,7 +979,8 @@ class OpenAICompatibleAdapter:
             if definitions:
                 self._pending_tools = definitions
             self._pending_disable_tool_validation = \
-                self.disable_tool_validation
+                self.disable_tool_validation \
+                if staged_flag is None else staged_flag
         try:
             content, _provider_model = self._call([
                 {"role": "system",

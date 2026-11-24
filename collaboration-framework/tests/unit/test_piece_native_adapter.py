@@ -50,14 +50,20 @@ brief's components B1–B5 with decisions BD-1 and BD-2:
   call IDs in its carriage, and its request body is the
   text body exactly as before.
 
-The duplicate-call-ID rule (N6) stands in the
-classification and in the checker, but under CAP = 1 it
-is unreachable end-to-end by construction: a duplicate
-can only stand at a position the cap has already
-refused. It is therefore witnessed at the classification
-unit level, with the cap constant raised locally in this
-test process only — the shipped construction is never
-altered.
+The duplicate-call-ID rule (N6) is judged BEFORE the
+cap (build-examination correction, INDEX 403): an
+overflow call carrying a missing or duplicated ID is
+malformed_call, not a cap refusal — the earlier claim
+that the rule was unreachable under CAP = 1 was the
+ordering's defect, not the construction's. It is
+witnessed at the real CAP = 1, at the classification
+unit level and end to end; the shipped cap constant is
+never altered. BD-1's commitment is likewise bound by
+a per-iteration snapshot: the value the commitment
+records is the value staged into the request's
+construction, and the checker derives an assembly's
+native mode from its sealed judgement and pack, never
+from an iteration's own fields.
 
 No provider is called: the adapter is exercised against
 a local stub endpoint, exactly as the probe suite
@@ -70,6 +76,7 @@ import copy
 import hashlib
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -281,6 +288,41 @@ def run_checker(store):
 def loop_problems(verdict):
     result = verdict["checks"]["loop_correspondence"]
     return result.get("problems", [])
+
+
+def tampered_copy(store, mutate, tag):
+    """Copy a store (SQLite's backup API, so the copy
+    holds the full logical database) BESIDE the original
+    — the checker's run_dir is the store's directory, and
+    the filed evidence must stay reachable — and mutate
+    its events table directly, dropping the append-only
+    triggers in the copy: the forgery pattern of the
+    piece 7 suite."""
+    dst = os.path.join(os.path.dirname(store.path),
+                       f"tampered-{tag}.db")
+    conn = sqlite3.connect(dst)
+    store._conn.backup(conn)
+    for trig in ("events_no_update", "events_no_delete",
+                 "events_no_replace"):
+        conn.execute(f"DROP TRIGGER IF EXISTS {trig}")
+    mutate(conn)
+    conn.commit()
+    conn.close()
+    return dst
+
+
+def run_checker_path(store, path):
+    """The checker over a store file at another path,
+    with the original store's snapshot as its state."""
+    req = {"store_path": path, "run_id": "run-1",
+           "snapshot": projection.snapshot(store)}
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+               PYTHONPATH=SRC)
+    proc = subprocess.run(
+        [sys.executable, "-B", "-m", "checker"],
+        input=json.dumps(req), capture_output=True, text=True,
+        env=env, cwd=ROOT)
+    return json.loads(proc.stdout)
 
 
 # ------------------------------------------------- stub endpoint
@@ -539,6 +581,104 @@ def test_bd1_loop():
           and "disable_tool_validation" not in REQUESTS[0])
 
 
+# --------------------------------- BD-1 snapshot binding (INDEX 403)
+class FlagFlipper(Recorder):
+    """A model wrapper that stages the iteration's
+    snapshot into the wrapped adapter — then reverses
+    the adapter's own attribute, the mid-iteration drift
+    the snapshot binding exists to defeat: if the
+    transmitted body followed the attribute rather than
+    the snapshot, it would carry the reversed state."""
+
+    def stage_disable_tool_validation(self, value):
+        self.inner.stage_disable_tool_validation(value)
+        self.inner.disable_tool_validation = not value
+
+
+def test_flag_binding():
+    w = assemble()
+    adapter = stub_adapter()
+    model = FlagFlipper(adapter)
+    del REQUESTS[:]
+    SPECS[:] = [(200, native_resp([READ_CALL])), yield_spec()]
+    result = run_loop(w, model)
+    iters = events_of(w["store"], "LOOP_ITERATION")
+    check("BD-1 binding: the transmitted body carries "
+          "the iteration's snapshot, not the adapter's "
+          "mutable attribute — the attribute was reversed "
+          "after staging, yet iteration 1's commitment "
+          "and its request body agree on the snapshot "
+          "value (enabled)",
+          result["outcome"] == "yield"
+          and iters[0]["payload"].get(
+              "disable_tool_validation") is True
+          and REQUESTS[0].get(
+              "disable_tool_validation") is True)
+    check("BD-1 binding: the snapshot is per-iteration "
+          "— iteration 2 reads the (reversed) attribute "
+          "afresh, commits false, and its body omits the "
+          "flag although the attribute was reversed back "
+          "to enabled at its staging",
+          iters[1]["payload"].get(
+              "disable_tool_validation") is False
+          and "disable_tool_validation" not in REQUESTS[1])
+    # A native iteration whose commitment field is
+    # absent: the checker derives native mode from the
+    # sealed judgement and pack, so the absence is
+    # divergent in itself — and is named as a missing
+    # commitment, not as a non-native iteration.
+    w = _native_run()
+    store = w["store"]
+    quiesce(store)
+    first_iter = events_of(store, "LOOP_ITERATION")[0]
+
+    def drop_flag(conn):
+        row = conn.execute(
+            "SELECT payload FROM events WHERE event_seq = ?",
+            (first_iter["event_seq"],)).fetchone()
+        p = json.loads(row[0])
+        del p["disable_tool_validation"]
+        conn.execute(
+            "UPDATE events SET payload = ? WHERE event_seq = ?",
+            (json.dumps(p), first_iter["event_seq"]))
+
+    kinds = {p["kind"] for p in loop_problems(
+        run_checker_path(store, tampered_copy(
+            store, drop_flag, "noflag")))}
+    check("BD-1 checker: a native iteration whose flag "
+          "commitment is absent is divergent as a missing "
+          "commitment — the sealed derivation names it, "
+          "where the field's absence once silently "
+          "reclassified the iteration as non-native",
+          "native_flag_commitment_missing" in kinds
+          and "translation_without_native_iteration"
+          not in kinds,
+          json.dumps(sorted(kinds))[:200])
+    # The commitment present, the translation record
+    # deleted: detection keys on the sealed derivation.
+    w = _native_run()
+    store = w["store"]
+    quiesce(store)
+    record = events_of(store, "TRANSLATION_RECORDED")[1]
+
+    def drop_record(conn):
+        conn.execute("DELETE FROM events WHERE event_seq = ?",
+                     (record["event_seq"],))
+
+    kinds = {p["kind"] for p in loop_problems(
+        run_checker_path(store, tampered_copy(
+            store, drop_record, "norecord")))}
+    check("BD-1 checker: with the commitment present, a "
+          "missing translation record is still detected "
+          "— the obligation derives from the sealed "
+          "judgement and pack, not from any field on the "
+          "iteration",
+          "translation_record_missing" in kinds
+          and "dispatch_without_translation" in kinds
+          and "native_flag_commitment_missing" not in kinds,
+          json.dumps(sorted(kinds))[:200])
+
+
 # ------------------------------------------------------- B2 units
 def test_validator():
     params = [
@@ -582,61 +722,161 @@ def test_validator():
 
 # --------------------------------------- classification units (N6)
 def test_classification_units():
-    saved = loop_module.CALL_CAP
-    loop_module.CALL_CAP = 3
-    try:
-        loop = Loop.__new__(Loop)
-        ctx = {"catalogue": [{
-                    "tool": "sandbox.read",
-                    "description": "Read.",
-                    "parameters": [
-                        {"name": "path", "required": True,
-                         "meaning": "the path"}],
-                    "scope_ceiling": {"path_prefix": "sources"},
-                    "grant_count": 1, "any_grant": None}],
-               "instance_id": "instance-x", "iterations": 2}
+    # At the shipped CAP = 1 throughout (INDEX 403): the
+    # ID-integrity verdicts precede the cap, so they are
+    # reachable — and witnessed — at the real cap.
+    loop = Loop.__new__(Loop)
+    ctx = {"catalogue": [{
+                "tool": "sandbox.read",
+                "description": "Read.",
+                "parameters": [
+                    {"name": "path", "required": True,
+                     "meaning": "the path"}],
+                "scope_ceiling": {"path_prefix": "sources"},
+                "grant_count": 1, "any_grant": None}],
+           "instance_id": "instance-x", "iterations": 2}
 
-        def rec(ordinal, call_id, name, form, args):
-            return {"provider_ordinal": ordinal,
-                    "provider_call_id": call_id, "name": name,
-                    "arguments_form": form, "arguments": args}
+    def rec(ordinal, call_id, name, form, args):
+        return {"provider_ordinal": ordinal,
+                "provider_call_id": call_id, "name": name,
+                "arguments_form": form, "arguments": args}
 
-        entries, converted = loop._classify_native(ctx, [
-            rec(1, "fc_a", "sandbox.read", "object",
-                {"path": "sources/a.md"}),
-            rec(2, "fc_a", "sandbox.read", "object",
-                {"path": "sources/b.md"}),
-            rec(3, "fc_b", "sandbox.read", "object",
-                {"path": "sources/c.md"})])
-        check("N6 a duplicated provider call ID is refused "
-              "malformed_call — the first occurrence stands, "
-              "the duplicate is never deduplicated into it "
-              "and never dispatched",
-              entries[0]["refusal_class"] is None
-              and entries[0]["loop_request_id"]
-              == "loop-instance-x-2-1"
-              and entries[1]["refusal_class"]
-              == "malformed_call"
-              and entries[1]["refusal_detail"]
-              == "its call ID was duplicated"
-              and entries[2]["loop_request_id"]
-              == "loop-instance-x-2-2"
-              and len(converted) == 2)
-        entries, _ = loop._classify_native(ctx, [
-            rec(1, "fc_a", "sandbox.read", "object",
-                {"path": "sources/a.md"}),
-            rec(2, "fc_b", "sandbox.read", "object",
-                {"path": "sources/a.md"})])
-        check("N6/OQ4 two calls identical in name and "
-              "arguments under distinct IDs are distinct "
-              "proposals — both presented, never merged",
-              [e["loop_request_id"] for e in entries]
-              == ["loop-instance-x-2-1",
-                  "loop-instance-x-2-2"])
-    finally:
-        loop_module.CALL_CAP = saved
-    check("the shipped cap stands at CAP = 1 after the "
-          "unit witnesses", loop_module.CALL_CAP == 1)
+    entries, converted = loop._classify_native(ctx, [
+        rec(1, "fc_a", "sandbox.read", "object",
+            {"path": "sources/a.md"}),
+        rec(2, "fc_a", "sandbox.read", "object",
+            {"path": "sources/b.md"}),
+        rec(3, "fc_b", "sandbox.read", "object",
+            {"path": "sources/c.md"})])
+    check("N6 at CAP = 1 a duplicated provider call ID "
+          "on an overflow call is refused malformed_call "
+          "— ID integrity precedes the cap: the first "
+          "occurrence stands presented, the duplicate is "
+          "never deduplicated into it, and a sound third "
+          "call still meets the cap on its own entry",
+          entries[0]["refusal_class"] is None
+          and entries[0]["loop_request_id"]
+          == "loop-instance-x-2-1"
+          and entries[1]["refusal_class"]
+          == "malformed_call"
+          and entries[1]["refusal_detail"]
+          == "its call ID was duplicated"
+          and entries[1]["provider_ordinal"] == 2
+          and entries[2]["refusal_class"]
+          == "call_cap_exceeded"
+          and len(converted) == 1)
+    entries, _ = loop._classify_native(ctx, [
+        rec(1, "fc_a", "sandbox.read", "object",
+            {"path": "sources/a.md"}),
+        rec(2, None, "sandbox.read", "object",
+            {"path": "sources/b.md"})])
+    check("N6 at CAP = 1 a missing provider call ID on "
+          "an overflow call is refused malformed_call, "
+          "not masked as a cap refusal",
+          entries[0]["refusal_class"] is None
+          and entries[1]["refusal_class"]
+          == "malformed_call"
+          and entries[1]["refusal_detail"]
+          == "its call ID was absent"
+          and entries[1]["provider_ordinal"] == 2)
+    entries, _ = loop._classify_native(ctx, [
+        rec(1, "fc_a", "sandbox.read", "object",
+            {"path": "sources/a.md"}),
+        rec(2, "fc_b", "sandbox.read", "object",
+            {"path": "sources/a.md"})])
+    check("N6/OQ4 two calls identical in name and "
+          "arguments under distinct IDs are distinct "
+          "proposals — the second stands as its own "
+          "entry under its own ID, never merged into "
+          "the first (at CAP = 1 the cap refuses it, "
+          "as its own call)",
+          len(entries) == 2
+          and entries[0]["loop_request_id"]
+          == "loop-instance-x-2-1"
+          and entries[1]["provider_call_id"] == "fc_b"
+          and entries[1]["provider_ordinal"] == 2
+          and entries[1]["refusal_class"]
+          == "call_cap_exceeded"
+          and entries[1]["loop_request_id"] is None)
+    check("the shipped cap stands at CAP = 1, unaltered "
+          "by the unit witnesses",
+          loop_module.CALL_CAP == 1)
+
+
+# --------------------------- N6 end to end at CAP = 1 (INDEX 403)
+def test_cap1_id_integrity():
+    # A second call whose ID is absent: the first call
+    # presents and dispatches exactly as before; the
+    # second is malformed_call at its own ordinal.
+    w = assemble()
+    SPECS[:] = [
+        (200, native_resp([
+            READ_CALL,
+            {"name": "sandbox.read",
+             "arguments": '{"path": "sources/alpha.md"}'}])),
+        yield_spec()]
+    result = run_loop(w, stub_adapter())
+    store = w["store"]
+    entries = events_of(
+        store, "TRANSLATION_RECORDED")[0]["payload"]["calls"]
+    check("N6 end to end at CAP = 1: a second call with "
+          "a missing ID is refused malformed_call — its "
+          "ordinal retained, no dispatch for it, the "
+          "first call's presentation and dispatch "
+          "unaffected, the run proceeding to yield",
+          result["outcome"] == "yield"
+          and entries[0]["refusal_class"] is None
+          and entries[0]["loop_request_id"] is not None
+          and entries[1]["refusal_class"] == "malformed_call"
+          and entries[1]["refusal_detail"]
+          == "its call ID was absent"
+          and entries[1]["provider_ordinal"] == 2
+          and entries[1]["provider_call_id"] is None
+          and len(events_of(store, "TOOL_DISPATCHED")) == 1,
+          json.dumps(entries)[:200])
+    verdict = run_checker(store)
+    check("N6 the checker, classifying independently "
+          "under the same order, agrees: the governed "
+          "record of the missing-ID run verifies all-ok",
+          verdict["checks"]["loop_correspondence"]["result"]
+          == "ok",
+          json.dumps(verdict["checks"]
+                     ["loop_correspondence"])[:200])
+    # A second call duplicating the first call's ID.
+    w = assemble()
+    SPECS[:] = [
+        (200, native_resp([
+            READ_CALL,
+            {"id": "fc_1", "name": "sandbox.read",
+             "arguments": '{"path": "sources/alpha.md"}'}])),
+        yield_spec()]
+    result = run_loop(w, stub_adapter())
+    store = w["store"]
+    entries = events_of(
+        store, "TRANSLATION_RECORDED")[0]["payload"]["calls"]
+    check("N6 end to end at CAP = 1: a second call "
+          "duplicating the first call's ID is refused "
+          "malformed_call — its ordinal and its claimed "
+          "ID retained on its own entry, no dispatch for "
+          "it, the first occurrence standing exactly as "
+          "before",
+          result["outcome"] == "yield"
+          and entries[0]["refusal_class"] is None
+          and entries[0]["loop_request_id"] is not None
+          and entries[1]["refusal_class"] == "malformed_call"
+          and entries[1]["refusal_detail"]
+          == "its call ID was duplicated"
+          and entries[1]["provider_ordinal"] == 2
+          and entries[1]["provider_call_id"] == "fc_1"
+          and len(events_of(store, "TOOL_DISPATCHED")) == 1,
+          json.dumps(entries)[:200])
+    verdict = run_checker(store)
+    check("N6 the checker agrees on the duplicate-ID "
+          "run likewise: loop correspondence all-ok",
+          verdict["checks"]["loop_correspondence"]["result"]
+          == "ok",
+          json.dumps(verdict["checks"]
+                     ["loop_correspondence"])[:200])
 
 
 # ------------------------------------------- W-a twin equivalence
@@ -1159,8 +1399,10 @@ def test_text_regression():
 def main():
     test_adapter_level()
     test_bd1_loop()
+    test_flag_binding()
     test_validator()
     test_classification_units()
+    test_cap1_id_integrity()
     test_twin_equivalence()
     test_closed_world()
     test_cap_and_preflight()
