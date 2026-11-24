@@ -530,17 +530,32 @@ def _checker_validate_arguments(parameters, arguments):
     return None
 
 
+def _checker_parse_arguments(raw):
+    """The checker's own classification-stage parse of a
+    string-form arguments value (INDEX 406): extraction
+    is structural only, so the parse stands here, in the
+    checker's independent classification, reached only by
+    a call that survived call-ID integrity and the cap —
+    the same order the loop is held to, derived and
+    implemented independently. Raises ValueError where
+    the string cannot be read as JSON."""
+    return json.loads(raw)
+
+
 def _checker_extract_calls(message):
     """The checker's own per-call extraction from a
     captured native message (the evidence artifact's L3):
     one record per call in emitted order — provider
     ordinal, provider call ID, name, arguments form and
-    the arguments in that form's shape. Returns [] where
-    the message carries no calls, and None where the
-    message's call structure is malformed as a whole
-    (calls not a list, an entry not an object, content
-    standing beside calls) — no per-call extraction
-    stands for such a message."""
+    the arguments in that form's shape. Extraction is
+    structural only (INDEX 406): a string stands raw
+    under the form "string"; whether it parses is
+    classification's determination, never extraction's.
+    Returns [] where the message carries no calls, and
+    None where the message's call structure is malformed
+    as a whole (calls not a list, an entry not an object,
+    content standing beside calls) — no per-call
+    extraction stands for such a message."""
     if not isinstance(message, dict):
         return None
     tool_calls = message.get("tool_calls")
@@ -567,15 +582,7 @@ def _checker_extract_calls(message):
                 name = raw_name
             raw_args = function.get("arguments")
             if isinstance(raw_args, str):
-                try:
-                    parsed = json.loads(raw_args)
-                except ValueError:
-                    form, arguments = "unparseable", raw_args
-                else:
-                    if isinstance(parsed, dict):
-                        form, arguments = "object", parsed
-                    else:
-                        form, arguments = "non_object", parsed
+                form, arguments = "string", raw_args
             elif isinstance(raw_args, dict):
                 form, arguments = "object", raw_args
             elif raw_args is not None:
@@ -593,10 +600,12 @@ def _checker_classify(records, catalogue, instance_id,
                       iteration):
     """The checker's own classification of an extraction
     (N33 (i)–(iii)): call-ID integrity, the per-response
-    cap, closed-world resolution against the catalogue,
-    and the checker's own validation — producing the
-    translation record's entry set the recorded record is
-    compared against, field for field."""
+    cap, argument parsing (after integrity and the cap,
+    INDEX 406), closed-world resolution against the
+    catalogue, and the checker's own validation —
+    producing the translation record's entry set the
+    recorded record is compared against, field for
+    field."""
     by_name = {}
     for entry in catalogue:
         by_name.setdefault(entry["tool"], entry)
@@ -644,18 +653,34 @@ def _checker_classify(records, catalogue, instance_id,
             entry["refusal_detail"] = \
                 "its name could not be read"
             continue
-        if record["arguments_form"] == "unparseable":
-            entry["refusal_class"] = "malformed_call"
-            entry["refusal_detail"] = \
-                "its arguments could not be read"
-            continue
-        if record["arguments_form"] != "object":
+        # Argument parsing stands here in the checker's
+        # own classification (INDEX 406), after call-ID
+        # integrity and the cap, with the checker's own
+        # parser: a string that cannot be read, and any
+        # form not yielding an object, is malformed_call.
+        if record["arguments_form"] == "string":
+            try:
+                arguments = _checker_parse_arguments(
+                    record["arguments"])
+            except ValueError:
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its arguments could not be read"
+                continue
+            if not isinstance(arguments, dict):
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its arguments are not an object"
+                continue
+        elif record["arguments_form"] == "object":
+            arguments = record["arguments"]
+        else:
             entry["refusal_class"] = "malformed_call"
             entry["refusal_detail"] = \
                 "its arguments are not an object"
             continue
         entry["arguments_sha256"] = sha256_hex(
-            canonical(record["arguments"]))
+            canonical(arguments))
         target = by_name.get(record["name"])
         if target is None:
             entry["resolution"] = "unknown"
@@ -663,7 +688,7 @@ def _checker_classify(records, catalogue, instance_id,
             continue
         entry["resolution"] = "resolved"
         constraint = _checker_validate_arguments(
-            target["parameters"], record["arguments"])
+            target["parameters"], arguments)
         if constraint is not None:
             entry["validation"] = "invalid"
             entry["validation_constraint"] = constraint

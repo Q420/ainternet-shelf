@@ -102,9 +102,10 @@ the driver's back.
   `native_calls` outcome, for the loop's classification,
   translation record and dispatch (the loop's corridor,
   not this module's). A defect inside one call — an
-  unreadable name, an unparseable or non-object arguments
-  value — is carried in that call's record for the loop to
-  refuse per call; it no longer ends the response. Defects
+  unreadable name, an arguments value in a shape
+  classification must refuse — is carried in that call's
+  record for the loop to refuse per call; it no longer
+  ends the response. Defects
   of the response as a whole still fail whole here: a
   tool_calls structure that is not a list of objects, and
   a response carrying both content and tool calls (the
@@ -1134,12 +1135,21 @@ class OpenAICompatibleAdapter:
         exactly as emitted, the name, the arguments, and the
         call's provider ordinal. The arguments arrive as a
         JSON string (the measured native envelope) or as an
-        object; both forms are accepted (N40). A defect
-        inside one call — an absent or unreadable name, an
-        unparseable arguments string, a non-object arguments
-        value — is carried in that call's own record (its
-        arguments_form names the shape) for the loop to
-        refuse per call; it no longer fails the response.
+        object; both forms are accepted (N40). Extraction
+        is STRUCTURAL ONLY (build-examination correction,
+        INDEX 406): it parses nothing — a string stands raw
+        under the form "string", an object under "object",
+        any other shape under "non_object". Whether a
+        string parses, and into what, is classification's
+        determination, made in the loop only for a call
+        that survives call-ID integrity and the cap;
+        extraction claims neither. A defect inside one
+        call — an absent or unreadable name, an arguments
+        value in a shape classification must refuse — is
+        carried in that call's own record (its
+        arguments_form names the delivered shape) for the
+        loop to refuse per call; it no longer fails the
+        response.
         Defects of the response as a whole still fail whole:
         a tool_calls value that is not a non-empty list, or
         an entry that is not an object — a structure from
@@ -1168,15 +1178,7 @@ class OpenAICompatibleAdapter:
                 name = None
             arguments = function.get("arguments")
             if isinstance(arguments, str):
-                try:
-                    parsed = json.loads(arguments)
-                except ValueError:
-                    form, value = "unparseable", arguments
-                else:
-                    if isinstance(parsed, dict):
-                        form, value = "object", parsed
-                    else:
-                        form, value = "non_object", parsed
+                form, value = "string", arguments
             elif isinstance(arguments, dict):
                 form, value = "object", arguments
             else:

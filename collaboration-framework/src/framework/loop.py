@@ -162,6 +162,7 @@ shape from an activation's bounded run, and stands unchanged.
 from __future__ import annotations
 
 import copy
+import json
 import re
 import time
 
@@ -195,6 +196,21 @@ CALL_CAP = 1
 _TRANSLATION_REFUSALS = ("unknown_tool", "malformed_call",
                          "invalid_arguments",
                          "call_cap_exceeded")
+
+
+def _parse_arguments_string(raw):
+    """The classification-stage parse of a string-form
+    arguments value (native adapter piece, build-
+    examination correction INDEX 406): the one place the
+    loop parses a provider call's arguments. Extraction
+    is structural only and parses nothing; this parse is
+    reached only by a call that has survived call-ID
+    integrity (N6) and the per-response cap (N22) in
+    _classify_native — a call refused on either ground
+    never has its arguments parsed, so the work the cap
+    bounds is the work actually performed. Raises
+    ValueError where the string cannot be read as JSON."""
+    return json.loads(raw)
 
 
 def _is_int(value):
@@ -1621,13 +1637,15 @@ class Loop:
         provider ordinal (its position, 1-based), its
         provider call ID (the emitted string, or None where
         none stands), its name (the emitted string, or None
-        where unreadable), its arguments form — "object"
-        (the arguments stand parsed as an object),
-        "unparseable" (the raw string stands, unread) or
-        "non_object" (the parsed value stands, not an
-        object) — and the arguments in the form's shape.
-        Anything else is malformed whole: the loop classifies
-        records it can trust, and trusts only this shape."""
+        where unreadable), its arguments form — "string"
+        (the arguments stand as the raw string the provider
+        emitted, unparsed: extraction is structural only,
+        INDEX 406), "object" (the arguments stand as the
+        emitted object) or "non_object" (the arguments
+        stand as emitted, neither string nor object) — and
+        the arguments in the form's shape. Anything else is
+        malformed whole: the loop classifies records it can
+        trust, and trusts only this shape."""
         if not isinstance(raw, list) or not raw:
             return None
         out = []
@@ -1652,10 +1670,14 @@ class Loop:
             if form == "object":
                 if not isinstance(entry["arguments"], dict):
                     return None
-            elif form == "unparseable":
+            elif form == "string":
                 if not isinstance(entry["arguments"], str):
                     return None
-            elif form != "non_object":
+            elif form == "non_object":
+                if isinstance(entry["arguments"],
+                              (dict, str)):
+                    return None
+            else:
                 return None
             out.append({
                 "provider_ordinal": position,
@@ -1709,7 +1731,9 @@ class Loop:
         """Phase (i) of the native preflight: classify every
         individuable call in emitted order, each on its own
         merits — call-ID integrity (N6) first, then the
-        per-response cap (N22), then closed-world
+        per-response cap (N22), then the name stage and
+        argument parsing (the parse extraction once made,
+        deferred to here, INDEX 406), then closed-world
         resolution against this package's catalogue (N7)
         and the pure schema validation (N8) — producing
         the translation record's entry
@@ -1776,20 +1800,41 @@ class Loop:
                 entry["refusal_detail"] = \
                     "its name could not be read"
                 continue
-            if record["arguments_form"] == "unparseable":
-                entry["refusal_class"] = "malformed_call"
-                entry["refusal_detail"] = \
-                    "its arguments could not be read"
-                continue
-            if record["arguments_form"] != "object":
+            # Argument parsing stands here (INDEX 406):
+            # only a call that survived call-ID integrity
+            # and the cap reaches it — a refused call's
+            # arguments are never parsed, so the work the
+            # cap bounds is the work performed. A string
+            # form parses now, in classification; a string
+            # that cannot be read, and any form that does
+            # not yield an object, is malformed_call (N13)
+            # — the determination extraction once made is
+            # classification's, at the point the order
+            # reaches it.
+            if record["arguments_form"] == "string":
+                try:
+                    arguments = _parse_arguments_string(
+                        record["arguments"])
+                except ValueError:
+                    entry["refusal_class"] = "malformed_call"
+                    entry["refusal_detail"] = \
+                        "its arguments could not be read"
+                    continue
+                if not isinstance(arguments, dict):
+                    entry["refusal_class"] = "malformed_call"
+                    entry["refusal_detail"] = \
+                        "its arguments are not an object"
+                    continue
+            elif record["arguments_form"] == "object":
+                arguments = record["arguments"]
+            else:
                 entry["refusal_class"] = "malformed_call"
                 entry["refusal_detail"] = \
                     "its arguments are not an object"
                 continue
-            # The extraction stands sound: the arguments
-            # hash is taken over the parsed arguments'
-            # canonical form, before resolution (N32).
-            arguments = record["arguments"]
+            # The arguments stand parsed: the hash is taken
+            # over the parsed arguments' canonical form,
+            # before resolution (N32).
             entry["arguments_sha256"] = sha256_hex(
                 canonical(arguments))
             resolved = by_name.get(record["name"])

@@ -65,6 +65,18 @@ construction, and the checker derives an assembly's
 native mode from its sealed judgement and pack, never
 from an iteration's own fields.
 
+Argument parsing stands in classification, after
+call-ID integrity and the cap (build-examination
+correction, INDEX 406): extraction — the adapter's
+and the checker's alike — is structural only and
+parses nothing, so a call refused on ID integrity or
+the cap never has its arguments parsed at all, and
+the work the cap bounds is the work performed. The
+parser-not-invoked witnesses spy on both sides'
+classification parsers and count their invocations:
+exactly the surviving calls' strings, and no refused
+call's.
+
 No provider is called: the adapter is exercised against
 a local stub endpoint, exactly as the probe suite
 exercises it.
@@ -469,15 +481,19 @@ def test_adapter_level():
                 "scope_ceiling": {"path_prefix": "sources"}}]}
     result = stub_adapter()(pkg, mode="native")
     check("W-a the adapter extracts a native call per call: "
-          "ordinal, provider call ID, name, object form and "
-          "the parsed arguments, exactly as emitted",
+          "ordinal, provider call ID, name, string form and "
+          "the raw arguments string standing unparsed, "
+          "exactly as emitted (INDEX 406: extraction is "
+          "structural only — the parsed arguments stand at "
+          "classification, witnessed there and in the twin "
+          "equivalence)",
           result == {"outcome": "native_calls",
                      "native_calls": [{
                          "provider_ordinal": 1,
                          "provider_call_id": "fc_1",
                          "name": "sandbox.read_range",
-                         "arguments_form": "object",
-                         "arguments": READ_ARGS}]},
+                         "arguments_form": "string",
+                         "arguments": READ_CALL["arguments"]}]},
           json.dumps(result))
     body = REQUESTS[0]
     check("BD-1 (enabled) the native request body carries "
@@ -506,22 +522,27 @@ def test_adapter_level():
         "arguments": READ_ARGS}]))]
     result = stub_adapter()(pkg, mode="native")
     check("B1 arguments emitted as an object stand as an "
-          "object — the same extraction as the string form",
+          "object — extraction records the delivered shape",
           result["native_calls"][0]["arguments"] == READ_ARGS
           and result["native_calls"][0]["arguments_form"]
           == "object")
-    # Unparseable arguments are a per-call record now —
-    # the response is not malformed whole (N13).
+    # An arguments string that cannot be read stands as a
+    # per-call record in string form — extraction does not
+    # judge it (INDEX 406); whether it can be read is
+    # classification's determination, witnessed at that
+    # level in test_malformed_calls. The response is not
+    # malformed whole (N13).
     SPECS[:] = [(200, native_resp([{
         "id": "fc_3", "name": "sandbox.read_range",
         "arguments": "{not json"}]))]
     result = stub_adapter()(pkg, mode="native")
-    check("B1/N13 an unparseable arguments string is a "
-          "per-call extraction record — the raw string "
-          "carried unread, the response not malformed whole",
+    check("B1/N13 an unreadable arguments string is a "
+          "per-call extraction record in string form — "
+          "the raw string carried unparsed, the response "
+          "not malformed whole",
           result["outcome"] == "native_calls"
           and result["native_calls"][0]["arguments_form"]
-          == "unparseable"
+          == "string"
           and result["native_calls"][0]["arguments"]
           == "{not json")
     # Mixed content + calls remains malformed whole (N12).
@@ -877,6 +898,194 @@ def test_cap1_id_integrity():
           == "ok",
           json.dumps(verdict["checks"]
                      ["loop_correspondence"])[:200])
+
+
+# ------------- parsing deferred past N6 and CAP (INDEX 406)
+def test_parser_not_invoked():
+    # The loop's classification parser, spied: invoked for
+    # a surviving call's string and for no refused call's
+    # — not for an overflow call, not for a call refused
+    # on call-ID integrity (CAP = 1 cases throughout).
+    catalogue = [{
+        "tool": "sandbox.read", "description": "Read.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the path"}],
+        "scope_ceiling": {"path_prefix": "sources"},
+        "grant_count": 1, "any_grant": None}]
+    seen = []
+    real_parse = loop_module._parse_arguments_string
+
+    def spy(raw):
+        seen.append(raw)
+        return real_parse(raw)
+
+    def rec(ordinal, call_id, name, form, args):
+        return {"provider_ordinal": ordinal,
+                "provider_call_id": call_id, "name": name,
+                "arguments_form": form, "arguments": args}
+
+    loop_module._parse_arguments_string = spy
+    try:
+        loop = Loop.__new__(Loop)
+        ctx = {"catalogue": catalogue,
+               "instance_id": "instance-x", "iterations": 2}
+        entries, converted = loop._classify_native(ctx, [
+            rec(1, "fc_a", "sandbox.read", "string",
+                '{"path": "sources/a.md"}'),
+            rec(2, "fc_b", "sandbox.read", "string",
+                '{"path": "sources/b.md"}'),
+            rec(3, None, "sandbox.read", "string",
+                '{"path": "sources/c.md"}'),
+            rec(4, "fc_a", "sandbox.read", "string",
+                '{"path": "sources/d.md"}')])
+    finally:
+        loop_module._parse_arguments_string = real_parse
+    check("INDEX 406 at classification the parser runs "
+          "for the surviving call alone: the overflow "
+          "call, the missing-ID call and the duplicate-ID "
+          "call are refused with their argument strings "
+          "never parsed — the invocation list is exactly "
+          "the presented call's string, and the presented "
+          "call's parameters stand parsed in the conversion",
+          seen == ['{"path": "sources/a.md"}']
+          and [e["refusal_class"] for e in entries]
+          == [None, "call_cap_exceeded", "malformed_call",
+              "malformed_call"]
+          and converted == [{"tool": "sandbox.read",
+                             "parameters":
+                                 {"path": "sources/a.md"}}],
+          json.dumps(seen))
+
+    # End to end under the spy: the four-call cap response
+    # — the parser sees the presented call's string and
+    # none of the overflow strings, including the
+    # unreadable one the old extraction would have parsed.
+    seen = []
+    loop_module._parse_arguments_string = spy
+    try:
+        w = assemble()
+        SPECS[:] = [
+            (200, native_resp([
+                READ_CALL,
+                {"id": "fc_2", "name": "sandbox.read",
+                 "arguments": '{"path": "sources/alpha.md"}'},
+                {"id": "fc_3", "name": "container.exec",
+                 "arguments": '{"cmd": "ls"}'},
+                {"id": "fc_4", "name": "sandbox.write",
+                 "arguments": "{not json"}])),
+            yield_spec()]
+        result = run_loop(w, stub_adapter())
+    finally:
+        loop_module._parse_arguments_string = real_parse
+    entries = events_of(
+        w["store"], "TRANSLATION_RECORDED")[0]["payload"]["calls"]
+    check("INDEX 406 end to end at CAP = 1: across a "
+          "four-call response the parser is invoked exactly "
+          "once — the presented call's string; the three "
+          "overflow calls' strings, readable and unreadable "
+          "alike, are never parsed, and their recorded "
+          "refusals stand exactly as before",
+          seen == [READ_CALL["arguments"]]
+          and result["outcome"] == "yield"
+          and [e["refusal_class"] for e in entries]
+          == [None, "call_cap_exceeded", "call_cap_exceeded",
+              "call_cap_exceeded"],
+          json.dumps(seen))
+
+    # End to end under the spy: ID-integrity refusals —
+    # a duplicate-ID and a missing-ID call carrying
+    # readable strings are refused unparsed.
+    seen = []
+    loop_module._parse_arguments_string = spy
+    try:
+        w = assemble()
+        SPECS[:] = [
+            (200, native_resp([
+                READ_CALL,
+                {"id": "fc_1", "name": "sandbox.read",
+                 "arguments": '{"path": "sources/alpha.md"}'},
+                {"name": "sandbox.read",
+                 "arguments": '{"path": "sources/beta.md"}'}])),
+            yield_spec()]
+        result = run_loop(w, stub_adapter())
+    finally:
+        loop_module._parse_arguments_string = real_parse
+    entries = events_of(
+        w["store"], "TRANSLATION_RECORDED")[0]["payload"]["calls"]
+    check("INDEX 406 end to end: a second call duplicating "
+          "the first call's ID and a third with no ID are "
+          "refused malformed_call with their argument "
+          "strings never parsed — the parser's single "
+          "invocation is the first call's string",
+          seen == [READ_CALL["arguments"]]
+          and result["outcome"] == "yield"
+          and [e["refusal_class"] for e in entries]
+          == [None, "malformed_call", "malformed_call"]
+          and [e["refusal_detail"] for e in entries[1:]]
+          == ["its call ID was duplicated",
+              "its call ID was absent"]
+          and len(events_of(w["store"], "TOOL_DISPATCHED"))
+          == 1,
+          json.dumps(seen))
+
+    # The checker's own side, exercised in-process: its
+    # extraction stands the strings raw, and its own
+    # parser — spied the same way — runs for the
+    # surviving call alone, its entries agreeing with
+    # the loop's field for field.
+    import checker.checker as checker_module
+    message = {"role": "assistant", "content": None,
+               "tool_calls": [
+                   {"id": "fc_a", "type": "function",
+                    "function": {
+                        "name": "sandbox.read",
+                        "arguments": '{"path": "sources/a.md"}'}},
+                   {"id": "fc_b", "type": "function",
+                    "function": {
+                        "name": "sandbox.read",
+                        "arguments": '{"path": "sources/b.md"}'}},
+                   {"type": "function",
+                    "function": {
+                        "name": "sandbox.read",
+                        "arguments": '{"path": "sources/c.md"}'}},
+                   {"id": "fc_a", "type": "function",
+                    "function": {
+                        "name": "sandbox.read",
+                        "arguments": '{"path": "sources/d.md"}'}}]}
+    records = checker_module._checker_extract_calls(message)
+    cseen = []
+    real_cparse = checker_module._checker_parse_arguments
+
+    def cspy(raw):
+        cseen.append(raw)
+        return real_cparse(raw)
+
+    checker_module._checker_parse_arguments = cspy
+    try:
+        centries = checker_module._checker_classify(
+            records, catalogue, "instance-x", 2)
+    finally:
+        checker_module._checker_parse_arguments = real_cparse
+    check("INDEX 406 the checker's extraction is "
+          "structural only — every string stands raw in "
+          "string form — and its own parser runs for the "
+          "surviving call alone, its classification of "
+          "the overflow and bad-ID calls agreeing with "
+          "the loop's",
+          records is not None
+          and all(r["arguments_form"] == "string"
+                  for r in records)
+          and [r["arguments"] for r in records]
+          == ['{"path": "sources/a.md"}',
+              '{"path": "sources/b.md"}',
+              '{"path": "sources/c.md"}',
+              '{"path": "sources/d.md"}']
+          and cseen == ['{"path": "sources/a.md"}']
+          and [e["refusal_class"] for e in centries]
+          == [None, "call_cap_exceeded", "malformed_call",
+              "malformed_call"],
+          json.dumps(cseen))
 
 
 # ------------------------------------------- W-a twin equivalence
@@ -1403,6 +1612,7 @@ def main():
     test_validator()
     test_classification_units()
     test_cap1_id_integrity()
+    test_parser_not_invoked()
     test_twin_equivalence()
     test_closed_world()
     test_cap_and_preflight()
