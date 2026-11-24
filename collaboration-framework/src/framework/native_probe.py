@@ -38,6 +38,21 @@ separate dimension, so the decision thresholds (scope
 Rev 2) are independently reconstructable from the
 evidence rather than resting on a summary label.
 
+The paced repetition (Vane's result examination, INDEX
+340) corrects the one thing the first released run got
+wrong outside the model: its pacing. Trials 2–5 of
+that run died as HTTP 429 delivery failures against
+the provider's per-minute token budget because the
+runner fired all five requests inside a minute. The
+repetition preserves the intervention exactly and
+paces the trials: strictly sequential, each request
+starting at least MIN_TRIAL_START_INTERVAL_SECONDS
+after the previous request's start, the wait computed
+as the shortfall from the actual start timestamps —
+and each trial's request start and applied wait are
+recorded in the evidence, so the spacing is auditable
+from the artifact alone.
+
 The baseline is a REPRODUCIBLE REPRESENTATION, in the
 scope's own terms, and the representation is exact
 about its one substitution. The iteration-1 package is
@@ -80,7 +95,8 @@ from .loop import Loop
 from .record import FrameworkStore
 
 __all__ = [
-    "OFFERED_TOOLS", "TRIAL_COUNT", "BEHAVIOURS",
+    "OFFERED_TOOLS", "TRIAL_COUNT",
+    "MIN_TRIAL_START_INTERVAL_SECONDS", "BEHAVIOURS",
     "ALLOWED_DIFF_PATHS", "NativeProbeRefusal",
     "build_baseline", "derive_offered_definitions",
     "build_modified_request", "diff_requests",
@@ -100,6 +116,19 @@ OFFERED_TOOLS = ("sandbox.list", "sandbox.read_range",
                  "sandbox.search")
 
 TRIAL_COUNT = 5
+
+# The paced repetition's pacing floor (Vane's result
+# examination, INDEX 340): strictly sequential trials,
+# each provider generation request starting at least
+# this many seconds after the previous request's start.
+# The first released run fired all five requests inside
+# a minute and trials 2–5 died as HTTP 429 delivery
+# failures against the provider's 8,000-token-per-minute
+# budget; the repetition corrects only the pacing. The
+# interval is a conservative pacing control, not a
+# guarantee of provider capacity — a further refusal
+# remains a delivery failure, not a model observation.
+MIN_TRIAL_START_INTERVAL_SECONDS = 65.0
 
 # The capture ceiling: the probe piece's own, which the
 # response-evidence piece adopted as its ceiling too —
@@ -791,11 +820,16 @@ def _classification(behaviour, delivery, records,
 # Trial evidence and the run.
 # ----------------------------------------------------------------
 
-def trial_evidence(index, capture):
+def trial_evidence(index, capture, request_started_at=None,
+                   pacing_wait_seconds=0.0):
     """One trial's recorded evidence: the classification
     (aggregate and per call), the settled flag — settled
     is evidence-complete, per this scope's definition —
-    and the retained provider body and diagnostics under
+    the trial's pacing record (the request's start
+    timestamp on the runner's clock, and the pacing wait
+    applied before it — the paced repetition's spacing
+    is auditable from these fields alone), and the
+    retained provider body and diagnostics under
     the capture ceiling, each with its hash, on the
     assembly probe's retention discipline: the raw
     provider response retained whole, the decoded
@@ -837,6 +871,8 @@ def trial_evidence(index, capture):
         status = None
     return {
         "trial": index,
+        "request_started_at": request_started_at,
+        "pacing_wait_seconds": pacing_wait_seconds,
         "behaviour": result["behaviour"],
         "delivery": result["delivery"],
         "calls": result["calls"],
@@ -900,19 +936,37 @@ def summarise_native(trials):
 
 
 def run_native_trials(raw_call, baseline, modified,
-                      comparison):
+                      comparison, clock=None,
+                      sleeper=None):
     """The bounded trial run: the precondition verified
     first — a failure refuses before any provider
-    request — then exactly TRIAL_COUNT trials, each ONE
-    generation request through the injected raw-call
-    callable, each ending at its first response. No
-    follow-up request, no dispatch, no execution, no
-    tool-result response, ever: the raw call is the
-    probe's capture protocol, which returns what the
-    provider sent and interprets nothing. A raw call that
-    raises, or returns no capture, is itself evidence — a
-    delivery failure with the failure as its diagnostic —
-    never a runner exception."""
+    request, and before any pacing wait — then exactly
+    TRIAL_COUNT trials, each ONE generation request
+    through the injected raw-call callable, each ending
+    at its first response. No follow-up request, no
+    dispatch, no execution, no tool-result response,
+    ever: the raw call is the probe's capture protocol,
+    which returns what the provider sent and interprets
+    nothing. A raw call that raises, or returns no
+    capture, is itself evidence — a delivery failure
+    with the failure as its diagnostic — never a runner
+    exception.
+
+    The trials are PACED (the paced repetition, INDEX
+    340): strictly sequential, each request starting at
+    least MIN_TRIAL_START_INTERVAL_SECONDS after the
+    previous request's start. The wait before a trial
+    is the shortfall between the floor and the time
+    already elapsed since the previous start — computed
+    from the actual start timestamps, sleeping only
+    that shortfall — so a generation that itself takes
+    time leaves a correspondingly shorter wait, and one
+    longer than the floor leaves none. The first trial
+    starts immediately. Each trial's start timestamp
+    and applied wait are recorded in its evidence. The
+    clock and sleeper are injectable seams (wall clock
+    and time.sleep by default) so the pacing is
+    witnessable without real waiting."""
     problems = check_precondition(
         baseline, modified, comparison)
     if problems:
@@ -920,8 +974,23 @@ def run_native_trials(raw_call, baseline, modified,
             "the request comparison fails the scope's "
             "precondition; no trial runs: "
             + "; ".join(problems))
+    if clock is None:
+        clock = time.time
+    if sleeper is None:
+        sleeper = time.sleep
     trials = []
+    previous_start = None
     for index in range(1, TRIAL_COUNT + 1):
+        wait = 0.0
+        if previous_start is not None:
+            shortfall = \
+                MIN_TRIAL_START_INTERVAL_SECONDS \
+                - (clock() - previous_start)
+            if shortfall > 0:
+                wait = shortfall
+                sleeper(wait)
+        started_at = clock()
+        previous_start = started_at
         request = copy.deepcopy(modified)
         try:
             capture = raw_call(request)
@@ -933,7 +1002,10 @@ def run_native_trials(raw_call, baseline, modified,
             # failure, as in the assembly probe's runner
             capture = {
                 "diagnostics": f"{type(exc).__name__}: {exc}"}
-        trials.append(trial_evidence(index, capture))
+        trials.append(trial_evidence(
+            index, capture,
+            request_started_at=started_at,
+            pacing_wait_seconds=wait))
     return trials
 
 
@@ -942,7 +1014,8 @@ def run_native_trials(raw_call, baseline, modified,
 # ----------------------------------------------------------------
 
 _TRIAL_HASH_FIELDS = (
-    "trial", "behaviour", "delivery", "text_form",
+    "trial", "request_started_at", "pacing_wait_seconds",
+    "behaviour", "delivery", "text_form",
     "has_offered_call", "has_unoffered_call",
     "has_malformed_call", "settled", "http_status",
     "provider_body_sha256", "provider_body_bytes",

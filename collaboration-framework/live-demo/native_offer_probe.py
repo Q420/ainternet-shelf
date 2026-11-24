@@ -27,7 +27,11 @@ an existing run. The driver:
    assembly probe used — exactly one request per trial,
    nothing dispatched or executed, and writes
    probe-evidence.json with the classifications, the
-   counts and the reading.
+   counts and the reading. The runner paces the trials
+   (the paced repetition, INDEX 340): strictly
+   sequential, each request starting at least 65 seconds
+   after the previous request's start, each start and
+   applied wait recorded in the evidence.
 
 This driver is machinery for a released run. The scope
 passage (INDEX 334) authorises the build only: a live

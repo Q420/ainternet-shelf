@@ -31,6 +31,16 @@ request is made anywhere in this suite.
 - exactly one request per trial across all five
   trials, tool-calling responses included — no
   follow-up generation ever;
+- the paced repetition's pacing (INDEX 340), witnessed
+  on an injected fake clock with no real waiting: the
+  pacing path itself engaged, request starts recorded
+  at least 65 seconds apart, the wait before each trial
+  the shortfall from the previous start (a generation
+  that takes fake time leaves a shorter wait; one
+  longer than the floor leaves none), the starts and
+  waits standing in the written evidence artifact, and
+  a tampered comparison still refusing before any
+  request — and before any pacing wait;
 - the decision thresholds read as the scope states:
   offered majority locks the door hypothesis in as
   supported, unoffered carriers strengthen the deeper
@@ -86,6 +96,46 @@ class StubRaw:
                 min(len(self.requests) - 1,
                     len(self.captures) - 1)]
         return self.captures
+
+
+class FakeClock:
+    """An injectable clock/sleeper pair for the pacing
+    witnesses: sleeping advances the clock by the slept
+    amount, instantly — the pacing path is exercised in
+    full, with no real waiting."""
+
+    def __init__(self, start=1_700_000_000.0):
+        self.now = start
+        self.sleeps = []
+
+    def time(self):
+        return self.now
+
+    def sleep(self, seconds):
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+    def advance(self, seconds):
+        self.now += seconds
+
+
+class TimedStubRaw(StubRaw):
+    """A StubRaw whose generation itself takes fake
+    time: each call advances the fake clock by
+    generation_seconds before returning its capture, so
+    a pacing witness can show the wait is the shortfall
+    from the previous request's start, not a flat delay
+    after the generation completes."""
+
+    def __init__(self, captures, clock, generation_seconds):
+        super().__init__(captures)
+        self.clock = clock
+        self.generation_seconds = generation_seconds
+
+    def __call__(self, request):
+        capture = super().__call__(request)
+        self.clock.advance(self.generation_seconds)
+        return capture
 
 
 def body_capture(message, status=200):
@@ -275,9 +325,11 @@ expect_refusal(
 # Classification, on stub captures.
 # ---------------------------------------------------------------
 def run(captures):
+    clock = FakeClock()
     stub = StubRaw(captures)
     trials = np.run_native_trials(
-        stub, baseline, modified, comparison)
+        stub, baseline, modified, comparison,
+        clock=clock.time, sleeper=clock.sleep)
     return stub, trials
 
 
@@ -361,6 +413,94 @@ check("a split result is reported as a split — no "
       and counts["behaviour"]["unoffered_tool_attempt"]
       == 1 and counts["behaviour"]["text_contract"] == 1
       and counts["behaviour"]["malformed"] == 1)
+
+# ---------------------------------------------------------------
+# Pacing: the paced repetition (INDEX 340), on a fake
+# clock — the pacing path itself, no real waiting.
+# ---------------------------------------------------------------
+def paced_run(captures, generation_seconds=0.0):
+    clock = FakeClock()
+    stub = TimedStubRaw(captures, clock, generation_seconds)
+    trials = np.run_native_trials(
+        stub, baseline, modified, comparison,
+        clock=clock.time, sleeper=clock.sleep)
+    return clock, stub, trials
+
+
+_, _, trials = paced_run(OFFERED_CALL)
+starts = [t["request_started_at"] for t in trials]
+waits = [t["pacing_wait_seconds"] for t in trials]
+check("paced trials record request starts at least the "
+      "65-second floor apart, strictly sequential, the "
+      "first trial starting immediately",
+      waits[0] == 0.0 and all(
+          b - a >= np.MIN_TRIAL_START_INTERVAL_SECONDS
+          for a, b in zip(starts, starts[1:])),
+      f"starts={starts}")
+check("with an instant generation, the wait before each "
+      "later trial is the full interval — the shortfall "
+      "from the previous request's start",
+      waits == [0.0, 65.0, 65.0, 65.0, 65.0],
+      f"waits={waits}")
+
+_, _, trials = paced_run(OFFERED_CALL, generation_seconds=20.0)
+starts = [t["request_started_at"] for t in trials]
+waits = [t["pacing_wait_seconds"] for t in trials]
+check("a generation that itself takes 20 seconds leaves "
+      "a 45-second wait — the shortfall, not a flat 65 "
+      "after completion — and starts stay 65 apart",
+      waits == [0.0, 45.0, 45.0, 45.0, 45.0] and all(
+          b - a == 65.0
+          for a, b in zip(starts, starts[1:])),
+      f"waits={waits} starts={starts}")
+
+_, _, trials = paced_run(OFFERED_CALL, generation_seconds=90.0)
+starts = [t["request_started_at"] for t in trials]
+waits = [t["pacing_wait_seconds"] for t in trials]
+check("a generation longer than the floor leaves no "
+      "wait at all — the next start is already past it",
+      waits == [0.0] * 5 and all(
+          b - a == 90.0
+          for a, b in zip(starts, starts[1:])),
+      f"waits={waits} starts={starts}")
+
+_, _, trials = paced_run(OFFERED_CALL, generation_seconds=20.0)
+paced_evidence = np.probe_evidence_object(comparison,
+                                          trials)
+paced_dir = os.path.join(TMP, "out-paced")
+np.write_outputs(paced_dir, comparison, paced_evidence)
+with open(os.path.join(paced_dir, "probe-evidence.json"),
+          encoding="utf-8") as fh:
+    written_trials = json.load(fh)["trials"]
+written_starts = [t["request_started_at"]
+                  for t in written_trials]
+check("the written evidence artifact carries each "
+      "trial's request start and applied wait — the "
+      "spacing verifiable from the artifact alone",
+      all(t["pacing_wait_seconds"] == 45.0
+          for t in written_trials[1:])
+      and written_trials[0]["pacing_wait_seconds"] == 0.0
+      and all(b - a >=
+              np.MIN_TRIAL_START_INTERVAL_SECONDS
+              for a, b in zip(written_starts,
+                              written_starts[1:])),
+      f"starts={written_starts}")
+
+clock = FakeClock()
+stub = StubRaw(OFFERED_CALL)
+refused = False
+try:
+    np.run_native_trials(stub, baseline, modified,
+                         diff_tampered,
+                         clock=clock.time,
+                         sleeper=clock.sleep)
+except np.NativeProbeRefusal:
+    refused = True
+check("the paced runner still refuses on a tampered "
+      "comparison before any provider request — and "
+      "before any pacing wait is taken",
+      refused and stub.requests == []
+      and clock.sleeps == [])
 
 # ---------------------------------------------------------------
 # The durable outputs.
