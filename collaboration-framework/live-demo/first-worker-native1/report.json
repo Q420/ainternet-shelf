@@ -1,0 +1,355 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "worker_route": "groq",
+ "retrieval_mode": true,
+ "brief_sandbox_path": "scratch/brief.md",
+ "model_pinned": "openai/gpt-oss-120b",
+ "model_requested": "openai/gpt-oss-120b",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 2,
+  "recorded": [
+   {
+    "event_seq": 18,
+    "event_id": "c7dc4ba9-1edb-41a0-bb43-a7d7c685e6b3",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 17,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 17,
+     "cursor_to": 17,
+     "catalogue_hash": "4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398",
+     "registry_version": "tool-registry-v3",
+     "evidence_governed": true,
+     "disable_tool_validation": true
+    },
+    "ts": "2026-11-24T21:20:52Z",
+    "prev_hash": "848b6cd59658275ffcc9dbb7f98da98834c3976025c943d1543e71fd9eef0adc",
+    "hash": "1f3a2b452f19aa6a589ac4f2eaad6eb0432d2c10a18d40740658dc9583466acc"
+   },
+   {
+    "event_seq": 20,
+    "event_id": "91a9cd1f-69b1-48fb-ba08-d70b29688eb7",
+    "run_id": "run-first-worker-1",
+    "type": "RESPONSE_EVIDENCE",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 17,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "iteration_seq": 18,
+     "outcome": "captured",
+     "artifact_sha256": "e5be23a66e03ac1d7f65c8378fd7b75599d618d09c0c8f769229521b8d0da5c9",
+     "layers": {
+      "L1": {
+       "byte_count": 979,
+       "sha256": "c44dbc73ce5d8d974fa0b3d7d06fbedc0bad9556ae2917469dbeded938416ac3",
+       "complete": true,
+       "body_complete": true,
+       "hash_subject": "observed_bytes",
+       "total_length": 979,
+       "stop_reason": "eof",
+       "read_error_kind": null
+      },
+      "L2": {
+       "present": true,
+       "canonical_sha256": "2194b858c3c94c8a2b3281e557bb8e038c08ac7f0672fbb610e2089346133c66",
+       "canonical_byte_count": 978
+      },
+      "L3": {
+       "present": true,
+       "canonical_sha256": "1d4e46833a124eb633bc2afe976319ddf85f7038f6602d03060d271b0e976f31",
+       "canonical_byte_count": 381
+      },
+      "L4": {
+       "present": false,
+       "reason": "the message's content is absent (null)"
+      },
+      "L5": {
+       "adapter_verdict_state": "outcome",
+       "loop_verdict_state": "validated"
+      }
+     },
+     "provenance": "groq_helper_raw_bounded",
+     "http_status": 200
+    },
+    "ts": "2026-11-24T21:20:54Z",
+    "prev_hash": "a1017d88b1f19a5d613b3d27659d402e093d51dd705f8a6e641b9514c89e8161",
+    "hash": "e919122cf38481c3ebca50d86431c65154f9e2034f9f9c4d528453cdf3d0d69c"
+   },
+   {
+    "event_seq": 21,
+    "event_id": "31c29ce2-6237-4bba-a20a-b41d509bce09",
+    "run_id": "run-first-worker-1",
+    "type": "TRANSLATION_RECORDED",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 17,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "iteration_seq": 18,
+     "calls": [
+      {
+       "provider_ordinal": 1,
+       "provider_call_id": "fc_5f4344e5-2273-4f7f-89b9-d4173ee6c42a",
+       "name": "sandbox.list",
+       "arguments_sha256": "6bd528b4a1f1a86aa5ee03ac9490466b48c732445d76a3e50cf1409ef76bbf4a",
+       "resolution": "resolved",
+       "validation": "valid",
+       "validation_constraint": null,
+       "refusal_class": null,
+       "refusal_detail": null,
+       "loop_request_id": "loop-inst-crew-1-1-1-1"
+      }
+     ],
+     "artifact_sha256": "e5be23a66e03ac1d7f65c8378fd7b75599d618d09c0c8f769229521b8d0da5c9",
+     "catalogue_hash": "4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398",
+     "registry_version": "tool-registry-v3"
+    },
+    "ts": "2026-11-24T21:20:54Z",
+    "prev_hash": "e919122cf38481c3ebca50d86431c65154f9e2034f9f9c4d528453cdf3d0d69c",
+    "hash": "5a86b9f4e52f70e388689cb07782b230bd26e245b57ae5731e7d7ab0c3bf0e11"
+   },
+   {
+    "event_seq": 26,
+    "event_id": "f97dfd7c-559f-4c8e-be21-199412503593",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 17,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 2,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 17,
+     "cursor_to": 25,
+     "catalogue_hash": "4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398",
+     "registry_version": "tool-registry-v3",
+     "evidence_governed": true,
+     "disable_tool_validation": true
+    },
+    "ts": "2026-11-24T21:20:54Z",
+    "prev_hash": "5542b26706a0c4e9f8e04e7b479d89aa7e72dd074791fa971469f0863332524c",
+    "hash": "67208e5a9bdd30c52e73c08d8fa611f773ad5f0dec2973ccd3a5fcb1c5ba33cc"
+   }
+  ],
+  "refused": [],
+  "dispatched": [
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-1",
+    "dispatch_id": "dispatch-1",
+    "outcome": null,
+    "reconciled_outcome": null
+   }
+  ],
+  "call_timings": [
+   {
+    "iteration": 1,
+    "package_construction_s": 0.0020004909997624054,
+    "render_s": 0.000553560000298603,
+    "transport_stages": null,
+    "total_call_s": 1.731560466999781,
+    "note": "the callable provided no transport stage timings; the transport stages are unknown"
+   },
+   {
+    "iteration": 2,
+    "package_construction_s": 0.0023760549997859925,
+    "render_s": 0.0012043560000165598,
+    "transport_stages": null,
+    "total_call_s": 65.50161634999995,
+    "note": "the callable provided no transport stage timings; the transport stages are unknown"
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 29,
+   "event_id": "612a6bd4-438d-4c1f-a48d-87ddbc32083a",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 17,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 2,
+    "detail": "provider_error: HTTP 400"
+   },
+   "ts": "2026-11-24T21:22:00Z",
+   "prev_hash": "44cd80615428f8b752e56b175cf950c3bbff953ee90ee536c4d1564d944ff213",
+   "hash": "5e224fae247482eede310cbcfba10a4cae829d12766081291060c59bfb28b1c9"
+  }
+ },
+ "iterations": 2,
+ "call_timings": [
+  {
+   "iteration": 1,
+   "package_construction_s": 0.0020004909997624054,
+   "render_s": 0.000553560000298603,
+   "transport_stages": null,
+   "total_call_s": 1.731560466999781,
+   "note": "the callable provided no transport stage timings; the transport stages are unknown"
+  },
+  {
+   "iteration": 2,
+   "package_construction_s": 0.0023760549997859925,
+   "render_s": 0.0012043560000165598,
+   "transport_stages": null,
+   "total_call_s": 65.50161634999995,
+   "note": "the callable provided no transport stage timings; the transport stages are unknown"
+  }
+ ],
+ "call_timings_note": "per-iteration stage timings measured directly by the loop, the adapter and the connector transport (INDEX 217/219): package construction, prompt rendering, and the transport's stages, with stages the interface cannot separate labelled as such and unmeasured stages null. Local cancellation of a helper process never proves the upstream provider stopped processing its request.",
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 29
+ },
+ "evidence_summary": [
+  {
+   "iteration": 1,
+   "iteration_seq": 18,
+   "call_entered_seq": 19,
+   "disposition": "captured",
+   "disposition_seq": 20,
+   "artifact_sha256": "e5be23a66e03ac1d7f65c8378fd7b75599d618d09c0c8f769229521b8d0da5c9",
+   "l1_byte_count": 979,
+   "stop_reason": "eof",
+   "body_complete": true,
+   "artifact_check": "ok"
+  },
+  {
+   "iteration": 2,
+   "iteration_seq": 26,
+   "call_entered_seq": 27,
+   "disposition": "captured",
+   "disposition_seq": 28,
+   "artifact_sha256": "551e16a800ef7381b716b100af9a90d893b80eec71deb3fee026f5258ab96bed",
+   "l1_byte_count": 972,
+   "stop_reason": "eof",
+   "body_complete": true,
+   "artifact_check": "ok"
+  }
+ ],
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.list",
+   "request_id": "loop-inst-crew-1-1-1-1",
+   "outcome": "result"
+  }
+ ],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m ChatGPT, a large language model built on OpenAI\u2019s GPT\u20114 architecture. I\u2019m provided by OpenAI and run on their cloud infrastructure.\n\n**What I can do**\n- Understand and generate natural\u2011language text across many topics.\n- Answer questions, explain concepts, and provide step\u2011by\u2011step reasoning.\n- Summarize, translate, and rewrite text in different styles or tones.\n- Write, debug, and review code in a variety of programming languages.\n- Generate creative content such as stories, poems, or brainstorming ideas.\n- Help with planning, outlining, and organizing information.\n- Perform basic calculations and logical deductions.\n\n**What I can\u2019t do**\n- Access the internet, real\u2011time data, or external databases unless the information is supplied in the conversation.\n- View or manipulate files, images, or other media unless they\u2019re explicitly provided as text.\n- Remember details beyond the current session (no long\u2011term memory across separate chats).\n- Provide personal data about private individuals or engage in activities that violate privacy, safety, or legal guidelines.\n- Perform actions in the physical world or control external software/hardware.\n- Guarantee absolute factual accuracy; my responses are based on patterns in training data up to my knowledge cutoff (June\u202f2024) and may contain errors or outdated information.",
+  "provider_model_id": "openai/gpt-oss-120b",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 29,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ },
+ "probed_mode": true,
+ "adapter_mode": "native",
+ "decision_receipt_hash": "17e1314470dcd1b247cda173cf6ba30331914fd7dcd0958af7117f8bfe6ef2bc",
+ "decision_receipt_file": "decision-receipt.json",
+ "decision_examiner": "Vane",
+ "decision_recording": "harness-recorded from the examiner decision receipt; the examiner token authenticates the recording act, not the examiner's identity"
+}
