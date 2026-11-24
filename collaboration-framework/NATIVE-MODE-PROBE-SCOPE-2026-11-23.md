@@ -1,11 +1,13 @@
 # NATIVE-MODE PROBE — SCOPE (2026-11-23)
 
-**Status:** Draft **Rev 3**, for Vane's examination. Rev 3 incorporates the
-two final corrections of her Rev 2 examination (INDEX 277): a named
-`payload_form` evidence attribute for the hybrid shape (§3), and the
-raw-evidence distinction among provider body, status/metadata, and helper
-diagnostics (§4). Rev 2 incorporated the seven corrections of her Rev 1
-examination (INDEX 272). Developed under her
+**Status:** Draft **Rev 4**, for Vane's examination. Rev 4 incorporates
+the two consistency corrections of her Rev 3 examination (INDEX 279): the
+recommendation-vs-judgement distinction made consistent between §5 and
+P5, and the capture ceiling defined as a per-trial aggregate (§4); it also
+records the translation seam's empirical check as a build-stage
+precondition (§8). Rev 3 incorporated the two corrections of her Rev 2
+examination (INDEX 277); Rev 2, the seven of her Rev 1 examination
+(INDEX 272). Developed under her
 INDEX 270 recommendation and Ben's INDEX 267/269 direction. A bounded
 addition to Piece A1's assembly lifecycle; A1 is not reopened wholesale. No
 implementation and no worker attempt are implied by this scope.
@@ -140,8 +142,14 @@ Three distinct things, never conflated:
 
 - **Probe evidence:** the complete raw response as captured at the
   observation boundary, including native arguments and the provider error
-  body where available — retained up to an explicit **capture ceiling of
-  64,000 bytes per trial response**.
+  body where available — retained under the capture ceiling defined
+  below: **a per-trial aggregate of 64,000 bytes across the retained
+  content objects** (the provider body and the diagnostic output
+  together). **Hashes and the HTTP status/metadata are accounted
+  separately, outside that byte budget.** Completeness is judged **per
+  object**: a trial's evidence is incomplete if its provider body is
+  incomplete, whatever the state of its diagnostics — a complete
+  diagnostic object never evidences a complete provider capture.
 - **Integrity evidence:** a SHA-256 hash over the exact captured bytes,
   recorded per trial.
 - **Presentation:** any shortened rendering used in reports or the viewer,
@@ -202,13 +210,19 @@ and provider-failure trials recommend nothing by themselves in any case;
 they stand as evidence for the examiner's weighing, and an environment
 attempt is never, by itself, a reason to grant anything.
 
-The examiner's **judgement act records the selected mode and its
-grounds**. The examiner may disagree with the recommendation, but may not
+**Recommendation and judgement are different acts.** The recommendation
+is automatic and exists only when the probe is conclusive; an
+inconclusive probe produces **no recommendation**, and a recommendation
+is never an authority in its own right. The **selection** of a mode is
+the examiner's accountable decision, recorded in the judgement act with
+its grounds. The examiner may disagree with a recommendation, but may not
 silently substitute an unsupported mode: the grounds are part of the act.
-Where the evidence is inconclusive, a decision to proceed must carry a
-clearly stated basis in the judgement act and **must not bypass the
-fail-closed rule**: absent a judgement act recording a mode on stated
-grounds, a governed assembly **cannot be packed** — there is no permissive
+**Despite inconclusive evidence, the examiner may still select a mode —
+but only through that explicit, independently examinable judgement,
+stating the basis for proceeding.** No selected mode, no recorded
+grounds, or an unsupported selection means the governed assembly **cannot
+be packed** — the fail-closed boundary is the absence of an accountable
+judgement, never the probe's silence alone, and there is no permissive
 default. **The selected mode is bound into the sealed assembly record —
 the object the adapter actually consumes.** The adapter reads the mode
 only from that sealed object; it must not be able to choose a mode from a
@@ -270,9 +284,13 @@ P4. The evidence binds to the assembly: sequence, fingerprints, hashes;
     foreign evidence, count tampering, and an over-ceiling trial retained
     without an incomplete classification.
 P5. Mode derivation and quorum: 3 settled + strict majority recommends;
-    2 settled, or no strict majority, is inconclusive, and an inconclusive
-    governed assembly cannot be packed (fail closed); four provider
-    failures + one text response recommends nothing.
+    2 settled, or no strict majority, is inconclusive and produces **no
+    recommendation**; an inconclusive governed assembly then packs
+    **only** on an explicit examiner judgement recording the selected
+    mode and its basis (the override branch, witnessed packing), and an
+    attempted packing without such a judgement **fails** (the fail-closed
+    branch, witnessed refused) — both branches are required witnesses;
+    four provider failures + one text response recommends nothing.
 P6. In-work native path: a native call to a granted tool dispatches
     through the doorway identically to its text-form twin (same events,
     same bounds), in a governed retrieval assembly.
@@ -289,6 +307,16 @@ P10. **Translation integrity:** a native call with altered arguments, an
     ungranted tool name, or a tool absent from the sealed catalogue
     cannot expand authority through translation; the doorway adjudicates
     the request exactly as emitted, and the record retains it exactly.
+
+**Build-stage precondition (INDEX 279).** Before the translation
+implementation's assumptions are finalised, the build first captures and
+examines the pinned route's actual native response envelope — the exact
+response shape, tool-call identifiers, argument representation, and any
+multi-call behaviour — and defines the translation contract against that
+capture. The five INDEX 274 trials establish that the provider delivers
+native calls for this model; they do not establish every shape the
+adapter must parse. This is the empirical-first rule applied to the seam,
+and it precedes the P6/P9/P10 implementation work it informs.
 
 ## 9. Non-goals
 
