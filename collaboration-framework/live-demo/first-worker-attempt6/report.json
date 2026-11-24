@@ -1,0 +1,272 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "worker_route": "groq",
+ "model_pinned": "openai/gpt-oss-120b",
+ "model_requested": "openai/gpt-oss-120b",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 2,
+  "recorded": [
+   {
+    "event_seq": 17,
+    "event_id": "f01fdd4b-148e-49ef-8baf-d4df00320272",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 16,
+     "catalogue_hash": "cffbd62f79fd9dcbfe434bb2487251058aa2adcaf37a2fd056831bf440c7915b",
+     "registry_version": "tool-registry-v2"
+    },
+    "ts": "2026-11-24T00:07:50Z",
+    "prev_hash": "39cf08eda5619ac7186b2adc512cf367ae8d94ddb937619698004f68e2bf3c26",
+    "hash": "a523b01b6fb432c5e7b8b2304a272418d3cfadd25f1e0d7c7e5b942375a48161"
+   },
+   {
+    "event_seq": 30,
+    "event_id": "7deb9939-3396-4116-b7e7-097917752785",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 16,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 2,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 16,
+     "cursor_to": 29,
+     "catalogue_hash": "cffbd62f79fd9dcbfe434bb2487251058aa2adcaf37a2fd056831bf440c7915b",
+     "registry_version": "tool-registry-v2"
+    },
+    "ts": "2026-11-24T00:07:52Z",
+    "prev_hash": "1f08c4523b33f903f2b4550655da062ccc17e9688bbd4d3f997105c4605d5f7b",
+    "hash": "9a0415d62684202dda696ccff8cbc3490246b186795a4558fa48ba96c3402070"
+   }
+  ],
+  "refused": [],
+  "dispatched": [
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-1",
+    "dispatch_id": "dispatch-1",
+    "outcome": null,
+    "reconciled_outcome": null
+   },
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-2",
+    "dispatch_id": "dispatch-2",
+    "outcome": null,
+    "reconciled_outcome": null
+   },
+   {
+    "ok": true,
+    "duplicate": false,
+    "instance_id": "inst-crew-1-1",
+    "request_id": "loop-inst-crew-1-1-1-3",
+    "dispatch_id": "dispatch-3",
+    "outcome": null,
+    "reconciled_outcome": null
+   }
+  ],
+  "call_timings": [
+   {
+    "iteration": 1,
+    "package_construction_s": 0.0008713759998499881,
+    "render_s": 0.0002930790005848394,
+    "transport_stages": {
+     "body_preparation_s": 5.3499999921768904e-05,
+     "helper_launch_s": 0.0006308060001174454,
+     "submission_provider_wait_receipt_s": 1.5865204069996253,
+     "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+     "response_parsing_s": 6.993500028329436e-05
+    },
+    "total_call_s": 1.5877618869999424
+   },
+   {
+    "iteration": 2,
+    "package_construction_s": 0.0024250440001196694,
+    "render_s": 0.00131579199933185,
+    "transport_stages": {
+     "body_preparation_s": 0.0005437239997263532,
+     "helper_launch_s": 0.0007751620005365112,
+     "submission_provider_wait_receipt_s": 0.6337391269998989,
+     "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+     "response_parsing_s": 2.676999974937644e-05
+    },
+    "total_call_s": 0.6365351470003588
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 31,
+   "event_id": "0b1c877e-6a37-459e-982c-144b1fb84ba9",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 16,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 2,
+    "detail": "provider_error: connector helper exited 1: Traceback (most recent call last):\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 88, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 81, in main\n    print(json.dumps(call(req)))\n                     ^^^^^^^^^\n  File \"/home/hatch/workspace/custom-connectors/custom.groq/bin/groq_api.py\", line 60, in call\n    with opener.open(request, timeout=request_timeout()) as response:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 413: Payload Too Large"
+   },
+   "ts": "2026-11-24T00:07:53Z",
+   "prev_hash": "9a0415d62684202dda696ccff8cbc3490246b186795a4558fa48ba96c3402070",
+   "hash": "d064f87593482e9ae924ed1466160ffebbe9d672b521b8838ec75a97f04f7b51"
+  }
+ },
+ "iterations": 2,
+ "call_timings": [
+  {
+   "iteration": 1,
+   "package_construction_s": 0.0008713759998499881,
+   "render_s": 0.0002930790005848394,
+   "transport_stages": {
+    "body_preparation_s": 5.3499999921768904e-05,
+    "helper_launch_s": 0.0006308060001174454,
+    "submission_provider_wait_receipt_s": 1.5865204069996253,
+    "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+    "response_parsing_s": 6.993500028329436e-05
+   },
+   "total_call_s": 1.5877618869999424
+  },
+  {
+   "iteration": 2,
+   "package_construction_s": 0.0024250440001196694,
+   "render_s": 0.00131579199933185,
+   "transport_stages": {
+    "body_preparation_s": 0.0005437239997263532,
+    "helper_launch_s": 0.0007751620005365112,
+    "submission_provider_wait_receipt_s": 0.6337391269998989,
+    "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+    "response_parsing_s": 2.676999974937644e-05
+   },
+   "total_call_s": 0.6365351470003588
+  }
+ ],
+ "call_timings_note": "per-iteration stage timings measured directly by the loop, the adapter and the connector transport (INDEX 217/219): package construction, prompt rendering, and the transport's stages, with stages the interface cannot separate labelled as such and unmeasured stages null. Local cancellation of a helper process never proves the upstream provider stopped processing its request.",
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 31
+ },
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-2",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-2",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-3",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-3",
+   "outcome": "result"
+  }
+ ],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m ChatGPT, a large language model built on OpenAI\u2019s GPT\u20114 architecture. I\u2019m provided and maintained by OpenAI.\n\n**What I can do**\n- Understand and generate natural\u2011language text across many topics.\n- Answer questions, explain concepts, and engage in conversation.\n- Help with writing, editing, brainstorming, and summarizing content.\n- Perform basic reasoning, math, and logic tasks.\n- Write, review, and debug code in a variety of programming languages.\n- Generate creative pieces such as stories, poems, or dialogue.\n- Offer general guidance on research, learning strategies, and problem\u2011solving.\n\n**What I can\u2019t do**\n- Access the internet, real\u2011time data, or external databases unless the information is supplied in the conversation.\n- Retrieve or store personal data about you unless you share it during the chat (and I don\u2019t retain it after the session ends).\n- Perform actions in the physical world (e.g., send emails, make phone calls, control devices).\n- Provide professional advice that requires a licensed expert (medical, legal, financial, etc.) beyond general informational content.\n- Generate disallowed content such as hate speech, extremist propaganda, or instructions for illegal activities.\n- Guarantee absolute factual accuracy; my responses are based on patterns in the data I was trained on up to my knowledge cutoff (June\u202f2024) and may contain errors or outdated information.\n\nIn short, I\u2019m a conversational AI designed to assist with information, creativity, and problem\u2011solving within the bounds of my training and safety guidelines.",
+  "provider_model_id": "openai/gpt-oss-120b",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 31,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ }
+}
