@@ -1,4 +1,4 @@
-# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 2)
+# BUILD BRIEF — THE DOORWAY-PRESERVING NATIVE ADAPTER (2026-11-24, Rev 3)
 
 Prepared by Remmy for the examiner's brief examination (INDEX 369: the actual brief
 against Rev 3, not a summary). **Authority:** Ben's full authorisation, 2026-11-24
@@ -14,10 +14,17 @@ text is not edited to say so (the ledger and INDEX 368 carry the sequence).
 BD-2 (agreed), and rejected §3's derivation: the 36,000-byte retrieval aggregate
 is a ceiling on admitted retrieved *content*, not a demonstrated envelope for the
 whole next package, and four different quantities had been charged against it.
-Section 3 is rewritten on the measurement she required — the limits separated,
-the standing `_build_package` construction measured, the provider-facing token
-budget as the evidenced envelope, her 25% margin applied. **The corrected
-derivation yields CAP = 1** (§3 (iii)). Nothing else in the brief changes.
+Section 3 was rewritten on the measurement she required.
+
+**Revision note — Rev 3 (2026-11-24):** her Rev 2 examination (INDEX 376) held
+that the margin binds the **complete worst-case next request**, not the growth
+alone — Rev 2 had applied 75% to the growth and 100% to the total, two different
+tests. Section 3 now applies her test exactly, distinguishes the measured
+provider usage from the approximate conversion as she required, and states the
+result plainly: **no positive CAP satisfies N22 under the standing constraints
+and her margin. This is a build-gate conflict, reported for Ben's direction**
+(§3). The brief changes neither the retrieval ceiling nor the margin, and no
+implementation proceeds. Nothing outside §3 and these notes changes.
 
 **Empirical gates, closed:** P1 passed (INDEX 367 — flag effect measured; delivery
 to the host demonstrated, doorway adjudication **not** demonstrated and therefore
@@ -118,145 +125,100 @@ nothing from it beyond what N36 (c)/(d) allow. **Examiner's disposition
 (INDEX 374): AGREED** — the seam is not built; provider evidence is preserved
 without promotion into a call.
 
-## 3. The call-cap derivation (N22 — the build gate) — Rev 2, corrected
+## 3. The call-cap derivation (N22 — the build gate) — Rev 3: the conflict stated
 
-Rev 1 of this section charged four different quantities against the retrieval
-aggregate ceiling and called it the package envelope. The examiner rejected that
-(INDEX 374): `RETRIEVAL_AGGREGATE_CEILING` bounds retrieved *content* admitted by
-the doorway; it does not, by itself, bound a package. This section is the
-measurement she required: the limits separated, the standing construction
-measured, the worst case shown for the relevant assembly, and her margin —
-**25%**, the cap to fit within 75% of the envelope — applied. Measurements taken
-2026-11-24 from the live code and the retained records; canonical byte counts use
-the framework's own canonical form throughout.
+Rev 1 charged four quantities against a content-admission ceiling. Rev 2
+separated the limits and measured the construction, but applied the examiner's
+margin to the response-generated growth alone and checked the total request
+against the full envelope — two different tests. Her Rev 2 examination
+(INDEX 376) is correct: the margin she set binds **the complete worst-case next
+request**. This section applies that one test, distinguishes what is measured
+from what is converted, and states the outcome plainly.
 
-### The limits, separated
+### The test
 
-- **L1 — Retrieved content (doorway admission).** Per-result ceiling **12,000**
-  bytes; aggregate **36,000** bytes of retrieved content per package window
-  (`RETRIEVAL_RESULT_CEILING` / `RETRIEVAL_AGGREGATE_CEILING`, enforced at
-  admission in `Doorway._retrieval_aggregate_problem`). This constrains retrieval
-  content only. It is not a package limit and is not used as one anywhere below.
-- **L2 — The package construction.** `Loop._build_package` imposes **no total
-  size ceiling** of its own. A package grows by what the record gives it: case,
-  catalogue, delta, tool_results, standing dispatches, bounds. Stated plainly, as
-  the examiner required: the construction affords no envelope; the envelope comes
-  from the provider-facing limits.
-- **L3 — Provider byte size.** Groq refused a 134,844-byte body with HTTP 413
-  (attempt 6). That is an evidenced refusal point, not a measured limit; the
-  route's actual byte limit is not in evidence and is not used.
-- **L4 — Provider token budget (the binding envelope).** The account's measured
-  limit is **8,000 tokens per minute** (INDEX 260; the 429 bodies in evidence).
-  A request whose prompt alone exceeds the minute budget cannot be sent at any
-  pacing — the budget is consumed by the request itself. This is evidenced both
-  ways: five large requests inside one minute never reached the model
-  (INDEX 339), and the same requests succeeded at ≥65-second spacing
-  (INDEX 352). The standing worker-shaped request measures **4,388 prompt
-  tokens** by the provider's own usage accounting (paced native-offer trial 1)
-  and **19,135 bytes** serialized (the baseline request regenerated through the
-  probe's construction path and verified byte-exact against the record —
-  15,413 bytes, hash `72f6297d…` — plus the offered-definitions span of
-  3,713 bytes) — a measured conversion of **≈ 4.36 bytes per token** for this
-  content shape. L4 is the envelope the cap is derived against.
+The complete worst-case next request — fixed standing request plus the growth
+one response's calls generate — must fit within **75% of the envelope**. The
+envelope is the account's measured provider budget: **8,000 tokens per minute**
+(free plan; INDEX 260 and the 429 bodies in evidence), which a request whose
+prompt exceeds it cannot be sent under at any pacing. The threshold is therefore
+**6,000 tokens**.
 
-### (i) Fixed package overhead and per-call costs, measured
+### The quantities, and what kind of knowledge each is
 
-Fixed overhead of the governed construction, from the retrieval piece's R5
-measurements (shelf artifact, hash-verified; each rendered request is the real
-loop package rendered through the adapter, components as exact serialized spans):
+- **Fixed standing request: 4,388 tokens — MEASURED.** The provider's own usage
+  accounting for the native worker request (paced native-offer trial 1). The
+  same request serialized is 19,135 bytes (baseline regenerated through the
+  probe's construction and verified byte-exact, 15,413 bytes, hash `72f6297d…`,
+  plus the 3,713-byte definitions span). This figure carries measurement
+  authority.
+- **Per-call growth: 15,656 bytes — MEASURED in bytes; its token figure is an
+  APPROXIMATE CONVERSION and is labelled as such wherever it appears.** The
+  bytes are exact (carriage entry 12,146 at the per-result ceiling; delta chain
+  copies 2,608; translation-record share ≈ 752; standing-dispatch entry ≈ 150).
+  Converting at the one measured ratio this content shape has produced
+  (19,135 bytes / 4,388 tokens ≈ 4.36 bytes per token) gives **≈ 3,591 tokens**.
+  On a deliberately conservative basis (3.5 bytes per token — worse than
+  anything this prose-and-JSON content has measured) it gives **≈ 4,473
+  tokens**. The conversion is an estimate with a stated basis; it does not
+  carry the fixed base's authority, and nothing below rests on its precision:
+  the growth would have to convert at **≥ 9.71 bytes per token** to fit the
+  headroom, a rate no tokeniser sustains on English and JSON. The conclusion
+  holds at every plausible conversion.
+- **Headroom under the threshold: 6,000 − 4,388 = 1,612 tokens.**
 
-| Component | Bytes |
-|---|---|
-| Case view and assignment | 1,242 |
-| Tool catalogue (governed v3) | 5,516 |
-| Provenance and dispatch material, iteration 1 (no outcomes yet) | 2,227 |
-| Remaining framework overhead (contract, framing, system message, skeleton) | 1,846 |
-| **Iteration-1 serialized request, total** | **10,831** |
+### The incompatibility, plainly
 
-The native worker request adds the offered definitions (3,713 bytes) and the
-native contract material, reaching the measured 19,135 bytes / 4,388 tokens
-above — that figure, not the R5 total, is the fixed base for a native run,
-because it is the request the pinned route has actually carried.
+One worst-case call adds ≈ 3,591 tokens (measured conversion) against 1,612
+tokens of headroom. The complete worst-case next request at CAP = 1 is
+**7,979 tokens**, which exceeds the 6,000-token threshold. CAP = 0 is not a
+call cap. **Therefore no positive CAP satisfies N22 under the examiner's
+margin with the standing constraints.** Three settled quantities cannot all
+hold at once:
 
-Per-call recording cost (unchanged from Rev 1; measured from the attempt-2/3
-records and N32's field set): translation-record entry **302** bytes presented /
-301 refused / 224 overflow; adjudication chain per presented call TOOL_REQUESTED
-614 + TOOL_DISPATCHED 551 + TOOL_STARTED 474 + TOOL_OUTCOME non-content overhead
-≤ 969 = **2,608** bytes; doorway-refused chain 614 + 701 = 1,315. Processing time
-is dominated by these durable appends and stands inside the activation deadline
-(N18); no separate time bound is proposed.
+1. the fixed standing request — 4,388 measured tokens of settled construction
+   (case, governed catalogue, contract, offered definitions);
+2. the per-result ceiling — 12,000 bytes, the retrieval piece's settled bound,
+   which sets the worst-case result a single call can bring back;
+3. the margin — 75% of an 8,000-token free-tier minute budget.
 
-Record-delta growth in real packages (R5): the provenance-and-dispatch span grew
-2,227 → 6,799 → 7,403 bytes across iterations of a scripted multi-dispatch run —
-delta growth is real and per-call: one dispatched call contributes its chain
-(2,608 bytes, its outcome's content stubbed under single carriage) plus a
-standing-dispatch entry (≈ 150 bytes) to every subsequent package's window until
-the cursor passes it.
+The cap sits downstream of all three and cannot mediate between them. This
+brief does not change the ceiling (outside this scope), does not lower or
+re-read the margin (the examiner's, ruled twice), and does not proceed to
+implementation on an unresolved bound. **This is a build-gate conflict,
+reported for Ben's direction** under the examiner's own disposition
+(INDEX 376).
 
-### (ii) Per-call growth of the next request — worst case
+### The variables that could resolve it — named, with their owners; the brief chooses none
 
-One presented-and-dispatched call, its result at the L1 per-result ceiling,
-grows the next request by:
+- **The provider budget (Ben's — a spend decision).** Groq's published
+  Developer plan for this model lists **250,000 tokens per minute** (checked
+  2026-11-24 against Groq's published limits as reported by multiple sources;
+  the free plan's 8,000 TPM is the same table's other column and matches our
+  measured account behaviour). At that budget the envelope stops binding: 75%
+  is 187,500 tokens, and even CAP = 2's complete worst case (11,570 tokens)
+  fits trivially. The plan is pay-per-token ($0.15 per million input tokens,
+  $0.60 per million output, published) — a full worker run costs cents.
+  Upgrading the account is Ben's action alone.
+- **The per-result ceiling (the retrieval piece's — a passed scope).** Lowering
+  it to ≈ 3,300 bytes would let CAP = 1 pass the total test (growth
+  ≈ (3,300 + 3,656) bytes ≈ 1,596 tokens at the measured conversion, inside
+  the 1,612 headroom — with nothing to spare, and sensitive to the conversion).
+  This reopens a passed piece and its examination; it is not this build's to
+  take.
+- **The margin (the examiner's).** She has ruled it binds the total. Ben may
+  direct that the conflict be put to her for a re-ruling; the brief does not
+  ask, and does not proceed as if it were answered.
+- **The fixed base (settled construction).** The needed reduction is 1,979
+  tokens. The offered definitions (≈ 851 tokens at the measured conversion)
+  and the catalogue (≈ 1,265) are the only spans of that size, and both are
+  settled pieces doing settled work. Not available inside this scope.
 
-| Growth | Bytes |
-|---|---|
-| `tool_results` carriage entry (146 measured overhead + 12,000 content) | 12,146 |
-| Delta copies of its chain (614 + 551 + 474 + 969; content stubbed) | 2,608 |
-| Translation-record event share (302 entry + ≈ 450 event envelope) | ≈ 752 |
-| Standing-dispatch entry | ≈ 150 |
-| **Total per call** | **≈ 15,656 bytes ≈ 3,591 tokens** at 4.36 B/token |
-
-A refusal's growth is far smaller (N16 error entry measured at 301 bytes; a
-doorway refusal adds its 1,315-byte chain to the delta). The dispatched-maximum
-case binds, so the cap is set on it — as before, but now against the envelope
-that actually governs.
-
-### (iii) The arithmetic, the margin, and the cap
-
-Fixed base (measured): **4,388 tokens**. Per-call worst-case growth (measured):
-**3,591 tokens**. Envelope (L4): **8,000 tokens**. The examiner's margin: the
-cap's worst case must fit within **75%** of the envelope — 6,000 tokens.
-
-- **CAP = 2:** response-generated growth 2 × 3,591 = **7,182 tokens — 90% of the
-  envelope**, beyond the 75% line on the growth reading; total request
-  4,388 + 7,182 = **11,570 tokens — beyond the entire budget** on the total
-  reading. Fails both.
-- **CAP = 1:** response-generated growth **3,591 tokens — 45% of the envelope**,
-  within the 75% line on the growth reading; total request 4,388 + 3,591 =
-  **7,979 tokens — within the budget**, at its edge.
-
-**CAP = 1.** It is the largest count the measured envelope supports under the
-examiner's margin, on the only reading of the margin a cap can answer for: the
-growth a single response is permitted to generate. The total-request reading is
-shown, not hidden: at the absolute worst case (a result at the full 12,000-byte
-ceiling) a CAP = 1 request stands at ≈ 7,979 of 8,000 tokens. That residual is
-not the cap's to fix — it is a standing property of the per-result ceiling
-itself, which this scope may not change (N44), which the doorway's aggregate
-admission already rations, and which the text path carries identically today.
-The first demonstration's pacing plan (N51) must treat a near-ceiling result as
-a rate-limit risk; a 429 there is a delivery failure under the standing rules,
-never an observation. If the examiner judges the margin must bind the total
-request at the worst case, the honest consequence is recorded here in advance:
-no positive cap satisfies it while the 12,000-byte per-result ceiling stands,
-and the binding constraint then belongs to that ceiling — a different piece's
-settled bound, outside this scope — not to the call cap.
-
-**Scope of the cap.** The derivation is run for the relevant assembly: the
-governed first-worker assembly on the pinned model and route (fixed request
-4,388 tokens; catalogue 5,516 bytes; retrieval results bounded by L1). CAP is a
-named constant of the native translation boundary, and the build note records
-the **formula**, not only the number: CAP is the largest count whose measured
-per-call growth keeps response-generated growth within 75% of the provider
-budget, for the assembly's measured fixed base. An assembly whose fixed request
-is materially larger must re-derive before it is judged native; it does not
-inherit the number. For assemblies whose tools return small results (no
-retrieval), the governed worst case is conservative — the cap holds with room
-they do not need.
-
-Overflow beyond CAP is refused `call_cap_exceeded` exactly as N22 settles:
-provider call ID, name as emitted, provider ordinal recorded; arguments never
-parsed, validated or converted; an N16 error result in the next package; never
-a silent truncation.
+Until one of these moves by its owner's hand, the derivation's honest output
+stands: **CAP is underivable under the current constraints — not zero, not
+one, but blocked, with the block named.** Overflow handling, the translation
+machinery, and every other section of this brief are unaffected and ready;
+they wait on this bound alone.
 
 ## 4. Acceptance — the witnesses (scope §9, mapped)
 
