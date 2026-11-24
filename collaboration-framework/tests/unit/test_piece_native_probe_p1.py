@@ -205,6 +205,24 @@ ERROR_413 = {
         "code": "request_too_large"}}),
     "http_status": 413, "diagnostics": None,
     "metadata": {}}
+ERROR_429_TOOL_REFUSAL_SHAPED = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Tool choice is none, but model "
+                   "called a tool",
+        "type": "invalid_request_error",
+        "code": "tool_use_failed"}}),
+    "http_status": 429, "diagnostics": None,
+    "metadata": {}}
+ERROR_500_TOOL_REFUSAL_SHAPED = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Tool choice is none, but model "
+                   "called a tool",
+        "type": "invalid_request_error",
+        "code": "tool_use_failed"}}),
+    "http_status": 500, "diagnostics": None,
+    "metadata": {}}
 
 
 # ---------------------------------------------------------------
@@ -442,6 +460,23 @@ check("a 401 authentication failure is "
 result = classify(ERROR_413)
 check("a 413 payload-size rejection is "
       "provider_failed, never provider_refused",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+result = classify(ERROR_429_TOOL_REFUSAL_SHAPED)
+check("a 429 carrying a tool_use_failed-shaped body "
+      "is still provider_failed — the rate-limit "
+      "status takes precedence over the refusal "
+      "predicate: the evidenced refusal shape is an "
+      "HTTP 400 response, and a rate-limit response "
+      "is not evidence about a model-generated call",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+result = classify(ERROR_500_TOOL_REFUSAL_SHAPED)
+check("a 5xx carrying a tool_use_failed-shaped body "
+      "is likewise provider_failed — the server-error "
+      "status takes precedence over the predicate",
       result["delivery"] == "provider_failed"
       and result["attempt_visible"] is None)
 

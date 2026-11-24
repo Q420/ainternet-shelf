@@ -63,7 +63,15 @@ INDEX 359):
   failure — an unrelated 400, a 401, a 413, a 429, a
   5xx, a transport failure — is provider_failed:
   none of those is evidence of the provider
-  rejecting a model-generated call.
+  rejecting a model-generated call. The status
+  boundary is explicit (re-examination correction,
+  INDEX 361): a 429 or a 5xx is a delivery failure
+  WITH PRECEDENCE over the predicate — even a body
+  carrying the tool-refusal code under such a status
+  is provider_failed, because the evidenced refusal
+  shape is an HTTP 400 response-level refusal and a
+  rate-limit or server response is not evidence
+  about a model-generated call.
 - P2's policy (delivery_of_attribution) is the
   existing attribution-driven taxonomy of the
   native-offer probe, which P2's proposal retains:
@@ -236,7 +244,11 @@ def is_tool_refusal(error_body):
     code alone: the refusal stands whether or not
     the body also carries a visible attempt;
     attempt visibility is a separate fact the
-    caller records, never part of this test."""
+    caller records, never part of this test. The
+    predicate reads the body alone; the HTTP-status
+    boundary — 429 and 5xx are delivery failures
+    with precedence — is applied by the delivery
+    policy that calls it."""
     if not isinstance(error_body, str):
         return False
     obj = _probe._json_object(error_body)
@@ -260,10 +272,19 @@ def delivery_of_refusal_predicate(capture):
     rejection), a 429 rate limit, a 5xx server
     error, a transport failure standing as a status
     or diagnostics — is provider_failed; an empty
-    capture is indeterminate."""
+    capture is indeterminate. A 429 or a 5xx takes
+    precedence over the refusal predicate: the
+    evidenced refusal shape is an HTTP 400
+    response-level refusal, so a rate-limit or
+    server response carrying the tool-refusal code
+    is still a delivery failure, never a refusal."""
     if isinstance(capture.get("body"), str):
         return "provider_accepted"
-    if is_tool_refusal(capture.get("error_body")):
+    status = _http_status(capture)
+    delivery_failure_status = status == 429 or (
+        status is not None and status >= 500)
+    if not delivery_failure_status and is_tool_refusal(
+            capture.get("error_body")):
         return "provider_refused"
     if isinstance(capture.get("error_body"), str) \
             or _http_status(capture) is not None \
