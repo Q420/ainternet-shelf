@@ -4,6 +4,12 @@ Submitted to the examiner 2026-11-24 (INDEX 395), under her passage of the
 proposal (INDEX 394). This scope governs a BUILD only. The live run keeps its
 own release gate; this scope authorises no provider request.
 
+**Revision note (2026-11-24):** as submitted, S3 added a zero-tolerance
+condition (no unoffered or malformed among the delivered) that the proposal
+never declared — a silent tightening of the decision rule between proposal
+and execution. The examiner caught it (INDEX 396); S3 now carries the
+proposal's threshold exactly. Nothing else changed.
+
 ## S1. Construction identity (her point 1)
 
 The experimental construction is the admitted Groq native-offer construction,
@@ -62,12 +68,17 @@ The decision rules are fixed here, before any result exists:
   are **delivery failures — never observations, and failed trials are never
   replaced**.
 - Every report states the denominator beside the reading: delivered of five.
-- **route_carries_q1**: at least 3 delivered, at least 3 of them
-  `offered_tool_call × provider_accepted`, and zero unoffered or malformed
-  classifications among the delivered.
+- **route_carries_q1**: at least 3 delivered trials return
+  `offered_tool_call × provider_accepted`. That is the proposal's predeclared
+  threshold, carried unchanged (correction, INDEX 396): no further condition
+  attaches. Unoffered or malformed classifications among the delivered do
+  **not** veto this reading — they are preserved, reported, and interpreted
+  as the evidence they are, but the decision rule is the one the proposal
+  declared.
 - **insufficient_evidence**: fewer than 3 delivered — no conclusion either
   way, whatever the delivered trials show.
-- **split_inconclusive**: every other delivered pattern.
+- **split_inconclusive**: every other delivered pattern (at least 3
+  delivered, fewer than 3 of them offered × accepted).
 - No reading stronger than this table may be drawn from the run, at any
   denominator.
 
