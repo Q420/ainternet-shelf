@@ -31,7 +31,8 @@ at creation on every room):
      count under a two-threshold rule (a working ceiling that must be
      exceeded continuously for a declared sustain window, and a higher
      catastrophic ceiling that trips at once), and a cumulative
-     CPU-seconds budget (cumulative, hence spike-immune). Excursions
+     CPU-seconds budget (its exact contract is stated under CPU
+     ACCOUNTING below). Excursions
      over the working ceiling that recover are recorded as pressure
      events in the room state.
   2. A sized tmpfs backing the room tree — a kernel-enforced aggregate
@@ -51,6 +52,10 @@ call is enforced against the run total, and a call that starts with
 the budget already spent is refused before execution. (The long-lived
 supervisor instance is a witnessing harness, not a worker execution;
 it stands outside the lock and the envelope, as RIG-NOTES declares.)
+The per-room lock serialises ONE worker's executions inside its OWN
+room only; it is not a framework-level constraint — each agent holds
+its own room and agents work concurrently (see the scope statement
+in RIG-NOTES).
 
 CPU ACCOUNTING, stated precisely. In flight, the warden's figure is a
 census level: for every observed process it sums the process's own
@@ -64,6 +69,14 @@ larger of the two. What is claimed is exactly that: sampled in-flight
 accounting, reconciled per call against the reaper's collected
 rusage; the suite measures the captured fraction against a
 rusage-derived ground truth (see RIG-NOTES for the measured figures).
+
+THE CPU CONTRACT, in exactly these terms: the CPU limit is a
+cumulative accounting budget, not a hard execution ceiling —
+in-flight enforcement acts on what the census observes; work that
+completes between observations can exceed the budget; the excess
+is charged exactly and further calls are refused. No wording in
+this rig claims a hard CPU ceiling, because this host cannot
+enforce one.
 
 MEMORY, stated precisely. The memory ceiling is a ceiling on the
 SUMMED RSS OF OBSERVED PROCESSES. Tmpfs pages the room writes are
@@ -84,7 +97,16 @@ and no executable room exists. An execution whose pid namespace
 cannot be discovered (and whose warden therefore cannot engage) is
 never run: the in-room reaper's start gate is opened only after
 discovery, so on discovery failure the launch is terminated with the
-command provably never started.
+command provably never started. The run CPU ledger is authority,
+not bookkeeping, and it fails closed too: an unreadable, malformed,
+or missing ledger refuses execution (it never defaults to a fresh
+allowance), and a failed ledger update is preserved in a sibling
+failure record (<base>/<name>.ledger-failure.json) and blocks every
+later execution. And the storage precondition is verified against
+the LIVE mount table at execution time — the tree's actual current
+backing mount, bound to the mount identity and declared size
+recorded at creation — not against the label the state recorded:
+a removed, replaced, or changed mount refuses execution.
 
 Identity: each room gets its OWN uid/gid, allocated per room and
 recorded in its state; the tree is owned by that uid, mode 0700.
@@ -136,6 +158,13 @@ CGROUP_ROOT = Path("/sys/fs/cgroup")
 LIMIT_FILES = ("memory.max", "cpu.max", "pids.max")
 CLK_TCK = os.sysconf("SC_CLK_TCK")
 
+CPU_CONTRACT = (
+    "the CPU limit is a cumulative accounting budget, not a hard "
+    "execution ceiling — in-flight enforcement acts on what the "
+    "census observes; work that completes between observations can "
+    "exceed the budget; the excess is charged exactly and further "
+    "calls are refused")
+
 PERSISTENCE_TERMS = {
     "filesystem_state": ("persists across calls within a run — one tree "
                          "per room, bind-mounted into every execution"),
@@ -158,6 +187,15 @@ class RoomCreationError(Exception):
     is written to the room's state path before the raise; no
     executable room is produced. load_room() raises it too when the
     state it is asked to load is such a record."""
+
+
+class LedgerError(Exception):
+    """The run CPU ledger could not be read or is malformed.
+
+    The ledger is part of the authority boundary: an unreadable,
+    malformed, or missing ledger NEVER defaults to a fresh allowance.
+    Room.run() refuses execution when this is raised (and records the
+    failure in the room's ledger-failure record)."""
 
 
 # --------------------------------------------------------------------------
@@ -361,8 +399,9 @@ class Warden:
     below by more than one census's scan races, not a sum of sampled
     deltas. The per-call total charged to the run ledger is
     reconciled at call end with the in-room reaper's exact collected
-    rusage (see Room.run). The budget is cumulative, hence
-    spike-immune, and trips the moment the run total crosses it.
+    rusage (see Room.run). In flight, the warden trips when the
+    census-observed run total crosses the budget. That is NOT a hard
+    execution ceiling — the contract is: """ + CPU_CONTRACT + """.
 
     The lifecycle this warden records is the OBSERVED lifecycle:
     births and deaths seen at census granularity. It is not a
@@ -568,6 +607,8 @@ class Room:
         self.stock_rw = stock_rw
         self._supervisor = None             # subprocess.Popen
         self.supervisor_info = None         # dict once started
+        self._ledger_poisoned = False       # a ledger failure was
+                                            # recorded by this process
 
     # -- paths -------------------------------------------------------------
     @property
@@ -577,6 +618,13 @@ class Room:
     @property
     def lock_path(self):
         return self.base / f"{self.name}.exec.lock"
+
+    @property
+    def ledger_failure_path(self):
+        """The durable home for ledger failures: a sibling of the
+        state file, so the failure survives the state file itself
+        being unwritable or corrupt."""
+        return self.base / f"{self.name}.ledger-failure.json"
 
     # -- construction ------------------------------------------------------
     def bwrap_cmd(self, argv, wrap_limits=True, reaper=None):
@@ -670,13 +718,159 @@ class Room:
         }
 
     def _ledger_consumed(self):
-        """Run CPU consumed so far, from the state file's ledger."""
+        """Run CPU consumed so far, from the state file's ledger.
+
+        The ledger is authority, not bookkeeping: an unreadable,
+        malformed, or missing state/ledger raises LedgerError. It
+        NEVER defaults to 0.0 — a defaulted ledger would silently
+        turn corruption into a fresh full CPU allowance."""
         try:
             state = json.loads(self.state_path.read_text())
-        except (OSError, ValueError):
-            return 0.0
-        ledger = state.get("cpu_ledger") or {}
-        return float(ledger.get("consumed_seconds", 0.0))
+        except (OSError, ValueError) as exc:
+            raise LedgerError(
+                f"the room state (and with it the run CPU ledger) "
+                f"could not be read: {exc}")
+        if not isinstance(state, dict):
+            raise LedgerError("the room state is not a JSON object")
+        ledger = state.get("cpu_ledger")
+        if not isinstance(ledger, dict):
+            raise LedgerError(
+                "the room state carries no cpu_ledger record")
+        consumed = ledger.get("consumed_seconds")
+        if (not isinstance(consumed, (int, float))
+                or isinstance(consumed, bool)
+                or consumed < 0 or consumed != consumed):
+            raise LedgerError(
+                f"the ledger's consumed_seconds is malformed: "
+                f"{consumed!r}")
+        return float(consumed)
+
+    def _note_ledger_failure(self, operation, detail, argv=None,
+                             result=None):
+        """Preserve a ledger failure explicitly and poison the room.
+
+        The record goes to the ledger-failure file (a sibling of the
+        state file, so it survives the state file itself being the
+        thing that failed). The room is also poisoned in-process, so
+        later executions are refused even if the failure file cannot
+        be written either; a later process re-derives the block from
+        the failure file. Returns the record written (or the record
+        that could not be written)."""
+        record = {"room": self.name, "at": time.time(),
+                  "operation": operation, "detail": detail}
+        if argv is not None:
+            record["argv"] = [str(a) for a in argv]
+        if result is not None:
+            acct = result.get("cpu_accounting") or {}
+            record["unrecorded_charged_seconds"] = acct.get(
+                "charged_seconds")
+            record["unrecorded_rc"] = result.get("rc")
+        self._ledger_poisoned = True
+        try:
+            records = []
+            if self.ledger_failure_path.exists():
+                try:
+                    prior = json.loads(
+                        self.ledger_failure_path.read_text())
+                    if isinstance(prior, list):
+                        records = prior
+                except (OSError, ValueError):
+                    records = []
+            records.append(record)
+            self.ledger_failure_path.write_text(
+                json.dumps(records, indent=2))
+        except OSError:
+            pass    # the in-process poison flag still blocks this
+                    # Room object; see RIG-NOTES for the residual gap
+        return record
+
+    def _ledger_failure(self):
+        """Why the ledger blocks execution, or None if it does not.
+
+        A room is blocked when this process recorded a ledger failure
+        (the poison flag) or when a ledger-failure record exists on
+        disk — including one left by an earlier process."""
+        if self._ledger_poisoned:
+            return ("a CPU ledger failure was recorded for this room "
+                    f"earlier in this process (see "
+                    f"{self.ledger_failure_path}); the ledger is "
+                    "authority and its failure blocks execution until "
+                    "the record is reconciled by the operator")
+        path = self.ledger_failure_path
+        if path.exists():
+            try:
+                records = json.loads(path.read_text())
+                first = records[0] if isinstance(records, list) \
+                    and records else {}
+                return (f"a CPU ledger failure is on record at "
+                        f"{path} ({first.get('operation')}: "
+                        f"{first.get('detail')}); execution is "
+                        "refused until the record is reconciled by "
+                        "the operator")
+            except (OSError, ValueError):
+                return (f"a CPU ledger failure record exists at "
+                        f"{path} but is itself unreadable; execution "
+                        "is refused")
+        return None
+
+    def _write_state(self, text):
+        """The state-write seam (the suite forces a failure here to
+        prove a failed ledger update is preserved and blocks the
+        next execution)."""
+        self.state_path.write_text(text)
+
+    def _verify_storage_live(self):
+        """Verify the tree's ACTUAL current backing mount.
+
+        The recorded "tmpfs-sized" label establishes what was mounted
+        at creation; this establishes what backs the tree NOW, from
+        the host mount table: a mount must exist at the tree path, be
+        a tmpfs, carry the mount identity (mount id and device)
+        recorded at creation, and have the declared total size. A
+        removed, replaced, or changed mount fails. Returns
+        (ok, detail)."""
+        st = self.storage or {}
+        if st.get("mechanism") != "tmpfs-sized":
+            return False, (f"the recorded storage mechanism is "
+                           f"{st.get('mechanism')!r}, not "
+                           "'tmpfs-sized'")
+        entry = _mount_entry_for(self.tree)
+        if entry is None:
+            return False, (f"no mount exists at the tree path "
+                           f"{self.tree} in the live mount table — "
+                           "the sized tmpfs backing is gone")
+        if entry["fs_type"] != "tmpfs":
+            return False, (f"the mount at the tree path is "
+                           f"{entry['fs_type']}, not tmpfs")
+        exp_id = st.get("mount_id")
+        exp_dev = st.get("mount_major_minor")
+        if exp_id is None or exp_dev is None:
+            return False, ("the room's storage record carries no "
+                           "mount identity to verify the live mount "
+                           "against")
+        if (entry["mount_id"] != exp_id
+                or entry["major_minor"] != exp_dev):
+            return False, (
+                f"the mount at the tree path is not the mount "
+                f"recorded at creation (live: mount id "
+                f"{entry['mount_id']}, device "
+                f"{entry['major_minor']}; recorded: mount id "
+                f"{exp_id}, device {exp_dev}) — it was removed or "
+                "replaced")
+        try:
+            vfs = os.statvfs(self.tree)
+        except OSError as exc:
+            return False, f"statvfs on the tree failed: {exc}"
+        total = vfs.f_blocks * vfs.f_frsize
+        declared = int(st.get("size_bytes") or 0)
+        if abs(total - declared) > 8192:
+            return False, (f"the backing filesystem's total size is "
+                           f"{total} bytes, not the declared "
+                           f"{declared}")
+        return True, (f"live mount verified: tmpfs mount id "
+                      f"{entry['mount_id']}, device "
+                      f"{entry['major_minor']}, total size {total} "
+                      "bytes")
 
     @staticmethod
     def _kill_launch_tree(proc):
@@ -727,7 +921,12 @@ class Room:
 
         The call is serialised against every other execution of this
         room by a per-room lock held for the whole call — the envelope
-        boundary is the worker run (see the module docstring). The
+        boundary is the worker run (see the module docstring). Before
+        anything launches, two preconditions fail closed: a recorded
+        CPU-ledger failure blocks the call (the ledger is authority
+        and never defaults), and the storage precondition is verified
+        against the LIVE mount table (the tree's actual backing
+        mount and declared size, not the recorded label). The
         command runs under the in-room reaper and starts only once
         the room's namespace has been discovered and the warden
         engaged; if discovery fails the launch is terminated with the
@@ -744,15 +943,28 @@ class Room:
         try:
             fcntl.flock(lock_fh, fcntl.LOCK_EX)
             try:
-                # fail closed: no sized storage backing, no execution
-                if self.storage.get("mechanism") != "tmpfs-sized":
+                # fail closed: a ledger failure blocks execution.
+                # The refusal is preserved in the failure record
+                # itself; it is NOT routed through _record_execution
+                # (the state is exactly what cannot be trusted here).
+                blocked = self._ledger_failure()
+                if blocked is not None:
+                    self._note_ledger_failure(
+                        "execution-refused-ledger-blocked", blocked,
+                        argv=argv)
+                    return self._refused_result(
+                        argv, "cpu-ledger", blocked)
+                # fail closed: the storage precondition is verified
+                # against the LIVE mount table, not the recorded
+                # label — a removed or replaced backing refuses.
+                ok, detail = self._verify_storage_live()
+                if not ok:
                     result = self._refused_result(
                         argv, "storage-backing",
-                        "the room's tree is not backed by its sized "
-                        "tmpfs (mechanism: "
-                        f"{self.storage.get('mechanism')}); execution "
-                        "without the aggregate storage ceiling is "
-                        "refused")
+                        "the room's storage precondition failed "
+                        f"against the live mount table: {detail}; "
+                        "execution without the verified aggregate "
+                        "storage ceiling is refused")
                     self._record_execution(argv, result, time.time())
                     return result
                 return self._run_locked(argv, timeout, budget)
@@ -764,7 +976,20 @@ class Room:
     def _run_locked(self, argv, timeout, budget):
         """One execution, with the room's execution lock held."""
         t0 = time.time()
-        consumed_before = self._ledger_consumed()
+        try:
+            consumed_before = self._ledger_consumed()
+        except LedgerError as exc:
+            # fail closed: the ledger never defaults to a fresh
+            # allowance. The failure is preserved in the failure
+            # record; the refusal is not recorded into the state
+            # (the state is what could not be read).
+            self._note_ledger_failure("ledger-read", str(exc),
+                                      argv=argv)
+            return self._refused_result(
+                argv, "cpu-ledger",
+                f"{exc}; execution is refused — the run CPU ledger "
+                "is authority and never defaults to a fresh "
+                "allowance")
 
         # fail closed on the run ledger: budget already spent
         if consumed_before >= budget:
@@ -940,11 +1165,26 @@ class Room:
     def _record_execution(self, argv, result, t0):
         """Append this execution's record to the room's state file and
         charge the run's CPU ledger by the call's reconciled CPU.
-        Called with the execution lock held."""
+        Called with the execution lock held.
+
+        The ledger is authority, so a failure here is never silent:
+        if the state cannot be read, updated, or written, the
+        unrecorded charge is preserved in the room's ledger-failure
+        record and the room is poisoned — every later execution is
+        refused (see _ledger_failure). Returns True iff the record
+        and charge are durably in the state."""
         try:
             state = json.loads(self.state_path.read_text())
-        except (OSError, ValueError):
-            return
+            if not isinstance(state, dict):
+                raise ValueError("room state is not a JSON object")
+        except (OSError, ValueError) as exc:
+            self._note_ledger_failure(
+                "ledger-update-read",
+                "an execution completed but its record and CPU "
+                f"charge could not be recorded: the room state "
+                f"could not be read ({exc})",
+                argv=argv, result=result)
+            return False
         acct = result.get("cpu_accounting") or {}
         state.setdefault("executions", []).append({
             "argv": [str(a) for a in argv],
@@ -971,25 +1211,47 @@ class Room:
         })
         state.setdefault("pressure_events", []).extend(
             result["pressure_events"])
-        ledger = state.setdefault("cpu_ledger", {
-            "boundary": "per worker run",
-            "budget_seconds": float(
-                self.limits["aggregate_cpu_seconds"]),
-            "consumed_seconds": 0.0, "calls": []})
-        charged = float(acct.get("charged_seconds", 0.0))
-        ledger["boundary"] = "per worker run"
-        ledger["budget_seconds"] = float(
-            self.limits["aggregate_cpu_seconds"])
-        ledger["consumed_seconds"] = round(
-            float(ledger.get("consumed_seconds", 0.0)) + charged, 6)
-        ledger.setdefault("calls", []).append({
-            "argv": [str(a) for a in argv],
-            "charged_seconds": charged,
-            "census_seconds": acct.get("census_seconds"),
-            "reaper_seconds": acct.get("reaper_seconds"),
-            "refused": result.get("refused", False),
-            "refusal_kind": result.get("refusal_kind")})
-        self.state_path.write_text(json.dumps(state, indent=2))
+        try:
+            ledger = state.setdefault("cpu_ledger", {
+                "boundary": "per worker run",
+                "contract": CPU_CONTRACT,
+                "budget_seconds": float(
+                    self.limits["aggregate_cpu_seconds"]),
+                "consumed_seconds": 0.0, "calls": []})
+            charged = float(acct.get("charged_seconds", 0.0))
+            ledger["boundary"] = "per worker run"
+            ledger["contract"] = CPU_CONTRACT
+            ledger["budget_seconds"] = float(
+                self.limits["aggregate_cpu_seconds"])
+            ledger["consumed_seconds"] = round(
+                float(ledger.get("consumed_seconds", 0.0)) + charged, 6)
+            ledger.setdefault("calls", []).append({
+                "argv": [str(a) for a in argv],
+                "charged_seconds": charged,
+                "census_seconds": acct.get("census_seconds"),
+                "reaper_seconds": acct.get("reaper_seconds"),
+                "refused": result.get("refused", False),
+                "refusal_kind": result.get("refusal_kind")})
+            text = json.dumps(state, indent=2)
+        except (ValueError, TypeError, KeyError) as exc:
+            self._note_ledger_failure(
+                "ledger-update-build",
+                "an execution completed but its record and CPU "
+                f"charge could not be recorded: the ledger update "
+                f"failed ({exc})",
+                argv=argv, result=result)
+            return False
+        try:
+            self._write_state(text)
+        except OSError as exc:
+            self._note_ledger_failure(
+                "ledger-update-write",
+                "an execution completed but its record and CPU "
+                f"charge could not be recorded: writing the room "
+                f"state failed ({exc})",
+                argv=argv, result=result)
+            return False
+        return True
 
     def start_supervisor(self, inner_argv=("/bin/sleep", "infinity"),
                          wait_s=6.0):
@@ -1081,6 +1343,36 @@ class Room:
 
 # --------------------------------------------------------------------------
 
+def _mount_entry_for(path):
+    """The host mount-table entry mounted exactly at path, from
+    /proc/self/mountinfo: {mount_id, major_minor, fs_type} of the
+    LAST entry for that point (the top of any stack), or None if
+    nothing is mounted there. This is the live backing identity the
+    storage precondition is bound to."""
+    target = str(path)
+    found = None
+    try:
+        lines = Path("/proc/self/mountinfo").read_text().splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if " - " not in line:
+            continue
+        head, tail = line.split(" - ", 1)
+        f = head.split()
+        t = tail.split()
+        if len(f) < 6 or not t:
+            continue
+        if f[4].replace("\\040", " ") == target:
+            try:
+                found = {"mount_id": int(f[0]),
+                         "major_minor": f[2],
+                         "fs_type": t[0]}
+            except ValueError:
+                continue
+    return found
+
+
 def _umount(path):
     """Unmount the tmpfs at path (with a lazy fallback). True if clear."""
     if not os.path.ismount(path):
@@ -1160,9 +1452,21 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
          "tmpfs", str(tree)],
         capture_output=True, text=True)
     if mount.returncode == 0 and os.path.ismount(tree):
+        live = _mount_entry_for(tree)
         storage = {"mechanism": "tmpfs-sized",
                    "size_bytes": limits["storage_bytes"],
                    "mount_point": str(tree),
+                   "mount_id": live["mount_id"] if live else None,
+                   "mount_major_minor": (live["major_minor"]
+                                         if live else None),
+                   "mount_fs_type": (live["fs_type"]
+                                     if live else None),
+                   "identity_note": (
+                       "the mount identity (mount id + device) and "
+                       "size recorded here are re-verified against "
+                       "the LIVE mount table at every execution "
+                       "(Room._verify_storage_live); the recorded "
+                       "label alone never authorises a run"),
                    "enforcement": ("kernel: writes past the tmpfs size "
                                    "fail with ENOSPC; the ceiling is "
                                    "aggregate over the whole tree"),
@@ -1270,10 +1574,16 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
                              "serialised by a per-room lock, and the "
                              "budget is cumulative across all calls "
                              "in the run (run ledger in this state)"),
-                "rule": ("cumulative across the run's calls; trips "
-                         "the moment the run total crosses the "
-                         "budget; a call that starts with the budget "
-                         "spent is refused before execution"),
+                "contract": CPU_CONTRACT,
+                "rule": ("cumulative accounting across the run's "
+                         "calls; in flight the warden trips when "
+                         "the census-observed run total crosses "
+                         "the budget; a call that starts with the "
+                         "budget spent is refused before execution; "
+                         "work that completes between observations "
+                         "can exceed the budget and is charged "
+                         "exactly at call end, with further calls "
+                         "refused"),
                 "accounting": ("in flight: the warden's census level "
                                "(each observed process's own + "
                                "reaped-children CPU from /proc stat). "
@@ -1331,6 +1641,7 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
                  "across the run's calls (cpu_ledger)"),
              "cpu_ledger": {
                  "boundary": "per worker run",
+                 "contract": CPU_CONTRACT,
                  "budget_seconds": float(limits["aggregate_cpu_seconds"]),
                  "consumed_seconds": 0.0, "calls": []},
              "executions": [], "pressure_events": []}
@@ -1344,7 +1655,7 @@ def load_room(base, name):
         raise RoomCreationError(
             f"room {name!r} is a failed-creation record, not an "
             f"executable room: {state.get('reason')}")
-    return Room(base, name, state["tree"], state["env_manifest"],
+    room = Room(base, name, state["tree"], state["env_manifest"],
                 state["limits"], state["envelope"],
                 state["envelope"].get("cgroup", {}).get("cgroup"),
                 state["stock_manifest"],
@@ -1352,6 +1663,18 @@ def load_room(base, name):
                 state.get("storage", {}), state.get("mount_recipe", {}),
                 extra_binds=[tuple(b) for b in state.get("extra_binds", [])],
                 stock_rw=state.get("stock_rw", False))
+    # loading gates executability, so it verifies the storage
+    # precondition against the LIVE mount table too — a room whose
+    # backing mount was removed or replaced since creation does not
+    # load as an executable room. (Room.run re-verifies at execution
+    # time regardless.)
+    ok, detail = room._verify_storage_live()
+    if not ok:
+        raise RoomCreationError(
+            f"room {name!r} is not executable: its storage "
+            f"precondition fails against the live mount table: "
+            f"{detail}")
+    return room
 
 
 # --------------------------------------------------------------------------

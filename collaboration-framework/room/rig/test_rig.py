@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""test_rig.py — Track B rig suite, correction round 2: build rooms,
+"""test_rig.py — Track B rig suite, correction round 3: build rooms,
 witness them from the host side, run the in-room pre-flight, and assert
 the walls — including the aggregate envelope Vane's examination
 required (INDEX 438): a host-side warden over the pid namespace with a
@@ -17,6 +17,17 @@ state ledger; CPU accounting reconciled with an in-room reaper's exact
 rusage and measured against short-lived CPU burners; and both
 fail-open paths (storage mount failure, namespace discovery failure)
 closed and negative-tested.
+
+Correction round 3 (Vane's three integrity findings, INDEX 453) adds:
+the CPU ledger fails closed (a corrupted ledger refuses execution; a
+failed ledger update is preserved in a sibling failure record and
+blocks the next execution); the CPU contract stated exactly — a
+cumulative accounting budget, NOT a hard execution ceiling — with an
+adversarial test of a short-lived call that crosses the remaining
+budget between census polls, completes, is charged exactly, and gets
+the next call refused; and the storage precondition verified against
+the LIVE mount table (mount identity + declared size), with a
+removed-backing negative test.
 
 Checks (each prints PASS/FAIL):
   control        pre-flight detects reaches when run UNCONFINED
@@ -76,6 +87,22 @@ Checks (each prints PASS/FAIL):
   ns-fail        NEGATIVE: namespace discovery failure fails the
                  execution closed — refused result, the gated command
                  provably never ran (no marker), nothing survives
+  ledger-read    NEGATIVE: a corrupted state/ledger refuses
+                 execution (never a fresh allowance); the failure is
+                 preserved in the ledger-failure record
+  ledger-write   NEGATIVE: a failed ledger update after a real
+                 execution is preserved (with its unrecorded charge)
+                 and the next execution is refused
+  cpu-overshoot  ADVERSARIAL: a short-lived call crosses the
+                 remaining run budget and finishes between census
+                 polls — the work completes (not undone), the
+                 overspend is charged exactly at call end (reaper),
+                 and the next call is refused. The CPU contract is
+                 an accounting budget, not a hard ceiling
+  mount-replaced NEGATIVE: the tree's tmpfs unmounted between
+                 creation and execution — the storage precondition
+                 verifies the LIVE mount, refuses, and load_room
+                 raises; the command never runs
   storage        the tree's sized tmpfs is a hard aggregate ceiling:
                  a fill attempt stops at it with ENOSPC
   output         stdout capture is bounded: 5 MB spew is counted in
@@ -253,6 +280,27 @@ child_ru = resource.getrusage(resource.RUSAGE_CHILDREN)
 true_total = (self_ru.ru_utime + self_ru.ru_stime
               + child_ru.ru_utime + child_ru.ru_stime)
 print(f"TRUE {true_total:.3f}", flush=True)
+"""
+BURST = b"""
+import os, resource, time
+N, PER = 12, 0.05
+kids = []
+for _ in range(N):
+    c = os.fork()
+    if c == 0:
+        t0 = time.process_time()
+        while time.process_time() - t0 < PER:
+            pass
+        os._exit(0)
+    kids.append(c)
+for c in kids:
+    os.waitpid(c, 0)
+self_ru = resource.getrusage(resource.RUSAGE_SELF)
+child_ru = resource.getrusage(resource.RUSAGE_CHILDREN)
+true_total = (self_ru.ru_utime + self_ru.ru_stime
+              + child_ru.ru_utime + child_ru.ru_stime)
+print(f"TRUE {true_total:.3f}", flush=True)
+print("burst-done", flush=True)
 """
 SPEW = b"""
 import os, sys
@@ -760,6 +808,110 @@ def main():
               f"charged={acct.get('charged_seconds')}")
         burners.destroy(remove_tree=True)
 
+        # --- ADVERSARIAL: a short-lived call crosses the remaining run
+        #     budget between census polls — the accounting contract ---
+        over = mkroom(base, "overshoot",
+                      stock={"helpers/burn.py": BURN_FIXED,
+                             "helpers/burst.py": BURST},
+                      limits={"aggregate_cpu_seconds": 0.9,
+                              "warden_poll_s": 2.0})
+        ov1 = over.run(["/usr/bin/python3",
+                        "/room/work/helpers/burn.py", "0.5"],
+                       timeout=30)
+        ov2 = over.run(["/usr/bin/python3",
+                        "/room/work/helpers/burst.py"], timeout=30)
+        ov3 = over.run(["/bin/sh", "-c",
+                        "echo ran > /room/work/overshoot-marker.txt"],
+                       timeout=30)
+        o_ledger = json.loads(over.state_path.read_text())["cpu_ledger"]
+        ov2_acct = ov2["cpu_accounting"] or {}
+        ov2_true_lines = [l for l in ov2["stdout"].splitlines()
+                          if l.startswith("TRUE")]
+        ov2_true = (float(ov2_true_lines[0].split()[1])
+                    if ov2_true_lines else 0.0)
+        check("cpu-overshoot: a short-lived call crosses the "
+              "remaining run budget and finishes between census "
+              "polls — the work completes (not undone), the "
+              "overspend is charged exactly at call end, and the "
+              "next call is refused (accounting budget, not a hard "
+              "ceiling)",
+              ov1["rc"] == 0 and not ov1["refused"]
+              and ov2["rc"] == 0 and not ov2["refused"]
+              and "burst-done" in ov2["stdout"]
+              and ov2["envelope_termination"] is None
+              and ov2_true >= 0.45
+              and (ov2_acct.get("reaper_seconds") or 0)
+                  >= 0.9 * ov2_true
+              and o_ledger["consumed_seconds"] > 0.9
+              and len(o_ledger["calls"]) == 3
+              and ov3["refused"]
+              and ov3["refusal_kind"] == "run-cpu-budget-spent"
+              and not (over.tree / "work"
+                       / "overshoot-marker.txt").exists(),
+              f"budget=0.9 call1_charged="
+              f"{ov1['aggregate_cpu_seconds']} burst_true="
+              f"{ov2_true:.3f}s burst_reaper="
+              f"{ov2_acct.get('reaper_seconds')} burst_census="
+              f"{ov2_acct.get('census_seconds')} ledger_total="
+              f"{o_ledger['consumed_seconds']}s")
+        over.destroy(remove_tree=True)
+
+        # --- NEGATIVE: an unreadable ledger refuses execution ----------
+        ledro = mkroom(base, "ledro")
+        ledro.state_path.write_text("{ this is not json")
+        lr = ledro.run(["/bin/sh", "-c",
+                        "echo ran > /room/work/ledger-marker.txt"],
+                       timeout=30)
+        lf_path = base / "ledro.ledger-failure.json"
+        lf_recs = (json.loads(lf_path.read_text())
+                   if lf_path.exists() else [])
+        check("ledger-read-fail: a corrupted state/ledger refuses "
+              "execution — never a fresh allowance — and the failure "
+              "is preserved in the ledger-failure record",
+              lr["refused"]
+              and lr["failed_precondition"] == "cpu-ledger"
+              and not (ledro.tree / "work"
+                       / "ledger-marker.txt").exists()
+              and bool(lf_recs)
+              and lf_recs[0].get("operation") == "ledger-read",
+              f"ops={[r.get('operation') for r in lf_recs]}")
+        ledro.destroy(remove_tree=True)
+
+        # --- NEGATIVE: a failed ledger update is preserved and
+        #     blocks the next execution --------------------------------
+        ledwr = mkroom(base, "ledwr",
+                       stock={"helpers/burn.py": BURN_FIXED})
+
+        def _write_boom(text):
+            raise OSError("simulated state write failure")
+
+        ledwr._write_state = _write_boom
+        lw1 = ledwr.run(["/usr/bin/python3",
+                         "/room/work/helpers/burn.py", "0.3"],
+                        timeout=30)
+        wf_path = base / "ledwr.ledger-failure.json"
+        wf_recs = (json.loads(wf_path.read_text())
+                   if wf_path.exists() else [])
+        lw2 = ledwr.run(["/bin/sh", "-c",
+                         "echo ran > /room/work/lw2-marker.txt"],
+                        timeout=30)
+        check("ledger-write-fail: an execution whose ledger update "
+              "fails is preserved in the failure record (with its "
+              "unrecorded charge), and the next execution is refused",
+              lw1["rc"] == 0 and not lw1["refused"]
+              and any(r.get("operation") == "ledger-update-write"
+                      for r in wf_recs)
+              and any((r.get("unrecorded_charged_seconds") or 0) > 0.1
+                      for r in wf_recs)
+              and lw2["refused"]
+              and lw2["failed_precondition"] == "cpu-ledger"
+              and not (ledwr.tree / "work"
+                       / "lw2-marker.txt").exists(),
+              f"ops={[r.get('operation') for r in wf_recs]} "
+              f"unrecorded="
+              f"{[r.get('unrecorded_charged_seconds') for r in wf_recs]}")
+        ledwr.destroy(remove_tree=True)
+
         # --- NEGATIVE: storage mount failure fails creation closed ------------
         raised = None
         try:
@@ -809,6 +961,36 @@ def main():
               and not room_mod.pid_alive(nf["launcher_pid"]),
               f"reason={nf['refusal_reason'][:80]}...")
         nsfail.destroy(remove_tree=True)
+
+        # --- NEGATIVE: the storage precondition verifies the LIVE
+        #     mount — the tree's backing removed after creation -------
+        swap = mkroom(base, "mountswap")
+        sw_pre = swap.run(["/bin/true"], timeout=30)
+        um = subprocess.run(["umount", str(swap.tree)],
+                            capture_output=True, text=True)
+        sw = swap.run(["/bin/sh", "-c",
+                       "echo ran > /room/work/swap-marker.txt"],
+                      timeout=30)
+        sw_load_raised = False
+        try:
+            room_mod.load_room(base, "mountswap")
+        except room_mod.RoomCreationError:
+            sw_load_raised = True
+        check("mount-replaced: with the tree's tmpfs unmounted after "
+              "creation, execution refuses against the LIVE mount "
+              "table (not the recorded label), load_room raises, "
+              "and the command never runs",
+              sw_pre["rc"] == 0
+              and um.returncode == 0
+              and not os.path.ismount(swap.tree)
+              and sw["refused"]
+              and sw["failed_precondition"] == "storage-backing"
+              and "live mount" in sw["refusal_reason"]
+              and not (swap.tree / "work"
+                       / "swap-marker.txt").exists()
+              and sw_load_raised,
+              f"reason={sw['refusal_reason'][:110]}...")
+        swap.destroy(remove_tree=True)
 
         # --- storage: sized tmpfs is a hard aggregate ceiling ----------------
         stor = mkroom(base, "storage", stock={"helpers/writer.py": WRITER},

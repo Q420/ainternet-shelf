@@ -1,18 +1,22 @@
-# Track B test rig — notes (2026-11-24, correction round 2)
+# Track B test rig — notes (2026-11-24, correction round 3)
 
 Offline only: nothing here talks to a provider or a model. Built under
 `ENVIRONMENT-DESIGN-REV2-2026-11-24.md` and Track B of
 `ROOM-TEST-PROGRAMME-2026-11-24.md`. Correction round 1 answered
 Vane's build examination (INDEX 438): an aggregate envelope, a mount
 witness that proves properties, identity read from the kernel,
-bounded output, exact persistence terms. **This round (round 2)
-answers her correction examination (INDEX 451), which returned the
-round-1 correction on five points**: the envelope boundary was
-undefined (per-call wardens, no serialisation, CPU resetting per
-call); CPU accounting missed short-lived processes; a failed storage
-mount left an executable room on the host filesystem; a failed
-namespace discovery left an execution running unwardened; and two
-claims (lifecycle, memory) were phrased broader than the mechanism.
+bounded output, exact persistence terms. Round 2 answered her
+correction examination (INDEX 451): the envelope boundary defined as
+the worker run, CPU accounting reconciled with an in-room reaper,
+both fail-open paths closed. **This round (round 3) answers her
+second correction examination (INDEX 453), which returned round 2 on
+three integrity findings**: the CPU ledger had a fail-open read path
+(and a silently-dropping write path); end-of-call reaper accounting
+was enforcement language for what is only accounting, with the CPU
+contract not stated exactly; and the storage precondition trusted
+the recorded label rather than the live mount. A fourth item is
+documentation only, at Ben's direction: an explicit scope statement
+for the per-room serialisation (see "Scope of the serialisation").
 Each point is answered below, in place. Ben's framing governs
 alongside: **the room is the temp's own office, not a cell** — walls
 at the property line (network, credentials, host reach, aggregate
@@ -26,7 +30,7 @@ limits), maximum freedom inside them.
 | `reaper.py` | The in-room execution parent (a named stock item, copied to `/rig/reaper.py`). A child subreaper that wait4()s every process of the execution and reports the exact collected rusage to the host over an inherited fd the command never sees; it also holds a mechanical start gate — the command is not forked until the host side opens the gate, after namespace discovery. |
 | `host_witness.py` | Independent host-side witness. Given the launcher PID, reads only `/proc`: the COMPLETE mount table (every mountinfo field), network interfaces/routes, launched environment, cgroup placement, namespaces, process tree, and the room program's **actual kernel credentials** from `/proc/<pid>/status`. Also carries `assess_mounts()`, which derives the allowed mount set from the declared recipe and flags anything it cannot derive. Never executes anything in the room, never reads room-produced files. |
 | `preflight.py` | In-room pre-flight (a named stock item, copied to `/rig/preflight.py`). Unchanged from round 1 (accepted): sentinel reaches plus enumeration, JSON out; every reach must fail. |
-| `test_rig.py` | The suite: 30 checks, including the round-1 control run, two deviant-room negative tests for the mount assessment, the warden's enforcement demonstrations, and round 2's boundary, accounting, and fail-closed tests. |
+| `test_rig.py` | The suite: 34 checks, including the round-1 control run, two deviant-room negative tests for the mount assessment, the warden's enforcement demonstrations, round 2's boundary, accounting, and fail-closed tests, and round 3's ledger fail-closed negatives, the budget-crossing overshoot test, and the replaced-mount negative. |
 | `RIG-NOTES.md` | This file. |
 
 ## The exact construction
@@ -83,8 +87,10 @@ on three other layers:
      capped fast, without waiting out the window.
    - **CPU budget** (default: 600 cumulative CPU-seconds): a total-
      work budget over the whole run (next section), **not** a CPU
-     rate limit; cumulative, so spike-immune; trips the moment the
-     run total crosses it.
+     rate limit and **not a hard execution ceiling** — the exact
+     contract is stated under "CPU accounting (round 2, point 2;
+     round 3, point 2)" below. In flight, the warden trips when the
+     census-observed run total crosses it.
    - **Pressure events:** any excursion over the working ceiling —
      including ones that recover — is recorded in the room state with
      its peak and duration. An undersized office shows up as evidence,
@@ -133,7 +139,59 @@ witnessing harness held open across calls, not a worker execution,
 and it remains witnessed-but-not-policed (see "What could NOT be
 established").
 
-### CPU accounting (round 2, point 2)
+### The ledger is authority: it fails closed (round 3, point 1)
+
+Round 2 put the run's CPU accounting in the state file's ledger —
+and left two fail-open paths in it: `_ledger_consumed()` defaulted
+to 0.0 when the state could not be read or parsed (corruption
+became a fresh full allowance), and `_record_execution()` silently
+returned when it could not read the state (an execution could
+complete with its charge never recorded). Round 3 closes both:
+
+- **Read path.** `_ledger_consumed()` raises `LedgerError` on an
+  unreadable, malformed, or missing state/ledger — a missing
+  `cpu_ledger`, a non-object state, or a malformed
+  `consumed_seconds` all refuse execution with the failed
+  precondition `cpu-ledger`. It never defaults.
+- **Write path.** A failed ledger update — the state unreadable,
+  the update unbuildable, or the write itself failing — is
+  preserved explicitly in a **ledger-failure record**:
+  `<base>/<name>.ledger-failure.json`, a sibling of the state file
+  chosen so the record survives the state file itself being the
+  thing that failed. Each record names the operation, the failure,
+  and (for a completed execution) the charge that could not be
+  recorded. The room is also poisoned in-process.
+- **Blocking.** `Room.run()` refuses every execution while a
+  ledger failure stands — the in-process poison flag, or a failure
+  record on disk (including one left by an earlier process). The
+  refusal itself is appended to the failure record, not routed
+  through the untrusted state. Clearing the block is an operator
+  act: reconcile the record, then remove it.
+
+Negative tests prove both paths: a state file corrupted after
+creation refuses the next execution (its marker is never written)
+with a `ledger-read` failure on record; and with the state-write
+seam forced to fail, a real execution completes, its unrecorded
+charge (0.35 s in the suite runs) is preserved in the failure
+record as a `ledger-update-write` entry, and the next execution is
+refused.
+
+### Scope of the serialisation (round 3, point 4 — Ben's direction)
+
+Stated explicitly, so the mechanism is never read as more than it
+is: **the per-room lock serialises ONE worker's executions inside
+its OWN room only. It is not a framework-level constraint.** Each
+agent holds its own room, and agents work concurrently — nothing
+in this rig serialises one room against another. This rig is the
+single-worker room case: one worker, one room, its calls ordered
+so the run's envelope is well-defined. A shared multi-occupancy
+workspace — a crew of agents working one tree together, as the
+collaboration design contemplates — is a named **open design
+question**. This rig does not settle it, and the per-room lock
+must not be read as settling it (in either direction: neither as
+the framework's concurrency model, nor as evidence against one).
+
+### CPU accounting (round 2, point 2; round 3, point 2)
 
 Round 1's warden accumulated CPU from per-process sampled deltas: a
 process that started, burned, and exited between two censuses never
@@ -182,7 +240,30 @@ accounting by the census identity, reconciled per call against the
 reaper's exact collected rusage* — with these measured fractions on
 this adversarial shape, not a blanket "complete".
 
-### Fail-closed preconditions (round 2, points 3 and 4)
+**The CPU contract, stated exactly (round 3, point 2).** The
+reaper's end-of-call recovery is accounting accuracy, not
+enforcement at the instant of crossing: if a short-lived call
+crosses the remaining budget and finishes between census polls,
+the overspend is discovered only when the call ends — the
+completed work cannot be undone. So, in exactly these terms (the
+same sentence is carried in the module docstring, the state's
+envelope record, and the ledger itself): **the CPU limit is a
+cumulative accounting budget, not a hard execution ceiling —
+in-flight enforcement acts on what the census observes; work that
+completes between observations can exceed the budget; the excess
+is charged exactly and further calls are refused.** No wording in
+this rig claims a hard CPU ceiling, because this host cannot
+enforce one. The suite's adversarial test demonstrates the case
+itself: with a 0.9 s budget and a deliberately slow 2 s census, a
+first call burns ~0.53 s and exits; a second call — twelve parallel
+burners, 0.64 s of CPU in well under one census interval — runs to
+completion (`burst-done`, no envelope termination; the census saw
+0.01 s of it), the reaper charges its exact 0.64 s at call end for
+a run total of ~1.17–1.18 s (**~0.27–0.28 s over the budget,
+charged, not undone**), and a third call is refused before
+execution.
+
+### Fail-closed preconditions (round 2, points 3 and 4; round 3, points 1 and 3)
 
 - **Storage.** If the sized tmpfs mount fails at creation, creation
   itself fails: a failed-precondition record
@@ -190,12 +271,28 @@ this adversarial shape, not a blanket "complete".
   "storage-tmpfs-mount"`, with the mount error) is written to the
   room's state path, the just-created tree directory is removed, and
   `create_room()` raises `RoomCreationError`. `load_room()` raises
-  on such a record, and `Room.run()` independently refuses any room
-  whose recorded storage is not `tmpfs-sized`. There is no code path
-  where a room executes on the host filesystem without its storage
-  ceiling. Negative test: creation with an impossible size parameter
-  (the mount genuinely fails at the real seam) raises, records, and
-  leaves neither a loadable room nor a tree.
+  on such a record. There is no code path where a room executes on
+  the host filesystem without its storage ceiling. Negative test:
+  creation with an impossible size parameter (the mount genuinely
+  fails at the real seam) raises, records, and leaves neither a
+  loadable room nor a tree.
+- **Storage, verified live (round 3, point 3).** Round 2's
+  execution-time check trusted the recorded label
+  (`mechanism == "tmpfs-sized"`) — it established what was mounted
+  at creation, not what backs the tree when execution begins.
+  Creation now also records the mount's identity (mount id and
+  device from the host mount table, beside the declared size), and
+  the precondition is verified against the **live** mount table:
+  `Room.run()` — and `load_room()`, where it gates executability —
+  require a mount to exist at the tree path, of type tmpfs, with
+  the recorded mount id and device, and with the declared total
+  size (statvfs). A removed, replaced, or changed mount fails
+  closed with the failed precondition `storage-backing`, the live
+  discrepancy named. Negative test: a room is created, executes
+  once cleanly, its tmpfs is then unmounted (leaving the plain
+  directory), and the next execution refuses against the live
+  table — the command's marker is never written — and
+  `load_room()` raises.
 - **Namespace discovery.** An execution's command starts only when
   the host side opens the reaper's **start gate** — a file in the
   room tree whose name carries a per-call random token — and the
@@ -247,14 +344,21 @@ suite runs:
 - **Legitimate spike** (256 MiB against the 192 MiB working
   ceiling): peaked at ~280–293 MiB for 0.36–0.56 s, released,
   exited 0; pressure event recorded with peak and duration.
-- **CPU budget** (3.0 s budget, three spinners): killed at a
-  measured 3.03–3.13 cumulative CPU-seconds. **Run-cumulative**
+- **CPU budget** (3.0 s budget, three long-lived spinners the
+  census observes in flight): killed at a measured 3.03–3.13
+  cumulative CPU-seconds. **Run-cumulative**
   (2.0 s budget, two ~1.23 s calls): the second call killed at a
   measured run total of ~2.04 s; a third call refused unspent.
 - **Short-lived burners** (40 × 25 ms CPU, each inside one census
   interval): reaper captured 100.5% of the rusage ground truth in
   both runs; the census identity captured 97.8% and 101.1%. See
   "CPU accounting" above for exactly what is claimed.
+- **Budget-crossing burst** (round 3; 0.9 s budget, 2 s census):
+  a 0.64 s parallel burst completed between polls (census saw
+  0.01 s of it), was charged exactly by the reaper at call end,
+  and left the run ~0.27–0.28 s over budget with the next call
+  refused — the accounting-budget contract, demonstrated. See
+  "CPU accounting".
 
 ## The mount witness (finding 2)
 
@@ -360,12 +464,13 @@ it.
 
 ## Suite result
 
-`python3 test_rig.py` — **30 passed, 0 failed**, twice consecutively
+`python3 test_rig.py` — **34 passed, 0 failed**, twice consecutively
 (control, stocking, supervisor, mounts, mounts-extra, mounts-rw,
 network, environment, namespaces, identity, cross-room,
 envelope-record, preflight, persistence, persist-terms, ward-mem,
 ward-spike, ward-fastspike, ward-pids, ward-forkfast, ward-cpu,
-serialise, cpu-run, cpu-shortlived, storage-fail, ns-fail, storage,
+serialise, cpu-run, cpu-shortlived, cpu-overshoot, ledger-read-fail,
+ledger-write-fail, storage-fail, ns-fail, mount-replaced, storage,
 output, lifecycle, cleanup). Exit code 0. Verified after the runs:
 no leftover processes, mounts, cgroups, or test trees.
 
@@ -434,6 +539,22 @@ in-room additions).
   bounding set — a documented adaptation, not equivalence.
 - **CPU *rate* limiting**: the envelope budgets cumulative
   CPU-seconds; nothing here throttles instantaneous CPU share.
+- **A hard CPU execution ceiling**: not established, and not
+  claimed. The CPU limit is a cumulative accounting budget (see
+  "CPU accounting" for the contract in its exact terms): work
+  that completes between census observations can exceed the
+  budget before the excess is charged at call end. A hard ceiling
+  would need a kernel mechanism (cgroup cpu.max) this host does
+  not delegate.
+- **A ledger failure whose record cannot be written either**: if
+  the state write fails AND the ledger-failure file cannot be
+  written (the base directory itself unwritable), the failure is
+  preserved only in the failing process's poison flag — that
+  process refuses all later executions, but a fresh process would
+  read the stale state and not know. Both writes failing means
+  the room's host-side record directory is broken wholesale,
+  which creation and every other record operation would also
+  fail against; the residual is stated, not hidden.
 - **Lifecycle completeness inside one poll interval**: a process
   born and dead entirely between two censuses (50 ms) leaves no
   lifecycle record. Births and deaths are recorded at census
