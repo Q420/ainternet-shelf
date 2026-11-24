@@ -73,6 +73,19 @@ from .record import (assembly_record_hash, declaration_fingerprint,
 # are.
 CATALOGUE_CONTRACT = "a3-cat"
 
+# The decision-recording note (INDEX 293): a probe-governed
+# judgement binds the hash of the examiner's durable decision
+# receipt, and the payload states plainly what the recording
+# does and does not establish — the act is recorded by the
+# harness from that receipt, under a token the harness issues;
+# the token authenticates the recording act, never the
+# examiner's identity. The provenance the record claims is the
+# receipt and its hash, nothing more.
+DECISION_RECORDING = (
+    "harness-recorded from the examiner decision receipt; "
+    "the examiner token authenticates the recording act, "
+    "not the examiner's identity")
+
 # The retrieval contract's declaration (RETRIEVAL-SCOPE
 # Rev 5): an assembly generated for structured retrieval
 # declares this value in the same field, in place of the
@@ -381,7 +394,8 @@ class Generator:
 
     # ------------------------------------------------------ judging
     def judgement(self, assembly_id, adapter_mode=None,
-                  mode_grounds=None):
+                  mode_grounds=None, decision_receipt_hash=None,
+                  decision_examiner=None):
         """The payload of the examiner's sufficiency judgement
         (R40), computed from the record: it names the assembly,
         its instance, and the exact object judged — by the
@@ -396,7 +410,16 @@ class Generator:
         by the caller — the probe's recommendation is evidence
         for that decision, never the decision itself, and an
         override of an inconclusive probe stands only as this
-        act, with its grounds (probe scope §5)."""
+        act, with its grounds (probe scope §5). The decision's
+        provenance binds with it (INDEX 293): the payload
+        carries the hash of the examiner's durable decision
+        receipt — the document that identifies this exact
+        assembly, its generated record, its probe event and
+        evidence, and the mode and grounds decided — and the
+        receipt's examiner label, under the standing note
+        (DECISION_RECORDING) that the recording token
+        authenticates the recording act, not the examiner's
+        identity."""
         generated = None
         for ev in self.store.all_events():
             if ev["type"] == "ASSEMBLY_GENERATED" and \
@@ -418,6 +441,10 @@ class Generator:
                 (probed or {}).get("evidence_hash")
             payload["adapter_mode"] = adapter_mode
             payload["mode_grounds"] = mode_grounds
+            payload["decision_receipt_hash"] = \
+                decision_receipt_hash
+            payload["decision_examiner"] = decision_examiner
+            payload["decision_recording"] = DECISION_RECORDING
         return payload
 
     # --------------------------------------------------------- pack

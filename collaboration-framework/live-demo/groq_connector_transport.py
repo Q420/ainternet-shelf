@@ -111,36 +111,43 @@ where one is staged) as "tool_choice". Where nothing is
 staged, the body is byte-identical to the historical
 construction above — the text path is untouched.
 
-The probe raw call (same release preparation). The probe
-stage's capture sits BELOW the adapter's response
-interpretation, but the adapter's own `probe_raw_call()`
-rides its built-in `_exchange` transport — the
-environment-key route this harness never uses — and
-cannot travel the connector route as built: it never
-passes through the replaced `_call` seam.
-`install_groq_connector_raw_call` therefore provides the
-raw call at this layer, against the same capture contract
-the adapter's own probe call honours (framework.probe's
-raw-call protocol): the request serialized exactly as
-given; on success the helper's stdout as the body (the
-provider's response object as the helper returns it — the
-helper parses and re-serialises, so byte-identity with
-the provider's wire bytes is not claimed) with the HTTP
-status recorded as 200 (the helper reports no status on
-success; a returned body means the provider answered
-successfully); on an HTTP error, the status the helper
-names and the provider's error body AS THE HELPER
-RETAINS IT in its failure (INDEX 261/262: read bounded,
-collapsed to one line) extracted from that failure, with
-the helper's full stderr retained separately as the
-capture's diagnostics object — the diagnostic output is
-never presented as the provider body. The subprocess
-discipline is this module's own: the helper in its own
-process group, bounded by the adapter's configured
-timeout — the fence the adapter's own probe call runs
-under, no activation clock existing at assembly time —
-terminated and confirmed on expiry, the expiry itself
-becoming the capture's diagnostic rather than an
+The probe raw call (same release preparation; capture
+contract corrected at INDEX 293). The probe stage's
+capture sits BELOW the adapter's response interpretation,
+but the adapter's own `probe_raw_call()` rides its
+built-in `_exchange` transport — the environment-key
+route this harness never uses — and cannot travel the
+connector route as built: it never passes through the
+replaced `_call` seam. `install_groq_connector_raw_call`
+therefore provides the raw call at this layer, against
+the same capture contract the adapter's own probe call
+honours (framework.probe's raw-call protocol): the
+request serialized exactly as given, and the capture
+carrying what the provider actually sent. The helper is
+invoked in its raw mode (`chat-raw`): it performs the
+same surrogate-credentialed request and frames the result
+as a JSON envelope carrying the provider's ACTUAL HTTP
+status and the UNMODIFIED response body, read whole — on
+success and on HTTP error alike (no retention bound, no
+collapsing on this path; the INDEX 261/262 bounded
+retention governs the helper's ordinary `chat` failures,
+not this evidence path). The transport hands that body
+to the probe WHOLE: retention and completeness are the
+probe's to judge, over the true body, under its own
+ceiling. The helper's stderr stands separately as the
+capture's diagnostics object — diagnostic output is never
+presented as the provider body. No status is ever
+manufactured: where the helper's output is not a raw-mode
+envelope (a helper without the raw mode, answering in the
+chat shape), or the helper fails before framing an answer,
+the capture claims no status and no body — the absence is
+recorded honestly, with the explanation as its diagnostic.
+The subprocess discipline is this module's own: the
+helper in its own process group, bounded by the adapter's
+configured timeout — the fence the adapter's own probe
+call runs under, no activation clock existing at assembly
+time — terminated and confirmed on expiry, the expiry
+itself becoming the capture's diagnostic rather than an
 exception, exactly as the adapter's probe call turns its
 transport failures into captures.
 
@@ -173,7 +180,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import signal
 import subprocess
 import sys
@@ -525,18 +531,6 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
     return connector_call
 
 
-# The helper's retained provider-error line (INDEX
-# 261/262): the helper turns a provider HTTP error into a
-# RuntimeError naming the status and carrying the error
-# body it read (bounded, collapsed to one line), which
-# reaches this layer as the final line of its traceback on
-# stderr. The pattern extracts exactly that status and
-# that retained body — nothing else in the traceback is
-# the provider's.
-_PROVIDER_ERROR_RE = re.compile(
-    r"provider error: HTTP (\d+): (.*)")
-
-
 def install_groq_connector_raw_call(adapter, helper_path=None,
                                     model=None):
     """Provide the probe stage's raw call over this
@@ -546,12 +540,16 @@ def install_groq_connector_raw_call(adapter, helper_path=None,
     it and returning the raw capture the probe's protocol
     defines — {"body", "error_body", "http_status",
     "diagnostics", "metadata"} — with capture sitting
-    below every layer of response interpretation. Nothing
-    here parses outcomes or classifies; the probe stage
-    does that over what this returns. A transport failure
-    is itself a capture (its kind as the diagnostic),
-    never an exception, exactly as the adapter's own
-    probe_raw_call turns its failures into captures.
+    below every layer of response interpretation. The
+    helper is invoked in its raw mode (`chat-raw`), whose
+    framed envelope carries the provider's actual status
+    and unmodified body; nothing here parses outcomes or
+    classifies, and no status is manufactured where the
+    envelope does not stand — the probe stage reads what
+    this returns. A transport failure is itself a capture
+    (its kind as the diagnostic), never an exception,
+    exactly as the adapter's own probe_raw_call turns its
+    failures into captures.
 
     The helper path resolution and the model default
     mirror install_groq_connector_transport's. The bound
@@ -576,7 +574,8 @@ def install_groq_connector_raw_call(adapter, helper_path=None,
         helper_env["GROQ_API_TIMEOUT"] = repr(bound)
         try:
             proc = _Popen(
-                [sys.executable, helper_path, "chat", model],
+                [sys.executable, helper_path, "chat-raw",
+                 model],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, start_new_session=True,
                 env=helper_env)
@@ -625,45 +624,62 @@ def install_groq_connector_raw_call(adapter, helper_path=None,
         out_text = out.decode("utf-8", "replace")
         err_text = err.decode("utf-8", "replace")
         diagnostics = err_text if err_text.strip() else None
-        if proc.returncode == 0:
-            parsed = None
-            try:
-                parsed = json.loads(out_text)
-            except ValueError:
-                parsed = None
-            if isinstance(parsed, dict) and \
-                    parsed.get("error"):
-                # An OpenAI-style error body carried on a
-                # successful helper exit: the provider's
-                # error object, retained as the error body.
-                return {"body": None, "error_body": out_text,
-                        "http_status": None,
-                        "diagnostics": diagnostics,
-                        "metadata": {}}
-            metadata = {}
-            if isinstance(parsed, dict):
-                for key in ("id", "model"):
-                    if parsed.get(key) is not None:
-                        metadata[key] = parsed[key]
-            return {"body": out_text, "error_body": None,
-                    "http_status": 200,
-                    "diagnostics": diagnostics,
-                    "metadata": metadata}
-        # A non-zero helper exit. Where the failure is the
-        # helper's retained provider error, its status and
-        # the error body it retained are extracted; the
-        # full stderr stands separately as the diagnostics
-        # object either way.
-        match = _PROVIDER_ERROR_RE.search(err_text)
-        if match:
-            return {"body": None,
-                    "error_body": match.group(2).strip(),
-                    "http_status": int(match.group(1)),
+        if proc.returncode != 0:
+            # The helper itself failed before any provider
+            # answer could be framed (a transport-level
+            # failure at the helper, or a helper that cannot
+            # run at all): no status and no body can be
+            # claimed — the helper's own output is the
+            # capture's diagnostic, never a body.
+            return {"body": None, "error_body": None,
+                    "http_status": None,
                     "diagnostics": err_text,
                     "metadata": {}}
-        return {"body": None, "error_body": None,
-                "http_status": None,
-                "diagnostics": err_text,
-                "metadata": {}}
+        envelope = None
+        try:
+            envelope = json.loads(out_text)
+        except ValueError:
+            envelope = None
+        if not isinstance(envelope, dict) or \
+                not isinstance(envelope.get("status"), int) \
+                or isinstance(envelope.get("status"), bool) \
+                or not isinstance(envelope.get("body"), str):
+            # The helper's output is not a raw-mode
+            # envelope (a helper without the raw mode,
+            # answering in the chat shape): the capture
+            # claims nothing — no manufactured status, no
+            # substituted body — and says why.
+            note = ("the helper's output was not a raw-mode "
+                    "envelope; no provider status or body "
+                    "can be claimed from it")
+            return {"body": None, "error_body": None,
+                    "http_status": None,
+                    "diagnostics": (err_text + "\n" + note)
+                    if err_text.strip() else note,
+                    "metadata": {}}
+        status = envelope["status"]
+        text = envelope["body"]
+        if status >= 400:
+            # The provider's error answer, whole: its
+            # status, and its exact error body as the
+            # error body — retention is the probe's call,
+            # over this true body.
+            return {"body": None, "error_body": text,
+                    "http_status": status,
+                    "diagnostics": diagnostics,
+                    "metadata": {}}
+        metadata = {}
+        try:
+            parsed = json.loads(text)
+        except ValueError:
+            parsed = None
+        if isinstance(parsed, dict):
+            for key in ("id", "model"):
+                if parsed.get(key) is not None:
+                    metadata[key] = parsed[key]
+        return {"body": text, "error_body": None,
+                "http_status": status,
+                "diagnostics": diagnostics,
+                "metadata": metadata}
 
     return connector_raw_call

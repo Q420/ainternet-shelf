@@ -91,6 +91,32 @@ TRACE = "commission brief, crew seat"
 BOUNDS = {"step_ceiling": 12, "deadline_seconds": 300}
 GROUNDS = "the probe's recommendation, read against the trials"
 
+# The examiner decision receipt (INDEX 293): a governed
+# judgement binds the hash of the examiner's durable
+# decision receipt. The witness fixture is a receipt in
+# the harness's shape, hashed the harness's way (SHA-256
+# over the canonical JSON); its field values are the
+# fixture's own — the binding the doorway and the checker
+# verify here is the hash's presence and shape, exactly as
+# the release harness's receipt will carry them.
+RECEIPT_EXAMINER = "exam-1"
+RECEIPT = {
+    "run_id": "run-1",
+    "assembly_id": "assembly-crew-1-1",
+    "generated_record_hash": "a" * 64,
+    "probed_seq": 17,
+    "probe_evidence_hash": "b" * 64,
+    "fingerprint": "c" * 64,
+    "adapter_mode": "native",
+    "mode_grounds": GROUNDS,
+    "examiner": RECEIPT_EXAMINER,
+    "decided_at": "2026-11-23T20:31:00-07:00",
+}
+RECEIPT_HASH = hashlib.sha256(
+    json.dumps(RECEIPT, sort_keys=True,
+               separators=(",", ":")).encode("utf-8")
+).hexdigest()
+
 
 def _grant(tool, prefix, count=60):
     return {"tool": tool, "scope_ceiling": {"path_prefix": prefix},
@@ -332,7 +358,9 @@ def assemble(grants=GRANTS, probe=True, captures=None,
         return out
     payload = gen.judgement(r["assembly_id"],
                             adapter_mode=judge_mode,
-                            mode_grounds=grounds) \
+                            mode_grounds=grounds,
+                            decision_receipt_hash=RECEIPT_HASH,
+                            decision_examiner=RECEIPT_EXAMINER) \
         if probe else gen.judgement(r["assembly_id"])
     d.act(tok["exam-1"], "ASSEMBLY_JUDGED", payload,
           view_seq=store.head_seq())
@@ -570,7 +598,9 @@ def test_p5():
         aid, adapter_mode="text",
         mode_grounds="examiner override: the text contract "
                      "is the framework's own dialect and the "
-                     "settled trials split evenly")
+                     "settled trials split evenly",
+        decision_receipt_hash=RECEIPT_HASH,
+        decision_examiner=RECEIPT_EXAMINER)
     w["d"].act(tok["exam-1"], "ASSEMBLY_JUDGED", payload,
                view_seq=store.head_seq())
     packed = gen.pack(tok["orch-1"], aid)

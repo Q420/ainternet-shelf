@@ -73,12 +73,23 @@ live trials over the Groq connector transport's raw
 call), records construction verification naming the
 probe evidence, and stops BEFORE judgement, exporting
 the record and writing probe-evidence.json;
-`--probe-phase2 <mode> <grounds-file>` reopens that run
-directory, records the examiner's judgement (the mode —
-text or native — and its grounds, read from the file),
-and carries the assembly through packing, authorisation,
+`--probe-phase2 --decision-receipt <file>` reopens that
+run directory and records the examiner's judgement FROM
+THE EXAMINER'S DURABLE DECISION RECEIPT (INDEX 293): a
+JSON document identifying the exact phase-1 run, the
+assembly, its generated-record hash, the probe event
+and evidence hash and the configuration fingerprint,
+with the selected mode, its grounds, the examiner's
+recorded label and the decision's recorded time. Phase
+2 validates every field against the standing phase-1
+record and refuses on any mismatch, binds the receipt's
+canonical hash into the judgement it records, and
+carries the assembly through packing, authorisation,
 activation and the loop exactly as the retrieval mode
-runs it. The adapter's transport,
+runs it. The judgement the harness records states in
+its own payload that the harness-issued examiner token
+is the recording mechanism, not independent
+authentication of the examiner's identity. The adapter's transport,
 however, is NOT the environment-variable key route: attempt
 1 died on it before activation (the key it surfaced was
 rejected, HTTP 401 — INDEX 191). The run's calls are
@@ -119,7 +130,10 @@ from framework.office import Office  # noqa: E402
 from framework.onboarding import (  # noqa: E402
     instance_onboarding_record)
 from framework.record import (CONSTITUTION_HASH,  # noqa: E402
-                              FrameworkStore)
+                              FrameworkStore,
+                              assembly_record_hash)
+
+from fabric.canonical import canonical  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from connector_transport import (  # noqa: E402
@@ -721,14 +735,103 @@ def _finish_probe_phase1(store, store_path, run_dir,
     return 0
 
 
-def run_probe_phase2(run_dir, mode, grounds):
+def _receipt_problem(receipt, run_dir_assembly_id,
+                       generated_hash, entry, probed):
+    """Why an examiner decision receipt may not carry a
+    phase-2 judgement, or None (INDEX 293): every field
+    must identify the exact phase-1 run and its standing
+    record — the run, the one assembly, its generated
+    record by hash, the probe event by sequence, the
+    probe evidence by hash, the configuration fingerprint
+    — and the decision itself must be complete: a mode
+    the adapter speaks, stated grounds, the examiner's
+    recorded label and the decision's recorded time."""
+    if not isinstance(receipt, dict):
+        return "the decision receipt is not a JSON object"
+    if receipt.get("run_id") != RUN_ID:
+        return (f"the receipt names run "
+                f"{receipt.get('run_id')!r}; this harness's "
+                f"run is {RUN_ID!r}")
+    if receipt.get("assembly_id") != run_dir_assembly_id:
+        return (f"the receipt names assembly "
+                f"{receipt.get('assembly_id')!r}; the "
+                f"phase-1 record's assembly is "
+                f"{run_dir_assembly_id!r}")
+    if receipt.get("generated_record_hash") != \
+            generated_hash:
+        return ("the receipt's generated-record hash "
+                f"{receipt.get('generated_record_hash')!r} "
+                f"is not the standing generated record's "
+                f"hash {generated_hash} — the receipt must "
+                f"identify the exact record the examiner "
+                f"judged")
+    if receipt.get("probed_seq") != entry.get("probed_seq"):
+        return (f"the receipt names probe event "
+                f"{receipt.get('probed_seq')!r}; the "
+                f"assembly's probe stands at "
+                f"{entry.get('probed_seq')}")
+    if receipt.get("probe_evidence_hash") != \
+            probed.get("evidence_hash"):
+        return ("the receipt's probe evidence hash "
+                f"{receipt.get('probe_evidence_hash')!r} "
+                f"is not the standing probe evidence's hash "
+                f"{probed.get('evidence_hash')} — the "
+                f"receipt must identify the exact evidence "
+                f"the examiner weighed")
+    if receipt.get("fingerprint") != \
+            probed.get("fingerprint"):
+        return ("the receipt's configuration fingerprint "
+                f"{receipt.get('fingerprint')!r} is not "
+                f"the standing probe's fingerprint "
+                f"{probed.get('fingerprint')}")
+    if receipt.get("adapter_mode") not in \
+            probe_module.ADAPTER_MODES:
+        return (f"the receipt selects adapter mode "
+                f"{receipt.get('adapter_mode')!r}; the "
+                f"modes are {probe_module.ADAPTER_MODES}")
+    grounds = receipt.get("mode_grounds")
+    if not isinstance(grounds, str) or not grounds.strip():
+        return ("the receipt records no grounds for its "
+                "mode; a decision without grounds does not "
+                "carry a judgement")
+    if not isinstance(receipt.get("examiner"), str) or \
+            not receipt.get("examiner").strip():
+        return ("the receipt names no examiner; the "
+                "decision's recorded label is part of its "
+                "provenance")
+    if not isinstance(receipt.get("decided_at"), str) or \
+            not receipt.get("decided_at").strip():
+        return ("the receipt records no decided_at; the "
+                "decision's recorded time is part of its "
+                "provenance")
+    return None
+
+
+def run_probe_phase2(run_dir, receipt_path):
     """Phase 2: reopen a phase-1 run directory and carry
     its assembly from the examiner's judgement to the
     finished run, exactly as the retrieval mode runs it.
-    Refuses — before recording anything — where the store
-    does not stand exactly as phase 1 left it: a probe
-    must stand, no judgement may stand yet, and nothing
-    may stand activated."""
+    The judgement is recorded FROM THE EXAMINER'S
+    DECISION RECEIPT (INDEX 293): the receipt is loaded
+    and every field validated against the standing
+    phase-1 record before anything is recorded, its
+    canonical hash is bound into the judgement, and the
+    judgement payload itself states that the harness-
+    issued examiner token is the recording mechanism,
+    not independent authentication of the examiner's
+    identity. Refuses — before recording anything — where
+    the receipt is missing, unreadable or mismatched, or
+    where the store does not stand exactly as phase 1
+    left it: a probe must stand, no judgement may stand
+    yet, and nothing may stand activated."""
+    try:
+        with open(receipt_path, encoding="utf-8") as fh:
+            receipt = json.load(fh)
+    except (OSError, ValueError) as exc:
+        print(f"ABORT: the examiner decision receipt at "
+              f"{receipt_path} cannot be read: {exc}",
+              file=sys.stderr)
+        return 1
     store_path = os.path.join(run_dir, "run.db")
     if not os.path.exists(store_path):
         print(f"ABORT: no phase-1 run store stands at "
@@ -766,6 +869,18 @@ def run_probe_phase2(run_dir, mode, grounds):
               "activated; this run has already been "
               "carried through phase 2", file=sys.stderr)
         return 1
+    probed = doorway._probed_payload(assembly_id) or {}
+    generated_hash = assembly_record_hash(
+        doorway._generated_payload(assembly_id) or {})
+    problem = _receipt_problem(
+        receipt, assembly_id, generated_hash, entry, probed)
+    if problem is not None:
+        print(f"ABORT: the decision receipt does not "
+              f"carry this run: {problem}", file=sys.stderr)
+        return 1
+    receipt_hash = hashlib.sha256(
+        canonical(receipt)).hexdigest()
+    mode = receipt["adapter_mode"]
     with open(os.path.join(run_dir, "manifest.json"),
               encoding="utf-8") as fh:
         manifest = json.load(fh)
@@ -775,22 +890,28 @@ def run_probe_phase2(run_dir, mode, grounds):
     adapter = _build_adapter("groq")
     judgement = gen.judgement(
         assembly_id, adapter_mode=mode,
-        mode_grounds=grounds)
+        mode_grounds=receipt["mode_grounds"],
+        decision_receipt_hash=receipt_hash,
+        decision_examiner=receipt["examiner"])
     if judgement is None:
         print("ABORT: the judgement payload cannot be "
               "computed; the generated record does not "
               "stand", file=sys.stderr)
         return 1
-    probed = doorway._probed_payload(assembly_id) or {}
-    print(f"probe phase 2 — the examiner's judgement: "
-          f"mode {mode!r}, on the standing probe evidence "
-          f"{probed.get('evidence_hash')}")
+    print(f"probe phase 2 — the examiner's judgement, "
+          f"recorded from decision receipt "
+          f"{receipt_hash}: mode {mode!r}, on the standing "
+          f"probe evidence {probed.get('evidence_hash')}")
     return _judge_pack_run(
         doorway, gen, tok, store, store_path, run_dir,
         os.path.join(run_dir, "sandbox"), "groq", True,
         adapter, manifest, manifest_hash, assembly_id,
         instance_id, judgement,
-        {"probed_mode": True, "adapter_mode": mode})
+        {"probed_mode": True, "adapter_mode": mode,
+         "decision_receipt_hash": receipt_hash,
+         "decision_examiner": receipt["examiner"],
+         "decision_recording":
+             judgement.get("decision_recording")})
 
 
 def _stub_probe_captures():
@@ -1132,17 +1253,20 @@ def main(argv=None):
     argv = [a for a in argv if a != "--verify-config"]
     phase1 = "--probe-phase1" in argv
     argv = [a for a in argv if a != "--probe-phase1"]
-    phase2 = None
-    if "--probe-phase2" in argv:
-        at = argv.index("--probe-phase2")
+    phase2 = "--probe-phase2" in argv
+    argv = [a for a in argv if a != "--probe-phase2"]
+    receipt_path = None
+    if "--decision-receipt" in argv:
+        at = argv.index("--decision-receipt")
         following = argv[at + 1:]
-        if len(following) < 2:
-            print("ABORT: --probe-phase2 takes a mode and "
-                  "a grounds file: --probe-phase2 <mode> "
-                  "<grounds-file>", file=sys.stderr)
+        if not following:
+            print("ABORT: --decision-receipt takes the "
+                  "examiner decision receipt's file: "
+                  "--decision-receipt <file>",
+                  file=sys.stderr)
             return 2
-        phase2 = (following[0], following[1])
-        argv = argv[:at] + following[2:]
+        receipt_path = following[0]
+        argv = argv[:at] + following[1:]
     # Route and mode selection first, before any staging or
     # assembly work (INDEX 230, correction 3): an invalid
     # value refuses outright and nothing is staged.
@@ -1169,12 +1293,12 @@ def main(argv=None):
               "RETRIEVAL=1); refusing to run",
               file=sys.stderr)
         return 2
-    if (phase1 or phase2 is not None) and not probed:
+    if (phase1 or phase2) and not probed:
         print("ABORT: --probe-phase1 / --probe-phase2 "
               "require the probed mode (PROBED=1); refusing "
               "to run", file=sys.stderr)
         return 2
-    if phase1 and phase2 is not None:
+    if phase1 and phase2:
         print("ABORT: --probe-phase1 and --probe-phase2 "
               "are distinct invocations; refusing to run",
               file=sys.stderr)
@@ -1191,32 +1315,27 @@ def main(argv=None):
         return verify_config()
     name = "first-worker" + (f"-{argv[0]}" if argv else "")
     run_dir = os.path.join(ROOT, "live-demo", name)
-    if phase2 is not None:
-        mode, grounds_path = phase2
-        if mode not in probe_module.ADAPTER_MODES:
-            print(f"ABORT: --probe-phase2 mode {mode!r} is "
-                  f"not an adapter mode (the modes are "
-                  f"{probe_module.ADAPTER_MODES}); refusing "
-                  f"to run", file=sys.stderr)
+    if phase2:
+        if receipt_path is None:
+            print("ABORT: --probe-phase2 requires the "
+                  "examiner's decision receipt: "
+                  "--probe-phase2 --decision-receipt "
+                  "<file>; the judgement is recorded from "
+                  "the receipt, never from bare mode and "
+                  "grounds arguments (INDEX 293)",
+                  file=sys.stderr)
             return 2
-        try:
-            with open(grounds_path, encoding="utf-8") as fh:
-                grounds = fh.read().strip()
-        except OSError as exc:
-            print(f"ABORT: the grounds file cannot be "
-                  f"read: {exc}", file=sys.stderr)
-            return 2
-        if not grounds:
-            print("ABORT: the grounds file is empty; a "
-                  "judgement under the probe regime stands "
-                  "on stated grounds", file=sys.stderr)
-            return 2
-        return run_probe_phase2(run_dir, mode, grounds)
+        return run_probe_phase2(run_dir, receipt_path)
+    if receipt_path is not None:
+        print("ABORT: --decision-receipt belongs to "
+              "--probe-phase2; refusing to run",
+              file=sys.stderr)
+        return 2
     if probed and not phase1:
         print("ABORT: PROBED=1 runs in two phases "
-              "(--probe-phase1, then --probe-phase2 <mode> "
-              "<grounds-file>); there is no single-"
-              "invocation probed run, because the "
+              "(--probe-phase1, then --probe-phase2 "
+              "--decision-receipt <file>); there is no "
+              "single-invocation probed run, because the "
               "examiner's judgement stands between the "
               "phases", file=sys.stderr)
         return 2

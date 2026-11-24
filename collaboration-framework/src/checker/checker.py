@@ -625,10 +625,12 @@ def _probe_correspondence(problem, aid, gen_ev, digest, mine,
     recomputed; the counts, quorum and recommendation
     recomputed; verification naming the evidence (the
     verified boundary covers it); the judgement identifying
-    the exact probe event and evidence and recording a mode
-    with grounds; the pack sealing the same bindings and the
-    judged mode itself — the end-to-end property that the
-    mode the adapter receives is the mode the examiner
+    the exact probe event and evidence, recording a mode
+    with grounds, and binding the hash of the examiner's
+    durable decision receipt (INDEX 293 — the decision's
+    own provenance); the pack sealing the same bindings and
+    the judged mode itself — the end-to-end property that
+    the mode the adapter receives is the mode the examiner
     judged. A probe act under no declaration, or an unknown
     declaration, diverges."""
     gen_payload = gen_ev["payload"]
@@ -725,6 +727,18 @@ def _probe_correspondence(problem, aid, gen_ev, digest, mine,
         grounds = jp.get("mode_grounds")
         if not isinstance(grounds, str) or not grounds:
             problem("probe_mode_grounds_missing",
+                    assembly_id=aid,
+                    at_seq=judged["event_seq"])
+        receipt_hash = jp.get("decision_receipt_hash")
+        if receipt_hash is None:
+            problem("probe_decision_receipt_missing",
+                    assembly_id=aid,
+                    at_seq=judged["event_seq"])
+        elif not isinstance(receipt_hash, str) or \
+                len(receipt_hash) != 64 or \
+                any(c not in "0123456789abcdef"
+                    for c in receipt_hash):
+            problem("probe_decision_receipt_invalid",
                     assembly_id=aid,
                     at_seq=judged["event_seq"])
     if packed is not None:

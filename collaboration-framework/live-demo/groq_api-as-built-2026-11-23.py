@@ -8,6 +8,9 @@ approved request to api.groq.com. Groq's API is OpenAI-compatible.
 Usage:
   groq_api.py models                        # GET /openai/v1/models (key check)
   groq_api.py chat MODEL < body.json        # POST /openai/v1/chat/completions
+  groq_api.py chat-raw MODEL < body.json    # same POST, framed raw result:
+                                            # {"status": <actual HTTP status>,
+                                            #  "body": <unmodified body text>}
 """
 import json
 import math
@@ -104,6 +107,30 @@ def call(request):
         raise _provider_error(error) from error
 
 
+def call_raw(request):
+    """The raw twin of call() (INDEX 293's correction): the
+    same surrogate-credentialed request, but the result is
+    the provider's ACTUAL HTTP status and the UNMODIFIED
+    response body, read whole and decoded as text — on
+    success and on HTTP error alike. No ERROR_BODY_LIMIT,
+    no whitespace collapsing: what the provider sent is
+    what the caller receives, and retention/completeness
+    are the caller's to judge over the true body. A
+    transport-level failure (no response at all) still
+    raises, exactly as in call()."""
+    request.add_header("User-Agent", "Groq/Python 1.0 (Pulse HQ Marni)")
+    add_surrogate_to_request(request, "custom.groq", allowed_hosts=[HOST])
+    opener = urllib.request.build_opener(NoRedirect())
+    try:
+        with opener.open(request,
+                         timeout=request_timeout()) as response:
+            return response.getcode(), response.read().decode(
+                "utf-8", errors="replace")
+    except urllib.error.HTTPError as error:
+        return error.code, error.read().decode(
+            "utf-8", errors="replace")
+
+
 def main():
     args = sys.argv[1:]
     if not args:
@@ -122,6 +149,17 @@ def main():
             method="POST",
         )
         print(json.dumps(call(req)))
+        return 0
+    if args[0] == "chat-raw" and len(args) == 2:
+        body = sys.stdin.buffer.read()
+        req = urllib.request.Request(
+            f"{BASE}/chat/completions",
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        status, text = call_raw(req)
+        print(json.dumps({"status": status, "body": text}))
         return 0
     print(__doc__)
     return 2

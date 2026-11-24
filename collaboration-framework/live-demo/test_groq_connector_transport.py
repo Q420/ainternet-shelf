@@ -57,14 +57,22 @@ W10 native-mode staging (INDEX 289 release preparation):
    staged, with a staged tool choice as tool_choice;
    with nothing staged the body is byte-identical to the
    pre-change construction and carries no tools field.
-W11 the probe raw call over this transport: a success
-   returns the provider body as received with status
-   and metadata; a provider HTTP error (a stub helper
-   failing in the real helper's shape) yields the status
-   and the retained error body as distinct objects from
-   the diagnostics, and the refused commentary-hybrid
-   capture classifies as the attempt-8 shape under the
-   framework probe's own classification.
+W11 the probe raw call over this transport (capture
+   contract corrected at INDEX 293): the helper is
+   invoked in its raw mode, whose framed envelope
+   carries the provider's actual status and unmodified
+   body. A success carries the stub's actual (non-200)
+   status and its exact body; a provider HTTP error
+   yields the status and the exact error body, whole —
+   an error body longer than the helper's ordinary
+   2,000-char retention arrives whole and is retained
+   completely under the probe's ceiling, and one longer
+   than the probe's 64,000 ceiling is truncated BY THE
+   PROBE and marked incomplete; the refused
+   commentary-hybrid capture classifies as the attempt-8
+   shape under the framework probe's own classification;
+   and a helper without the raw mode yields an honest
+   capture claiming no status and no body.
 
 Run: PYTHONPATH=src python3 \
     live-demo/test_groq_connector_transport.py
@@ -192,15 +200,38 @@ print(json.dumps({
         "role": "assistant", "content": content}}]}))
 ''' % (DECLARATION, YIELD_CONTENT)
 
-# A helper failing the way the REAL helper fails on a
-# provider HTTP error (INDEX 261/262): a traceback on
-# stderr whose final line is the RuntimeError carrying
-# the status and the retained error body — here the
-# commentary-hybrid refusal of the empirical probe run.
-STUB_RAWERR = '''\
-import json, sys
+# Raw-mode stub helpers (INDEX 293): each answers the
+# helper's `chat-raw` invocation with the framed envelope
+# the real helper's raw mode prints — {"status", "body"}
+# — and records the exact body it framed to STUB_RAWBODY
+# so the witness can compare byte for byte.
+STUB_RAWOK = '''\
+import json, os, sys
 sys.stdin.buffer.read()
-body = {"error": {
+body = json.dumps({
+    "id": "chatcmpl-raw", "model": %r,
+    "choices": [{"index": 0, "message": {
+        "role": "assistant", "content": None,
+        "tool_calls": [{"id": "fc_raw1", "type": "function",
+                        "function": {
+                            "name": "probe.lookup",
+                            "arguments": json.dumps(
+                                {"object":
+                                 "brass lantern"})}}]}}]})
+rec = os.environ.get("STUB_RAWBODY")
+if rec:
+    with open(rec, "w") as fh:
+        fh.write(body)
+print(json.dumps({"status": 201, "body": body}))
+''' % PIN
+
+# The commentary-hybrid refusal of the empirical probe
+# run, carried as the provider's exact error body inside
+# a raw-mode envelope.
+STUB_RAWERR = '''\
+import json, os, sys
+sys.stdin.buffer.read()
+body = json.dumps({"error": {
     "message": "attempted to call tool 'commentary' which "
                "was not in request.tools",
     "code": "tool_use_failed",
@@ -208,13 +239,42 @@ body = {"error": {
         "name": "commentary",
         "arguments": json.dumps({"tool_requests": [
             {"tool": "probe.lookup",
-             "parameters": {"object": "brass lantern"}}]})})}}
-sys.stderr.write("Traceback (most recent call last):\\n")
-sys.stderr.write("  File \\"groq_api.py\\", line 104, "
-                 "in call\\n")
-sys.stderr.write("RuntimeError: provider error: "
-                 "HTTP 400: " + json.dumps(body) + "\\n")
-sys.exit(1)
+             "parameters": {"object": "brass lantern"}}]})})}})
+rec = os.environ.get("STUB_RAWBODY")
+if rec:
+    with open(rec, "w") as fh:
+        fh.write(body)
+print(json.dumps({"status": 400, "body": body}))
+'''
+
+# An error body longer than the helper's ordinary
+# 2,000-char retention (ERROR_BODY_LIMIT): on the raw
+# path it must arrive whole.
+STUB_RAWLONG = '''\
+import json, os, sys
+sys.stdin.buffer.read()
+body = json.dumps({"error": {
+    "message": "x" * 5000, "code": "long_error"}})
+rec = os.environ.get("STUB_RAWBODY")
+if rec:
+    with open(rec, "w") as fh:
+        fh.write(body)
+print(json.dumps({"status": 400, "body": body}))
+'''
+
+# An error body longer than the probe's own 64,000-byte
+# capture ceiling: the probe itself truncates it and
+# marks the evidence incomplete.
+STUB_RAWXL = '''\
+import json, os, sys
+sys.stdin.buffer.read()
+body = json.dumps({"error": {
+    "message": "y" * 70000, "code": "huge_error"}})
+rec = os.environ.get("STUB_RAWBODY")
+if rec:
+    with open(rec, "w") as fh:
+        fh.write(body)
+print(json.dumps({"status": 400, "body": body}))
 '''
 
 TMP = tempfile.mkdtemp(prefix="groq-transport-witness-")
@@ -225,7 +285,10 @@ for name, body in (("ok", STUB_OK), ("sleep", STUB_SLEEP),
                    ("nochoices", STUB_NOCHOICES),
                    ("errorbody", STUB_ERRORBODY),
                    ("wrongmodel", STUB_WRONG_MODEL),
-                   ("rawerr", STUB_RAWERR)):
+                   ("rawerr", STUB_RAWERR),
+                   ("rawok", STUB_RAWOK),
+                   ("rawlong", STUB_RAWLONG),
+                   ("rawxl", STUB_RAWXL)):
     p = os.path.join(TMP, f"stub_{name}.py")
     with open(p, "w", encoding="utf-8") as fh:
         fh.write(body)
@@ -831,49 +894,59 @@ os.environ.pop("STUB_RECORD", None)
 # -- W11: the probe raw call over this transport. The
 # adapter's own probe_raw_call rides its built-in
 # _exchange and cannot travel this route; the transport
-# layer's raw call is witnessed here against stub
-# helpers, and its captures are read by the framework
-# probe's own classification.
+# layer's raw call is witnessed here against raw-mode
+# stub helpers, and its captures are read by the
+# framework probe's own classification and evidence
+# retention (INDEX 293).
 from framework import probe as probe_module  # noqa: E402
 from groq_connector_transport import (  # noqa: E402
     install_groq_connector_raw_call)
 adapter11 = OpenAICompatibleAdapter(model=PIN, timeout=10.0)
-raw_call11 = install_groq_connector_raw_call(
-    adapter11, PATHS["ok"], PIN)
 request11 = probe_module.build_request(PIN)
+RAWBODY = os.path.join(TMP, "raw_body.txt")
+os.environ["STUB_RAWBODY"] = RAWBODY
+
+
+def framed_body():
+    with open(RAWBODY, encoding="utf-8") as fh:
+        return fh.read()
+
+
+raw_call11 = install_groq_connector_raw_call(
+    adapter11, PATHS["rawok"], PIN)
 capture11 = raw_call11(request11)
-body11 = None
-try:
-    body11 = json.loads(capture11.get("body") or "")
-except ValueError:
-    body11 = None
-check("W11: a successful raw call returns the provider "
-      "body as received, status 200, and no error body",
-      isinstance(body11, dict) and
-      capture11.get("http_status") == 200 and
+check("W11: a successful raw call carries the "
+      "provider's ACTUAL status — the stub framed 201, "
+      "not a manufactured 200 — and its exact body, "
+      "with no error body beside it",
+      capture11.get("http_status") == 201 and
+      capture11.get("body") == framed_body() and
       capture11.get("error_body") is None,
       f"status={capture11.get('http_status')}")
 check("W11: the raw capture's metadata names the "
       "provider-reported model id",
       (capture11.get("metadata") or {}).get("model") ==
       PIN)
+check("W11: the successful capture classifies under "
+      "the probe's own classification as a native "
+      "catalogue call the provider accepted",
+      probe_module.classify_capture(capture11) ==
+      ("native_catalogue", "provider_accepted", None),
+      f"classified={probe_module.classify_capture(capture11)}")
 raw_call11b = install_groq_connector_raw_call(
     adapter11, PATHS["rawerr"], PIN)
 capture11b = raw_call11b(request11)
 check("W11: on a provider HTTP error the capture names "
-      "the status the helper reported",
-      capture11b.get("http_status") == 400,
+      "the provider's actual status and carries its "
+      "exact error body, with no body beside it",
+      capture11b.get("http_status") == 400 and
+      capture11b.get("error_body") == framed_body() and
+      capture11b.get("body") is None,
       f"status={capture11b.get('http_status')}")
-check("W11: the capture's error body is the provider's "
-      "error body as the helper retained it, and no body "
-      "stands beside it",
-      isinstance(capture11b.get("error_body"), str) and
-      "commentary" in capture11b["error_body"] and
-      capture11b.get("body") is None)
-check("W11: the diagnostics object is the helper's own "
-      "output, distinct from the error body it carried",
-      isinstance(capture11b.get("diagnostics"), str) and
-      "Traceback" in capture11b["diagnostics"] and
+check("W11: the diagnostics object carries none of the "
+      "error body — the raw helper's stderr stands apart "
+      "from the provider's testimony",
+      not capture11b.get("diagnostics") or
       capture11b["diagnostics"] !=
       capture11b.get("error_body"))
 check("W11: the refused hybrid capture classifies "
@@ -884,6 +957,57 @@ check("W11: the refused hybrid capture classifies "
       ("environment_tool_attempt", "provider_refused",
        "text_contract_json"),
       f"classified={probe_module.classify_capture(capture11b)}")
+raw_call11c = install_groq_connector_raw_call(
+    adapter11, PATHS["rawlong"], PIN)
+capture11c = raw_call11c(request11)
+long_body = framed_body()
+trial11c = probe_module.trial_evidence(1, capture11c)
+check("W11: an error body longer than the helper's "
+      "ordinary 2,000-char retention arrives WHOLE on "
+      "the raw path and is retained completely under "
+      "the probe's ceiling — completeness judged on the "
+      "true body",
+      capture11c.get("error_body") == long_body and
+      len(long_body.encode("utf-8")) > 2000 and
+      trial11c["provider_body"] == long_body and
+      trial11c["provider_body_complete"] is True and
+      trial11c["provider_body_bytes"] ==
+      len(long_body.encode("utf-8")) and
+      trial11c["evidence_complete"] is True,
+      f"body_bytes={trial11c['provider_body_bytes']}")
+raw_call11d = install_groq_connector_raw_call(
+    adapter11, PATHS["rawxl"], PIN)
+capture11d = raw_call11d(request11)
+trial11d = probe_module.trial_evidence(1, capture11d)
+check("W11: an error body longer than the probe's own "
+      "64,000-byte ceiling is truncated BY THE PROBE "
+      "and marked incomplete — never labelled complete",
+      len(framed_body().encode("utf-8")) >
+      probe_module.CAPTURE_CEILING and
+      trial11d["provider_body_complete"] is False and
+      trial11d["evidence_complete"] is False and
+      trial11d["provider_body_bytes"] ==
+      probe_module.CAPTURE_CEILING and
+      trial11d["aggregate_bytes"] ==
+      probe_module.CAPTURE_CEILING,
+      f"body_bytes={trial11d['provider_body_bytes']}")
+raw_call11e = install_groq_connector_raw_call(
+    adapter11, PATHS["ok"], PIN)
+capture11e = raw_call11e(request11)
+check("W11: a helper without the raw mode yields an "
+      "honest capture — no manufactured status, no "
+      "substituted body, the absence explained in the "
+      "diagnostics",
+      capture11e.get("http_status") is None and
+      capture11e.get("body") is None and
+      capture11e.get("error_body") is None and
+      isinstance(capture11e.get("diagnostics"), str) and
+      "raw-mode envelope" in capture11e["diagnostics"] and
+      probe_module.classify_capture(capture11e) ==
+      ("no_observable_behaviour", "provider_failed",
+       None),
+      f"status={capture11e.get('http_status')}")
+os.environ.pop("STUB_RAWBODY", None)
 
 shutil.rmtree(TMP, ignore_errors=True)
 print()

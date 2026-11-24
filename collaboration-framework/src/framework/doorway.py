@@ -2717,8 +2717,11 @@ class Doorway:
         stand, or None (probe scope §4): verification names the
         standing probe evidence — the verified assembly's
         integrity boundary covers it (INDEX 285); the judgement
-        identifies the exact probe event and evidence and
-        records the selected mode with its grounds; the pack
+        identifies the exact probe event and evidence, records
+        the selected mode with its grounds, and binds the hash
+        of the examiner's durable decision receipt (INDEX 293 —
+        the decision's own provenance, without which the mode
+        and grounds are bare caller arguments); the pack
         seals the same bindings and the judged mode itself, so
         the mode the adapter receives is the mode the examiner
         judged."""
@@ -2750,6 +2753,21 @@ class Doorway:
                 return ("the judgement records no grounds for "
                         "its mode; a mode without grounds does "
                         "not seal (probe scope §5)")
+            receipt_hash = payload.get(
+                "decision_receipt_hash")
+            if not isinstance(receipt_hash, str) or \
+                    len(receipt_hash) != 64 or \
+                    any(c not in "0123456789abcdef"
+                        for c in receipt_hash):
+                return ("the judgement binds no examiner "
+                        "decision receipt: "
+                        f"decision_receipt_hash "
+                        f"{receipt_hash!r} is not the SHA-256 "
+                        f"of the examiner's durable decision "
+                        f"receipt — a judgement's mode and "
+                        f"grounds must arrive bound to the "
+                        f"receipt that carries them, not as "
+                        f"bare caller arguments (INDEX 293)")
         if type_ == "ASSEMBLY_PACKED":
             judged = self._event_at(entry.get("judged_seq"))
             judged_mode = (judged or {}).get(
