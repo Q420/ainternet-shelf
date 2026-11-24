@@ -1,13 +1,14 @@
 # NATIVE-MODE PROBE — SCOPE (2026-11-23)
 
-**Status:** Draft **Rev 4**, for Vane's examination. Rev 4 incorporates
-the two consistency corrections of her Rev 3 examination (INDEX 279): the
-recommendation-vs-judgement distinction made consistent between §5 and
-P5, and the capture ceiling defined as a per-trial aggregate (§4); it also
-records the translation seam's empirical check as a build-stage
-precondition (§8). Rev 3 incorporated the two corrections of her Rev 2
-examination (INDEX 277); Rev 2, the seven of her Rev 1 examination
-(INDEX 272). Developed under her
+**Status:** Draft **Rev 5**, for Vane's examination. Rev 5 incorporates
+the final correction of her Rev 4 examination (INDEX 281): §7's sequence
+corrected to A1's established lifecycle (the probe stands after
+ASSEMBLY_GENERATED, before ASSEMBLY_VERIFIED), verified against
+`generator.py`'s own stated order, and the checker's aggregate duty made
+a recomputation of the per-trial sum (§4). Rev 4 incorporated the two
+consistency corrections of her Rev 3 examination (INDEX 279); Rev 3, the
+two of her Rev 2 examination (INDEX 277); Rev 2, the seven of her Rev 1
+examination (INDEX 272). Developed under her
 INDEX 270 recommendation and Ben's INDEX 267/269 direction. A bounded
 addition to Piece A1's assembly lifecycle; A1 is not reopened wholesale. No
 implementation and no worker attempt are implied by this scope.
@@ -189,9 +190,13 @@ count; and a **recommended adapter mode** (§5) marked as recommendation,
 not decision. The sealed assembly record binds the probe evidence's hash,
 so packing seals it with everything else. The **independent checker**
 verifies: the probe act stands in its named sequence (§7); the counts
-recompute from the per-trial records in both dimensions; no trial's
-retained bytes exceed the capture ceiling, and any trial at the ceiling
-without a completeness statement diverges; the sealed record's adapter
+recompute from the per-trial records in both dimensions; the checker
+**recomputes the sum of each trial's retained provider-body and
+diagnostic bytes** and verifies it against the aggregate ceiling (not
+merely each object's size independently), verifies the provider body's
+own completeness status, and diverges on any trial whose retained total
+exceeds the ceiling or whose completeness statements do not match the
+objects retained; the sealed record's adapter
 mode corresponds to the judgement act (§5), not merely to the
 recommendation; and a governed assembly's probe evidence carries a
 configuration fingerprint matching its own (§7) — stale or foreign
@@ -251,13 +256,20 @@ byte-identical to today.
 
 ## 7. Ordering and freshness
 
-Against A1's existing lifecycle, the stage's exact sequence is:
+Against A1's existing lifecycle — whose normative order `generator.py`
+itself states as ASSEMBLY_PROPOSED → instance onboarding →
+ASSEMBLY_GENERATED → ASSEMBLY_VERIFIED → ASSEMBLY_JUDGED →
+ASSEMBLY_PACKED → ASSEMBLY_ISSUE_AUTHORISED → INSTANCE_ACTIVATED — the
+stage's exact sequence is:
 **… instance onboarding recorded → ASSEMBLY_GENERATED → ASSEMBLY_PROBED →
-the examiner's assembly judgement → ASSEMBLY_VERIFIED →
-ASSEMBLY_ISSUE_AUTHORISED → ASSEMBLY_PACKED → INSTANCE_ACTIVATED …** —
+ASSEMBLY_VERIFIED → ASSEMBLY_JUDGED → ASSEMBLY_PACKED →
+ASSEMBLY_ISSUE_AUTHORISED → INSTANCE_ACTIVATED …** —
 the probe requires the allocated instance and its attributable onboarding
-to exist, and stands before judgement, packing and activation; the
-checker enforces the ordering by these named events, not by inference.
+to exist, and stands **after generation and before construction
+verification**, hence before judgement, packing, issue authorisation and
+activation; it moves no existing act from its established place. The
+event-order witness and the checker enforce the ordering by these named
+events in this exact sequence, not by inference.
 
 Probe evidence is bound to a **configuration fingerprint** comprising:
 provider route; pinned model identifier; probe suite version and its
