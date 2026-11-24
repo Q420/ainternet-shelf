@@ -236,7 +236,10 @@ conversion) fits within the true envelope — the measured 8,000-token budget;
 the 25% margin's purpose is to absorb estimation error, not to stand as a
 second, lower envelope; and a breach of the true envelope in live running
 fails safe — the provider refuses, the refusal is recorded as a delivery
-failure, the run stalls honestly, and nothing is silently mangled. The
+failure, the run stalls honestly, and nothing is silently mangled. Ben added:
+a stalled run that leaves a proper record is resumable by design — the
+briefcase tells the next agent exactly how to finish the task; the worst case
+is a handoff, not a dead end. The
 incompatibility finding above stands unaltered as the derivation's result
 under the margin-as-threshold reading; the ruling changes the margin's
 status, on the director's authority, and is carried to the examiner for her
