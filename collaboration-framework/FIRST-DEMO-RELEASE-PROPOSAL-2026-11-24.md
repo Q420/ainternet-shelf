@@ -75,9 +75,16 @@ deliberately never made (N51: the two claims are never merged).
   ordinal recorded and arguments never processed.
 - **Tool surface and grants:** as sealed for the evidenced configuration
   line of this assignment (INDEX 326: same assignment / sources / route /
-  pin / bounds / retrieval) — the retrieval catalogue offered natively,
-  reads confined to `sources/`, the write grant confined to the sandbox.
-  No grant is widened by this proposal.
+  pin / bounds / retrieval) — the retrieval catalogue offered natively.
+  The exact surface is the harness's `GRANTS_RETRIEVAL`, **nine grants**:
+  `sandbox.list`, `sandbox.search`, `sandbox.read_range`, `sandbox.read`
+  under `sources/`; `sandbox.write` under `scratch/`; and the same four
+  retrieval tools under `scratch/` — the worker holds scratch-read
+  authority, including the capability to read its own brief. This is the
+  previously released retrieval-v3 two-path configuration, **not**
+  sources-only access, and it differs in exactly that respect from the
+  original Rev 2 run scope's no-read-back condition; the distinction is
+  preserved here deliberately. No grant is widened by this proposal.
 
 ## 3. Bounds and budget
 
@@ -96,8 +103,9 @@ deliberately never made (N51: the two claims are never merged).
     admitted (INDEX 352). Residual Used ≈ 0 at each start is an
     **operating assumption, not a measurement**; the accounting says so
     and this proposal does not upgrade it.
-  - The arithmetic is stated plainly: at ≥ 65 s spacing, at most nine
-    iteration starts fit inside the 600 s deadline, so the deadline —
+  - The arithmetic is stated plainly: at ≥ 65 s spacing, starts at
+    0, 65, 130, 195, 260, 325, 390, 455, 520 and 585 fit inside the
+    600 s deadline — at most **ten** iteration starts — so the deadline —
     not the step ceiling — is the expected binding bound. That is
     accepted in advance, not discovered mid-run.
   - **A refusal is a recorded delivery failure, never a disguised
@@ -166,3 +174,22 @@ and again before the run starts. His decisions are not sought at either
 point, and none are needed — the authorisation, the scope, and this
 release examination are the gates, and they have each had their say in
 order.
+
+---
+
+## Corrections (2026-11-24, per the release examination, INDEX 412)
+
+Two statements in the proposal as submitted were wrong, and are corrected
+in place above, on the examiner's findings:
+
+1. **Deadline arithmetic.** The submission said "at most nine iteration
+   starts." The correct bound is **ten** (starts at 0 through 585 s). The
+   conclusion — the deadline binds before the step ceiling — is unchanged.
+   The error was Remmy's arithmetic, caught at examination.
+2. **Grant surface.** The submission described the tool surface as "reads
+   confined to `sources/`." The actual `GRANTS_RETRIEVAL` surface is nine
+   grants including the four retrieval tools under `scratch/` — the worker
+   can read its own brief. §2 now states the exact surface and preserves
+   the distinction from the original Rev 2 no-read-back condition. The
+   configuration itself is the previously released retrieval-v3 line,
+   unchanged and unwidened; the description was wrong, not the grants.
