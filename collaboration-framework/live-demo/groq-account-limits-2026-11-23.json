@@ -1,0 +1,17 @@
+{
+  "artifact": "groq-account-limits",
+  "date": "2026-11-23",
+  "method": "One minimal live chat call (model openai/gpt-oss-120b, 75 prompt tokens, 8 completion tokens) through the Groq connector's own call path; the applied rate-limit headers returned by api.groq.com for Ben's authenticated organisation are recorded verbatim. No key material is recorded or was exposed.",
+  "model": "openai/gpt-oss-120b",
+  "status": 200,
+  "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "7917",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "622ms"
+  },
+  "usage": {"prompt_tokens": 75, "completion_tokens": 8, "total_tokens": 83},
+  "reading": "The applied token limit is 8,000 tokens per minute — the published Free-plan TPM figure for this model (Vane's doc check, INDEX 257); the applied request limit is 1,000 per minute. The binding constraint for attempt 7 is therefore the per-minute token budget, not a byte ceiling: a package must fit, with its completion, inside the tokens available in its minute, or the provider answers 429 (which the loop records as provider failure). Attempt 6's calls were small and fast; the passed design's captured packages (10,831-20,087 bytes) sit in the few-thousand-token range; a maximum-configuration package (~36,000 retrieved bytes) would exceed the minute budget on its own and is a bound for the design, not a shape the real run should approach."
+}
