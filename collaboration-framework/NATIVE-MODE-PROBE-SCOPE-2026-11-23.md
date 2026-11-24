@@ -1,9 +1,23 @@
 # NATIVE-MODE PROBE — SCOPE (2026-11-23)
 
-**Status:** Draft Rev 1, for Vane's examination. Developed under her INDEX 270
-recommendation and Ben's INDEX 267/269 direction. A bounded addition to Piece
-A1's assembly lifecycle; A1 is not reopened wholesale. No implementation and
-no worker attempt are implied by this scope.
+**Status:** Draft **Rev 2**, for Vane's examination. Rev 2 incorporates the
+seven corrections of her Rev 1 examination (INDEX 272). Developed under her
+INDEX 270 recommendation and Ben's INDEX 267/269 direction. A bounded
+addition to Piece A1's assembly lifecycle; A1 is not reopened wholesale. No
+implementation and no worker attempt are implied by this scope.
+
+**Changes in Rev 2:** (1) the capture boundary is placed **below** response
+interpretation (§2); (2) trial outcomes are recorded in **two dimensions**
+— behaviour observed × delivery status — replacing the single outcome
+class (§3); (3) a **quorum** governs mode recommendation (§3, §5); (4)
+probe evidence, integrity evidence and presentation are distinguished,
+under an explicit **capture ceiling** with an **incomplete** classification
+(§4); (5) judgement records the selected mode **and its grounds**, and the
+mode is bound into the sealed assembly object the adapter consumes (§5);
+(6) two witnesses added — native≡text equivalence and **translation
+integrity** (§8, P9–P10); (7) the stage's predecessor and successor events
+are named against A1's lifecycle, and the configuration fingerprint is
+extended to request parameters and tool-choice configuration (§7).
 
 ## 1. Purpose and place
 
@@ -11,102 +25,158 @@ The probe is a recorded stage of assembly, sitting **after per-instance
 onboarding** (the model's identity declaration stands recorded, so probe
 evidence is attributable) and **before assembly judgement and packing**. It
 establishes, for one generated instance, **observed interaction behaviour
-under specified conditions** — nothing else. It is not a work assignment, not
-an authority grant, and not an opportunity to exercise real tools. Its output
-is probe evidence, bound into the assembly record, which the examiner weighs
-at judgement; the evidence informs the adapter-mode decision and never makes
-it automatically.
+under specified conditions** — nothing else. It is not a work assignment,
+not an authority grant, and not an opportunity to exercise real tools. Its
+output is probe evidence, bound into the assembly record, which the
+examiner weighs at judgement; the evidence informs the adapter-mode
+decision and never makes it automatically.
 
-## 2. The probe environment
+## 2. The probe environment and the observation boundary
 
-- A **synthetic probe case**, explicitly identified as such in its own text:
-  a trivial toy task ("report the toy object's colour") whose answer needs
-  one call against the probe catalogue or one structured text reply.
+- A **synthetic probe case**, explicitly identified as such in its own
+  text: a trivial toy task ("report the toy object's colour") whose answer
+  needs one call against the probe catalogue or one structured text reply.
 - A **small, fixed catalogue of harmless test tools**, offered **natively**
-  (provider tool definitions) and described in the text contract at once, so
-  either channel is genuinely available: `probe.lookup` (a canned toy
+  (provider tool definitions) and described in the text contract at once,
+  so either channel is genuinely available: `probe.lookup` (a canned toy
   lookup) and `probe.note` (a canned toy note). Both are **non-executing**:
   no performer exists for them anywhere in the framework; a call to either
   can only ever be captured.
 - **No real filesystem, shell, network (beyond the provider call itself),
   credentials, shelf access, or external side effects.** The probe prompt
   carries no case material, no sources, and no grants.
-- A **capture boundary**: for every trial, the raw provider response is
-  retained whole — content, native tool calls with their arguments, and
-  provider errors with their bodies (the INDEX 262 correction makes the
-  last of these available). **No captured call is dispatched, executed, or
-  answered.** A call is observed, not obeyed.
+- **The observation boundary sits below response interpretation.** The
+  probe captures the provider's response **at the transport/response
+  level, before the adapter's text-contract parsing or validation can
+  reject, transform, or discard anything**. A native call must never be
+  classified malformed merely because the text parser does not understand
+  it. The capture preserves, per trial: the raw response content; native
+  tool-call names and arguments as delivered; provider refusal and error
+  details (with error bodies, per the INDEX 262 correction); **provider
+  acceptance or rejection, recorded separately from the model's attempted
+  behaviour**; and the response's identity and integrity information (§4).
+- **One generation is observed, then the trial ends.** The probe never
+  sends tool results back, never continues a native tool conversation, and
+  never answers a captured call. **No captured call is dispatched or
+  executed.** A call is observed, not obeyed.
 
-## 3. The trial set — "native-probe-v1"
+## 3. The trial set — "native-probe-v1"; two evidence dimensions
 
 Consistency claims require repetition, so the stage runs a **versioned
 suite**: **5 trials** of the identical probe request (same prompt, same
-offered definitions, same parameters: temperature 0.2, the run's pinned
-model and route), each bounded (one call; the adapter's ordinary deadline
-discipline). The suite definition — prompt text, tool definitions,
-parameters, classification rules — is a named, versioned artifact
-(`native-probe-v1`); any change to it is a new version, and **results are
-never inherited across a change of model, provider route, or probe
-version**.
+offered definitions, same parameters: temperature 0.2, tool-choice left at
+the provider default, the run's pinned model and route), each bounded (one
+call; the adapter's ordinary deadline discipline). The suite definition —
+prompt text, tool definitions, parameters, classification rules — is a
+named, versioned artifact (`native-probe-v1`); any change to it is a new
+version, and **results are never inherited across a change of model,
+provider route, or probe version** (§7).
 
-Each trial is classified into exactly one outcome class:
+Each trial is recorded in **two dimensions**, neither discarded:
 
-- `text_contract` — the response is the framework's structured text object
-  (a contribution, or text-form tool requests naming probe tools);
-- `native_catalogue` — the response carries native tool call(s) naming
-  offered probe tools, and the provider accepted the generation;
-- `environment_tool_attempt` — the response reaches for a capability that
-  was **not offered** (e.g. `container.exec`), whether the provider
-  delivers it or refuses it (attempt 8's shape: the provider's
-  `tool_use_failed` refusal is recorded with the attempt);
-- `mixed` — more than one of the above in a single response;
-- `malformed` — a response in neither contract, or with unparseable
+**Behaviour observed** — what the model attempted:
+- `text_contract` — the framework's structured text object (a
+  contribution, or text-form tool requests naming probe tools);
+- `native_catalogue` — native tool call(s) naming **offered** probe tools;
+- `environment_tool_attempt` — a reach for a capability that was **not
+  offered** (e.g. `container.exec`), whether or not the provider delivers
+  it;
+- `mixed` — more than one of the above in a single generation;
+- `malformed` — a generation in neither contract, or with unparseable
   arguments;
 - `refusal` — the model declines the probe task;
-- `provider_failure` — the boundary delivered no generation (HTTP error,
-  timeout, disconnect), the provider's reason retained where available.
+- `no_observable_behaviour` — no generation from which behaviour can be
+  read.
 
-The stage reports **counts per class over the 5 trials** (N of M), never a
-single blended verdict. Requested vs provider-accepted is preserved per
-trial: a native call the provider refused is an attempt with a provider
-refusal attached, not an accepted call; **actual execution is not a
-possible probe outcome**.
+**Delivery status** — what the provider did with the generation:
+- `provider_accepted` — the generation was delivered to the framework;
+- `provider_refused` — the provider rejected the generation and supplied
+  evidence of the attempt in its refusal (attempt 8's exact shape:
+  behaviour `environment_tool_attempt` × delivery `provider_refused`);
+- `provider_failed` — no generation and no attributable attempted call
+  (HTTP error, timeout, disconnect), the provider's reason retained where
+  available;
+- `indeterminate` — the response is unavailable or its status cannot be
+  determined.
 
-## 4. Evidence and the record
+The stage reports **counts per class in each dimension** over the 5
+trials, never a single blended verdict, and the examiner sees the complete
+distribution. **What the model attempted, what the provider accepted, and
+what the framework executed are three different facts**; in the probe, the
+third is always *nothing executed*, by construction.
 
-A new recorded act in the assembly lifecycle, **ASSEMBLY_PROBED**, recorded
-by the office after onboarding and before judgement, carrying: the instance
+**Settled trials and the quorum.** A trial is **settled** when its
+behaviour dimension is classifiable from captured evidence — including a
+provider-refused attempt whose refusal carries the attempt (attempt 8's
+trial is settled; a bare provider failure is not). A mode recommendation
+requires **at least 3 settled trials** and a **strict majority of the
+settled trials** in one behaviour class that carries a mode (§5);
+otherwise the stage's result is **inconclusive**.
+
+## 4. Evidence: probe, integrity, presentation
+
+Three distinct things, never conflated:
+
+- **Probe evidence:** the complete raw response as captured at the
+  observation boundary, including native arguments and the provider error
+  body where available — retained up to an explicit **capture ceiling of
+  64,000 bytes per trial response**.
+- **Integrity evidence:** a SHA-256 hash over the exact captured bytes,
+  recorded per trial.
+- **Presentation:** any shortened rendering used in reports or the viewer,
+  labelled as a rendering; presentation is never evidence.
+
+If a response exceeds the capture ceiling, the record states that fact
+explicitly, retains the available bounded bytes (whose hash is then the
+integrity evidence for *those* bytes), and classifies that trial's
+evidence as **incomplete** — an incomplete capture is never labelled a
+complete raw response. The capture ceiling is a named constant of the
+suite, and the checker verifies it (§4, checker duties below).
+
+A new recorded act in the assembly lifecycle, **ASSEMBLY_PROBED**,
+recorded by the office at its sequence point (§7), carrying: the instance
 and assembly ids; the seat and role; the **provider route and pinned model
 identifier**; the **probe suite name and version** and a canonical hash of
-its definition; the offered tool definitions; per-trial outcome classes
-with the raw responses retained in full (subject to the record's ordinary
-diagnostic bound, with hashes of the untruncated originals); the per-class
-counts; and a **recommended adapter mode** (§5) marked as recommendation,
+its definition; the offered tool definitions; per trial — behaviour class,
+delivery status, settled flag, evidence-completeness flag, and the
+integrity hash (the captured bytes themselves retained in the record,
+subject to the ceiling above); the per-dimension counts; the settled
+count; and a **recommended adapter mode** (§5) marked as recommendation,
 not decision. The sealed assembly record binds the probe evidence's hash,
 so packing seals it with everything else. The **independent checker**
-verifies: the probe act stands in sequence (after onboarding, before
-judgement); the counts recompute from the per-trial classes; the sealed
-record's adapter mode corresponds to the judgement act, not merely to the
-recommendation; and a governed assembly (one whose case will run the loop)
-carries probe evidence whose configuration fingerprint matches its own
-provider, model and probe version — stale or foreign evidence is a
-divergence.
+verifies: the probe act stands in its named sequence (§7); the counts
+recompute from the per-trial records in both dimensions; no trial's
+retained bytes exceed the capture ceiling, and any trial at the ceiling
+without a completeness statement diverges; the sealed record's adapter
+mode corresponds to the judgement act (§5), not merely to the
+recommendation; and a governed assembly's probe evidence carries a
+configuration fingerprint matching its own (§7) — stale or foreign
+evidence is a divergence.
 
-## 5. Adapter modes and their derivation
+## 5. Adapter modes, derivation, and judgement
 
 Two modes: **`text`** (the existing contract, unchanged) and **`native`**
 (the catalogue offered as provider tool definitions; §6). The
-recommendation derives from the counts by a fixed rule: a class holding a
-**majority of settled trials** (text_contract → `text`; native_catalogue →
-`native`) recommends that mode; environment attempts, mixed, malformed,
-refusal and provider-failure trials recommend nothing by themselves — they
-stand as evidence for the examiner's weighing (a model that reaches for a
-shell in the probe is a fact judgement may act on; it is never, by itself, a
-reason to grant anything). **No majority → no recommendation** (recorded as
-inconclusive). The examiner's judgement act records the assembly's mode;
-absent or inconclusive probe evidence, a governed assembly **fails
-closed**: it may not be packed with a permissive default — judgement must
-either record a mode on stated grounds or the assembly does not proceed.
+recommendation derives from the settled trials by the fixed rule of §3:
+a strict majority of settled trials in `text_contract` recommends `text`;
+in `native_catalogue` recommends `native`; any other distribution —
+including environment attempts holding a majority — recommends **none**
+(recorded inconclusive). Environment attempts, mixed, malformed, refusal
+and provider-failure trials recommend nothing by themselves in any case;
+they stand as evidence for the examiner's weighing, and an environment
+attempt is never, by itself, a reason to grant anything.
+
+The examiner's **judgement act records the selected mode and its
+grounds**. The examiner may disagree with the recommendation, but may not
+silently substitute an unsupported mode: the grounds are part of the act.
+Where the evidence is inconclusive, a decision to proceed must carry a
+clearly stated basis in the judgement act and **must not bypass the
+fail-closed rule**: absent a judgement act recording a mode on stated
+grounds, a governed assembly **cannot be packed** — there is no permissive
+default. **The selected mode is bound into the sealed assembly record —
+the object the adapter actually consumes.** The adapter reads the mode
+only from that sealed object; it must not be able to choose a mode from a
+prompt, an environment variable, or an unverified model name.
 
 ## 6. The in-work native path (translation boundary)
 
@@ -116,52 +186,78 @@ INDEX 258 derivation — the offered set is the sealed grants, nothing else)
 and parses native tool calls in the response into **the same typed
 tool_requests outcome the loop already consumes**. Translation happens
 entirely inside the adapter, before the doorway: from the doorway onward —
-grant and bounds adjudication (including the retrieval aggregate), recorded
-dispatch, execution, recorded outcome — **nothing differs from the text
-path**. Malformed native arguments fail closed as a malformed response.
-A native call naming a tool outside the offered catalogue is translated
-like any other request and **refused at the doorway as ungranted, recorded,
-without execution** — this is the scope's negative acceptance case (§8).
-Where the sealed mode is `text`, requests and parsing are byte-identical
-to today.
+grant and bounds adjudication (including the retrieval aggregate),
+recorded dispatch, execution, recorded outcome — **nothing differs from
+the text path**. **Translation is a trust boundary:** it preserves the
+original request faithfully — tool name and arguments exactly as the
+model emitted them are what the doorway adjudicates and the record
+retains; translation must never quietly normalise an invalid request into
+an authorised one. Malformed native arguments fail closed as a malformed
+response. A native call naming a tool outside the offered catalogue is
+translated like any other request and **refused at the doorway as
+ungranted, recorded, without execution** — the scope's negative acceptance
+case (§8, P7). Where the sealed mode is `text`, requests and parsing are
+byte-identical to today.
 
-## 7. Freshness and failure discipline
+## 7. Ordering and freshness
 
-Probe evidence is bound to a configuration fingerprint (provider route,
-pinned model identifier, probe version, offered definitions). Any change
-to a component invalidates the evidence for mode purposes: a governed
-assembly whose fingerprint does not match its own configuration is treated
-as unprobed — fail closed (§5). Probe-stage provider failures classify the
-affected trials; they never fabricate a mode.
+Against A1's existing lifecycle, the stage's exact sequence is:
+**… instance onboarding recorded → ASSEMBLY_GENERATED → ASSEMBLY_PROBED →
+the examiner's assembly judgement → ASSEMBLY_VERIFIED →
+ASSEMBLY_ISSUE_AUTHORISED → ASSEMBLY_PACKED → INSTANCE_ACTIVATED …** —
+the probe requires the allocated instance and its attributable onboarding
+to exist, and stands before judgement, packing and activation; the
+checker enforces the ordering by these named events, not by inference.
+
+Probe evidence is bound to a **configuration fingerprint** comprising:
+provider route; pinned model identifier; probe suite version and its
+canonical hash; the offered native tool definitions; the relevant request
+parameters; and the tool-choice configuration. Any change to a component
+invalidates the evidence for mode purposes: a governed assembly whose
+fingerprint does not match its own configuration is treated as unprobed —
+fail closed (§5). A new assembly never inherits a prior assembly's probe
+evidence, whatever the displayed model name. Probe-stage provider failures
+classify the affected trials; they never fabricate a mode.
 
 ## 8. Witnesses the build must carry
 
 P1. The probe runs pre-activation against a synthetic case; no real tool
     exists to execute; captured calls dispatch nothing (record proof).
-P2. Each outcome class is produced and classified distinctly, including an
-    environment-tool attempt in attempt 8's exact shape (a provider
-    `tool_use_failed` refusal with the attempt preserved).
-P3. Five bounded trials reproduce the suite; counts recompute; the
-    classification of a scripted mixed response is `mixed`.
+P2. The two dimensions are produced and classified distinctly, including
+    an environment-tool attempt in attempt 8's exact shape (behaviour
+    `environment_tool_attempt` × delivery `provider_refused`, the attempt
+    preserved from the provider's refusal body).
+P3. Five bounded trials reproduce the suite; counts in both dimensions
+    recompute; a scripted mixed generation classifies `mixed`.
 P4. The evidence binds to the assembly: sequence, fingerprints, hashes;
     the checker accepts a sound record and diverges on stale evidence,
-    foreign evidence, and count tampering.
-P5. Mode derivation: majority text → text; majority native → native; no
-    majority → inconclusive, and an inconclusive governed assembly cannot
-    be packed (fail closed).
+    foreign evidence, count tampering, and an over-ceiling trial retained
+    without an incomplete classification.
+P5. Mode derivation and quorum: 3 settled + strict majority recommends;
+    2 settled, or no strict majority, is inconclusive, and an inconclusive
+    governed assembly cannot be packed (fail closed); four provider
+    failures + one text response recommends nothing.
 P6. In-work native path: a native call to a granted tool dispatches
     through the doorway identically to its text-form twin (same events,
     same bounds), in a governed retrieval assembly.
 P7. **Negative acceptance case:** a native call to an ungranted tool
-    during work is refused at the doorway, recorded, and executes nothing.
+    during work is refused at the doorway, recorded, and executes
+    nothing.
 P8. The text path is byte-identical for text-mode assemblies (the full
     existing battery at its counts: A1 69, A2 80, A3 88, A3-CAT 37,
     retrieval 56 + evidence 41, checker 35, transports 55 + 55).
+P9. **Equivalence:** a native call to a granted tool and its text-form
+    equivalent produce equivalent doorway requests and the same governed
+    dispatch behaviour.
+P10. **Translation integrity:** a native call with altered arguments, an
+    ungranted tool name, or a tool absent from the sealed catalogue
+    cannot expand authority through translation; the doorway adjudicates
+    the request exactly as emitted, and the record retains it exactly.
 
 ## 9. Non-goals
 
 No execution service and no new work tools; no environment capability is
-granted, designed, or implied; no change to grants, bounds, the doorway, or
-the checker beyond §4's correspondence; no worker attempt is authorised by
-this piece — the first governed run under a probed mode is a separate
+granted, designed, or implied; no change to grants, bounds, the doorway,
+or the checker beyond §4's correspondence; no worker attempt is authorised
+by this piece — the first governed run under a probed mode is a separate
 release decision for Vane and Ben.
