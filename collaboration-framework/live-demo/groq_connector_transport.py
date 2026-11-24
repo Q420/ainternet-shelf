@@ -127,21 +127,31 @@ carrying what the provider actually sent. The helper is
 invoked in its raw mode (`chat-raw`): it performs the
 same surrogate-credentialed request and frames the result
 as a JSON envelope carrying the provider's ACTUAL HTTP
-status and the UNMODIFIED response body, read whole — on
-success and on HTTP error alike (no retention bound, no
-collapsing on this path; the INDEX 261/262 bounded
-retention governs the helper's ordinary `chat` failures,
-not this evidence path). The transport hands that body
-to the probe WHOLE: retention and completeness are the
-probe's to judge, over the true body, under its own
-ceiling. The helper's stderr stands separately as the
-capture's diagnostics object — diagnostic output is never
-presented as the provider body. No status is ever
-manufactured: where the helper's output is not a raw-mode
-envelope (a helper without the raw mode, answering in the
-chat shape), or the helper fails before framing an answer,
-the capture claims no status and no body — the absence is
-recorded honestly, with the explanation as its diagnostic.
+status and the response body as RAW BYTES, base64-encoded
+(`body_b64`), read whole to EOF — on success and on HTTP
+error alike (no retention bound, no collapsing, and no
+decoding anywhere on the helper's raw path; the INDEX
+261/262 bounded retention governs the helper's ordinary
+`chat` failures, not this evidence path). The transport
+decodes the base64 back to the exact bytes and applies
+the declared probe-boundary policy: STRICT UTF-8. A body
+that is valid UTF-8 — the provider's JSON contract —
+crosses byte-exact as the capture's body, and the probe
+judges retention and completeness over that true body
+under its own ceiling. A body that is NOT valid UTF-8 is
+never silently rewritten (no replacement characters, no
+lossy decode): the capture claims no body, keeps the
+actual status, and its diagnostics record the body's byte
+length and the SHA-256 of the raw bytes — provenance
+without substitution, the body standing unobserved. The
+helper's stderr stands separately as the capture's
+diagnostics object — diagnostic output is never presented
+as the provider body. No status is ever manufactured:
+where the helper's output is not a raw-mode envelope (a
+helper without the raw mode, answering in the chat shape),
+or the helper fails before framing an answer, the capture
+claims no status and no body — the absence is recorded
+honestly, with the explanation as its diagnostic.
 The subprocess discipline is this module's own: the
 helper in its own process group, bounded by the adapter's
 configured timeout — the fence the adapter's own probe
@@ -178,6 +188,8 @@ Failure-kind mapping (mirroring `_dispatch`):
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import signal
@@ -543,13 +555,18 @@ def install_groq_connector_raw_call(adapter, helper_path=None,
     below every layer of response interpretation. The
     helper is invoked in its raw mode (`chat-raw`), whose
     framed envelope carries the provider's actual status
-    and unmodified body; nothing here parses outcomes or
-    classifies, and no status is manufactured where the
-    envelope does not stand — the probe stage reads what
-    this returns. A transport failure is itself a capture
-    (its kind as the diagnostic), never an exception,
-    exactly as the adapter's own probe_raw_call turns its
-    failures into captures.
+    and the exact response bytes, base64-encoded; the
+    bytes are decoded under the declared probe-boundary
+    policy (strict UTF-8 — see this module's docstring):
+    a body that is not valid UTF-8 stands unobserved,
+    its byte length and raw-bytes SHA-256 recorded in
+    the diagnostics, never rewritten. Nothing here parses
+    outcomes or classifies, and no status is manufactured
+    where the envelope does not stand — the probe stage
+    reads what this returns. A transport failure is itself
+    a capture (its kind as the diagnostic), never an
+    exception, exactly as the adapter's own probe_raw_call
+    turns its failures into captures.
 
     The helper path resolution and the model default
     mirror install_groq_connector_transport's. The bound
@@ -640,10 +657,18 @@ def install_groq_connector_raw_call(adapter, helper_path=None,
             envelope = json.loads(out_text)
         except ValueError:
             envelope = None
+        raw_bytes = None
+        if isinstance(envelope, dict) and \
+                isinstance(envelope.get("body_b64"), str):
+            try:
+                raw_bytes = base64.b64decode(
+                    envelope["body_b64"], validate=True)
+            except ValueError:
+                raw_bytes = None
         if not isinstance(envelope, dict) or \
                 not isinstance(envelope.get("status"), int) \
                 or isinstance(envelope.get("status"), bool) \
-                or not isinstance(envelope.get("body"), str):
+                or raw_bytes is None:
             # The helper's output is not a raw-mode
             # envelope (a helper without the raw mode,
             # answering in the chat shape): the capture
@@ -658,7 +683,29 @@ def install_groq_connector_raw_call(adapter, helper_path=None,
                     if err_text.strip() else note,
                     "metadata": {}}
         status = envelope["status"]
-        text = envelope["body"]
+        try:
+            text = raw_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            # The declared probe-boundary policy (strict
+            # UTF-8): a body that is not valid UTF-8 is
+            # never silently rewritten — no replacement
+            # characters stand in for the provider's
+            # bytes. The capture claims no body, keeps the
+            # actual status, and records the body's
+            # provenance in the diagnostics: its byte
+            # length and the SHA-256 of the raw bytes
+            # exactly as received.
+            note = ("the provider body was not valid "
+                    f"UTF-8 ({len(raw_bytes)} bytes, "
+                    f"sha256 "
+                    f"{hashlib.sha256(raw_bytes).hexdigest()}"
+                    "); it stands unobserved rather than "
+                    "rewritten")
+            return {"body": None, "error_body": None,
+                    "http_status": status,
+                    "diagnostics": (err_text + "\n" + note)
+                    if err_text.strip() else note,
+                    "metadata": {}}
         if status >= 400:
             # The provider's error answer, whole: its
             # status, and its exact error body as the

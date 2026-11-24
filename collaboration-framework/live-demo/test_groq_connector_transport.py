@@ -200,13 +200,15 @@ print(json.dumps({
         "role": "assistant", "content": content}}]}))
 ''' % (DECLARATION, YIELD_CONTENT)
 
-# Raw-mode stub helpers (INDEX 293): each answers the
-# helper's `chat-raw` invocation with the framed envelope
-# the real helper's raw mode prints — {"status", "body"}
-# — and records the exact body it framed to STUB_RAWBODY
-# so the witness can compare byte for byte.
+# Raw-mode stub helpers (INDEX 293, byte-exact envelope
+# at INDEX 295): each answers the helper's `chat-raw`
+# invocation with the framed envelope the real helper's
+# raw mode prints — {"status", "body_b64"}, the body
+# carried as base64 of its exact bytes — and records the
+# exact body it framed to STUB_RAWBODY so the witness
+# can compare byte for byte.
 STUB_RAWOK = '''\
-import json, os, sys
+import base64, json, os, sys
 sys.stdin.buffer.read()
 body = json.dumps({
     "id": "chatcmpl-raw", "model": %r,
@@ -222,14 +224,15 @@ rec = os.environ.get("STUB_RAWBODY")
 if rec:
     with open(rec, "w") as fh:
         fh.write(body)
-print(json.dumps({"status": 201, "body": body}))
+print(json.dumps({"status": 201, "body_b64":
+    base64.b64encode(body.encode("utf-8")).decode("ascii")}))
 ''' % PIN
 
 # The commentary-hybrid refusal of the empirical probe
 # run, carried as the provider's exact error body inside
 # a raw-mode envelope.
 STUB_RAWERR = '''\
-import json, os, sys
+import base64, json, os, sys
 sys.stdin.buffer.read()
 body = json.dumps({"error": {
     "message": "attempted to call tool 'commentary' which "
@@ -244,14 +247,15 @@ rec = os.environ.get("STUB_RAWBODY")
 if rec:
     with open(rec, "w") as fh:
         fh.write(body)
-print(json.dumps({"status": 400, "body": body}))
+print(json.dumps({"status": 400, "body_b64":
+    base64.b64encode(body.encode("utf-8")).decode("ascii")}))
 '''
 
 # An error body longer than the helper's ordinary
 # 2,000-char retention (ERROR_BODY_LIMIT): on the raw
 # path it must arrive whole.
 STUB_RAWLONG = '''\
-import json, os, sys
+import base64, json, os, sys
 sys.stdin.buffer.read()
 body = json.dumps({"error": {
     "message": "x" * 5000, "code": "long_error"}})
@@ -259,14 +263,15 @@ rec = os.environ.get("STUB_RAWBODY")
 if rec:
     with open(rec, "w") as fh:
         fh.write(body)
-print(json.dumps({"status": 400, "body": body}))
+print(json.dumps({"status": 400, "body_b64":
+    base64.b64encode(body.encode("utf-8")).decode("ascii")}))
 '''
 
 # An error body longer than the probe's own 64,000-byte
 # capture ceiling: the probe itself truncates it and
 # marks the evidence incomplete.
 STUB_RAWXL = '''\
-import json, os, sys
+import base64, json, os, sys
 sys.stdin.buffer.read()
 body = json.dumps({"error": {
     "message": "y" * 70000, "code": "huge_error"}})
@@ -274,7 +279,8 @@ rec = os.environ.get("STUB_RAWBODY")
 if rec:
     with open(rec, "w") as fh:
         fh.write(body)
-print(json.dumps({"status": 400, "body": body}))
+print(json.dumps({"status": 400, "body_b64":
+    base64.b64encode(body.encode("utf-8")).decode("ascii")}))
 '''
 
 TMP = tempfile.mkdtemp(prefix="groq-transport-witness-")

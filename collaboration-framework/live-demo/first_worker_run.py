@@ -819,7 +819,13 @@ def run_probe_phase2(run_dir, receipt_path):
     judgement payload itself states that the harness-
     issued examiner token is the recording mechanism,
     not independent authentication of the examiner's
-    identity. Refuses — before recording anything — where
+    identity. The receipt's exact bytes are retained
+    in the run directory as decision-receipt.json
+    before the judgement is recorded (INDEX 295) —
+    the record carries the hash, and the retained file
+    is the very document that hash identifies; a
+    retention failure refuses before any judgement
+    stands. Refuses — before recording anything — where
     the receipt is missing, unreadable or mismatched, or
     where the store does not stand exactly as phase 1
     left it: a probe must stand, no judgement may stand
@@ -881,6 +887,26 @@ def run_probe_phase2(run_dir, receipt_path):
     receipt_hash = hashlib.sha256(
         canonical(receipt)).hexdigest()
     mode = receipt["adapter_mode"]
+    # The retention (INDEX 295): the receipt's exact
+    # bytes are copied into the run directory BEFORE
+    # the judgement is recorded — the record carries
+    # the canonical hash, and decision-receipt.json is
+    # the very document that hash identifies, standing
+    # with the run's evidence. A failed copy fails
+    # phase 2 here, before any judgement stands: the
+    # retention is part of the decision's evidence.
+    try:
+        with open(receipt_path, "rb") as fh:
+            receipt_bytes = fh.read()
+        with open(os.path.join(
+                run_dir, "decision-receipt.json"),
+                "wb") as fh:
+            fh.write(receipt_bytes)
+    except OSError as exc:
+        print(f"ABORT: the decision receipt could not "
+              f"be retained in the run directory: {exc}",
+              file=sys.stderr)
+        return 1
     with open(os.path.join(run_dir, "manifest.json"),
               encoding="utf-8") as fh:
         manifest = json.load(fh)
@@ -909,6 +935,7 @@ def run_probe_phase2(run_dir, receipt_path):
         instance_id, judgement,
         {"probed_mode": True, "adapter_mode": mode,
          "decision_receipt_hash": receipt_hash,
+         "decision_receipt_file": "decision-receipt.json",
          "decision_examiner": receipt["examiner"],
          "decision_recording":
              judgement.get("decision_recording")})

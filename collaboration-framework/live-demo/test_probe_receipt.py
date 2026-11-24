@@ -15,7 +15,11 @@ driven in-process against that standing record:
   the receipt's canonical hash and the decision-
   recording note, packs, activates, completes the loop,
   and the independent checker is all-ok over the full
-  probed record.
+  probed record;
+- the exact receipt file stands retained in the run
+  directory as decision-receipt.json, byte-identical
+  to the receipt supplied, its canonical hash the
+  hash bound in the judgement (INDEX 295).
 
 The real provider is never called: the stub helper
 answers `chat` (identify + loop) and `chat-raw` (the
@@ -62,7 +66,7 @@ YIELD_CONTENT = json.dumps(
      "summary": "stub worker: the brief stands"})
 
 STUB_HELPER = '''\
-import json, sys
+import base64, json, sys
 argv = sys.argv[1:]
 raw = sys.stdin.buffer.read()
 if argv and argv[0] == "chat-raw":
@@ -77,7 +81,9 @@ if argv and argv[0] == "chat-raw":
                                 "arguments": json.dumps(
                                     {"object":
                                      "brass lantern"})}}]}}]})
-    print(json.dumps({"status": 200, "body": body}))
+    print(json.dumps({"status": 200, "body_b64":
+        base64.b64encode(
+            body.encode("utf-8")).decode("ascii")}))
     sys.exit(0)
 if b"State your identity" in raw:
     content = %r
@@ -198,8 +204,8 @@ check("phase 2 refuses a missing receipt",
       rc == 1 and judged_events() == [])
 
 # -- The correct receipt carries the run through.
-rc = harness.run_probe_phase2(
-    RUN_DIR, write_receipt("receipt.json", RECEIPT))
+GOOD_RECEIPT_PATH = write_receipt("receipt.json", RECEIPT)
+rc = harness.run_probe_phase2(RUN_DIR, GOOD_RECEIPT_PATH)
 check("phase 2 with the correct receipt completes "
       "the run", rc == 0, f"rc={rc}")
 store = FrameworkStore(os.path.join(RUN_DIR, "run.db"))
@@ -236,6 +242,39 @@ check("report.json names the probed mode and the "
       report.get("adapter_mode") == "native" and
       report.get("decision_receipt_hash") ==
       RECEIPT_HASH)
+
+# -- The retention (INDEX 295): the exact receipt file
+# stands in the run directory, byte-identical to the
+# receipt supplied, and the canonical hash of what
+# stands there is the hash bound in the judgement — an
+# auditor reads the very document the hash identifies.
+# The phase-2 report names the retained file.
+retained_path = os.path.join(RUN_DIR,
+                             "decision-receipt.json")
+retained_bytes = None
+if os.path.exists(retained_path):
+    with open(retained_path, "rb") as fh:
+        retained_bytes = fh.read()
+with open(GOOD_RECEIPT_PATH, "rb") as fh:
+    supplied_bytes = fh.read()
+retained_hash = None
+if retained_bytes is not None:
+    retained_hash = hashlib.sha256(canonical(
+        json.loads(retained_bytes.decode("utf-8")))
+    ).hexdigest()
+check("the exact receipt file stands retained in the "
+      "run directory — byte-identical to the receipt "
+      "supplied, its canonical hash the hash bound in "
+      "ASSEMBLY_JUDGED, and the phase-2 report names "
+      "the retained file",
+      retained_bytes is not None and
+      retained_bytes == supplied_bytes and
+      retained_hash == RECEIPT_HASH and
+      jp.get("decision_receipt_hash") == retained_hash
+      and report is not None and
+      report.get("decision_receipt_file") ==
+      "decision-receipt.json",
+      f"retained_hash={retained_hash}")
 
 # -- The independent checker over the full probed
 # record (the probe suite's own runner shape).

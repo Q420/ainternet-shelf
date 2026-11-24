@@ -10,8 +10,10 @@ Usage:
   groq_api.py chat MODEL < body.json        # POST /openai/v1/chat/completions
   groq_api.py chat-raw MODEL < body.json    # same POST, framed raw result:
                                             # {"status": <actual HTTP status>,
-                                            #  "body": <unmodified body text>}
+                                            #  "body_b64": <base64 of the exact
+                                            #   response body bytes>}
 """
+import base64
 import json
 import math
 import os
@@ -108,27 +110,30 @@ def call(request):
 
 
 def call_raw(request):
-    """The raw twin of call() (INDEX 293's correction): the
-    same surrogate-credentialed request, but the result is
-    the provider's ACTUAL HTTP status and the UNMODIFIED
-    response body, read whole and decoded as text — on
-    success and on HTTP error alike. No ERROR_BODY_LIMIT,
-    no whitespace collapsing: what the provider sent is
-    what the caller receives, and retention/completeness
-    are the caller's to judge over the true body. A
-    transport-level failure (no response at all) still
-    raises, exactly as in call()."""
+    """The raw twin of call() (INDEX 293's correction,
+    byte-exact at INDEX 295): the same surrogate-
+    credentialed request, but the result is the provider's
+    ACTUAL HTTP status and the response body as RAW BYTES,
+    read whole to EOF — on success and on HTTP error
+    alike. No decode anywhere on this path: the bytes
+    cross to the caller exactly as the provider sent them
+    (the chat-raw framing carries them base64-encoded),
+    and any decoding is the caller's, under its own
+    declared policy. No ERROR_BODY_LIMIT, no whitespace
+    collapsing: what the provider sent is what the caller
+    receives, and retention/completeness are the caller's
+    to judge over the true bytes. A transport-level
+    failure (no response at all, or a body that cannot be
+    read) still raises, exactly as in call()."""
     request.add_header("User-Agent", "Groq/Python 1.0 (Pulse HQ Marni)")
     add_surrogate_to_request(request, "custom.groq", allowed_hosts=[HOST])
     opener = urllib.request.build_opener(NoRedirect())
     try:
         with opener.open(request,
                          timeout=request_timeout()) as response:
-            return response.getcode(), response.read().decode(
-                "utf-8", errors="replace")
+            return response.getcode(), response.read()
     except urllib.error.HTTPError as error:
-        return error.code, error.read().decode(
-            "utf-8", errors="replace")
+        return error.code, error.read()
 
 
 def main():
@@ -158,8 +163,10 @@ def main():
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        status, text = call_raw(req)
-        print(json.dumps({"status": status, "body": text}))
+        status, raw = call_raw(req)
+        print(json.dumps({
+            "status": status,
+            "body_b64": base64.b64encode(raw).decode("ascii")}))
         return 0
     print(__doc__)
     return 2
