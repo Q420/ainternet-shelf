@@ -26,10 +26,10 @@ Resource control has three layers, because cgroup v2 cannot be raised
 on this host (the unified hierarchy delegates no controllers — recorded
 at creation on every room):
   1. A host-side WARDEN (this module) that, during every execution,
-     censuses ALL processes in the room's pid namespace from /proc and
-     enforces AGGREGATE ceilings: memory and process count under a
-     two-threshold rule (a working ceiling that must be exceeded
-     continuously for a declared sustain window, and a higher
+     censuses the processes it can observe in the room's pid namespace
+     from /proc and enforces AGGREGATE ceilings: memory and process
+     count under a two-threshold rule (a working ceiling that must be
+     exceeded continuously for a declared sustain window, and a higher
      catastrophic ceiling that trips at once), and a cumulative
      CPU-seconds budget (cumulative, hence spike-immune). Excursions
      over the working ceiling that recover are recorded as pressure
@@ -39,19 +39,69 @@ at creation on every room):
   3. Per-process rlimits via prlimit — a second layer, labelled as
      per-process wherever they are recorded; they are NOT the envelope.
 
+THE ENVELOPE BOUNDARY IS THE WORKER RUN. The framework's other bounds
+(step ceiling, deadline) are per run, and the envelope matches:
+executions within a room are serialised mechanically — a per-room
+execution lock is held for the whole of each call, so at any instant
+one execution is the room's whole load and the instantaneous ceilings
+(memory, process count) are per-room enforcement — and the CPU budget
+is cumulative across ALL calls in the run: a run-scoped ledger lives
+in the room state (budget, consumed, per-call contributions), each
+call is enforced against the run total, and a call that starts with
+the budget already spent is refused before execution. (The long-lived
+supervisor instance is a witnessing harness, not a worker execution;
+it stands outside the lock and the envelope, as RIG-NOTES declares.)
+
+CPU ACCOUNTING, stated precisely. In flight, the warden's figure is a
+census level: for every observed process it sums the process's own
+CPU time AND its reaped-children CPU times from /proc/<pid>/stat, so
+CPU burned by a short-lived process its parent reaped is still
+counted — it persists in the parent's reaped-children times. At call
+end the figure is reconciled with the in-room REAPER's exact total
+(reaper.py: a subreaper parent that wait4()s every process of the
+execution and sums their rusage). The run ledger is charged the
+larger of the two. What is claimed is exactly that: sampled in-flight
+accounting, reconciled per call against the reaper's collected
+rusage; the suite measures the captured fraction against a
+rusage-derived ground truth (see RIG-NOTES for the measured figures).
+
+MEMORY, stated precisely. The memory ceiling is a ceiling on the
+SUMMED RSS OF OBSERVED PROCESSES. Tmpfs pages the room writes are
+bounded separately, by the storage ceiling; other kernel-side
+allocations are not inside the RSS sum. The RSS ceiling is therefore
+NOT a claim about total host memory charged to the room.
+
+LIFECYCLE, stated precisely. The recorded lifecycle is the OBSERVED
+process lifecycle — births and deaths seen by the census at its poll
+granularity. A process born and dead entirely between two censuses
+leaves no lifecycle record (its CPU is still accounted, via its
+reaper or its parent's reaped-children times). The record is never
+phrased as a complete process-event trace.
+
+FAIL-CLOSED PRECONDITIONS. A room whose sized tmpfs cannot be mounted
+is never created: creation records the failed precondition and raises,
+and no executable room exists. An execution whose pid namespace
+cannot be discovered (and whose warden therefore cannot engage) is
+never run: the in-room reaper's start gate is opened only after
+discovery, so on discovery failure the launch is terminated with the
+command provably never started.
+
 Identity: each room gets its OWN uid/gid, allocated per room and
 recorded in its state; the tree is owned by that uid, mode 0700.
 
 State is kept host-side, OUTSIDE the room tree, at <base>/<name>.room.json,
-including a per-execution record (lifecycle, envelope outcome, pressure
-events, output accounting). Nothing here talks to a provider or a model.
-Offline only.
+including a per-execution record (observed lifecycle, envelope outcome,
+pressure events, output accounting, CPU accounting and the run ledger).
+Nothing here talks to a provider or a model. Offline only.
 """
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
+import secrets
+import select
 import shutil
 import signal
 import subprocess
@@ -98,6 +148,16 @@ PERSISTENCE_TERMS = {
 }
 
 _allocated_uids = {}   # base path -> set of uids handed out by this process
+
+
+class RoomCreationError(Exception):
+    """A room could not be constructed to its declared contract.
+
+    Raised by create_room() when a precondition fails (today: the
+    sized tmpfs that must back the tree). A failed-precondition record
+    is written to the room's state path before the raise; no
+    executable room is produced. load_room() raises it too when the
+    state it is asked to load is such a record."""
 
 
 # --------------------------------------------------------------------------
@@ -184,7 +244,17 @@ def room_processes(init_pid):
 
 
 def proc_sample(pid):
-    """(ppid, session, comm, rss_bytes, cpu_seconds) for a pid, or None."""
+    """(ppid, session, comm, rss_bytes, cpu_own_s, cpu_children_s).
+
+    cpu_own_s is the process's own user+system time; cpu_children_s is
+    the cumulative user+system time of the children it has reaped
+    (utime/stime fields 14/15 and cutime/cstime fields 16/17 of
+    /proc/<pid>/stat). Summed over every process in a tree, own +
+    children is the tree's total CPU at that instant: when a process
+    is reaped, its times move into its parent's children fields at
+    exactly the moment the process itself leaves /proc, so nothing is
+    double-counted and nothing reaped is lost. Returns None if the
+    process vanished mid-read."""
     try:
         rss = 0
         with open(f"/proc/{pid}/status") as fh:
@@ -199,8 +269,9 @@ def proc_sample(pid):
         parts = stat.rsplit(b")", 1)[1].split()
         ppid = int(parts[1])
         session = int(parts[3])
-        cpu = (int(parts[11]) + int(parts[12])) / CLK_TCK
-        return ppid, session, comm, rss, cpu
+        cpu_own = (int(parts[11]) + int(parts[12])) / CLK_TCK
+        cpu_children = (int(parts[13]) + int(parts[14])) / CLK_TCK
+        return ppid, session, comm, rss, cpu_own, cpu_children
     except (OSError, IndexError, ValueError):
         return None
 
@@ -276,12 +347,29 @@ class Warden:
     WORKING ceiling starts an episode; the kill fires only if the excess
     is continuous for the declared sustain window, OR the instant the
     CATASTROPHIC ceiling (working x declared multiple) is crossed.
-    Episodes that recover are closed as pressure events. CPU-seconds is
-    a cumulative budget accumulated across every process the namespace
-    ever holds, so it is spike-immune by construction and trips at once.
+    Episodes that recover are closed as pressure events.
+
+    CPU is a cumulative budget over the whole WORKER RUN (see the
+    module docstring): this warden polices one call's share of it.
+    Its in-flight figure is a census LEVEL — the sum, over every
+    observed process, of that process's own CPU time plus its
+    reaped-children CPU time (/proc stat fields 14–17). Because a
+    reaped process's times persist in its parent's reaped-children
+    fields, CPU burned by short-lived processes their parents reaped
+    is counted even though the sampler never saw them alive; the
+    figure is therefore a level the tree's true total cannot fall
+    below by more than one census's scan races, not a sum of sampled
+    deltas. The per-call total charged to the run ledger is
+    reconciled at call end with the in-room reaper's exact collected
+    rusage (see Room.run). The budget is cumulative, hence
+    spike-immune, and trips the moment the run total crosses it.
+
+    The lifecycle this warden records is the OBSERVED lifecycle:
+    births and deaths seen at census granularity. It is not a
+    complete process-event trace.
     """
 
-    def __init__(self, limits, t0):
+    def __init__(self, limits, t0, cpu_prior=0.0):
         self.limits = limits
         self.t0 = t0
         self.poll_s = limits["warden_poll_s"]
@@ -292,10 +380,11 @@ class Warden:
         self.pids_cat = int(self.pids_work
                             * limits["aggregate_pids_catastrophic_multiple"])
         self.cpu_budget = float(limits["aggregate_cpu_seconds"])
+        self.cpu_prior = float(cpu_prior)   # run CPU consumed before
+                                            # this call (the ledger)
         self.sustain = float(limits["sustain_seconds"])
         self.known = {}          # pid -> birth record
-        self.cpu_last = {}       # pid -> last cumulative cpu seconds seen
-        self.cpu_total = 0.0
+        self.cpu_census = 0.0    # this call's census CPU level (max)
         self.peak_rss = 0
         self.peak_count = 0
         self.lifecycle = []
@@ -304,9 +393,9 @@ class Warden:
         self.termination = None
         self.kill_cause = None   # set by the caller when IT kills the ns
 
-    # -- lifecycle ---------------------------------------------------------
+    # -- observed lifecycle --------------------------------------------------
     def _birth(self, pid, sample, now):
-        ppid, session, comm, _, _ = sample
+        ppid, session, comm, _, _, _ = sample
         ns = nspid(pid)
         rec = {"event": "birth", "pid": pid,
                "ns_pid": ns[-1] if ns else None,
@@ -374,22 +463,29 @@ class Warden:
 
     # -- the census ----------------------------------------------------------
     def poll(self, init_pid, now):
-        """One census of the namespace. Returns termination dict or None."""
+        """One census of the namespace. Returns termination dict or None.
+
+        Memory here is the summed RSS of the processes this census
+        observed — see the module docstring for what that sum does
+        and does not cover. CPU is the census level described in the
+        class docstring, added to the run's prior consumption.
+        """
         members = room_processes(init_pid)
         member_set = set(members)
         total_rss = 0
+        census_cpu = 0.0
         for pid in members:
             sample = proc_sample(pid)
             if sample is None:
                 continue
             if pid not in self.known:
                 self._birth(pid, sample, now)
-            _, _, _, rss, cpu = sample
+            _, _, _, rss, cpu_own, cpu_children = sample
             total_rss += rss
-            last = self.cpu_last.get(pid, 0.0)
-            if cpu >= last:
-                self.cpu_total += cpu - last
-            self.cpu_last[pid] = cpu
+            census_cpu += cpu_own + cpu_children
+        # the level is monotone in truth; keep the max against the
+        # scan races of a single non-atomic /proc sweep
+        self.cpu_census = max(self.cpu_census, census_cpu)
         for pid in list(self.known):
             if pid not in member_set:
                 self._death(pid, self.kill_cause or "exited", now)
@@ -400,16 +496,20 @@ class Warden:
         if term is None:
             term = self._threshold("pids", len(members), self.pids_work,
                                    self.pids_cat, now)
-        if term is None and self.cpu_total > self.cpu_budget:
+        run_cpu = self.cpu_prior + self.cpu_census
+        if term is None and run_cpu > self.cpu_budget:
             term = {"resource": "cpu", "rule": "cumulative-budget",
-                    "measured": round(self.cpu_total, 3),
+                    "measured": round(run_cpu, 3),
                     "working_ceiling": self.cpu_budget,
                     "catastrophic_ceiling": None, "sustained_for_s": None,
-                    "t": round(now - self.t0, 3)}
+                    "t": round(now - self.t0, 3),
+                    "boundary": "per worker run",
+                    "run_consumed_before_seconds": round(self.cpu_prior, 3),
+                    "call_census_seconds": round(self.cpu_census, 3)}
         if term is not None:
             term["peak_aggregate_rss_bytes"] = self.peak_rss
             term["peak_process_count"] = self.peak_count
-            term["aggregate_cpu_seconds"] = round(self.cpu_total, 3)
+            term["aggregate_cpu_seconds"] = round(run_cpu, 3)
             self.termination = term
         return term
 
@@ -474,9 +574,21 @@ class Room:
     def state_path(self):
         return self.base / f"{self.name}.room.json"
 
+    @property
+    def lock_path(self):
+        return self.base / f"{self.name}.exec.lock"
+
     # -- construction ------------------------------------------------------
-    def bwrap_cmd(self, argv, wrap_limits=True):
-        """Full host command line for one execution inside this room."""
+    def bwrap_cmd(self, argv, wrap_limits=True, reaper=None):
+        """Full host command line for one execution inside this room.
+
+        With `reaper` (a dict {"report_fd", "gate_name"}), the command
+        runs under the in-room reaper (rig/reaper.py): it starts only
+        when the host side opens the reaper's start gate, and its
+        whole process tree's rusage is collected exactly. One-shot
+        executions (Room.run) always use it; the supervisor instance
+        does not (it is witnessed, not executed-and-accounted).
+        """
         cmd = ["unshare", "-n", "bwrap",
                "--unshare-pid", "--unshare-ipc", "--unshare-uts",
                "--hostname", f"room-{self.name}",
@@ -505,6 +617,12 @@ class Room:
                   "--regid", str(self.room_gid),
                   "--clear-groups", "--no-new-privs",
                   "--bounding-set=-all", "--inh-caps=-all"]
+        if reaper is not None:
+            inner += ["/usr/bin/python3", f"{ROOM_MOUNT}/rig/reaper.py",
+                      "--report-fd", str(reaper["report_fd"]),
+                      "--gate-file",
+                      f"{ROOM_MOUNT}/rig/{reaper['gate_name']}",
+                      "--"]
         return cmd + inner + [str(a) for a in argv]
 
     # -- execution ---------------------------------------------------------
@@ -528,64 +646,221 @@ class Room:
             time.sleep(0.02)
         return None, None
 
+    # -- run helpers -----------------------------------------------------
+
+    def _refused_result(self, argv, failed_precondition, reason,
+                        refusal_kind="failed-precondition"):
+        """The result shape for a call that never executed."""
+        return {
+            "rc": None, "stdout": "", "stderr": "",
+            "stdout_bytes": 0, "stderr_bytes": 0,
+            "stdout_truncated": False, "stderr_truncated": False,
+            "timed_out": False, "cmd": None,
+            "ns_inode": None, "room_init_pid": None,
+            "warden_engaged": False,
+            "envelope_termination": None, "pressure_events": [],
+            "lifecycle": [],
+            "lifecycle_kind": "observed (census-sampled)",
+            "peak_aggregate_rss_bytes": 0, "peak_process_count": 0,
+            "aggregate_cpu_seconds": 0.0, "cpu_accounting": None,
+            "survivors": [], "launcher_pid": None,
+            "refused": True, "refusal_kind": refusal_kind,
+            "failed_precondition": failed_precondition,
+            "refusal_reason": reason,
+        }
+
+    def _ledger_consumed(self):
+        """Run CPU consumed so far, from the state file's ledger."""
+        try:
+            state = json.loads(self.state_path.read_text())
+        except (OSError, ValueError):
+            return 0.0
+        ledger = state.get("cpu_ledger") or {}
+        return float(ledger.get("consumed_seconds", 0.0))
+
+    @staticmethod
+    def _kill_launch_tree(proc):
+        """Kill a launcher and everything it spawned (used when a
+        launch must be terminated before its command ever ran).
+        Returns any pids still alive afterwards."""
+        tree = [proc.pid] + descendants(proc.pid)
+        kill_pids(tree)
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        time.sleep(0.1)
+        return [p for p in tree if pid_alive(p)]
+
+    @staticmethod
+    def _read_reaper_report(fd, grace_s=2.0):
+        """Read the in-room reaper's one-line JSON report from its
+        pipe. Returns the parsed dict, or None if the reaper died
+        before reporting (warden sweep / timeout kill)."""
+        data = b""
+        deadline = time.time() + grace_s
+        os.set_blocking(fd, False)
+        while time.time() < deadline:
+            ready, _, _ = select.select([fd], [], [], 0.1)
+            if not ready:
+                continue
+            try:
+                chunk = os.read(fd, 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            data += chunk
+            if b"\n" in data:
+                break
+        try:
+            return json.loads(data.splitlines()[0])
+        except (ValueError, IndexError):
+            return None
+
     def run(self, argv, timeout=30):
         """Run one command in a fresh namespace instance over the tree.
 
-        The warden censuses the execution's pid namespace for the whole
-        call; output is captured with a hard per-stream ceiling; the
-        lifecycle of every process in the namespace is recorded. On an
-        envelope termination or a timeout the ENTIRE namespace is
-        sweep-killed by namespace census — a process that called setsid
-        is still in the namespace and is still killed.
+        The call is serialised against every other execution of this
+        room by a per-room lock held for the whole call — the envelope
+        boundary is the worker run (see the module docstring). The
+        command runs under the in-room reaper and starts only once
+        the room's namespace has been discovered and the warden
+        engaged; if discovery fails the launch is terminated with the
+        reaper's start gate still closed and the command never runs.
+        Output is captured with a hard per-stream ceiling; the
+        OBSERVED lifecycle of the namespace's processes is recorded.
+        On an envelope termination or a timeout the ENTIRE namespace
+        is sweep-killed by census — a process that called setsid is
+        still in the namespace and is still killed.
         """
-        cmd = self.bwrap_cmd(argv)
+        argv = [str(a) for a in argv]
+        budget = float(self.limits["aggregate_cpu_seconds"])
+        lock_fh = open(self.lock_path, "a+")
+        try:
+            fcntl.flock(lock_fh, fcntl.LOCK_EX)
+            try:
+                # fail closed: no sized storage backing, no execution
+                if self.storage.get("mechanism") != "tmpfs-sized":
+                    result = self._refused_result(
+                        argv, "storage-backing",
+                        "the room's tree is not backed by its sized "
+                        "tmpfs (mechanism: "
+                        f"{self.storage.get('mechanism')}); execution "
+                        "without the aggregate storage ceiling is "
+                        "refused")
+                    self._record_execution(argv, result, time.time())
+                    return result
+                return self._run_locked(argv, timeout, budget)
+            finally:
+                fcntl.flock(lock_fh, fcntl.LOCK_UN)
+        finally:
+            lock_fh.close()
+
+    def _run_locked(self, argv, timeout, budget):
+        """One execution, with the room's execution lock held."""
         t0 = time.time()
+        consumed_before = self._ledger_consumed()
+
+        # fail closed on the run ledger: budget already spent
+        if consumed_before >= budget:
+            result = self._refused_result(
+                argv, None,
+                "the run's cumulative CPU budget is already spent "
+                f"({consumed_before:.3f}s of {budget:.3f}s); the "
+                "call was refused before execution",
+                refusal_kind="run-cpu-budget-spent")
+            result["cpu_accounting"] = {
+                "boundary": "per worker run",
+                "budget_seconds": budget,
+                "run_consumed_before_seconds": round(consumed_before, 3),
+                "census_seconds": 0.0, "reaper_seconds": None,
+                "charged_seconds": 0.0,
+                "run_consumed_after_seconds": round(consumed_before, 3)}
+            self._record_execution(argv, result, t0)
+            return result
+
+        token = secrets.token_hex(8)
+        gate_name = f".start-gate-{token}"
+        gate_host = self.tree / "rig" / gate_name
+        rep_r, rep_w = os.pipe()
+        os.set_inheritable(rep_w, True)
+        cmd = self.bwrap_cmd(argv, reaper={"report_fd": rep_w,
+                                           "gate_name": gate_name})
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=self.LAUNCHER_ENV,
-                                start_new_session=True)
+                                start_new_session=True,
+                                pass_fds=(rep_w,))
+        os.close(rep_w)
         out_r = _CappedReader(proc.stdout, self.limits["output_bytes"])
         err_r = _CappedReader(proc.stderr, self.limits["output_bytes"])
         out_r.start()
         err_r.start()
-        init_pid, ns_inode = self._discover_ns(proc)
-        warden = Warden(self.limits, t0)
-        timed_out = False
-        deadline = t0 + timeout
-        while True:
-            if init_pid and proc.poll() is None:
-                if warden.poll(init_pid, time.time()) is not None:
-                    warden.kill_cause = "envelope-termination"
+        try:
+            init_pid, ns_inode = self._discover_ns(proc)
+
+            # fail closed: no discovered namespace, no warden, no run.
+            # The reaper's gate is still closed, so the command has
+            # not started and — the gate being mechanical — cannot
+            # have run at all.
+            if init_pid is None:
+                survivors = self._kill_launch_tree(proc)
+                out_r.join(timeout=5)
+                err_r.join(timeout=5)
+                result = self._refused_result(
+                    argv, "namespace-discovery",
+                    "the room's pid namespace could not be "
+                    "discovered, so the warden never engaged; the "
+                    "launch was terminated with the start gate "
+                    "closed — the command never ran",
+                    refusal_kind="failed-precondition")
+                result["launcher_pid"] = proc.pid
+                result["rc"] = proc.returncode
+                result["survivors"] = survivors
+                self._record_execution(argv, result, t0)
+                return result
+
+            warden = Warden(self.limits, t0, cpu_prior=consumed_before)
+            # namespace discovered, warden engaged: open the gate
+            gate_host.write_text(token)
+            timed_out = False
+            deadline = t0 + timeout
+            while True:
+                if proc.poll() is None:
+                    if warden.poll(init_pid, time.time()) is not None:
+                        warden.kill_cause = "envelope-termination"
+                        kill_pids(room_processes(init_pid))
+                        try:
+                            os.killpg(proc.pid, signal.SIGKILL)
+                        except OSError:
+                            pass
+                        break
+                if proc.poll() is not None:
+                    break
+                if time.time() >= deadline:
+                    timed_out = True
+                    warden.kill_cause = "timeout"
                     kill_pids(room_processes(init_pid))
                     try:
                         os.killpg(proc.pid, signal.SIGKILL)
                     except OSError:
                         pass
                     break
-            if proc.poll() is not None:
-                break
-            if time.time() >= deadline:
-                timed_out = True
-                warden.kill_cause = "timeout"
-                if init_pid:
-                    kill_pids(room_processes(init_pid))
+                time.sleep(warden.poll_s)
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
                 try:
                     os.killpg(proc.pid, signal.SIGKILL)
                 except OSError:
                     pass
-                break
-            time.sleep(warden.poll_s if init_pid else 0.02)
-        try:
-            proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except OSError:
-                pass
-            proc.wait(timeout=5)
-        # final census: record remaining deaths; name any survivors
-        survivors = []
-        if init_pid:
+                proc.wait(timeout=5)
+            # final census: record remaining deaths; name any survivors
             time.sleep(0.1)
             warden.poll(init_pid, time.time())
             survivors = room_processes(init_pid)
@@ -594,58 +869,126 @@ class Room:
                 time.sleep(0.1)
                 warden.poll(init_pid, time.time())
                 survivors = room_processes(init_pid)
-        warden.finish(time.time())
-        out_r.join(timeout=5)
-        err_r.join(timeout=5)
-        result = {
-            "rc": proc.returncode,
-            "stdout": bytes(out_r.buf).decode(errors="replace"),
-            "stderr": bytes(err_r.buf).decode(errors="replace"),
-            "stdout_bytes": out_r.total,
-            "stderr_bytes": err_r.total,
-            "stdout_truncated": out_r.truncated,
-            "stderr_truncated": err_r.truncated,
-            "timed_out": timed_out,
-            "cmd": cmd,
-            "ns_inode": ns_inode,
-            "room_init_pid": init_pid,
-            "warden_engaged": init_pid is not None,
-            "envelope_termination": warden.termination,
-            "pressure_events": warden.pressure_events,
-            "lifecycle": warden.lifecycle,
-            "peak_aggregate_rss_bytes": warden.peak_rss,
-            "peak_process_count": warden.peak_count,
-            "aggregate_cpu_seconds": round(warden.cpu_total, 3),
-            "survivors": survivors,
-        }
-        self._record_execution(argv, result, t0)
-        return result
+            warden.finish(time.time())
+            out_r.join(timeout=5)
+            err_r.join(timeout=5)
+
+            # reconcile the call's CPU: the reaper's exact collected
+            # rusage against the warden's census level; charge the
+            # larger (each method can miss what the other catches —
+            # the reaper dies with a sweep kill, the census can lose
+            # a tail that vanishes between polls)
+            report = self._read_reaper_report(rep_r)
+            reaper_cpu = (float(report["cpu_seconds"])
+                          if report else None)
+            census_cpu = warden.cpu_census
+            charged = max(reaper_cpu or 0.0, census_cpu)
+            consumed_after = consumed_before + charged
+            result = {
+                "rc": proc.returncode,
+                "stdout": bytes(out_r.buf).decode(errors="replace"),
+                "stderr": bytes(err_r.buf).decode(errors="replace"),
+                "stdout_bytes": out_r.total,
+                "stderr_bytes": err_r.total,
+                "stdout_truncated": out_r.truncated,
+                "stderr_truncated": err_r.truncated,
+                "timed_out": timed_out,
+                "cmd": cmd,
+                "ns_inode": ns_inode,
+                "room_init_pid": init_pid,
+                "launcher_pid": proc.pid,
+                "warden_engaged": True,
+                "envelope_termination": warden.termination,
+                "pressure_events": warden.pressure_events,
+                "lifecycle": warden.lifecycle,
+                "lifecycle_kind": "observed (census-sampled)",
+                "peak_aggregate_rss_bytes": warden.peak_rss,
+                "peak_process_count": warden.peak_count,
+                "aggregate_cpu_seconds": round(charged, 3),
+                "cpu_accounting": {
+                    "boundary": "per worker run",
+                    "budget_seconds": budget,
+                    "run_consumed_before_seconds":
+                        round(consumed_before, 3),
+                    "census_seconds": round(census_cpu, 3),
+                    "reaper_seconds": (round(reaper_cpu, 3)
+                                       if reaper_cpu is not None
+                                       else None),
+                    "reaper_processes_reaped":
+                        report.get("processes_reaped") if report else None,
+                    "charged_seconds": round(charged, 3),
+                    "run_consumed_after_seconds":
+                        round(consumed_after, 3)},
+                "survivors": survivors,
+                "refused": False,
+                "refusal_kind": None,
+                "failed_precondition": None,
+                "refusal_reason": None,
+            }
+            self._record_execution(argv, result, t0)
+            return result
+        finally:
+            try:
+                os.close(rep_r)
+            except OSError:
+                pass
+            try:
+                gate_host.unlink()
+            except OSError:
+                pass
 
     def _record_execution(self, argv, result, t0):
-        """Append this execution's record to the room's state file."""
+        """Append this execution's record to the room's state file and
+        charge the run's CPU ledger by the call's reconciled CPU.
+        Called with the execution lock held."""
         try:
             state = json.loads(self.state_path.read_text())
         except (OSError, ValueError):
             return
+        acct = result.get("cpu_accounting") or {}
         state.setdefault("executions", []).append({
             "argv": [str(a) for a in argv],
             "started_at": t0,
             "rc": result["rc"],
             "timed_out": result["timed_out"],
+            "refused": result.get("refused", False),
+            "refusal_kind": result.get("refusal_kind"),
+            "failed_precondition": result.get("failed_precondition"),
+            "refusal_reason": result.get("refusal_reason"),
             "envelope_termination": result["envelope_termination"],
             "pressure_events": result["pressure_events"],
             "peak_aggregate_rss_bytes": result["peak_aggregate_rss_bytes"],
             "peak_process_count": result["peak_process_count"],
             "aggregate_cpu_seconds": result["aggregate_cpu_seconds"],
+            "cpu_accounting": acct,
             "stdout_bytes": result["stdout_bytes"],
             "stderr_bytes": result["stderr_bytes"],
             "stdout_truncated": result["stdout_truncated"],
             "stderr_truncated": result["stderr_truncated"],
             "lifecycle": result["lifecycle"],
+            "lifecycle_kind": result.get("lifecycle_kind"),
             "survivors": result["survivors"],
         })
         state.setdefault("pressure_events", []).extend(
             result["pressure_events"])
+        ledger = state.setdefault("cpu_ledger", {
+            "boundary": "per worker run",
+            "budget_seconds": float(
+                self.limits["aggregate_cpu_seconds"]),
+            "consumed_seconds": 0.0, "calls": []})
+        charged = float(acct.get("charged_seconds", 0.0))
+        ledger["boundary"] = "per worker run"
+        ledger["budget_seconds"] = float(
+            self.limits["aggregate_cpu_seconds"])
+        ledger["consumed_seconds"] = round(
+            float(ledger.get("consumed_seconds", 0.0)) + charged, 6)
+        ledger.setdefault("calls", []).append({
+            "argv": [str(a) for a in argv],
+            "charged_seconds": charged,
+            "census_seconds": acct.get("census_seconds"),
+            "reaper_seconds": acct.get("reaper_seconds"),
+            "refused": result.get("refused", False),
+            "refusal_kind": result.get("refusal_kind")})
         self.state_path.write_text(json.dumps(state, indent=2))
 
     def start_supervisor(self, inner_argv=("/bin/sleep", "infinity"),
@@ -801,8 +1144,15 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
     # via loop mount — impossible here, the host has no loop devices at
     # all (`losetup: cannot find an unused loop device`); (ii) a sized
     # tmpfs — works, and the kernel enforces the ceiling (ENOSPC).
-    storage = {"mechanism": "none", "size_bytes": limits["storage_bytes"],
-               "reason": "tmpfs mount not attempted"}
+    #
+    # FAIL CLOSED: the sized backing is a precondition of an executable
+    # room, not an optional layer. If the mount fails, creation fails:
+    # a failed-precondition record is written to the room's state path,
+    # the just-created tree directory is removed, and RoomCreationError
+    # is raised. No code path produces a room that executes on the
+    # host filesystem without its storage ceiling — and Room.run()
+    # refuses any room whose recorded storage is not tmpfs-sized, as
+    # a second line of the same defence.
     mount = subprocess.run(
         ["mount", "-t", "tmpfs",
          "-o", f"size={limits['storage_bytes']},uid={room_uid},"
@@ -821,12 +1171,29 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
                        "on this host: no /dev/loop* devices exist "
                        "(losetup cannot find an unused loop device)")}
     else:
-        storage = {"mechanism": "none",
-                   "size_bytes": limits["storage_bytes"],
-                   "reason": ("sized tmpfs mount failed: "
-                              + (mount.stderr or "").strip()[:200]
-                              + "; the tree lives on the host filesystem "
-                                "with NO aggregate storage ceiling")}
+        reason = ("sized tmpfs mount failed: "
+                  + (mount.stderr or "").strip()[:200])
+        failed_record = {
+            "name": name, "tree": str(tree),
+            "failed": True, "executable": False,
+            "failed_precondition": "storage-tmpfs-mount",
+            "reason": reason,
+            "storage": {"mechanism": "none",
+                        "size_bytes": limits["storage_bytes"],
+                        "reason": reason},
+            "limits": limits, "room_uid": room_uid,
+            "room_gid": room_gid,
+        }
+        (base / f"{name}.room.json").write_text(
+            json.dumps(failed_record, indent=2))
+        try:
+            os.rmdir(tree)      # the empty directory we just made
+        except OSError:
+            pass
+        raise RoomCreationError(
+            f"room {name!r} not created: {reason}; the failure is "
+            f"recorded at {base / (name + '.room.json')} and no "
+            "executable room exists")
 
     for sub in ("work", "scratch", "deliverable", "rig"):
         (tree / sub).mkdir(parents=True, exist_ok=True)
@@ -842,6 +1209,13 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
         shutil.copy2(pf_src, tree / "rig" / "preflight.py")
         stock_manifest["rig/preflight.py"] = hashlib.sha256(
             pf_src.read_bytes()).hexdigest()
+    # the in-room reaper is a named stock item too: every one-shot
+    # execution runs under it (exact CPU accounting + the start gate)
+    rp_src = RIG_DIR / "reaper.py"
+    if rp_src.exists():
+        shutil.copy2(rp_src, tree / "rig" / "reaper.py")
+        stock_manifest["rig/reaper.py"] = hashlib.sha256(
+            rp_src.read_bytes()).hexdigest()
     for path in tree.rglob("*"):
         os.chown(path, room_uid, room_gid)
     os.chown(tree, room_uid, room_gid)
@@ -876,6 +1250,12 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
                     limits["aggregate_mem_bytes"]
                     * limits["aggregate_mem_catastrophic_multiple"]),
                 "rule": "sustained at working, immediate at catastrophic",
+                "measure": ("summed RSS of the processes the census "
+                            "observes. This is NOT total host memory "
+                            "charged to the room: tmpfs pages are "
+                            "bounded separately by the storage "
+                            "ceiling, and other kernel-side "
+                            "allocations are not inside the RSS sum."),
             },
             "pids": {
                 "working_ceiling": limits["aggregate_pids_max"],
@@ -886,8 +1266,21 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
             },
             "cpu": {
                 "budget_seconds": limits["aggregate_cpu_seconds"],
-                "rule": ("cumulative across all processes the namespace "
-                         "holds; trips the moment the budget is spent"),
+                "boundary": ("per worker run: executions are "
+                             "serialised by a per-room lock, and the "
+                             "budget is cumulative across all calls "
+                             "in the run (run ledger in this state)"),
+                "rule": ("cumulative across the run's calls; trips "
+                         "the moment the run total crosses the "
+                         "budget; a call that starts with the budget "
+                         "spent is refused before execution"),
+                "accounting": ("in flight: the warden's census level "
+                               "(each observed process's own + "
+                               "reaped-children CPU from /proc stat). "
+                               "Per call: reconciled with the "
+                               "in-room reaper's exact collected "
+                               "rusage; the ledger is charged the "
+                               "larger of the two."),
             },
             "granularity": ("poll-based userspace enforcement: a "
                             "breach is detected at the first census "
@@ -931,6 +1324,15 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
              "extra_binds": [list(b) for b in (extra_binds or [])],
              "stock_rw": stock_rw,
              "persistence": PERSISTENCE_TERMS,
+             "envelope_boundary": (
+                 "per worker run: executions serialised by a per-room "
+                 "lock; instantaneous ceilings apply to the room's "
+                 "one running execution; the CPU budget is cumulative "
+                 "across the run's calls (cpu_ledger)"),
+             "cpu_ledger": {
+                 "boundary": "per worker run",
+                 "budget_seconds": float(limits["aggregate_cpu_seconds"]),
+                 "consumed_seconds": 0.0, "calls": []},
              "executions": [], "pressure_events": []}
     room.state_path.write_text(json.dumps(state, indent=2))
     return room
@@ -938,6 +1340,10 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
 
 def load_room(base, name):
     state = json.loads((Path(base) / f"{name}.room.json").read_text())
+    if state.get("failed") or state.get("executable") is False:
+        raise RoomCreationError(
+            f"room {name!r} is a failed-creation record, not an "
+            f"executable room: {state.get('reason')}")
     return Room(base, name, state["tree"], state["env_manifest"],
                 state["limits"], state["envelope"],
                 state["envelope"].get("cgroup", {}).get("cgroup"),
@@ -968,7 +1374,12 @@ def main():
     args = ap.parse_args()
 
     if args.op == "create":
-        room = create_room(args.base, args.name)
+        try:
+            room = create_room(args.base, args.name)
+        except RoomCreationError as exc:
+            print(json.dumps({"created": False, "error": str(exc)},
+                             indent=2))
+            sys.exit(3)
         print(json.dumps({"tree": str(room.tree),
                           "envelope": room.envelope}, indent=2))
     elif args.op == "run":
@@ -977,6 +1388,10 @@ def main():
         res = room.run(argv, timeout=args.timeout)
         sys.stdout.write(res["stdout"])
         sys.stderr.write(res["stderr"])
+        if res.get("refused"):
+            sys.stderr.write(
+                f"execution refused: {res.get('refusal_reason')}\n")
+            sys.exit(3)
         sys.exit(res["rc"] if res["rc"] is not None and res["rc"] >= 0
                  else 1)
     elif args.op == "destroy":

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""test_rig.py — Track B rig suite, correction round: build rooms,
+"""test_rig.py — Track B rig suite, correction round 2: build rooms,
 witness them from the host side, run the in-room pre-flight, and assert
 the walls — including the aggregate envelope Vane's examination
 required (INDEX 438): a host-side warden over the pid namespace with a
@@ -7,7 +7,16 @@ two-threshold (sustained working / immediate catastrophic) rule, a
 cumulative CPU budget, pressure-event recording, a sized-tmpfs storage
 ceiling, per-room identities witnessed from actual kernel state,
 recipe-derived mount assessment with deviant-room negative tests,
-bounded output capture, and full process-lifecycle accounting.
+bounded output capture, and observed process-lifecycle accounting
+(census-sampled — never a complete trace).
+
+Correction round 2 (Vane's five points, INDEX 451) adds: the envelope
+boundary DEFINED as the worker run — executions serialised by a
+per-room lock, the CPU budget cumulative across the run's calls in a
+state ledger; CPU accounting reconciled with an in-room reaper's exact
+rusage and measured against short-lived CPU burners; and both
+fail-open paths (storage mount failure, namespace discovery failure)
+closed and negative-tested.
 
 Checks (each prints PASS/FAIL):
   control        pre-flight detects reaches when run UNCONFINED
@@ -51,12 +60,29 @@ Checks (each prints PASS/FAIL):
                  process ceiling; measured overshoot printed
   ward-cpu       AGGREGATE cumulative CPU-seconds budget: parallel
                  spinners die when the budget is spent
+  serialise      BOUNDARY: two concurrent run() calls on one room
+                 never overlap inside the room (per-room lock)
+  cpu-run        BOUNDARY: the CPU budget is cumulative across the
+                 run's calls — call 2 dies at the RUN budget, call 3
+                 is refused before execution, the ledger shows all
+  cpu-shortlived ADVERSARIAL: 40 CPU burners each living ~25 ms of
+                 CPU time (inside one census interval), reaped by
+                 their parent — the charged accounting (reaper +
+                 census) is measured against the workload's own
+                 rusage ground truth
+  storage-fail   NEGATIVE: a failed tmpfs mount fails creation
+                 closed — RoomCreationError, a failed-precondition
+                 record, no loadable/executable room, no tree
+  ns-fail        NEGATIVE: namespace discovery failure fails the
+                 execution closed — refused result, the gated command
+                 provably never ran (no marker), nothing survives
   storage        the tree's sized tmpfs is a hard aggregate ceiling:
                  a fill attempt stops at it with ENOSPC
   output         stdout capture is bounded: 5 MB spew is counted in
                  full, truncated at the ceiling, and flagged
-  lifecycle      a setsid-detached child is born, recorded, and dead
-                 after the timeout sweep — no namespace survivors
+  lifecycle      OBSERVED lifecycle: a setsid-detached child is seen
+                 born, recorded, and dead after the timeout sweep —
+                 no namespace survivors
   cleanup        destroy kills the supervisor tree including a
                  setsid-detached process; tree removed; tmpfs unmounted
 
@@ -202,6 +228,31 @@ while True:
 SPINNER = b"""
 while True:
     pass
+"""
+BURN_FIXED = b"""
+import sys, time
+target = float(sys.argv[1])
+t0 = time.process_time()
+while time.process_time() - t0 < target:
+    pass
+print("burned", flush=True)
+"""
+BURNERS = b"""
+import os, resource, time
+N, PER = 40, 0.025
+for _ in range(N):
+    c = os.fork()
+    if c == 0:
+        t0 = time.process_time()
+        while time.process_time() - t0 < PER:
+            pass
+        os._exit(0)
+    os.waitpid(c, 0)
+self_ru = resource.getrusage(resource.RUSAGE_SELF)
+child_ru = resource.getrusage(resource.RUSAGE_CHILDREN)
+true_total = (self_ru.ru_utime + self_ru.ru_stime
+              + child_ru.ru_utime + child_ru.ru_stime)
+print(f"TRUE {true_total:.3f}", flush=True)
 """
 SPEW = b"""
 import os, sys
@@ -620,6 +671,145 @@ def main():
               f"term={cterm} wall={cpu_wall:.1f}s")
         cpurun.destroy(remove_tree=True)
 
+        # --- boundary: executions are serialised per room -------------------
+        serial = mkroom(base, "serial")
+        order_file = serial.tree / "work" / "order.txt"
+        serial_results = {}
+
+        def serial_call(tag):
+            serial_results[tag] = serial.run(
+                ["/bin/sh", "-c",
+                 f"echo {tag}-begin >> /room/work/order.txt; "
+                 "sleep 1.5; "
+                 f"echo {tag}-end >> /room/work/order.txt"],
+                timeout=30)
+
+        threads = [threading.Thread(target=serial_call, args=(t,))
+                   for t in ("A", "B")]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        order = order_file.read_text().split()
+        serialised_orders = (
+            ["A-begin", "A-end", "B-begin", "B-end"],
+            ["B-begin", "B-end", "A-begin", "A-end"])
+        check("serialise: two concurrent run() calls never overlap "
+              "inside the room (per-room execution lock)",
+              order in serialised_orders
+              and all(r["rc"] == 0 for r in serial_results.values()),
+              f"order={order}")
+        serial.destroy(remove_tree=True)
+
+        # --- boundary: the CPU budget is cumulative across the run ----------
+        runburn = mkroom(base, "runburn",
+                         stock={"helpers/burn.py": BURN_FIXED},
+                         limits={"aggregate_cpu_seconds": 2.0})
+        rb1 = runburn.run(["/usr/bin/python3",
+                           "/room/work/helpers/burn.py", "1.2"],
+                          timeout=30)
+        rb2 = runburn.run(["/usr/bin/python3",
+                           "/room/work/helpers/burn.py", "1.2"],
+                          timeout=30)
+        rb3 = runburn.run(["/bin/sh", "-c",
+                           "echo ran > /room/work/should-not-exist.txt"],
+                          timeout=30)
+        rb_term = rb2["envelope_termination"] or {}
+        ledger = json.loads(runburn.state_path.read_text())["cpu_ledger"]
+        check("cpu-run: budget is cumulative across the run's calls — "
+              "call 2 dies at the run budget, call 3 refused, ledger "
+              "shows all three",
+              rb1["rc"] == 0 and not rb1["refused"]
+              and rb_term.get("resource") == "cpu"
+              and rb_term.get("boundary") == "per worker run"
+              and rb2["survivors"] == []
+              and rb3["refused"]
+              and rb3["refusal_kind"] == "run-cpu-budget-spent"
+              and not (runburn.tree / "work"
+                       / "should-not-exist.txt").exists()
+              and ledger["consumed_seconds"] >= 2.0
+              and len(ledger["calls"]) == 3
+              and ledger["calls"][2]["refused"],
+              f"charged1={rb1['aggregate_cpu_seconds']} "
+              f"term2={rb_term.get('measured')} "
+              f"ledger={ledger['consumed_seconds']}s over "
+              f"{len(ledger['calls'])} calls")
+        runburn.destroy(remove_tree=True)
+
+        # --- adversarial: short-lived CPU burners vs the accounting ----------
+        burners = mkroom(base, "burners",
+                         stock={"helpers/burners.py": BURNERS})
+        bn = burners.run(["/usr/bin/python3",
+                          "/room/work/helpers/burners.py"], timeout=60)
+        true_lines = [l for l in bn["stdout"].splitlines()
+                      if l.startswith("TRUE")]
+        true_cpu = float(true_lines[0].split()[1]) if true_lines else 0.0
+        acct = bn["cpu_accounting"] or {}
+        check("cpu-shortlived: 40 burners of ~25 ms CPU each are "
+              "accounted against rusage ground truth",
+              bn["rc"] == 0 and true_cpu > 0.8
+              and acct.get("reaper_seconds") is not None
+              and acct["reaper_seconds"] >= 0.95 * true_cpu
+              and acct["census_seconds"] >= 0.90 * true_cpu
+              and acct["charged_seconds"] >= 0.95 * true_cpu,
+              f"true={true_cpu:.3f}s reaper="
+              f"{acct.get('reaper_seconds')} "
+              f"({(acct.get('reaper_seconds') or 0) / max(true_cpu, 1e-9):.1%}) "
+              f"census={acct.get('census_seconds')} "
+              f"({acct.get('census_seconds', 0) / max(true_cpu, 1e-9):.1%}) "
+              f"charged={acct.get('charged_seconds')}")
+        burners.destroy(remove_tree=True)
+
+        # --- NEGATIVE: storage mount failure fails creation closed ------------
+        raised = None
+        try:
+            room_mod.create_room(base, "badstore",
+                                 limits={"storage_bytes": -1})
+        except room_mod.RoomCreationError as exc:
+            raised = exc
+        bad_rec_path = base / "badstore.room.json"
+        bad_rec = (json.loads(bad_rec_path.read_text())
+                   if bad_rec_path.exists() else {})
+        load_raised = False
+        try:
+            room_mod.load_room(base, "badstore")
+        except room_mod.RoomCreationError:
+            load_raised = True
+        check("storage-fail: a failed tmpfs mount fails creation "
+              "closed — error raised, failure recorded, no executable "
+              "room, no tree left",
+              raised is not None
+              and bad_rec.get("failed") is True
+              and bad_rec.get("executable") is False
+              and bad_rec.get("failed_precondition")
+                  == "storage-tmpfs-mount"
+              and "tmpfs" in bad_rec.get("reason", "")
+              and load_raised
+              and not (base / "badstore-tree").exists()
+              and not os.path.ismount(base / "badstore-tree"),
+              f"record={ {k: bad_rec.get(k) for k in ('failed', 'executable', 'failed_precondition')} }")
+
+        # --- NEGATIVE: namespace discovery failure fails execution closed -----
+        nsfail = mkroom(base, "nsfail")
+        # simulate the discovery seam reporting failure while a real
+        # launch is alive behind its closed start gate
+        nsfail._discover_ns = lambda proc, deadline_s=5.0: (None, None)
+        marker = nsfail.tree / "work" / "marker.txt"
+        nf = nsfail.run(["/bin/sh", "-c",
+                         "echo ran > /room/work/marker.txt"], timeout=30)
+        gate_leftovers = list((nsfail.tree / "rig").glob(".start-gate-*"))
+        check("ns-fail: discovery failure refuses the execution — "
+              "the gated command never ran, nothing survives",
+              nf["refused"]
+              and nf["failed_precondition"] == "namespace-discovery"
+              and nf["warden_engaged"] is False
+              and not marker.exists()
+              and nf["survivors"] == []
+              and not gate_leftovers
+              and not room_mod.pid_alive(nf["launcher_pid"]),
+              f"reason={nf['refusal_reason'][:80]}...")
+        nsfail.destroy(remove_tree=True)
+
         # --- storage: sized tmpfs is a hard aggregate ceiling ----------------
         stor = mkroom(base, "storage", stock={"helpers/writer.py": WRITER},
                       limits={"storage_bytes": 16 << 20})
@@ -665,8 +855,9 @@ def main():
                   if e["event"] == "death"}
         detached = [b for b in births
                     if b["comm"] == "sleep" and b["session"] == b["pid"]]
-        check("lifecycle: setsid-detached child is born, recorded, "
-              "and dead after the timeout sweep; no survivors",
+        check("lifecycle (observed): setsid-detached child is seen "
+              "born, recorded, and dead after the timeout sweep; "
+              "no survivors",
               lf["timed_out"] and detached
               and all(b["pid"] in deaths for b in detached)
               and lf["survivors"] == []
