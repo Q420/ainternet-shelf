@@ -1,7 +1,11 @@
 # NATIVE-MODE PROBE — SCOPE (2026-11-23)
 
-**Status:** Draft **Rev 2**, for Vane's examination. Rev 2 incorporates the
-seven corrections of her Rev 1 examination (INDEX 272). Developed under her
+**Status:** Draft **Rev 3**, for Vane's examination. Rev 3 incorporates the
+two final corrections of her Rev 2 examination (INDEX 277): a named
+`payload_form` evidence attribute for the hybrid shape (§3), and the
+raw-evidence distinction among provider body, status/metadata, and helper
+diagnostics (§4). Rev 2 incorporated the seven corrections of her Rev 1
+examination (INDEX 272). Developed under her
 INDEX 270 recommendation and Ben's INDEX 267/269 direction. A bounded
 addition to Piece A1's assembly lifecycle; A1 is not reopened wholesale. No
 implementation and no worker attempt are implied by this scope.
@@ -99,6 +103,23 @@ Each trial is recorded in **two dimensions**, neither discarded:
 - `indeterminate` — the response is unavailable or its status cannot be
   determined.
 
+**Behavioural detail — `payload_form`.** Alongside the two dimensions,
+each trial may carry a named detail attribute where the generation's
+payload has a recognisable form the dimensions alone would flatten. The
+first such value, from the INDEX 274 measurement: **`text_contract_json`**
+— a native call to an unoffered tool (there, `commentary`, a channel name
+from the model's own response format) **whose arguments are the
+framework's text-contract JSON**. This is **not** a third dimension, not a
+new behaviour class, and not `mixed` (the model delivered one call, not
+two responses): the trial's governing classification stands in the two
+dimensions (there, `environment_tool_attempt` × `provider_refused`), and
+`payload_form` preserves the compatibility signal — the adapter may one
+day need to recognise exactly this shape, neither a clean native request
+nor a clean text response. For such a trial the evidence preserves the
+native call name, the exact arguments, the embedded text-contract payload,
+the provider refusal and its reason, and the fact that no generation
+reached the framework as an accepted response.
+
 The stage reports **counts per class in each dimension** over the 5
 trials, never a single blended verdict, and the examiner sees the complete
 distribution. **What the model attempted, what the provider accepted, and
@@ -126,6 +147,20 @@ Three distinct things, never conflated:
 - **Presentation:** any shortened rendering used in reports or the viewer,
   labelled as a rendering; presentation is never evidence.
 
+**Retained evidence objects.** What the capture retains is distinguished
+by kind, and the kinds are never conflated (the INDEX 274 artifact is the
+motivating case: its refusal trials' retained text is the helper's
+traceback, which *contains* the provider's error body but is not itself
+the raw HTTP response body): (a) the **provider response body as
+received** — for an accepted generation, the response body; for a
+refusal, the **exact provider error body as captured**; (b) the **HTTP
+status and relevant response metadata**; (c) **transport/helper
+diagnostic output**, including any traceback, retained as its own object
+and labelled as diagnostics; (d) a **SHA-256 hash of each retained
+object**, recorded separately per object. A wrapper's diagnostic
+rendering is never labelled, hashed, or presented as the provider's raw
+response.
+
 If a response exceeds the capture ceiling, the record states that fact
 explicitly, retains the available bounded bytes (whose hash is then the
 integrity evidence for *those* bytes), and classifies that trial's
@@ -138,9 +173,10 @@ recorded by the office at its sequence point (§7), carrying: the instance
 and assembly ids; the seat and role; the **provider route and pinned model
 identifier**; the **probe suite name and version** and a canonical hash of
 its definition; the offered tool definitions; per trial — behaviour class,
-delivery status, settled flag, evidence-completeness flag, and the
-integrity hash (the captured bytes themselves retained in the record,
-subject to the ceiling above); the per-dimension counts; the settled
+delivery status, any `payload_form` detail, settled flag,
+evidence-completeness flag, and the retained evidence objects of the
+paragraph above, each with its own integrity hash (the captured bytes
+themselves retained in the record, subject to the ceiling above); the per-dimension counts; the settled
 count; and a **recommended adapter mode** (§5) marked as recommendation,
 not decision. The sealed assembly record binds the probe evidence's hash,
 so packing seals it with everything else. The **independent checker**
