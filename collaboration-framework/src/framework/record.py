@@ -85,6 +85,13 @@ EVENT_TYPES = {
     # evidence mechanism's own failure — terminal for the
     # instance, and never a disposition (R8-2).
     "CALL_ENTERED", "RESPONSE_EVIDENCE", "EVIDENCE_CAPTURE_FAILED",
+    # Native adapter piece (NATIVE-ADAPTER-SCOPE Rev 3, N32):
+    # the translation record — the iteration's per-call
+    # translation and refusal decisions, a distinct durable
+    # event committed after the response-evidence disposition
+    # and before the first dispatch of the iteration, bound to
+    # the exact response-evidence artifact hash.
+    "TRANSLATION_RECORDED",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -1101,6 +1108,7 @@ def apply_event(state: dict, ev: dict) -> dict:
             "call_entered_seq": None,
             "disposition_seq": None,
             "disposition_outcome": None,
+            "translation_seq": None,
         })
     elif t == "CALL_ENTERED":
         # Response-evidence piece (R5-2/R6-2): the call
@@ -1131,6 +1139,22 @@ def apply_event(state: dict, ev: dict) -> dict:
                         it["disposition_seq"] = ev["event_seq"]
                         it["disposition_outcome"] = \
                             p.get("outcome")
+                    break
+    elif t == "TRANSLATION_RECORDED":
+        # Native adapter piece (N32): the iteration's
+        # translation record. The fold marks the iteration
+        # entry the payload names (by its LOOP_ITERATION
+        # event seq); the first translation record stands —
+        # a second is history for the checker, and replaces
+        # nothing: the decision set, once committed, is the
+        # set the iteration's dispatches answer to.
+        entry = state["loop_activations"].get(
+            p.get("assembly_id"))
+        if entry is not None:
+            for it in entry["iterations"]:
+                if it["event_seq"] == p.get("iteration_seq"):
+                    if it["translation_seq"] is None:
+                        it["translation_seq"] = ev["event_seq"]
                     break
     elif t == "EVIDENCE_CAPTURE_FAILED":
         # Response-evidence piece (R8-2): the evidence

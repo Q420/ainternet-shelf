@@ -158,7 +158,8 @@ SCHEMA = _obj({
             "registry_version": _opt(_STR),
             "call_entered_seq": _opt(_INT),
             "disposition_seq": _opt(_INT),
-            "disposition_outcome": _opt(_STR)})),
+            "disposition_outcome": _opt(_STR),
+            "translation_seq": _opt(_INT)})),
         "stalled": _opt(_obj({
             "ground": _opt(_STR), "event_seq": _INT,
             "iterations": _opt(_INT),

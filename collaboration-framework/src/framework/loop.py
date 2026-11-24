@@ -127,6 +127,32 @@ The shape, as the scope settles it:
 - The loop's context is a local object, held for the run and
   dropped at return. Evidenced disposal is Piece A5's; here
   the context simply does not outlive the call.
+- The native adapter piece (NATIVE-ADAPTER-SCOPE Rev 3,
+  PASSED) adds the second entrance to this same corridor:
+  under an assembly judged native, a response's native
+  tool calls arrive as per-call extraction records (the
+  adapter's native_calls outcome) and run N20's three
+  phases here — (i) every individuable call is classified
+  in emitted order: call-ID integrity (N6), closed-world
+  resolution against THIS package's catalogue (N7), the
+  pure schema validation (N8), and the per-response cap
+  (N22, CALL_CAP above); (ii) the complete decision set is
+  persisted as the translation record — a distinct record
+  event bound to the iteration's response-evidence
+  artifact hash — before any dispatch, and if it cannot
+  be persisted nothing from the response is dispatched;
+  (iii) the converted requests are dispatched in emitted
+  order through the ordinary adjudication below, so from
+  conversion onward a native iteration is indistinguishable
+  from its text-mode twin (N9). A refusal at translation
+  consumes no dispatch, no grant bound and no step beyond
+  its iteration, and is not a stall (N18/N19); refusals
+  and outcomes alike are presented in the next package's
+  tool-results carriage in provider call order, under the
+  provider call ID that proposed them (N24/N26), the
+  refusals in the examined N16 error form. The text path
+  is untouched: a text-judged assembly's packages and
+  requests are exactly as before.
 
 The loop never touches the seat Driver: the Driver's
 contract — wake, acknowledge, one response — is a different
@@ -136,11 +162,13 @@ shape from an activation's bounded run, and stands unchanged.
 from __future__ import annotations
 
 import copy
+import re
 import time
 
 from fabric.canonical import canonical, sha256_hex
 
 from . import evidence as _evidence
+from . import schema_validator as _schema_validator
 from . import tool_policy as _tool_policy
 from .adapter import AdapterFailure
 from .bubble import render_view
@@ -149,6 +177,24 @@ from .doorway import (LOOP_ITERATION_DEADLINE_GROUND,
 from .record import EVENT_TYPES, fold
 
 __all__ = ["Loop"]
+
+# The per-response call cap (native adapter piece, N22):
+# the largest count of individuable calls one response may
+# present to classification and possible dispatch. Its
+# value is fixed by the build brief's §3 derivation under
+# Ben's ruling (2026-11-24): CAP = 1 — the margin is a
+# cushion, not a wall. Calls beyond the cap, in emitted
+# order, are refused call_cap_exceeded with their identity
+# and ordinal recorded and their arguments never processed.
+CALL_CAP = 1
+
+# The translation refusal classes of the native adapter
+# piece (§3, with the fifth at N22): a call refused at
+# translation is recorded under exactly one of these, in
+# its translation record, before any package presents it.
+_TRANSLATION_REFUSALS = ("unknown_tool", "malformed_call",
+                         "invalid_arguments",
+                         "call_cap_exceeded")
 
 
 def _is_int(value):
@@ -270,6 +316,53 @@ def _catalogue_hash(catalogue):
     the checker verifies by independent reconstruction from
     the sealed grants and its own registry copy."""
     return sha256_hex(canonical(catalogue))
+
+
+def _translation_error_text(entry, offered_names):
+    """The N16 error result for a translation refusal
+    (native adapter piece): the examined templates of the
+    scope, implemented as written — the call it answers,
+    the decision in plain terms, and the explicit statement
+    that nothing was dispatched for that call. It states
+    what was decided and nothing else: no record internals,
+    no apology, no speculation."""
+    refusal = entry.get("refusal_class")
+    if refusal == "unknown_tool":
+        return (
+            f"Tool unavailable: '{entry.get('name')}' is "
+            f"not one of the tools offered for this task. "
+            f"Nothing was dispatched for this call. The "
+            f"tools offered are: {', '.join(offered_names)}.")
+    if refusal == "malformed_call":
+        return (
+            f"Call not accepted: {entry.get('refusal_detail')}. "
+            f"Nothing was dispatched for this call.")
+    if refusal == "invalid_arguments":
+        return (
+            f"Arguments invalid: "
+            f"{entry.get('validation_constraint')}. Nothing "
+            f"was dispatched for this call.")
+    if refusal == "call_cap_exceeded":
+        return (
+            "Call not accepted: this response's call limit "
+            "was already reached. Nothing was dispatched "
+            "for this call.")
+    return ""
+
+
+def _doorway_error_text(ground):
+    """The N16 error result for a doorway refusal of a
+    bound native call: the doorway's ground in plain
+    terms — the ground's own sentence with its record-
+    internal citations (the R-numbered parentheticals)
+    removed; the record itself keeps the ground whole —
+    and the explicit statement that nothing was dispatched
+    for that call."""
+    plain = re.sub(r"\s*\([^)]*\bR[0-9]+[^)]*\)", "",
+                   ground or "")
+    plain = re.sub(r"\s+", " ", plain).strip()
+    return (f"Request refused: {plain}. Nothing was "
+            f"dispatched for this call.")
 
 
 class Loop:
@@ -505,6 +598,23 @@ class Loop:
             # no iteration is counted, and the loop answers
             # with its deadline stall. Any other refusal is
             # the machinery's own failure.
+            # BD-1 (native adapter piece): under a native-
+            # judged assembly, the iteration's commitment
+            # also records the disable_tool_validation
+            # state of its request construction — read from
+            # the callable's own construction (the adapter's
+            # attribute), so the commitment and the body the
+            # adapter builds cannot drift apart silently. A
+            # callable exposing no such state stands under
+            # the build's settled construction: enabled. A
+            # text-judged assembly records nothing — its
+            # iteration events are exactly as before.
+            native_flag = None
+            if ctx.get("adapter_mode") == "native":
+                flag = getattr(self.model,
+                               "disable_tool_validation", True)
+                native_flag = flag if isinstance(flag, bool) \
+                    else True
             try:
                 ev = doorway.record_loop_iteration(
                     ctx["assembly_id"], iteration,
@@ -513,7 +623,8 @@ class Loop:
                     registry_version=ctx.get(
                         "registry_version"),
                     evidence_governed=self.evidence_store
-                    is not None)
+                    is not None,
+                    disable_tool_validation=native_flag)
             except DoorwayRefusal as refusal:
                 if refusal.ground == \
                         LOOP_ITERATION_DEADLINE_GROUND:
@@ -626,7 +737,9 @@ class Loop:
 
             # (v) Whole-response validation, then per-act and
             # per-request adjudication.
-            outcome, data = self._validate(raw)
+            outcome, data = self._validate(
+                raw, native_mode=ctx.get("adapter_mode")
+                == "native")
             if outcome == "malformed":
                 return self._stall(ctx, "malformed_response",
                                    detail=data)
@@ -650,7 +763,18 @@ class Loop:
                         "refused": ctx["refused"],
                         "dispatched": ctx["dispatched"],
                         "call_timings": ctx["call_timings"]}
-            self._adjudicate(ctx, data)
+            if outcome == "native":
+                # The native corridor (N20), on the
+                # ungoverned path: classification, the
+                # translation record, then dispatch — no
+                # disposition stands on this path to bind,
+                # so the record binds no artifact hash.
+                native_result = self._adjudicate_native(
+                    ctx, data, ev["event_seq"], None)
+                if native_result != "continue":
+                    return native_result
+            else:
+                self._adjudicate(ctx, data)
 
     # --------------------------------- response evidence
     def _call_governed(self, ctx, package, iteration,
@@ -825,7 +949,9 @@ class Loop:
         # runs here so the artifact's loop verdict stands
         # complete before the disposition commits. Its
         # outcomes take effect only after the disposition.
-        outcome, data = self._validate(raw)
+        outcome, data = self._validate(
+            raw, native_mode=ctx.get("adapter_mode")
+            == "native")
         if outcome == "malformed":
             loop_v = _evidence.loop_verdict(
                 "malformed", detail=data)
@@ -883,6 +1009,15 @@ class Loop:
                     "refused": ctx["refused"],
                     "dispatched": ctx["dispatched"],
                     "call_timings": ctx["call_timings"]}
+        if outcome == "native":
+            # The native corridor (N20), governed: the
+            # disposition stands committed above, so the
+            # translation record commits after it — bound
+            # to its exact artifact hash — and before any
+            # dispatch of this iteration.
+            return self._adjudicate_native(
+                ctx, data, iteration_seq,
+                disposition["payload"].get("artifact_sha256"))
         self._adjudicate(ctx, data)
         return "continue"
 
@@ -1151,6 +1286,10 @@ class Loop:
             per_grant=governed)
         ctx["catalogue_hash"] = _catalogue_hash(catalogue)
         ctx["registry_version"] = version
+        # The native preflight (N7) resolves against this
+        # very catalogue object — the one whose hash the
+        # iteration event records — never a re-derivation.
+        ctx["catalogue"] = catalogue
         seat = ctx["seat"]
         view = render_view(events, seat)
         boundary = ctx["content"].get("evidence_boundary")
@@ -1173,6 +1312,103 @@ class Loop:
             "detail": ev["payload"].get("detail"),
             "event_seq": ev["event_seq"],
         } for ev in raw_delta if ev["type"] == "TOOL_OUTCOME"]
+        # Native adapter piece (B4 — N26/N24): the binding
+        # between provider call IDs and the loop's request
+        # identities stands in the record's translation
+        # records; the carriage reads it from the full
+        # snapshot, so an outcome settling in a later delta
+        # than its translation still answers under its call
+        # ID. Outcome entries gain the provider call ID
+        # beside request_id and dispatch_id where a binding
+        # stands; translation refusals and doorway refusals
+        # of bound calls are presented in the same carriage,
+        # in the examined N16 error form; and the bound
+        # entries assemble in provider call order. Where no
+        # binding stands anywhere — every text-mode package
+        # — the carriage is exactly as it has always been.
+        call_binding = {}
+        for ev in events:
+            if ev["type"] != "TRANSLATION_RECORDED":
+                continue
+            for centry in ev["payload"].get("calls") or []:
+                if centry.get("loop_request_id"):
+                    call_binding[centry["loop_request_id"]] = {
+                        "provider_call_id":
+                            centry.get("provider_call_id"),
+                        "provider_ordinal":
+                            centry.get("provider_ordinal"),
+                        "translation_seq": ev["event_seq"]}
+        if any(ev["type"] == "TRANSLATION_RECORDED"
+               for ev in events):
+            offered_names = list(dict.fromkeys(
+                entry["tool"] for entry in catalogue))
+            for entry in tool_results:
+                binding = call_binding.get(entry["request_id"])
+                if binding is not None:
+                    entry["provider_call_id"] = \
+                        binding["provider_call_id"]
+                    entry["provider_ordinal"] = \
+                        binding["provider_ordinal"]
+                    entry["_translation_seq"] = \
+                        binding["translation_seq"]
+            for ev in raw_delta:
+                if ev["type"] == "TRANSLATION_RECORDED":
+                    for centry in \
+                            ev["payload"].get("calls") or []:
+                        if not centry.get("refusal_class"):
+                            continue
+                        tool_results.append({
+                            "dispatch_id": None,
+                            "request_id": None,
+                            "provider_call_id": centry.get(
+                                "provider_call_id"),
+                            "provider_ordinal": centry.get(
+                                "provider_ordinal"),
+                            "outcome": "refused",
+                            "refusal_class":
+                                centry["refusal_class"],
+                            "error": _translation_error_text(
+                                centry, offered_names),
+                            "result": None,
+                            "detail": None,
+                            "event_seq": ev["event_seq"],
+                            "_translation_seq":
+                                ev["event_seq"]})
+                elif ev["type"] == "REJECTION" and \
+                        ev["payload"].get("attempted_type") \
+                        == "TOOL_DISPATCHED":
+                    binding = call_binding.get(
+                        ev["payload"].get("request_id"))
+                    if binding is not None:
+                        tool_results.append({
+                            "dispatch_id": None,
+                            "request_id": ev["payload"].get(
+                                "request_id"),
+                            "provider_call_id": binding[
+                                "provider_call_id"],
+                            "provider_ordinal": binding[
+                                "provider_ordinal"],
+                            "outcome": "refused",
+                            "refusal_class": "doorway_refused",
+                            "error": _doorway_error_text(
+                                ev["payload"].get("ground")),
+                            "result": None,
+                            "detail": None,
+                            "event_seq": ev["event_seq"],
+                            "_translation_seq": binding[
+                                "translation_seq"]})
+            # Provider call order (N24): the bound entries
+            # sort by their translation record and ordinal;
+            # any unbound entry keeps its place after them,
+            # in record order. The sort key is carriage-local
+            # and is removed before the package freezes.
+            tool_results.sort(key=lambda entry: (
+                (0, entry["_translation_seq"],
+                 entry["provider_ordinal"])
+                if "_translation_seq" in entry else
+                (1, 0, entry.get("event_seq") or 0)))
+            for entry in tool_results:
+                entry.pop("_translation_seq", None)
         delta = copy.deepcopy(raw_delta)
         if governed:
             # Single carriage (retrieval piece; INDEX 249):
@@ -1272,7 +1508,7 @@ class Loop:
 
     # ----------------------------------------------- validation
     @staticmethod
-    def _validate(raw):
+    def _validate(raw, native_mode=False):
         """Validate a whole response before anything is
         effected (R49): ("proposals", {"proposals": [...],
         "tool_requests": [...]}) / ("yield", summary) /
@@ -1280,10 +1516,30 @@ class Loop:
         Validation is all-or-nothing for shape; what it passes
         is adjudicated per act afterwards. Terminal outcomes
         are mutually exclusive — a yield or decline combined
-        with anything is malformed whole."""
+        with anything is malformed whole. The native adapter
+        piece adds one outcome, under a native-judged
+        assembly only: ("native", [extraction records]) —
+        the adapter's per-call extraction of a native
+        response's tool calls, whose classification is the
+        native preflight's, not this validation's."""
         if not isinstance(raw, dict):
             return "malformed", "the response is not an outcome"
         outcome = raw.get("outcome")
+        if outcome == "native_calls":
+            if not native_mode:
+                return "malformed", \
+                    "a native_calls outcome stands only " \
+                    "under a native-judged assembly"
+            if set(raw) != {"outcome", "native_calls"}:
+                return "malformed", \
+                    "a native_calls outcome carries its " \
+                    "extraction records and nothing else"
+            records = Loop._validate_extraction(
+                raw.get("native_calls"))
+            if records is None:
+                return "malformed", "the native extraction " \
+                    "records are not well-formed"
+            return "native", records
         if outcome == "decline":
             if set(raw) != {"outcome", "reason"} or \
                     not isinstance(raw.get("reason"), str):
@@ -1333,6 +1589,58 @@ class Loop:
         return "malformed", f"unknown outcome {outcome!r}"
 
     @staticmethod
+    def _validate_extraction(raw):
+        """Well-formed per-call extraction records (native
+        adapter piece, B1): a non-empty list, one record per
+        call in emitted order, each naming exactly its
+        provider ordinal (its position, 1-based), its
+        provider call ID (the emitted string, or None where
+        none stands), its name (the emitted string, or None
+        where unreadable), its arguments form — "object"
+        (the arguments stand parsed as an object),
+        "unparseable" (the raw string stands, unread) or
+        "non_object" (the parsed value stands, not an
+        object) — and the arguments in the form's shape.
+        Anything else is malformed whole: the loop classifies
+        records it can trust, and trusts only this shape."""
+        if not isinstance(raw, list) or not raw:
+            return None
+        out = []
+        for position, entry in enumerate(raw, start=1):
+            if not isinstance(entry, dict) or \
+                    set(entry) != {"provider_ordinal",
+                                   "provider_call_id", "name",
+                                   "arguments_form",
+                                   "arguments"}:
+                return None
+            if entry["provider_ordinal"] != position:
+                return None
+            call_id = entry["provider_call_id"]
+            if call_id is not None and (
+                    not isinstance(call_id, str) or not call_id):
+                return None
+            name = entry["name"]
+            if name is not None and (
+                    not isinstance(name, str) or not name):
+                return None
+            form = entry["arguments_form"]
+            if form == "object":
+                if not isinstance(entry["arguments"], dict):
+                    return None
+            elif form == "unparseable":
+                if not isinstance(entry["arguments"], str):
+                    return None
+            elif form != "non_object":
+                return None
+            out.append({
+                "provider_ordinal": position,
+                "provider_call_id": call_id,
+                "name": name,
+                "arguments_form": form,
+                "arguments": entry["arguments"]})
+        return out
+
+    @staticmethod
     def _validate_proposals(raw):
         """Well-formed acts, in the driver's shape: a list of
         dicts naming a known event type with a dict payload —
@@ -1370,6 +1678,163 @@ class Loop:
             out.append({"tool": entry["tool"],
                         "parameters": entry["parameters"]})
         return out
+
+    # -------------------------------- native preflight (N20)
+    def _classify_native(self, ctx, records):
+        """Phase (i) of the native preflight: classify every
+        individuable call in emitted order, each on its own
+        merits — call-ID integrity (N6), closed-world
+        resolution against this package's catalogue (N7),
+        the pure schema validation (N8), and the per-response
+        cap (N22) — producing the translation record's entry
+        set and the converted requests, in emitted order.
+        No call's verdict waits on or is contaminated by
+        another's. Returns (entries, converted): one entry
+        per call with the N32 field set; the converted
+        requests in the existing {"tool", "parameters"}
+        shape, whose loop request identities the entries
+        carry — assigned here, deterministically, in the
+        order the adjudication below will present them."""
+        catalogue = ctx.get("catalogue") or []
+        by_name = {}
+        for entry in catalogue:
+            by_name.setdefault(entry["tool"], entry)
+        entries = []
+        converted = []
+        seen_ids = {}
+        presented = 0
+        for record in records:
+            ordinal = record["provider_ordinal"]
+            call_id = record["provider_call_id"]
+            entry = {
+                "provider_ordinal": ordinal,
+                "provider_call_id": call_id,
+                "name": record["name"],
+                "arguments_sha256": None,
+                "resolution": "not_reached",
+                "validation": "not_reached",
+                "validation_constraint": None,
+                "refusal_class": None,
+                "refusal_detail": None,
+                "loop_request_id": None}
+            entries.append(entry)
+            if call_id is not None and call_id not in seen_ids:
+                seen_ids[call_id] = ordinal
+            if ordinal > CALL_CAP:
+                # Overflow (N22): identity and ordinal are
+                # recorded; the arguments are not processed
+                # — not parsed, not validated, not converted.
+                entry["refusal_class"] = "call_cap_exceeded"
+                continue
+            if call_id is None:
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its call ID was absent"
+                continue
+            if seen_ids.get(call_id) != ordinal:
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its call ID was duplicated"
+                continue
+            if record["name"] is None:
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its name could not be read"
+                continue
+            if record["arguments_form"] == "unparseable":
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its arguments could not be read"
+                continue
+            if record["arguments_form"] != "object":
+                entry["refusal_class"] = "malformed_call"
+                entry["refusal_detail"] = \
+                    "its arguments are not an object"
+                continue
+            # The extraction stands sound: the arguments
+            # hash is taken over the parsed arguments'
+            # canonical form, before resolution (N32).
+            arguments = record["arguments"]
+            entry["arguments_sha256"] = sha256_hex(
+                canonical(arguments))
+            resolved = by_name.get(record["name"])
+            if resolved is None:
+                entry["resolution"] = "unknown"
+                entry["refusal_class"] = "unknown_tool"
+                continue
+            entry["resolution"] = "resolved"
+            verdict, constraint = \
+                _schema_validator.validate_arguments(
+                    resolved["parameters"], arguments)
+            if verdict != "valid":
+                entry["validation"] = "invalid"
+                entry["validation_constraint"] = constraint
+                entry["refusal_class"] = "invalid_arguments"
+                continue
+            entry["validation"] = "valid"
+            presented += 1
+            entry["loop_request_id"] = (
+                f"loop-{ctx['instance_id']}-"
+                f"{ctx['iterations']}-{presented}")
+            converted.append({"tool": record["name"],
+                              "parameters": arguments})
+        return entries, converted
+
+    def _adjudicate_native(self, ctx, records, iteration_seq,
+                           artifact_sha256):
+        """The native corridor (N20's three phases, build
+        brief B3): classify the whole response (phase i),
+        persist the complete decision set as the translation
+        record (phase ii), then dispatch the converted
+        requests in emitted order through the ordinary
+        adjudication (phase iii) — from conversion onward
+        the iteration is indistinguishable from its
+        text-mode twin (N9). If the translation record
+        cannot be persisted, nothing from the response is
+        dispatched and the iteration follows the
+        record-failure path: a runtime_failure stall, fail
+        closed (N15/N20). Refusals are collected in the
+        run's result beside the dispatched outcomes (N19);
+        they consume no dispatch, no grant bound and no
+        step beyond this iteration, and are not stalls
+        (N18). Returns "continue" or the stall result."""
+        entries, converted = self._classify_native(ctx, records)
+        try:
+            ev = self.doorway.record_translation(
+                ctx["assembly_id"], iteration_seq, entries,
+                artifact_sha256=artifact_sha256,
+                catalogue_hash=ctx.get("catalogue_hash"),
+                registry_version=ctx.get("registry_version"))
+        except DoorwayRefusal as refusal:
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=f"the translation record could not "
+                       f"be persisted: {refusal.ground}; "
+                       f"nothing from the response was "
+                       f"dispatched (N20)")
+        except Exception as exc:  # noqa: BLE001 — the
+            # record mechanism itself unavailable: fail
+            # closed, claim nothing was dispatched
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=f"the translation record could not "
+                       f"be persisted "
+                       f"({type(exc).__name__}: {exc}); "
+                       f"nothing from the response was "
+                       f"dispatched (N20)")
+        ctx["recorded"].append(ev)
+        for entry in entries:
+            if entry["refusal_class"] is not None:
+                ctx["refused"].append({
+                    "type": "TRANSLATION_REFUSAL",
+                    "provider_call_id":
+                        entry["provider_call_id"],
+                    "provider_ordinal":
+                        entry["provider_ordinal"],
+                    "ground": entry["refusal_class"]})
+        self._adjudicate(ctx, {"proposals": [],
+                               "tool_requests": converted})
+        return "continue"
 
     # ---------------------------------------------- adjudication
     def _adjudicate(self, ctx, data):

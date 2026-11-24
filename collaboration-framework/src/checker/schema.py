@@ -111,7 +111,9 @@ SCHEMA = {
                 "disposition_seq": {"t": "opt",
                                     "v": {"t": "int"}},
                 "disposition_outcome": {"t": "opt",
-                                        "v": {"t": "str"}}}}},
+                                        "v": {"t": "str"}},
+                "translation_seq": {"t": "opt",
+                                    "v": {"t": "int"}}}}},
             "stalled": {"t": "opt", "v": {"t": "obj", "f": {
                 "ground": {"t": "opt", "v": {"t": "str"}},
                 "event_seq": {"t": "int"},

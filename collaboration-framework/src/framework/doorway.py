@@ -1920,11 +1920,254 @@ class Doorway:
             self.store.commit()
             return ev
 
+    def record_translation(self, assembly_id, iteration_seq,
+                           calls, artifact_sha256=None,
+                           catalogue_hash=None,
+                           registry_version=None):
+        """The loop's translation record (native adapter
+        piece, N32): the complete set of per-call
+        translation and refusal decisions for one native
+        iteration's response — a distinct record event,
+        committed after the iteration's response-evidence
+        disposition and before any dispatch of the
+        iteration, bound to the exact response-evidence
+        artifact hash. Admitted only from this loop route,
+        only for the activation's latest recorded
+        iteration, exactly once per iteration. Where the
+        iteration was entered under the evidence regime,
+        its disposition must already stand and the named
+        artifact hash must be the disposition's own — a
+        translation record that answers no committed
+        disposition, or binds a different artifact, is
+        refused. The decision set's shape and coherence
+        are validated here, at write time (the entry
+        contract of N32/N20/N22); the semantic
+        reconstruction — resolution and validation re-run
+        against the sealed catalogue and the captured
+        calls — is the checker's."""
+        with self.store.serialized():
+            state = self.state()
+            entry = state["assemblies"].get(assembly_id)
+            if entry is None or \
+                    entry.get("activated_seq") is None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED",
+                    (entry or {}).get("instance_id"),
+                    f"no standing activation for assembly "
+                    f"{assembly_id}; a translation record "
+                    f"records only against an activated "
+                    f"instance (N32)")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if loop.get("stalled") is not None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    "the activation stands stalled; no "
+                    "translation record records after a "
+                    "terminal (N32)")
+            if loop.get("evidence_failed") is not None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    "the activation stands ended by an "
+                    "evidence capture failure; nothing "
+                    "further records for it (R8-2)")
+            iterations = loop.get("iterations") or []
+            target = None
+            for it in iterations:
+                if it.get("event_seq") == iteration_seq:
+                    target = it
+                    break
+            if target is None or not iterations or \
+                    iterations[-1] is not target:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    f"iteration_seq {iteration_seq!r} does "
+                    f"not name the activation's latest "
+                    f"recorded iteration; a translation "
+                    f"record binds the iteration in flight "
+                    f"(N32)")
+            if target.get("call_entered_seq") is not None \
+                    and target.get("disposition_seq") is None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    "the iteration's response disposition "
+                    "stands outstanding; the translation "
+                    "record commits after the disposition "
+                    "and before any dispatch (N32)")
+            if target.get("translation_seq") is not None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    "the iteration already stands with its "
+                    "translation record; exactly one "
+                    "translation record per iteration, "
+                    "final once committed (N32)")
+            if target.get("disposition_seq") is not None:
+                disposition = self._event_at(
+                    target["disposition_seq"]) or {}
+                bound = (disposition.get("payload") or {}).get(
+                    "artifact_sha256")
+                if artifact_sha256 != bound:
+                    self._loop_refuse(
+                        "TRANSLATION_RECORDED", instance_id,
+                        "the translation record must bind "
+                        "the exact response-evidence "
+                        "artifact hash its iteration's "
+                        "disposition committed (N32)")
+            elif artifact_sha256 is not None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    "the iteration stands without a "
+                    "disposition; no artifact hash stands "
+                    "to bind (N32)")
+            problem = self._translation_problem(
+                calls, catalogue_hash)
+            if problem is not None:
+                self._loop_refuse(
+                    "TRANSLATION_RECORDED", instance_id,
+                    problem)
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration": target.get("iteration"),
+                "iteration_seq": iteration_seq,
+                "calls": copy.deepcopy(calls)}
+            payload["artifact_sha256"] = artifact_sha256
+            if catalogue_hash is not None:
+                payload["catalogue_hash"] = catalogue_hash
+            if registry_version is not None:
+                payload["registry_version"] = registry_version
+            ev = self.store.append(
+                "TRANSLATION_RECORDED", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
+    @staticmethod
+    def _translation_problem(calls, catalogue_hash):
+        """Why a translation record's decision set may not
+        stand, or None (native adapter piece): the entry
+        contract the loop's preflight produces — one entry
+        per individuable call in provider call order, each
+        carrying the N32 field set, the refusal classes of
+        §3/N22, and the coherence between an entry's
+        classification and its disposition (a presented
+        call stands resolved and valid under its loop
+        request identity; a refused call stands under
+        exactly one class, its unrun stages not_reached;
+        an overflow call's arguments were never processed,
+        so it carries no arguments hash)."""
+        if catalogue_hash is not None and (
+                not isinstance(catalogue_hash, str)
+                or len(catalogue_hash) != 64):
+            return ("a translation record carries the "
+                    "catalogue hash it was resolved against "
+                    "as a sha256 (N32)")
+        if not isinstance(calls, list) or not calls:
+            return ("a translation record carries one "
+                    "entry per individuable call; an empty "
+                    "decision set records nothing (N32)")
+        classes = ("unknown_tool", "malformed_call",
+                   "invalid_arguments", "call_cap_exceeded")
+        for position, entry in enumerate(calls, start=1):
+            if not isinstance(entry, dict):
+                return ("each translation entry is an "
+                        "object (N32)")
+            if entry.get("provider_ordinal") != position:
+                return ("translation entries stand in "
+                        "provider call order, their ordinals "
+                        "1..n without gaps (N20)")
+            call_id = entry.get("provider_call_id")
+            if call_id is not None and (
+                    not isinstance(call_id, str)
+                    or not call_id):
+                return ("a translation entry's provider "
+                        "call ID is the emitted string or "
+                        "absent (N6)")
+            name = entry.get("name")
+            if name is not None and (
+                    not isinstance(name, str) or not name):
+                return ("a translation entry's name is "
+                        "the emitted string or unreadable "
+                        "(N6)")
+            digest = entry.get("arguments_sha256")
+            if digest is not None and (
+                    not isinstance(digest, str)
+                    or len(digest) != 64):
+                return ("a translation entry's arguments "
+                        "hash is the sha256 of the parsed "
+                        "arguments' canonical form, or "
+                        "absent where the arguments were "
+                        "never parsed (N32)")
+            resolution = entry.get("resolution")
+            validation = entry.get("validation")
+            constraint = entry.get("validation_constraint")
+            refusal = entry.get("refusal_class")
+            detail = entry.get("refusal_detail")
+            request_id = entry.get("loop_request_id")
+            if constraint is not None and \
+                    not isinstance(constraint, str):
+                return ("a validation constraint is a "
+                        "string or absent (N8)")
+            if detail is not None and \
+                    not isinstance(detail, str):
+                return ("a refusal detail is a string or "
+                        "absent (N6)")
+            if refusal is None:
+                if resolution != "resolved" or \
+                        validation != "valid" or \
+                        not isinstance(request_id, str) \
+                        or not request_id:
+                    return ("a presented call stands "
+                            "resolved and valid under its "
+                            "loop request identity (N20)")
+            elif refusal not in classes:
+                return (f"refusal class {refusal!r} is not "
+                        f"a translation refusal class (§3)")
+            elif request_id is not None:
+                return ("a refused call carries no loop "
+                        "request identity; nothing was "
+                        "presented for it (N18)")
+            elif refusal == "unknown_tool":
+                if resolution != "unknown" or \
+                        validation != "not_reached":
+                    return ("an unknown_tool refusal "
+                            "stands unresolved, its "
+                            "validation not reached (N7)")
+            elif refusal == "invalid_arguments":
+                if resolution != "resolved" or \
+                        validation != "invalid" or \
+                        not isinstance(constraint, str) \
+                        or not constraint:
+                    return ("an invalid_arguments refusal "
+                            "stands resolved and invalid, "
+                            "its failing constraint named "
+                            "(N8)")
+            elif refusal == "malformed_call":
+                if resolution != "not_reached" or \
+                        validation != "not_reached":
+                    return ("a malformed_call refusal "
+                            "stands with resolution and "
+                            "validation not reached (N13)")
+            elif refusal == "call_cap_exceeded":
+                if resolution != "not_reached" or \
+                        validation != "not_reached" or \
+                        digest is not None:
+                    return ("a call_cap_exceeded refusal "
+                            "stands with its arguments "
+                            "never processed — no arguments "
+                            "hash, no classification (N22)")
+        return None
+
     def record_loop_iteration(self, assembly_id, iteration,
                               cursor_from, cursor_to,
                               catalogue_hash=None,
                               registry_version=None,
-                              evidence_governed=False):
+                              evidence_governed=False,
+                              disable_tool_validation=None):
         """The loop's iteration report (Piece A3, R49): one
         event per model call, recorded before the call it
         accounts, under the loop identity. The route derives
@@ -2077,6 +2320,17 @@ class Doorway:
                 payload["registry_version"] = registry_version
             if evidence_governed:
                 payload["evidence_governed"] = True
+            if disable_tool_validation is not None:
+                # Native adapter piece (BD-1): the flag
+                # state of this iteration's request
+                # construction, recorded in the iteration's
+                # commitment beside the catalogue hash and
+                # registry version — the loop reads the
+                # state from the callable's own construction,
+                # so the commitment and the constructed body
+                # cannot drift apart silently.
+                payload["disable_tool_validation"] = \
+                    bool(disable_tool_validation)
             ev = self.store.append(
                 "LOOP_ITERATION", LOOP_ACTOR, [instance_id],
                 payload)

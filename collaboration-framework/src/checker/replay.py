@@ -53,6 +53,8 @@ _KNOWN_TYPES = {
     # the response disposition, and the evidence failure
     # terminal.
     "CALL_ENTERED", "RESPONSE_EVIDENCE", "EVIDENCE_CAPTURE_FAILED",
+    # Native adapter piece (N32): the translation record.
+    "TRANSLATION_RECORDED",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",
@@ -388,6 +390,11 @@ def _shape_problem(ev):
         for key in ("catalogue_hash", "registry_version"):
             if bad_opt_str(key):
                 return f"LOOP_ITERATION {key} is not a string"
+        if "disable_tool_validation" in p and \
+                not isinstance(p["disable_tool_validation"],
+                               bool):
+            return "LOOP_ITERATION disable_tool_validation " \
+                "is not a boolean"
     elif t == "LOOP_STALLED":
         for key in ("assembly_id", "instance_id", "ground"):
             if need_str(key):
@@ -457,6 +464,30 @@ def _shape_problem(ev):
             return "EVIDENCE_CAPTURE_FAILED case_id is not a string"
         if bad_opt_str("detail"):
             return "EVIDENCE_CAPTURE_FAILED detail is not a string"
+    elif t == "TRANSLATION_RECORDED":
+        # Native adapter piece (N32): the translation
+        # record names its activation and iteration, the
+        # artifact and catalogue it binds, and its per-call
+        # decision set — a list of entry objects whose
+        # fields the correspondence check verifies.
+        for key in ("assembly_id", "instance_id"):
+            if need_str(key):
+                return f"TRANSLATION_RECORDED requires a {key} string"
+        for key in ("iteration", "iteration_seq"):
+            if not _is_int(p.get(key)):
+                return f"TRANSLATION_RECORDED {key} is not an integer"
+        for key in ("activated_seq", "case_version"):
+            if bad_opt(key, _is_int):
+                return f"TRANSLATION_RECORDED {key} is not an integer"
+        for key in ("case_id", "artifact_sha256",
+                    "catalogue_hash", "registry_version"):
+            if bad_opt_str(key):
+                return f"TRANSLATION_RECORDED {key} is not a string"
+        calls = p.get("calls")
+        if not isinstance(calls, list) or \
+                any(not isinstance(c, dict) for c in calls):
+            return "TRANSLATION_RECORDED calls is not a list " \
+                "of entry objects"
     return None
 
 
@@ -969,6 +1000,7 @@ def _apply(state, ev):
             "call_entered_seq": None,
             "disposition_seq": None,
             "disposition_outcome": None,
+            "translation_seq": None,
         })
     elif t == "CALL_ENTERED":
         # Response-evidence piece: the call boundary marks
@@ -993,6 +1025,18 @@ def _apply(state, ev):
                         it["disposition_seq"] = seq
                         it["disposition_outcome"] = \
                             p.get("outcome")
+                    break
+    elif t == "TRANSLATION_RECORDED":
+        # Native adapter piece (N32): the first translation
+        # record stands on its iteration; a second replaces
+        # nothing.
+        entry = state["loop_activations"].get(
+            p.get("assembly_id"))
+        if entry is not None:
+            for it in entry["iterations"]:
+                if it["event_seq"] == p.get("iteration_seq"):
+                    if it["translation_seq"] is None:
+                        it["translation_seq"] = seq
                     break
     elif t == "EVIDENCE_CAPTURE_FAILED":
         # Response-evidence piece (R8-2): the first

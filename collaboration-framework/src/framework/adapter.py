@@ -81,11 +81,7 @@ the driver's back.
   where the sealed package's judged mode is native, the call
   additionally offers tool definitions derived from the
   package's own catalogue — the same per-grant derivation the
-  loop renders as text — and a response's native tool_calls
-  are translated into the existing typed tool_requests
-  outcome: name and arguments exactly as emitted, arguments
-  parsed from their JSON string, an unparseable arguments
-  string malformed whole. The mode is read only from the
+  loop renders as text. The mode is read only from the
   sealed package (the loop passes it from the ASSEMBLY_PACKED
   act); the text path is otherwise byte-identical, and from
   the doorway onward nothing differs. Translation never
@@ -95,6 +91,33 @@ the driver's back.
   stage: one generation whose response is returned as a raw
   capture — body, error body, status, diagnostics — below
   this module's own response interpretation.
+- A9. Per-call extraction (native adapter piece,
+  NATIVE-ADAPTER-SCOPE Rev 3 — N6/N13, build brief B1):
+  a native response's tool_calls are no longer translated
+  fail-whole. Each call is EXTRACTED — one record per call
+  in emitted order, carrying the provider call ID exactly
+  as emitted, the name, the arguments (the JSON-string and
+  object forms both accepted, N40), and the call's provider
+  ordinal — and the records cross the boundary as the
+  `native_calls` outcome, for the loop's classification,
+  translation record and dispatch (the loop's corridor,
+  not this module's). A defect inside one call — an
+  unreadable name, an unparseable or non-object arguments
+  value — is carried in that call's record for the loop to
+  refuse per call; it no longer ends the response. Defects
+  of the response as a whole still fail whole here: a
+  tool_calls structure that is not a list of objects, and
+  a response carrying both content and tool calls (the
+  channels are not mixed, N12). In native mode the prompt
+  also carries the examined contract wording of N30 —
+  native calls are proposals, their outcomes or refusals
+  arrive in the next package under the call's own ID —
+  and the request carries `disable_tool_validation` as
+  the constructor's flag state stands (BD-1: enabled by
+  default, so an unoffered call is DELIVERED to the
+  framework's own resolver instead of dying at the
+  provider; the flag changes where an unoffered call is
+  stopped, never whether it may take effect).
 """
 
 from __future__ import annotations
@@ -148,8 +171,23 @@ _TOOL_SECTION = (
     "limits. You may request only these tools, under these "
     "exact names:\n")
 
+# The native arrangement, named to the model (native
+# adapter piece, N30 — examined scope wording, implemented
+# as written): native calls are proposals, not actions,
+# and every call's outcome or refusal arrives in the next
+# package under the call's own ID. Rendered only in native
+# mode; the text path's prompt is byte-identical without it.
+_NATIVE_CONTRACT = (
+    "You are offered the tools in this package as native "
+    "tool calls. A tool call is a proposal, not an action: "
+    "it happens only if the framework accepts it and "
+    "performs it. The outcome of every call — its result, "
+    "or a refusal stating that nothing was dispatched — "
+    "will be presented in your next package, under the "
+    "call's own ID.")
 
-def _render_prompt(package):
+
+def _render_prompt(package, native=False):
     """The wake prompt (Piece A3-CAT): the contract, the wake
     package as structured data, and — where the package
     carries a tool catalogue — the catalogue in its own
@@ -157,15 +195,21 @@ def _render_prompt(package):
     adapter invents, renames and supplements nothing: the
     section's framing lines are the only words it adds. A
     package without a tools field (the seat-driver path)
-    renders byte-identically to before."""
+    renders byte-identically to before. In native mode
+    (the native adapter piece, N30) the contract also
+    names the native arrangement, in the examined wording;
+    the text path renders exactly as before."""
+    contract = _CONTRACT
+    if native:
+        contract = _CONTRACT + "\n\n" + _NATIVE_CONTRACT
     tools = package.get("tools") if isinstance(package, dict) \
         else None
     if tools is None:
-        return _CONTRACT + "\n\nYour wake package:\n" + \
+        return contract + "\n\nYour wake package:\n" + \
             json.dumps(package, indent=1, default=str)
     body = {key: value for key, value in package.items()
             if key != "tools"}
-    return _CONTRACT + "\n\nYour wake package:\n" + \
+    return contract + "\n\nYour wake package:\n" + \
         json.dumps(body, indent=1, default=str) + \
         _TOOL_SECTION + json.dumps(tools, indent=1,
                                    default=str)
@@ -218,7 +262,8 @@ class OpenAICompatibleAdapter:
 
     def __init__(self, endpoint=DEFAULT_ENDPOINT, model=None,
                  api_key=None, api_key_env="NVIDIA_API_KEY",
-                 timeout=120.0, mode="text"):
+                 timeout=120.0, mode="text",
+                 disable_tool_validation=True):
         if mode not in ("text", "native"):
             raise ValueError(
                 f"adapter mode {mode!r} is not a mode; the "
@@ -228,6 +273,22 @@ class OpenAICompatibleAdapter:
         self._api_key = api_key
         self._api_key_env = api_key_env
         self.timeout = timeout
+        # BD-1 (native adapter piece): a native-mode
+        # request carries Groq's disable_tool_validation
+        # flag in this state — enabled by default, so an
+        # unoffered call is delivered to the framework's
+        # own resolver rather than refused at the provider.
+        # The flag is a request-construction property of
+        # native mode; the loop records its state in the
+        # iteration's commitment (the LOOP_ITERATION
+        # event), reading it from this attribute, so the
+        # commitment and the constructed body cannot drift
+        # apart silently. Disabled, the field is omitted
+        # from the request — the provider's default
+        # condition the P1 probe measured.
+        self.disable_tool_validation = \
+            bool(disable_tool_validation)
+        self._pending_disable_tool_validation = None
         # The interface mode (probe scope §6): the constructor
         # value is the default only — a call under a sealed
         # package's judged mode passes that mode per call, and
@@ -519,6 +580,13 @@ class OpenAICompatibleAdapter:
         tools = getattr(self, "_pending_tools", None)
         if tools:
             payload["tools"] = tools
+        # BD-1: the flag the caller staged for this call,
+        # carried in the request body exactly in the staged
+        # state — present and true where enabled; omitted
+        # where disabled (the provider's default condition).
+        if getattr(self, "_pending_disable_tool_validation",
+                   None):
+            payload["disable_tool_validation"] = True
         status, raw = self._exchange(payload, deadline)
         # Response-evidence piece: the seam's capture of
         # this response, taken before any interpretation —
@@ -820,11 +888,13 @@ class OpenAICompatibleAdapter:
         constructor's mode stands, which defaults to text, the
         historical behaviour. In native mode the request
         offers the tool definitions derived from the package's
-        catalogue and a native tool_calls response is
-        translated into the typed tool_requests outcome; the
-        text contract remains in the prompt, and a response
-        without tool calls is read on the text path exactly as
-        before."""
+        catalogue, carries BD-1's flag in its staged state,
+        and a native tool_calls response is extracted per
+        call into the native_calls outcome (A9) for the
+        loop's classification and dispatch; the prompt also
+        carries the examined native contract wording (N30).
+        A response without tool calls is read on the text
+        path exactly as before."""
         effective_mode = self.mode if mode is None else mode
         if effective_mode not in ("text", "native"):
             raise AdapterFailure(
@@ -860,7 +930,8 @@ class OpenAICompatibleAdapter:
         self.last_render_s = None
         self._last_message = None
         render_started = time.monotonic()
-        prompt = _render_prompt(package)
+        prompt = _render_prompt(
+            package, native=effective_mode == "native")
         self.last_render_s = time.monotonic() - render_started
         # Native mode stages its offered definitions for the
         # one call: _dispatch reads them from the instance so
@@ -868,12 +939,17 @@ class OpenAICompatibleAdapter:
         # transports replace — keeps its exact shape. A
         # transport that does not stage definitions simply
         # makes the text offer, and the response is read on
-        # the text path.
+        # the text path. BD-1's flag is staged the same way:
+        # the state this construction carries for the call,
+        # from the constructor's settled state.
         self._pending_tools = None
+        self._pending_disable_tool_validation = None
         if effective_mode == "native":
             definitions = self._native_tool_definitions(package)
             if definitions:
                 self._pending_tools = definitions
+            self._pending_disable_tool_validation = \
+                self.disable_tool_validation
         try:
             content, _provider_model = self._call([
                 {"role": "system",
@@ -883,6 +959,7 @@ class OpenAICompatibleAdapter:
                 {"role": "user", "content": prompt}])
         finally:
             self._pending_tools = None
+            self._pending_disable_tool_validation = None
         if effective_mode == "native":
             message = getattr(self, "_last_message", None)
             calls = message.get("tool_calls") \
@@ -894,10 +971,10 @@ class OpenAICompatibleAdapter:
                         detail="the native response carries "
                                "both content and tool calls; "
                                "the channels are not mixed")
-                requests = self._translate_tool_calls(calls)
+                records = self._extract_tool_calls(calls)
                 self._check_deadline()
-                return {"outcome": "tool_requests",
-                        "tool_requests": requests}
+                return {"outcome": "native_calls",
+                        "native_calls": records}
         obj = _extract_json_object(content)
         self._check_deadline()
         if obj is None:
@@ -1019,51 +1096,67 @@ class OpenAICompatibleAdapter:
                 else {"type": "object", "properties": {}}}})
         return definitions
 
-    def _translate_tool_calls(self, calls):
-        """Translate a native response's tool_calls into the
-        typed tool_requests shape (A8): each call's name and
-        arguments exactly as emitted — the arguments parsed
-        from their JSON string (the measured native envelope);
-        an unparseable arguments string, a non-object
-        arguments value, or a call without a readable name
-        makes the whole response malformed, fail closed. The
-        translated list then faces the same whole validation
-        as a text-carried list: translation changes the
-        encoding, never the standard."""
+    def _extract_tool_calls(self, calls):
+        """Extract a native response's tool_calls, one record
+        per call in emitted order (native adapter piece,
+        N6/N13 — build brief B1): the provider call ID
+        exactly as emitted, the name, the arguments, and the
+        call's provider ordinal. The arguments arrive as a
+        JSON string (the measured native envelope) or as an
+        object; both forms are accepted (N40). A defect
+        inside one call — an absent or unreadable name, an
+        unparseable arguments string, a non-object arguments
+        value — is carried in that call's own record (its
+        arguments_form names the shape) for the loop to
+        refuse per call; it no longer fails the response.
+        Defects of the response as a whole still fail whole:
+        a tool_calls value that is not a non-empty list, or
+        an entry that is not an object — a structure from
+        which per-call extraction cannot begin at all (N13's
+        boundary). Extraction classifies nothing and permits
+        nothing: resolution, validation, the translation
+        record and dispatch are the loop's corridor."""
         if not isinstance(calls, list) or not calls:
             raise AdapterFailure(
                 "malformed_response",
                 detail="native tool calls are a non-empty list")
-        requests = []
-        for call in calls:
+        records = []
+        for ordinal, call in enumerate(calls, start=1):
             if not isinstance(call, dict):
                 raise AdapterFailure(
                     "malformed_response",
                     detail="a native tool call is not an object")
+            call_id = call.get("id")
+            if not isinstance(call_id, str) or not call_id:
+                call_id = None
             function = call.get("function")
-            if not isinstance(function, dict) or \
-                    not isinstance(function.get("name"), str) \
-                    or not function["name"]:
-                raise AdapterFailure(
-                    "malformed_response",
-                    detail="a native tool call names no tool")
+            if not isinstance(function, dict):
+                function = {}
+            name = function.get("name")
+            if not isinstance(name, str) or not name:
+                name = None
             arguments = function.get("arguments")
             if isinstance(arguments, str):
                 try:
-                    arguments = json.loads(arguments)
+                    parsed = json.loads(arguments)
                 except ValueError:
-                    raise AdapterFailure(
-                        "malformed_response",
-                        detail="a native tool call's arguments "
-                               "are not readable JSON")
-            if not isinstance(arguments, dict):
-                raise AdapterFailure(
-                    "malformed_response",
-                    detail="a native tool call's arguments "
-                           "are not an object")
-            requests.append({"tool": function["name"],
-                             "parameters": arguments})
-        return self._tool_requests(requests)
+                    form, value = "unparseable", arguments
+                else:
+                    if isinstance(parsed, dict):
+                        form, value = "object", parsed
+                    else:
+                        form, value = "non_object", parsed
+            elif isinstance(arguments, dict):
+                form, value = "object", arguments
+            else:
+                form, value = "non_object", arguments
+            records.append({
+                "provider_ordinal": ordinal,
+                "provider_call_id": call_id,
+                "name": name,
+                "arguments_form": form,
+                "arguments": value})
+        return records
 
     @staticmethod
     def _tool_requests(value):

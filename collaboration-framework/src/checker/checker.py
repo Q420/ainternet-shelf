@@ -480,6 +480,195 @@ def _probe_suite_hash():
     }))
 
 
+# ------------------------------------------------- native adapter
+# Native adapter piece (NATIVE-ADAPTER-SCOPE Rev 3, N33):
+# the translation verdict, reconstructed independently.
+# The checker implements its own extraction, its own
+# strict validation and its own classification here —
+# it never imports the framework's validator or the
+# adapter's translation (N33's independence rule): the
+# two implementations agreeing is the evidence; one
+# implementation grading itself would be none.
+_CHECKER_CALL_CAP = 1
+
+
+def _checker_validate_arguments(parameters, arguments):
+    """The checker's own statement of the strict
+    validation contract (N8): the declared parameter list
+    is the whole contract — every required parameter
+    present, no undeclared parameter standing, no
+    coercion, no defaults. Returns the first violated
+    constraint, or None where the arguments conform."""
+    if not isinstance(arguments, dict):
+        return "the arguments are not an object"
+    if not isinstance(parameters, list):
+        return "the parameter declaration is not a list"
+    declared = []
+    for decl in parameters:
+        if not isinstance(decl, dict):
+            return "a parameter declaration is not an object"
+        name = decl.get("name")
+        if not isinstance(name, str) or not name:
+            return "a parameter declaration's name is not " \
+                "a string"
+        if name in declared:
+            return f"the parameter '{name}' is declared twice"
+        if not isinstance(decl.get("required"), bool):
+            return f"the parameter '{name}' declaration's " \
+                "required flag is not a boolean"
+        if not isinstance(decl.get("meaning"), str):
+            return f"the parameter '{name}' declaration's " \
+                "meaning is not a string"
+        declared.append(name)
+    for decl in parameters:
+        if decl["required"] and decl["name"] not in arguments:
+            return f"required parameter '{decl['name']}' " \
+                "is absent"
+    for key in sorted(arguments):
+        if key not in declared:
+            return f"parameter '{key}' is not declared"
+    return None
+
+
+def _checker_extract_calls(message):
+    """The checker's own per-call extraction from a
+    captured native message (the evidence artifact's L3):
+    one record per call in emitted order — provider
+    ordinal, provider call ID, name, arguments form and
+    the arguments in that form's shape. Returns [] where
+    the message carries no calls, and None where the
+    message's call structure is malformed as a whole
+    (calls not a list, an entry not an object, content
+    standing beside calls) — no per-call extraction
+    stands for such a message."""
+    if not isinstance(message, dict):
+        return None
+    tool_calls = message.get("tool_calls")
+    if tool_calls is None:
+        return []
+    if message.get("content"):
+        return None
+    if not isinstance(tool_calls, list) or not tool_calls:
+        return None
+    records = []
+    for position, entry in enumerate(tool_calls, start=1):
+        if not isinstance(entry, dict):
+            return None
+        call_id = entry.get("id")
+        if not isinstance(call_id, str) or not call_id:
+            call_id = None
+        name = None
+        arguments = None
+        form = "non_object"
+        function = entry.get("function")
+        if isinstance(function, dict):
+            raw_name = function.get("name")
+            if isinstance(raw_name, str) and raw_name:
+                name = raw_name
+            raw_args = function.get("arguments")
+            if isinstance(raw_args, str):
+                try:
+                    parsed = json.loads(raw_args)
+                except ValueError:
+                    form, arguments = "unparseable", raw_args
+                else:
+                    if isinstance(parsed, dict):
+                        form, arguments = "object", parsed
+                    else:
+                        form, arguments = "non_object", parsed
+            elif isinstance(raw_args, dict):
+                form, arguments = "object", raw_args
+            elif raw_args is not None:
+                form, arguments = "non_object", raw_args
+        records.append({
+            "provider_ordinal": position,
+            "provider_call_id": call_id,
+            "name": name,
+            "arguments_form": form,
+            "arguments": arguments})
+    return records
+
+
+def _checker_classify(records, catalogue, instance_id,
+                      iteration):
+    """The checker's own classification of an extraction
+    (N33 (i)–(iii)): call-ID integrity, the per-response
+    cap, closed-world resolution against the catalogue,
+    and the checker's own validation — producing the
+    translation record's entry set the recorded record is
+    compared against, field for field."""
+    by_name = {}
+    for entry in catalogue:
+        by_name.setdefault(entry["tool"], entry)
+    entries = []
+    seen_ids = {}
+    presented = 0
+    for record in records:
+        ordinal = record["provider_ordinal"]
+        call_id = record["provider_call_id"]
+        entry = {
+            "provider_ordinal": ordinal,
+            "provider_call_id": call_id,
+            "name": record["name"],
+            "arguments_sha256": None,
+            "resolution": "not_reached",
+            "validation": "not_reached",
+            "validation_constraint": None,
+            "refusal_class": None,
+            "refusal_detail": None,
+            "loop_request_id": None}
+        entries.append(entry)
+        if call_id is not None and call_id not in seen_ids:
+            seen_ids[call_id] = ordinal
+        if ordinal > _CHECKER_CALL_CAP:
+            entry["refusal_class"] = "call_cap_exceeded"
+            continue
+        if call_id is None:
+            entry["refusal_class"] = "malformed_call"
+            entry["refusal_detail"] = "its call ID was absent"
+            continue
+        if seen_ids.get(call_id) != ordinal:
+            entry["refusal_class"] = "malformed_call"
+            entry["refusal_detail"] = \
+                "its call ID was duplicated"
+            continue
+        if record["name"] is None:
+            entry["refusal_class"] = "malformed_call"
+            entry["refusal_detail"] = \
+                "its name could not be read"
+            continue
+        if record["arguments_form"] == "unparseable":
+            entry["refusal_class"] = "malformed_call"
+            entry["refusal_detail"] = \
+                "its arguments could not be read"
+            continue
+        if record["arguments_form"] != "object":
+            entry["refusal_class"] = "malformed_call"
+            entry["refusal_detail"] = \
+                "its arguments are not an object"
+            continue
+        entry["arguments_sha256"] = sha256_hex(
+            canonical(record["arguments"]))
+        target = by_name.get(record["name"])
+        if target is None:
+            entry["resolution"] = "unknown"
+            entry["refusal_class"] = "unknown_tool"
+            continue
+        entry["resolution"] = "resolved"
+        constraint = _checker_validate_arguments(
+            target["parameters"], record["arguments"])
+        if constraint is not None:
+            entry["validation"] = "invalid"
+            entry["validation_constraint"] = constraint
+            entry["refusal_class"] = "invalid_arguments"
+            continue
+        entry["validation"] = "valid"
+        presented += 1
+        entry["loop_request_id"] = \
+            f"loop-{instance_id}-{iteration}-{presented}"
+    return entries
+
+
 def _probe_fingerprint(route, model):
     return sha256_hex(canonical({
         "route": route,
@@ -1895,6 +2084,7 @@ def _loop_result(events, state, run_dir=None):
     entered = {}
     dispositions = {}
     evidence_failures = {}
+    translations = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -1953,6 +2143,19 @@ def _loop_result(events, state, run_dir=None):
                         assembly_id=aid, at_seq=seq)
             evidence_failures.setdefault(aid, []).append(ev)
             binding_problems("evidence_failure", ev, aid)
+        elif t == "TRANSLATION_RECORDED":
+            # Native adapter piece (N32/N33): the
+            # translation record — the loop machinery's
+            # own actor, bound to the standing activation
+            # exactly, like its other bookkeeping.
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("translation_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("translation", ev, aid):
+                continue
+            translations.setdefault(aid, []).append(ev)
 
     for aid in activated:
         if pinned_bounds_malformed(aid):
@@ -2738,6 +2941,285 @@ def _loop_result(events, state, run_dir=None):
                             assembly_id=aid,
                             at_seq=other["event_seq"],
                             type=other["type"])
+
+    # ---------------------------------- native translation
+    # Native adapter piece (N33): the translation verdict,
+    # reconstructed independently from the record and the
+    # filed evidence — never from the loop's word. For
+    # every translation record: its iteration binding, its
+    # catalogue and artifact bindings, its position (after
+    # its iteration's disposition, before any dispatch of
+    # the iteration), and its decision set — re-derived
+    # from the captured response's own calls, resolved
+    # against the catalogue this checker reconstructs from
+    # the sealed grants, validated by the checker's own
+    # validator — compared field for field. And the
+    # record-level doorway invariance (N33 (v)): no
+    # dispatch of a native iteration without its
+    # translation record standing before it; no record
+    # silently lacking adjudication — every presented call
+    # answered by exactly its request, dispatched or
+    # doorway-refused, in emitted order. A native iteration
+    # is known by its own commitment: the iteration event
+    # of a native-judged assembly carries the request's
+    # disable_tool_validation state (BD-1).
+    def load_artifact(iseq, claimed):
+        """The filed artifact for an iteration, read and
+        hash-verified against the disposition that binds
+        it — or None where it cannot stand (the artifact's
+        own defects are reported by the evidence checks
+        above; here an unreadable artifact simply leaves
+        the translation unverifiable)."""
+        if run_dir is None or claimed is None:
+            return None
+        path = os.path.join(run_dir, "responses",
+                            f"iteration-{iseq}.json")
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read()
+        except OSError:
+            return None
+        if sha256_hex(data) != claimed:
+            return None
+        try:
+            return json.loads(data.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            return None
+
+    for aid in set(iterations) | set(translations):
+        gen = generated.get(aid)
+        iid = gen["payload"].get("instance_id") \
+            if gen is not None else None
+        grants = gen["payload"].get("grants") \
+            if gen is not None else None
+        per_grant = gen is not None and \
+            gen["payload"].get("catalogue_contract") == \
+            _RETRIEVAL_CONTRACT
+        iters = iterations.get(aid, [])
+        iter_by_seq = {ev["event_seq"]: ev for ev in iters}
+        disp_by_iter = {}
+        for ev in dispositions.get(aid, []):
+            disp_by_iter.setdefault(
+                ev["payload"].get("iteration_seq"), ev)
+        tev_by_iter = {}
+        for tev in translations.get(aid, []):
+            tiseq = tev["payload"].get("iteration_seq")
+            if tiseq not in iter_by_seq:
+                problem("translation_without_iteration",
+                        assembly_id=aid,
+                        at_seq=tev["event_seq"],
+                        iteration_seq=tiseq)
+            elif tiseq in tev_by_iter:
+                problem("translation_duplicate",
+                        assembly_id=aid,
+                        at_seq=tev["event_seq"],
+                        iteration_seq=tiseq)
+            else:
+                tev_by_iter[tiseq] = tev
+        for idx, iev in enumerate(iters):
+            iseq = iev["event_seq"]
+            ip = iev["payload"]
+            window_end = iters[idx + 1]["event_seq"] \
+                if idx + 1 < len(iters) else None
+
+            def in_window(seq, after):
+                return seq > after and \
+                    (window_end is None or seq < window_end)
+
+            tev = tev_by_iter.get(iseq)
+            disp = disp_by_iter.get(iseq)
+            if tev is None:
+                # No record stands for this iteration: a
+                # native-marked iteration that nevertheless
+                # dispatched, or a captured response whose
+                # calls stand unrecorded, diverges.
+                if "disable_tool_validation" in ip and \
+                        iid is not None and any(
+                            ev["type"] == "TOOL_REQUESTED"
+                            and ev["payload"].get(
+                                "instance_id") == iid
+                            and in_window(ev["event_seq"], iseq)
+                            for ev in events):
+                    problem("dispatch_without_translation",
+                            assembly_id=aid, at_seq=iseq,
+                            iteration_seq=iseq)
+                if "disable_tool_validation" in ip and \
+                        disp is not None and \
+                        disp["payload"].get("outcome") == \
+                        "captured":
+                    # A native-judged iteration only: a
+                    # text-judged iteration's native-shaped
+                    # content is the malformed stall the
+                    # evidence checks already account — it
+                    # owes no translation record.
+                    artifact = load_artifact(
+                        iseq, disp["payload"].get(
+                            "artifact_sha256"))
+                    if artifact is not None:
+                        layers = artifact.get("layers") or {}
+                        l3 = layers.get("L3") or {}
+                        if l3.get("present"):
+                            found = _checker_extract_calls(
+                                l3.get("message"))
+                            if found:
+                                problem(
+                                    "translation_record_missing",
+                                    assembly_id=aid,
+                                    at_seq=disp["event_seq"],
+                                    iteration_seq=iseq)
+                continue
+            tp = tev["payload"]
+            tseq = tev["event_seq"]
+            if "disable_tool_validation" not in ip:
+                problem("translation_without_native_iteration",
+                        assembly_id=aid, at_seq=tseq,
+                        iteration_seq=iseq)
+            if tp.get("iteration") != ip.get("iteration"):
+                problem("translation_iteration_mismatch",
+                        assembly_id=aid, at_seq=tseq,
+                        iteration_seq=iseq)
+            # The catalogue binding and reconstruction.
+            catalogue = None
+            version = tp.get("registry_version")
+            if tp.get("catalogue_hash") != \
+                    ip.get("catalogue_hash") or \
+                    version != ip.get("registry_version"):
+                problem("translation_catalogue_mismatch",
+                        assembly_id=aid, at_seq=tseq,
+                        iteration_seq=iseq)
+            elif not known_version(version):
+                problem(
+                    "translation_catalogue_version_unknown",
+                    assembly_id=aid, at_seq=tseq,
+                    iteration_seq=iseq,
+                    registry_version=version)
+            else:
+                catalogue, ground = _derive_catalogue(
+                    grants, version, per_grant=per_grant)
+                if catalogue is None:
+                    problem("translation_catalogue_not_derivable",
+                            assembly_id=aid, at_seq=tseq,
+                            iteration_seq=iseq, detail=ground)
+                    catalogue = None
+                elif sha256_hex(canonical(catalogue)) != \
+                        tp.get("catalogue_hash"):
+                    problem("translation_catalogue_mismatch",
+                            assembly_id=aid, at_seq=tseq,
+                            iteration_seq=iseq)
+                    catalogue = None
+            # The artifact binding and the record's
+            # position: after the disposition, before any
+            # dispatch of the iteration.
+            if disp is not None:
+                if tp.get("artifact_sha256") != \
+                        disp["payload"].get("artifact_sha256"):
+                    problem("translation_artifact_mismatch",
+                            assembly_id=aid, at_seq=tseq,
+                            iteration_seq=iseq)
+                if tseq <= disp["event_seq"]:
+                    problem("translation_before_disposition",
+                            assembly_id=aid, at_seq=tseq,
+                            iteration_seq=iseq)
+            # The decision set, re-derived from the
+            # captured response itself.
+            if disp is not None and \
+                    disp["payload"].get("outcome") == \
+                    "captured" and catalogue is not None:
+                artifact = load_artifact(
+                    iseq, disp["payload"].get(
+                        "artifact_sha256"))
+                if artifact is None:
+                    problem("translation_unverifiable",
+                            assembly_id=aid, at_seq=tseq,
+                            iteration_seq=iseq)
+                else:
+                    layers = artifact.get("layers") or {}
+                    l3 = layers.get("L3") or {}
+                    records = _checker_extract_calls(
+                        l3.get("message")) \
+                        if l3.get("present") else None
+                    if records is None:
+                        problem(
+                            "translation_reconstruction_mismatch",
+                            assembly_id=aid, at_seq=tseq,
+                            iteration_seq=iseq,
+                            detail="the captured message's "
+                                   "calls are malformed as "
+                                   "a whole")
+                    else:
+                        expected = _checker_classify(
+                            records, catalogue, iid,
+                            ip.get("iteration"))
+                        recorded = tp.get("calls")
+                        detail = None
+                        if not isinstance(recorded, list) or \
+                                len(recorded) != len(expected):
+                            detail = "the recorded decision " \
+                                "set's size differs from " \
+                                "the reconstruction's"
+                        else:
+                            for want, got in zip(expected,
+                                                 recorded):
+                                if want != got:
+                                    field = next(
+                                        (k for k in want
+                                         if not isinstance(
+                                             got, dict)
+                                         or got.get(k)
+                                         != want[k]),
+                                        None)
+                                    detail = (
+                                        f"call "
+                                        f"{want['provider_ordinal']}: "
+                                        f"field {field} "
+                                        f"differs from the "
+                                        f"reconstruction")
+                                    break
+                        if detail is not None:
+                            problem(
+                                "translation_reconstruction_mismatch",
+                                assembly_id=aid, at_seq=tseq,
+                                iteration_seq=iseq,
+                                detail=detail)
+            # Doorway invariance at the record level: the
+            # requests standing after the record, in this
+            # iteration's window, are exactly the record's
+            # presented calls, in emitted order — and each
+            # presented call was adjudicated: dispatched,
+            # or refused by the doorway on the record.
+            recorded_calls = tp.get("calls") \
+                if isinstance(tp.get("calls"), list) else []
+            presented = [c.get("loop_request_id")
+                         for c in recorded_calls
+                         if isinstance(c, dict)
+                         and c.get("loop_request_id")]
+            window_requests = [
+                ev for ev in events
+                if ev["type"] == "TOOL_REQUESTED"
+                and ev["payload"].get("instance_id") == iid
+                and in_window(ev["event_seq"], tseq)]
+            if [ev["payload"].get("request_id")
+                    for ev in window_requests] != presented:
+                problem("translation_dispatch_mismatch",
+                        assembly_id=aid, at_seq=tseq,
+                        iteration_seq=iseq)
+            for rid in presented:
+                dispatched = any(
+                    ev["type"] == "TOOL_DISPATCHED"
+                    and ev["payload"].get("request_id") == rid
+                    and in_window(ev["event_seq"], tseq)
+                    for ev in events)
+                refused = any(
+                    ev["type"] == "REJECTION"
+                    and ev["payload"].get("request_id") == rid
+                    and ev["payload"].get("attempted_type")
+                    == "TOOL_DISPATCHED"
+                    for ev in events)
+                if not dispatched and not refused:
+                    problem(
+                        "translation_presented_without_adjudication",
+                        assembly_id=aid, at_seq=tseq,
+                        iteration_seq=iseq, request_id=rid)
 
     # Orphan artifacts (R2-2): a file in the run's evidence
     # store that no committed captured disposition binds
