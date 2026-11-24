@@ -162,6 +162,78 @@
    "ts": "2026-11-24T04:03:23Z",
    "prev_hash": "9b54339beec2a756094c305012720f9c480dca8e7a6cf2e952cc243ab95bfc60",
    "hash": "08636b7bfd3394d8a1c1309c584dd7d1eafe9eedc0fb71b31bca4d6124955759"
+  },
+  {
+   "event_seq": 14,
+   "event_id": "c9b0ad50-1b0d-4ba4-9106-bc26f45cf3b6",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_JUDGED",
+   "actor": "exam-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"ccb664fecee05b11ddf86f2dcd8f0076a577faacf004902ea67562f1123f8bb3\", \"probe_seq\": 12, \"probe_evidence_hash\": \"59d1b38e0900a2daad6b0175e6f2fdaae18b99028df774fa2ad1226a7da261c0\", \"adapter_mode\": \"text\", \"mode_grounds\": \"Examiner judgement (Vane, on the phase-1 probe evidence): the settled five trials favour the established text contract - four text_contract x provider_accepted observations are a strict majority under the quorum; the one contrary observation (trial 4) is an environment_tool_attempt the provider refused, carrying the text-contract JSON, and is not evidence of native capability; there is no empirical basis for selecting native mode in this probe, and text preserves the existing response contract and doorway path without the additional native translation boundary for this assembly. Scope limit preserved: five trials decide this assembly, route, model and configuration only; they do not establish general model consistency or text-contract reliability, and malformed or unrecognised responses continue to fail closed.\", \"decision_receipt_hash\": \"9d84788c01366b43c511ca2338f1e4bf3c4b6300fb515b6247dc52033b0e8c57\", \"decision_examiner\": \"Vane\", \"decision_recording\": \"harness-recorded from the examiner decision receipt; the examiner token authenticates the recording act, not the examiner's identity\"}",
+   "ts": "2026-11-24T04:06:35Z",
+   "prev_hash": "08636b7bfd3394d8a1c1309c584dd7d1eafe9eedc0fb71b31bca4d6124955759",
+   "hash": "822922abe47940660423e0d00ee47a126066a18e24203204e0a3e16f6feb0dec"
+  },
+  {
+   "event_seq": 15,
+   "event_id": "b0e87d48-f629-439d-97e3-c35d181a5e8a",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PACKED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"ccb664fecee05b11ddf86f2dcd8f0076a577faacf004902ea67562f1123f8bb3\", \"credential_fingerprint\": \"78fdef9e7c9cbb5c2a324b06ce59de69b1f2d73f00944e3bd5be7876d2708b52\", \"probe_evidence_hash\": \"59d1b38e0900a2daad6b0175e6f2fdaae18b99028df774fa2ad1226a7da261c0\", \"adapter_mode\": \"text\"}",
+   "ts": "2026-11-24T04:06:35Z",
+   "prev_hash": "822922abe47940660423e0d00ee47a126066a18e24203204e0a3e16f6feb0dec",
+   "hash": "813f1a16c0dea20690a91367af5b6293584554750710efc806c4ef503dbf67bb"
+  },
+  {
+   "event_seq": 16,
+   "event_id": "485f2538-43e2-4998-9c8b-62019e508f68",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_ISSUE_AUTHORISED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T04:06:35Z",
+   "prev_hash": "813f1a16c0dea20690a91367af5b6293584554750710efc806c4ef503dbf67bb",
+   "hash": "ed118b8b466abf19c0634826f10baf75c3454cf76843daf57c318fe050ef3754"
+  },
+  {
+   "event_seq": 17,
+   "event_id": "96d7c8dd-8953-439f-8f03-d617f64816f8",
+   "run_id": "run-first-worker-1",
+   "type": "INSTANCE_ACTIVATED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-24T04:06:35Z",
+   "prev_hash": "ed118b8b466abf19c0634826f10baf75c3454cf76843daf57c318fe050ef3754",
+   "hash": "8750dcf756927bba78af2200b03a7dd19a87fb6ebb9f23c657b2fcaddb178f29"
+  },
+  {
+   "event_seq": 18,
+   "event_id": "3b284b05-5ddc-423a-8985-840be5a0e32a",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_ITERATION",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"step_ceiling\": 12, \"deadline_seconds\": 600, \"cursor_from\": 17, \"cursor_to\": 17, \"catalogue_hash\": \"4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398\", \"registry_version\": \"tool-registry-v3\"}",
+   "ts": "2026-11-24T04:06:35Z",
+   "prev_hash": "8750dcf756927bba78af2200b03a7dd19a87fb6ebb9f23c657b2fcaddb178f29",
+   "hash": "fcfa40a9a2c61c8b8fb0c3cbef9b417b85e7a4c5b893379f793308da3810afc0"
+  },
+  {
+   "event_seq": 19,
+   "event_id": "92284594-0127-42bc-a0d3-672fc1c11ec2",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"ground\": \"provider_failure\", \"iterations\": 1, \"detail\": \"answer is not one JSON object\"}",
+   "ts": "2026-11-24T04:06:36Z",
+   "prev_hash": "fcfa40a9a2c61c8b8fb0c3cbef9b417b85e7a4c5b893379f793308da3810afc0",
+   "hash": "feb91078c8c22b097c195b04d79cb223969f179b38f635d8fd707ed90ef6cdd9"
   }
  ]
 }

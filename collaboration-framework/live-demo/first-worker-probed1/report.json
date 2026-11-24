@@ -1,0 +1,180 @@
+{
+ "kind": "first generated-worker run harness report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "scope": "FIRST-WORKER-RUN-SCOPE-2026-11-23.md Rev 2",
+ "worker_route": "groq",
+ "retrieval_mode": true,
+ "brief_sandbox_path": "scratch/brief.md",
+ "model_pinned": "openai/gpt-oss-120b",
+ "model_requested": "openai/gpt-oss-120b",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "manifest": {
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)"
+   }
+  ]
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "ground": "provider_failure",
+  "instance_id": "inst-crew-1-1",
+  "assembly_id": "assembly-crew-1-1",
+  "iterations": 1,
+  "recorded": [
+   {
+    "event_seq": 18,
+    "event_id": "3b284b05-5ddc-423a-8985-840be5a0e32a",
+    "run_id": "run-first-worker-1",
+    "type": "LOOP_ITERATION",
+    "actor": "loop",
+    "affected": [
+     "inst-crew-1-1"
+    ],
+    "payload": {
+     "assembly_id": "assembly-crew-1-1",
+     "instance_id": "inst-crew-1-1",
+     "activated_seq": 17,
+     "case_id": "case-crew-1",
+     "case_version": 1,
+     "iteration": 1,
+     "step_ceiling": 12,
+     "deadline_seconds": 600,
+     "cursor_from": 17,
+     "cursor_to": 17,
+     "catalogue_hash": "4020a870a2af005a48b63c5b46270e1e00a610c469c1cbc7abbd4349a1c90398",
+     "registry_version": "tool-registry-v3"
+    },
+    "ts": "2026-11-24T04:06:35Z",
+    "prev_hash": "8750dcf756927bba78af2200b03a7dd19a87fb6ebb9f23c657b2fcaddb178f29",
+    "hash": "fcfa40a9a2c61c8b8fb0c3cbef9b417b85e7a4c5b893379f793308da3810afc0"
+   }
+  ],
+  "refused": [],
+  "dispatched": [],
+  "call_timings": [
+   {
+    "iteration": 1,
+    "package_construction_s": 0.001353210000161198,
+    "render_s": 0.0004724489999716752,
+    "transport_stages": {
+     "body_preparation_s": 9.23489997148863e-05,
+     "helper_launch_s": 0.0008581970005252515,
+     "submission_provider_wait_receipt_s": 1.2291188489998603,
+     "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+     "response_parsing_s": 5.569399945670739e-05
+    },
+    "total_call_s": 1.2308020629998282
+   }
+  ],
+  "stall_recorded": true,
+  "stall_event": {
+   "event_seq": 19,
+   "event_id": "92284594-0127-42bc-a0d3-672fc1c11ec2",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": [
+    "inst-crew-1-1"
+   ],
+   "payload": {
+    "assembly_id": "assembly-crew-1-1",
+    "instance_id": "inst-crew-1-1",
+    "activated_seq": 17,
+    "case_id": "case-crew-1",
+    "case_version": 1,
+    "ground": "provider_failure",
+    "iterations": 1,
+    "detail": "answer is not one JSON object"
+   },
+   "ts": "2026-11-24T04:06:36Z",
+   "prev_hash": "fcfa40a9a2c61c8b8fb0c3cbef9b417b85e7a4c5b893379f793308da3810afc0",
+   "hash": "feb91078c8c22b097c195b04d79cb223969f179b38f635d8fd707ed90ef6cdd9"
+  }
+ },
+ "iterations": 1,
+ "call_timings": [
+  {
+   "iteration": 1,
+   "package_construction_s": 0.001353210000161198,
+   "render_s": 0.0004724489999716752,
+   "transport_stages": {
+    "body_preparation_s": 9.23489997148863e-05,
+    "helper_launch_s": 0.0008581970005252515,
+    "submission_provider_wait_receipt_s": 1.2291188489998603,
+    "submission_provider_wait_receipt_note": "submission + provider wait + receipt (inseparable through this interface)",
+    "response_parsing_s": 5.569399945670739e-05
+   },
+   "total_call_s": 1.2308020629998282
+  }
+ ],
+ "call_timings_note": "per-iteration stage timings measured directly by the loop, the adapter and the connector transport (INDEX 217/219): package construction, prompt rendering, and the transport's stages, with stages the interface cannot separate labelled as such and unmeasured stages null. Local cancellation of a helper process never proves the upstream provider stopped processing its request.",
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 19
+ },
+ "dispatches": [],
+ "brief_exists": false,
+ "brief_word_count": null,
+ "identity_evidence": {
+  "declaration": "I\u2019m ChatGPT, a large language model built on OpenAI\u2019s GPT\u20114 architecture. I\u2019m provided and hosted by OpenAI.\n\n**What I can do**\n- Understand and generate natural\u2011language text across many topics.\n- Answer questions, explain concepts, and engage in conversation.\n- Summarize, translate, and rewrite text.\n- Help with brainstorming, outlining, and drafting written material.\n- Write, review, and debug code snippets in a variety of programming languages.\n- Perform basic reasoning, calculations, and problem\u2011solving.\n- Generate creative content such as stories, poems, or dialogue.\n\n**What I can\u2019t do**\n- Access the internet, real\u2011time data, or external databases (I can\u2019t browse or fetch live information).\n- Retrieve or store personal data about you unless you share it in the conversation; I don\u2019t retain memory between sessions.\n- Execute code or run programs; I can only simulate or suggest code.\n- Provide professional advice that requires a licensed expert (e.g., medical, legal, financial) beyond general informational guidance.\n- Guarantee absolute factual accuracy; my responses are based on patterns in training data up to my knowledge cutoff (June\u202f2024) and may contain errors or outdated information.\n\nIn short, I\u2019m a text\u2011based AI assistant designed to help with information, writing, coding, and reasoning tasks, within the limits of my training data and offline operation.",
+  "provider_model_id": "openai/gpt-oss-120b",
+  "identity_status": "declared",
+  "note": "declaration and provider-reported id as recorded at the instance's onboarding; neither is independent proof of the model the provider actually served"
+ },
+ "event_count": 19,
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ },
+ "probed_mode": true,
+ "adapter_mode": "text",
+ "decision_receipt_hash": "9d84788c01366b43c511ca2338f1e4bf3c4b6300fb515b6247dc52033b0e8c57",
+ "decision_receipt_file": "decision-receipt.json",
+ "decision_examiner": "Vane",
+ "decision_recording": "harness-recorded from the examiner decision receipt; the examiner token authenticates the recording act, not the examiner's identity"
+}

@@ -1,0 +1,12 @@
+{
+  "run_id": "run-first-worker-1",
+  "assembly_id": "assembly-crew-1-1",
+  "generated_record_hash": "ccb664fecee05b11ddf86f2dcd8f0076a577faacf004902ea67562f1123f8bb3",
+  "probed_seq": 12,
+  "probe_evidence_hash": "59d1b38e0900a2daad6b0175e6f2fdaae18b99028df774fa2ad1226a7da261c0",
+  "fingerprint": "002d3677dcbca52a7568a98f26c6255fadbe72ac3c6caab0adda3925ddf72e32",
+  "adapter_mode": "text",
+  "examiner": "Vane",
+  "mode_grounds": "Examiner judgement (Vane, on the phase-1 probe evidence): the settled five trials favour the established text contract - four text_contract x provider_accepted observations are a strict majority under the quorum; the one contrary observation (trial 4) is an environment_tool_attempt the provider refused, carrying the text-contract JSON, and is not evidence of native capability; there is no empirical basis for selecting native mode in this probe, and text preserves the existing response contract and doorway path without the additional native translation boundary for this assembly. Scope limit preserved: five trials decide this assembly, route, model and configuration only; they do not establish general model consistency or text-contract reliability, and malformed or unrecognised responses continue to fail closed.",
+  "decided_at": "2026-11-24T04:06:32.163542+00:00"
+}
