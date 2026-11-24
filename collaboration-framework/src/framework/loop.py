@@ -349,9 +349,24 @@ class Loop:
                 "reason": problem}}
         seat = entry.get("seat")
         content = doorway._pinned_case_content(state, entry)
+        # Native-mode probe piece (probe scope §6): under a
+        # probe-governed assembly, the adapter's mode is read
+        # from the sealed packed package — the ASSEMBLY_PACKED
+        # act's own payload, the same object the checker
+        # verifies against the judgement. It is passed to the
+        # model callable as a keyword only for governed
+        # assemblies: a historical assembly's callable is
+        # invoked exactly as it has always been.
+        adapter_mode = None
+        if doorway._probe_governed(
+                doorway._generated_payload(assembly_id)):
+            packed = doorway._event_at(entry.get("packed_seq"))
+            adapter_mode = (packed or {}).get(
+                "payload", {}).get("adapter_mode")
         return {
             "instance_id": instance_id,
             "assembly_id": assembly_id,
+            "adapter_mode": adapter_mode,
             "seat": seat,
             "role": (state["seats"].get(seat) or {}).get("role"),
             "case_id": entry.get("case_id"),
@@ -475,8 +490,14 @@ class Loop:
                 if deadline is not None else None
             call_started = time.monotonic()
             try:
-                raw = self.model(package, budget=remaining,
-                                 deadline=deadline)
+                if ctx.get("adapter_mode") is not None:
+                    raw = self.model(
+                        package, budget=remaining,
+                        deadline=deadline,
+                        mode=ctx["adapter_mode"])
+                else:
+                    raw = self.model(package, budget=remaining,
+                                     deadline=deadline)
             except AdapterFailure as failure:
                 self._note_call_timing(ctx, iteration,
                                        package_s, call_started)

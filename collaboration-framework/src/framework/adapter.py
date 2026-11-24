@@ -77,6 +77,24 @@ the driver's back.
   named environment variable at call time. It is sent only
   as the Authorization header — never into the record, a
   package, a prompt, or a log line (this module logs nothing).
+- A8. Native mode (native-mode probe piece, probe scope §6):
+  where the sealed package's judged mode is native, the call
+  additionally offers tool definitions derived from the
+  package's own catalogue — the same per-grant derivation the
+  loop renders as text — and a response's native tool_calls
+  are translated into the existing typed tool_requests
+  outcome: name and arguments exactly as emitted, arguments
+  parsed from their JSON string, an unparseable arguments
+  string malformed whole. The mode is read only from the
+  sealed package (the loop passes it from the ASSEMBLY_PACKED
+  act); the text path is otherwise byte-identical, and from
+  the doorway onward nothing differs. Translation never
+  normalises an invalid request into an authorised one: a
+  translated request faces the doorway exactly as its
+  text-form twin does. `probe_raw_call()` serves the probe
+  stage: one generation whose response is returned as a raw
+  capture — body, error body, status, diagnostics — below
+  this module's own response interpretation.
 """
 
 from __future__ import annotations
@@ -191,12 +209,23 @@ class OpenAICompatibleAdapter:
 
     def __init__(self, endpoint=DEFAULT_ENDPOINT, model=None,
                  api_key=None, api_key_env="NVIDIA_API_KEY",
-                 timeout=120.0):
+                 timeout=120.0, mode="text"):
+        if mode not in ("text", "native"):
+            raise ValueError(
+                f"adapter mode {mode!r} is not a mode; the "
+                f"modes are text and native (probe scope §6)")
         self.endpoint = endpoint
         self.model = model
         self._api_key = api_key
         self._api_key_env = api_key_env
         self.timeout = timeout
+        # The interface mode (probe scope §6): the constructor
+        # value is the default only — a call under a sealed
+        # package's judged mode passes that mode per call, and
+        # the per-call value governs. Text is the historical
+        # default: an adapter constructed as before behaves
+        # exactly as before.
+        self.mode = mode
         self._contribution_counter = 0
         # Timing evidence (INDEX 217/219): the prompt-
         # rendering seconds of the most recent __call__, or
@@ -248,27 +277,11 @@ class OpenAICompatibleAdapter:
                 "no_response", detail="total deadline exceeded")
 
     # ---------------------------------------------------- transport
-    def _call(self, messages):
-        """One provider call under the operation's total
-        deadline. The transport runs on a daemon worker thread
-        over a connection this adapter owns from creation
-        (http.client, not urlopen), and the calling thread
-        enforces the deadline with a timed join: EVERY phase
-        -- connection, request, response headers, body,
-        parsing -- sits under the same absolute point. On
-        expiry the caller ACTIVELY TERMINATES the transport:
-        the published connection's socket is shut down and
-        closed, which interrupts whatever blocking read the
-        worker is inside, and the worker is joined for a
-        short grace period to confirm it ended. A provider
-        operation therefore cannot outlive its deadline on
-        any path where a socket exists; the only phase no
-        shutdown can reach is a connection attempt whose
-        socket has not been created yet, and that is bounded
-        by the dispatch-time socket timeout. Nothing can be
-        submitted from a terminated worker: submission
-        happens only on this thread's success path. Returns
-        (content, provider_model_id). No retry, ever."""
+    def _run_transport(self, fn):
+        """Run one blocking transport function on the daemon
+        worker thread under the operation's total deadline,
+        with the calling thread's active termination on expiry
+        (see _call). Returns fn's value; re-raises its failure."""
         deadline = getattr(self, "_deadline", None) or \
             self._begin_deadline()
         self._active_conn = None
@@ -276,7 +289,7 @@ class OpenAICompatibleAdapter:
 
         def work():
             try:
-                box["value"] = self._dispatch(messages, deadline)
+                box["value"] = fn(deadline)
             except BaseException as exc:  # carried, re-raised here
                 box["error"] = exc
 
@@ -303,6 +316,30 @@ class OpenAICompatibleAdapter:
         if "error" in box:
             raise box["error"]
         return box["value"]
+
+    def _call(self, messages):
+        """One provider call under the operation's total
+        deadline. The transport runs on a daemon worker thread
+        over a connection this adapter owns from creation
+        (http.client, not urlopen), and the calling thread
+        enforces the deadline with a timed join: EVERY phase
+        -- connection, request, response headers, body,
+        parsing -- sits under the same absolute point. On
+        expiry the caller ACTIVELY TERMINATES the transport:
+        the published connection's socket is shut down and
+        closed, which interrupts whatever blocking read the
+        worker is inside, and the worker is joined for a
+        short grace period to confirm it ended. A provider
+        operation therefore cannot outlive its deadline on
+        any path where a socket exists; the only phase no
+        shutdown can reach is a connection attempt whose
+        socket has not been created yet, and that is bounded
+        by the dispatch-time socket timeout. Nothing can be
+        submitted from a terminated worker: submission
+        happens only on this thread's success path. Returns
+        (content, provider_model_id). No retry, ever."""
+        return self._run_transport(
+            lambda deadline: self._dispatch(messages, deadline))
 
     def _open_connection(self, remaining):
         """Build (not yet connect) the connection for the
@@ -358,18 +395,21 @@ class OpenAICompatibleAdapter:
             (proxy_url and scheme == "http") else {}
         return conn, path
 
-    def _dispatch(self, messages, deadline):
-        """The blocking transport itself (runs on _call's
-        worker thread) over the owned connection: request,
-        header acquisition, and the body read via read1 with
-        the socket timeout reset to the current remaining
-        time before every read -- a provider drip-feeding
-        inside each socket window cannot hold the read loop
-        open -- and the read path FAILS CLOSED: no unbounded
-        fallback, no silently ignored inability to bound a
-        read. Phases outside the read loop (connect, headers)
-        are bounded by the calling thread's active
-        termination at the deadline (see _call)."""
+    def _exchange(self, payload_obj, deadline):
+        """The raw HTTP exchange (runs on the transport worker
+        thread) over the owned connection: request, header
+        acquisition, and the body read via read1 with the
+        socket timeout reset to the current remaining time
+        before every read -- a provider drip-feeding inside
+        each socket window cannot hold the read loop open --
+        and the read path FAILS CLOSED: no unbounded fallback,
+        no silently ignored inability to bound a read. Phases
+        outside the read loop (connect, headers) are bounded
+        by the calling thread's active termination at the
+        deadline (see _call). Returns (status, raw body text)
+        for ANY status — interpreting the status is the
+        caller's; the probe capture needs the error body this
+        exchange now reads whole."""
 
         def remaining():
             left = deadline - time.monotonic()
@@ -379,9 +419,7 @@ class OpenAICompatibleAdapter:
             return left
 
         key = self._api_key or os.environ.get(self._api_key_env)
-        payload = json.dumps(
-            {"model": self.model, "messages": messages,
-             "temperature": 0.2}).encode("utf-8")
+        payload = json.dumps(payload_obj).encode("utf-8")
         conn, path = self._open_connection(remaining)
         try:
             headers = {"Content-Type": "application/json",
@@ -393,9 +431,7 @@ class OpenAICompatibleAdapter:
             if conn.sock is not None:
                 conn.sock.settimeout(remaining())
             resp = conn.getresponse()
-            if resp.status >= 400:
-                raise AdapterFailure(
-                    "provider_error", detail=f"HTTP {resp.status}")
+            status = resp.status
             chunks = []
             read1 = getattr(resp, "read1", None)
             if read1 is None:
@@ -438,26 +474,101 @@ class OpenAICompatibleAdapter:
             except Exception:
                 pass
         remaining()
+        return status, raw
+
+    def _dispatch(self, messages, deadline):
+        """The blocking transport itself (runs on _call's
+        worker thread): one chat-completions call and its
+        interpretation — an HTTP error is a provider_error, an
+        unusable body malformed. In native mode (A8) the
+        request additionally offers the pending tool
+        definitions the caller staged, and the full response
+        message is retained on the instance for the caller's
+        translation step: content is ABSENT (not empty) when a
+        native response carries tool calls instead, and only
+        a response with neither is malformed."""
+        payload = {"model": self.model, "messages": messages,
+                   "temperature": 0.2}
+        tools = getattr(self, "_pending_tools", None)
+        if tools:
+            payload["tools"] = tools
+        status, raw = self._exchange(payload, deadline)
+        if status >= 400:
+            raise AdapterFailure(
+                "provider_error", detail=f"HTTP {status}")
         try:
             parsed = json.loads(raw)
         except ValueError:
             raise AdapterFailure("malformed_response",
                                  detail="provider body is not JSON")
-        remaining()
         if not isinstance(parsed, dict):
             raise AdapterFailure("malformed_response",
                                  detail="provider body is not an object")
         provider_model_id = parsed.get("model")
         try:
-            content = parsed["choices"][0]["message"]["content"]
+            message = parsed["choices"][0]["message"]
         except (KeyError, IndexError, TypeError):
+            raise AdapterFailure("malformed_response",
+                                 detail="no message content in "
+                                        "provider response")
+        if not isinstance(message, dict):
+            raise AdapterFailure("malformed_response",
+                                 detail="no message content in "
+                                        "provider response")
+        self._last_message = message
+        content = message.get("content")
+        if content is None and not message.get("tool_calls"):
             raise AdapterFailure("malformed_response",
                                  detail="no message content in "
                                         "provider response")
         return content, provider_model_id
 
+    # --------------------------------------------------------- probe
+    def probe_raw_call(self, request):
+        """The probe stage's raw call (probe scope §2/§8): one
+        generation of the request exactly as given, returned
+        as a raw capture BELOW this module's response
+        interpretation — the provider body as received on
+        success, the exact error body on an HTTP error, the
+        HTTP status, response metadata, and the transport's
+        own failure as the capture's diagnostic object when no
+        provider response stands. Nothing here parses outcomes
+        or classifies; the probe stage does that over what
+        this returns. The call runs under the configured
+        timeout fence, like identify(): the probe is a
+        pre-activation assembly act and no activation clock
+        exists for it."""
+        self._begin_deadline()
+        payload = dict(request)
+        if payload.get("model") is None:
+            payload["model"] = self.model
+        try:
+            status, raw = self._run_transport(
+                lambda deadline: self._exchange(payload, deadline))
+        except AdapterFailure as failure:
+            return {"http_status": None, "body": None,
+                    "error_body": None,
+                    "diagnostics": f"{failure.kind}: "
+                                   f"{failure.detail}",
+                    "metadata": {}}
+        metadata = {}
+        try:
+            parsed = json.loads(raw)
+        except ValueError:
+            parsed = None
+        if isinstance(parsed, dict):
+            for key in ("id", "model"):
+                if parsed.get(key) is not None:
+                    metadata[key] = parsed[key]
+        return {"http_status": status,
+                "body": raw if status < 400 else None,
+                "error_body": raw if status >= 400 else None,
+                "diagnostics": None,
+                "metadata": metadata}
+
     # --------------------------------------------------------- wake
-    def __call__(self, package, budget=None, deadline=None):
+    def __call__(self, package, budget=None, deadline=None,
+                 mode=None):
         """One bounded call. budget (Piece A3, R49/R51) is the
         activation's remaining budget in seconds, supplied by
         the caller as a call parameter — it never enters the
@@ -476,7 +587,26 @@ class OpenAICompatibleAdapter:
         boundary follows the original point, not a
         reconstruction from the sampled budget. A supplied
         deadline already in the past refuses before any
-        provider call, exactly as an exhausted budget does."""
+        provider call, exactly as an exhausted budget does.
+
+        mode (probe scope §6) is the interface mode for this
+        call — under a probe-governed assembly the loop passes
+        the mode sealed in the packed package; absent, the
+        constructor's mode stands, which defaults to text, the
+        historical behaviour. In native mode the request
+        offers the tool definitions derived from the package's
+        catalogue and a native tool_calls response is
+        translated into the typed tool_requests outcome; the
+        text contract remains in the prompt, and a response
+        without tool calls is read on the text path exactly as
+        before."""
+        effective_mode = self.mode if mode is None else mode
+        if effective_mode not in ("text", "native"):
+            raise AdapterFailure(
+                "malformed_response",
+                detail=f"adapter mode {effective_mode!r} is "
+                       f"not a mode; the modes are text and "
+                       f"native")
         if budget is not None:
             if isinstance(budget, bool) or \
                     not isinstance(budget, (int, float)):
@@ -503,15 +633,46 @@ class OpenAICompatibleAdapter:
                            "passed; the call cannot begin")
         self._begin_deadline(budget, deadline)
         self.last_render_s = None
+        self._last_message = None
         render_started = time.monotonic()
         prompt = _render_prompt(package)
         self.last_render_s = time.monotonic() - render_started
-        content, _provider_model = self._call([
-            {"role": "system",
-             "content": "You are a seat in a recorded "
-                        "collaborative run. Answer exactly as "
-                        "the contract specifies."},
-            {"role": "user", "content": prompt}])
+        # Native mode stages its offered definitions for the
+        # one call: _dispatch reads them from the instance so
+        # the _call(messages) seam — the seam the connector
+        # transports replace — keeps its exact shape. A
+        # transport that does not stage definitions simply
+        # makes the text offer, and the response is read on
+        # the text path.
+        self._pending_tools = None
+        if effective_mode == "native":
+            definitions = self._native_tool_definitions(package)
+            if definitions:
+                self._pending_tools = definitions
+        try:
+            content, _provider_model = self._call([
+                {"role": "system",
+                 "content": "You are a seat in a recorded "
+                            "collaborative run. Answer exactly as "
+                            "the contract specifies."},
+                {"role": "user", "content": prompt}])
+        finally:
+            self._pending_tools = None
+        if effective_mode == "native":
+            message = getattr(self, "_last_message", None)
+            calls = message.get("tool_calls") \
+                if isinstance(message, dict) else None
+            if calls:
+                if isinstance(content, str) and content.strip():
+                    raise AdapterFailure(
+                        "malformed_response",
+                        detail="the native response carries "
+                               "both content and tool calls; "
+                               "the channels are not mixed")
+                requests = self._translate_tool_calls(calls)
+                self._check_deadline()
+                return {"outcome": "tool_requests",
+                        "tool_requests": requests}
         obj = _extract_json_object(content)
         self._check_deadline()
         if obj is None:
@@ -597,6 +758,87 @@ class OpenAICompatibleAdapter:
         # into a failure — nothing succeeds after the deadline.
         self._check_deadline()
         return result
+
+    @staticmethod
+    def _native_tool_definitions(package):
+        """The native tool definitions for a package (A8):
+        derived from the package's own tool catalogue — the
+        same per-grant derivation the loop renders as text —
+        one definition per tool name (the catalogue may carry
+        a tool once per grant; a native offer names it once —
+        the doorway still adjudicates per grant). Name,
+        description and parameters are the catalogue's own;
+        the adapter invents, renames and supplements nothing."""
+        tools = package.get("tools") \
+            if isinstance(package, dict) else None
+        definitions = []
+        seen = set()
+        for entry in tools or []:
+            if not isinstance(entry, dict):
+                continue
+            # The catalogue's own field for the tool's name
+            # is `tool` (Piece A3-CAT's entry shape).
+            name = entry.get("tool") or entry.get("name")
+            if not isinstance(name, str) or not name \
+                    or name in seen:
+                continue
+            seen.add(name)
+            description = entry.get("description")
+            parameters = entry.get("parameters")
+            definitions.append({"type": "function", "function": {
+                "name": name,
+                "description": description
+                if isinstance(description, str) else "",
+                "parameters": parameters
+                if isinstance(parameters, dict)
+                else {"type": "object", "properties": {}}}})
+        return definitions
+
+    def _translate_tool_calls(self, calls):
+        """Translate a native response's tool_calls into the
+        typed tool_requests shape (A8): each call's name and
+        arguments exactly as emitted — the arguments parsed
+        from their JSON string (the measured native envelope);
+        an unparseable arguments string, a non-object
+        arguments value, or a call without a readable name
+        makes the whole response malformed, fail closed. The
+        translated list then faces the same whole validation
+        as a text-carried list: translation changes the
+        encoding, never the standard."""
+        if not isinstance(calls, list) or not calls:
+            raise AdapterFailure(
+                "malformed_response",
+                detail="native tool calls are a non-empty list")
+        requests = []
+        for call in calls:
+            if not isinstance(call, dict):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="a native tool call is not an object")
+            function = call.get("function")
+            if not isinstance(function, dict) or \
+                    not isinstance(function.get("name"), str) \
+                    or not function["name"]:
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="a native tool call names no tool")
+            arguments = function.get("arguments")
+            if isinstance(arguments, str):
+                try:
+                    arguments = json.loads(arguments)
+                except ValueError:
+                    raise AdapterFailure(
+                        "malformed_response",
+                        detail="a native tool call's arguments "
+                               "are not readable JSON")
+            if not isinstance(arguments, dict):
+                raise AdapterFailure(
+                    "malformed_response",
+                    detail="a native tool call's arguments "
+                           "are not an object")
+            requests.append({"tool": function["name"],
+                             "parameters": arguments})
+        return self._tool_requests(requests)
 
     @staticmethod
     def _tool_requests(value):

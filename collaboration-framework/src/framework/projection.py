@@ -138,6 +138,7 @@ SCHEMA = _obj({
         "case_version": _opt(_INT),
         "proposal_seq": _opt(_INT), "onboarding_seq": _opt(_INT),
         "generated_seq": _INT,
+        "probed_seq": _opt(_INT),
         "verified_seq": _opt(_INT), "judged_seq": _opt(_INT),
         "judged_hash": _opt(_STR),
         "packed_seq": _opt(_INT), "pack_hash": _opt(_STR),

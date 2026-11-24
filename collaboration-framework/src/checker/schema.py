@@ -79,6 +79,7 @@ SCHEMA = {
             "proposal_seq": {"t": "opt", "v": {"t": "int"}},
             "onboarding_seq": {"t": "opt", "v": {"t": "int"}},
             "generated_seq": {"t": "int"},
+            "probed_seq": {"t": "opt", "v": {"t": "int"}},
             "verified_seq": {"t": "opt", "v": {"t": "int"}},
             "judged_seq": {"t": "opt", "v": {"t": "int"}},
             "judged_hash": {"t": "opt", "v": {"t": "str"}},

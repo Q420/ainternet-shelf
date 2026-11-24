@@ -28,8 +28,11 @@ import secrets
 import threading
 import time
 
+from fabric.canonical import canonical
+
 from . import gates as _gates
 from . import orchestrator as _orch
+from . import probe as _probe
 from . import tool_policy as _tool_policy
 from .record import (CASE_CONTENT_FIELDS, FrameworkStore,
                      GATE_OUTCOMES, assembly_record_hash,
@@ -83,7 +86,7 @@ LOOP_ITERATION_DEADLINE_GROUND = (
 # stripped (see act()): provenance in the record is
 # doorway-established or it is not there.
 INSTANCE_REFERENT_ACTS = frozenset({
-    "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
+    "ASSEMBLY_GENERATED", "ASSEMBLY_PROBED", "ASSEMBLY_VERIFIED",
     "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
     "ASSEMBLY_ISSUE_AUTHORISED", "INSTANCE_ACTIVATED"})
 
@@ -108,6 +111,10 @@ ACT_AUTHORITY = {
     # sufficiency judgement remains the examiner's own, like
     # CASE_JUDGED. No act substitutes for another.
     "ASSEMBLY_GENERATED": {"orchestrator"},
+    # Native-mode probe piece: the probe is an office act, like
+    # generation — the office runs it and records its evidence;
+    # the judgement it feeds remains the examiner's own.
+    "ASSEMBLY_PROBED": {"orchestrator"},
     "ASSEMBLY_VERIFIED": {"orchestrator"},
     "ASSEMBLY_JUDGED": {"examiner"},
     "ASSEMBLY_PACKED": {"orchestrator"},
@@ -1866,7 +1873,8 @@ class Doorway:
             problem = self._assembly_slot_problem(state, payload)
             if problem is not None:
                 self._refuse(seat_id, type_, problem, view_seq)
-        if type_ in ("ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
+        if type_ in ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",
+                     "ASSEMBLY_VERIFIED",
                      "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
                      "ASSEMBLY_ISSUE_AUTHORISED",
                      "INSTANCE_ACTIVATED"):
@@ -2398,6 +2406,9 @@ class Doorway:
             return (f"assembly {assembly_id} belongs to "
                     f"instance {entry.get('instance_id')}, not "
                     f"{instance_id} (R37)")
+        if type_ == "ASSEMBLY_PROBED":
+            return self._assembly_probed_problem(
+                state, entry, payload)
         stage = {
             "ASSEMBLY_VERIFIED": ("verified_seq", "generated_seq",
                                   "generation"),
@@ -2412,6 +2423,16 @@ class Doorway:
                                    "the issue authorisation"),
         }[type_]
         own_seq, prior_seq, prior_name = stage
+        if type_ == "ASSEMBLY_VERIFIED" and \
+                self._probe_governed(
+                    self._generated_payload(assembly_id)):
+            # Native-mode probe piece (scope §4): under a
+            # probe-governed assembly, verification answers the
+            # probe, not generation directly — the probe stands
+            # between them in the normative order.
+            own_seq, prior_seq, prior_name = (
+                "verified_seq", "probed_seq",
+                "the native-mode probe")
         if entry.get(own_seq) is not None:
             return (f"assembly {assembly_id} already stands "
                     f"with its {type_} recorded; the lifecycle "
@@ -2456,6 +2477,289 @@ class Doorway:
                     "section; an instance does not activate "
                     "without one — the shape must exist before "
                     "an instance lives (R39)")
+        if type_ in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+                     "ASSEMBLY_PACKED") and \
+                self._probe_governed(
+                    self._generated_payload(assembly_id)):
+            return self._probe_chain_problem(
+                entry, type_, payload, assembly_id)
+        return None
+
+    @staticmethod
+    def _probe_governed(generated):
+        """Whether a sealed generated record declares the
+        native-mode probe contract (probe scope §1/§4): the
+        compatibility discriminator for the whole probe regime
+        — the probe stage, the binding chain, the adapter mode —
+        exactly as the retrieval contract discriminates its own.
+        An assembly whose record declares anything else (or
+        nothing) is not governed: its lifecycle keeps the
+        behaviour it has always had."""
+        return isinstance(generated, dict) and \
+            generated.get("probe_contract") == \
+            _probe.PROBE_CONTRACT
+
+    def _probed_payload(self, assembly_id):
+        """The ASSEMBLY_PROBED payload standing for an assembly,
+        or None — the evidence object the later lifecycle acts
+        answer to under the probe regime."""
+        for ev in self.store.all_events():
+            if ev["type"] == "ASSEMBLY_PROBED" and \
+                    ev["payload"].get("assembly_id") == \
+                    assembly_id:
+                return ev["payload"]
+        return None
+
+    def _assembly_probed_problem(self, state, entry, payload):
+        """Why an ASSEMBLY_PROBED may not be recorded, or None
+        (probe scope §2–§5): the assembly must declare the probe
+        contract in its sealed generated record (an unknown
+        declaration fails; absence is the historical exemption
+        and grounds no probe); the act binds the exact generated
+        record by its hash and binds its evidence hash to it;
+        the suite identity, the configuration fingerprint, the
+        per-trial evidence (classes, settled flags, per-object
+        hashes, byte counts, the aggregate ceiling, per-object
+        completeness) and the counts, quorum and recommendation
+        all recompute from what the payload itself carries — a
+        probe act whose own arithmetic does not reconcile does
+        not stand."""
+        assembly_id = payload.get("assembly_id")
+        if entry.get("probed_seq") is not None:
+            return (f"assembly {assembly_id} already stands "
+                    f"with its ASSEMBLY_PROBED recorded; the "
+                    f"lifecycle is one-to-one (R40)")
+        generated = self._generated_payload(assembly_id)
+        declared = (generated or {}).get("probe_contract")
+        if declared is None:
+            return ("the generated assembly declares no probe "
+                    "contract; the probe stage is not part of "
+                    "this assembly's lifecycle (probe scope §1)")
+        if declared != _probe.PROBE_CONTRACT:
+            return (f"the generated assembly declares probe "
+                    f"contract {declared!r}, which this doorway "
+                    f"does not know; an unknown declaration "
+                    f"fails (probe scope §1)")
+        digest = assembly_record_hash(generated or {})
+        if payload.get("generated_record_hash") != digest:
+            return ("ASSEMBLY_PROBED names generated record "
+                    f"hash {payload.get('generated_record_hash')!r}; "
+                    f"the generated assembly's canonical hash is "
+                    f"{digest} — the probe binds the exact "
+                    f"generated record (probe scope §4)")
+        if payload.get("suite") != _probe.SUITE_NAME or \
+                payload.get("suite_hash") != _probe.SUITE_HASH:
+            return ("the probe act does not identify the "
+                    "versioned suite native-probe-v1 by its "
+                    "canonical hash (probe scope §2)")
+        fingerprint = _probe.configuration_fingerprint(
+            payload.get("route"), payload.get("model"))
+        if payload.get("fingerprint") != fingerprint:
+            return ("the probe act's configuration fingerprint "
+                    "does not recompute from its route, model, "
+                    "suite, offered definitions, parameters and "
+                    "tool-choice configuration (probe scope §7)")
+        trials = payload.get("trials")
+        if not isinstance(trials, list) or \
+                len(trials) != _probe.TRIAL_COUNT:
+            return (f"the probe act carries "
+                    f"{len(trials) if isinstance(trials, list) else 'no'} "
+                    f"trials; the suite runs exactly "
+                    f"{_probe.TRIAL_COUNT} (probe scope §2)")
+        for position, trial in enumerate(trials, start=1):
+            problem = self._probe_trial_problem(trial, position)
+            if problem is not None:
+                return problem
+        counts, settled, recommended = _probe.summarise(trials)
+        if payload.get("counts") != counts or \
+                payload.get("settled_count") != settled or \
+                payload.get("recommended_mode") != recommended:
+            return ("the probe act's counts, settled count or "
+                    "recommendation do not recompute from its "
+                    "trials under the quorum rule (probe scope "
+                    "§3/§5)")
+        if payload.get("evidence_hash") != \
+                _probe.evidence_hash(payload):
+            return ("the probe act's evidence hash does not "
+                    "recompute over its recorded evidence; the "
+                    "binding the judgement and the pack will "
+                    "name must be the evidence's own hash "
+                    "(probe scope §4)")
+        return None
+
+    @staticmethod
+    def _probe_trial_problem(trial, position):
+        """Why one recorded probe trial is not well-formed
+        evidence, or None: the classes are the scope's, the
+        settled flag is the behaviour's own consequence, every
+        retained object's hash and byte count recompute from the
+        retained text, the aggregate is the content objects'
+        sum under the ceiling, and completeness is per object —
+        an object cut by the ceiling stands incomplete, and
+        nothing stands incomplete that the ceiling did not
+        force."""
+        if not isinstance(trial, dict):
+            return f"probe trial {position} is not an object"
+        if trial.get("trial") != position:
+            return (f"probe trial at position {position} names "
+                    f"itself {trial.get('trial')!r} (probe "
+                    f"scope §3)")
+        behaviour = trial.get("behaviour")
+        if behaviour not in _probe.BEHAVIOURS:
+            return (f"probe trial {position} carries behaviour "
+                    f"{behaviour!r}, not one of the scope's "
+                    f"classes (probe scope §3)")
+        if trial.get("delivery") not in _probe.DELIVERIES:
+            return (f"probe trial {position} carries delivery "
+                    f"{trial.get('delivery')!r}, not one of the "
+                    f"scope's classes (probe scope §3)")
+        if trial.get("payload_form") not in (
+                None, "text_contract_json"):
+            return (f"probe trial {position} carries "
+                    f"payload_form "
+                    f"{trial.get('payload_form')!r} (probe "
+                    f"scope §3)")
+        if trial.get("settled") != \
+                (behaviour != "no_observable_behaviour"):
+            return (f"probe trial {position}'s settled flag "
+                    f"contradicts its behaviour class (probe "
+                    f"scope §3)")
+        body = trial.get("provider_body")
+        if body is not None and not isinstance(body, str):
+            return (f"probe trial {position}'s provider body "
+                    f"is not text")
+        body_bytes = len(body.encode("utf-8")) \
+            if body is not None else 0
+        if trial.get("provider_body_bytes") != body_bytes:
+            return (f"probe trial {position}'s provider body "
+                    f"byte count does not recompute (probe "
+                    f"scope §3)")
+        body_hash = hashlib.sha256(
+            body.encode("utf-8")).hexdigest() \
+            if body is not None else None
+        if trial.get("provider_body_sha256") != body_hash:
+            return (f"probe trial {position}'s provider body "
+                    f"hash does not recompute over the retained "
+                    f"body (probe scope §3)")
+        if not isinstance(
+                trial.get("provider_body_complete"), bool) or \
+                not isinstance(
+                    trial.get("diagnostics_complete"), bool):
+            return (f"probe trial {position}'s completeness "
+                    f"standings are not booleans (probe "
+                    f"scope §3)")
+        diag = trial.get("diagnostics")
+        if diag is not None and not isinstance(diag, str):
+            return (f"probe trial {position}'s diagnostics "
+                    f"are not text")
+        diag_bytes = len(diag.encode("utf-8")) \
+            if diag is not None else 0
+        if trial.get("diagnostics_bytes") != diag_bytes:
+            return (f"probe trial {position}'s diagnostics "
+                    f"byte count does not recompute (probe "
+                    f"scope §3)")
+        diag_hash = hashlib.sha256(
+            diag.encode("utf-8")).hexdigest() \
+            if diag is not None else None
+        if trial.get("diagnostics_sha256") != diag_hash:
+            return (f"probe trial {position}'s diagnostics "
+                    f"hash does not recompute over the retained "
+                    f"diagnostics (probe scope §3)")
+        aggregate = trial.get("aggregate_bytes")
+        if aggregate != body_bytes + diag_bytes:
+            return (f"probe trial {position}'s aggregate is "
+                    f"not the sum of its content objects "
+                    f"(probe scope §3)")
+        if not isinstance(aggregate, int) or \
+                aggregate > _probe.CAPTURE_CEILING:
+            return (f"probe trial {position}'s aggregate "
+                    f"exceeds the per-trial capture ceiling "
+                    f"(probe scope §3)")
+        body_complete = trial.get("provider_body_complete")
+        if body is None and body_complete:
+            return (f"probe trial {position} labels an absent "
+                    f"provider body complete (probe scope §3)")
+        diag_complete = trial.get("diagnostics_complete")
+        if diag is None and diag_complete is not True:
+            return (f"probe trial {position}'s absent "
+                    f"diagnostics carry no completeness standing")
+        # A PRESENT object standing incomplete means the
+        # ceiling cut it — which can only have happened with
+        # the aggregate at the ceiling. (An ABSENT object is
+        # honestly incomplete at any aggregate: nothing was
+        # produced, so nothing was cut.)
+        if (body is not None and body_complete is not True
+                or diag is not None
+                and diag_complete is not True) and \
+                aggregate != _probe.CAPTURE_CEILING:
+            return (f"probe trial {position} stands incomplete "
+                    f"below the capture ceiling; the ceiling "
+                    f"did not force the cut, so the evidence "
+                    f"mislabels itself (probe scope §3)")
+        if trial.get("evidence_complete") != \
+                (body_complete is True):
+            return (f"probe trial {position}'s evidence "
+                    f"completeness is not its provider body's "
+                    f"(probe scope §3)")
+        metadata = trial.get("metadata")
+        if not isinstance(metadata, dict):
+            return (f"probe trial {position}'s metadata is "
+                    f"not an object")
+        if trial.get("metadata_sha256") != hashlib.sha256(
+                canonical(metadata)).hexdigest():
+            return (f"probe trial {position}'s metadata hash "
+                    f"does not recompute (probe scope §3)")
+        return None
+
+    def _probe_chain_problem(self, entry, type_, payload,
+                             assembly_id):
+        """Why a governed lifecycle act's probe binding may not
+        stand, or None (probe scope §4): verification names the
+        standing probe evidence — the verified assembly's
+        integrity boundary covers it (INDEX 285); the judgement
+        identifies the exact probe event and evidence and
+        records the selected mode with its grounds; the pack
+        seals the same bindings and the judged mode itself, so
+        the mode the adapter receives is the mode the examiner
+        judged."""
+        probed = self._probed_payload(assembly_id)
+        evidence_hash = (probed or {}).get("evidence_hash")
+        if payload.get("probe_evidence_hash") != evidence_hash:
+            return (f"{type_} names probe evidence hash "
+                    f"{payload.get('probe_evidence_hash')!r}; "
+                    f"the standing probe evidence hashes to "
+                    f"{evidence_hash} — the act must bind the "
+                    f"exact evidence (probe scope §4)")
+        if type_ == "ASSEMBLY_JUDGED":
+            if payload.get("probe_seq") != \
+                    entry.get("probed_seq"):
+                return ("the judgement names probe event "
+                        f"{payload.get('probe_seq')!r}; the "
+                        f"assembly's probe stands at "
+                        f"{entry.get('probed_seq')} — the "
+                        f"judgement identifies the exact probe "
+                        f"event (probe scope §4)")
+            if payload.get("adapter_mode") not in \
+                    _probe.ADAPTER_MODES:
+                return ("the judgement selects adapter mode "
+                        f"{payload.get('adapter_mode')!r}; the "
+                        f"modes are text and native (probe "
+                        f"scope §5)")
+            grounds = payload.get("mode_grounds")
+            if not isinstance(grounds, str) or not grounds:
+                return ("the judgement records no grounds for "
+                        "its mode; a mode without grounds does "
+                        "not seal (probe scope §5)")
+        if type_ == "ASSEMBLY_PACKED":
+            judged = self._event_at(entry.get("judged_seq"))
+            judged_mode = (judged or {}).get(
+                "payload", {}).get("adapter_mode")
+            if payload.get("adapter_mode") != judged_mode:
+                return ("the pack seals adapter mode "
+                        f"{payload.get('adapter_mode')!r}; the "
+                        f"judgement selected {judged_mode!r} — "
+                        f"the sealed mode is the judged mode "
+                        f"(probe scope §4)")
         return None
 
     def _assembly_generated_problem(self, state, payload):
@@ -2490,6 +2794,13 @@ class Doorway:
                 return ("the onboarding is already bound to "
                         "another assembly; the binding is "
                         "one-to-one (R38)")
+        declared_probe = payload.get("probe_contract")
+        if declared_probe is not None and \
+                declared_probe != _probe.PROBE_CONTRACT:
+            return (f"the generated record declares probe "
+                    f"contract {declared_probe!r}, which this "
+                    f"doorway does not know; an unknown "
+                    f"declaration fails (probe scope §1)")
         proposal = self._event_at(payload.get("proposal_seq"))
         if proposal is None or \
                 proposal["type"] != "ASSEMBLY_PROPOSED":

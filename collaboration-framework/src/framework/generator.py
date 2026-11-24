@@ -25,7 +25,13 @@ The lifecycle, in the normative order (R40):
       to the exact onboarding event by position and by the
       declaration's fingerprint; identity claims live only in
       the onboarding event)
-    → ASSEMBLY_VERIFIED (office: construction verification)
+    → ASSEMBLY_PROBED (office: the native-mode probe — only
+      where the generated record declares the probe contract;
+      its evidence binds to the exact generated record by hash)
+    → ASSEMBLY_VERIFIED (office: construction verification;
+      under a probe-governed assembly it names the probe
+      evidence, so the verified assembly's integrity boundary
+      covers it)
     → ASSEMBLY_JUDGED (examiner: sufficiency, naming the exact
       record by its canonical hash)
     → ASSEMBLY_PACKED (office: the record sealed by its hash;
@@ -46,6 +52,7 @@ was left.
 import copy
 
 from . import onboarding as _onboarding
+from . import probe as _probe
 from . import tool_policy as _tool_policy
 from .record import (assembly_record_hash, declaration_fingerprint,
                      effective_case, instance_credential_fingerprint)
@@ -218,7 +225,7 @@ class Generator:
 
     def generate(self, token, seat_id, identify, skills=(),
                  grants=None, model_requested=None,
-                 retrieval=False):
+                 retrieval=False, probe=False):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -237,7 +244,19 @@ class Generator:
         contract in place of the A3-CAT value — the
         declaration that governs the assembly's whole
         retrieval regime. The default keeps every existing
-        generation's declaration exactly as it stands."""
+        generation's declaration exactly as it stands.
+
+        `probe` (native-mode probe scope, Rev 6): where the
+        assembly is generated under the probe regime, its
+        sealed record declares the probe contract — the
+        declaration that makes the probe stage a required,
+        binding step of this assembly's lifecycle. The
+        declaration rides outside the record's canonical hash
+        fields, like the catalogue contract's: the generated
+        record is never rewritten by the probe, which binds to
+        it by hash instead. The default declares nothing, and
+        an assembly without the declaration is exempt,
+        identifiably."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -279,6 +298,8 @@ class Generator:
                 _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT
                 if retrieval else CATALOGUE_CONTRACT,
         }
+        if probe:
+            record["probe_contract"] = _probe.PROBE_CONTRACT
         ev = self.doorway.act(token, "ASSEMBLY_GENERATED", record,
                               view_seq=self.store.head_seq())
         return {"ok": True, "assembly_id": assembly_id,
@@ -287,29 +308,95 @@ class Generator:
                 "onboarding_seq": onboard_ev["event_seq"],
                 "record_hash": assembly_record_hash(record)}
 
+    # -------------------------------------------------------- probe
+    def probe(self, token, assembly_id, raw_call, route=None,
+              model=None):
+        """The native-mode probe stage (probe scope §2): runs
+        the versioned suite's bounded trials against the
+        assembly's pinned model through the injected raw-call
+        callable — capture below the adapter's interpretation —
+        classifies each trial in two dimensions, retains the
+        per-object evidence under the aggregate ceiling, and
+        records ASSEMBLY_PROBED binding the evidence hash to
+        the exact generated record by its hash. The generated
+        record is never rewritten; nothing captured is
+        dispatched or executed, and no tool results are sent
+        back. The stage recommends at most a mode; the
+        examiner's judgement decides."""
+        state = self.doorway.state()
+        entry = self._entry(state, assembly_id)
+        generated = self.doorway._generated_payload(assembly_id)
+        trials = _probe.run_trials(raw_call, model)
+        counts, settled, recommended = _probe.summarise(trials)
+        payload = {
+            "assembly_id": assembly_id,
+            "instance_id": (entry or {}).get("instance_id"),
+            "generated_record_hash": assembly_record_hash(
+                generated or {}),
+            "suite": _probe.SUITE_NAME,
+            "suite_hash": _probe.SUITE_HASH,
+            "route": route,
+            "model": model,
+            "fingerprint": _probe.configuration_fingerprint(
+                route, model),
+            "trials": trials,
+            "counts": counts,
+            "settled_count": settled,
+            "recommended_mode": recommended,
+        }
+        payload["evidence_hash"] = _probe.evidence_hash(payload)
+        ev = self.doorway.act(token, "ASSEMBLY_PROBED", payload,
+                              view_seq=state["head_seq"])
+        return {"ok": True, "assembly_id": assembly_id,
+                "probed_seq": ev["event_seq"],
+                "evidence_hash": payload["evidence_hash"],
+                "recommended_mode": recommended,
+                "counts": counts, "settled_count": settled}
+
     # ------------------------------------------------------- verify
     def verify(self, token, assembly_id):
         """Construction verification (office, R40): the
         assembly matches its record and is technically
         complete. The doorway checks the sequence; whether the
         construction is *sufficient* is the examiner's judgement
-        that follows, never this act's."""
+        that follows, never this act's. Under a probe-governed
+        assembly the act names the standing probe evidence
+        hash, so the verified assembly's integrity boundary
+        covers the probe evidence (probe scope §4, INDEX 285):
+        a verification that left the evidence outside the
+        boundary it verifies would let the evidence be
+        substituted after verification."""
         state = self.doorway.state()
         entry = self._entry(state, assembly_id)
+        payload = {"assembly_id": assembly_id,
+                   "instance_id": (entry or {}).get("instance_id")}
+        if self.doorway._probe_governed(
+                self.doorway._generated_payload(assembly_id)):
+            probed = self.doorway._probed_payload(assembly_id)
+            payload["probe_evidence_hash"] = \
+                (probed or {}).get("evidence_hash")
         return self.doorway.act(
-            token, "ASSEMBLY_VERIFIED",
-            {"assembly_id": assembly_id,
-             "instance_id": (entry or {}).get("instance_id")},
+            token, "ASSEMBLY_VERIFIED", payload,
             view_seq=state["head_seq"])
 
     # ------------------------------------------------------ judging
-    def judgement(self, assembly_id):
+    def judgement(self, assembly_id, adapter_mode=None,
+                  mode_grounds=None):
         """The payload of the examiner's sufficiency judgement
         (R40), computed from the record: it names the assembly,
         its instance, and the exact object judged — by the
         generated record's canonical hash. The act itself is
         the examiner's to record, through the doorway, under
-        the examiner's token."""
+        the examiner's token.
+
+        Under a probe-governed assembly the payload also
+        identifies the exact probe event and its evidence hash
+        and carries the examiner's mode decision: `adapter_mode`
+        and `mode_grounds` are the examiner's inputs, supplied
+        by the caller — the probe's recommendation is evidence
+        for that decision, never the decision itself, and an
+        override of an inconclusive probe stands only as this
+        act, with its grounds (probe scope §5)."""
         generated = None
         for ev in self.store.all_events():
             if ev["type"] == "ASSEMBLY_GENERATED" and \
@@ -318,9 +405,20 @@ class Generator:
                 break
         if generated is None:
             return None
-        return {"assembly_id": assembly_id,
-                "instance_id": generated.get("instance_id"),
-                "record_hash": assembly_record_hash(generated)}
+        payload = {"assembly_id": assembly_id,
+                   "instance_id": generated.get("instance_id"),
+                   "record_hash": assembly_record_hash(generated)}
+        if self.doorway._probe_governed(generated):
+            state = self.doorway.state()
+            entry = self._entry(state, assembly_id)
+            probed = self.doorway._probed_payload(assembly_id)
+            payload["probe_seq"] = (entry or {}).get(
+                "probed_seq")
+            payload["probe_evidence_hash"] = \
+                (probed or {}).get("evidence_hash")
+            payload["adapter_mode"] = adapter_mode
+            payload["mode_grounds"] = mode_grounds
+        return payload
 
     # --------------------------------------------------------- pack
     def pack(self, token, assembly_id):
@@ -346,6 +444,20 @@ class Generator:
                     (entry or {}).get("case_id"),
                     (entry or {}).get("case_version")),
         }
+        if self.doorway._probe_governed(
+                self.doorway._generated_payload(assembly_id)):
+            # Probe scope §4: the pack seals the probe bindings
+            # alongside the record's — the evidence hash and the
+            # mode exactly as judged, copied from the standing
+            # acts, so the sealed package the adapter reads is
+            # the package the examiner judged.
+            probed = self.doorway._probed_payload(assembly_id)
+            judged = self.doorway._event_at(
+                (entry or {}).get("judged_seq"))
+            payload["probe_evidence_hash"] = \
+                (probed or {}).get("evidence_hash")
+            payload["adapter_mode"] = (judged or {}).get(
+                "payload", {}).get("adapter_mode")
         ev = self.doorway.act(token, "ASSEMBLY_PACKED", payload,
                               view_seq=state["head_seq"])
         instance_token = self.doorway.issue_instance_token(

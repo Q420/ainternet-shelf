@@ -385,6 +385,361 @@ def _assembly_record_hash(payload):
         {"assembly_record_v": 1, "record": body}))
 
 
+# The native-mode probe contract (probe scope Rev 6), as this
+# checker derives it from the scope: its own copies of the
+# suite definition, the class lists, the quorum rule and the
+# evidence arithmetic — the correspondence below recomputes
+# every value from the events, never trusting the framework's
+# arithmetic or the doorway's refusal at offer time.
+_PROBE_CONTRACT = "native-probe-v1"
+_PROBE_TRIALS = 5
+_PROBE_CEILING = 64000
+_PROBE_QUORUM = 3
+_PROBE_MODES = ("text", "native")
+_PROBE_BEHAVIOURS = (
+    "text_contract", "native_catalogue",
+    "environment_tool_attempt", "mixed", "refusal", "malformed",
+    "no_observable_behaviour")
+_PROBE_DELIVERIES = (
+    "provider_accepted", "provider_refused", "provider_failed",
+    "indeterminate")
+
+_PROBE_SYSTEM_TEXT = (
+    "You are a seat in a recorded collaborative run. Answer "
+    "exactly as the contract specifies.")
+
+_PROBE_CASE_TEXT = (
+    "PROBE CASE (synthetic; nothing here is real work, and no "
+    "tool call in this case is ever executed).\n"
+    "Task: find the colour of the brass lantern in the scene "
+    "and note it. You have two ways to act:\n"
+    "1. The native tools offered with this request "
+    "(probe.lookup to look an object up, probe.note to record "
+    "a note).\n"
+    "2. The run's text contract: reply with exactly one JSON "
+    "object and no other text, of the form "
+    "{\"outcome\": \"tool_requests\", \"tool_requests\": "
+    "[{\"tool\": \"probe.lookup\", \"parameters\": "
+    "{\"object\": \"brass lantern\"}}]}.\n"
+    "Use whichever channel you would naturally use. Make one "
+    "lookup for the brass lantern, then stop.")
+
+_PROBE_TOOL_DEFINITIONS = [
+    {"type": "function", "function": {
+        "name": "probe.lookup",
+        "description": "Look up a named object in the probe's "
+                       "synthetic scene. Probe tool: a call is "
+                       "recorded as evidence only and never "
+                       "executes.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "object": {"type": "string"}},
+            "required": ["object"],
+            "additionalProperties": False}}},
+    {"type": "function", "function": {
+        "name": "probe.note",
+        "description": "Record a short note about the probe's "
+                       "synthetic scene. Probe tool: a call is "
+                       "recorded as evidence only and never "
+                       "executes.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string"}},
+            "required": ["text"],
+            "additionalProperties": False}}},
+]
+
+
+def _probe_suite_hash():
+    return sha256_hex(canonical({
+        "suite": _PROBE_CONTRACT,
+        "system": _PROBE_SYSTEM_TEXT,
+        "case": _PROBE_CASE_TEXT,
+        "tools": _PROBE_TOOL_DEFINITIONS,
+        "parameters": {"temperature": 0.2},
+        "tool_choice": "default",
+        "trials": _PROBE_TRIALS,
+        "capture_ceiling": _PROBE_CEILING,
+        "quorum_settled": _PROBE_QUORUM,
+        "behaviours": list(_PROBE_BEHAVIOURS),
+        "deliveries": list(_PROBE_DELIVERIES),
+    }))
+
+
+def _probe_fingerprint(route, model):
+    return sha256_hex(canonical({
+        "route": route,
+        "model": model,
+        "suite": _PROBE_CONTRACT,
+        "suite_hash": _probe_suite_hash(),
+        "tools": _PROBE_TOOL_DEFINITIONS,
+        "parameters": {"temperature": 0.2},
+        "tool_choice": "default",
+    }))
+
+
+_PROBE_TRIAL_HASH_FIELDS = (
+    "trial", "behaviour", "delivery", "payload_form", "settled",
+    "http_status", "provider_body_sha256", "provider_body_bytes",
+    "provider_body_complete", "metadata_sha256",
+    "diagnostics_sha256", "diagnostics_bytes",
+    "diagnostics_complete", "aggregate_bytes",
+    "evidence_complete",
+)
+
+
+def _probe_evidence_hash(probed):
+    return sha256_hex(canonical({
+        "generated_record_hash": probed.get(
+            "generated_record_hash"),
+        "suite": probed.get("suite"),
+        "suite_hash": probed.get("suite_hash"),
+        "fingerprint": probed.get("fingerprint"),
+        "trials": [
+            {key: trial.get(key)
+             for key in _PROBE_TRIAL_HASH_FIELDS}
+            for trial in probed.get("trials") or []],
+        "counts": probed.get("counts"),
+        "settled_count": probed.get("settled_count"),
+        "recommended_mode": probed.get("recommended_mode"),
+    }))
+
+
+def _probe_summarise(trials):
+    counts = {
+        "behaviour": {name: 0 for name in _PROBE_BEHAVIOURS},
+        "delivery": {name: 0 for name in _PROBE_DELIVERIES},
+    }
+    for trial in trials:
+        if trial.get("behaviour") in counts["behaviour"]:
+            counts["behaviour"][trial["behaviour"]] += 1
+        if trial.get("delivery") in counts["delivery"]:
+            counts["delivery"][trial["delivery"]] += 1
+    settled = sum(1 for trial in trials if trial.get("settled"))
+    recommended = None
+    if settled >= _PROBE_QUORUM:
+        if counts["behaviour"]["text_contract"] * 2 > settled:
+            recommended = "text"
+        elif counts["behaviour"]["native_catalogue"] * 2 > \
+                settled:
+            recommended = "native"
+    return counts, settled, recommended
+
+
+def _probe_trial_problem(trial, position):
+    """Why one recorded probe trial is not well-formed
+    evidence, or None — the checker's own recomputation of
+    the scope's evidence rules (probe scope §3): classes from
+    the scope's lists, the settled flag the behaviour's own
+    consequence, per-object hashes and byte counts recomputed
+    from the retained text, the aggregate the content
+    objects' sum under the ceiling, completeness per object
+    and never labelled complete past what the ceiling
+    forced."""
+    if not isinstance(trial, dict):
+        return "trial is not an object"
+    if trial.get("trial") != position:
+        return "trial position does not match its index"
+    behaviour = trial.get("behaviour")
+    if behaviour not in _PROBE_BEHAVIOURS:
+        return f"behaviour {behaviour!r} is not a scope class"
+    if trial.get("delivery") not in _PROBE_DELIVERIES:
+        return "delivery is not a scope class"
+    if trial.get("payload_form") not in (
+            None, "text_contract_json"):
+        return "payload_form is not a scope detail"
+    if trial.get("settled") != \
+            (behaviour != "no_observable_behaviour"):
+        return "settled flag contradicts the behaviour class"
+    body = trial.get("provider_body")
+    if body is not None and not isinstance(body, str):
+        return "provider body is not text"
+    body_bytes = len(body.encode("utf-8")) \
+        if body is not None else 0
+    if trial.get("provider_body_bytes") != body_bytes:
+        return "provider body byte count does not recompute"
+    body_hash = hashlib.sha256(
+        body.encode("utf-8")).hexdigest() \
+        if body is not None else None
+    if trial.get("provider_body_sha256") != body_hash:
+        return "provider body hash does not recompute"
+    diag = trial.get("diagnostics")
+    if diag is not None and not isinstance(diag, str):
+        return "diagnostics are not text"
+    diag_bytes = len(diag.encode("utf-8")) \
+        if diag is not None else 0
+    if trial.get("diagnostics_bytes") != diag_bytes:
+        return "diagnostics byte count does not recompute"
+    diag_hash = hashlib.sha256(
+        diag.encode("utf-8")).hexdigest() \
+        if diag is not None else None
+    if trial.get("diagnostics_sha256") != diag_hash:
+        return "diagnostics hash does not recompute"
+    aggregate = trial.get("aggregate_bytes")
+    if aggregate != body_bytes + diag_bytes:
+        return "aggregate is not the content objects' sum"
+    if not isinstance(aggregate, int) or \
+            aggregate > _PROBE_CEILING:
+        return "aggregate exceeds the capture ceiling"
+    if not isinstance(
+            trial.get("provider_body_complete"), bool) or \
+            not isinstance(
+                trial.get("diagnostics_complete"), bool):
+        return "completeness standings are not booleans"
+    if body is None and trial.get("provider_body_complete"):
+        return "an absent provider body is labelled complete"
+    # A present object standing incomplete means the ceiling
+    # cut it — possible only with the aggregate at the
+    # ceiling. An absent object is honestly incomplete at
+    # any aggregate: nothing was produced, nothing was cut.
+    if (body is not None
+            and trial.get("provider_body_complete") is not True
+            or diag is not None
+            and trial.get("diagnostics_complete") is not True) \
+            and aggregate != _PROBE_CEILING:
+        return "evidence stands incomplete below the ceiling"
+    if trial.get("evidence_complete") != \
+            (trial.get("provider_body_complete") is True):
+        return "evidence completeness is not the body's"
+    metadata = trial.get("metadata")
+    if not isinstance(metadata, dict):
+        return "metadata is not an object"
+    if trial.get("metadata_sha256") != sha256_hex(
+            canonical(metadata)):
+        return "metadata hash does not recompute"
+    return None
+
+
+def _probe_correspondence(problem, aid, gen_ev, digest, mine,
+                          probed_evs, role_of):
+    """Probe correspondence (probe scope §4/P4): for an
+    assembly whose generated record declares the probe
+    contract — the binding chain reconstructed from the
+    events: exactly one probe act, after generation and
+    before verification, binding the exact generated record
+    by its hash and its evidence by the evidence hash;
+    the suite identified by its canonical hash; the
+    configuration fingerprint fresh; every trial's evidence
+    recomputed; the counts, quorum and recommendation
+    recomputed; verification naming the evidence (the
+    verified boundary covers it); the judgement identifying
+    the exact probe event and evidence and recording a mode
+    with grounds; the pack sealing the same bindings and the
+    judged mode itself — the end-to-end property that the
+    mode the adapter receives is the mode the examiner
+    judged. A probe act under no declaration, or an unknown
+    declaration, diverges."""
+    gen_payload = gen_ev["payload"]
+    declared = gen_payload.get("probe_contract")
+    if declared is not None and declared != _PROBE_CONTRACT:
+        problem("probe_contract_unknown", assembly_id=aid,
+                at_seq=gen_ev["event_seq"],
+                declared=declared)
+        return
+    if declared != _PROBE_CONTRACT:
+        for ev in probed_evs:
+            problem("probe_act_without_declaration",
+                    assembly_id=aid, at_seq=ev["event_seq"])
+        return
+    verified = (mine.get("ASSEMBLY_VERIFIED") or [None])[0]
+    judged = (mine.get("ASSEMBLY_JUDGED") or [None])[0]
+    packed = (mine.get("ASSEMBLY_PACKED") or [None])[0]
+    if len(probed_evs) > 1:
+        problem("duplicate_assembly_act", type="ASSEMBLY_PROBED",
+                assembly_id=aid,
+                at_seq=probed_evs[1]["event_seq"])
+    if not probed_evs:
+        later = verified or judged or packed
+        if later is not None:
+            problem("probe_stage_missing", assembly_id=aid,
+                    at_seq=later["event_seq"])
+        return
+    ev = probed_evs[0]
+    pp = ev["payload"]
+    if role_of(ev["actor"]) != "orchestrator":
+        problem("assembly_act_wrong_role", type="ASSEMBLY_PROBED",
+                assembly_id=aid, at_seq=ev["event_seq"],
+                actor=ev["actor"])
+    if ev["event_seq"] <= gen_ev["event_seq"] or (
+            verified is not None and
+            ev["event_seq"] >= verified["event_seq"]):
+        problem("assembly_act_out_of_order",
+                type="ASSEMBLY_PROBED", assembly_id=aid,
+                at_seq=ev["event_seq"])
+    if pp.get("generated_record_hash") != digest:
+        problem("probe_binding_mismatch",
+                binding="generated_record", assembly_id=aid,
+                at_seq=ev["event_seq"])
+    if pp.get("suite") != _PROBE_CONTRACT or \
+            pp.get("suite_hash") != _probe_suite_hash():
+        problem("probe_suite_mismatch", assembly_id=aid,
+                at_seq=ev["event_seq"])
+    if pp.get("fingerprint") != _probe_fingerprint(
+            pp.get("route"), pp.get("model")):
+        problem("probe_fingerprint_stale", assembly_id=aid,
+                at_seq=ev["event_seq"])
+    trials = pp.get("trials")
+    if not isinstance(trials, list) or \
+            len(trials) != _PROBE_TRIALS:
+        problem("probe_trial_count", assembly_id=aid,
+                at_seq=ev["event_seq"])
+        trials = trials if isinstance(trials, list) else []
+    for position, trial in enumerate(trials, start=1):
+        detail = _probe_trial_problem(trial, position)
+        if detail is not None:
+            problem("probe_trial_evidence_mismatch",
+                    assembly_id=aid, at_seq=ev["event_seq"],
+                    trial=position, detail=detail)
+    counts, settled, recommended = _probe_summarise(
+        [t for t in trials if isinstance(t, dict)])
+    if pp.get("counts") != counts or \
+            pp.get("settled_count") != settled or \
+            pp.get("recommended_mode") != recommended:
+        problem("probe_counts_mismatch", assembly_id=aid,
+                at_seq=ev["event_seq"])
+    if pp.get("evidence_hash") != _probe_evidence_hash(pp):
+        problem("probe_evidence_hash_mismatch", assembly_id=aid,
+                at_seq=ev["event_seq"])
+    evidence_hash = pp.get("evidence_hash")
+    if verified is not None and \
+            verified["payload"].get("probe_evidence_hash") != \
+            evidence_hash:
+        problem("probe_verification_binding_mismatch",
+                assembly_id=aid,
+                at_seq=verified["event_seq"])
+    if judged is not None:
+        jp = judged["payload"]
+        if jp.get("probe_seq") != ev["event_seq"]:
+            problem("probe_judgement_binding_mismatch",
+                    binding="probe_event", assembly_id=aid,
+                    at_seq=judged["event_seq"])
+        if jp.get("probe_evidence_hash") != evidence_hash:
+            problem("probe_judgement_binding_mismatch",
+                    binding="probe_evidence", assembly_id=aid,
+                    at_seq=judged["event_seq"])
+        if jp.get("adapter_mode") not in _PROBE_MODES:
+            problem("probe_mode_invalid", assembly_id=aid,
+                    at_seq=judged["event_seq"])
+        grounds = jp.get("mode_grounds")
+        if not isinstance(grounds, str) or not grounds:
+            problem("probe_mode_grounds_missing",
+                    assembly_id=aid,
+                    at_seq=judged["event_seq"])
+    if packed is not None:
+        kp = packed["payload"]
+        if kp.get("probe_evidence_hash") != evidence_hash:
+            problem("probe_pack_binding_mismatch",
+                    assembly_id=aid,
+                    at_seq=packed["event_seq"])
+        judged_mode = (judged["payload"].get("adapter_mode")
+                       if judged is not None else None)
+        if kp.get("adapter_mode") != judged_mode:
+            problem("probe_mode_mismatch", assembly_id=aid,
+                    at_seq=packed["event_seq"])
+
+
 def _assembly_result(events, state):
     """Assembly correspondence (Piece A1, R37–R40/R55): every
     generated instance's lifecycle, verified from the events
@@ -400,8 +755,14 @@ def _assembly_result(events, state):
     proposal's, and its part equalling its bound case's
     established part (correction round 2); and no activation
     without the full chain and the record's grants section.
-    An incomplete or incorrectly ordered assembly history is
-    reported, never read as valid."""
+    Under a probe-declaring generated record, the probe
+    binding chain is verified with it (probe scope §4): the
+    probe act's position and bindings, its evidence
+    recomputed object by object, verification covering the
+    evidence, the judgement's mode and grounds, and the pack
+    sealing the judged mode. An incomplete or incorrectly
+    ordered assembly history is reported, never read as
+    valid."""
     problems = []
 
     def problem(kind, **fields):
@@ -418,6 +779,7 @@ def _assembly_result(events, state):
     onboardings = {}
     generated = {}
     stages = {}
+    probed = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -434,6 +796,9 @@ def _assembly_result(events, state):
                 problem("duplicate_generated_assembly",
                         assembly_id=aid, at_seq=ev["event_seq"])
             generated.setdefault(aid, ev)
+        elif t == "ASSEMBLY_PROBED":
+            probed.setdefault(p.get("assembly_id"), []) \
+                .append(ev)
         elif t in _ASSEMBLY_STAGES:
             stages.setdefault(p.get("assembly_id"), {}) \
                 .setdefault(t, []).append(ev)
@@ -579,12 +944,21 @@ def _assembly_result(events, state):
                 problem("activated_without_grants",
                         assembly_id=aid,
                         at_seq=stage_ev["event_seq"])
+        # The probe binding chain, where the generated record
+        # declares the probe contract (probe scope §4).
+        _probe_correspondence(problem, aid, ev, digest, mine,
+                              probed.get(aid, []), role_of)
     for aid, mine in stages.items():
         if aid not in generated:
             for kind, evs in mine.items():
                 problem("assembly_act_without_generation",
                         type=kind, assembly_id=aid,
                         at_seq=evs[0]["event_seq"])
+    for aid, evs in probed.items():
+        if aid not in generated:
+            problem("assembly_act_without_generation",
+                    type="ASSEMBLY_PROBED", assembly_id=aid,
+                    at_seq=evs[0]["event_seq"])
     if problems:
         return {"result": "divergent", "problems": problems}
     return {"result": "ok"}

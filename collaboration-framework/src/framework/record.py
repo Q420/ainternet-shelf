@@ -57,7 +57,8 @@ EVENT_TYPES = {
     # its payload extended with the seat slot being filled —
     # and the instance's own ONBOARDING (subject "instance")
     # stands between the proposal and ASSEMBLY_GENERATED.
-    "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+    "ASSEMBLY_GENERATED", "ASSEMBLY_PROBED", "ASSEMBLY_VERIFIED",
+    "ASSEMBLY_JUDGED",
     "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
     "INSTANCE_ACTIVATED",
     # Agent layer (Piece A2, SPEC Rev 6 R44–R48): the dispatch
@@ -923,6 +924,7 @@ def apply_event(state: dict, ev: dict) -> dict:
             "proposal_seq": p.get("proposal_seq"),
             "onboarding_seq": p.get("onboarding_seq"),
             "generated_seq": ev["event_seq"],
+            "probed_seq": None,
             "verified_seq": None, "judged_seq": None,
             "judged_hash": None,
             "packed_seq": None, "pack_hash": None,
@@ -936,15 +938,20 @@ def apply_event(state: dict, ev: dict) -> dict:
             # predate it.
             "catalogue_contract": p.get("catalogue_contract"),
         }
-    elif t in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
-               "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
-               "INSTANCE_ACTIVATED"):
+    elif t in ("ASSEMBLY_PROBED", "ASSEMBLY_VERIFIED",
+               "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
+               "ASSEMBLY_ISSUE_AUTHORISED", "INSTANCE_ACTIVATED"):
         # Piece A1 (R39/R40): the assembly's later acts, each
-        # filling its own position on the generated entry.
+        # filling its own position on the generated entry. The
+        # probe act (native-mode probe piece) fills probed_seq
+        # the same way, between generation and verification.
         entry = state["assemblies"].get(p.get("assembly_id")
                                          or "")
         if entry is not None:
-            if t == "ASSEMBLY_VERIFIED" and \
+            if t == "ASSEMBLY_PROBED" and \
+                    entry["probed_seq"] is None:
+                entry["probed_seq"] = ev["event_seq"]
+            elif t == "ASSEMBLY_VERIFIED" and \
                     entry["verified_seq"] is None:
                 entry["verified_seq"] = ev["event_seq"]
             elif t == "ASSEMBLY_JUDGED" and \

@@ -40,7 +40,8 @@ _KNOWN_TYPES = {
     "RUN_CLOSED", "ASSEMBLY_PROPOSED", "ASSEMBLY_RECORD",
     "RUN_READY_FOR_COMPLETION",
     # Agent layer (Piece A1): the assembly lifecycle acts.
-    "ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+    "ASSEMBLY_GENERATED", "ASSEMBLY_PROBED", "ASSEMBLY_VERIFIED",
+    "ASSEMBLY_JUDGED",
     "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
     "INSTANCE_ACTIVATED",
     # Agent layer (Piece A2): the dispatch sequence.
@@ -50,7 +51,8 @@ _KNOWN_TYPES = {
     "LOOP_ITERATION", "LOOP_STALLED",
 }
 
-_ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_VERIFIED",
+_ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",
+                  "ASSEMBLY_VERIFIED",
                   "ASSEMBLY_JUDGED", "ASSEMBLY_PACKED",
                   "ASSEMBLY_ISSUE_AUTHORISED", "INSTANCE_ACTIVATED")
 
@@ -297,6 +299,9 @@ def _shape_problem(ev):
             if bad_opt_str("catalogue_contract"):
                 return "ASSEMBLY_GENERATED " \
                     "catalogue_contract is not a string"
+            if bad_opt_str("probe_contract"):
+                return "ASSEMBLY_GENERATED " \
+                    "probe_contract is not a string"
             if "model_selection" in p and \
                     not isinstance(p["model_selection"], dict):
                 return "ASSEMBLY_GENERATED model_selection " \
@@ -781,6 +786,7 @@ def _apply(state, ev):
             "proposal_seq": p.get("proposal_seq"),
             "onboarding_seq": p.get("onboarding_seq"),
             "generated_seq": seq,
+            "probed_seq": None,
             "verified_seq": None, "judged_seq": None,
             "judged_hash": None,
             "packed_seq": None, "pack_hash": None,
@@ -789,13 +795,17 @@ def _apply(state, ev):
             "grants_present": p.get("grants") is not None,
             "catalogue_contract": p.get("catalogue_contract"),
         }
-    elif t in ("ASSEMBLY_VERIFIED", "ASSEMBLY_JUDGED",
+    elif t in ("ASSEMBLY_PROBED", "ASSEMBLY_VERIFIED",
+               "ASSEMBLY_JUDGED",
                "ASSEMBLY_PACKED", "ASSEMBLY_ISSUE_AUTHORISED",
                "INSTANCE_ACTIVATED"):
         entry = state["assemblies"].get(p.get("assembly_id")
                                          or "")
         if entry is not None:
-            if t == "ASSEMBLY_VERIFIED" and \
+            if t == "ASSEMBLY_PROBED" and \
+                    entry["probed_seq"] is None:
+                entry["probed_seq"] = seq
+            elif t == "ASSEMBLY_VERIFIED" and \
                     entry["verified_seq"] is None:
                 entry["verified_seq"] = seq
             elif t == "ASSEMBLY_JUDGED" and \
