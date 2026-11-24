@@ -180,6 +180,24 @@ REFUSAL = {
                 "start_line": 1, "end_line": 50}})}}),
     "http_status": 400, "diagnostics": None,
     "metadata": {}}
+ERROR_NO_ATTEMPT = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Invalid request: the request body "
+                   "could not be validated",
+        "type": "invalid_request_error",
+        "code": "invalid_request"}}),
+    "http_status": 400, "diagnostics": None,
+    "metadata": {}}
+FAILED_429 = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Rate limit reached for model",
+        "type": "tokens",
+        "code": "rate_limit_exceeded"}}),
+    "http_status": 429, "diagnostics": None,
+    "metadata": {}}
+
 
 # ---------------------------------------------------------------
 # The construction, from the real evidenced record.
@@ -369,6 +387,23 @@ check("a refusal delivers no countable response — "
       and result["call_count"] == 1
       and result["calls"][0]["name"] ==
       "sandbox.read_range")
+result = classify(ERROR_NO_ATTEMPT)
+check("an HTTP error with no attributable attempt is "
+      "provider_failed under the attribution-driven "
+      "taxonomy P2 retains — not a refusal, and not a "
+      "construction observation",
+      result["delivery"] == "provider_failed"
+      and result["behaviour"] ==
+      "no_observable_behaviour"
+      and result["call_count"] == 0
+      and result["calls"] == [])
+
+result = classify(FAILED_429)
+check("a 429 is provider_failed — a delivery "
+      "failure, outside every denominator",
+      result["delivery"] == "provider_failed"
+      and result["call_count"] == 0)
+
 
 # ---------------------------------------------------------------
 # The run and the predeclared readings, on stub queues

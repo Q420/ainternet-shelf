@@ -34,6 +34,9 @@ provider request is made anywhere in this suite.
   refusal without it is provider_refused with
   attempt_visible no — a distinct observation; a 429
   is provider_failed, outside every denominator;
+  the refusal predicate is witnessed negatively —
+  an unrelated 400, a 401 and a 413 are each
+  provider_failed, never provider_refused;
 - the predeclared readings compute as stated: five
   returned unoffered calls establish behaviour (a)
   for their condition, five refusals with the attempt
@@ -68,6 +71,7 @@ sys.path.insert(0, SRC)
 from fabric.canonical import canonical, sha256_hex  # noqa: E402
 from framework import native_probe as np  # noqa: E402
 from framework import native_probe_p1 as p1  # noqa: E402
+from framework import native_probe_paced as paced  # noqa: E402
 
 PIN = "openai/gpt-oss-120b"
 EVIDENCED = os.path.join(
@@ -176,6 +180,32 @@ FAILED_429 = {
     "error_body": "Rate limit reached for model",
     "http_status": 429, "diagnostics": None,
     "metadata": {}}
+ERROR_400_UNRELATED = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Invalid request: the request body "
+                   "could not be validated",
+        "type": "invalid_request_error",
+        "code": "invalid_request"}}),
+    "http_status": 400, "diagnostics": None,
+    "metadata": {}}
+ERROR_401 = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Invalid API Key",
+        "type": "invalid_request_error",
+        "code": "invalid_api_key"}}),
+    "http_status": 401, "diagnostics": None,
+    "metadata": {}}
+ERROR_413 = {
+    "body": None,
+    "error_body": json.dumps({"error": {
+        "message": "Request too large",
+        "type": "invalid_request_error",
+        "code": "request_too_large"}}),
+    "http_status": 413, "diagnostics": None,
+    "metadata": {}}
+
 
 # ---------------------------------------------------------------
 # The construction, from the real evidenced record.
@@ -391,6 +421,44 @@ result = classify(FAILED_429)
 check("a 429 is provider_failed — a delivery "
       "failure, not a model observation",
       result["delivery"] == "provider_failed")
+result = classify(ERROR_400_UNRELATED)
+check("an unrelated 400 — an invalid-request error "
+      "that is not the provider's tool refusal — is "
+      "provider_failed, never provider_refused: it is "
+      "not evidence the provider rejected a "
+      "model-generated call",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None
+      and result["behaviour"] ==
+      "no_observable_behaviour"
+      and result["calls"] == [])
+
+result = classify(ERROR_401)
+check("a 401 authentication failure is "
+      "provider_failed, never provider_refused",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+result = classify(ERROR_413)
+check("a 413 payload-size rejection is "
+      "provider_failed, never provider_refused",
+      result["delivery"] == "provider_failed"
+      and result["attempt_visible"] is None)
+
+check("the refusal predicate reads the error shape "
+      "itself: a tool_use_failed body is the refusal, "
+      "with or without a visible attempt; an "
+      "unrelated 400's body, a non-JSON body and no "
+      "body are not",
+      paced.is_tool_refusal(
+          REFUSED_VISIBLE["error_body"])
+      and paced.is_tool_refusal(
+          REFUSED_INVISIBLE["error_body"])
+      and not paced.is_tool_refusal(
+          ERROR_400_UNRELATED["error_body"])
+      and not paced.is_tool_refusal("not json")
+      and not paced.is_tool_refusal(None))
+
 
 # ---------------------------------------------------------------
 # The run and the predeclared readings, on stub queues

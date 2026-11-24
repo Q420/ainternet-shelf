@@ -68,11 +68,19 @@ behaviour — nothing was returned — with the delivery
 axis (provider_refused) and the attempt_visible flag
 carrying reading (b)'s fact. The readings count the
 two shapes separately, exactly as the proposal
-states them. Delivery is HTTP-status-driven (see
-native_probe_paced): a refusal without an
+states them. Delivery follows P1's own policy in the shared
+core (delivery_of_refusal_predicate): provider_
+refused only where the error body IS the provider's
+response-level tool refusal — its error object's
+code is "tool_use_failed" — so a refusal without an
 attributable attempt is provider_refused with
-attempt_visible "no" — the proposal's distinct
-observation — not a delivery failure.
+attempt_visible "no", the proposal's distinct
+observation, not a delivery failure; while an
+unrelated 400, a 401 authentication failure, a 413
+payload-size rejection, a 429, a 5xx or a transport
+failure is provider_failed, never a refusal —
+none of those is evidence of the provider
+rejecting a model-generated call.
 """
 
 from __future__ import annotations
@@ -741,7 +749,7 @@ def classify_p1_capture(capture):
     separately. attempt_visible is None where the
     trial was not refused: the flag speaks only of
     refusals."""
-    delivery = _paced.delivery_of(capture)
+    delivery = _paced.delivery_of_refusal_predicate(capture)
     body = capture.get("body")
     if isinstance(body, str):
         message = _paced.message_from_body(body)

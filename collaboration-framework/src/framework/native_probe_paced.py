@@ -44,18 +44,36 @@ body records carry no provider call ID — the error
 body names no delivered call — and their ordinal is
 their position in the attributed list.
 
-Delivery classification here is HTTP-status-driven,
-where the native-offer probe's was attribution-
-driven; P1's proposal defines the dimension in
-status terms (provider_refused = an HTTP error
-refusing the response; provider_failed = a delivery
-failure — 429, 5xx, transport error — which is not a
-model observation), and P1's central case — a refusal
-whose attempt is NOT visible — is only expressible
-if a refusal without an attributable attempt still
-classifies as refused. A 429 is a delivery failure
-even though it arrives as an HTTP error body (INDEX
-339/353 practice).
+Delivery classification is NOT one shared rule: the
+two probes hold different delivery contracts, and
+this core carries each probe's policy as its own
+named function rather than imposing a single
+classifier on both (build examination correction,
+INDEX 359):
+
+- P1's policy (delivery_of_refusal_predicate) is a
+  narrow, explicit refusal predicate: provider_
+  refused only where the capture's error body IS
+  the provider's response-level tool refusal — its
+  error object's `code` is "tool_use_failed", the
+  shape retained from the evidenced run — whether
+  or not an attempt is visible in it. P1's central
+  case, a refusal whose attempt is NOT visible, is
+  expressible only under this predicate. Every other
+  failure — an unrelated 400, a 401, a 413, a 429, a
+  5xx, a transport failure — is provider_failed:
+  none of those is evidence of the provider
+  rejecting a model-generated call.
+- P2's policy (delivery_of_attribution) is the
+  existing attribution-driven taxonomy of the
+  native-offer probe, which P2's proposal retains:
+  an error body with an attributable attempt is
+  provider_refused; an error body with none is
+  provider_failed; a 429 is provider_failed even
+  though it arrives as an HTTP error body (INDEX
+  339/353 practice); a capture carrying only a
+  status or diagnostics is provider_failed; an
+  empty capture is indeterminate.
 """
 
 from __future__ import annotations
@@ -73,7 +91,9 @@ __all__ = [
     "CAPTURE_CEILING", "DELIVERIES",
     "message_from_body", "text_form_of",
     "call_records_from_message",
-    "call_records_from_error_body", "delivery_of",
+    "call_records_from_error_body", "is_tool_refusal",
+    "delivery_of_refusal_predicate",
+    "delivery_of_attribution",
     "retain_capture", "run_paced_trials",
 ]
 
@@ -194,29 +214,88 @@ def call_records_from_error_body(error_body, classify_call):
             in enumerate(pairs)]
 
 
-def delivery_of(capture):
-    """The delivery dimension, HTTP-status-driven (see
-    the module docstring): an accepted body is
-    provider_accepted; a 429 or a 5xx is a delivery
-    failure even though it arrives as an error body; a
-    remaining HTTP error (an error body, or a 4xx
-    status) is provider_refused; a capture carrying
-    only a status or diagnostics is a delivery failure;
-    an empty capture is indeterminate."""
-    if isinstance(capture.get("body"), str):
-        return "provider_accepted"
+def _http_status(capture):
+    """The capture's HTTP status as an int, or None
+    where it carries none (a bool is not a status)."""
     status = capture.get("http_status")
     if not isinstance(status, int) or \
             isinstance(status, bool):
-        status = None
-    if status == 429 or (status is not None
-                         and status >= 500):
+        return None
+    return status
+
+
+def is_tool_refusal(error_body):
+    """Whether an error body IS the provider's
+    response-level tool refusal: the body's error
+    object's `code` is "tool_use_failed" — the error
+    shape retained from the evidenced run (the
+    iteration-18 capture: HTTP 400, error type
+    invalid_request_error, code tool_use_failed, a
+    failed_generation naming the call the provider
+    refused to deliver). The predicate reads the
+    code alone: the refusal stands whether or not
+    the body also carries a visible attempt;
+    attempt visibility is a separate fact the
+    caller records, never part of this test."""
+    if not isinstance(error_body, str):
+        return False
+    obj = _probe._json_object(error_body)
+    if obj is None:
+        return False
+    error = obj.get("error")
+    return isinstance(error, dict) \
+        and error.get("code") == "tool_use_failed"
+
+
+def delivery_of_refusal_predicate(capture):
+    """P1's delivery policy — the narrow refusal
+    predicate (see the module docstring): an
+    accepted body is provider_accepted; an error
+    body that is the provider's response-level tool
+    refusal (is_tool_refusal) is provider_refused,
+    whether or not an attempt is visible in it;
+    every other failure — an unrelated HTTP error
+    of any status (an unrelated 400, a 401
+    authentication failure, a 413 payload-size
+    rejection), a 429 rate limit, a 5xx server
+    error, a transport failure standing as a status
+    or diagnostics — is provider_failed; an empty
+    capture is indeterminate."""
+    if isinstance(capture.get("body"), str):
+        return "provider_accepted"
+    if is_tool_refusal(capture.get("error_body")):
+        return "provider_refused"
+    if isinstance(capture.get("error_body"), str) \
+            or _http_status(capture) is not None \
+            or capture.get("diagnostics"):
         return "provider_failed"
-    if isinstance(capture.get("error_body"), str):
-        return "provider_refused"
-    if status is not None and 400 <= status < 500:
-        return "provider_refused"
-    if status is not None or capture.get("diagnostics"):
+    return "indeterminate"
+
+
+def delivery_of_attribution(capture):
+    """P2's delivery policy — the native-offer
+    probe's attribution-driven taxonomy, which
+    P2's proposal retains (see the module
+    docstring): an accepted body is
+    provider_accepted; a 429 is provider_failed;
+    an error body with an attempt attributable
+    through the base probe's own attribution is
+    provider_refused; an error body with no
+    attributable attempt is provider_failed; a
+    capture carrying only a status or diagnostics
+    is provider_failed; an empty capture is
+    indeterminate."""
+    if isinstance(capture.get("body"), str):
+        return "provider_accepted"
+    if _http_status(capture) == 429:
+        return "provider_failed"
+    error_body = capture.get("error_body")
+    if isinstance(error_body, str):
+        return "provider_refused" if (
+            _probe._calls_from_error_body(error_body)
+            is not None) else "provider_failed"
+    if _http_status(capture) is not None \
+            or capture.get("diagnostics"):
         return "provider_failed"
     return "indeterminate"
 

@@ -547,7 +547,7 @@ def classify_p2_capture(capture):
     call count, a multi-call response's shape, the
     required sources the calls address, and, for a
     single call, the required source it addresses."""
-    delivery = _paced.delivery_of(capture)
+    delivery = _paced.delivery_of_attribution(capture)
     body = capture.get("body")
     if isinstance(body, str):
         message = _paced.message_from_body(body)
