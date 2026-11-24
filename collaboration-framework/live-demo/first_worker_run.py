@@ -426,6 +426,39 @@ def extract_index_entries(index_path, first=INDEX_FIRST,
     return text
 
 
+# The first-worker assignment's source-set identity
+# (evidenced-run release examination, INDEX 322): the
+# manifest hash the probed1 run staged and sealed — read
+# from live-demo/first-worker-probed1/report.json, where
+# it stands as that run's manifest_hash. Verifying a
+# freshly built manifest against itself proves internal
+# consistency only; THIS value is the identity of the
+# released source set, and a run of this line whose
+# staged manifest hashes to anything else is not the
+# released assignment, however consistent it is
+# internally. It is therefore an explicit pre-activation
+# release condition in both phases (below).
+EXPECTED_MANIFEST_HASH = (
+    "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784"
+    "b4ae3a287d904f")
+
+
+def _manifest_identity_problem(manifest_hash):
+    """Why a staged manifest is not the released source
+    set, or None: the built hash must EQUAL the probed1
+    manifest hash — the first-worker assignment's
+    source-set identity — not merely verify against the
+    files it was built from."""
+    if manifest_hash != EXPECTED_MANIFEST_HASH:
+        return (f"the staged source manifest hashes to "
+                f"{manifest_hash}, not the first-worker "
+                f"assignment's source-set identity "
+                f"{EXPECTED_MANIFEST_HASH} (the probed1 "
+                f"manifest); the staged source set is not "
+                f"the released one")
+    return None
+
+
 def stage(run_dir, root=ROOT):
     """Stage the sandbox and the source manifest under
     run_dir. Returns (manifest, manifest_hash). Idempotent:
@@ -544,6 +577,11 @@ def verify_config():
     os.makedirs(run_dir)
     sandbox = os.path.join(run_dir, "sandbox")
     manifest, manifest_hash = stage(run_dir)
+    expect("the staged manifest is the first-worker "
+           "assignment's source-set identity (the probed1 "
+           "manifest hash, INDEX 322)",
+           _manifest_identity_problem(manifest_hash)
+           is None)
     store = FrameworkStore(os.path.join(run_dir, "run.db"))
     store.insert_run(RUN_ID, CONSTITUTION_HASH)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
@@ -913,6 +951,17 @@ def run_probe_phase2(run_dir, receipt_path):
     manifest_hash = _sha256_bytes(json.dumps(
         manifest, sort_keys=True,
         separators=(",", ":")).encode("utf-8"))
+    # The source-set identity, phase 2's form (INDEX
+    # 322): the standing manifest must BE the probed1
+    # manifest. The refusal lands here — after the
+    # receipt's validation and retention, before the
+    # judgement is recorded and before any activation.
+    identity_problem = _manifest_identity_problem(
+        manifest_hash)
+    if identity_problem is not None:
+        print(f"ABORT: {identity_problem}",
+              file=sys.stderr)
+        return 1
     adapter = _build_adapter("groq")
     judgement = gen.judgement(
         assembly_id, adapter_mode=mode,
@@ -1023,6 +1072,11 @@ def verify_config_probed():
     run_dir = os.path.join(tmp, "run")
     os.makedirs(run_dir)
     manifest, manifest_hash = stage(run_dir)
+    expect("the staged manifest is the first-worker "
+           "assignment's source-set identity (the probed1 "
+           "manifest hash, INDEX 322)",
+           _manifest_identity_problem(manifest_hash)
+           is None)
     store = FrameworkStore(os.path.join(run_dir, "run.db"))
     store.insert_run(RUN_ID, CONSTITUTION_HASH)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
@@ -1394,6 +1448,17 @@ def _run_fresh(run_dir, route, retrieval, probed, phase1):
     # is commissioned.
     manifest, manifest_hash = stage(run_dir)
     print(f"manifest sha256: {manifest_hash}")
+    # The source-set identity (INDEX 322): the staged
+    # manifest must BE the probed1 manifest, not merely a
+    # manifest that verifies against its own files. The
+    # refusal lands here — before commission, before any
+    # record event, long before activation.
+    identity_problem = _manifest_identity_problem(
+        manifest_hash)
+    if identity_problem is not None:
+        print(f"ABORT: {identity_problem}",
+              file=sys.stderr)
+        return 1
 
     # 2. COMMISSION — one part, four seats, the crew brief
     # carrying the assignment, the bounds, and (as recorded
@@ -1631,6 +1696,123 @@ def _run_fresh(run_dir, route, retrieval, probed, phase1):
         gen.judgement(assembly_id), None)
 
 
+def _filed_artifact_check(run_dir, iteration_seq,
+                          disposition_payload):
+    """Cross-check one captured disposition against the
+    artifact filed under the run directory (INDEX 322):
+    the file the store contract names —
+    responses/iteration-<iteration_seq>.json — must
+    stand, its bytes must hash to the artifact hash the
+    disposition committed, and its own L1 statement must
+    agree with the L1 summary the disposition committed.
+    Returns "ok", or a plain statement of the
+    disagreement: the summary reports the evidence as it
+    stands, never smoothed over."""
+    path = os.path.join(run_dir, "responses",
+                        f"iteration-{iteration_seq}.json")
+    if not os.path.exists(path):
+        return (f"the artifact the disposition names "
+                f"does not stand at {path}")
+    with open(path, "rb") as fh:
+        data = fh.read()
+    if _sha256_bytes(data) != \
+            disposition_payload.get("artifact_sha256"):
+        return ("the filed artifact's sha256 is not the "
+                "artifact hash the disposition committed")
+    try:
+        artifact = json.loads(data.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return "the filed artifact is not readable JSON"
+    filed_l1 = ((artifact.get("layers") or {})
+                .get("L1") or {})
+    committed_l1 = ((disposition_payload.get("layers")
+                     or {}).get("L1") or {})
+    for key in ("byte_count", "sha256", "stop_reason",
+                "body_complete"):
+        if filed_l1.get(key) != committed_l1.get(key):
+            return (f"the filed artifact's L1 {key} "
+                    f"({filed_l1.get(key)!r}) disagrees "
+                    f"with the committed summary "
+                    f"({committed_l1.get(key)!r})")
+    return "ok"
+
+
+def _evidence_summary(events, run_dir):
+    """The report's evidence summary (evidenced-run
+    release examination, INDEX 322): one entry per
+    entered iteration, derived from the record's
+    committed events — the CALL_ENTERED boundaries and
+    the RESPONSE_EVIDENCE dispositions that answer
+    them — cross-checked against the artifacts filed
+    under run_dir/responses/. Derived matter: an index
+    into the evidence, never a replacement for it. A
+    captured entry carries the artifact's identity as
+    committed (its hash, the L1 byte count, stop_reason,
+    body_complete) and the filed artifact's cross-check;
+    a no_response or unresolved entry carries its
+    failure class and no artifact fields, because no
+    artifact stands for it; an entered iteration with
+    no disposition — the evidence-capture-failure
+    terminal's case — is stated as exactly that."""
+    dispositions = {}
+    capture_failures = {}
+    for e in events:
+        if e["type"] == "RESPONSE_EVIDENCE":
+            dispositions[e["payload"].get(
+                "iteration_seq")] = e
+        elif e["type"] == "EVIDENCE_CAPTURE_FAILED":
+            capture_failures[e["payload"].get(
+                "iteration_seq")] = e
+    summary = []
+    for e in events:
+        if e["type"] != "CALL_ENTERED":
+            continue
+        payload = e["payload"]
+        iteration_seq = payload.get("iteration_seq")
+        entry = {"iteration": payload.get("iteration"),
+                 "iteration_seq": iteration_seq,
+                 "call_entered_seq": e["event_seq"]}
+        disp = dispositions.get(iteration_seq)
+        if disp is None:
+            entry["disposition"] = None
+            failed = capture_failures.get(iteration_seq)
+            if failed is not None:
+                entry["disposition_note"] = (
+                    "no disposition stands; the "
+                    "evidence capture failure terminal "
+                    "answers this iteration, and the "
+                    "disposition obligation stands "
+                    "undischarged")
+                entry["evidence_capture_failed"] = {
+                    "operation": failed["payload"].get(
+                        "operation"),
+                    "event_seq": failed["event_seq"]}
+            else:
+                entry["disposition_note"] = (
+                    "no disposition stands for this "
+                    "entered iteration")
+            summary.append(entry)
+            continue
+        dp = disp["payload"]
+        entry["disposition"] = dp.get("outcome")
+        entry["disposition_seq"] = disp["event_seq"]
+        if dp.get("failure_class") is not None:
+            entry["failure_class"] = dp["failure_class"]
+        if dp.get("outcome") == "captured":
+            l1 = (dp.get("layers") or {}).get("L1") or {}
+            entry["artifact_sha256"] = dp.get(
+                "artifact_sha256")
+            entry["l1_byte_count"] = l1.get("byte_count")
+            entry["stop_reason"] = l1.get("stop_reason")
+            entry["body_complete"] = l1.get(
+                "body_complete")
+            entry["artifact_check"] = \
+                _filed_artifact_check(run_dir,
+                                      iteration_seq, dp)
+        summary.append(entry)
+    return summary
+
+
 def _judge_pack_run(doorway, gen, tok, store, store_path,
                     run_dir, sandbox, route, retrieval,
                     adapter, manifest, manifest_hash,
@@ -1725,6 +1907,8 @@ def _judge_pack_run(doorway, gen, tok, store, store_path,
                        "ground"),
                    "event_seq": stalls[0]["event_seq"]}
                   if stalls else None),
+        "evidence_summary": _evidence_summary(events,
+                                              run_dir),
         "dispatches": dispatches,
         "brief_exists": brief_exists,
         "brief_word_count": brief_words,
