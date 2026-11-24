@@ -120,16 +120,22 @@ not measured.
 CAP = 1 is safely governed not because a worst-case request fits inside a
 per-request envelope — there is no such envelope at 8,000 — but because:
 
-1. the one documented per-request bound — the 131,072-token context
-   window — sits an order of magnitude above anything this construction
-   produces, and the worst case's serialized size sits comfortably below
-   the one observed byte-size refusal point (134,844 bytes): a comparison
-   against an observed point, not a proven byte bound;
+1. the estimated prompt sits comfortably inside the one documented
+   per-request bound — the 131,072-token context window — and the worst
+   case's serialized size sits comfortably below the one observed byte-size
+   refusal point (134,844 bytes): comparisons that establish the prompt's
+   fit, not that everything the construction produces necessarily fits —
+   the completion is a separate quantity (point 2);
 2. on the evidenced admission model, an oversize request is predicted to
    be refused **at admission, before any effect** (hypothesis, §3) — and a
    refusal, whenever it occurs, is a recorded delivery failure under the
    standing evidence discipline, never a disguised success; if the request
-   is admitted instead, it runs as compared in point 1 above;
+   is admitted instead, its prompt fits as compared in point 1 — but
+   admission guarantees nothing about the completion: with no configured
+   completion ceiling, the completion remains subject to the provider's
+   own limits and observed response disposition, and any resulting refusal
+   or incomplete response is handled under the same evidence and rollover
+   rules;
 3. the predicted refusal zone is only the top ~1,000 bytes of the
    permitted result range (§3 — a prediction, not a demonstrated boundary),
    under a pacing discipline that operates on the residual-Used assumption
