@@ -1088,6 +1088,320 @@ def test_parser_not_invoked():
           json.dumps(cseen))
 
 
+# ------- catalogue determination precedes parsing (INDEX 408)
+def test_resolution_ordering():
+    # The ruled order, witnessed with both classification
+    # seams spied: for a call that survives call-ID
+    # integrity and the cap, the catalogue determination
+    # is consulted before the parser fires; a call
+    # refused on either earlier ground reaches neither.
+    # The refusal precedence stands: an unknown name does
+    # not skip parsing (N32 requires its hash), and an
+    # unknown name with unreadable arguments is
+    # malformed_call — its entry carrying no resolution
+    # standing — not unknown_tool.
+    from fabric.canonical import canonical, sha256_hex
+    catalogue = [{
+        "tool": "sandbox.read", "description": "Read.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the path"}],
+        "scope_ceiling": {"path_prefix": "sources"},
+        "grant_count": 1, "any_grant": None}]
+
+    def rec(ordinal, call_id, name, form, args):
+        return {"provider_ordinal": ordinal,
+                "provider_call_id": call_id, "name": name,
+                "arguments_form": form, "arguments": args}
+
+    events = []
+    real_resolve = loop_module._resolve_against_catalogue
+    real_parse = loop_module._parse_arguments_string
+
+    def resolve_spy(by_name, name):
+        events.append(("resolve", name))
+        return real_resolve(by_name, name)
+
+    def parse_spy(raw):
+        events.append(("parse", raw))
+        return real_parse(raw)
+
+    def classify(records):
+        del events[:]
+        loop_module._resolve_against_catalogue = resolve_spy
+        loop_module._parse_arguments_string = parse_spy
+        try:
+            loop = Loop.__new__(Loop)
+            ctx = {"catalogue": catalogue,
+                   "instance_id": "instance-x", "iterations": 2}
+            return loop._classify_native(ctx, records)
+        finally:
+            loop_module._resolve_against_catalogue = \
+                real_resolve
+            loop_module._parse_arguments_string = real_parse
+
+    entries, converted = classify([
+        rec(1, "fc_a", "sandbox.read", "string",
+            '{"path": "sources/a.md"}')])
+    check("INDEX 408 for a surviving call the catalogue "
+          "determination is consulted before the parser "
+          "fires — the seam order is resolve, then parse "
+          "— and the call stands resolved and presented "
+          "with its arguments hash",
+          events == [("resolve", "sandbox.read"),
+                     ("parse", '{"path": "sources/a.md"}')]
+          and entries[0]["resolution"] == "resolved"
+          and entries[0]["refusal_class"] is None
+          and entries[0]["arguments_sha256"]
+          == sha256_hex(canonical({"path": "sources/a.md"}))
+          and converted == [{"tool": "sandbox.read",
+                             "parameters":
+                                 {"path": "sources/a.md"}}],
+          json.dumps(events))
+
+    entries, converted = classify([
+        rec(1, "fc_u", "container.exec", "string",
+            '{"cmd": "ls"}')])
+    check("INDEX 408 an unknown-tool call with valid "
+          "arguments: the determination (unknown) is made "
+          "before parsing, and the arguments are parsed "
+          "and hashed all the same — the hash stands on "
+          "the entry — the refusal unknown_tool, the "
+          "resolution standing unknown",
+          events == [("resolve", "container.exec"),
+                     ("parse", '{"cmd": "ls"}')]
+          and entries[0]["resolution"] == "unknown"
+          and entries[0]["refusal_class"] == "unknown_tool"
+          and entries[0]["validation"] == "not_reached"
+          and entries[0]["arguments_sha256"]
+          == sha256_hex(canonical({"cmd": "ls"}))
+          and entries[0]["loop_request_id"] is None
+          and converted == [],
+          json.dumps(events))
+
+    entries, converted = classify([
+        rec(1, "fc_u", "container.exec", "string",
+            "{not json")])
+    check("INDEX 408 an unknown-tool call with malformed "
+          "arguments: the determination is still made "
+          "before the parse is attempted — resolve, then "
+          "parse — but the established precedence stands: "
+          "the refusal is malformed_call, its entry "
+          "carrying no resolution standing (resolution "
+          "not_reached, N13) and no arguments hash",
+          events == [("resolve", "container.exec"),
+                     ("parse", "{not json")]
+          and entries[0]["refusal_class"] == "malformed_call"
+          and entries[0]["refusal_detail"]
+          == "its arguments could not be read"
+          and entries[0]["resolution"] == "not_reached"
+          and entries[0]["validation"] == "not_reached"
+          and entries[0]["arguments_sha256"] is None
+          and converted == [],
+          json.dumps(events))
+
+    entries, _ = classify([
+        rec(1, "fc_a", "sandbox.read", "string", "{not json")])
+    check("INDEX 408 a known-tool call with malformed "
+          "arguments likewise stands malformed_call with "
+          "resolution not_reached — the determination "
+          "precedes the parse; the malformed disposition "
+          "carries no resolution standing",
+          events == [("resolve", "sandbox.read"),
+                     ("parse", "{not json")]
+          and entries[0]["refusal_class"] == "malformed_call"
+          and entries[0]["resolution"] == "not_reached"
+          and entries[0]["arguments_sha256"] is None,
+          json.dumps(events))
+
+    entries, converted = classify([
+        rec(1, "fc_a", "sandbox.read", "string",
+            '{"path": "sources/a.md"}'),
+        rec(2, "fc_b", "container.exec", "string",
+            '{"cmd": "ls"}'),
+        rec(3, None, "sandbox.read", "string",
+            '{"path": "sources/c.md"}'),
+        rec(4, "fc_a", "sandbox.read", "string",
+            '{"path": "sources/d.md"}')])
+    check("INDEX 408 the boundary holds with both seams "
+          "spied at CAP = 1: the overflow call (an unknown "
+          "name), the missing-ID call and the duplicate-ID "
+          "call reach neither the catalogue determination "
+          "nor the parser — each seam fires exactly once, "
+          "for the surviving call alone, determination "
+          "first",
+          events == [("resolve", "sandbox.read"),
+                     ("parse", '{"path": "sources/a.md"}')]
+          and [e["refusal_class"] for e in entries]
+          == [None, "call_cap_exceeded", "malformed_call",
+              "malformed_call"]
+          and len(converted) == 1,
+          json.dumps(events))
+
+    # End to end, both seams spied on the live path: the
+    # durable record itself demonstrates the resolution
+    # standing, the hash carriage and the refusal
+    # semantics for the two unknown-tool cases.
+    del events[:]
+    loop_module._resolve_against_catalogue = resolve_spy
+    loop_module._parse_arguments_string = parse_spy
+    try:
+        w = assemble()
+        SPECS[:] = [
+            (200, native_resp([{
+                "id": "fc_u", "name": "container.exec",
+                "arguments": '{"cmd": "ls"}'}])),
+            yield_spec()]
+        result = run_loop(w, stub_adapter())
+    finally:
+        loop_module._resolve_against_catalogue = real_resolve
+        loop_module._parse_arguments_string = real_parse
+    entries = events_of(
+        w["store"], "TRANSLATION_RECORDED")[0]["payload"]["calls"]
+    check("INDEX 408 end to end: an unknown-tool call "
+          "with valid arguments stands in the translation "
+          "record with resolution unknown, its parsed-"
+          "arguments hash carried, refused unknown_tool — "
+          "the determination witnessed before the parse on "
+          "the live path, nothing dispatched, the run "
+          "yielding",
+          events == [("resolve", "container.exec"),
+                     ("parse", '{"cmd": "ls"}')]
+          and result["outcome"] == "yield"
+          and len(entries) == 1
+          and entries[0]["resolution"] == "unknown"
+          and entries[0]["refusal_class"] == "unknown_tool"
+          and entries[0]["arguments_sha256"]
+          == sha256_hex(canonical({"cmd": "ls"}))
+          and entries[0]["validation"] == "not_reached"
+          and entries[0]["loop_request_id"] is None
+          and events_of(w["store"], "TOOL_DISPATCHED") == [],
+          json.dumps(events))
+    verdict = run_checker(w["store"])
+    check("INDEX 408 the checker independently "
+          "reconstructs the unknown-with-valid-arguments "
+          "record: loop correspondence all-ok",
+          verdict["checks"]["loop_correspondence"]["result"]
+          == "ok",
+          json.dumps(verdict["checks"]
+                     ["loop_correspondence"])[:200])
+
+    del events[:]
+    loop_module._resolve_against_catalogue = resolve_spy
+    loop_module._parse_arguments_string = parse_spy
+    try:
+        w = assemble()
+        SPECS[:] = [
+            (200, native_resp([{
+                "id": "fc_u", "name": "container.exec",
+                "arguments": "{not json"}])),
+            yield_spec()]
+        result = run_loop(w, stub_adapter())
+    finally:
+        loop_module._resolve_against_catalogue = real_resolve
+        loop_module._parse_arguments_string = real_parse
+    entries = events_of(
+        w["store"], "TRANSLATION_RECORDED")[0]["payload"]["calls"]
+    check("INDEX 408 end to end: an unknown-tool call "
+          "with malformed arguments stands in the "
+          "translation record as malformed_call — the "
+          "precedence preserved in the durable record: "
+          "resolution not_reached, no arguments hash, the "
+          "record persisted (the doorway's coherence for "
+          "the class holding under the new order), nothing "
+          "dispatched, the run yielding — with the "
+          "determination witnessed before the attempted "
+          "parse",
+          events == [("resolve", "container.exec"),
+                     ("parse", "{not json")]
+          and result["outcome"] == "yield"
+          and len(entries) == 1
+          and entries[0]["refusal_class"] == "malformed_call"
+          and entries[0]["refusal_detail"]
+          == "its arguments could not be read"
+          and entries[0]["resolution"] == "not_reached"
+          and entries[0]["validation"] == "not_reached"
+          and entries[0]["arguments_sha256"] is None
+          and events_of(w["store"], "TOOL_DISPATCHED") == [],
+          json.dumps(events))
+    verdict = run_checker(w["store"])
+    check("INDEX 408 the checker independently "
+          "reconstructs the unknown-with-malformed record "
+          "likewise: loop correspondence all-ok",
+          verdict["checks"]["loop_correspondence"]["result"]
+          == "ok",
+          json.dumps(verdict["checks"]
+                     ["loop_correspondence"])[:200])
+
+    # The checker's own side, exercised in-process: its
+    # determination and its parser, both spied, fire in
+    # the ruled order, and its entries for the two
+    # unknown-tool cases agree with the loop's field for
+    # field.
+    import checker.checker as checker_module
+    cevents = []
+    real_cresolve = \
+        checker_module._checker_resolve_against_catalogue
+    real_cparse = checker_module._checker_parse_arguments
+
+    def cresolve_spy(by_name, name):
+        cevents.append(("resolve", name))
+        return real_cresolve(by_name, name)
+
+    def cparse_spy(raw):
+        cevents.append(("parse", raw))
+        return real_cparse(raw)
+
+    def cclassify(records):
+        del cevents[:]
+        checker_module._checker_resolve_against_catalogue \
+            = cresolve_spy
+        checker_module._checker_parse_arguments = cparse_spy
+        try:
+            return checker_module._checker_classify(
+                records, catalogue, "instance-x", 2)
+        finally:
+            checker_module._checker_resolve_against_catalogue \
+                = real_cresolve
+            checker_module._checker_parse_arguments = \
+                real_cparse
+
+    centries = cclassify([
+        rec(1, "fc_u", "container.exec", "string",
+            '{"cmd": "ls"}')])
+    lentries, _ = classify([
+        rec(1, "fc_u", "container.exec", "string",
+            '{"cmd": "ls"}')])
+    check("INDEX 408 the checker's own determination "
+          "precedes its own parser, and its entry for the "
+          "unknown-with-valid case agrees with the loop's "
+          "field for field — standing, hash and refusal "
+          "alike",
+          cevents == [("resolve", "container.exec"),
+                      ("parse", '{"cmd": "ls"}')]
+          and centries == lentries,
+          json.dumps(cevents))
+    centries = cclassify([
+        rec(1, "fc_u", "container.exec", "string",
+            "{not json")])
+    lentries, _ = classify([
+        rec(1, "fc_u", "container.exec", "string",
+            "{not json")])
+    check("INDEX 408 the checker's entry for the "
+          "unknown-with-malformed case likewise agrees "
+          "with the loop's field for field: malformed_call "
+          "under the preserved precedence, resolution "
+          "not_reached, no hash — reconstructed "
+          "independently, in the same order",
+          cevents == [("resolve", "container.exec"),
+                      ("parse", "{not json")]
+          and centries == lentries
+          and centries[0]["refusal_class"] == "malformed_call"
+          and centries[0]["resolution"] == "not_reached"
+          and centries[0]["arguments_sha256"] is None,
+          json.dumps(cevents))
+
+
 # ------------------------------------------- W-a twin equivalence
 def test_twin_equivalence():
     w = assemble()
@@ -1613,6 +1927,7 @@ def main():
     test_classification_units()
     test_cap1_id_integrity()
     test_parser_not_invoked()
+    test_resolution_ordering()
     test_twin_equivalence()
     test_closed_world()
     test_cap_and_preflight()

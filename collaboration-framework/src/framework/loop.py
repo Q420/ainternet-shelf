@@ -198,6 +198,21 @@ _TRANSLATION_REFUSALS = ("unknown_tool", "malformed_call",
                          "call_cap_exceeded")
 
 
+def _resolve_against_catalogue(by_name, name):
+    """The classification-stage catalogue determination
+    (native adapter piece, N7; the examiner's ordering
+    ruling, INDEX 408): whether a call's name resolves
+    against this package's catalogue, decided from the
+    name alone. It stands in _classify_native after
+    call-ID integrity (N6) and the per-response cap
+    (N22) and before argument parsing (N32) — a call
+    refused on either earlier ground never reaches it,
+    and for a call that does reach it, no argument work
+    precedes the decision. Returns the catalogue entry,
+    or None where the name is unknown to the catalogue."""
+    return by_name.get(name)
+
+
 def _parse_arguments_string(raw):
     """The classification-stage parse of a string-form
     arguments value (native adapter piece, build-
@@ -206,10 +221,12 @@ def _parse_arguments_string(raw):
     is structural only and parses nothing; this parse is
     reached only by a call that has survived call-ID
     integrity (N6) and the per-response cap (N22) in
-    _classify_native — a call refused on either ground
-    never has its arguments parsed, so the work the cap
-    bounds is the work actually performed. Raises
-    ValueError where the string cannot be read as JSON."""
+    _classify_native, and stands after the catalogue
+    determination (N7, INDEX 408) — a call refused on
+    either earlier ground never has its arguments
+    parsed, so the work the cap bounds is the work
+    actually performed. Raises ValueError where the
+    string cannot be read as JSON."""
     return json.loads(raw)
 
 
@@ -1730,14 +1747,28 @@ class Loop:
     def _classify_native(self, ctx, records):
         """Phase (i) of the native preflight: classify every
         individuable call in emitted order, each on its own
-        merits — call-ID integrity (N6) first, then the
-        per-response cap (N22), then the name stage and
-        argument parsing (the parse extraction once made,
-        deferred to here, INDEX 406), then closed-world
-        resolution against this package's catalogue (N7)
-        and the pure schema validation (N8) — producing
-        the translation record's entry
-        set and the converted requests, in emitted order.
+        merits, in the ruled order (the examiner's ordering
+        ruling, INDEX 408) — call-ID integrity (N6) first,
+        then the per-response cap (N22), then name
+        readability and the closed-world catalogue
+        determination against this package's catalogue
+        (N7), then argument parsing and the canonical
+        arguments hash (N32), then the pure schema
+        validation (N8), for resolved calls only —
+        producing the translation record's entry set and
+        the converted requests, in emitted order. The
+        determination precedes parsing, but an unknown
+        name does not skip parsing: N32 requires the hash
+        for calls that reach that stage, and the refusal
+        precedence is the established one — a call whose
+        arguments then fail stands malformed_call (an
+        unknown name with unreadable arguments is
+        malformed_call, not unknown_tool), its entry
+        carrying no resolution standing, resolution
+        not_reached, exactly as the doorway's coherence
+        for the class requires (N13); the determination
+        was made, but a malformed call's disposition
+        carries no resolution outcome in the record.
         No call's verdict waits on or is contaminated by
         another's. Returns (entries, converted): one entry
         per call with the N32 field set; the converted
@@ -1791,26 +1822,49 @@ class Loop:
                 continue
             if ordinal > CALL_CAP:
                 # Overflow (N22): identity and ordinal are
-                # recorded; the arguments are not processed
-                # — not parsed, not validated, not converted.
+                # recorded; the call reaches neither name
+                # resolution nor argument processing — not
+                # resolved, not parsed, not validated, not
+                # converted.
                 entry["refusal_class"] = "call_cap_exceeded"
                 continue
             if record["name"] is None:
+                # Name readability is the determination
+                # stage's first half: an unreadable name
+                # cannot be determined against the
+                # catalogue at all, and the call is
+                # malformed before any argument work.
                 entry["refusal_class"] = "malformed_call"
                 entry["refusal_detail"] = \
                     "its name could not be read"
                 continue
-            # Argument parsing stands here (INDEX 406):
-            # only a call that survived call-ID integrity
-            # and the cap reaches it — a refused call's
-            # arguments are never parsed, so the work the
-            # cap bounds is the work performed. A string
-            # form parses now, in classification; a string
-            # that cannot be read, and any form that does
-            # not yield an object, is malformed_call (N13)
-            # — the determination extraction once made is
-            # classification's, at the point the order
-            # reaches it.
+            # The catalogue determination (N7) stands
+            # here, before argument parsing (INDEX 408):
+            # for a call that survived call-ID integrity
+            # and the cap, whether its name resolves
+            # against this package's catalogue is decided
+            # now, from the name alone. No call refused
+            # above reached this determination, and no
+            # argument work precedes it for a call that
+            # does.
+            resolved = _resolve_against_catalogue(
+                by_name, record["name"])
+            # Argument parsing stands after the
+            # determination (INDEX 406/408): only a call
+            # that survived call-ID integrity and the cap
+            # reaches it — a refused call's arguments are
+            # never parsed, so the work the cap bounds is
+            # the work performed — and an unknown name
+            # does not skip it, because N32 requires the
+            # parsed-arguments hash for calls reaching
+            # this stage and the malformed-argument
+            # classification is established precedence.
+            # A string form parses now, in classification;
+            # a string that cannot be read, and any form
+            # that does not yield an object, is
+            # malformed_call (N13) — the determination
+            # extraction once made is classification's, at
+            # the point the order reaches it.
             if record["arguments_form"] == "string":
                 try:
                     arguments = _parse_arguments_string(
@@ -1833,11 +1887,12 @@ class Loop:
                     "its arguments are not an object"
                 continue
             # The arguments stand parsed: the hash is taken
-            # over the parsed arguments' canonical form,
-            # before resolution (N32).
+            # over the parsed arguments' canonical form
+            # (N32) — for a call the determination found
+            # unknown exactly as for a resolved one; the
+            # determination does not discard it.
             entry["arguments_sha256"] = sha256_hex(
                 canonical(arguments))
-            resolved = by_name.get(record["name"])
             if resolved is None:
                 entry["resolution"] = "unknown"
                 entry["refusal_class"] = "unknown_tool"

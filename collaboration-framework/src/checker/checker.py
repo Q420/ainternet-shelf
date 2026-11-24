@@ -530,15 +530,32 @@ def _checker_validate_arguments(parameters, arguments):
     return None
 
 
+def _checker_resolve_against_catalogue(by_name, name):
+    """The checker's own catalogue determination
+    (INDEX 408): whether a call's name resolves against
+    the package's catalogue, decided from the name
+    alone, standing in the checker's classification
+    after call-ID integrity and the cap and before its
+    own argument parsing — the ruled order, derived and
+    implemented independently of the loop's, so a loop
+    that decided resolution after parsing, or reached
+    it for a refused call, would diverge here. Returns
+    the catalogue entry, or None where the name is
+    unknown."""
+    return by_name.get(name)
+
+
 def _checker_parse_arguments(raw):
     """The checker's own classification-stage parse of a
     string-form arguments value (INDEX 406): extraction
     is structural only, so the parse stands here, in the
     checker's independent classification, reached only by
-    a call that survived call-ID integrity and the cap —
-    the same order the loop is held to, derived and
-    implemented independently. Raises ValueError where
-    the string cannot be read as JSON."""
+    a call that survived call-ID integrity and the cap,
+    and standing after the checker's own catalogue
+    determination (INDEX 408) — the same order the loop
+    is held to, derived and implemented independently.
+    Raises ValueError where the string cannot be read
+    as JSON."""
     return json.loads(raw)
 
 
@@ -599,13 +616,21 @@ def _checker_extract_calls(message):
 def _checker_classify(records, catalogue, instance_id,
                       iteration):
     """The checker's own classification of an extraction
-    (N33 (i)–(iii)): call-ID integrity, the per-response
-    cap, argument parsing (after integrity and the cap,
-    INDEX 406), closed-world resolution against the
-    catalogue, and the checker's own validation —
+    (N33 (i)–(iii)), in the ruled order (INDEX 408):
+    call-ID integrity, the per-response cap, name
+    readability and the checker's own closed-world
+    catalogue determination, argument parsing and the
+    canonical hash (after integrity, the cap and the
+    determination, INDEX 406/408), and the checker's
+    own validation, for resolved calls only —
     producing the translation record's entry set the
     recorded record is compared against, field for
-    field."""
+    field. The precedence is reconstructed with the
+    order: the determination precedes parsing, an
+    unknown name does not skip parsing, and a call
+    whose arguments then fail stands malformed_call
+    with resolution not_reached, as the loop's entry
+    stands."""
     by_name = {}
     for entry in catalogue:
         by_name.setdefault(entry["tool"], entry)
@@ -653,11 +678,25 @@ def _checker_classify(records, catalogue, instance_id,
             entry["refusal_detail"] = \
                 "its name could not be read"
             continue
-        # Argument parsing stands here in the checker's
-        # own classification (INDEX 406), after call-ID
-        # integrity and the cap, with the checker's own
-        # parser: a string that cannot be read, and any
-        # form not yielding an object, is malformed_call.
+        # The checker's own catalogue determination
+        # stands here, before its own parsing
+        # (INDEX 408): decided from the name alone, for
+        # a call that survived integrity and the cap —
+        # no refused call above reached it, and no
+        # argument work precedes it.
+        target = _checker_resolve_against_catalogue(
+            by_name, record["name"])
+        # Argument parsing stands after the
+        # determination in the checker's own
+        # classification (INDEX 406/408), with the
+        # checker's own parser, and an unknown name does
+        # not skip it — the hash is required for calls
+        # reaching this stage, and the malformed
+        # precedence is the established one: a string
+        # that cannot be read, and any form not yielding
+        # an object, is malformed_call, its entry
+        # standing with resolution not_reached exactly
+        # as the loop's stands.
         if record["arguments_form"] == "string":
             try:
                 arguments = _checker_parse_arguments(
@@ -681,7 +720,6 @@ def _checker_classify(records, catalogue, instance_id,
             continue
         entry["arguments_sha256"] = sha256_hex(
             canonical(arguments))
-        target = by_name.get(record["name"])
         if target is None:
             entry["resolution"] = "unknown"
             entry["refusal_class"] = "unknown_tool"
