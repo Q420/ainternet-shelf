@@ -46,6 +46,7 @@ was left.
 import copy
 
 from . import onboarding as _onboarding
+from . import tool_policy as _tool_policy
 from .record import (assembly_record_hash, declaration_fingerprint,
                      effective_case, instance_credential_fingerprint)
 
@@ -64,6 +65,19 @@ from .record import (assembly_record_hash, declaration_fingerprint,
 # duplicated in the checker's own copy as its other contracts
 # are.
 CATALOGUE_CONTRACT = "a3-cat"
+
+# The retrieval contract's declaration (RETRIEVAL-SCOPE
+# Rev 5): an assembly generated for structured retrieval
+# declares this value in the same field, in place of the
+# A3-CAT value. It discriminates the whole retrieval regime
+# — the v3 registry governs its dispatches and catalogue,
+# the doorway enforces the two authority paths and the
+# aggregate admission, and the loop carries each retrieval
+# result exactly once. The value is the registry's own
+# contract data (tool_policy.RETRIEVAL_CATALOGUE_CONTRACT),
+# read from there so the generator, the doorway and the loop
+# cannot drift apart on it; the checker holds its own copy,
+# as its other contracts are held.
 
 
 class Generator:
@@ -203,7 +217,8 @@ class Generator:
         return problems
 
     def generate(self, token, seat_id, identify, skills=(),
-                 grants=None, model_requested=None):
+                 grants=None, model_requested=None,
+                 retrieval=False):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -214,7 +229,15 @@ class Generator:
         generation, no act of any kind. On success the
         instance's onboarding is recorded first (its normative
         place in the sequence), then the generated record that
-        binds to it."""
+        binds to it.
+
+        `retrieval` (retrieval scope, Rev 5): where the
+        assembly is generated for structured retrieval, its
+        sealed record declares the retrieval catalogue
+        contract in place of the A3-CAT value — the
+        declaration that governs the assembly's whole
+        retrieval regime. The default keeps every existing
+        generation's declaration exactly as it stands."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -252,7 +275,9 @@ class Generator:
             "skills": [{"name": s["name"],
                         "version": s["version"]} for s in skills],
             "grants": copy.deepcopy(grants),
-            "catalogue_contract": CATALOGUE_CONTRACT,
+            "catalogue_contract":
+                _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT
+                if retrieval else CATALOGUE_CONTRACT,
         }
         ev = self.doorway.act(token, "ASSEMBLY_GENERATED", record,
                               view_seq=self.store.head_seq())

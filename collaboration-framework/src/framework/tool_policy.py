@@ -44,6 +44,26 @@ default is the current version, and an unknown version fails
 closed — a version the registry does not hold is a contract
 nobody can verify under.
 
+The retrieval piece (RETRIEVAL-SCOPE-2026-11-23, Rev 5) adds
+a third view, `tool-registry-v3`: v2's contract for the
+standing tools unchanged, plus the three structured
+retrieval tools (`sandbox.list`, `sandbox.read_range`,
+`sandbox.search`) — and `sandbox.read` joins the retrieval
+set, its results bounded like the others'. v3 does NOT
+become the default version: `REGISTRY_VERSION` stays v2, so
+an assembly is governed by the retrieval contract only
+where its sealed record declares it (`RETRIEVAL_CATALOGUE_
+CONTRACT`), and the doorway and the loop apply v3 per
+assembly, recording the version on each dispatch and
+iteration exactly as the A3-CAT settlement established.
+Pre-v3 assemblies keep their behaviour whole — the
+historical-exemption pattern, applied to a registry version
+this time. The retrieval constants below (the per-result
+ceiling, the aggregate per-package ceiling, the search page
+cap, the two scope prefixes) are the scope's named design
+bounds, held here as contract data so the doorway, the
+executor and the checker all read the same numbers.
+
 The versioned views are frozen deeply at module load (A3-CAT
 correction round): every mapping is a MappingProxyType, every
 list a tuple, every set a frozenset, so no caller can alter a
@@ -84,6 +104,67 @@ def _freeze(value):
 # they agree, and the checker verifies each dispatch under
 # the version its record names (Piece A3-CAT settlement (c)).
 REGISTRY_VERSION = "tool-registry-v2"
+
+# The retrieval piece's contract data (RETRIEVAL-SCOPE Rev 5).
+# The registry version an assembly declaring the retrieval
+# contract is dispatched and catalogued under; the catalogue
+# contract value its sealed generated record declares; the
+# per-result ceiling every retrieval result is bounded by
+# (bytes of returned content, enforced at execution — a
+# result over it is refused with the bound named, never
+# truncated); the aggregate ceiling on retrieved content
+# presented in one package (enforced at admission, before
+# execution, §3a); the search page's line cap; the tools the
+# retrieval contract governs (`sandbox.read` included — under
+# the contract, whole-document injection is impossible
+# through it too); and the two authority scopes' path
+# prefixes — source material under sources/, the worker's
+# own scratch under scratch/.
+RETRIEVAL_REGISTRY_VERSION = "tool-registry-v3"
+RETRIEVAL_CATALOGUE_CONTRACT = "retrieval-v3"
+RETRIEVAL_RESULT_CEILING = 12000
+RETRIEVAL_AGGREGATE_CEILING = 36000
+SEARCH_PAGE_LINE_CAP = 40
+RETRIEVAL_TOOLS = frozenset({
+    "sandbox.list", "sandbox.read_range", "sandbox.search",
+    "sandbox.read"})
+SOURCE_SCOPE_PREFIX = "sources"
+SCRATCH_SCOPE_PREFIX = "scratch"
+
+
+def retrieval_authority(path):
+    """The authority path a sandbox path falls under, or
+    None: "source" for a path under sources/, "scratch" for
+    a path under scratch/, and None anywhere else — a path
+    under neither scope is admitted by no authority path
+    (retrieval scope, boundary enforcement). Pure, of the
+    path only."""
+    if not isinstance(path, str):
+        return None
+    if path.startswith(SOURCE_SCOPE_PREFIX + "/"):
+        return "source"
+    if path.startswith(SCRATCH_SCOPE_PREFIX + "/"):
+        return "scratch"
+    return None
+
+
+def boundary_member(boundary, path) -> bool:
+    """Whether a path is a member of a case's sealed evidence
+    boundary. The boundary names material ids (a list of
+    strings, as the office seals them); an id names its path
+    either exactly or as its leading field — the sealing
+    convention names the path, then the material's hash, in
+    the one id. Pure, of the two values."""
+    if not isinstance(boundary, list) or \
+            not isinstance(path, str):
+        return False
+    for item in boundary:
+        if item == path:
+            return True
+        if isinstance(item, str) and \
+                item.startswith(path + " "):
+            return True
+    return False
 
 # sandbox.flaky's modes (scope point 6): the first three are
 # the outcome shapes; the fourth performs the operation and
@@ -178,6 +259,179 @@ _TOOLS_V2 = _freeze({
     },
 })
 
+# The v3 view (retrieval piece): v2's entries for the
+# standing tools, unchanged word for word, plus the three
+# retrieval tools with their worker-facing layers. A v3
+# assembly's catalogue therefore describes its standing
+# tools exactly as v2 did, and its retrieval tools in the
+# same style.
+_TOOLS_V3 = _freeze({
+    "sandbox.write": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path", "content"},
+        "description":
+            "Write a text file inside the sandbox: creates "
+            "the file at the given path (with any folders it "
+            "needs) or replaces it, storing exactly the given "
+            "content. Returns the path written and the number "
+            "of bytes stored.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+            {"name": "content", "required": True,
+             "meaning": "the text to store in the file"},
+        ],
+    },
+    "sandbox.read": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path"},
+        "description":
+            "Read a text file inside the sandbox. Returns "
+            "the file's path and its full text content.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+        ],
+    },
+    "sandbox.flaky": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"mode", "path", "content",
+                       "hang_seconds"},
+        "description":
+            "A test tool whose behaviour its mode parameter "
+            "sets, so uncertain outcomes are exercised for "
+            "real: 'succeed' performs (writing the file when "
+            "a path is given) and reports its result; 'fail' "
+            "fails; 'hang-past-deadline' runs past the "
+            "deadline, so its outcome is recorded uncertain; "
+            "'execute-but-lose-the-report' performs the "
+            "operation but its report never arrives, so its "
+            "outcome is recorded uncertain. Returns the mode, "
+            "and the write's result when it wrote.",
+        "parameters": [
+            {"name": "mode", "required": True,
+             "meaning": "one of 'succeed', 'fail', "
+                        "'hang-past-deadline', "
+                        "'execute-but-lose-the-report'"},
+            {"name": "path", "required": False,
+             "meaning": "a file path inside the sandbox to "
+                        "write, for the modes that write"},
+            {"name": "content", "required": False,
+             "meaning": "the text to store when writing"},
+            {"name": "hang_seconds", "required": False,
+             "meaning": "how long the 'hang-past-deadline' "
+                        "mode runs, in seconds (a positive "
+                        "number)"},
+        ],
+    },
+    "sandbox.list": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path"},
+        "description":
+            "List a text file's structure inside the sandbox "
+            "without returning its contents: its byte size, "
+            "its line count, and — for markdown or text "
+            "files — its headings with their line numbers. "
+            "The structure map is returned as the result's "
+            "content. Use it to discover what a file holds "
+            "before retrieving any of it.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+        ],
+    },
+    "sandbox.read_range": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"path", "start_line", "end_line",
+                       "heading", "byte_start", "byte_end"},
+        "description":
+            "Retrieve a bounded slice of a text file inside "
+            "the sandbox: the lines of an inclusive 1-based "
+            "line range, or one heading's section (from its "
+            "heading line to just before the next heading of "
+            "the same or higher level), or — for a "
+            "single-line range — a byte window of that line. "
+            "A result is never larger than 12,000 bytes: a "
+            "range whose content exceeds the ceiling is "
+            "refused with the bound named, and nothing "
+            "partial is returned. A heading naming more "
+            "than one heading is refused as ambiguous, "
+            "naming the matches and their line numbers. A "
+            "byte window may span at most 11,997 bytes; the "
+            "slice served is aligned to character "
+            "boundaries, and the window actually served is "
+            "recorded in the result.",
+        "parameters": [
+            {"name": "path", "required": True,
+             "meaning": "the file's path inside the sandbox, "
+                        "relative, under the grant's prefix"},
+            {"name": "start_line", "required": False,
+             "meaning": "the range's first line, numbered "
+                        "from 1; given with end_line when no "
+                        "heading is named"},
+            {"name": "end_line", "required": False,
+             "meaning": "the range's last line, inclusive; "
+                        "given with start_line when no "
+                        "heading is named"},
+            {"name": "heading", "required": False,
+             "meaning": "the exact text of the one heading "
+                        "whose section to retrieve; refused "
+                        "when it matches more than one "
+                        "heading"},
+            {"name": "byte_start", "required": False,
+             "meaning": "for a single-line range, the byte "
+                        "window's start within the line, "
+                        "0-based and inclusive; given with "
+                        "byte_end"},
+            {"name": "byte_end", "required": False,
+             "meaning": "for a single-line range, the byte "
+                        "window's end within the line, "
+                        "0-based and exclusive; given with "
+                        "byte_start"},
+        ],
+    },
+    "sandbox.search": {
+        "ceiling_keys": {"path_prefix"},
+        "param_keys": {"query", "path", "offset"},
+        "description":
+            "Search permitted text inside the sandbox for a "
+            "query string (an exact, case-sensitive "
+            "substring) and return matching passages — each "
+            "matching line with up to two lines of context, "
+            "labelled with its file and line numbers. "
+            "Matches are ordered by path, then by line, and "
+            "returned in deterministic pages under the "
+            "result ceiling and a 40-line page cap: every "
+            "result states the total match count, how many "
+            "matches it returns, and — where more remain — "
+            "the continuation offset to pass back as the "
+            "offset parameter for the next page. A matching "
+            "line too large to return even on its own is "
+            "reported as a stub — its path, line number and "
+            "byte size, with no content — which "
+            "sandbox.read_range can fetch in byte-window "
+            "slices. With no path, the search covers the "
+            "case's sealed source material; with a path, it "
+            "searches that one file.",
+        "parameters": [
+            {"name": "query", "required": True,
+             "meaning": "the exact text to search for "
+                        "(case-sensitive)"},
+            {"name": "path", "required": False,
+             "meaning": "one file to search, under the "
+                        "grant's prefix; without it, the "
+                        "sealed source material is searched"},
+            {"name": "offset", "required": False,
+             "meaning": "the continuation offset a previous "
+                        "search result returned: the match "
+                        "index the next page starts at"},
+        ],
+    },
+})
+
 # One registry view per version, v1 preserved immutable for
 # historical verification (Piece A3-CAT settlement (a)/(c)) —
 # the version map itself is frozen with its views, so a
@@ -185,6 +439,7 @@ _TOOLS_V2 = _freeze({
 _REGISTRIES = MappingProxyType({
     "tool-registry-v1": _TOOLS_V1,
     "tool-registry-v2": _TOOLS_V2,
+    "tool-registry-v3": _TOOLS_V3,
 })
 
 # The current view: what an unversioned call applies. This
@@ -299,6 +554,76 @@ def _path_problem(path, prefix):
     return None
 
 
+def _read_range_problem(parameters):
+    """Why sandbox.read_range's parameters may not be used,
+    or None (retrieval scope §2): exactly one selection — a
+    heading, or an inclusive 1-based line range — and a byte
+    window only on a single-line range, spanning at most the
+    per-result ceiling minus 3 bytes, so the served slice
+    (its end extended at most 3 bytes to a character
+    boundary) never exceeds the ceiling. Pure, of the
+    parameters only; the same result at the doorway and in
+    the checker."""
+    heading = parameters.get("heading")
+    if heading is not None:
+        if not isinstance(heading, str) or not heading:
+            return ("sandbox.read_range's heading is not a "
+                    "non-empty string")
+        for key in ("start_line", "end_line", "byte_start",
+                    "byte_end"):
+            if key in parameters:
+                return (f"sandbox.read_range names a heading "
+                        f"and {key}; a request selects by "
+                        f"heading or by line range, never both")
+        return None
+    start = parameters.get("start_line")
+    end = parameters.get("end_line")
+    if start is None or end is None:
+        return ("sandbox.read_range requires a heading, or "
+                "both start_line and end_line")
+    for name, value in (("start_line", start),
+                        ("end_line", end)):
+        if isinstance(value, bool) or \
+                not isinstance(value, int) or value < 1:
+            return (f"sandbox.read_range's {name} is not a "
+                    f"positive integer (lines are numbered "
+                    f"from 1)")
+    if end < start:
+        return ("sandbox.read_range's end_line precedes its "
+                "start_line")
+    has_start = "byte_start" in parameters
+    has_end = "byte_end" in parameters
+    if has_start != has_end:
+        return ("sandbox.read_range's byte window names both "
+                "byte_start and byte_end, or neither")
+    if has_start:
+        if start != end:
+            return ("sandbox.read_range's byte window "
+                    "applies to a single-line range only")
+        byte_start = parameters["byte_start"]
+        byte_end = parameters["byte_end"]
+        for name, value in (("byte_start", byte_start),
+                            ("byte_end", byte_end)):
+            if isinstance(value, bool) or \
+                    not isinstance(value, int) or value < 0:
+                return (f"sandbox.read_range's {name} is not "
+                        f"a non-negative integer")
+        if byte_end <= byte_start:
+            return ("sandbox.read_range's byte_end does not "
+                    "exceed its byte_start")
+        if byte_end - byte_start > \
+                RETRIEVAL_RESULT_CEILING - 3:
+            return (f"sandbox.read_range's byte window spans "
+                    f"{byte_end - byte_start} bytes; the "
+                    f"maximum requestable window is "
+                    f"{RETRIEVAL_RESULT_CEILING - 3} bytes "
+                    f"(the per-result ceiling minus 3, so "
+                    f"the served slice — its end extended at "
+                    f"most 3 bytes to a character boundary — "
+                    f"never exceeds the ceiling)")
+    return None
+
+
 def check_ceiling(tool, ceiling, parameters, version=None):
     """The pure ceiling contract: (ok, ground). Applies the
     named tool's registered checker to the grant's ceiling and
@@ -369,4 +694,36 @@ def check_ceiling(tool, ceiling, parameters, version=None):
                     not hang > 0:
                 return False, ("sandbox.flaky's hang_seconds "
                                "is not a positive number")
+    elif tool == "sandbox.list":
+        if "path" not in parameters:
+            return False, "sandbox.list requires a path parameter"
+        problem = _path_problem(parameters.get("path"), prefix)
+        if problem is not None:
+            return False, problem
+    elif tool == "sandbox.read_range":
+        if "path" not in parameters:
+            return False, ("sandbox.read_range requires a "
+                           "path parameter")
+        problem = _path_problem(parameters.get("path"), prefix)
+        if problem is not None:
+            return False, problem
+        problem = _read_range_problem(parameters)
+        if problem is not None:
+            return False, problem
+    elif tool == "sandbox.search":
+        query = parameters.get("query")
+        if not isinstance(query, str) or not query:
+            return False, ("sandbox.search requires its query "
+                           "parameter to be a non-empty string")
+        if "path" in parameters:
+            problem = _path_problem(parameters.get("path"),
+                                    prefix)
+            if problem is not None:
+                return False, problem
+        if "offset" in parameters:
+            offset = parameters["offset"]
+            if isinstance(offset, bool) or \
+                    not isinstance(offset, int) or offset < 0:
+                return False, ("sandbox.search's offset is "
+                               "not a non-negative integer")
     return True, ""

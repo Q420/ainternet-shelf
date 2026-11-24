@@ -95,6 +95,21 @@ The shape, as the scope settles it:
   the independent checker reconstructs the expected
   catalogue from the sealed grants and its own registry
   copy and compares.
+- The retrieval piece (RETRIEVAL-SCOPE Rev 5) rides on the
+  assembly's declared contract: an assembly declaring the
+  retrieval contract is catalogued under registry v3 (the
+  version its iterations record and its dispatches are
+  governed by), and its retrieval results are carried
+  exactly once per package — in tool_results, with their
+  provenance — while the delta's rendering of the same
+  outcome carries the provenance without the content
+  (single carriage, INDEX 249). The record itself retains
+  every outcome in full. A result is presented in the one
+  package the cursor mechanism already gives it — the first
+  package built after it settled — and never re-presented:
+  the retention rule is the cursor's, stated explicitly.
+  Assemblies declaring anything else keep their catalogue
+  version and their outcomes' presentation whole.
 - Timing evidence (INDEX 217/219 — Ben's flags): the loop
   measures each iteration's package construction directly,
   times the callable's invocation, and collects the stage
@@ -145,7 +160,7 @@ class _CatalogueError(Exception):
     package that leaves a granted tool unnamed."""
 
 
-def _derive_catalogue(grants):
+def _derive_catalogue(grants, version=None):
     """The worker-facing tool catalogue for a sealed grants
     list (Piece A3-CAT): one entry per granted tool — the
     first grant of each tool, as the doorway's own grant
@@ -159,7 +174,15 @@ def _derive_catalogue(grants):
     doorway refuses such tools, and there is nothing lawful
     to describe; the distinction from a registered tool with
     missing metadata stays explicit: that is a registry
-    defect and raises _CatalogueError."""
+    defect and raises _CatalogueError.
+
+    The retrieval piece adds the version parameter: an
+    assembly declaring the retrieval contract is catalogued
+    under v3 — the version its dispatches are governed by —
+    and any other assembly under the current version,
+    exactly as before."""
+    if version is None:
+        version = _tool_policy.REGISTRY_VERSION
     entries = []
     seen = set()
     for grant in grants or []:
@@ -170,17 +193,16 @@ def _derive_catalogue(grants):
                 tool in seen:
             continue
         seen.add(tool)
-        if not _tool_policy.registered(tool):
+        if not _tool_policy.registered(tool, version):
             continue
-        facing = _tool_policy.worker_facing(tool)
+        facing = _tool_policy.worker_facing(tool, version)
         if facing is None:
             raise _CatalogueError(
                 f"the registry entry for granted tool "
                 f"{tool!r} carries no complete worker-facing "
                 f"description and parameter schema under "
-                f"{_tool_policy.REGISTRY_VERSION}; the "
-                f"catalogue cannot honestly describe the "
-                f"worker's tools (Piece A3-CAT)")
+                f"{version}; the catalogue cannot honestly "
+                f"describe the worker's tools (Piece A3-CAT)")
         entries.append({
             "tool": tool,
             "description": facing["description"],
@@ -521,20 +543,32 @@ class Loop:
         # no call.
         generated = doorway._generated_payload(
             ctx["assembly_id"])
+        # The retrieval piece: an assembly declaring the
+        # retrieval contract is catalogued under v3 — the
+        # version its dispatches record — and its retrieval
+        # results are carried once (below). Any other
+        # assembly derives under the current version and
+        # presents its outcomes exactly as it always has.
+        governed = doorway._retrieval_governed(generated)
+        version = _tool_policy.RETRIEVAL_REGISTRY_VERSION \
+            if governed else _tool_policy.REGISTRY_VERSION
         catalogue = _derive_catalogue(
-            (generated or {}).get("grants"))
+            (generated or {}).get("grants"), version)
         ctx["catalogue_hash"] = _catalogue_hash(catalogue)
-        ctx["registry_version"] = \
-            _tool_policy.REGISTRY_VERSION
+        ctx["registry_version"] = version
         seat = ctx["seat"]
         view = render_view(events, seat)
         boundary = ctx["content"].get("evidence_boundary")
         if isinstance(boundary, list):
             view["sealed"] = [s for s in view["sealed"]
                               if s["material_id"] in boundary]
-        delta = [ev for ev in events
-                 if ctx["cursor"] < ev["event_seq"] <= head
-                 and self._relevant(ctx, ev)]
+        raw_delta = [ev for ev in events
+                     if ctx["cursor"] < ev["event_seq"] <= head
+                     and self._relevant(ctx, ev)]
+        # tool_results is built from the record's own events,
+        # before the delta's copy is stubbed for single
+        # carriage below: this is the one place the package
+        # carries a retrieval result's content.
         tool_results = [{
             "dispatch_id": ev["payload"].get("dispatch_id"),
             "request_id": ev["payload"].get("request_id"),
@@ -543,7 +577,47 @@ class Loop:
                 ev["payload"].get("result")),
             "detail": ev["payload"].get("detail"),
             "event_seq": ev["event_seq"],
-        } for ev in delta if ev["type"] == "TOOL_OUTCOME"]
+        } for ev in raw_delta if ev["type"] == "TOOL_OUTCOME"]
+        delta = copy.deepcopy(raw_delta)
+        if governed:
+            # Single carriage (retrieval piece; INDEX 249):
+            # the record retains each retrieval outcome in
+            # full, but the package presents its content
+            # exactly once — in tool_results, below, with its
+            # provenance. The delta's rendering of the same
+            # outcome carries the provenance without the
+            # content: the fields that bear content (the
+            # content itself, search passages, a listing's
+            # headings) are replaced by the carriage marker,
+            # and every scalar the provenance needs — the
+            # path, the authority path, the content's hash
+            # and size, the served range or window, the
+            # search's totals — stands as recorded. A later
+            # package does not re-present the result at all:
+            # the cursor has passed it, as it passes every
+            # event exactly once.
+            dispatch_tools = {
+                did: d.get("tool")
+                for did, d in state["dispatches"].items()}
+            for ev in delta:
+                if ev["type"] != "TOOL_OUTCOME":
+                    continue
+                payload = ev["payload"]
+                result = payload.get("result")
+                if payload.get("outcome") != "result" or \
+                        dispatch_tools.get(
+                            payload.get("dispatch_id")) not in \
+                        _tool_policy.RETRIEVAL_TOOLS or \
+                        not isinstance(result, dict) or \
+                        "content" not in result:
+                    continue
+                stub = {key: value for key, value
+                        in result.items()
+                        if key not in ("content", "passages",
+                                       "headings")}
+                stub["single_carriage"] = True
+                stub["presented_in"] = "tool_results"
+                payload["result"] = stub
         standing = [{
             "dispatch_id": did,
             "request_id": d.get("request_id"),

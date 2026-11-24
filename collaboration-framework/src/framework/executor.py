@@ -36,13 +36,126 @@ execute-but-lose-the-report mode performs its operation and
 then reports uncertainty: the report, not the execution, is
 what was lost.
 """
+import hashlib
 import json
 import os
+import re
 import threading
 import time
 
+from . import tool_policy as _tool_policy
 from .doorway import EXECUTOR_ACTOR  # noqa: F401  (the identity
 # this machinery reports under, named here for its consumers)
+
+
+# ------------------------------------------------ retrieval
+# The structured retrieval performers (RETRIEVAL-SCOPE
+# Rev 5), used by Executor._perform for the v3 tools and —
+# under a retrieval-governed assembly only — for
+# sandbox.read. Every retrieval result carries the exact
+# returned content with its sha256 and byte size as separate
+# fields and the authority path that admitted it, so the
+# record retains what the worker was given, verifiably
+# (provenance, §5 of the scope). The per-result ceiling is
+# enforced here, at execution: an oversized result is
+# refused with the bound named — a failure the operation
+# establishes — and nothing partial is returned.
+
+_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
+
+# The file kinds whose structure map names headings; any
+# other text file's map is its line count alone (the scope's
+# distinction: headings for markdown/text, line count for
+# other text).
+_HEADING_FILE_KINDS = ("md", "markdown", "txt")
+
+
+def _split_lines(data):
+    """The lines of a byte string, as the retrieval contract
+    counts them: a line is the bytes up to and including its
+    newline; the final line may lack one. Returns a list of
+    (raw_bytes, text) — the line's bytes exactly as they
+    stand, and its decoded text without the trailing
+    newline."""
+    lines = []
+    start = 0
+    while start < len(data):
+        nl = data.find(b"\n", start)
+        if nl == -1:
+            raw = data[start:]
+            start = len(data)
+        else:
+            raw = data[start:nl + 1]
+            start = nl + 1
+        text = raw.decode("utf-8")
+        if text.endswith("\n"):
+            text = text[:-1]
+        lines.append((raw, text))
+    return lines
+
+
+def _headings(lines):
+    """The ATX headings of a split file: each heading line's
+    text (without its #s), its level (the # count) and its
+    1-based line number, in file order."""
+    out = []
+    for number, (_raw, text) in enumerate(lines, start=1):
+        match = _HEADING_RE.match(text)
+        if match:
+            out.append({"text": match.group(2),
+                        "level": len(match.group(1)),
+                        "line": number})
+    return out
+
+
+def _boundary_at_or_after(data, offset):
+    """The first UTF-8 character boundary at or after offset
+    in data: offset itself where it already falls on one (or
+    at either end), else the end of the character offset
+    falls inside. The retrieval scope's assignment rule
+    (§2): a character straddling a requested start belongs
+    to the previous slice, so the served start advances past
+    it; a character straddling a requested end belongs to
+    this slice, so the served end extends to include it —
+    one rule, applied at both ends."""
+    if offset <= 0:
+        return 0
+    if offset >= len(data):
+        return len(data)
+    index = offset
+    while index < len(data) and (data[index] & 0xC0) == 0x80:
+        index += 1
+    return index
+
+
+def _retrieval_result(path, content, authority, extra=None):
+    """A retrieval outcome's result: the exact returned
+    content, its sha256 and byte size as separate recorded
+    fields, and the authority path that admitted it — the
+    provenance the record retains (§5)."""
+    raw = content.encode("utf-8")
+    result = {"path": path, "content": content,
+              "content_bytes": len(raw),
+              "content_sha256": hashlib.sha256(raw).hexdigest(),
+              "authority_path": authority}
+    if extra:
+        result.update(extra)
+    return result
+
+
+def _authority_or_raise(tool, path):
+    """The authority path a retrieval operation on this path
+    answers under, or a refusal: the executor is the last
+    line before the filesystem, and it fails closed on a
+    path under neither scope, whatever admitted the
+    dispatch."""
+    authority = _tool_policy.retrieval_authority(path)
+    if authority is None:
+        raise RuntimeError(
+            f"{tool}: path {path!r} lies under neither the "
+            f"sources/ scope nor the scratch/ scope; no "
+            f"authority path admits it")
+    return authority
 
 
 class Executor:
@@ -56,6 +169,11 @@ class Executor:
             sandbox_dir, ".claims")
         self.deadline = deadline
         self.executor_id = executor_id
+        # The executing thread's retrieval context (the
+        # retrieval piece): set by the worker thread in
+        # execute() from the dispatch's own record, read by
+        # _perform on that same thread.
+        self._retrieval_local = threading.local()
         # The monotonic clock the operation deadline is read
         # from — a dependency, defaulting to time.monotonic,
         # so a test can supply a controlled clock and place
@@ -170,6 +288,33 @@ class Executor:
     def _sandbox_path(self, rel):
         return os.path.join(self.sandbox_dir, rel)
 
+    def _retrieval_context(self, dispatch_id):
+        """The dispatch's retrieval context (retrieval
+        piece): (governed, boundary) — whether the assembly
+        behind the dispatch declares the retrieval contract
+        in its sealed record, and the pinned case's sealed
+        evidence boundary. Derived from the record, as every
+        fact the executor acts on is; an assembly that
+        declares nothing else is not governed, and its
+        dispatches perform exactly as they always have."""
+        state = self.doorway.state()
+        entry = state["dispatches"].get(dispatch_id) or {}
+        assembly_id, assembly = \
+            self.doorway._assembly_entry_of_instance(
+                state, entry.get("instance_id"))
+        if assembly_id is None:
+            return False, None
+        generated = self.doorway._generated_payload(
+            assembly_id)
+        governed = self.doorway._retrieval_governed(generated)
+        boundary = None
+        if governed and assembly is not None:
+            content = self.doorway._pinned_case_content(
+                state, assembly)
+            boundary = (content or {}).get(
+                "evidence_boundary")
+        return governed, boundary
+
     def _write(self, parameters):
         path = self._sandbox_path(parameters["path"])
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -179,19 +324,341 @@ class Executor:
         return {"path": parameters["path"],
                 "bytes": len(content.encode("utf-8"))}
 
+    # --------------------------------------- retrieval performers
+    def _read_bytes(self, path):
+        with open(self._sandbox_path(path), "rb") as fh:
+            return fh.read()
+
+    def _perform_read_governed(self, parameters):
+        """sandbox.read under the retrieval contract: the
+        whole file, bounded — a file over the per-result
+        ceiling is refused with the bound named, so
+        whole-document injection is impossible through this
+        door too (retrieval scope, the tool contract)."""
+        path = parameters["path"]
+        authority = _authority_or_raise("sandbox.read", path)
+        data = self._read_bytes(path)
+        ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
+        if len(data) > ceiling:
+            raise RuntimeError(
+                f"sandbox.read of {path} would return "
+                f"{len(data)} bytes, exceeding the per-result "
+                f"ceiling of {ceiling} bytes; the read is "
+                f"refused and nothing is returned — retrieve "
+                f"a bounded range with sandbox.read_range "
+                f"instead")
+        return _retrieval_result(path, data.decode("utf-8"),
+                                 authority)
+
+    def _perform_list(self, parameters):
+        """sandbox.list: discovery without contents — the
+        file's size, line count, and (for markdown/text) its
+        headings with line numbers. No body text crosses."""
+        path = parameters["path"]
+        authority = _authority_or_raise("sandbox.list", path)
+        if not os.path.isfile(self._sandbox_path(path)):
+            raise RuntimeError(
+                f"sandbox.list: {path} is not a file in the "
+                f"sandbox")
+        data = self._read_bytes(path)
+        lines = _split_lines(data)
+        kind = path.rsplit(".", 1)[-1].lower() \
+            if "." in path else ""
+        headings = _headings(lines) \
+            if kind in _HEADING_FILE_KINDS else []
+        rendered = [f"{path} — {len(data)} bytes, "
+                    f"{len(lines)} lines"]
+        for heading in headings:
+            rendered.append(
+                f"line {heading['line']}: "
+                f"{'#' * heading['level']} {heading['text']}")
+        content = "\n".join(rendered)
+        ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
+        if len(content.encode("utf-8")) > ceiling:
+            raise RuntimeError(
+                f"sandbox.list of {path} produces a structure "
+                f"map of {len(content.encode('utf-8'))} "
+                f"bytes, exceeding the per-result ceiling of "
+                f"{ceiling} bytes; the listing is refused and "
+                f"nothing is returned")
+        # The rendered map is the result's whole substance:
+        # the headings stand in it, with their line numbers,
+        # and are not carried a second time as structured
+        # extras — single carriage (INDEX 249) is a property
+        # of the result itself, not only of the package. The
+        # scalar facts (the file's size, its line count)
+        # ride as provenance.
+        return _retrieval_result(
+            path, content, authority,
+            {"size_bytes": len(data),
+             "line_count": len(lines)})
+
+    def _perform_read_range(self, parameters):
+        """sandbox.read_range: a bounded slice — a heading's
+        section, an inclusive line range, or a byte window
+        of a single line — under the exact semantics of §2:
+        a heading matching several headings is refused as
+        ambiguous, naming the matches; a slice over the
+        ceiling is refused with the bound named; a byte
+        window is served aligned to character boundaries,
+        and the window actually served is recorded."""
+        path = parameters["path"]
+        authority = _authority_or_raise("sandbox.read_range",
+                                        path)
+        data = self._read_bytes(path)
+        lines = _split_lines(data)
+        ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
+        extra = {}
+        if "heading" in parameters:
+            name = parameters["heading"]
+            matches = [h for h in _headings(lines)
+                       if h["text"] == name]
+            if not matches:
+                raise RuntimeError(
+                    f"sandbox.read_range: no heading "
+                    f"{name!r} stands in {path}")
+            if len(matches) > 1:
+                where = ", ".join(str(h["line"])
+                                  for h in matches)
+                raise RuntimeError(
+                    f"sandbox.read_range: heading {name!r} "
+                    f"matches {len(matches)} headings in "
+                    f"{path} (lines {where}); the request is "
+                    f"refused as ambiguous — disambiguate by "
+                    f"line range")
+            heading = matches[0]
+            start_idx = heading["line"] - 1
+            end_idx = len(lines)
+            for other in _headings(lines):
+                if other["line"] > heading["line"] and \
+                        other["level"] <= heading["level"]:
+                    end_idx = other["line"] - 1
+                    break
+            extra["heading"] = name
+        else:
+            if parameters["start_line"] > len(lines):
+                raise RuntimeError(
+                    f"sandbox.read_range: the range begins "
+                    f"at line {parameters['start_line']}, past "
+                    f"the end of {path} ({len(lines)} lines)")
+            start_idx = parameters["start_line"] - 1
+            end_idx = min(parameters["end_line"], len(lines))
+        if "byte_start" in parameters:
+            raw = lines[start_idx][0]
+            requested_start = parameters["byte_start"]
+            requested_end = parameters["byte_end"]
+            served_start = _boundary_at_or_after(
+                raw, min(requested_start, len(raw)))
+            served_end = _boundary_at_or_after(
+                raw, min(requested_end, len(raw)))
+            if served_start > served_end:
+                served_start = served_end
+            chunk = raw[served_start:served_end]
+            extra.update({
+                "byte_start": served_start,
+                "byte_end": served_end,
+                "requested_byte_start": requested_start,
+                "requested_byte_end": requested_end})
+            served = (start_idx + 1, start_idx + 1)
+        else:
+            chunk = b"".join(raw for raw, _text
+                             in lines[start_idx:end_idx])
+            served = (start_idx + 1, end_idx)
+        if len(chunk) > ceiling:
+            raise RuntimeError(
+                f"sandbox.read_range of {path} lines "
+                f"{served[0]}–{served[1]} spans {len(chunk)} "
+                f"bytes, exceeding the per-result ceiling of "
+                f"{ceiling} bytes; the request is refused "
+                f"and nothing is returned — narrow the range")
+        extra.update({"start_line": served[0],
+                      "end_line": served[1]})
+        return _retrieval_result(path, chunk.decode("utf-8"),
+                                 authority, extra)
+
+    def _boundary_source_files(self, boundary):
+        """The source files a pathless search may cover: the
+        paths the pinned case's sealed evidence boundary
+        names under sources/ — the boundary governs the
+        searched material, so no file outside it is searched
+        and no existence signal leaks from outside it."""
+        paths = []
+        for item in boundary or []:
+            if not isinstance(item, str):
+                continue
+            candidate = item.split(" sha256:")[0]
+            if candidate.startswith(
+                    _tool_policy.SOURCE_SCOPE_PREFIX + "/") \
+                    and candidate not in paths:
+                paths.append(candidate)
+        return sorted(paths)
+
+    def _perform_search(self, parameters, boundary):
+        """sandbox.search: deterministic paged passages
+        within permitted material. Matches order by path,
+        then line; passages (a match with up to two context
+        lines, neighbours merged, never grown past the page
+        line cap) pack into pages under the result ceiling
+        and the line cap; every result states the total, how
+        many it returns, and the continuation where more
+        remain — a result never silently looks complete. A
+        passage too large for any page is reduced to its
+        matching lines; a matching line too large even alone
+        is a stub, fetchable by byte window."""
+        query = parameters["query"]
+        offset = parameters.get("offset", 0)
+        path = parameters.get("path")
+        ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
+        cap = _tool_policy.SEARCH_PAGE_LINE_CAP
+        if path is not None:
+            authority = _authority_or_raise("sandbox.search",
+                                            path)
+            files = [path]
+        else:
+            authority = "source"
+            files = self._boundary_source_files(boundary)
+        file_lines = {}
+        matches = []
+        for name in files:
+            if not os.path.isfile(self._sandbox_path(name)):
+                if path is not None:
+                    raise RuntimeError(
+                        f"sandbox.search: {name} is not a "
+                        f"file in the sandbox")
+                continue
+            lines = _split_lines(self._read_bytes(name))
+            file_lines[name] = lines
+            for number, (_raw, text) in enumerate(lines,
+                                                  start=1):
+                if query in text:
+                    matches.append((name, number))
+        matches.sort()
+        # Passages: each match with its context, neighbours
+        # merged — never grown past the page line cap, so a
+        # page can always hold at least one passage whole.
+        passages = []
+        for name, number in matches:
+            low = max(1, number - 2)
+            high = min(len(file_lines[name]), number + 2)
+            if passages and \
+                    passages[-1]["path"] == name and \
+                    low <= passages[-1]["end"] + 1 and \
+                    high - passages[-1]["start"] + 1 <= cap:
+                passages[-1]["end"] = max(passages[-1]["end"],
+                                          high)
+                passages[-1]["match_lines"].append(number)
+            else:
+                passages.append({"path": name, "start": low,
+                                 "end": high,
+                                 "match_lines": [number]})
+
+        def render(passage):
+            lines = file_lines[passage["path"]]
+            return "\n".join(
+                f"{passage['path']}:{n}: {lines[n - 1][1]}"
+                for n in range(passage["start"],
+                               passage["end"] + 1))
+
+        # Pageable units: a passage that fits whole; else its
+        # matching lines alone; else — a line too large even
+        # alone — a content-free stub.
+        units = []
+        for passage in passages:
+            if len(render(passage).encode("utf-8")) <= ceiling:
+                units.append(passage)
+                continue
+            for number in passage["match_lines"]:
+                single = {"path": passage["path"],
+                          "start": number, "end": number,
+                          "match_lines": [number]}
+                if len(render(single).encode("utf-8")) \
+                        <= ceiling:
+                    units.append(single)
+                else:
+                    units.append({
+                        "path": passage["path"],
+                        "match_line": number, "stub": True,
+                        "line_bytes": len(
+                            file_lines[passage["path"]]
+                            [number - 1][0])})
+        # The page holding the match at `offset`: units
+        # partition the matches in order, so the page starts
+        # at the first unit covering a match at or past it.
+        covered = 0
+        start_unit = None
+        for index, unit in enumerate(units):
+            count = 1 if unit.get("stub") else \
+                len(unit["match_lines"])
+            if covered + count > offset:
+                start_unit = index
+                break
+            covered += count
+        page = []
+        page_lines = 0
+        content = ""
+        returned = 0
+        if start_unit is not None:
+            for unit in units[start_unit:]:
+                if unit.get("stub"):
+                    page.append(unit)
+                    returned += 1
+                    continue
+                rendered = render(unit)
+                candidate = rendered if not content else \
+                    content + "\n" + rendered
+                if page and \
+                        (page_lines + unit["end"]
+                         - unit["start"] + 1 > cap or
+                         len(candidate.encode("utf-8"))
+                         > ceiling):
+                    break
+                page.append(unit)
+                page_lines += unit["end"] - unit["start"] + 1
+                content = candidate
+                returned += len(unit["match_lines"])
+        continuation = offset + returned \
+            if offset + returned < len(matches) else None
+        return _retrieval_result(
+            path, content, authority,
+            {"query": query, "total_matches": len(matches),
+             "returned": returned,
+             "continuation_offset": continuation,
+             "passages": page})
+
     def _perform(self, tool, parameters):
         """Perform the operation. Returns ("result", result)
         or ("lost", result) — the report-lost marker for
         flaky's execute-but-lose-the-report mode — and raises
-        for a failure the operation itself establishes."""
+        for a failure the operation itself establishes. The
+        dispatch's retrieval context (the retrieval piece) —
+        whether its assembly declares the retrieval contract,
+        and the pinned case's sealed evidence boundary —
+        reaches this seam on the executing thread's local
+        (set in execute() below), so the seam's shape is the
+        one it has always had."""
+        governed = getattr(self._retrieval_local, "governed",
+                           False)
+        boundary = getattr(self._retrieval_local, "boundary",
+                           None)
         if tool == "sandbox.write":
             return "result", self._write(parameters)
         if tool == "sandbox.read":
+            if governed:
+                return "result", self._perform_read_governed(
+                    parameters)
             path = self._sandbox_path(parameters["path"])
             with open(path) as fh:
                 content = fh.read()
             return "result", {"path": parameters["path"],
                               "content": content}
+        if tool == "sandbox.list":
+            return "result", self._perform_list(parameters)
+        if tool == "sandbox.read_range":
+            return "result", self._perform_read_range(
+                parameters)
+        if tool == "sandbox.search":
+            return "result", self._perform_search(
+                parameters, boundary)
         if tool == "sandbox.flaky":
             mode = parameters.get("mode")
             if mode == "fail":
@@ -247,6 +714,8 @@ class Executor:
             return {"ok": True, "dispatch_id": dispatch_id,
                     "outcome": "uncertain"}
         tool, parameters = source
+        governed, boundary = self._retrieval_context(
+            dispatch_id)
         box = {}
         # The deadline the join below waits on, as a point on
         # the monotonic clock: the worker rechecks it after
@@ -288,6 +757,12 @@ class Executor:
             if self.clock() >= deadline_at:
                 box["deadline_expired"] = True
                 return
+            # The dispatch's retrieval context rides the
+            # executing thread's local into _perform (see
+            # there): set here, by the thread that performs,
+            # so concurrent executions never share it.
+            self._retrieval_local.governed = governed
+            self._retrieval_local.boundary = boundary
             try:
                 box["value"] = self._perform(tool, parameters)
             except Exception as exc:  # the operation's failure

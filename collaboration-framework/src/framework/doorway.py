@@ -885,6 +885,31 @@ class Doorway:
                  "request_id": request_id, "tool": tool})
             self.store.commit()
             raise DoorwayRefusal(ground)
+        # Aggregate admission (retrieval scope §3a): under a
+        # retrieval-governed assembly, a retrieval request is
+        # admitted only if the package window's settled
+        # retrieved content plus this request's worst-case
+        # return stays within the aggregate ceiling —
+        # enforced here, before any dispatch intent exists,
+        # so a refused admission creates no dispatch and
+        # leaves no claim to settle. Ordered after the grant
+        # and temporal checks: a request no grant admits is
+        # refused on its grant ground, never on the aggregate.
+        governed = self._retrieval_governed(
+            self._generated_payload(assembly_id))
+        if governed and tool in _tool_policy.RETRIEVAL_TOOLS:
+            ground = self._retrieval_aggregate_problem(
+                state, entry, instance_id)
+            if ground is not None:
+                ev = self.store.append(
+                    "REJECTION", DOORWAY_ACTOR, [seat_id],
+                    {"seat": seat_id,
+                     "attempted_type": "TOOL_DISPATCHED",
+                     "ground": ground,
+                     "instance_id": instance_id,
+                     "request_id": request_id, "tool": tool})
+                self.store.commit()
+                raise DoorwayRefusal(ground)
         dispatch_id = f"dispatch-{len(state['dispatches']) + 1}"
         ev = self.store.append(
             "TOOL_DISPATCHED", DOORWAY_ACTOR, [instance_id],
@@ -898,8 +923,14 @@ class Doorway:
              # record which policy version was applied, and
              # the checker verifies the version it holds is
              # the version that governed — a dispatch under
-             # another version is not verifiable by it.
+             # another version is not verifiable by it. A
+             # retrieval-governed assembly's dispatches are
+             # governed by v3 (retrieval scope): the version
+             # follows the assembly's declared contract, as
+             # the catalogue's does.
              "registry_version":
+                 _tool_policy.RETRIEVAL_REGISTRY_VERSION
+                 if governed else
                  _tool_policy.REGISTRY_VERSION})
         self.store.commit()
         return {"ok": True, "duplicate": False,
@@ -907,6 +938,21 @@ class Doorway:
                 "request_id": request_id,
                 "dispatch_id": dispatch_id, "outcome": None,
                 "reconciled_outcome": None}
+
+    @staticmethod
+    def _retrieval_governed(generated):
+        """Whether a sealed generated record declares the
+        retrieval contract (RETRIEVAL-SCOPE Rev 5): the
+        compatibility discriminator for the whole retrieval
+        regime — v3 dispatch, the two authority paths, the
+        aggregate admission — exactly as the A3-CAT catalogue
+        contract discriminates its own. An assembly whose
+        record declares anything else (or nothing) is not
+        governed: its dispatches keep the behaviour they have
+        always had."""
+        return isinstance(generated, dict) and \
+            generated.get("catalogue_contract") == \
+            _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT
 
     def _dispatch_check(self, state, assembly_id, entry,
                         instance_id, tool, parameters):
@@ -926,6 +972,11 @@ class Doorway:
                     f"(R44)")
         generated = self._generated_payload(assembly_id)
         grants = (generated or {}).get("grants") or []
+        governed = self._retrieval_governed(generated)
+        if governed and tool in _tool_policy.RETRIEVAL_TOOLS:
+            return self._retrieval_dispatch_check(
+                state, entry, instance_id, grants, tool,
+                parameters)
         grant = next((g for g in grants
                       if isinstance(g, dict)
                       and g.get("tool") == tool), None)
@@ -942,7 +993,9 @@ class Doorway:
                     f"grant without a trace was never judged "
                     f"and packed (R44)")
         ok, ground = _tool_policy.check_ceiling(
-            tool, grant.get("scope_ceiling"), parameters)
+            tool, grant.get("scope_ceiling"), parameters,
+            version=_tool_policy.RETRIEVAL_REGISTRY_VERSION
+            if governed else None)
         if not ok:
             return f"{ground} (R44)"
         bound = grant.get("bound")
@@ -960,6 +1013,208 @@ class Doorway:
                     f"exhausted: {used} of {count} dispatches "
                     f"stand charged, and no outcome refunds a "
                     f"dispatch (R47)")
+        return None
+
+    def _retrieval_dispatch_check(self, state, entry,
+                                  instance_id, grants, tool,
+                                  parameters):
+        """Why a retrieval dispatch may not be recorded under
+        a retrieval-governed assembly, or None (retrieval
+        scope, boundary enforcement): the request is admitted
+        under exactly one of two authority paths, enforced
+        here, not merely described. (a) Source retrieval —
+        the path lies under sources/: admission requires a
+        grant scoped to sources/ AND the path's membership in
+        the pinned case's sealed evidence boundary. (b)
+        Scratch retrieval — the path lies under scratch/:
+        admission requires the separately sealed scratch
+        grant, and nothing else; scratch is never source
+        evidence, and the scratch grant exempts no other
+        path. A path under neither scope is admitted by no
+        path. A pathless search is admitted under the source
+        path — its grant alone; the boundary governs which
+        files the execution may search. The admitting grant
+        is the first grant for the tool, in sealed order,
+        whose ceiling the request satisfies and whose scope
+        is the authority path's own scope; its authority
+        trace must stand, and its bound counts the tool's
+        dispatches for the instance, as every grant's bound
+        does."""
+        path = parameters.get("path")
+        if path is None and tool != "sandbox.search":
+            return (f"{tool} requires a path parameter "
+                    f"(retrieval scope §2)")
+        authority = "source" if path is None else \
+            _tool_policy.retrieval_authority(path)
+        if authority is None:
+            return (f"path {path!r} lies under neither the "
+                    f"sources/ scope nor the scratch/ scope; "
+                    f"no authority path admits it — source "
+                    f"retrieval requires the grant and the "
+                    f"sealed evidence boundary, scratch "
+                    f"retrieval its own sealed grant "
+                    f"(retrieval scope, boundary enforcement)")
+        tool_grants = [g for g in grants
+                       if isinstance(g, dict)
+                       and g.get("tool") == tool]
+        if not tool_grants:
+            return (f"no grant for tool {tool} stands in the "
+                    f"sealed assembly record of instance "
+                    f"{instance_id}; a grant outside the sealed "
+                    f"record does not exist for the doorway "
+                    f"(R44)")
+        scope_prefix = _tool_policy.SOURCE_SCOPE_PREFIX \
+            if authority == "source" else \
+            _tool_policy.SCRATCH_SCOPE_PREFIX
+        admitting = None
+        first_ground = None
+        for grant in tool_grants:
+            ok, ground = _tool_policy.check_ceiling(
+                tool, grant.get("scope_ceiling"), parameters,
+                version=_tool_policy.RETRIEVAL_REGISTRY_VERSION)
+            if not ok:
+                if first_ground is None:
+                    first_ground = ground
+                continue
+            prefix = (grant.get("scope_ceiling") or {}).get(
+                "path_prefix")
+            if prefix != scope_prefix:
+                if first_ground is None:
+                    first_ground = (
+                        f"the grant for tool {tool} whose "
+                        f"ceiling admits path {path!r} is "
+                        f"scoped to {prefix!r}, not the "
+                        f"{scope_prefix!r} scope the "
+                        f"{authority} authority path requires")
+                continue
+            admitting = grant
+            break
+        if admitting is None:
+            return f"{first_ground} (R44)"
+        trace = admitting.get("authority_trace")
+        if not isinstance(trace, str) or not trace:
+            return (f"the grant for tool {tool} in the sealed "
+                    f"record carries no authority trace; a "
+                    f"grant without a trace was never judged "
+                    f"and packed (R44)")
+        if authority == "source" and path is not None:
+            content = self._pinned_case_content(state, entry)
+            boundary = (content or {}).get(
+                "evidence_boundary")
+            if not _tool_policy.boundary_member(boundary,
+                                                path):
+                return (f"path {path!r} is not a member of "
+                        f"the pinned case's sealed evidence "
+                        f"boundary; source retrieval requires "
+                        f"the grant AND boundary membership "
+                        f"(retrieval scope, boundary "
+                        f"enforcement)")
+        bound = admitting.get("bound")
+        count = bound.get("count") if isinstance(bound, dict) \
+            else None
+        if not isinstance(count, int) or isinstance(count, bool):
+            return (f"the grant for tool {tool} carries no "
+                    f"count bound; the bound check fails "
+                    f"closed (R44)")
+        used = sum(1 for d in state["dispatches"].values()
+                   if d.get("instance_id") == instance_id
+                   and d.get("tool") == tool)
+        if used >= count:
+            return (f"the grant's bound for tool {tool} is "
+                    f"exhausted: {used} of {count} dispatches "
+                    f"stand charged, and no outcome refunds a "
+                    f"dispatch (R47)")
+        return None
+
+    def _retrieval_window_start(self, instance_id, entry):
+        """The event position the package window now forming
+        opened at (retrieval scope §3a): the frozen head —
+        the cursor_to — of the instance's most recent
+        LOOP_ITERATION, the package the worker last saw; or
+        the instance's activation, where no package has been
+        built yet. Retrieval outcomes settled after this
+        position are the window's settled content: they are
+        what the next package will present."""
+        start = (entry or {}).get("activated_seq") or 0
+        for ev in self.store.all_events():
+            if ev["type"] == "LOOP_ITERATION" and \
+                    ev["payload"].get("instance_id") == \
+                    instance_id:
+                cursor_to = ev["payload"].get("cursor_to")
+                if isinstance(cursor_to, int) and \
+                        not isinstance(cursor_to, bool):
+                    start = cursor_to
+        return start
+
+    def _retrieval_aggregate_problem(self, state, entry,
+                                     instance_id):
+        """Why aggregate admission refuses a retrieval
+        dispatch, or None (retrieval scope §3a): the sum of
+        retrieved content settled in the current package
+        window — result outcomes at their retained content
+        sizes, uncertain outcomes at the full per-result
+        ceiling (their content may exist; the bound assumes
+        the worst) — plus the per-result ceiling (the new
+        request's worst-case return) must not exceed the
+        aggregate ceiling. The accounting is derived from
+        the record alone, and admission is serialized by the
+        callers' shape: each admitted dispatch's outcome
+        settles before the next request reaches this check,
+        so the settled total at every check already includes
+        every previously admitted request. A refusal names
+        the aggregate bound and the remaining allowance."""
+        start = self._retrieval_window_start(instance_id,
+                                             entry)
+        tools = {}
+        for ev in self.store.all_events():
+            if ev["type"] == "TOOL_DISPATCHED":
+                tools[ev["payload"].get("dispatch_id")] = \
+                    ev["payload"].get("tool")
+        # Each dispatch counts once, by its latest standing
+        # outcome in the window: a result at its retained
+        # size, an uncertainty at the full ceiling. (A delayed
+        # report settling a standing uncertainty replaces its
+        # contribution with the settled size — the dispatch
+        # is one retrieval, counted once, as the checker
+        # reconstructs it.)
+        contributions = {}
+        for ev in self.store.all_events():
+            if ev["type"] != "TOOL_OUTCOME" or \
+                    ev["event_seq"] <= start:
+                continue
+            payload = ev["payload"]
+            if payload.get("instance_id") != instance_id:
+                continue
+            if tools.get(payload.get("dispatch_id")) not in \
+                    _tool_policy.RETRIEVAL_TOOLS:
+                continue
+            if payload.get("outcome") == "uncertain":
+                contributions[payload.get("dispatch_id")] = \
+                    _tool_policy.RETRIEVAL_RESULT_CEILING
+            elif payload.get("outcome") == "result":
+                result = payload.get("result") or {}
+                size = result.get("content_bytes")
+                if not isinstance(size, int) or \
+                        isinstance(size, bool) or size < 0:
+                    # A settled retrieval result whose size
+                    # the record cannot state counts at the
+                    # ceiling — the bound assumes the worst.
+                    size = _tool_policy.RETRIEVAL_RESULT_CEILING
+                contributions[payload.get("dispatch_id")] = size
+            elif payload.get("outcome") == "failure":
+                contributions[payload.get("dispatch_id")] = 0
+        total = sum(contributions.values())
+        ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
+        aggregate = _tool_policy.RETRIEVAL_AGGREGATE_CEILING
+        if total + ceiling > aggregate:
+            return (f"the aggregate retrieval ceiling for "
+                    f"the package now forming is {aggregate} "
+                    f"bytes of retrieved content; {total} "
+                    f"bytes stand settled in this window, "
+                    f"leaving {aggregate - total} — a further "
+                    f"retrieval may return up to {ceiling} "
+                    f"bytes and is refused before execution "
+                    f"(retrieval scope §3a)")
         return None
 
     def _executor_refuse(self, attempted_type, dispatch_id,

@@ -33,7 +33,15 @@ What it checks, from the record alone:
   lifecycle, and each recorded dispatch against the authority
   that actually stood, reconstructed from the events — the
   dispatch check applying the checker's own copy of the pure
-  tool-policy contract and executing nothing (R48);
+  tool-policy contract and executing nothing (R48). For an
+  assembly declaring the retrieval contract (RETRIEVAL-SCOPE
+  Rev 5), dispatch correspondence additionally verifies the
+  retrieval regime from the record: the v3 version stamp,
+  the admitting grant under the two authority paths with
+  boundary membership for source paths, each result's
+  retained-content provenance (sha256 and byte size
+  recomputed over the exact content the outcome carries),
+  and the aggregate admission over each package window;
 - loop correspondence (Piece A3): each activation's iteration
   bookkeeping and recorded stall against the activation and
   the pinned case bounds that actually stood — numbering,
@@ -58,9 +66,14 @@ from fabric.canonical import canonical, event_hash, sha256_hex
 
 from checker.replay import replay_events
 from checker.schema import SCHEMA
-from checker.tool_policy import (REGISTRY_VERSION, check_ceiling,
-                                 known_version, registered,
-                                 request_fingerprint,
+from checker.tool_policy import (REGISTRY_VERSION,
+                                 RETRIEVAL_AGGREGATE_CEILING,
+                                 RETRIEVAL_REGISTRY_VERSION,
+                                 RETRIEVAL_RESULT_CEILING,
+                                 RETRIEVAL_TOOLS, boundary_member,
+                                 check_ceiling, known_version,
+                                 registered, request_fingerprint,
+                                 retrieval_authority,
                                  worker_facing)
 
 _ENVELOPE = ("event_seq", "event_id", "run_id", "type", "actor",
@@ -662,9 +675,93 @@ def _dispatch_result(events, state):
             digest in packed_hashes.get(aid, [])
         return ev["payload"].get("grants"), sealed
 
+    # The retrieval piece (RETRIEVAL-SCOPE Rev 5): an
+    # assembly whose sealed record declares the retrieval
+    # contract is governed by it, and its retrieval
+    # dispatches are verified against the regime the doorway
+    # enforced — the v3 version stamp, the admitting grant
+    # under the two authority paths, boundary membership for
+    # source paths, retained-content provenance on every
+    # result, and the aggregate admission over each package
+    # window. An assembly declaring anything else asks none
+    # of this: the historical exemption, read from the
+    # assembly's own declaration.
+    def retrieval_governed(instance_id):
+        ev = generated_by_instance.get(instance_id)
+        return ev is not None and \
+            ev["payload"].get("catalogue_contract") == \
+            _RETRIEVAL_CONTRACT
+
+    def pinned_boundary(instance_id):
+        """The evidence boundary of the exact case version
+        the instance's assembly record pins, from the
+        replayed state — the membership source retrieval
+        must show."""
+        ev = generated_by_instance.get(instance_id)
+        if ev is None:
+            return None
+        gp = ev["payload"]
+        case = (state.get("cases") or {}).get(
+            gp.get("case_id"))
+        ver = ((case or {}).get("versions") or {}).get(
+            str(gp.get("case_version"))) or {}
+        boundary = (ver.get("content") or {}).get(
+            "evidence_boundary")
+        return boundary if isinstance(boundary, list) else None
+
+    def retrieval_admitting(grants, tool, parameters,
+                            version):
+        """(grant, authority, ground): the doorway's
+        admitting-grant rule, reconstructed — the first
+        grant for the tool, in sealed order, whose ceiling
+        the request satisfies under the recorded version and
+        whose scope is the request path's authority scope.
+        A pathless search is admitted under the source path.
+        ground names why no grant admits, where none does."""
+        if not isinstance(parameters, dict):
+            return None, None, "the request's parameters " \
+                               "are not an object"
+        path = parameters.get("path")
+        authority = "source" if path is None else \
+            retrieval_authority(path)
+        if authority is None:
+            return None, None, (
+                f"path {path!r} lies under neither the "
+                f"sources/ scope nor the scratch/ scope")
+        scope_prefix = "sources" if authority == "source" \
+            else "scratch"
+        first_ground = None
+        for grant in grants or []:
+            if not isinstance(grant, dict) or \
+                    grant.get("tool") != tool:
+                continue
+            ok, ground = check_ceiling(
+                tool, grant.get("scope_ceiling"), parameters,
+                version=version)
+            if not ok:
+                if first_ground is None:
+                    first_ground = ground
+                continue
+            prefix = (grant.get("scope_ceiling") or {}).get(
+                "path_prefix")
+            if prefix != scope_prefix:
+                if first_ground is None:
+                    first_ground = (
+                        f"the admitting grant's scope is "
+                        f"{prefix!r}, not the {scope_prefix!r} "
+                        f"scope the {authority} authority path "
+                        f"requires")
+                continue
+            return grant, authority, None
+        return None, authority, first_ground or (
+            f"no grant for tool {tool} stands in the sealed "
+            f"record")
+
     requests = {}
     dispatches = {}
     counts = {}
+    iterations = {}
+    retrieval_outcomes = []
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -737,6 +834,29 @@ def _dispatch_result(events, state):
                         registry_version=p.get(
                             "registry_version"),
                         checker_registry_version=REGISTRY_VERSION)
+            # The retrieval piece: the version follows the
+            # assembly's declared contract — a governed
+            # assembly's dispatches are governed by v3, and
+            # v3 recorded for an assembly that declares no
+            # retrieval contract is a stamp nothing issued.
+            if retrieval_governed(iid) and \
+                    p.get("registry_version") != \
+                    RETRIEVAL_REGISTRY_VERSION:
+                problem("dispatch_registry_version_mismatch",
+                        dispatch_id=did, at_seq=seq,
+                        registry_version=p.get(
+                            "registry_version"),
+                        expected=RETRIEVAL_REGISTRY_VERSION)
+            elif not retrieval_governed(iid) and \
+                    p.get("registry_version") == \
+                    RETRIEVAL_REGISTRY_VERSION:
+                problem("dispatch_registry_version_mismatch",
+                        dispatch_id=did, at_seq=seq,
+                        registry_version=p.get(
+                            "registry_version"),
+                        detail="v3 recorded for an assembly "
+                               "that declares no retrieval "
+                               "contract")
             if any(d["instance_id"] == iid
                    and d["request_id"] == rid
                    for d in dispatches.values()):
@@ -761,6 +881,58 @@ def _dispatch_result(events, state):
                     problem("dispatch_without_grant",
                             dispatch_id=did, at_seq=seq,
                             tool=p.get("tool"))
+                elif retrieval_governed(iid) and \
+                        p.get("tool") in RETRIEVAL_TOOLS and \
+                        req is not None:
+                    # The retrieval branch: the admitting
+                    # grant is chosen by the doorway's rule —
+                    # the first whose ceiling the request
+                    # satisfies and whose scope is the path's
+                    # authority scope — and source admission
+                    # additionally requires the path's
+                    # membership in the pinned boundary. The
+                    # bound counts the tool's dispatches, as
+                    # every grant's bound does, read from the
+                    # admitting grant.
+                    admitting, authority, ground = \
+                        retrieval_admitting(
+                            grants, p.get("tool"),
+                            req["parameters"],
+                            p.get("registry_version"))
+                    if admitting is None:
+                        problem("dispatch_exceeds_ceiling",
+                                dispatch_id=did, at_seq=seq,
+                                detail=ground)
+                    else:
+                        trace = admitting.get("authority_trace")
+                        if not isinstance(trace, str) or \
+                                not trace:
+                            problem(
+                                "grant_without_authority_trace",
+                                dispatch_id=did, at_seq=seq)
+                        req_path = (req["parameters"] or {}).get(
+                            "path")
+                        if authority == "source" and \
+                                req_path is not None and \
+                                not boundary_member(
+                                    pinned_boundary(iid),
+                                    req_path):
+                            problem(
+                                "retrieval_boundary_violation",
+                                dispatch_id=did, at_seq=seq,
+                                path=req_path)
+                        bound = admitting.get("bound")
+                        limit = bound.get("count") if isinstance(
+                            bound, dict) else None
+                        ckey = (iid, p.get("tool"))
+                        counts[ckey] = counts.get(ckey, 0) + 1
+                        if not isinstance(limit, int) or \
+                                isinstance(limit, bool):
+                            problem("grant_bound_not_a_count",
+                                    dispatch_id=did, at_seq=seq)
+                        elif counts[ckey] > limit:
+                            problem("dispatch_over_bound",
+                                    dispatch_id=did, at_seq=seq)
                 else:
                     trace = grant.get("authority_trace")
                     if not isinstance(trace, str) or not trace:
@@ -791,7 +963,21 @@ def _dispatch_result(events, state):
             dispatches[did] = {
                 "instance_id": iid, "request_id": rid,
                 "seq": seq, "started_seq": None, "outcome": None,
-                "reconciled": False}
+                "reconciled": False,
+                "tool": p.get("tool"),
+                "governed": retrieval_governed(iid),
+                "parameters": (requests.get((iid, rid)) or {})
+                .get("parameters"),
+                "authority": None}
+            if dispatches[did]["governed"] and \
+                    p.get("tool") in RETRIEVAL_TOOLS and \
+                    isinstance(dispatches[did]["parameters"],
+                               dict):
+                req_path = dispatches[did]["parameters"].get(
+                    "path")
+                dispatches[did]["authority"] = "source" \
+                    if req_path is None else \
+                    retrieval_authority(req_path)
         elif t == "TOOL_STARTED":
             did = p.get("dispatch_id")
             if actor != "executor":
@@ -846,6 +1032,86 @@ def _dispatch_result(events, state):
                 # A first outcome — or the delayed report
                 # settling a standing uncertainty.
                 d["outcome"] = p.get("outcome")
+            # The retrieval piece: a governed retrieval
+            # outcome's provenance is verified — the retained
+            # content's sha256 and byte size recomputed over
+            # the exact bytes the record carries, the recorded
+            # authority path and path against the request's
+            # own, and the per-result ceiling — and its size
+            # is collected for the aggregate verification
+            # below (a result at its size, an uncertainty at
+            # the full ceiling, a failure at nothing).
+            if d is not None and d.get("governed") and \
+                    d.get("tool") in RETRIEVAL_TOOLS and \
+                    p.get("outcome") in _OUTCOME_VOCAB:
+                if p.get("outcome") == "uncertain":
+                    retrieval_outcomes.append(
+                        (seq, d["instance_id"], did,
+                         RETRIEVAL_RESULT_CEILING))
+                elif p.get("outcome") == "failure":
+                    retrieval_outcomes.append(
+                        (seq, d["instance_id"], did, 0))
+                elif p.get("outcome") == "result":
+                    result = p.get("result")
+                    size = RETRIEVAL_RESULT_CEILING
+                    if not isinstance(result, dict):
+                        problem(
+                            "retrieval_provenance_mismatch",
+                            dispatch_id=did, at_seq=seq,
+                            detail="the retrieval outcome "
+                                   "carries no result object")
+                    else:
+                        content = result.get("content")
+                        recorded = result.get("content_bytes")
+                        digest = result.get("content_sha256")
+                        if not isinstance(content, str) or \
+                                not isinstance(recorded, int) \
+                                or isinstance(recorded, bool) \
+                                or not isinstance(digest, str):
+                            problem(
+                                "retrieval_provenance_mismatch",
+                                dispatch_id=did, at_seq=seq,
+                                detail="the retrieval result "
+                                       "does not carry its "
+                                       "content, byte size and "
+                                       "sha256 as recorded "
+                                       "fields")
+                        else:
+                            raw = content.encode("utf-8")
+                            if len(raw) != recorded or \
+                                    sha256_hex(raw) != digest:
+                                problem(
+                                    "retrieval_provenance_"
+                                    "mismatch",
+                                    dispatch_id=did, at_seq=seq)
+                            else:
+                                size = recorded
+                            if recorded > \
+                                    RETRIEVAL_RESULT_CEILING:
+                                problem(
+                                    "retrieval_result_over_"
+                                    "ceiling",
+                                    dispatch_id=did, at_seq=seq,
+                                    content_bytes=recorded)
+                        if result.get("authority_path") != \
+                                d.get("authority"):
+                            problem(
+                                "retrieval_authority_mismatch",
+                                dispatch_id=did, at_seq=seq,
+                                authority_path=result.get(
+                                    "authority_path"),
+                                expected=d.get("authority"))
+                        if result.get("path") != \
+                                (d.get("parameters") or {}).get(
+                                    "path"):
+                            problem(
+                                "retrieval_authority_mismatch",
+                                dispatch_id=did, at_seq=seq,
+                                detail="the outcome's path is "
+                                       "not the request's "
+                                       "path")
+                    retrieval_outcomes.append(
+                        (seq, d["instance_id"], did, size))
         elif t == "TOOL_RECONCILED":
             did = p.get("dispatch_id")
             if role_of(actor) != "examiner":
@@ -872,6 +1138,76 @@ def _dispatch_result(events, state):
                 if d["outcome"] == "uncertain" and \
                         not d["reconciled"]:
                     d["reconciled"] = True
+        elif t == "LOOP_ITERATION":
+            iterations.setdefault(p.get("instance_id"),
+                                  []).append(
+                                      (seq, p.get("cursor_to")))
+
+    # The aggregate verification (retrieval scope §3a),
+    # reconstructed from the record as the doorway derived
+    # it: each dispatch counts once toward its package
+    # window, by its latest standing outcome — a result at
+    # its retained size, an uncertainty at the full ceiling.
+    # For every window, the settled total must stand within
+    # the aggregate ceiling; and every retrieval dispatch's
+    # admission must have been lawful when it was made: the
+    # total settled before it in its window, plus the
+    # per-result ceiling, within the aggregate ceiling.
+    # Outstanding state at a stall is already inside these
+    # sums — the stall discipline closes accounting before
+    # the stall, so a dispatch admitted in the final window
+    # stands there with an outcome, uncertainty included.
+    def window_start(instance_id, before_seq):
+        start = 0
+        for iter_seq, cursor_to in iterations.get(
+                instance_id, []):
+            if iter_seq < before_seq and \
+                    isinstance(cursor_to, int) and \
+                    not isinstance(cursor_to, bool):
+                start = cursor_to
+        return start
+
+    history = {}
+    for seq, iid, did, size in retrieval_outcomes:
+        history.setdefault(did, []).append((seq, iid, size))
+    window_totals = {}
+    for did, entries in history.items():
+        oseq, oiid, osize = entries[-1]
+        key = (oiid, window_start(oiid, oseq))
+        window_totals[key] = window_totals.get(key, 0) + osize
+    for (iid, start), total in sorted(window_totals.items()):
+        if total > RETRIEVAL_AGGREGATE_CEILING:
+            problem("retrieval_aggregate_exceeded",
+                    instance_id=iid, window_start=start,
+                    total=total,
+                    ceiling=RETRIEVAL_AGGREGATE_CEILING)
+    for did, d in dispatches.items():
+        if not d.get("governed") or \
+                d.get("tool") not in RETRIEVAL_TOOLS:
+            continue
+        start = window_start(d["instance_id"], d["seq"])
+        settled = 0
+        for other, entries in history.items():
+            if other == did:
+                continue
+            # The contribution standing when this dispatch was
+            # admitted: the dispatch's latest outcome before
+            # it, inside the same window — an uncertainty
+            # standing then counts at the ceiling even where
+            # a delayed report settled it afterwards.
+            standing = None
+            for oseq, oiid, osize in entries:
+                if oiid == d["instance_id"] and \
+                        start < oseq < d["seq"]:
+                    standing = osize
+            if standing is not None:
+                settled += standing
+        if settled + RETRIEVAL_RESULT_CEILING > \
+                RETRIEVAL_AGGREGATE_CEILING:
+            problem("retrieval_admission_exceeded",
+                    dispatch_id=did, at_seq=d["seq"],
+                    settled=settled,
+                    ceiling=RETRIEVAL_AGGREGATE_CEILING)
     if problems:
         return {"result": "divergent", "problems": problems}
     return {"result": "ok"}
@@ -892,6 +1228,21 @@ _LOOP_GROUNDS = ("step_ceiling", "deadline", "provider_failure",
 # carries no declaration predates the contract — its
 # iterations are historical and exempt, identifiably.
 _CATALOGUE_CONTRACT = "a3-cat"
+
+# The retrieval contract's declaration value (RETRIEVAL-SCOPE
+# Rev 5): an assembly declaring it is governed by the
+# retrieval regime — v3 dispatches, the two authority paths,
+# the aggregate admission, retained-content provenance —
+# and this checker verifies all of it within dispatch
+# correspondence. The governed catalogue contracts are the
+# two values together: an assembly declaring either owes
+# the catalogue commitment; an assembly declaring any other
+# value declares a contract this checker does not
+# understand.
+_RETRIEVAL_CONTRACT = "retrieval-v3"
+
+_GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
+                                 _RETRIEVAL_CONTRACT)
 
 
 def _derive_catalogue(grants, version):
@@ -1138,7 +1489,7 @@ def _loop_result(events, state):
         contract = gen["payload"].get("catalogue_contract") \
             if gen is not None else None
         if contract is not None and \
-                contract != _CATALOGUE_CONTRACT:
+                contract not in _GOVERNED_CATALOGUE_CONTRACTS:
             problem("catalogue_contract_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     catalogue_contract=contract)
@@ -1220,8 +1571,8 @@ def _loop_result(events, state):
             # above (catalogue_contract_unknown).
             gen = generated.get(aid)
             declared = gen is not None and \
-                gen["payload"].get("catalogue_contract") == \
-                _CATALOGUE_CONTRACT
+                gen["payload"].get("catalogue_contract") in \
+                _GOVERNED_CATALOGUE_CONTRACTS
             recorded_hash = p.get("catalogue_hash")
             recorded_version = p.get("registry_version")
             if declared and (recorded_hash is None or
