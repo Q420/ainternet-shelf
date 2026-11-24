@@ -37,6 +37,20 @@ transport changes:
   its trial_evidence): behaviour × delivery on separate
   axes, per-call records preserved, retention under the
   same capture ceiling;
+- the route's transport travels the helper's BOUNDED
+  raw mode (scope S2, as corrected at the build
+  examination): the capture ceiling is enforced in the
+  helper, and the bounded capture's own observations —
+  phase, status, captured bytes, body_complete,
+  stop_reason, read_error_kind — are threaded verbatim
+  into each trial's evidence as its transport_capture
+  record and bound into the evidence hash, so a
+  complete provider body is distinguished from a
+  bounded or interrupted capture by the transport's
+  own facts. An incomplete capture is never decoded
+  into a response: it contributes no body to
+  classification or retention, and its trial stands
+  unsettled on the record's own terms;
 - the run is the shared paced discipline
   (framework.native_probe.run_native_trials): strictly
   sequential, at least 65 seconds between actual
@@ -228,8 +242,26 @@ def trial_evidence(index, capture, **pacing):
     (aggregate and per call) on the behaviour × delivery
     axes, the settled flag, the pacing record, and the
     retained provider body and diagnostics under the
-    capture ceiling, each with its hash."""
-    return _np.trial_evidence(index, capture, **pacing)
+    capture ceiling, each with its hash — PLUS this
+    route's transport_capture record: the bounded
+    transport's own observations (phase, status,
+    captured bytes and their hash, body_complete,
+    stop_reason, read_error_kind), threaded verbatim
+    from the capture the transport produced, so the
+    evidence distinguishes a complete provider body
+    from a bounded or interrupted capture by the
+    transport's own facts rather than by the probe's
+    retention arithmetic. The record stands None where
+    no bounded envelope was ever framed (a stub capture
+    in a suite, a helper failure before framing) — its
+    absence is recorded, never filled in."""
+    evidence = _np.trial_evidence(index, capture,
+                                   **pacing)
+    record = capture.get("transport_capture") \
+        if isinstance(capture, dict) else None
+    evidence["transport_capture"] = \
+        record if isinstance(record, dict) else None
+    return evidence
 
 
 # ----------------------------------------------------------------
@@ -331,11 +363,19 @@ def _evidence_projection(evidence):
     hashes; per-trial classifications, aggregate AND per
     call with arguments hashes; the counts and the
     reading), with this probe's route and its delivered
-    denominator bound beside them — so the S3 reading
-    and the denominator it was read over are
-    reconstructable from the hash-bound projection
-    alone."""
+    denominator bound beside them, and each trial's
+    transport_capture record bound beside its
+    classification — so the S3 reading, the denominator
+    it was read over, and the completeness facts each
+    classification rests on are reconstructable from
+    the hash-bound projection alone."""
     projection = _np._evidence_projection(evidence)
+    source_trials = evidence.get("trials") or []
+    for entry, trial in zip(projection["trials"],
+                            source_trials):
+        record = trial.get("transport_capture")
+        entry["transport_capture"] = \
+            record if isinstance(record, dict) else None
     projection["route"] = evidence.get("route")
     projection["delivered_count"] = evidence.get(
         "delivered_count")

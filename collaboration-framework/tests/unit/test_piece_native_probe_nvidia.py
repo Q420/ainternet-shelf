@@ -31,13 +31,26 @@ touched.
   main() frames both envelopes; the pre-existing
   models/chat modes behave exactly as before;
 - through the real NVIDIA transport over the wrapped
-  real helper: a success capture carries the exact
-  body; an over-ceiling error body crosses whole and
-  the PROBE alone truncates it, marked incomplete; an
-  undecodable body claims no body — the actual status
-  stands and the diagnostics name the byte length and
-  the raw bytes' SHA-256; a body-read failure yields
-  an honest capture claiming nothing;
+  real helper, travelling the helper's BOUNDED mode
+  end-to-end (the build examination's correction —
+  the ceiling is the helper's, and the bounded
+  capture's completeness facts are the evidence
+  path): a body under the ceiling arrives complete
+  and unchanged, the transport record standing in
+  the capture and in the trial evidence; an
+  over-ceiling body is bounded AT the helper — what
+  crosses the boundary is the bounded capture with
+  its indicators, marked incomplete, never the whole
+  body, and its prefix is never decoded into a
+  response; an HTTP error body travels the same
+  bounded path, complete under the ceiling and
+  bounded past it; a mid-read failure surfaces its
+  read-error kind with body_complete false and
+  nothing decoded into a response; a pre-response
+  failure frames its phase through the transport;
+  an undecodable COMPLETE body claims no body — the
+  actual status stands and the diagnostics name the
+  byte length and the raw bytes' SHA-256;
 - decision accounting (scope S3), the table exactly:
   delivered is provider-accepted; three or more
   delivered offered × accepted reads route_carries_q1
@@ -613,6 +626,10 @@ OK_BODY = json.dumps({
 ERR_XL_BODY = json.dumps({"error": {
     "message": "y" * 70000, "code": "huge_error"}}
 ).encode("utf-8")
+ERR_LONG_BODY = json.dumps({"error": {
+    "message": "x" * 5000, "code": "long_error"}}
+).encode("utf-8")
+MIDREAD_BODY = b"q" * 50000
 BAD_BYTES = b"\\xff\\xfe\\x00\\x01binary\\x80\\x81"
 
 
@@ -654,6 +671,45 @@ class ReadFailResponse:
         return False
 
 
+class MidReadFailResponse:
+    """Delivers the payload in fixed chunks for a
+    scripted number of reads, then raises — a body
+    whose read fails midway, its prefix accumulated
+    by the bounded read before the failure."""
+
+    def __init__(self, payload, chunk=10000,
+                 good_reads=2):
+        self._payload = payload
+        self._chunk = chunk
+        self._good = good_reads
+        self._pos = 0
+        self._reads = 0
+
+    def getcode(self):
+        return 200
+
+    def read(self, size=-1):
+        self._reads += 1
+        if self._reads > self._good:
+            raise OSError("the body could not be read")
+        end = min(self._pos + self._chunk,
+                  len(self._payload))
+        if size is not None and size >= 0:
+            end = min(end, self._pos + size)
+        data = self._payload[self._pos:end]
+        self._pos = end
+        return data
+
+    def close(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
 class ScenarioOpener:
     def __init__(self, response=None, error=None):
         self._response = response
@@ -677,10 +733,17 @@ SCENARIOS = {
         response=FakeRawResponse(200, OK_BODY)),
     "errxl": ScenarioOpener(
         error=http_error(ERR_XL_BODY, 400)),
+    "errbnd": ScenarioOpener(
+        error=http_error(ERR_LONG_BODY, 400)),
     "badutf8": ScenarioOpener(
         response=FakeRawResponse(200, BAD_BYTES)),
     "readfail": ScenarioOpener(
         response=ReadFailResponse()),
+    "readfailmid": ScenarioOpener(
+        response=MidReadFailResponse(MIDREAD_BODY)),
+    "connfail": ScenarioOpener(
+        error=urllib.error.URLError(
+            ConnectionRefusedError("refused"))),
 }
 urllib.request.build_opener = (
     lambda *a, **k: SCENARIOS[os.environ["NV_SCENARIO"]])
@@ -760,6 +823,8 @@ request = {"model": PIN, "messages": [
 os.environ["NV_SCENARIO"] = "ok200"
 capture = raw_call(request)
 trial = nvn.trial_evidence(1, capture)
+ok_sha = hashlib.sha256(OK_BODY).hexdigest()
+record = capture.get("transport_capture") or {}
 check("transport over the real helper: a success "
       "capture carries the actual status and the exact "
       "body, classifying as the offered call the "
@@ -768,22 +833,90 @@ check("transport over the real helper: a success "
       capture.get("body") == OK_BODY.decode("utf-8") and
       trial["behaviour"] == "offered_tool_call" and
       trial["delivery"] == "provider_accepted")
+check("transport over the real helper: the bounded "
+      "envelope's own observations stand in the "
+      "capture's transport record and in the trial "
+      "evidence — response_received, the captured "
+      "bytes counted and hashed exactly, complete on "
+      "the observed EOF",
+      record.get("provenance") ==
+      "nvidia_helper_raw_bounded" and
+      record.get("phase") == "response_received" and
+      record.get("http_status") == 200 and
+      record.get("captured_bytes") == len(OK_BODY) and
+      record.get("captured_sha256") == ok_sha and
+      record.get("body_complete") is True and
+      record.get("stop_reason") == "eof" and
+      record.get("read_error_kind") is None and
+      trial["transport_capture"] == record and
+      trial["settled"] is True)
 os.environ["NV_SCENARIO"] = "errxl"
 capture_xl = raw_call(request)
 trial_xl = nvn.trial_evidence(1, capture_xl)
+record_xl = capture_xl.get("transport_capture") or {}
 check("transport over the real helper: the over-"
-      "ceiling error body crosses whole, and the PROBE "
-      "alone truncates it to its ceiling and marks the "
-      "evidence incomplete",
-      capture_xl.get("error_body") ==
-      ERR_XL_BODY.decode("utf-8") and
-      trial_xl["provider_body_bytes"] == CEILING and
+      "ceiling error body is bounded AT THE HELPER — "
+      "what crosses the boundary is the bounded "
+      "capture (exactly the ceiling's bytes, "
+      "capture_limit, incomplete), never the whole "
+      "body; the prefix is not decoded into any "
+      "response: no body, no error body, the actual "
+      "status standing, the diagnostics naming the "
+      "bound",
+      capture_xl.get("body") is None and
+      capture_xl.get("error_body") is None and
+      capture_xl.get("http_status") == 400 and
+      record_xl.get("captured_bytes") == CEILING and
+      record_xl.get("captured_sha256") ==
+      hashlib.sha256(
+          ERR_XL_BODY[:CEILING]).hexdigest() and
+      record_xl.get("body_complete") is False and
+      record_xl.get("stop_reason") == "capture_limit"
+      and record_xl.get("phase") ==
+      "response_received" and
+      isinstance(capture_xl.get("diagnostics"), str)
+      and "capture_limit" in
+      capture_xl["diagnostics"],
+      f"captured={record_xl.get('captured_bytes')}")
+check("transport over the real helper: the trial "
+      "evidence of a bounded capture distinguishes it "
+      "from a complete body — no provider body stands "
+      "retained, completeness stands false, the trial "
+      "stands unsettled, and the transport record in "
+      "the evidence names the bound",
+      trial_xl["provider_body"] is None and
       trial_xl["provider_body_complete"] is False and
-      trial_xl["evidence_complete"] is False,
-      f"body_bytes={trial_xl['provider_body_bytes']}")
+      trial_xl["evidence_complete"] is False and
+      trial_xl["settled"] is False and
+      trial_xl["transport_capture"] == record_xl and
+      trial_xl["behaviour"] ==
+      "no_observable_behaviour" and
+      trial_xl["delivery"] == "provider_failed")
+os.environ["NV_SCENARIO"] = "errbnd"
+capture_eb = raw_call(request)
+trial_eb = nvn.trial_evidence(1, capture_eb)
+record_eb = capture_eb.get("transport_capture") or {}
+check("transport over the real helper: an HTTP error "
+      "body travels the SAME bounded path — under the "
+      "ceiling it arrives complete and whole as the "
+      "error body, its transport record complete on "
+      "the observed EOF",
+      capture_eb.get("error_body") ==
+      ERR_LONG_BODY.decode("utf-8") and
+      capture_eb.get("body") is None and
+      capture_eb.get("http_status") == 400 and
+      record_eb.get("body_complete") is True and
+      record_eb.get("stop_reason") == "eof" and
+      record_eb.get("captured_bytes") ==
+      len(ERR_LONG_BODY) and
+      trial_eb["provider_body"] ==
+      ERR_LONG_BODY.decode("utf-8") and
+      trial_eb["provider_body_complete"] is True and
+      trial_eb["delivery"] == "provider_failed")
 os.environ["NV_SCENARIO"] = "badutf8"
 capture_bad = raw_call(request)
 bad_sha = hashlib.sha256(BAD_BYTES).hexdigest()
+record_bad = capture_bad.get("transport_capture") or {}
 check("transport over the real helper: an undecodable "
       "body claims NO body — the actual status stands, "
       "the diagnostics name the byte length and the "
@@ -798,17 +931,79 @@ check("transport over the real helper: an undecodable "
       bad_sha in capture_bad["diagnostics"] and
       "\ufffd" not in json.dumps(capture_bad),
       f"diagnostics={capture_bad.get('diagnostics')}")
+check("transport over the real helper: the undecodable "
+      "body's capture was COMPLETE at the transport — "
+      "its record says so, distinguishing an "
+      "undecodable complete body from an incomplete "
+      "capture",
+      record_bad.get("body_complete") is True and
+      record_bad.get("stop_reason") == "eof" and
+      record_bad.get("captured_bytes") ==
+      len(BAD_BYTES))
 os.environ["NV_SCENARIO"] = "readfail"
 capture_fail = raw_call(request)
+trial_fail = nvn.trial_evidence(1, capture_fail)
+record_fail = capture_fail.get("transport_capture") or {}
 check("transport over the real helper: a body-read "
-      "failure yields an honest capture — no body, and "
-      "no status claimed",
-      capture_fail.get("http_status") is None and
+      "failure on the first read surfaces through the "
+      "bounded path — the observed status stands, no "
+      "body is claimed, and the record names the read "
+      "failure and its kind, body_complete false, zero "
+      "bytes captured; nothing is decoded into a "
+      "response",
+      capture_fail.get("http_status") == 200 and
       capture_fail.get("body") is None and
       capture_fail.get("error_body") is None and
-      isinstance(capture_fail.get("diagnostics"), str) and
-      bool(capture_fail["diagnostics"].strip()),
-      f"status={capture_fail.get('http_status')}")
+      record_fail.get("stop_reason") == "read_failure"
+      and record_fail.get("read_error_kind") ==
+      "OSError" and
+      record_fail.get("body_complete") is False and
+      record_fail.get("captured_bytes") == 0 and
+      trial_fail["transport_capture"] == record_fail
+      and trial_fail["provider_body"] is None,
+      f"stop={record_fail.get('stop_reason')}")
+os.environ["NV_SCENARIO"] = "readfailmid"
+capture_mid = raw_call(request)
+record_mid = capture_mid.get("transport_capture") or {}
+check("transport over the real helper: a MID-READ "
+      "failure frames its accumulated prefix in the "
+      "record — the exact prefix bytes counted and "
+      "hashed, the read-error kind named, "
+      "body_complete false — and the prefix is never "
+      "decoded into a response: no body stands "
+      "despite 20,000 captured bytes",
+      capture_mid.get("body") is None and
+      capture_mid.get("error_body") is None and
+      capture_mid.get("http_status") == 200 and
+      record_mid.get("captured_bytes") == 20000 and
+      record_mid.get("captured_sha256") ==
+      hashlib.sha256(b"q" * 20000).hexdigest() and
+      record_mid.get("stop_reason") == "read_failure"
+      and record_mid.get("read_error_kind") ==
+      "OSError" and
+      record_mid.get("body_complete") is False)
+os.environ["NV_SCENARIO"] = "connfail"
+capture_cf = raw_call(request)
+trial_cf = nvn.trial_evidence(1, capture_cf)
+record_cf = capture_cf.get("transport_capture") or {}
+check("transport over the real helper: a connection "
+      "failure before any response frames the "
+      "pre_response phase through the transport — no "
+      "status, no body, the failure's kind standing "
+      "in the record and the diagnostics; the trial "
+      "is a delivery failure, never an observation",
+      capture_cf.get("http_status") is None and
+      capture_cf.get("body") is None and
+      capture_cf.get("error_body") is None and
+      record_cf.get("phase") == "pre_response" and
+      record_cf.get("phase_error_kind") ==
+      "ConnectionRefusedError" and
+      record_cf.get("body_complete") is False and
+      isinstance(capture_cf.get("diagnostics"), str)
+      and "before a response was received" in
+      capture_cf["diagnostics"] and
+      trial_cf["transport_capture"] == record_cf and
+      trial_cf["delivery"] == "provider_failed")
 os.environ.pop("NV_SCENARIO", None)
 
 # ================================================================
