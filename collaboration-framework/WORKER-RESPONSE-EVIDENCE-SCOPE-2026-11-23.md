@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 2** — revised at Vane's scope examination (INDEX 305): L1 provenance made exact (the Groq worker path moves to the raw helper mode so L1 is the provider body, not a re-serialization); the durable-store contract specified; one exact event/failure sequence, with evidence capture placed ahead of the post-call deadline stall; W-a strengthened to prove the layers' identity chain, with the five response-shape cases added.
+
 Drafted by Remmy at Vane's request (INDEX 303), for her scope examination. The piece answers the gap the first probed-mode run exposed (INDEX 301): the loop recorded a parse verdict — "answer is not one JSON object" — while the answer itself was discarded at the transport seam. **Boundary (hers, standing): no rerun, no change to the selected text mode, grants, bounds or assignment. This scope authorises nothing; the build waits on her scope pass and Ben's tap.**
 
 ## §1 The seam (as located, verified against the source)
@@ -53,3 +55,52 @@ The transports' obligation is redefined to match the built-in path's retention: 
 ## §7 Out of scope
 
 No rerun of any run; no change to mode, grants, bounds, assignment or the probe; no general logging beyond the response-evidence path; no retention of requests/prompts (already in the record); no change to the stall grounds' existing meanings (one new ground added, §4).
+
+---
+
+## Rev 2 — the examination's four points, answered
+
+### R2-1. Provenance made exact (her point 1)
+
+The layer list is revised; no layer borrows another's name.
+
+- **Transport capture** — exactly what crossed the transport boundary, its source and representation named (e.g. "the Groq helper's `chat-raw` envelope, base64"). This is a fact about the seam, recorded as provenance metadata, not itself a body.
+- **L1 provider body** — the original HTTP response bytes, and the label is earned only where the transport genuinely captures them. **For Groq, the worker transport obtains the response through the helper's raw mode (`chat-raw`)**: L1 is the provider body bytes; the transport parses L1 itself for the envelope and message. (The ordinary `chat` path's output — parsed and re-serialized by the helper — is never labelled provider body; if any transport cannot supply the true bytes, its L1 stands labelled `transport_serialized` with the transformation named, and the checker treats the two provenance classes distinctly.) For the adapter's built-in path, L1 is the response text its own HTTP transport received. For NVIDIA, the same rule: the raw bytes where its path supplies them, the honest label where it does not.
+- **L2 decoded envelope** — L1 parsed as JSON, with the decoding (strict UTF-8, per the probe boundary policy) and parsing outcomes recorded; absent, and saying why, where either fails.
+- **L3 assistant message** — the complete message object from L2, all fields.
+- **L4 extracted content** — the exact content value handed to the adapter's content parser (or its recorded absence).
+- **L5 verdicts, two and distinguished** — (a) the **adapter verdict**: the extraction/parser result, recording the hash of the exact content it consumed; (b) the **loop validation verdict**: the loop's subsequent response validation (catalogue/grant-shape checks) where it runs. Neither stands in for the other.
+- **Hash representations defined:** L1 hashes over the raw bytes. For derived JSON layers (L2, L3), the hash is over the framework's canonical JSON serialization (`fabric.canonical`) of the parsed object — a defined representation of a derived object, never implied to be the original bytes. L4 hashes over its exact string bytes (UTF-8).
+
+### R2-2. The durable store, as a contract (her point 2)
+
+- **Location and binding:** artifacts live in `<run-dir>/responses/`. The filename is derived, never chosen: `iteration-<seq>.json`, where `<seq>` is the seq of the LOOP_ITERATION event the artifact answers — binding run (the directory), assembly and instance (named inside the artifact, validated against the record), and iteration (the filename + the artifact's own `iteration_seq` field) by construction.
+- **Collision and substitution:** the store refuses to overwrite — if `iteration-<seq>.json` already exists, the write is an evidence-capture failure, not a replacement. The artifact's internal fields (run, assembly, instance, iteration seq) must agree with the filename and the record, and the checker validates that agreement, so a substituted file fails on content even if its name is right.
+- **What "durable" means here:** write to a temporary name in the same directory → flush and fsync → rename into place → **read the artifact back and verify its sha256 against the computed hash**. Only a read-back-verified artifact counts as persisted. A write call merely returning is not durability and the scope never calls it that.
+- **The checker** locates artifacts from the run directory (the same run-directory basis its replay already works from), reads `responses/iteration-<seq>.json` for each bound iteration, and recomputes every hash from the file it actually read.
+- **Artifact written, event uncommittable:** the artifact may stand as an **orphan** — an incomplete recordkeeping outcome the checker reports as such. It licenses nothing: without the committed RESPONSE_EVIDENCE event, the loop stops (evidence-capture failure at the commit step) and no dispatch follows. **Dispatch without a committed evidence event is the forbidden case, in all orderings.**
+
+### R2-3. One exact sequence (her point 3 + the deadline point)
+
+For every iteration, in this order, on success and failure alike:
+
+1. LOOP_ITERATION is recorded (pre-call, unchanged).
+2. The provider call returns — or raises, carrying whatever response evidence actually exists.
+3. The adapter completes its interpretation (extraction, parsing, verdicts) **without causing effects**.
+4. **The response artifact is persisted and read-back-verified** — this step stands **ahead of the post-call deadline check**: a response that arrives after the activation deadline is captured and bound first, and only then does the deadline stall proceed, with the evidence attached. No answer escapes capture at the deadline boundary.
+5. RESPONSE_EVIDENCE is committed — a **loop-owned** event with its own doorway route and validation (payload: the iteration seq it answers, the artifact hash, the per-layer hashes/counts/completeness, the L1 provenance class), the doorway checking that the named iteration stands and that no dispatch for it precedes this event.
+6. Only then may the loop validate for dispatch and dispatch.
+
+Distinctions preserved in the sequence: an **HTTP error with a body is a response** — the raw path returns status + body, so evidence is captured (L1 = the error body; the verdicts record the HTTP failure) and the stall follows with evidence attached. A **transport failure before any response exists** produces no artifact and no RESPONSE_EVIDENCE; the stall records the transport diagnostic. The checker keeps the two states distinct: *no response* (no evidence event, legitimately) versus *response without evidence* (a checker failure, always).
+
+### R2-4. W-a proves the identity chain (her point 4)
+
+W-a is strengthened: the stub answers in text mode with a native-shaped response; the witness asserts not merely that a tool_calls-bearing object was saved, but the **identity chain** — L3 is the message inside L2 inside L1 (each layer's hash recomputed from the layer above), **L4 is L3's content value (or its recorded absence), and the adapter verdict in L5 records the hash of the exact content it consumed, equal to L4's hash**. The saved message is thereby proven to be the very message the verdict arose from. The response-shape cases are added as witnesses:
+
+- **W-g:** content absent, native tool_calls present (the probed1 shape).
+- **W-h:** content **and** tool_calls together.
+- **W-i:** a malformed / undecodable provider envelope (L2 absent with its reason; L1 intact).
+- **W-j:** an HTTP error **with** a response body (evidence captured; verdicts record the HTTP failure).
+- **W-k:** a transport failure with **no** response body (no artifact; the stall's diagnostic stands alone; the checker accepts the absence as the no-response state).
+
+All other Rev 1 provisions stand as written (the five-layer object as amended by R2-1, the ceiling and whole-original hashes, the `evidence_capture_failure` ground, the contents discipline, the checker rules as extended by R2-2/R2-3, and the §7 boundary).
