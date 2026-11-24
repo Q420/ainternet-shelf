@@ -1,5 +1,7 @@
 # SCOPE — WORKER RESPONSE EVIDENCE (2026-11-23)
 
+**Rev 7** — Rev 6, plus the two contract settlements (INDEX 310): the ceiling becomes a **capture ceiling** (the helper stops reading at 64,000 bytes; stored ≡ observed for L1; `stop_reason` ∈ {eof, capture_limit, read_failure}; the whole-original-hash-over-truncated-store language withdrawn), and the doorway's disposition lifecycle is closed in both directions (loop-actor-only, entered-iterations-only, exactly-one, doorway-validated, no bypass, final once committed — with the checker independently reconstructing the same rules).
+
 **Rev 6** — Rev 5, plus the implementable contracts (INDEX 309): the helper's incremental read loop with observed-prefix hash semantics (`hash_subject: observed_bytes`, `total_length: null` when unknown); CALL_ENTERED's meaning defined as the durable crossing of the call-entry boundary (a missing disposition after it is an integrity failure, never a reinterpreted no-response), enforced at the doorway as well as reconstructed by the checker; and the phase-observation contract made exhaustive across all six boundary cases.
 
 **Rev 5** — Rev 4, plus receipt-side proof and a visible call boundary (INDEX 308): the helper records a phase observation (`pre_response` / `response_received`); `no_response` survives only for `connection_failed_pre_response` on that evidence, the timeout class is withdrawn to `unresolved`, and a mid-read body failure is captured partial-and-incomplete; a loop-owned **CALL_ENTERED** event makes the call boundary a record fact, mutually exclusive with the pre-call terminals.
@@ -248,3 +250,27 @@ The helper's raw path behaves exactly as follows at each boundary — the comple
 | Helper fails before it can emit a trustworthy phase observation (crash, kill, unparseable failure output) | no observation exists | **none** | **`unresolved`** — always; no exception class, diagnostic, or transport-side inference promotes this history to `no_response` |
 
 The promotion rule, stated for the whole piece: `no_response` requires **all three** — the helper's `pre_response` observation, an error kind in the pre-response family, and the transport's agreement (no status, no envelope). Anything less is `unresolved` (or `captured`, where a response object supplied status/bytes).
+
+---
+
+## Rev 7 — one ceiling, and the doorway closed in both directions
+
+### R7-1. The bounded capture contract (her point 1; this section supersedes Rev 1 §3's L1 retention rule)
+
+The conflict is settled by making the ceiling a **capture** ceiling, not merely a storage ceiling:
+
+- The helper's incremental read **stops at the capture ceiling: 64,000 bytes**. It never accumulates beyond the ceiling plus one chunk; the memory bound and the evidence bound are the same bound. (The probe's 64,000 ceiling and this one are the same number by the same reasoning: the largest body the evidence contract undertakes to hold whole.)
+- The artifact therefore retains **exactly the observed bytes** — for L1, stored bytes ≡ observed bytes, always. The Rev 1 language of a whole-original hash over a truncated store is **withdrawn for L1**: there is no longer an unretained remainder for the hash to describe.
+- The disposition and artifact record, for L1: `hash_subject: "observed_bytes"`; the observed byte count; the sha256 of exactly those bytes (recomputable by the checker from the stored base64 — the bytes it needs are the bytes that exist); `total_length: null` whenever EOF was not reached (the true total standing unknown, never estimated); `body_complete` true **only** when the read reached EOF below the ceiling.
+- **Why the capture stopped** is a typed field, `stop_reason`, with exactly three values: **`eof`** (the read completed; `body_complete: true`), **`capture_limit`** (the read stopped deliberately at the ceiling; `body_complete: false`), **`read_failure`** (a read raised midway; `body_complete: false`, the read error kind recorded). A deliberate limit and a failure are never the same word.
+- Derived layers (L2–L4) are computed **from the captured L1 only**. Where the captured prefix does not parse, L2/L3 stand absent with that reason — the evidence never pretends to layers the captured bytes cannot support. Their hashes remain as Rev 2 defined (canonical/exact forms of what is actually retained), and the same agreement rule covers them: hash subject, retained form, completeness and checker recompute always describe the same bytes.
+
+### R7-2. The doorway's disposition lifecycle — the reciprocal rules (her point 2)
+
+Stated with the same force as R6-2's CALL_ENTERED rules, and enforced **at write time**:
+
+- RESPONSE_EVIDENCE is admitted **only from the loop actor**, and **only for an iteration whose CALL_ENTERED stands**. A disposition for an unentered iteration is refused.
+- **Exactly one** disposition is admitted per entered iteration. A second — whether identical, supplementary or contradictory — is refused at the doorway. Once committed, a disposition is final: nothing replaces or supplements it.
+- The disposition's **outcome, failure class and supporting evidence are validated at the doorway** against the R4-2/R5-1/R7-1 contract (the class↔outcome pairing, the required seam-evidence fields per class, the captured form's artifact hash + layer summaries, the no_response form's three-part agreement). An invalid disposition is refused where it is written, not merely caught later.
+- **No bypass:** while an entered iteration's disposition is outstanding, the doorway refuses any event that advances or closes the work on that instance — the next iteration's events, any dispatch, a yield, a stall, a completion. The obligation cannot be stepped around by moving on.
+- The **checker independently reconstructs all of these constraints** from the record, in its own copy: the doorway prevents an invalid history from being extended; the checker detects a history that nevertheless arrives in an invalid state. Both statements are the design, and neither substitutes for the other.
