@@ -56,3 +56,9 @@ Remmy's notes: hot memory is carried until it approaches ~75% of the occupying m
 Ben: "I'm going to push back let's prove the system before she starts building entire factories around it."
 
 Recorded as the governing sequence for this design: the librarian stays a filed idea at paper stage — no design paper, no build — until the system it would serve is proven: one worker, in the fixed room, producing the brief (run 5 under Vane's examination). Vane's five questions stand on file as the design paper's examination list for when Ben calls for the paper. Nothing about the librarian direction enlarges, delays, or reorders the live line: pass examination → run 5 → proof.
+
+## Ben's correction of the sequencing — 2026-11-24 ~20:48 MST
+
+Ben, correcting Remmy's first reading of his pushback: "I mean let's prove that the Liberian can work at all before we start building an entire hierarchy around why and this and that she's overcomplicating just an experiment so let's get a working brief and then let's work on the persistent memory."
+
+The ruling as corrected: the librarian is an EXPERIMENT, not a design programme. Order: (1) a working brief (run 5); (2) then a minimal librarian experiment that proves or disproves the concept by doing — one role, one occupant change: a worker does work, a librarian pass compacts it into a role memory, a fresh occupant takes the same role with that memory and a follow-on task, and we see whether the continuity is real. Vane's five questions are answered BY the experiment where they can be, not settled in a paper before it. No hierarchy of design around an unproven concept.
