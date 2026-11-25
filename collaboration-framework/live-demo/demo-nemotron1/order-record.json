@@ -1,0 +1,42 @@
+{
+ "kind": "director's order record \u2014 the decision record the ASSEMBLY_JUDGED act binds by hash (this run's judgement provenance)",
+ "run_id": "run-first-worker-1",
+ "assembly_id": "assembly-crew-1-1",
+ "instance_id": "inst-crew-1-1",
+ "generated_record_hash": "fbd3ddd0c79f3fe2edab7ae6cb569cef441b2e50c1d1c0480c7f42654f34e8c4",
+ "probed_seq": 12,
+ "probe_evidence_hash": "46ad5167a7f96afd3a6749fc65f4dbaf24348e31745927ae454ad88afc53f330",
+ "probe_recommended_mode": null,
+ "probe_settled_count": 0,
+ "probe_counts": {
+  "behaviour": {
+   "text_contract": 0,
+   "native_catalogue": 0,
+   "environment_tool_attempt": 0,
+   "mixed": 0,
+   "refusal": 0,
+   "malformed": 0,
+   "no_observable_behaviour": 5
+  },
+  "delivery": {
+   "provider_accepted": 0,
+   "provider_refused": 0,
+   "provider_failed": 5,
+   "indeterminate": 0
+  }
+ },
+ "fingerprint": "d525e3f90b543fc7cad31e1921a7457e88f732f738ba87a21f28fb43fdd3777f",
+ "adapter_mode": "native",
+ "mode_grounds": "Director's order (Ben, 2026-11-24): run the demonstration with Nemotron on NVIDIA and see how he reacts. The order replaces the probe-phase examiner judgement for this run: the mode is judged native by the order \u2014 the execution tool exists as a host-defined definition, the native adapter is the built and closed path for it, and the model's first live response is itself the delivery evidence (DEMONSTRATION-PREPARATION-2026-11-24.md \u00a72.1, \u00a73.1, \u00a75 item 1). The probe stage ran live and its recommendation stands in the record as evidence; it does not decide this run's mode.",
+ "order": {
+  "by": "Ben (director)",
+  "date": "2026-11-24",
+  "words": "just run it with nemotron, see how he reacts... lets start doing. im done guessing",
+  "effect": "the director's order replaces the probe-phase examiner judgement for this run: the mode is judged native by the order, whatever the probe stage recommends; the probe's recommendation stands in the record as evidence, not as the decision; the model's first live response is the delivery evidence"
+ },
+ "model_pin": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+ "route": "nvidia",
+ "decision_examiner": "Ben (director) \u2014 order of 2026-11-24",
+ "decided_at": "2026-11-25T01:05:22Z",
+ "verify_config_staging": false
+}

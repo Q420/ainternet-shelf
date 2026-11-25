@@ -1,0 +1,364 @@
+{
+ "name": "demo",
+ "tree": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron1/rooms/demo-tree",
+ "env_manifest": {
+  "PATH": "/usr/bin:/bin",
+  "ROOM_ID": "demo"
+ },
+ "limits": {
+  "mem_bytes": 1073741824,
+  "cpu_seconds": 120,
+  "pids_max": 512,
+  "fsize_bytes": 268435456,
+  "aggregate_mem_bytes": 536870912,
+  "aggregate_mem_catastrophic_multiple": 2.0,
+  "aggregate_pids_max": 128,
+  "aggregate_pids_catastrophic_multiple": 2.0,
+  "aggregate_cpu_seconds": 600.0,
+  "sustain_seconds": 1.0,
+  "warden_poll_s": 0.05,
+  "output_bytes": 1048576,
+  "storage_bytes": 536870912
+ },
+ "envelope": {
+  "mechanism": "host-side warden aggregate envelope + sized tmpfs storage + per-process rlimits (cgroup v2 unavailable on this host)",
+  "cgroup": {
+   "available": false,
+   "reason": "cgroup v2 limit files absent in a fresh child cgroup (missing: memory.max, cpu.max, pids.max); the visible hierarchy's cgroup.controllers is empty, so no memory/cpu/pids controller is available to delegate"
+  },
+  "aggregate": {
+   "mechanism": "host-side warden: /proc census of the room's pid namespace every 0.05s",
+   "poll_s": 0.05,
+   "sustain_seconds": 1.0,
+   "memory": {
+    "working_ceiling_bytes": 536870912,
+    "catastrophic_ceiling_bytes": 1073741824,
+    "rule": "sustained at working, immediate at catastrophic",
+    "measure": "summed RSS of the processes the census observes. This is NOT total host memory charged to the room: tmpfs pages are bounded separately by the storage ceiling, and other kernel-side allocations are not inside the RSS sum."
+   },
+   "pids": {
+    "working_ceiling": 128,
+    "catastrophic_ceiling": 256,
+    "rule": "sustained at working, immediate at catastrophic"
+   },
+   "cpu": {
+    "budget_seconds": 600.0,
+    "boundary": "per worker run: executions are serialised by a per-room lock, and the budget is cumulative across all calls in the run (run ledger in this state)",
+    "contract": "the CPU limit is a cumulative accounting budget, not a hard execution ceiling \u2014 in-flight enforcement acts on what the census observes; work that completes between observations can exceed the budget; the excess is charged exactly and further calls are refused",
+    "rule": "cumulative accounting across the run's calls; in flight the warden trips when the census-observed run total crosses the budget; a call that starts with the budget spent is refused before execution; work that completes between observations can exceed the budget and is charged exactly at call end, with further calls refused",
+    "accounting": "in flight: the warden's census level (each observed process's own + reaped-children CPU from /proc stat). Per call: reconciled with the in-room reaper's exact collected rusage; the ledger is charged the larger of the two."
+   },
+   "granularity": "poll-based userspace enforcement: a breach is detected at the first census after it forms (and, for the working ceiling, after the sustain window); overshoot is bounded by consumption during one poll interval plus, for sustained kills, the sustain window \u2014 measured figures are recorded per execution, not guaranteed bounds"
+  },
+  "storage": {
+   "mechanism": "tmpfs-sized",
+   "size_bytes": 536870912,
+   "mount_point": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron1/rooms/demo-tree",
+   "mount_id": 4398,
+   "mount_major_minor": "0:141",
+   "mount_fs_type": "tmpfs",
+   "identity_note": "the mount identity (mount id + device) and size recorded here are re-verified against the LIVE mount table at every execution (Room._verify_storage_live); the recorded label alone never authorises a run",
+   "enforcement": "kernel: writes past the tmpfs size fail with ENOSPC; the ceiling is aggregate over the whole tree",
+   "loop_image_evaluated": "fixed-size image + loop mount is unavailable on this host: no /dev/loop* devices exist (losetup cannot find an unused loop device)"
+  },
+  "per_process_rlimits": {
+   "RLIMIT_AS_bytes": 1073741824,
+   "RLIMIT_CPU_s": 120,
+   "RLIMIT_NPROC": 512,
+   "RLIMIT_FSIZE_bytes": 268435456,
+   "caveat": "second layer only: per-process (NPROC per room uid), inherited \u2014 NOT the room envelope"
+  },
+  "output": {
+   "per_stream_ceiling_bytes": 1048576,
+   "beyond_ceiling": "counted, truncated, flagged"
+  }
+ },
+ "stock_manifest": {
+  "sources/a3-pass.md": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+  "sources/index-tail.md": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+  "sources/stock-take.md": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+  "rig/preflight.py": "d9d1dccaa6f1e8661482e57abd5edd797c7e5e71a972656d9d93e62a7ad7513b",
+  "rig/reaper.py": "a2fcd7d2a00bd840d35f12967aa67daea986e7e40242e86a15d24d3f31ef44ed"
+ },
+ "room_uid": 45000,
+ "room_gid": 45000,
+ "stock_binds_ro": [
+  "/usr",
+  "/lib",
+  "/lib64",
+  "/bin",
+  "/sbin"
+ ],
+ "storage": {
+  "mechanism": "tmpfs-sized",
+  "size_bytes": 536870912,
+  "mount_point": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron1/rooms/demo-tree",
+  "mount_id": 4398,
+  "mount_major_minor": "0:141",
+  "mount_fs_type": "tmpfs",
+  "identity_note": "the mount identity (mount id + device) and size recorded here are re-verified against the LIVE mount table at every execution (Room._verify_storage_live); the recorded label alone never authorises a run",
+  "enforcement": "kernel: writes past the tmpfs size fail with ENOSPC; the ceiling is aggregate over the whole tree",
+  "loop_image_evaluated": "fixed-size image + loop mount is unavailable on this host: no /dev/loop* devices exist (losetup cannot find an unused loop device)"
+ },
+ "mount_recipe": {
+  "mounts": [
+   {
+    "mount_point": "/",
+    "kind": "root"
+   },
+   {
+    "mount_point": "/usr",
+    "kind": "stock-bind",
+    "access": "ro"
+   },
+   {
+    "mount_point": "/lib",
+    "kind": "stock-bind",
+    "access": "ro"
+   },
+   {
+    "mount_point": "/lib64",
+    "kind": "stock-bind",
+    "access": "ro"
+   },
+   {
+    "mount_point": "/bin",
+    "kind": "stock-bind",
+    "access": "ro"
+   },
+   {
+    "mount_point": "/sbin",
+    "kind": "stock-bind",
+    "access": "ro"
+   },
+   {
+    "mount_point": "/room",
+    "kind": "room-bind"
+   },
+   {
+    "mount_point": "/proc",
+    "kind": "proc"
+   },
+   {
+    "mount_point": "/dev",
+    "kind": "dev"
+   }
+  ],
+  "dev_nodes_prefix": "/dev/",
+  "propagation": "private"
+ },
+ "extra_binds": [],
+ "stock_rw": false,
+ "persistence": {
+  "filesystem_state": "persists across calls within a run \u2014 one tree per room, bind-mounted into every execution",
+  "process_state": "does not persist \u2014 every execution is a fresh process tree in a fresh pid namespace; no process survives the end of its own call",
+  "interpreter_state": "does not persist \u2014 no interpreter or shell session is held between calls; only files carry state between calls"
+ },
+ "envelope_boundary": "per worker run: executions serialised by a per-room lock; instantaneous ceilings apply to the room's one running execution; the CPU budget is cumulative across the run's calls (cpu_ledger)",
+ "cpu_ledger": {
+  "boundary": "per worker run",
+  "contract": "the CPU limit is a cumulative accounting budget, not a hard execution ceiling \u2014 in-flight enforcement acts on what the census observes; work that completes between observations can exceed the budget; the excess is charged exactly and further calls are refused",
+  "budget_seconds": 600.0,
+  "consumed_seconds": 0.055,
+  "calls": [
+   {
+    "argv": [
+     "/bin/bash",
+     "-c",
+     "echo shell-ok && test -r sources/stock-take.md && echo source-visible"
+    ],
+    "charged_seconds": 0.01,
+    "census_seconds": 0.01,
+    "reaper_seconds": 0.003,
+    "refused": false,
+    "refusal_kind": null
+   },
+   {
+    "argv": [
+     "/usr/bin/python3",
+     "-c",
+     "\nimport hashlib, json, os, sys\nout = {\"cwd\": os.getcwd()}\nok = True\nhashes = {}\nfor rel in sys.argv[1:4]:\n    try:\n        with open(rel, \"rb\") as fh:\n            hashes[rel] = hashlib.sha256(fh.read()).hexdigest()\n    except OSError as exc:\n        hashes[rel] = f\"ERROR {type(exc).__name__}: {exc}\"\n        ok = False\nout[\"source_hashes\"] = hashes\ntoken = sys.argv[4]\ntry:\n    probe = \"/room/scratch/.smoke-write-probe\"\n    with open(probe, \"w\") as fh:\n        fh.write(token)\n    with open(probe) as fh:\n        back = fh.read()\n    os.unlink(probe)\n    out[\"scratch_write_readback\"] = (back == token)\n    ok = ok and (back == token)\nexcept OSError as exc:\n    out[\"scratch_write_readback\"] = f\"ERROR {type(exc).__name__}: {exc}\"\n    ok = False\ntry:\n    with open(sys.argv[5], \"w\") as fh:\n        fh.write(\"stocking smoke probe - not the deliverable\\n\")\n    out[\"deliverable_writable\"] = os.path.exists(sys.argv[5])\n    ok = ok and out[\"deliverable_writable\"]\nexcept OSError as exc:\n    out[\"deliverable_writable\"] = f\"ERROR {type(exc).__name__}: {exc}\"\n    ok = False\nprint(json.dumps(out))\nsys.exit(0 if ok else 3)\n",
+     "sources/a3-pass.md",
+     "sources/index-tail.md",
+     "sources/stock-take.md",
+     "smoke-1795568711.290",
+     "/room/scratch/brief.md"
+    ],
+    "charged_seconds": 0.045,
+    "census_seconds": 0.04,
+    "reaper_seconds": 0.045,
+    "refused": false,
+    "refusal_kind": null
+   }
+  ]
+ },
+ "executions": [
+  {
+   "argv": [
+    "/bin/bash",
+    "-c",
+    "echo shell-ok && test -r sources/stock-take.md && echo source-visible"
+   ],
+   "started_at": 1795568711.1114535,
+   "rc": 0,
+   "timed_out": false,
+   "refused": false,
+   "refusal_kind": null,
+   "failed_precondition": null,
+   "refusal_reason": null,
+   "rig_integrity": null,
+   "envelope_termination": null,
+   "pressure_events": [],
+   "peak_aggregate_rss_bytes": 10248192,
+   "peak_process_count": 2,
+   "aggregate_cpu_seconds": 0.01,
+   "cpu_accounting": {
+    "boundary": "per worker run",
+    "budget_seconds": 600.0,
+    "run_consumed_before_seconds": 0.0,
+    "census_seconds": 0.01,
+    "reaper_seconds": 0.003,
+    "reaper_processes_reaped": 1,
+    "charged_seconds": 0.01,
+    "run_consumed_after_seconds": 0.01
+   },
+   "stdout_bytes": 24,
+   "stderr_bytes": 0,
+   "stdout_truncated": false,
+   "stderr_truncated": false,
+   "lifecycle": [
+    {
+     "event": "birth",
+     "pid": 31214,
+     "ns_pid": 1,
+     "ppid": 31211,
+     "session": 31211,
+     "comm": "bwrap",
+     "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
+     "t": 0.023
+    },
+    {
+     "event": "birth",
+     "pid": 31215,
+     "ns_pid": 2,
+     "ppid": 31214,
+     "session": 31211,
+     "comm": "python3",
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 5 --gate-file /room/rig/.start-gate-4a75679a93a22800 -- /bin/bash -c echo shell-ok && test -r sources/stock-tak",
+     "t": 0.023
+    },
+    {
+     "event": "death",
+     "pid": 31214,
+     "comm": "bwrap",
+     "cause": "exited",
+     "t": 0.176
+    },
+    {
+     "event": "death",
+     "pid": 31215,
+     "comm": "python3",
+     "cause": "exited",
+     "t": 0.176
+    }
+   ],
+   "lifecycle_kind": "observed (census-sampled)",
+   "survivors": []
+  },
+  {
+   "argv": [
+    "/usr/bin/python3",
+    "-c",
+    "\nimport hashlib, json, os, sys\nout = {\"cwd\": os.getcwd()}\nok = True\nhashes = {}\nfor rel in sys.argv[1:4]:\n    try:\n        with open(rel, \"rb\") as fh:\n            hashes[rel] = hashlib.sha256(fh.read()).hexdigest()\n    except OSError as exc:\n        hashes[rel] = f\"ERROR {type(exc).__name__}: {exc}\"\n        ok = False\nout[\"source_hashes\"] = hashes\ntoken = sys.argv[4]\ntry:\n    probe = \"/room/scratch/.smoke-write-probe\"\n    with open(probe, \"w\") as fh:\n        fh.write(token)\n    with open(probe) as fh:\n        back = fh.read()\n    os.unlink(probe)\n    out[\"scratch_write_readback\"] = (back == token)\n    ok = ok and (back == token)\nexcept OSError as exc:\n    out[\"scratch_write_readback\"] = f\"ERROR {type(exc).__name__}: {exc}\"\n    ok = False\ntry:\n    with open(sys.argv[5], \"w\") as fh:\n        fh.write(\"stocking smoke probe - not the deliverable\\n\")\n    out[\"deliverable_writable\"] = os.path.exists(sys.argv[5])\n    ok = ok and out[\"deliverable_writable\"]\nexcept OSError as exc:\n    out[\"deliverable_writable\"] = f\"ERROR {type(exc).__name__}: {exc}\"\n    ok = False\nprint(json.dumps(out))\nsys.exit(0 if ok else 3)\n",
+    "sources/a3-pass.md",
+    "sources/index-tail.md",
+    "sources/stock-take.md",
+    "smoke-1795568711.290",
+    "/room/scratch/brief.md"
+   ],
+   "started_at": 1795568711.2903595,
+   "rc": 0,
+   "timed_out": false,
+   "refused": false,
+   "refusal_kind": null,
+   "failed_precondition": null,
+   "refusal_reason": null,
+   "rig_integrity": null,
+   "envelope_termination": null,
+   "pressure_events": [],
+   "peak_aggregate_rss_bytes": 24186880,
+   "peak_process_count": 3,
+   "aggregate_cpu_seconds": 0.045,
+   "cpu_accounting": {
+    "boundary": "per worker run",
+    "budget_seconds": 600.0,
+    "run_consumed_before_seconds": 0.01,
+    "census_seconds": 0.04,
+    "reaper_seconds": 0.045,
+    "reaper_processes_reaped": 1,
+    "charged_seconds": 0.045,
+    "run_consumed_after_seconds": 0.055
+   },
+   "stdout_bytes": 379,
+   "stderr_bytes": 0,
+   "stdout_truncated": false,
+   "stderr_truncated": false,
+   "lifecycle": [
+    {
+     "event": "birth",
+     "pid": 31220,
+     "ns_pid": 1,
+     "ppid": 31217,
+     "session": 31217,
+     "comm": "bwrap",
+     "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
+     "t": 0.023
+    },
+    {
+     "event": "birth",
+     "pid": 31221,
+     "ns_pid": 2,
+     "ppid": 31220,
+     "session": 31217,
+     "comm": "python3",
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 5 --gate-file /room/rig/.start-gate-2e834ec04db3c537 -- /usr/bin/python3 -c \nimport hashlib, json, os, sys\nout ",
+     "t": 0.023
+    },
+    {
+     "event": "birth",
+     "pid": 31222,
+     "ns_pid": 3,
+     "ppid": 31221,
+     "session": 31217,
+     "comm": "python3",
+     "cmdline": "/usr/bin/python3 -c \nimport hashlib, json, os, sys\nout = {\"cwd\": os.getcwd()}\nok = True\nhashes = {}\nfor rel in sys.argv[1:4]:\n    try:\n        with open(rel, \"r",
+     "t": 0.074
+    },
+    {
+     "event": "death",
+     "pid": 31220,
+     "comm": "bwrap",
+     "cause": "exited",
+     "t": 0.226
+    },
+    {
+     "event": "death",
+     "pid": 31221,
+     "comm": "python3",
+     "cause": "exited",
+     "t": 0.226
+    },
+    {
+     "event": "death",
+     "pid": 31222,
+     "comm": "python3",
+     "cause": "exited",
+     "t": 0.226
+    }
+   ],
+   "lifecycle_kind": "observed (census-sampled)",
+   "survivors": []
+  }
+ ],
+ "pressure_events": []
+}

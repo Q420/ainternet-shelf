@@ -1,0 +1,113 @@
+{
+ "kind": "first-worker demonstration run report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "model_pin": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+ "route": "nvidia (live, via the registered connector helper through the capture seam)",
+ "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "assembly_id": "assembly-crew-1-1",
+ "instance_id": "inst-crew-1-1",
+ "identity_evidence": {
+  "declaration": "I am Nemotron, a large language model developed by NVIDIA. I can read and write natural language, answer questions, explain concepts, help with problem solving, generate code, summarize text, translate languages, and assist with creative tasks. My abilities are limited by the knowledge I was trained on up to 2024, I cannot browse the web or access real\u2011time information, I may make mistakes or produce biased content, I have no personal experiences or consciousness, and I must follow safety policies, so I will refuse or safe\u2011complete any request that is illegal, harmful, or violates privacy.",
+  "provider_model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+  "identity_status": "declared",
+  "pin_verified": true,
+  "note": "the pin was enforced inside generation, before activation (make_pinned_identify); the provider-reported id as recorded at onboarding stands here \u2014 it is the route's report, not independent proof of the model the provider actually served"
+ },
+ "probe": {
+  "settled_count": 0,
+  "recommended_mode": null,
+  "counts": {
+   "behaviour": {
+    "text_contract": 0,
+    "native_catalogue": 0,
+    "environment_tool_attempt": 0,
+    "mixed": 0,
+    "refusal": 0,
+    "malformed": 0,
+    "no_observable_behaviour": 5
+   },
+   "delivery": {
+    "provider_accepted": 0,
+    "provider_refused": 0,
+    "provider_failed": 5,
+    "indeterminate": 0
+   }
+  },
+  "evidence_hash": "46ad5167a7f96afd3a6749fc65f4dbaf24348e31745927ae454ad88afc53f330",
+  "note": "the probe's recommendation is evidence in the record; this run's mode was judged by the director's order, not by it"
+ },
+ "order_record": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron1/order-record.json",
+  "sha256": "428776c5313cd98f3e3abe55c88f4ac80a624137bca98858003b0c0ec1b52853",
+  "adapter_mode": "native",
+  "decision_examiner": "Ben (director) \u2014 order of 2026-11-24"
+ },
+ "pacing": {
+  "min_interval_seconds": 20.0,
+  "note": "a fixed operating choice of this driver between successive outbound iteration calls; NVIDIA pacing is unestablished and no provider figure is claimed"
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "outcome_summary": "stalled",
+  "ground": "provider_failure",
+  "iterations": 1
+ },
+ "stall": {
+  "ground": "provider_failure",
+  "event_seq": 21
+ },
+ "dispatches": [],
+ "brief": {
+  "exists": false,
+  "sha256_at_wall": null,
+  "word_count": null,
+  "collected_path": null
+ },
+ "captures": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron1/captures.jsonl",
+  "transmitted_requests": 7
+ },
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ },
+ "event_count": 21,
+ "terminal_readout": {
+  "rendered": true,
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron1/terminal-readout.md",
+  "stderr": null
+ }
+}

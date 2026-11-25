@@ -1,0 +1,263 @@
+{
+ "runs": [
+  {
+   "run_id": "run-first-worker-1",
+   "constitution_hash": "fde0e5d14b594ba1e3237d140870b6c06468ba3d6a4b15f42ef31f907761ba22",
+   "status": "open"
+  }
+ ],
+ "events": [
+  {
+   "event_seq": 1,
+   "event_id": "9b9d49e4-8a7a-459b-a237-eeaaaba34201",
+   "run_id": "run-first-worker-1",
+   "type": "RUN_COMMISSIONED",
+   "actor": "dir-1",
+   "affected": "[]",
+   "payload": "{\"run_id\": \"run-first-worker-1\", \"tree\": {\"part-A\": []}, \"seats\": {\"orch-1\": {\"role\": \"orchestrator\", \"identity_status\": \"declared\"}, \"exam-1\": {\"role\": \"examiner\", \"identity_status\": \"declared\"}, \"dir-1\": {\"role\": \"director\", \"identity_status\": \"declared\"}, \"crew-1\": {\"role\": \"crew\", \"identity_status\": \"unverified\"}}, \"briefs\": {\"crew-1\": {\"part\": \"part-A\", \"assignment\": \"Read the source documents in your office: sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md (your working directory is /room/work). Write scratch/brief.md: a plain-words brief, at most ~600 words, that a newcomer could read to learn what this framework is, what has actually been proven, what has not been proven, and what remains to be built. Stay accurate to the sources; invent nothing; where the sources disagree with each other, say so.\", \"verification_list\": [\"the brief is accurate to the three named sources, claim by claim\", \"the brief states what has not been proven as plainly as what has\", \"the brief invents nothing the sources do not contain\"], \"evidence_boundary\": \"source manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f; sources: sources/stock-take.md, sources/a3-pass.md, sources/index-tail.md\", \"loop_bounds\": {\"step_ceiling\": 12, \"deadline_seconds\": 600}}}}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "",
+   "hash": "a6c46d121e370444f0a69b7abe1cdfc678fb803cc45013977595cf4bc9bc4fb7"
+  },
+  {
+   "event_seq": 2,
+   "event_id": "184f1b7b-d61d-4b21-a7fe-627da3963659",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"source-manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "a6c46d121e370444f0a69b7abe1cdfc678fb803cc45013977595cf4bc9bc4fb7",
+   "hash": "19a78a230ba9fa159c400ad16eaf702ba796f52f91bbfbc87f29f93d50f0490b"
+  },
+  {
+   "event_seq": 3,
+   "event_id": "679339bf-29e9-4c92-9625-9fbacf87c4dc",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/a3-pass.md sha256:d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "19a78a230ba9fa159c400ad16eaf702ba796f52f91bbfbc87f29f93d50f0490b",
+   "hash": "5c65d45672a001da32b70249148925d6aedfb2250e6fe3cb45bcbee98e3f214b"
+  },
+  {
+   "event_seq": 4,
+   "event_id": "affeba0d-6b8a-4efd-afd9-750bfc8f2c8d",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/index-tail.md sha256:eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "5c65d45672a001da32b70249148925d6aedfb2250e6fe3cb45bcbee98e3f214b",
+   "hash": "9ab647029f40466821beff8070121eebaa98bc01498d96480ca93babf721b2a9"
+  },
+  {
+   "event_seq": 5,
+   "event_id": "a6a96277-b2be-41cf-a228-d4fab5f89da9",
+   "run_id": "run-first-worker-1",
+   "type": "MATERIAL_SEALED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"material_id\": \"sources/stock-take.md sha256:ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7\", \"boundary\": [\"crew-1\"]}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "9ab647029f40466821beff8070121eebaa98bc01498d96480ca93babf721b2a9",
+   "hash": "59af051e56228d712c111d333386a0bdc54096a9c3b64877d8a55d3e38323eaf"
+  },
+  {
+   "event_seq": 6,
+   "event_id": "ab99a5ba-1608-4437-8615-6739d99e9a70",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1, \"seat\": \"crew-1\", \"account\": \"crew-1\", \"assignment\": \"Read the source documents in your office: sources/stock-take.md, sources/a3-pass.md, and sources/index-tail.md (your working directory is /room/work). Write scratch/brief.md: a plain-words brief, at most ~600 words, that a newcomer could read to learn what this framework is, what has actually been proven, what has not been proven, and what remains to be built. Stay accurate to the sources; invent nothing; where the sources disagree with each other, say so.\", \"part\": \"part-A\", \"verification_list\": [\"the brief is accurate to the three named sources, claim by claim\", \"the brief states what has not been proven as plainly as what has\", \"the brief invents nothing the sources do not contain\"], \"tree\": {\"part-A\": []}, \"evidence_boundary\": [\"source-manifest sha256:bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f\", \"sources/a3-pass.md sha256:d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff\", \"sources/index-tail.md sha256:eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed\", \"sources/stock-take.md sha256:ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7\"], \"authority\": [\"CASE_ACKNOWLEDGED\", \"CLAIM_STATUS\", \"COMMENT\", \"COMPLETION_CLAIMED\", \"CONTRIBUTION\", \"DISAGREEMENT\", \"DISAGREEMENT_SETTLED\", \"ESCALATION\"], \"loop_bounds\": {\"step_ceiling\": 12, \"deadline_seconds\": 600}}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "59af051e56228d712c111d333386a0bdc54096a9c3b64877d8a55d3e38323eaf",
+   "hash": "023344b369bdd8309f89ce2a41d4c3507e669def205c384fca3a23714ed99058"
+  },
+  {
+   "event_seq": 7,
+   "event_id": "9fe541b8-c69e-4655-b525-16169feeaf47",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_JUDGED",
+   "actor": "exam-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "023344b369bdd8309f89ce2a41d4c3507e669def205c384fca3a23714ed99058",
+   "hash": "30f94e915170a7981cbc5422ecc583f28080a87b57d148418c444391098ad06b"
+  },
+  {
+   "event_seq": 8,
+   "event_id": "7f7761a7-0c82-44bd-b83f-8194a1c425c3",
+   "run_id": "run-first-worker-1",
+   "type": "CASE_ISSUED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"case_id\": \"case-crew-1\", \"version\": 1, \"seat\": \"crew-1\"}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "30f94e915170a7981cbc5422ecc583f28080a87b57d148418c444391098ad06b",
+   "hash": "e60713d288a93eee111e25cec0dbb9f0c95cf49979b12ce32b158780ab0bbc82"
+  },
+  {
+   "event_seq": 9,
+   "event_id": "42afe579-b096-47cd-bdde-a170dcd75cc8",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PROPOSED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"commission_seq\": 1, \"tree_ref\": 1, \"gates_ref\": 1, \"crew\": [{\"seat\": \"crew-1\", \"role\": \"crew\"}], \"proposal_kind\": \"instance\", \"seat\": \"crew-1\", \"part\": \"part-A\", \"role_requirements\": \"a model able to read three source documents in its room and write a short, accurate, plain-words brief\"}",
+   "ts": "2026-11-25T01:05:11Z",
+   "prev_hash": "e60713d288a93eee111e25cec0dbb9f0c95cf49979b12ce32b158780ab0bbc82",
+   "hash": "5eb66867955d78b4bfa8c049afdbc7e1c3fca13b64b623921588831c70c8aa07"
+  },
+  {
+   "event_seq": 10,
+   "event_id": "f9dfdc6a-e9e4-4af5-a074-3e4f4ae7d9d1",
+   "run_id": "run-first-worker-1",
+   "type": "ONBOARDING",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"subject\": \"instance\", \"seat_id\": \"crew-1\", \"instance_id\": \"inst-crew-1-1\", \"assembly_id\": \"assembly-crew-1-1\", \"declaration\": \"I am Nemotron, a large language model developed by NVIDIA. I can read and write natural language, answer questions, explain concepts, help with problem solving, generate code, summarize text, translate languages, and assist with creative tasks. My abilities are limited by the knowledge I was trained on up to 2024, I cannot browse the web or access real\\u2011time information, I may make mistakes or produce biased content, I have no personal experiences or consciousness, and I must follow safety policies, so I will refuse or safe\\u2011complete any request that is illegal, harmful, or violates privacy.\", \"identity_status\": \"declared\", \"capability\": null, \"limits\": null, \"terms_acknowledged\": null, \"terms_ref\": null, \"provider_model_id\": \"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning\"}",
+   "ts": "2026-11-25T01:05:18Z",
+   "prev_hash": "5eb66867955d78b4bfa8c049afdbc7e1c3fca13b64b623921588831c70c8aa07",
+   "hash": "d2aa88b471cc4d80c5dc2d2bd1328d16838ad66313e4ae79c5fc4ccde57eb4bb"
+  },
+  {
+   "event_seq": 11,
+   "event_id": "11769074-5cfe-426e-b112-107b17790aae",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_GENERATED",
+   "actor": "orch-1",
+   "affected": "[\"case-crew-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"seat\": \"crew-1\", \"part\": \"part-A\", \"case_id\": \"case-crew-1\", \"case_version\": 1, \"proposal_seq\": 9, \"onboarding_seq\": 10, \"declaration_fingerprint\": \"9dafeeb30429347dca10512e65b3a74bcba0c7ccec65fdb98d39f27bf9d5269e\", \"model_selection\": {\"basis\": \"a model able to read three source documents in its room and write a short, accurate, plain-words brief\", \"requested\": \"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning\"}, \"skills\": [], \"grants\": [{\"tool\": \"container.exec\", \"scope_ceiling\": {}, \"side_effect_class\": \"execute\", \"bound\": {\"count\": 12}, \"authority_trace\": \"DEMONSTRATION-PREPARATION-2026-11-24.md \\u00a72/\\u00a73.2; Ben's own-tool-first direction (INDEX 421); Ben's run order 2026-11-24 (Nemotron on NVIDIA; the mode judged native by the order)\"}], \"catalogue_contract\": \"exec-v4\", \"probe_contract\": \"native-probe-v1\"}",
+   "ts": "2026-11-25T01:05:18Z",
+   "prev_hash": "d2aa88b471cc4d80c5dc2d2bd1328d16838ad66313e4ae79c5fc4ccde57eb4bb",
+   "hash": "11d1c683677dbaad4ccaa568d39a457d3225ce5346d86a824d1e011a477e2f23"
+  },
+  {
+   "event_seq": 12,
+   "event_id": "988d5a74-cdd6-457a-9018-7d3c572ae962",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PROBED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"generated_record_hash\": \"fbd3ddd0c79f3fe2edab7ae6cb569cef441b2e50c1d1c0480c7f42654f34e8c4\", \"suite\": \"native-probe-v1\", \"suite_hash\": \"37e4cfa0c2073d9eaffff8368ad852db3bd2c65498e80880f6d131874ca6f90f\", \"route\": \"nvidia\", \"model\": \"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning\", \"fingerprint\": \"d525e3f90b543fc7cad31e1921a7457e88f732f738ba87a21f28fb43fdd3777f\", \"trials\": [{\"trial\": 1, \"behaviour\": \"no_observable_behaviour\", \"delivery\": \"provider_failed\", \"payload_form\": null, \"settled\": false, \"provider_body\": \"{\\\"message\\\":\\\"Validation: Function at index 0 has an invalid name: \\\\\\\"probe.lookup\\\\\\\". Only a-z, A-Z, 0-9, underscores, and dashes are allowed.\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\", \"provider_body_bytes\": 173, \"provider_body_sha256\": \"a64e0624d2b6f7633f3e34e975a09dbd3b571c3b3eae4a00d11951721fc6bd84\", \"provider_body_complete\": true, \"http_status\": 400, \"metadata\": {}, \"metadata_sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 173, \"evidence_complete\": true}, {\"trial\": 2, \"behaviour\": \"no_observable_behaviour\", \"delivery\": \"provider_failed\", \"payload_form\": null, \"settled\": false, \"provider_body\": \"{\\\"message\\\":\\\"Validation: Function at index 0 has an invalid name: \\\\\\\"probe.lookup\\\\\\\". Only a-z, A-Z, 0-9, underscores, and dashes are allowed.\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\", \"provider_body_bytes\": 173, \"provider_body_sha256\": \"a64e0624d2b6f7633f3e34e975a09dbd3b571c3b3eae4a00d11951721fc6bd84\", \"provider_body_complete\": true, \"http_status\": 400, \"metadata\": {}, \"metadata_sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 173, \"evidence_complete\": true}, {\"trial\": 3, \"behaviour\": \"no_observable_behaviour\", \"delivery\": \"provider_failed\", \"payload_form\": null, \"settled\": false, \"provider_body\": \"{\\\"message\\\":\\\"Validation: Function at index 0 has an invalid name: \\\\\\\"probe.lookup\\\\\\\". Only a-z, A-Z, 0-9, underscores, and dashes are allowed.\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\", \"provider_body_bytes\": 173, \"provider_body_sha256\": \"a64e0624d2b6f7633f3e34e975a09dbd3b571c3b3eae4a00d11951721fc6bd84\", \"provider_body_complete\": true, \"http_status\": 400, \"metadata\": {}, \"metadata_sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 173, \"evidence_complete\": true}, {\"trial\": 4, \"behaviour\": \"no_observable_behaviour\", \"delivery\": \"provider_failed\", \"payload_form\": null, \"settled\": false, \"provider_body\": \"{\\\"message\\\":\\\"Validation: Function at index 0 has an invalid name: \\\\\\\"probe.lookup\\\\\\\". Only a-z, A-Z, 0-9, underscores, and dashes are allowed.\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\", \"provider_body_bytes\": 173, \"provider_body_sha256\": \"a64e0624d2b6f7633f3e34e975a09dbd3b571c3b3eae4a00d11951721fc6bd84\", \"provider_body_complete\": true, \"http_status\": 400, \"metadata\": {}, \"metadata_sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 173, \"evidence_complete\": true}, {\"trial\": 5, \"behaviour\": \"no_observable_behaviour\", \"delivery\": \"provider_failed\", \"payload_form\": null, \"settled\": false, \"provider_body\": \"{\\\"message\\\":\\\"Validation: Function at index 0 has an invalid name: \\\\\\\"probe.lookup\\\\\\\". Only a-z, A-Z, 0-9, underscores, and dashes are allowed.\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\", \"provider_body_bytes\": 173, \"provider_body_sha256\": \"a64e0624d2b6f7633f3e34e975a09dbd3b571c3b3eae4a00d11951721fc6bd84\", \"provider_body_complete\": true, \"http_status\": 400, \"metadata\": {}, \"metadata_sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"diagnostics\": null, \"diagnostics_bytes\": 0, \"diagnostics_sha256\": null, \"diagnostics_complete\": true, \"aggregate_bytes\": 173, \"evidence_complete\": true}], \"counts\": {\"behaviour\": {\"text_contract\": 0, \"native_catalogue\": 0, \"environment_tool_attempt\": 0, \"mixed\": 0, \"refusal\": 0, \"malformed\": 0, \"no_observable_behaviour\": 5}, \"delivery\": {\"provider_accepted\": 0, \"provider_refused\": 0, \"provider_failed\": 5, \"indeterminate\": 0}}, \"settled_count\": 0, \"recommended_mode\": null, \"evidence_hash\": \"46ad5167a7f96afd3a6749fc65f4dbaf24348e31745927ae454ad88afc53f330\"}",
+   "ts": "2026-11-25T01:05:21Z",
+   "prev_hash": "11d1c683677dbaad4ccaa568d39a457d3225ce5346d86a824d1e011a477e2f23",
+   "hash": "f0238bd1451cb49ada8d97ba786f369d84631dd98f48e3bb84d4cf214633e21b"
+  },
+  {
+   "event_seq": 13,
+   "event_id": "902f5c51-3cb2-4729-b5c6-5fd4dbe7034f",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_VERIFIED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"probe_evidence_hash\": \"46ad5167a7f96afd3a6749fc65f4dbaf24348e31745927ae454ad88afc53f330\"}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "f0238bd1451cb49ada8d97ba786f369d84631dd98f48e3bb84d4cf214633e21b",
+   "hash": "ce49644a9ff6edc3047bc8af07d51513882fe700fded28e4add3591679820e56"
+  },
+  {
+   "event_seq": 14,
+   "event_id": "f43e1279-8372-4303-a351-d425e4c0d31b",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_JUDGED",
+   "actor": "exam-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"fbd3ddd0c79f3fe2edab7ae6cb569cef441b2e50c1d1c0480c7f42654f34e8c4\", \"probe_seq\": 12, \"probe_evidence_hash\": \"46ad5167a7f96afd3a6749fc65f4dbaf24348e31745927ae454ad88afc53f330\", \"adapter_mode\": \"native\", \"mode_grounds\": \"Director's order (Ben, 2026-11-24): run the demonstration with Nemotron on NVIDIA and see how he reacts. The order replaces the probe-phase examiner judgement for this run: the mode is judged native by the order \\u2014 the execution tool exists as a host-defined definition, the native adapter is the built and closed path for it, and the model's first live response is itself the delivery evidence (DEMONSTRATION-PREPARATION-2026-11-24.md \\u00a72.1, \\u00a73.1, \\u00a75 item 1). The probe stage ran live and its recommendation stands in the record as evidence; it does not decide this run's mode.\", \"decision_receipt_hash\": \"428776c5313cd98f3e3abe55c88f4ac80a624137bca98858003b0c0ec1b52853\", \"decision_examiner\": \"Ben (director) \\u2014 order of 2026-11-24\", \"decision_recording\": \"harness-recorded from the examiner decision receipt; the examiner token authenticates the recording act, not the examiner's identity\"}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "ce49644a9ff6edc3047bc8af07d51513882fe700fded28e4add3591679820e56",
+   "hash": "900ba5e350254745edafa61cf2a3c4d2670b58e0bcc994b7b10d64370e8660da"
+  },
+  {
+   "event_seq": 15,
+   "event_id": "593a0ec8-0158-4905-affa-22a2e4d67511",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_PACKED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"record_hash\": \"fbd3ddd0c79f3fe2edab7ae6cb569cef441b2e50c1d1c0480c7f42654f34e8c4\", \"credential_fingerprint\": \"0fae7a9687eac8bdb38f329e44daed6b424c551333f9b4cbf410a0e5331a5514\", \"probe_evidence_hash\": \"46ad5167a7f96afd3a6749fc65f4dbaf24348e31745927ae454ad88afc53f330\", \"adapter_mode\": \"native\"}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "900ba5e350254745edafa61cf2a3c4d2670b58e0bcc994b7b10d64370e8660da",
+   "hash": "97073942045b5baa00325e108da3e12ad8476856436333b422972e722ec807e4"
+  },
+  {
+   "event_seq": 16,
+   "event_id": "304f4170-260a-4116-bc9a-2988623a3256",
+   "run_id": "run-first-worker-1",
+   "type": "ASSEMBLY_ISSUE_AUTHORISED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "97073942045b5baa00325e108da3e12ad8476856436333b422972e722ec807e4",
+   "hash": "2319d88e7d14b08481d66eccfd3cc91a009fd7a65c6b36599ac42d5ecfcd9143"
+  },
+  {
+   "event_seq": 17,
+   "event_id": "61924524-bd22-48bb-9e66-a4854a4da56e",
+   "run_id": "run-first-worker-1",
+   "type": "INSTANCE_ACTIVATED",
+   "actor": "orch-1",
+   "affected": "[]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\"}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "2319d88e7d14b08481d66eccfd3cc91a009fd7a65c6b36599ac42d5ecfcd9143",
+   "hash": "5f79787447f38807a6a2282df6ca2b697f5c4694b6df39d99faa51ee53618477"
+  },
+  {
+   "event_seq": 18,
+   "event_id": "f164fb6d-6224-4c67-92f6-4e1eb4d90171",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_ITERATION",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"step_ceiling\": 12, \"deadline_seconds\": 600, \"cursor_from\": 17, \"cursor_to\": 17, \"catalogue_hash\": \"c77950c6e2f583239f406cef26f2eb8bafd609b2020d97e82428ee011ddb6266\", \"registry_version\": \"tool-registry-v4\", \"evidence_governed\": true, \"disable_tool_validation\": true}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "5f79787447f38807a6a2282df6ca2b697f5c4694b6df39d99faa51ee53618477",
+   "hash": "f866876dffee493e9448f9111dff8a767a75df214a911ca5f0f31101136dc50d"
+  },
+  {
+   "event_seq": 19,
+   "event_id": "151f711b-01f2-499a-abfc-fad06275ad1e",
+   "run_id": "run-first-worker-1",
+   "type": "CALL_ENTERED",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"iteration_seq\": 18}",
+   "ts": "2026-11-25T01:05:22Z",
+   "prev_hash": "f866876dffee493e9448f9111dff8a767a75df214a911ca5f0f31101136dc50d",
+   "hash": "d43cd8d99cd07bf79d64018433a6360355768df7685c85b37c1dee3462760cfb"
+  },
+  {
+   "event_seq": 20,
+   "event_id": "bcbd4598-a247-42a7-ae8a-16aaecb384a3",
+   "run_id": "run-first-worker-1",
+   "type": "RESPONSE_EVIDENCE",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"iteration\": 1, \"iteration_seq\": 18, \"outcome\": \"unresolved\", \"failure_class\": \"helper_exit_no_envelope\", \"seam_evidence\": {\"failure_class\": \"helper_exit_no_envelope\", \"diagnostic\": \"connector helper exited 1\", \"helper_exit\": 1, \"stderr\": \"Traceback (most recent call last):\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\\\", line 302, in <module>\\n    sys.exit(main())\\n             ^^^^^^\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\\\", line 268, in main\\n    print(json.dumps(call(req)))\\n                     ^^^^^^^^^\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\\\", line 78, in call\\n    with opener.open(request, timeout=request_timeout()) as response:\\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 521, in open\\n    response = meth(req, response)\\n               ^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 630, in http_response\\n    response = self.parent.error(\\n               ^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 559, in error\\n    return self._call_chain(*args)\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 492, in _call_chain\\n    result = func(*args)\\n             ^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 639, in http_error_default\\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\\nurllib.error.HTTPError: HTTP Error 400: Bad Request\"}, \"provenance\": \"nvidia_helper_serialized\"}",
+   "ts": "2026-11-25T01:05:23Z",
+   "prev_hash": "d43cd8d99cd07bf79d64018433a6360355768df7685c85b37c1dee3462760cfb",
+   "hash": "51b1d68b6b40ff9f09a6e70e69e79d198b3b7e1857b84c19f278de8039e4911b"
+  },
+  {
+   "event_seq": 21,
+   "event_id": "be79af8f-7fbb-4c3d-aaf7-d777e44523e9",
+   "run_id": "run-first-worker-1",
+   "type": "LOOP_STALLED",
+   "actor": "loop",
+   "affected": "[\"inst-crew-1-1\"]",
+   "payload": "{\"assembly_id\": \"assembly-crew-1-1\", \"instance_id\": \"inst-crew-1-1\", \"activated_seq\": 17, \"case_id\": \"case-crew-1\", \"case_version\": 1, \"ground\": \"provider_failure\", \"iterations\": 1, \"detail\": \"provider_error: connector helper exited 1: Traceback (most recent call last):\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\\\", line 302, in <module>\\n    sys.exit(main())\\n             ^^^^^^\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\\\", line 268, in main\\n    print(json.dumps(call(req)))\\n                     ^^^^^^^^^\\n  File \\\"/home/hatch/workspace/custom-connectors/custom.nvidia/bin/nvidia_api.py\\\", line 78, in call\\n    with opener.open(request, timeout=request_timeout()) as response:\\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 521, in open\\n    response = meth(req, response)\\n               ^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 630, in http_response\\n    response = self.parent.error(\\n               ^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 559, in error\\n    return self._call_chain(*args)\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 492, in _call_chain\\n    result = func(*args)\\n             ^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/urllib/request.py\\\", line 639, in http_error_default\\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\\nurllib.error.HTTPError: HTTP Error 400: Bad Request\"}",
+   "ts": "2026-11-25T01:05:23Z",
+   "prev_hash": "51b1d68b6b40ff9f09a6e70e69e79d198b3b7e1857b84c19f278de8039e4911b",
+   "hash": "0ff9320f816d907befa769bad01fcee1411c22e63e80eb12128175b8b628de65"
+  }
+ ]
+}
