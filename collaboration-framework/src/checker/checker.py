@@ -1406,6 +1406,28 @@ def _dispatch_result(events, state):
             ev["payload"].get("catalogue_contract") in \
             (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
 
+    def working_set_declared(instance_id):
+        """Whether the instance's sealed generated record
+        declares the working-set contract (the run-3
+        correction; the value is this checker's own copy,
+        _WORKING_SET_CONTRACT below). Under that
+        declaration the freedom-first setup pass's carriage
+        honesty stands: a retrieval result may lawfully
+        exceed the per-result ceiling (the read returns its
+        full content; package growth is governed by the
+        working-set budget at carriage, verified in loop
+        correspondence), and the aggregate admission does
+        not stand — so neither the over-ceiling problem nor
+        the aggregate verification below applies to these
+        assemblies' dispatches. Provenance verification —
+        the retained content's hash, size, authority path —
+        applies exactly as it does to every governed
+        dispatch: the record's truth does not move."""
+        ev = generated_by_instance.get(instance_id)
+        return ev is not None and \
+            ev["payload"].get("working_set_contract") == \
+            _WORKING_SET_CONTRACT
+
     def declared_contract(instance_id):
         ev = generated_by_instance.get(instance_id)
         return ev["payload"].get("catalogue_contract") \
@@ -1722,6 +1744,7 @@ def _dispatch_result(events, state):
                 "reconciled": False,
                 "tool": p.get("tool"),
                 "governed": retrieval_governed(iid),
+                "working_set": working_set_declared(iid),
                 "parameters": (requests.get((iid, rid)) or {})
                 .get("parameters"),
                 "authority": None}
@@ -1801,12 +1824,14 @@ def _dispatch_result(events, state):
                     d.get("tool") in RETRIEVAL_TOOLS and \
                     p.get("outcome") in _OUTCOME_VOCAB:
                 if p.get("outcome") == "uncertain":
-                    retrieval_outcomes.append(
-                        (seq, d["instance_id"], did,
-                         RETRIEVAL_RESULT_CEILING))
+                    if not d.get("working_set"):
+                        retrieval_outcomes.append(
+                            (seq, d["instance_id"], did,
+                             RETRIEVAL_RESULT_CEILING))
                 elif p.get("outcome") == "failure":
-                    retrieval_outcomes.append(
-                        (seq, d["instance_id"], did, 0))
+                    if not d.get("working_set"):
+                        retrieval_outcomes.append(
+                            (seq, d["instance_id"], did, 0))
                 elif p.get("outcome") == "result":
                     result = p.get("result")
                     size = RETRIEVAL_RESULT_CEILING
@@ -1843,7 +1868,9 @@ def _dispatch_result(events, state):
                             else:
                                 size = recorded
                             if recorded > \
-                                    RETRIEVAL_RESULT_CEILING:
+                                    RETRIEVAL_RESULT_CEILING \
+                                    and not d.get(
+                                        "working_set"):
                                 problem(
                                     "retrieval_result_over_"
                                     "ceiling",
@@ -1866,8 +1893,9 @@ def _dispatch_result(events, state):
                                 detail="the outcome's path is "
                                        "not the request's "
                                        "path")
-                    retrieval_outcomes.append(
-                        (seq, d["instance_id"], did, size))
+                    if not d.get("working_set"):
+                        retrieval_outcomes.append(
+                            (seq, d["instance_id"], did, size))
         elif t == "TOOL_RECONCILED":
             did = p.get("dispatch_id")
             if role_of(actor) != "examiner":
@@ -1913,6 +1941,13 @@ def _dispatch_result(events, state):
     # sums — the stall discipline closes accounting before
     # the stall, so a dispatch admitted in the final window
     # stands there with an outcome, uncertainty included.
+    # Working-set assemblies stand outside this verification
+    # (the freedom-first setup pass): their doorway applies
+    # no aggregate admission, so their dispatches' outcomes
+    # are never collected above and their admissions are
+    # skipped below — there is no rule here for the checker
+    # to reconstruct, and their carriage is verified in
+    # loop correspondence against the working-set budget.
     def window_start(instance_id, before_seq):
         start = 0
         for iter_seq, cursor_to in iterations.get(
@@ -1938,7 +1973,7 @@ def _dispatch_result(events, state):
                     total=total,
                     ceiling=RETRIEVAL_AGGREGATE_CEILING)
     for did, d in dispatches.items():
-        if not d.get("governed") or \
+        if not d.get("governed") or d.get("working_set") or \
                 d.get("tool") not in RETRIEVAL_TOOLS:
             continue
         start = window_start(d["instance_id"], d["seq"])

@@ -20,7 +20,7 @@ its provenance, marked not carried, never silently
 truncated.
 
 This rehearsal proves the correction offline, on the
-examiner's narrow examination list, in two scenarios
+examiner's narrow examination list, in three scenarios
 driven by a deterministic scripted stand-in through a
 stub at the real NVIDIA connector seam — the combined
 rehearsal's pattern. The REAL loop, native adapter (with
@@ -38,9 +38,8 @@ driver stages it:
   (2) read sources/a3-pass.md whole;
   (3) read sources/stock-take.md AGAIN (the repeat);
   (4) read sources/index-tail.md in a range (lines
-      1–4 — the file's lines run long, and a wider
-      range would exceed the per-result ceiling and be
-      refused whole), as its glossary entry directs;
+      1–4), proving a range stands in the set as the
+      range actually retrieved, never expanded;
   (5) yield.
 The witness reads the packages from the captured
 requests and the outcomes from the record, and asserts
@@ -57,6 +56,29 @@ stated over-budget behaviour: the entry that does not
 fit stands by its provenance alone, marked not carried,
 while a later smaller entry that does fit is still
 carried.
+
+Scenario C (freedom) is the freedom-first setup pass's
+proof (2026-11-24), on the same combined configuration
+and the same released source set:
+  (1) read sources/index-tail.md WHOLE — 40,953 bytes,
+      over the retrieval regime's per-result ceiling:
+      under the working-set contract the read returns
+      its full content as a recorded result, and the
+      next wake's working set carries it whole;
+  (2) read sources/stock-take.md whole;
+  (3) read sources/a3-pass.md whole — the fourth wake
+      then holds all three sources together, 57,562
+      bytes carried against the 64,000 budget;
+  (4) read sources/not-stocked.md — a path outside the
+      case's sealed evidence boundary: the doorway
+      refuses it, and the package presenting the
+      refusal carries the failure instruction (what
+      was asked, why in plain terms, the stocked
+      sources as the working alternative);
+  (5) read sources/not-stocked.md AGAIN — the package
+      presenting the second refusal names it as a
+      repeat: this exact call already failed at step 4;
+  (6) yield.
 
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario: the run record, the stub's
@@ -251,6 +273,53 @@ def build_script_continuity():
                            "A3 pass, the stock-take "
                            "again, and a range of the "
                            "index tail."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_freedom():
+    chat = [
+        _identify_step("freedom"),
+        # 1 — the whole pull of index-tail: 40,953 bytes,
+        # over the per-result ceiling the old populations
+        # refuse at.
+        {"respond": _native_call(
+            "fc-f-1", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 2 — the second source whole.
+        {"respond": _native_call(
+            "fc-f-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 3 — the third source whole.
+        {"respond": _native_call(
+            "fc-f-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 4 — a path outside the sealed boundary: the
+        # doorway refuses it; the presenting package
+        # carries the failure instruction.
+        {"respond": _native_call(
+            "fc-f-4", "sandbox-read",
+            {"path": "sources/not-stocked.md"}),
+         "action": None},
+        # 5 — the identical call again: the presenting
+        # package names it as a repeat of step 4.
+        {"respond": _native_call(
+            "fc-f-5", "sandbox-read",
+            {"path": "sources/not-stocked.md"}),
+         "action": None},
+        # 6 — the yield.
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Read all three sources whole; "
+                           "asked twice for a file the "
+                           "briefcase does not hold."})),
          "action": None},
     ]
     return {"chat": chat,
@@ -583,9 +652,9 @@ def _run_scenario(work_dir, *, scenario, brief,
 
 
 def run_rehearsal(work_dir):
-    """Run both scenarios under `work_dir` (created
+    """Run all three scenarios under `work_dir` (created
     fresh). Returns {"continuity": report, "budget":
-    report}."""
+    report, "freedom": report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -669,4 +738,27 @@ def run_rehearsal(work_dir):
                 "configuration's judgement is native. "
                 "Rehearsal furniture by a scripted "
                 "stand-in examiner.")
-    return {"continuity": continuity, "budget": budget}
+
+    # Scenario C — the freedom-first setup pass: the
+    # released source set under the same combined
+    # configuration as continuity.
+    freedom = _run_scenario(
+        work_dir / "freedom",
+        scenario="freedom",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_freedom(),
+        grounds="Working-set rehearsal, freedom "
+                "scenario (the freedom-first setup "
+                "pass): the scripted stand-in's probe "
+                "trials settled 5/5 native, and the "
+                "combined configuration's judgement is "
+                "native. Rehearsal furniture by a "
+                "scripted stand-in examiner.")
+    return {"continuity": continuity, "budget": budget,
+            "freedom": freedom}

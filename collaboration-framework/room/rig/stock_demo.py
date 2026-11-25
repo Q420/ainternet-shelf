@@ -25,11 +25,21 @@ verification smoke set before any worker is admitted:
     it is destroyed, a stocking-failure record is written, and no
     executable demo room is left standing.
 
+  * completability is verified before the room is created (the
+    freedom-first setup pass, 2026-11-24): every required source
+    must be carriable under the working-set content budget —
+    whole, since ranges partition a file and its whole content
+    through ranges weighs the same — and the per-source facts
+    (size, lines, how it can be obtained) are written into the
+    stocking record. A source that could not be carried refuses
+    the stocking here, at setup.
+
 The stocking record (<base>/<name>.stocking.json, host-side beside
 the room state) carries the manifest identity, the per-source
 hashes as verified host-side and in-room, the declared envelope,
-and every smoke result — the record the demonstration's checker
-reconstructs the stocking from (the paper's hop 2).
+the completability facts, and every smoke result — the record the
+demonstration's checker reconstructs the stocking from (the
+paper's hop 2).
 
 Nothing here talks to a provider or a model. Offline only.
 """
@@ -153,6 +163,106 @@ def verify_source_set(manifest_path=DEFAULT_MANIFEST_PATH,
                 f"{want}; the file will not be stocked")
         stock[rel] = data
     return manifest, mhash, stock
+
+
+# -- completability --------------------------------------------------------
+# The freedom-first setup pass (2026-11-24): before a room
+# is stocked, the setup verifies the assignment is
+# COMPLETABLE in the room as configured — every required
+# source obtainable and carriable under the working-set
+# configuration. Run 4's lesson: index-tail (40,953 bytes)
+# could not be pulled whole at all under the inherited
+# per-result ceiling, and no gate had ever asked whether
+# the task could be finished as configured; the worker
+# discovered it at his step 11 instead. The check belongs
+# here, at setup, where a failure costs nothing.
+
+def _working_set_budget():
+    """The working-set content budget the carriage facts
+    are checked against: the framework's own constant when
+    the framework package is importable (the demo driver
+    and the rehearsals run with src/ on the path), else
+    the standing literal — the same number, named here so
+    this module still runs standalone from the rig dir."""
+    try:
+        from framework import tool_policy
+        return tool_policy.WORKING_SET_CONTENT_BUDGET
+    except Exception:
+        return 64000
+
+
+def _line_count(data):
+    """Lines in data, counted as the retrieval performers
+    split them: each line is the bytes up to and including
+    its newline; a final line may lack one."""
+    count = 0
+    start = 0
+    while start < len(data):
+        nl = data.find(b"\n", start)
+        start = len(data) if nl == -1 else nl + 1
+        count += 1
+    return count
+
+
+def check_completability(stock, budget_bytes):
+    """The per-source carriage facts for a stock (a mapping
+    of in-room path to bytes, as verify_source_set
+    returns), and the refusal the setup owes when the
+    assignment cannot be completed as configured. Returns
+    the facts block for the stocking record; raises
+    StockingError naming the source, its size and the
+    budget when a required source could not be carried.
+
+    A source is carriable whole when its size stands
+    within the working-set content budget. Ranges cannot
+    rescue a source that is not: ranges partition the
+    file, so the file's whole content through ranges
+    weighs exactly the file's size, and the working set's
+    first-fit derivation would leave the later ranges
+    standing not-carried — the worker could never hold the
+    source. (The in-room exec door bypasses the working
+    set, but a source the package can never present whole
+    is not a source the assignment may silently depend on:
+    the setup refuses, and the office re-stocks or
+    re-scopes — at setup, not at the worker's step 11.)
+    The accumulated figure — all stocked sources carried
+    together — is recorded as a fact, not a refusal
+    ground: the worker may hold the sources one or two at
+    a time and reach the rest through the room."""
+    facts = []
+    accumulated = 0
+    for rel in sorted(stock):
+        data = stock[rel]
+        size = len(data)
+        accumulated += size
+        facts.append({
+            "path": rel,
+            "bytes": size,
+            "lines": _line_count(data),
+            "obtainable_via": [
+                "sandbox.read (whole pull)",
+                "sandbox.read_range (line ranges)",
+                "container.exec (cat, inside the room)"],
+            "carriable_whole": size <= budget_bytes,
+        })
+    for fact in facts:
+        if not fact["carriable_whole"]:
+            raise StockingError(
+                f"required source {fact['path']} stands at "
+                f"{fact['bytes']} bytes, over the working-set "
+                f"content budget of {budget_bytes} bytes: it "
+                "could not be carried whole, and ranges "
+                "partition the file, so its whole content "
+                "through ranges weighs the same — the "
+                "assignment is not completable as stocked; "
+                "re-stock or re-scope at setup")
+    return {
+        "budget_bytes": budget_bytes,
+        "sources": facts,
+        "accumulated_bytes": accumulated,
+        "accumulated_carriable": accumulated <= budget_bytes,
+        "ok": True,
+    }
 
 
 # -- the smoke set ---------------------------------------------------------
@@ -299,6 +409,18 @@ def stock_demo_room(base, name="demo", manifest_path=None,
     except StockingError as exc:
         refuse(f"source-set verification failed: {exc}")
 
+    # Completability (the freedom-first setup pass): the
+    # assignment must be completable in the room as
+    # configured — every required source carriable under
+    # the working-set budget — verified here, before the
+    # room is created, so a failure costs a setup refusal
+    # and never the worker's steps.
+    try:
+        completability = check_completability(
+            stock, _working_set_budget())
+    except StockingError as exc:
+        refuse(f"completability verification failed: {exc}")
+
     try:
         room = room_mod.create_room(base, name, stock=stock,
                                     limits=dict(DEMO_LIMITS))
@@ -359,6 +481,7 @@ def stock_demo_room(base, name="demo", manifest_path=None,
             "per_execution_wall_s": PER_EXECUTION_WALL_S,
             "cpu_contract": room_mod.CPU_CONTRACT,
         },
+        "completability": completability,
         "smoke": smoke,
         "room_state_executions_at_stocking": len(
             state.get("executions", [])),

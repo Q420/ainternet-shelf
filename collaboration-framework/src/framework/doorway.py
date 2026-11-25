@@ -959,11 +959,23 @@ class Doorway:
         # leaves no claim to settle. Ordered after the grant
         # and temporal checks: a request no grant admits is
         # refused on its grant ground, never on the aggregate.
-        governed = self._retrieval_governed(
-            self._generated_payload(assembly_id))
-        exec_governed = self._exec_governed(
-            self._generated_payload(assembly_id))
-        if governed and tool in _tool_policy.RETRIEVAL_TOOLS:
+        generated = self._generated_payload(assembly_id)
+        governed = self._retrieval_governed(generated)
+        exec_governed = self._exec_governed(generated)
+        # The aggregate admission does not stand under the
+        # working-set contract (freedom-first setup pass,
+        # 2026-11-24): its bound governs the retrieved
+        # content one package SERVES, and under that
+        # contract a package's growth is governed at
+        # carriage by the working-set budget and dedupe —
+        # the protection the aggregate ceiling and the
+        # per-result ceiling together served, kept at the
+        # place the growth happens. Admission here keeps
+        # exactly its authority: the grant check above and
+        # the temporal check; nothing dispatches until the
+        # call is right.
+        if governed and tool in _tool_policy.RETRIEVAL_TOOLS \
+                and not self._working_set_declared(generated):
             ground = self._retrieval_aggregate_problem(
                 state, entry, instance_id)
             if ground is not None:
@@ -1056,6 +1068,28 @@ class Doorway:
             generated.get("catalogue_contract") in (
                 _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT,
                 _tool_policy.EXEC_CATALOGUE_CONTRACT)
+
+    @staticmethod
+    def _working_set_declared(generated):
+        """Whether a sealed generated record declares the
+        working-set contract (the run-3 correction): the
+        combined configuration's assemblies declare it
+        beside their catalogue contract, and their wake
+        packages carry the gathered material forward under
+        the working-set budget. The declaration is the
+        discriminator for the freedom-first setup pass's
+        carriage honesty: under it, a retrieval read
+        returns its full content at execution and package
+        growth is governed at carriage, so the retrieval
+        regime's per-result and aggregate ceilings — the
+        bounds that governed what one package may SERVE —
+        do not stand at admission or execution for these
+        assemblies. The grant check, the boundary
+        enforcement and the temporal admission are
+        untouched: the doorway's authority does not move."""
+        return isinstance(generated, dict) and \
+            generated.get("working_set_contract") == \
+            _tool_policy.WORKING_SET_CONTRACT
 
     def _dispatch_check(self, state, assembly_id, entry,
                         instance_id, tool, parameters):

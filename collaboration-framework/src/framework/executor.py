@@ -60,6 +60,22 @@ from .doorway import EXECUTOR_ACTOR  # noqa: F401  (the identity
 # enforced here, at execution: an oversized result is
 # refused with the bound named — a failure the operation
 # establishes — and nothing partial is returned.
+#
+# The one exception is an assembly declaring the working-set
+# contract (the freedom-first setup pass, 2026-11-24): there
+# a read returns its full content as a recorded result, at
+# whatever size the file stands. The ceiling's real
+# protection was never the file — it was package growth,
+# the attempt-6 blowup — and under the working-set contract
+# package growth is governed where the material is CARRIED:
+# by the working-set budget and dedupe at package
+# construction. Refusing the read itself made a required
+# source (index-tail, 40,953 bytes) unobtainable whole
+# inside a configuration whose whole purpose is that the
+# worker holds his briefcase's contents; the restriction
+# did not name what it protected once the budget stood.
+# Every other population keeps the ceiling exactly as it
+# was: refused, never truncated.
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 
@@ -303,30 +319,39 @@ class Executor:
 
     def _retrieval_context(self, dispatch_id):
         """The dispatch's retrieval context (retrieval
-        piece): (governed, boundary) — whether the assembly
-        behind the dispatch declares the retrieval contract
-        in its sealed record, and the pinned case's sealed
-        evidence boundary. Derived from the record, as every
-        fact the executor acts on is; an assembly that
-        declares nothing else is not governed, and its
-        dispatches perform exactly as they always have."""
+        piece): (governed, boundary, working_set) — whether
+        the assembly behind the dispatch declares the
+        retrieval contract in its sealed record, the pinned
+        case's sealed evidence boundary, and whether the
+        assembly declares the working-set contract (the
+        freedom-first setup pass: under that declaration a
+        read returns its full content and package growth is
+        governed by the working-set budget at carriage, not
+        by the per-result ceiling at execution). Derived
+        from the record, as every fact the executor acts on
+        is; an assembly that declares nothing else is not
+        governed, and its dispatches perform exactly as
+        they always have."""
         state = self.doorway.state()
         entry = state["dispatches"].get(dispatch_id) or {}
         assembly_id, assembly = \
             self.doorway._assembly_entry_of_instance(
                 state, entry.get("instance_id"))
         if assembly_id is None:
-            return False, None
+            return False, None, False
         generated = self.doorway._generated_payload(
             assembly_id)
         governed = self.doorway._retrieval_governed(generated)
+        working_set = isinstance(generated, dict) and \
+            generated.get("working_set_contract") == \
+            _tool_policy.WORKING_SET_CONTRACT
         boundary = None
         if governed and assembly is not None:
             content = self.doorway._pinned_case_content(
                 state, assembly)
             boundary = (content or {}).get(
                 "evidence_boundary")
-        return governed, boundary
+        return governed, boundary, working_set
 
     def _write(self, parameters):
         path = self._sandbox_path(parameters["path"])
@@ -347,10 +372,23 @@ class Executor:
         whole file, bounded — a file over the per-result
         ceiling is refused with the bound named, so
         whole-document injection is impossible through this
-        door too (retrieval scope, the tool contract)."""
+        door too (retrieval scope, the tool contract).
+
+        Under the working-set contract the bound does not
+        stand (freedom-first setup pass, 2026-11-24): the
+        read returns the file's full content as a recorded
+        result, and what enters the worker's packages is
+        governed by the working-set budget and dedupe at
+        carriage. The ceiling protected package growth;
+        the budget is that protection now, at the place
+        the growth happens."""
         path = parameters["path"]
         authority = _authority_or_raise("sandbox.read", path)
         data = self._read_bytes(path)
+        if getattr(self._retrieval_local, "working_set",
+                   False):
+            return _retrieval_result(
+                path, data.decode("utf-8"), authority)
         ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
         if len(data) > ceiling:
             raise RuntimeError(
@@ -480,7 +518,11 @@ class Executor:
         ambiguous, naming the matches; a slice over the
         ceiling is refused with the bound named; a byte
         window is served aligned to character boundaries,
-        and the window actually served is recorded."""
+        and the window actually served is recorded. Under
+        the working-set contract the slice ceiling does not
+        stand, as with sandbox.read (freedom-first setup
+        pass): the range the worker asked for is served
+        whole, and carriage is the budget's business."""
         path = parameters["path"]
         authority = _authority_or_raise("sandbox.read_range",
                                         path)
@@ -543,7 +585,8 @@ class Executor:
             chunk = b"".join(raw for raw, _text
                              in lines[start_idx:end_idx])
             served = (start_idx + 1, end_idx)
-        if len(chunk) > ceiling:
+        if len(chunk) > ceiling and not getattr(
+                self._retrieval_local, "working_set", False):
             raise RuntimeError(
                 f"sandbox.read_range of {path} lines "
                 f"{served[0]}–{served[1]} spans {len(chunk)} "
@@ -711,7 +754,8 @@ class Executor:
         for a failure the operation itself establishes. The
         dispatch's retrieval context (the retrieval piece) —
         whether its assembly declares the retrieval contract,
-        and the pinned case's sealed evidence boundary —
+        the pinned case's sealed evidence boundary, and
+        whether it declares the working-set contract —
         reaches this seam on the executing thread's local
         (set in execute() below), so the seam's shape is the
         one it has always had."""
@@ -795,8 +839,8 @@ class Executor:
             return {"ok": True, "dispatch_id": dispatch_id,
                     "outcome": "uncertain"}
         tool, parameters = source
-        governed, boundary = self._retrieval_context(
-            dispatch_id)
+        governed, boundary, working_set = \
+            self._retrieval_context(dispatch_id)
         box = {}
         # The deadline the join below waits on, as a point on
         # the monotonic clock: the worker rechecks it after
@@ -844,6 +888,7 @@ class Executor:
             # so concurrent executions never share it.
             self._retrieval_local.governed = governed
             self._retrieval_local.boundary = boundary
+            self._retrieval_local.working_set = working_set
             try:
                 box["value"] = self._perform(tool, parameters)
             except Exception as exc:  # the operation's failure

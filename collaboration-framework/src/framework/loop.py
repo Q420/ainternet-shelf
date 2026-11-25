@@ -559,6 +559,18 @@ def _doorway_error_text(ground):
             f"dispatched for this call.")
 
 
+def _plain_ground(ground):
+    """A doorway ground in plain terms — the ground's own
+    sentence with its record-internal citations removed,
+    the cleaning _doorway_error_text applies — standing
+    alone, for the failure instruction's why (Ben's gate
+    ruling, INDEX 475: a refusal states its reason in
+    usable terms, not as a regulation citation)."""
+    plain = re.sub(r"\s*\([^)]*\bR[0-9]+[^)]*\)", "",
+                   ground or "")
+    return re.sub(r"\s+", " ", plain).strip()
+
+
 class Loop:
     """One activation's bounded run.
 
@@ -1652,6 +1664,24 @@ class Loop:
             for entry in tool_results:
                 entry.pop("_translation_seq", None)
         if ws_applies:
+            # Failure instruction (Ben's gate ruling,
+            # INDEX 475; the freedom-first setup pass,
+            # 2026-11-24): in a working-set package, a
+            # presented failure or refusal carries usable
+            # instruction — what was asked, why it failed
+            # in plain terms, and the working alternative
+            # that exists within his grants; an identical
+            # call that already failed is named as a
+            # repeat. A refusal is a gate, not a wall: the
+            # doorway's authority is unchanged — nothing
+            # dispatched until the call was right — this
+            # changes only what the refusal SAYS. Working-
+            # set packages only; every other population's
+            # packages are byte-identical to what they were.
+            self._attach_failure_instructions(
+                tool_results, events, raw_delta, ctx,
+                generated)
+        if ws_applies:
             # Working-set carriage: this delta's retrieval
             # results are presented in the working set (the
             # accumulated set built below), so their
@@ -1765,6 +1795,223 @@ class Loop:
         if working_set is not None:
             package["working_set"] = working_set
         return package, head
+
+    def _attach_failure_instructions(self, tool_results,
+                                     events, raw_delta, ctx,
+                                     generated):
+        """Attach the failure instruction to each failure or
+        refusal entry in tool_results (Ben's gate ruling,
+        INDEX 475; the freedom-first setup pass): what was
+        asked, why it failed in plain terms, the working
+        alternative that exists within his grants, and —
+        where an identical call already failed — the repeat
+        named with the step it first failed at. Everything
+        is derived from the record snapshot the package
+        itself is built from; an alternative is named only
+        where his sealed grants and the case actually offer
+        one — never invented. Entries whose identity cannot
+        be established from the record carry no instruction
+        rather than a guessed one."""
+        content = ctx["content"] or {}
+        requests = {}
+        for ev in events:
+            if ev["type"] == "TOOL_REQUESTED":
+                p = ev["payload"]
+                requests[p.get("request_id")] = (
+                    p.get("tool"), p.get("parameters"))
+        iterations = [
+            ev["payload"].get("cursor_to")
+            for ev in events
+            if ev["type"] == "LOOP_ITERATION"
+            and ev["payload"].get("instance_id")
+            == ctx["instance_id"]]
+
+        def step_of(seq):
+            return sum(1 for c in iterations
+                       if isinstance(c, int)
+                       and not isinstance(c, bool)
+                       and c < seq)
+
+        def canon(parameters):
+            if not isinstance(parameters, dict):
+                return None
+            return json.dumps(parameters, sort_keys=True)
+
+        grounds = {}
+        occurrences = []
+        # Occurrences are collected from the whole snapshot,
+        # not the delta: a repeat is a call that failed in an
+        # EARLIER window, already presented and scrolled out
+        # of the delta — the record remembers it even where
+        # the package no longer carries it.
+        for ev in events:
+            p = ev["payload"]
+            if ev["type"] == "TOOL_OUTCOME" and \
+                    p.get("outcome") == "failure":
+                tool, params = requests.get(
+                    p.get("request_id"), (None, None))
+                occurrences.append((ev["event_seq"], (
+                    "call", tool, canon(params))))
+            elif ev["type"] == "REJECTION" and \
+                    p.get("attempted_type") == "TOOL_DISPATCHED":
+                grounds[p.get("request_id")] = p.get("ground")
+                tool, params = requests.get(
+                    p.get("request_id"), (None, None))
+                occurrences.append((ev["event_seq"], (
+                    "call", tool, canon(params))))
+            elif ev["type"] == "TRANSLATION_RECORDED":
+                for centry in p.get("calls") or []:
+                    if centry.get("refusal_class"):
+                        occurrences.append((ev["event_seq"], (
+                            "translation", centry.get("name"),
+                            centry.get("arguments_sha256"))))
+
+        stocked = []
+        for gentry in content.get("glossary") or []:
+            if isinstance(gentry, dict):
+                addr = gentry.get("address")
+                if isinstance(addr, str) and \
+                        addr.startswith("sources/"):
+                    stocked.append(addr)
+        if not stocked:
+            boundary = content.get("evidence_boundary")
+            if isinstance(boundary, str):
+                stocked = re.findall(r"sources/[\w.\-]+",
+                                     boundary)
+            elif isinstance(boundary, list):
+                stocked = [b for b in boundary
+                           if isinstance(b, str)
+                           and b.startswith("sources/")]
+        grants = (generated or {}).get("grants") or []
+        granted_tools = list(dict.fromkeys(
+            g.get("tool") for g in grants
+            if isinstance(g, dict) and g.get("tool")))
+        offered_names = [t.get("tool") for t in
+                         content.get("tool_catalogue") or []
+                         if isinstance(t, dict)
+                         and t.get("tool")]
+
+        def alternative(tool, params, why_text):
+            path = params.get("path") if isinstance(
+                params, dict) else None
+            if isinstance(path, str) and \
+                    path.startswith("sources/") and \
+                    stocked and path not in stocked:
+                return (
+                    "your briefcase holds: "
+                    + ", ".join(stocked)
+                    + " — pull one of those (sandbox.list "
+                      "on sources/ shows each file with its "
+                      "size). If the material you need is "
+                      "not in your briefcase, say so in your "
+                      "yield: asking is how the office "
+                      "learns what to stock.")
+            if "exhausted" in why_text and \
+                    len(granted_tools) > 1:
+                others = [t for t in granted_tools
+                          if t != tool]
+                return (
+                    "that door's grant count is spent for "
+                    "this run; your other granted doors "
+                    "stand: " + ", ".join(others) + ".")
+            if isinstance(path, str) and \
+                    "matches" in why_text and \
+                    "sandbox.read_range" in granted_tools:
+                return (
+                    "pull the section by line range "
+                    "instead: sandbox.read_range with "
+                    "start_line and end_line — the lines "
+                    "named above are the matches.")
+            if isinstance(path, str) and \
+                    path.startswith("scratch/") and \
+                    "no file stands" in why_text:
+                return (
+                    "scratch/ is your writing space and "
+                    "nothing stands there yet — create it "
+                    "with sandbox.write, or in your office "
+                    "with container.exec.")
+            if isinstance(path, str) and \
+                    "container.exec" in granted_tools:
+                return (
+                    "read it inside your office instead: "
+                    "container.exec with cmd [\"cat\", "
+                    f"\"{path}\"] — the room serves the "
+                    "whole file.")
+            if tool is not None and offered_names and \
+                    tool not in offered_names:
+                return (
+                    "the tools on offer are: "
+                    + ", ".join(offered_names) + ".")
+            return None
+
+        for entry in tool_results:
+            if entry.get("outcome") not in ("failure",
+                                            "refused"):
+                continue
+            if entry.get("result") is not None:
+                continue
+            seq = entry.get("event_seq")
+            tool = params = args_hash = None
+            identity = None
+            if entry.get("request_id") is not None or \
+                    entry.get("dispatch_id") is not None:
+                tool, params = requests.get(
+                    entry.get("request_id"), (None, None))
+                identity = ("call", tool, canon(params))
+            elif entry.get("refusal_class"):
+                for ev in raw_delta:
+                    if ev["event_seq"] != seq or \
+                            ev["type"] != \
+                            "TRANSLATION_RECORDED":
+                        continue
+                    for centry in \
+                            ev["payload"].get("calls") or []:
+                        if centry.get("provider_call_id") \
+                                == entry.get(
+                                    "provider_call_id") and \
+                                centry.get("refusal_class"):
+                            tool = centry.get("name")
+                            args_hash = centry.get(
+                                "arguments_sha256")
+                            identity = ("translation", tool,
+                                        args_hash)
+            if identity is None or tool is None:
+                continue
+            if entry.get("refusal_class") == "doorway_refused":
+                why = _plain_ground(grounds.get(
+                    entry.get("request_id"))) or \
+                    entry.get("error") or ""
+            elif entry.get("outcome") == "refused":
+                why = entry.get("error") or ""
+            else:
+                why = entry.get("detail") or ""
+                if "No such file or directory" in why and \
+                        isinstance(params, dict) and \
+                        isinstance(params.get("path"), str):
+                    why = (f"no file stands at "
+                           f"{params['path']} in your "
+                           f"briefcase")
+            instruction = {
+                "asked": {"tool": tool,
+                          "parameters": params}
+                if args_hash is None else
+                {"tool": tool,
+                 "arguments_sha256": args_hash},
+                "why": why,
+                "alternative": alternative(tool, params, why),
+            }
+            earlier = [s for s, ident in occurrences
+                       if ident == identity
+                       and isinstance(seq, int)
+                       and s < seq]
+            if earlier:
+                first_step = step_of(max(earlier))
+                instruction["repeat"] = {
+                    "already_failed_step": first_step,
+                    "note": "this exact call already failed "
+                            f"at step {first_step} for this "
+                            "reason"}
+            entry["instruction"] = instruction
 
     def _relevant(self, ctx, ev):
         """Whether an event belongs in this activation's

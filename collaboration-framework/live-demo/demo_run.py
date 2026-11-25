@@ -82,10 +82,15 @@ operating choice of this driver, stated as such, not a
 provider figure. Identify and probe calls precede the
 loop and are not paced, as in the harness's paced runs.
 
-Bounds are the scoped ones (first_worker_run.BOUNDS:
-12 steps, 600 s activation deadline — the one
-authoritative clock); the adapter's per-call span is
-the paper §3.3 300 s; the room's envelope is the
+Bounds are this driver's re-derived ones (the
+freedom-first setup pass, 2026-11-24): DEMO_BOUNDS —
+20 steps, 1,200 s activation deadline (the one
+authoritative clock) — sized to the task as stocked,
+with the derivation recorded beside the constant and
+in every run report; the harness's standing
+first_worker_run.BOUNDS (12 steps, 600 s) still govern
+the rehearsals. The adapter's per-call span is the
+paper §3.3 300 s; the room's envelope is the
 stocking's declared one (paper §1.4).
 
 The combined configuration (INDEX 476; Ben's
@@ -297,6 +302,14 @@ ASSIGNMENT_COMBINED = (
 # office carries it into the issued case as its own
 # component; it stands in his wake package inside the
 # case, not merely named in the assignment prose.
+# Each source's entry carries its concrete facts (the
+# freedom-first setup pass, 2026-11-24): its size and
+# line count as stocked — the same facts the stocking
+# record's completability block verifies — and, under
+# the working-set configuration, every source pulls
+# whole or in ranges at his choice; the earlier
+# "pull it in ranges, not whole" instruction for
+# index-tail named a ceiling that no longer stands.
 GLOSSARY = [
     {"address": "sources/stock-take.md",
      "description": "Vane's stock-take of the whole "
@@ -304,18 +317,23 @@ GLOSSARY = [
                     "actually been proven, what has "
                     "not, and her four worries — the "
                     "sharpest single map of where "
-                    "things stand."},
+                    "things stand. 11,946 bytes, "
+                    "155 lines — pull it whole or in "
+                    "ranges, your choice."},
     {"address": "sources/a3-pass.md",
      "description": "Vane's Piece A3 pass letter "
                     "(2026-11-23): the bounded loop's "
                     "examination verdict — what it "
-                    "closed and what it left open."},
+                    "closed and what it left open. "
+                    "4,663 bytes, 55 lines — pull it "
+                    "whole or in ranges, your choice."},
     {"address": "sources/index-tail.md",
      "description": "The framework INDEX, entries "
                     "165-187: the decision record for "
                     "the agent-layer pieces and the "
-                    "stock-take. Long — pull it in "
-                    "ranges, not whole."},
+                    "stock-take. 40,953 bytes, "
+                    "24 lines — pull it whole or in "
+                    "ranges, your choice."},
     {"address": "scratch/",
      "description": "Your writing space: drafts and "
                     "the deliverable live here — write "
@@ -351,6 +369,38 @@ GRANTS_COMBINED = (
         "side_effect_class": "write",
         "bound": {"count": 4},
         "authority_trace": COMBINED_TRACE}])
+
+
+# The demonstration's loop bounds, re-derived from the
+# task as stocked (the freedom-first setup pass,
+# 2026-11-24 — Ben: "testing him over and over again is
+# going to explain nothing. We have to fix the room."
+# The inherited bounds — 12 steps, 600 s — were scoped
+# when the sources were believed to total ~17 KB; the
+# stocked sources total 57,562 bytes, and run 4 spent
+# its 12 steps reaching the right move at the ceiling).
+# Steps are accounting, not rationing: the ceiling is
+# sized to the honest path with slack, and the deadline
+# accommodates the step count at this driver's pacing.
+DEMO_BOUNDS = {"step_ceiling": 20, "deadline_seconds": 1200}
+BOUNDS_DERIVATION = (
+    "step ceiling 20: the honest path is 5 steps (three "
+    "whole reads, one write, one yield); pulling "
+    "index-tail by ranges instead of whole adds up to 6; "
+    "slack of 9 covers the missteps, retries, lists and "
+    "searches runs 3-4 actually spent (7-8 steps on "
+    "failures, repeats and silence) — 20 steps is four "
+    "times the honest path. Deadline 1,200 s: 20 steps x "
+    "(the 20 s pacing interval + a 40 s per-call "
+    "allowance, ~4x this route's observed per-call "
+    "latency; runs 3-4 ran 12 iterations in ~240-290 s) "
+    "= 1,200 s. The deadline remains the one "
+    "authoritative clock; a single call may still "
+    "lawfully take its 300 s adapter span within it. "
+    "Grant counts stand as commissioned (exec 12, "
+    "retrieval 12 per tool and prefix, write 4): they do "
+    "not bind the honest or the ranged path, so the "
+    "re-derivation leaves them.")
 
 
 def _stage_sandbox_sources(sandbox_dir, manifest):
@@ -513,7 +563,8 @@ def _commission_and_issue(store, manifest_hash,
     Returns (doorway, office, gen, tok, issued). Raises
     RuntimeError on any failure."""
     brief = _commission_brief(assignment, manifest_hash,
-                              glossary=glossary)
+                              glossary=glossary,
+                              bounds=DEMO_BOUNDS)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -563,10 +614,10 @@ def _commission_and_issue(store, manifest_hash,
         raise RuntimeError(
             "the issued case's evidence boundary does "
             "not identify the source manifest hash")
-    if (content or {}).get("loop_bounds") != BOUNDS:
+    if (content or {}).get("loop_bounds") != DEMO_BOUNDS:
         raise RuntimeError(
             "the issued case's loop_bounds are not the "
-            "scoped bounds")
+            "demonstration's re-derived bounds")
     if glossary is not None and \
             (content or {}).get("glossary") != glossary:
         raise RuntimeError(
@@ -1047,6 +1098,13 @@ def run_demo():
                         "and no provider figure is "
                         "claimed",
             },
+            "bounds": {
+                "step_ceiling":
+                    DEMO_BOUNDS["step_ceiling"],
+                "deadline_seconds":
+                    DEMO_BOUNDS["deadline_seconds"],
+                "derivation": BOUNDS_DERIVATION,
+            },
             "loop_result": {
                 "ok": result.get("ok"),
                 "outcome": result.get("outcome"),
@@ -1191,6 +1249,25 @@ def verify_config():
                and deliverable["present_at_stocking_end"]
                is False,
                json.dumps(deliverable)[:200])
+        completability = stocking.get("completability") \
+            or {}
+        comp_sources = completability.get("sources") or []
+        expect("stocking: completability verified — "
+               "every source carriable whole under the "
+               "working-set budget, the accumulated set "
+               "carriable together (the freedom-first "
+               "setup pass)",
+               completability.get("ok") is True
+               and len(comp_sources) == 3
+               and all(f.get("carriable_whole") is True
+                       for f in comp_sources)
+               and completability.get(
+                   "accumulated_bytes")
+               == sum(f.get("bytes", 0)
+                      for f in comp_sources)
+               and completability.get(
+                   "accumulated_carriable") is True,
+               json.dumps(completability)[:300])
         tree = Path(stocking["tree"])
         room = room_mod.load_room(rooms_base, "demo")
         room.destroy(remove_tree=True)
@@ -1211,11 +1288,11 @@ def verify_config():
         except RuntimeError as exc:
             expect("commission: issue + pre-activation "
                    "verification (manifest in boundary, "
-                   "scoped bounds)", False, str(exc))
+                   "re-derived bounds)", False, str(exc))
         if commissioned is not None:
             expect("commission: issue + pre-activation "
                    "verification (manifest in boundary, "
-                   "scoped bounds)", True)
+                   "re-derived bounds)", True)
             doorway, office, gen, tok, issued = \
                 commissioned
 

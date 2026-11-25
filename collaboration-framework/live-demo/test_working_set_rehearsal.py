@@ -44,6 +44,26 @@ worker that not-carried material stands in the record
 and may be re-pulled with its retrieval tools; zero
 leftovers (no bwrap standing; the scratch tree removed).
 
+The freedom scenario witnesses the freedom-first setup
+pass (2026-11-24) on the same combined configuration:
+a whole pull of index-tail (40,953 bytes — over the
+retrieval regime's 12,000-byte per-result ceiling)
+returns a recorded result and is carried whole in the
+next wake's working set; the fourth wake holds all
+three sources together (57,562 bytes, within the
+budget); the package presenting the doorway's refusal
+of an out-of-boundary read carries the failure
+instruction — what was asked, the plain-terms why, the
+stocked sources as the working alternative — and the
+package presenting the identical second refusal names
+it as a repeat of step 4; the checker stands eleven
+checks, all ok, over this record too. The stocking
+completability check is witnessed directly: the
+standing sources' per-source facts (size, lines,
+carriable whole, the accumulated set carriable
+together), and a synthetic 70,001-byte required source
+refused at setup, named with its size and the budget.
+
 Run: python3 live-demo/test_working_set_rehearsal.py
 Exits 0 when every check passes.
 """
@@ -67,6 +87,7 @@ from fabric.canonical import canonical, sha256_hex  # noqa: E402
 
 from framework import tool_policy  # noqa: E402
 import working_set_rehearsal as rehearsal  # noqa: E402
+import stock_demo  # noqa: E402
 
 FAILURES = []
 CHECKS = [0]
@@ -552,6 +573,214 @@ def main():
               f"last={ {k: last.get(k) for k in ('path', 'content_carried', 'not_carried_reason', 'content_sha256')} }")
         _check_commitments("budget", bwork, packages, 9)
         _check_checker("budget", rep)
+
+        # ================= freedom =================
+        # The freedom-first setup pass (2026-11-24):
+        # carriage honesty at the whole pull, failure
+        # instruction at the genuine wall, the repeat
+        # named.
+        rep = reports["freedom"]
+        fwork = work / "freedom"
+        check("freedom: the run yields in six "
+              "iterations",
+              rep["outcome"] == "yield"
+              and rep["iterations"] == 6,
+              f"{rep['outcome']} / {rep['iterations']}")
+        check("freedom: the sealed record declares "
+              "the working-set contract",
+              rep["sealed_working_set_contract"]
+              == tool_policy.WORKING_SET_CONTRACT)
+        packages = _packages(fwork)
+        evs = _events(fwork)
+        f_requests = {}
+        for e in evs:
+            if e["type"] == "TOOL_REQUESTED":
+                p = _payload(e)
+                f_requests[p.get("request_id")] = (
+                    p.get("tool"), p.get("parameters") or {})
+        f_dispatched = [_payload(e) for e in evs
+                        if e["type"] == "TOOL_DISPATCHED"]
+        check("freedom: exactly three dispatches — "
+              "the three whole reads; the two "
+              "out-of-boundary calls were refused at "
+              "the doorway and never dispatched",
+              [f_requests.get(d.get("request_id"),
+                              (None, {}))[1].get("path")
+               for d in f_dispatched] == [
+                  "sources/index-tail.md",
+                  "sources/stock-take.md",
+                  "sources/a3-pass.md"],
+              f"{[f_requests.get(d.get('request_id'), (None, {})) for d in f_dispatched]}")
+        f_outcomes = {}
+        for e in evs:
+            if e["type"] == "TOOL_OUTCOME":
+                p = _payload(e)
+                f_outcomes[p.get("dispatch_id")] = p
+        tail_outcome = f_outcomes.get(
+            f_dispatched[0].get("dispatch_id")) or {}
+        tail_result = tail_outcome.get("result") or {}
+        index_tail_f = (fwork / "run" / "sandbox"
+                        / "sources"
+                        / "index-tail.md").read_bytes()
+        stock_take_f = (fwork / "run" / "sandbox"
+                        / "sources"
+                        / "stock-take.md").read_bytes()
+        a3_pass_f = (fwork / "run" / "sandbox" / "sources"
+                     / "a3-pass.md").read_bytes()
+        check("freedom: the whole pull of index-tail "
+              "stands in the record as a result — "
+              "40,953 bytes, over the 12,000-byte "
+              "per-result ceiling the old populations "
+              "refuse at, its content the file itself",
+              tail_outcome.get("outcome") == "result"
+              and tail_result.get("content_bytes")
+              == 40953
+              and tail_result.get("content_bytes")
+              > tool_policy.RETRIEVAL_RESULT_CEILING
+              and tail_result.get("content")
+              == index_tail_f.decode("utf-8")
+              and tail_result.get("content_sha256")
+              == INDEX_TAIL_SHA256,
+              f"{tail_result.get('content_bytes')}")
+        entries_f2 = (packages[2].get("working_set")
+                      or {}).get("entries") or []
+        check("freedom: the wake after the whole pull "
+              "carries index-tail whole in the working "
+              "set — one entry, the whole-file served "
+              "descriptor, full content, carried",
+              len(entries_f2) == 1
+              and entries_f2[0].get("path")
+              == "sources/index-tail.md"
+              and (entries_f2[0].get("served") or {})
+              .get("kind") == "whole"
+              and entries_f2[0].get("content")
+              == index_tail_f.decode("utf-8")
+              and entries_f2[0].get("content_bytes")
+              == 40953
+              and entries_f2[0].get("content_carried")
+              is True,
+              f"{[(e.get('path'), e.get('content_bytes')) for e in entries_f2]}")
+        ws_f4 = packages[4].get("working_set") or {}
+        entries_f4 = ws_f4.get("entries") or []
+        check("freedom: the fourth wake holds all "
+              "three sources together, each whole and "
+              "carried — 57,562 bytes against the "
+              "64,000 budget",
+              [e.get("path") for e in entries_f4] == [
+                  "sources/index-tail.md",
+                  "sources/stock-take.md",
+                  "sources/a3-pass.md"]
+              and [e.get("content") for e in entries_f4]
+              == [index_tail_f.decode("utf-8"),
+                  stock_take_f.decode("utf-8"),
+                  a3_pass_f.decode("utf-8")]
+              and all(e.get("content_carried") is True
+                      for e in entries_f4)
+              and ws_f4.get("content_bytes") == 57562
+              and ws_f4.get("budget_bytes") == BUDGET,
+              f"{[(e.get('path'), e.get('content_bytes'), e.get('content_carried')) for e in entries_f4]} "
+              f"total={ws_f4.get('content_bytes')}")
+
+        def refused_entry(package):
+            for tr in package.get("tool_results") or []:
+                if tr.get("outcome") == "refused" and \
+                        tr.get("refusal_class") \
+                        == "doorway_refused":
+                    return tr
+            return {}
+
+        first_refusal = refused_entry(packages[5])
+        instr5 = first_refusal.get("instruction") or {}
+        check("freedom: the package presenting the "
+              "out-of-boundary refusal carries the "
+              "failure instruction — what was asked, "
+              "the plain-terms why (boundary membership, "
+              "no regulation citation), the stocked "
+              "sources as the working alternative — "
+              "and no repeat (nothing identical had "
+              "failed before it)",
+              instr5.get("asked") == {
+                  "tool": "sandbox.read",
+                  "parameters": {
+                      "path": "sources/not-stocked.md"}}
+              and "not a member of the pinned case's "
+                  "sealed evidence boundary"
+                  in (instr5.get("why") or "")
+              and "R44" not in (instr5.get("why") or "")
+              and all(name in (
+                  instr5.get("alternative") or "")
+                  for name in (
+                      "sources/stock-take.md",
+                      "sources/a3-pass.md",
+                      "sources/index-tail.md"))
+              and "repeat" not in instr5,
+              f"{instr5}")
+        second_refusal = refused_entry(packages[6])
+        instr6 = second_refusal.get("instruction") or {}
+        repeat6 = instr6.get("repeat") or {}
+        check("freedom: the package presenting the "
+              "identical second refusal names it as a "
+              "repeat — this exact call already failed "
+              "at step 4 — with the alternative standing",
+              instr6.get("asked") == {
+                  "tool": "sandbox.read",
+                  "parameters": {
+                      "path": "sources/not-stocked.md"}}
+              and repeat6.get("already_failed_step") == 4
+              and "step 4" in (repeat6.get("note") or "")
+              and all(name in (
+                  instr6.get("alternative") or "")
+                  for name in (
+                      "sources/stock-take.md",
+                      "sources/a3-pass.md",
+                      "sources/index-tail.md")),
+              f"{instr6}")
+        _check_commitments("freedom", fwork, packages, 6)
+        _check_checker("freedom", rep)
+
+        # ---------- completability at stocking
+        _manifest, _mhash, real_stock = \
+            stock_demo.verify_source_set()
+        facts = stock_demo.check_completability(
+            real_stock, BUDGET)
+        by_path = {f["path"]: f
+                   for f in facts["sources"]}
+        check("completability: the standing sources "
+              "pass — per-source facts (size, lines, "
+              "carriable whole) as stocked, the "
+              "accumulated set carriable together",
+              facts.get("ok") is True
+              and facts.get("budget_bytes") == BUDGET
+              and facts.get("accumulated_bytes") == 57562
+              and facts.get("accumulated_carriable")
+              is True
+              and {p: (f["bytes"], f["lines"])
+                   for p, f in by_path.items()} == {
+                      "sources/stock-take.md":
+                          (11946, 155),
+                      "sources/a3-pass.md": (4663, 55),
+                      "sources/index-tail.md":
+                          (40953, 24)}
+              and all(f["carriable_whole"] is True
+                      for f in by_path.values())
+              and all(f["obtainable_via"]
+                      for f in by_path.values()),
+              f"{facts}")
+        refusal = None
+        try:
+            stock_demo.check_completability(
+                {"sources/huge.md": b"x" * 70001}, BUDGET)
+        except stock_demo.StockingError as exc:
+            refusal = str(exc)
+        check("completability: a synthetic 70,001-byte "
+              "required source is REFUSED at setup — "
+              "the refusal names the source, its size "
+              "and the budget",
+              refusal is not None
+              and "sources/huge.md" in refusal
+              and "70001" in refusal
+              and str(BUDGET) in refusal,
+              f"{refusal}")
 
         # ---------- zero leftovers
         bwrap = subprocess.run(
