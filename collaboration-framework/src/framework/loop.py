@@ -3089,7 +3089,14 @@ class Loop:
         durable reconciliation note stands beside the
         destination naming the incomplete filing, so the
         state left behind is explicit and recoverable
-        rather than silent."""
+        rather than silent. On the record side, a failed
+        filing's pending insert is rolled back before
+        the stall records; if that rollback itself
+        fails, the pending transaction is discarded by
+        resetting the store's connection, and if even
+        that fails no stall is recorded on the poisoned
+        connection — no later commit may land the
+        discarded filing."""
         text = proposal["payload"].get("text")
         destination = ctx["delivery"]["destination"]
         if not isinstance(text, str) or not text:
@@ -3155,13 +3162,37 @@ class Loop:
             # contribution it files was committed by its
             # own route before the filing was attempted.
             # A rollback that itself fails is named in
-            # the detail, not hidden.
+            # the detail, not hidden — and the pending
+            # transaction is then discarded by resetting
+            # the store's connection (the examiner's
+            # residual path): a later commit on the
+            # original connection, the stall's own
+            # included, could otherwise land the
+            # discarded filing alongside the terminal.
+            # If even the discard fails, the context is
+            # marked poisoned and _stall records nothing
+            # on this connection at all.
             rollback_problem = None
+            discarded = False
             try:
                 self.doorway.store.rollback()
             except Exception as rb_exc:  # noqa: BLE001
                 rollback_problem = (
                     f"{type(rb_exc).__name__}: {rb_exc}")
+                try:
+                    self.doorway.store.\
+                        discard_pending_transaction()
+                    discarded = True
+                except Exception as d_exc:  # noqa:
+                    # BLE001 — named in the detail; the
+                    # stall path is poisoned below
+                    rollback_problem += (
+                        "; discarding the pending "
+                        "transaction also failed "
+                        f"({type(d_exc).__name__}: "
+                        f"{d_exc})")
+                    ctx["record_transaction_poisoned"] = \
+                        True
             problem = self._restore_filing_destination(
                 path, staging, prior)
             detail = (
@@ -3171,6 +3202,18 @@ class Loop:
                 detail += (
                     "; the store transaction could not "
                     f"be rolled back ({rollback_problem})")
+                if discarded:
+                    detail += (
+                        "; the pending transaction was "
+                        "discarded by resetting the "
+                        "store connection before anything "
+                        "else was recorded")
+                elif ctx.get(
+                        "record_transaction_poisoned"):
+                    detail += (
+                        "; no stall is recorded on this "
+                        "connection, so no later commit "
+                        "can land the discarded filing")
             if problem is None:
                 detail += ("; the destination was rolled "
                            "back to its prior state")
@@ -3515,6 +3558,22 @@ class Loop:
                 "refused": ctx["refused"],
                 "dispatched": ctx["dispatched"],
                 "call_timings": ctx["call_timings"]}
+        if ctx.get("record_transaction_poisoned"):
+            # The filing failure path could neither roll
+            # its transaction back nor discard it: any
+            # commit on this connection — dispatch
+            # accounting's or the stall's own — could
+            # land the discarded filing insert. Record
+            # nothing; fail closed and say so (R50).
+            base["stall_recorded"] = False
+            base["reason"] = (
+                "the stall was not recorded: the store "
+                "transaction could not be rolled back or "
+                "discarded after the failed filing, so "
+                "recording on this connection could "
+                "commit the discarded filing insert; no "
+                "stall is claimed (R50)")
+            return base
         try:
             if not self._close_accounting(ctx):
                 base["stall_recorded"] = False

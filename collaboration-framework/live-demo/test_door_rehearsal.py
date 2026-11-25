@@ -70,11 +70,23 @@ contacted — and asserts, per part:
   for a filing that was rolled back on disk, and the
   destination stands at the draft's exact bytes.
 
+  FILING-ROLLBACK (the examiner's residual path,
+  counted separately again): the commit failure above
+  and the store's rollback itself raises — the
+  pending filing insert must be discarded before
+  anything else is recorded, so the stall's own
+  commit can never land it: the exported record
+  contains no DELIVERABLE_FILED, the stall stands
+  recorded naming the rollback failure and the
+  discard, and the destination stands at the draft's
+  exact bytes.
+
 Run: python3 live-demo/test_door_rehearsal.py
 Exits 0 when every check passes. Per-part counts are
 printed separately (door / gate / carriage / opening,
-filing for the correction's witnesses, and
-filing-commit for the round-six witness).
+filing for the correction's witnesses,
+filing-commit for the round-six witness, and
+filing-rollback for the residual-path witness).
 """
 
 import hashlib
@@ -588,13 +600,59 @@ def main():
               f"{_scratch_names(f5work)}")
         _checker_ok("filing-commit", "commit-fails",
                     f5rep)
+
+        # ============== FILING-ROLLBACK ===============
+        # The examiner's residual path, counted
+        # separately under "filing-rollback": the
+        # filing's commit failed and the store's
+        # rollback raised too — the pending insert
+        # must be discarded before the stall records,
+        # so no later commit can land it.
+        f6rep = reports["rollback_fails"]
+        f6work = work / "filing-rollback-fails"
+        f6evs = _events(f6work)
+        _filing_stall("filing-rollback",
+                      "rollback-fails", f6rep, f6evs)
+        f6stalls = _of_type(f6evs, "LOOP_STALLED")
+        f6detail = _payload(f6stalls[0]).get("detail") \
+            if f6stalls else None
+        check("filing-rollback",
+              "rollback-fails: the stall's detail names "
+              "the rollback failure and the pending "
+              "transaction's discard — the exceptional "
+              "path is explicit in the record, not "
+              "hidden",
+              isinstance(f6detail, str)
+              and "could not be rolled back" in f6detail
+              and "discarded" in f6detail,
+              f"{f6detail}")
+        f6dest = f6work / "run" / "sandbox" / \
+            "scratch" / "brief.md"
+        check("filing-rollback",
+              "rollback-fails: the destination holds "
+              "the worker's draft bytes exactly — the "
+              "filing's rename was rolled back on disk "
+              "as its insert was discarded in the "
+              "record",
+              f6dest.exists()
+              and f6dest.read_bytes() == draft_bytes)
+        check("filing-rollback",
+              "rollback-fails: no staging residue and "
+              "no reconciliation note stand in the "
+              "scratch directory — the destination "
+              "rollback completed the account",
+              _scratch_names(f6work) == ["brief.md"],
+              f"{_scratch_names(f6work)}")
+        _checker_ok("filing-rollback", "rollback-fails",
+                    f6rep)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
     total_pass = sum(v[0] for v in COUNTS.values())
     total = sum(v[1] for v in COUNTS.values())
     for part in ("door", "gate", "carriage", "opening",
-                 "filing", "filing-commit"):
+                 "filing", "filing-commit",
+                 "filing-rollback"):
         passed, count = COUNTS.get(part, [0, 0])
         print(f"{part}: {passed}/{count} checks passed")
     print(f"\n{total_pass}/{total} checks passed")

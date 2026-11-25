@@ -383,6 +383,40 @@ class FrameworkStore:
         with self._lock:
             self._conn.rollback()
 
+    def discard_pending_transaction(self):
+        """Discard whatever stands uncommitted in the
+        connection's open transaction by resetting the
+        connection itself (the examiner's residual
+        filing path, 2026-11-24): where rollback()
+        itself has failed, the pending inserts must
+        still never be committed by a later commit.
+        Closing a sqlite connection abandons its open
+        transaction — the pending work is rolled back
+        by the close, never committed — and a fresh
+        connection to the same path starts with no
+        pending work, so no later commit on this store
+        can land what the discarded transaction held.
+        Every caller reaches the connection through
+        this store object, so replacing it here is the
+        whole reset. File-backed stores only: an
+        in-memory store's history lives in the
+        connection itself, so resetting it would
+        destroy the record rather than discard a
+        transaction — that case raises instead, and
+        the caller fails closed without recording
+        further events."""
+        with self._lock:
+            if self.path == ":memory:":
+                raise RuntimeError(
+                    "a pending transaction cannot be "
+                    "discarded by resetting an in-memory "
+                    "store's connection")
+            self._conn.close()
+            conn = sqlite3.connect(
+                self.path, check_same_thread=False)
+            conn.execute("PRAGMA journal_mode=WAL")
+            self._conn = conn
+
     def all_events(self):
         with self._lock:
             rows = self._conn.execute(

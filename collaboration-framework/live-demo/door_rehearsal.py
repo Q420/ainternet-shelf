@@ -74,6 +74,16 @@ so no filing event stands in the exported record
 for a filing that was rolled back on disk, and the
 destination returns to the draft's exact bytes.
 
+ROLLBACK-FAILS — the commit failure above AND the
+store's rollback doubled to raise when the filing
+handler calls it (the examiner's residual path,
+2026-11-24): the pending filing insert must still
+never be committed by the stall's later commit —
+the filing path must discard the pending
+transaction before anything else is recorded — so
+no filing event stands, the stall records, and the
+destination returns to the draft's exact bytes.
+
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario, in the working-set
 rehearsal's shape (report.json, captures, export,
@@ -346,6 +356,38 @@ def _filing_commit_fails():
         FrameworkStore.commit = original_commit
 
 
+@contextlib.contextmanager
+def _filing_commit_and_rollback_fail():
+    """The rollback-failure double (the examiner's
+    residual path): the commit failure above, plus
+    the store's rollback (FrameworkStore.rollback —
+    the exact method the filing handler calls after
+    a failed filing) doubled to raise whenever it is
+    called, without calling through. The filing
+    insert stands pending in the store's open
+    transaction and the handler's rollback cannot
+    clear it: only discarding the pending transaction
+    itself — never a later commit on the same
+    connection — keeps the stall's own commit from
+    landing the discarded filing alongside the
+    terminal."""
+    original_rollback = FrameworkStore.rollback
+
+    def rollback_double(self):
+        raise RuntimeError(
+            "injected filing-rollback failure (door "
+            "rehearsal double)")
+
+    stack = contextlib.ExitStack()
+    stack.enter_context(_filing_commit_fails())
+    FrameworkStore.rollback = rollback_double
+    try:
+        yield
+    finally:
+        FrameworkStore.rollback = original_rollback
+        stack.close()
+
+
 def _run(work_dir, *, scenario, declared, script,
          stage=None, patch=None):
     brief, manifest, manifest_hash = _brief(
@@ -375,14 +417,14 @@ def _run(work_dir, *, scenario, declared, script,
 
 
 def run_rehearsal(work_dir):
-    """Run all nine scenarios under `work_dir`
+    """Run all ten scenarios under `work_dir`
     (created fresh): the four door/gate scenarios and
-    the five filing-failure scenarios. Returns
+    the six filing-failure scenarios. Returns
     {"door": report, "control": report, "gate":
     report, "refusal": report, "record_fails": report,
     "record_fails_nodraft": report, "partial_write":
     report, "double_failure": report, "commit_fails":
-    report}."""
+    report, "rollback_fails": report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -429,13 +471,20 @@ def run_rehearsal(work_dir):
         declared=True, script=build_script_door(),
         stage=_stage_with_draft,
         patch=_filing_commit_fails())
+    rollback_fails = _run(
+        work_dir / "filing-rollback-fails",
+        scenario="door-filing-rollback-fails",
+        declared=True, script=build_script_door(),
+        stage=_stage_with_draft,
+        patch=_filing_commit_and_rollback_fail())
     return {"door": door, "control": control,
             "gate": gate, "refusal": refusal,
             "record_fails": record_fails,
             "record_fails_nodraft": record_fails_nodraft,
             "partial_write": partial_write,
             "double_failure": double_failure,
-            "commit_fails": commit_fails}
+            "commit_fails": commit_fails,
+            "rollback_fails": rollback_fails}
 
 
 def main():
