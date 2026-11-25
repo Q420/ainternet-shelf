@@ -162,6 +162,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1460,14 +1461,18 @@ def main():
               f"{sizes}")
         check("staged: every onboarding stage package "
               "stands within its budget (memory < 8,000; "
-              "case < 9,000; files < 15,000; task "
+              "case < 9,000; files < 17,000; task "
               "< 22,000 rendered chars — the files and "
               "task budgets carry the tool catalogue's "
               "~11,000 rendered chars, the same offer "
-              "the old shape made at every wake)",
+              "the old shape made at every wake; the "
+              "files budget additionally carries round "
+              "nine's worked example — the first "
+              "source's real listing, ~1,100 rendered "
+              "chars — and each needed file's way in)",
               sizes.get(1, 10 ** 9) < 8000
               and sizes.get(2, 10 ** 9) < 9000
-              and sizes.get(3, 10 ** 9) < 15000
+              and sizes.get(3, 10 ** 9) < 17000
               and sizes.get(4, 10 ** 9) < 22000,
               f"{sizes}")
         check("staged: dashboard wakes carry no "
@@ -1603,6 +1608,296 @@ def main():
               f"{filed_path}")
         _check_commitments("staged", swork, pkgs, 6)
         _check_checker("staged", rep)
+
+        # ---- round nine (INDEX 548 + the INDEX 549
+        # fold-in): the snapshot, the needed files'
+        # ways in, and the worked example, over the
+        # staged run above.
+        check("staged: stage 1's snapshot carries the "
+              "opening record's settled results "
+              "verbatim — where the worker stands, from "
+              "the record, before his memory",
+              pkgs[1].get("snapshot", {}).get("settled")
+              == ["No work product is produced in "
+                  "the opening; the work happens in "
+                  "the room."]
+              and pkgs[1].get("snapshot", {})
+              .get("note", "").startswith(
+                  "Where you stand"),
+              f"{pkgs[1].get('snapshot')}")
+        check("staged: every needed file in stage 3's "
+              "map carries its way in — the concrete "
+              "call naming a granted tool over the "
+              "file's own address",
+              all(e.get("access") == {
+                  "tool": "sandbox.read",
+                  "parameters": {"path": e["address"]}}
+                  for e in pkgs[3]["files"]["briefcase"]),
+              f"{pkgs[3]['files']['briefcase']}")
+        example = pkgs[3]["files"].get("worked_example")
+        check("staged: stage 3's worked example is "
+              "the office's sandbox.list call on the "
+              "first glossary file, shown with its "
+              "result",
+              example is not None
+              and example.get("call") == {
+                  "tool": "sandbox.list",
+                  "parameters": {
+                      "path": GLOSSARY[0]["address"]}}
+              and isinstance(example.get("result"),
+                             dict),
+              f"{example and example.get('call')}")
+        check("staged: the presented example is the "
+              "sealed record's own — the loop presents "
+              "the seal, not a reconstruction of it",
+              example is not None
+              and example.get("result")
+              == (rep.get("sealed_worked_example")
+                  or {}).get("result")
+              and (rep.get("sealed_worked_example")
+                   or {}).get("path")
+              == GLOSSARY[0]["address"],
+              f"{rep.get('sealed_worked_example')}")
+        # The example is REAL: recompute the listing
+        # from the staged file's own bytes, here,
+        # independently of the framework, and compare
+        # whole — size, line count and the structure
+        # map itself.
+        raw = (swork / "run" / "sandbox"
+               / GLOSSARY[0]["address"]).read_bytes()
+        text_lines = []
+        start = 0
+        while start < len(raw):
+            nl = raw.find(b"\n", start)
+            piece = raw[start:] if nl == -1 \
+                else raw[start:nl + 1]
+            start = len(raw) if nl == -1 else nl + 1
+            piece_text = piece.decode("utf-8")
+            text_lines.append(
+                piece_text[:-1]
+                if piece_text.endswith("\n")
+                else piece_text)
+        heading_lines = []
+        for number, line_text in enumerate(
+                text_lines, start=1):
+            match = re.match(r"^(#{1,6})\s+(.*?)\s*$",
+                             line_text)
+            if match:
+                heading_lines.append(
+                    (number, len(match.group(1)),
+                     match.group(2)))
+        expected_map = (
+            f"{GLOSSARY[0]['address']} — {len(raw)} "
+            f"bytes, {len(text_lines)} lines")
+        for number, level, heading_text in heading_lines:
+            expected_map += (
+                f"\nline {number}: "
+                f"{'#' * level} {heading_text}")
+        check("staged: the worked example's result "
+              "is the staged file's real listing — "
+              "recomputed from its bytes in this "
+              "witness, not trusted from the seal",
+              example is not None
+              and example["result"].get("content")
+              == expected_map
+              and example["result"].get("size_bytes")
+              == len(raw)
+              and example["result"].get("line_count")
+              == len(text_lines),
+              "expected map head: "
+              + expected_map[:120])
+        check("staged: the example's result is never "
+              "carried into the working set — it "
+              "demonstrates a call; it is not material "
+              "the worker gathered",
+              example is not None
+              and all(
+                  example["result"]["content"] not in
+                  json.dumps(pkgs[k].get("working_set")
+                             or {})
+                  for k in (4, 5, 6)),
+              "working sets at wakes 4-6")
+
+        # ---- the stage gate, files stage: an early
+        # contribution is set aside unfiled, the
+        # correction rides the next wake, and the run
+        # completes on the honest contribution.
+        grep = reports["staged_gate_files"]
+        gwork = work / "staged-gate-files"
+        gpkgs = {k: v[0] for k, v in
+                 _staged_packages(gwork).items()}
+        check("staged-gate-files: the run completes "
+              "on the honest contribution, in five "
+              "iterations — the gate consumed one",
+              grep["outcome"] == "yield"
+              and grep["iterations"] == 5,
+              f"{grep['outcome']} / {grep['iterations']}")
+        gevs = _events(gwork)
+        gates = [_payload(e) for e in gevs
+                 if e["type"] == "DELIVERY_STAGE_GATE"]
+        gcontribs = {e["event_seq"]: _payload(e)
+                     for e in gevs
+                     if e["type"] == "CONTRIBUTION"}
+        gfilings = [_payload(e) for e in gevs
+                    if e["type"] == "DELIVERABLE_FILED"]
+        check("staged-gate-files: exactly one stage "
+              "gate stands, at the files stage, "
+              "recording that nothing was filed",
+              len(gates) == 1
+              and gates[0].get("stage") == "files"
+              and gates[0].get("filed") is False,
+              f"{gates}")
+        gate = gates[0] if gates else {}
+        check("staged-gate-files: the gate names the "
+              "early contribution and its text's hash",
+              gcontribs.get(
+                  gate.get("contribution_seq"), {})
+              .get("text")
+              == rehearsal.STAGED_GATE_TEXT
+              and gate.get("text_sha256")
+              == hashlib.sha256(
+                  rehearsal.STAGED_GATE_TEXT
+                  .encode("utf-8")).hexdigest(),
+              f"{gate}")
+        check("staged-gate-files: the only filing "
+              "names the honest contribution — the "
+              "gated one was never filed",
+              len(gfilings) == 1
+              and gfilings[0].get("contribution_seq")
+              != gate.get("contribution_seq")
+              and gfilings[0].get("content_sha256")
+              == hashlib.sha256(
+                  rehearsal.STAGED_BRIEF_TEXT
+                  .encode("utf-8")).hexdigest(),
+              f"{gfilings}")
+        gcorr = gpkgs[4].get(
+            "delivery_stage_gate_correction") or {}
+        check("staged-gate-files: the correction "
+              "rides the wake after the gate, carrying "
+              "the gate's facts — what arrived, at "
+              "which stage, and when delivery opens",
+              gcorr.get("stage") == "files"
+              and gcorr.get("contribution_seq")
+              == gate.get("contribution_seq")
+              and gcorr.get("text_sha256")
+              == gate.get("text_sha256")
+              and "before your task had been "
+                  "presented" in gcorr.get(
+                      "what_arrived", "")
+              and "Delivery opens with your task"
+              in gcorr.get("instruction", "")
+              and "delivery_stage_gate_correction"
+              not in gpkgs[3],
+              f"{gcorr}")
+        grec_ph = {}
+        for e in gevs:
+            if e["type"] == "LOOP_ITERATION":
+                p = _payload(e)
+                grec_ph[p.get("iteration")] = \
+                    p.get("presentation_hash")
+        for k in (1, 2, 3, 4, 5):
+            check(f"staged-gate-files: iteration {k}'s "
+                  f"commitment is the hash of the "
+                  f"staged package its captured wake "
+                  f"presented",
+                  grec_ph.get(k)
+                  == _presentation_hash_of(gpkgs[k]),
+                  f"recorded={grec_ph.get(k)}")
+        _check_commitments(
+            "staged-gate-files", gwork, gpkgs, 5)
+        _check_checker("staged-gate-files", grep)
+
+        # ---- the stage gate, memory stage: the
+        # earliest possible early contribution.
+        mrep = reports["staged_gate_memory"]
+        mwork = work / "staged-gate-memory"
+        mpkgs = {k: v[0] for k, v in
+                 _staged_packages(mwork).items()}
+        check("staged-gate-memory: the run completes "
+              "on the honest contribution, in four "
+              "iterations — the gate consumed one",
+              mrep["outcome"] == "yield"
+              and mrep["iterations"] == 4,
+              f"{mrep['outcome']} / {mrep['iterations']}")
+        mevs = _events(mwork)
+        mgates = [_payload(e) for e in mevs
+                  if e["type"] == "DELIVERY_STAGE_GATE"]
+        mfilings = [_payload(e) for e in mevs
+                    if e["type"] == "DELIVERABLE_FILED"]
+        check("staged-gate-memory: exactly one stage "
+              "gate stands, at the memory stage — the "
+              "first wake — and the honest contribution "
+              "at the task stage is the only filing",
+              len(mgates) == 1
+              and mgates[0].get("stage") == "memory"
+              and mgates[0].get("filed") is False
+              and len(mfilings) == 1
+              and mfilings[0].get("contribution_seq")
+              != (mgates[0].get("contribution_seq")
+                  if mgates else None),
+              f"{mgates} / {mfilings}")
+        mcorr = mpkgs[2].get(
+            "delivery_stage_gate_correction") or {}
+        check("staged-gate-memory: the correction "
+              "rides the case-stage wake, naming the "
+              "memory stage",
+              mcorr.get("stage") == "memory"
+              and "at the memory stage"
+              in mcorr.get("what_arrived", "")
+              and "delivery_stage_gate_correction"
+              not in mpkgs[1],
+              f"{mcorr}")
+        mrec_ph = {}
+        for e in mevs:
+            if e["type"] == "LOOP_ITERATION":
+                p = _payload(e)
+                mrec_ph[p.get("iteration")] = \
+                    p.get("presentation_hash")
+        for k in (1, 2, 3, 4):
+            check(f"staged-gate-memory: iteration "
+                  f"{k}'s commitment is the hash of "
+                  f"the staged package its captured "
+                  f"wake presented",
+                  mrec_ph.get(k)
+                  == _presentation_hash_of(mpkgs[k]),
+                  f"recorded={mrec_ph.get(k)}")
+        _check_commitments(
+            "staged-gate-memory", mwork, mpkgs, 4)
+        _check_checker("staged-gate-memory", mrep)
+
+        # ---- the omission: the demonstration call
+        # cannot be made, so no example stands — the
+        # files stage presents the map without one,
+        # and the run is otherwise the staged walk.
+        nrep = reports["staged_noexample"]
+        nwork = work / "staged-noexample"
+        npkgs = {k: v[0] for k, v in
+                 _staged_packages(nwork).items()}
+        check("staged-noexample: no worked example "
+              "stands in the seal, and the files stage "
+              "presents no example — the omission is "
+              "honest, the introduction the variant "
+              "that promises none",
+              nrep.get("sealed_worked_example") is None
+              and "worked_example" not in
+              npkgs[3]["files"]
+              and "worked as an example" not in
+              npkgs[3]["files"]["introduction"],
+              f"{list(npkgs[3]['files'])}")
+        check("staged-noexample: the needed files "
+              "still carry their ways in, and the run "
+              "completes as the staged walk does",
+              all(e.get("access") == {
+                  "tool": "sandbox.read",
+                  "parameters": {"path": e["address"]}}
+                  for e in npkgs[3]["files"]
+                  ["briefcase"])
+              and nrep["outcome"] == "yield"
+              and nrep["iterations"] == 6,
+              f"{nrep['outcome']} / {nrep['iterations']}")
+        _check_commitments(
+            "staged-noexample", nwork, npkgs, 6)
+        _check_checker("staged-noexample", nrep)
         print(f"staged-onboarding section: "
               f"{CHECKS[0] - staged_before} checks")
 

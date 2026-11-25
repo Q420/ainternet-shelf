@@ -616,6 +616,117 @@ def build_script_staged():
             "chat-raw-bounded": _probe_steps()}
 
 
+# The early contribution the stage-gate scenarios offer:
+# a brief sent before the task has been presented.
+STAGED_GATE_TEXT = (
+    "A brief sent before my task was presented: the "
+    "framework is a collaborative agent framework; "
+    "this text stands in the record, set aside "
+    "unfiled, until the task arrives.")
+
+
+def build_script_staged_gate_files():
+    """Round nine's first gate scenario: the stand-in
+    walks the onboarding honestly, then contributes at
+    the FILES stage — before his task has been
+    presented. The gate sets the contribution aside
+    unfiled and the loop continues; at the task stage
+    he reads a source, and at the first dashboard wake
+    he contributes again — that contribution is the
+    deliverable's arrival and completes the run."""
+    chat = [
+        _identify_step("staged-gate-files"),
+        # 1 — the memory stage: acknowledge.
+        {"respond": _text_response(
+            "sgf-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 2 — the case stage: acknowledge.
+        {"respond": _text_response(
+            "sgf-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: the early contribution.
+        # The stage gate fires: recorded, unfiled, the
+        # loop continues.
+        {"respond": _text_response(
+            "sgf-early",
+            json.dumps({
+                "outcome": "contribute",
+                "text": STAGED_GATE_TEXT})),
+         "action": None},
+        # 4 — the task stage: read the first source
+        # whole.
+        {"respond": _native_call(
+            "fc-sgf-1", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — the first dashboard wake: the honest
+        # contribution — filed, completing the run.
+        {"respond": _text_response(
+            "sgf-contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": STAGED_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_staged_gate_memory():
+    """Round nine's second gate scenario: the stand-in
+    contributes at the MEMORY stage — the first wake,
+    before anything but his role's memory and the
+    snapshot have been presented. The gate sets it
+    aside; he acknowledges the case, lists a file at
+    the files stage, and contributes honestly at the
+    task stage, which files and completes."""
+    chat = [
+        _identify_step("staged-gate-memory"),
+        # 1 — the memory stage: the early contribution.
+        {"respond": _text_response(
+            "sgm-early",
+            json.dumps({
+                "outcome": "contribute",
+                "text": STAGED_GATE_TEXT})),
+         "action": None},
+        # 2 — the case stage: acknowledge.
+        {"respond": _text_response(
+            "sgm-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: list a file from the
+        # pointers himself.
+        {"respond": _native_call(
+            "fc-sgm-1", "sandbox-list",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 4 — the task stage: the honest contribution —
+        # filed, completing the run.
+        {"respond": _text_response(
+            "sgm-contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": STAGED_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_staged_noexample():
+    """Round nine's omission scenario: the same
+    onboarding walk as scenario G, but the case's
+    glossary leads with a file that is not stocked —
+    the office's demonstration call cannot be made, so
+    no worked example stands in the seal and the files
+    stage presents the map without one."""
+    script = build_script_staged()
+    script["chat"][0] = _identify_step("staged-noexample")
+    return script
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -814,6 +925,41 @@ def _run_scenario(work_dir, *, scenario, brief,
         raise RuntimeError(
             f"sandbox staging failed: {staging_problem}")
 
+    # THE WORKED EXAMPLE (round nine's correction pair,
+    # INDEX 548): under the presentation declaration the
+    # office performs the demonstration call on the
+    # case's first glossary file against the staged
+    # sandbox, through the same governed performer a
+    # dispatch runs, BEFORE the assembly is generated —
+    # the call's real result is what generation seals.
+    # Where the call cannot be made (the file is not
+    # there to be listed), no example stands and
+    # generation proceeds without one.
+    worked_example = None
+    if presentation_declaration:
+        first_address = None
+        for entry in (content or {}).get("glossary") or []:
+            if isinstance(entry, dict) and isinstance(
+                    entry.get("address"), str):
+                first_address = entry["address"]
+                break
+        if first_address is not None:
+            example_executor = Executor(
+                doorway, str(run_dir / "sandbox"),
+                claim_dir=str(run_dir / "claims"),
+                deadline=150.0)
+            try:
+                example_result = \
+                    example_executor.worked_example_list(
+                        first_address)
+                worked_example = {
+                    "tool": "sandbox.list",
+                    "path": first_address,
+                    "result": example_result}
+            except Exception:  # noqa: BLE001 — the call
+                # cannot be made: no example stands.
+                worked_example = None
+
     # ASSEMBLE — the adapter on the NVIDIA route's seam,
     # its transport the stub helper; generation under the
     # probe contract and the exec catalogue contract,
@@ -836,7 +982,8 @@ def _run_scenario(work_dir, *, scenario, brief,
         model_requested=MODEL, probe=True, exec_room=True,
         freshness_suspended=freshness_suspended,
         delivery_declaration=delivery_declaration,
-        presentation_declaration=presentation_declaration)
+        presentation_declaration=presentation_declaration,
+        worked_example=worked_example)
     if not generated.get("ok"):
         raise RuntimeError(
             f"generation failed: "
@@ -934,6 +1081,8 @@ def _run_scenario(work_dir, *, scenario, brief,
             (sealed or {}).get("delivery"),
         "sealed_presentation_contract":
             (sealed or {}).get("presentation_contract"),
+        "sealed_worked_example":
+            (sealed or {}).get("worked_example"),
         "sealed_catalogue_contract":
             (sealed or {}).get("catalogue_contract"),
         "manifest_hash": manifest_hash,
@@ -1194,12 +1343,116 @@ def run_rehearsal(work_dir):
     # other scenario's generation seals no presentation
     # declaration, and their packages present exactly as
     # they always have.
+    staged_brief = _commission_brief(
+        ASSIGNMENT_COMBINED, manifest_hash,
+        glossary=GLOSSARY,
+        journal="scratch/journal.md",
+        onboarding=ONBOARDING,
+        delivery={"destination": "scratch/brief.md",
+                  "route": "contribution-v1"},
+        role_memory=ROLE_MEMORY,
+        opening={
+            "worker_statements": [
+                "The job is to read the three "
+                "sources and write the brief; the "
+                "deliverable is the file "
+                "scratch/brief.md."],
+            "office_answers": [
+                "Confirmed: the sources stand in "
+                "sources/, named in the glossary; "
+                "the brief is plain prose, at most "
+                "~600 words."],
+            "settled": [
+                "No work product is produced in "
+                "the opening; the work happens in "
+                "the room."],
+            "unresolved": []})
     staged = _run_scenario(
         work_dir / "staged",
         scenario="staged",
+        brief=staged_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_staged(),
+        grounds="Staged-onboarding rehearsal (INDEX "
+                "544): the scripted stand-in's probe "
+                "trials settled 5/5 native, and the "
+                "combined configuration's judgement is "
+                "native. The generation seals the "
+                "staged-onboarding presentation "
+                "contract under the director's "
+                "direction. Rehearsal furniture by a "
+                "scripted stand-in examiner.",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        presentation_declaration=True)
+    # Round nine's scenarios (INDEX 548 + the INDEX 549
+    # fold-in): the stage gate and the worked example,
+    # under the same combined configuration and the same
+    # staged brief. In the first, the stand-in
+    # contributes at the files stage — before his task
+    # has been presented — and the gate sets the
+    # contribution aside unfiled while the loop
+    # continues to an honest completion. In the second,
+    # he contributes at the memory stage, the first
+    # wake. In the third, the case's glossary leads
+    # with a file that is not stocked, so the office's
+    # demonstration call cannot be made and no worked
+    # example stands in the seal.
+    staged_gate_files = _run_scenario(
+        work_dir / "staged-gate-files",
+        scenario="staged-gate-files",
+        brief=staged_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_staged_gate_files(),
+        grounds="Stage-gate rehearsal (INDEX 548): "
+                "the scripted stand-in's probe trials "
+                "settled 5/5 native, and the combined "
+                "configuration's judgement is native. "
+                "The generation seals the "
+                "staged-onboarding presentation "
+                "contract and the office's worked "
+                "example. Rehearsal furniture by a "
+                "scripted stand-in examiner.",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        presentation_declaration=True)
+    staged_gate_memory = _run_scenario(
+        work_dir / "staged-gate-memory",
+        scenario="staged-gate-memory",
+        brief=staged_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_staged_gate_memory(),
+        grounds="Stage-gate rehearsal (INDEX 548): "
+                "the scripted stand-in's probe trials "
+                "settled 5/5 native, and the combined "
+                "configuration's judgement is native. "
+                "The generation seals the "
+                "staged-onboarding presentation "
+                "contract and the office's worked "
+                "example. Rehearsal furniture by a "
+                "scripted stand-in examiner.",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        presentation_declaration=True)
+    staged_noexample = _run_scenario(
+        work_dir / "staged-noexample",
+        scenario="staged-noexample",
         brief=_commission_brief(
             ASSIGNMENT_COMBINED, manifest_hash,
-            glossary=GLOSSARY,
+            glossary=[{
+                "address": "sources/not-stocked.md",
+                "description":
+                    "A file the case names but the "
+                    "briefcase does not hold."}] + GLOSSARY,
             journal="scratch/journal.md",
             onboarding=ONBOARDING,
             delivery={"destination": "scratch/brief.md",
@@ -1225,16 +1478,19 @@ def run_rehearsal(work_dir):
         seal_entries=manifest["sources"],
         stage_fn=lambda sandbox: _stage_sandbox_sources(
             sandbox, manifest),
-        script=build_script_staged(),
-        grounds="Staged-onboarding rehearsal (INDEX "
-                "544): the scripted stand-in's probe "
-                "trials settled 5/5 native, and the "
-                "combined configuration's judgement is "
-                "native. The generation seals the "
-                "staged-onboarding presentation "
-                "contract under the director's "
-                "direction. Rehearsal furniture by a "
-                "scripted stand-in examiner.",
+        script=build_script_staged_noexample(),
+        grounds="Worked-example omission rehearsal "
+                "(INDEX 548): the scripted stand-in's "
+                "probe trials settled 5/5 native, and "
+                "the combined configuration's "
+                "judgement is native. The generation "
+                "seals the staged-onboarding "
+                "presentation contract; the office's "
+                "demonstration call could not be made "
+                "on the case's first glossary file, so "
+                "no worked example stands in the seal. "
+                "Rehearsal furniture by a scripted "
+                "stand-in examiner.",
         freshness_suspended=True,
         delivery_declaration=True,
         presentation_declaration=True)
@@ -1242,4 +1498,7 @@ def run_rehearsal(work_dir):
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
             "freshness_control": freshness_control,
-            "staged": staged}
+            "staged": staged,
+            "staged_gate_files": staged_gate_files,
+            "staged_gate_memory": staged_gate_memory,
+            "staged_noexample": staged_noexample}

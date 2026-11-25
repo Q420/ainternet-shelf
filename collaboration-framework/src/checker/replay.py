@@ -60,6 +60,9 @@ _KNOWN_TYPES = {
     # Door scope (2026-11-24): the office filing and the
     # envelope gate events.
     "DELIVERABLE_FILED", "DELIVERY_GATE",
+    # Round nine (INDEX 548): the delivery door's stage
+    # gate event.
+    "DELIVERY_STAGE_GATE",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",

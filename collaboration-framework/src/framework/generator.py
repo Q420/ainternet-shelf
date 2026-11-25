@@ -50,6 +50,7 @@ fresh onboarding, and the old assembly stands in history as it
 was left.
 """
 import copy
+import hashlib
 
 from . import onboarding as _onboarding
 from . import probe as _probe
@@ -112,6 +113,78 @@ DECISION_RECORDING = (
 # read from there so the generator, the doorway and the loop
 # cannot drift apart on it; the checker holds its own copy,
 # as its other contracts are held.
+
+
+def _worked_example_problem(example, glossary,
+                            presentation_declaration):
+    """The worked example's preflight (round nine's
+    correction pair, INDEX 548): the problem a supplied
+    example stands under, or None where it may seal. The
+    example seals only beside the presentation contract,
+    names the pinned case's first glossary address
+    exactly, and carries the listing performer's whole
+    result, internally consistent — its hash and byte
+    count its content's, its path the call's. Anything
+    else would claim a demonstration the office never
+    made, so the generation fails preflight whole."""
+    if not presentation_declaration:
+        return ("the worked example was asked to be "
+                "sealed but this generation does not "
+                "declare the staged-onboarding "
+                "presentation contract, the only "
+                "population the example stands for")
+    if not isinstance(example, dict) or \
+            set(example) != {"tool", "path", "result"}:
+        return ("the worked example is not a call and "
+                "its result (a mapping naming exactly "
+                "tool, path and result)")
+    if example.get("tool") != "sandbox.list":
+        return ("the worked example's call is not "
+                "sandbox.list, the demonstration call "
+                "the files stage presents")
+    path = example.get("path")
+    first = None
+    if isinstance(glossary, list):
+        for entry in glossary:
+            if isinstance(entry, dict) and \
+                    isinstance(entry.get("address"), str):
+                first = entry["address"]
+                break
+    if not isinstance(path, str) or not path or \
+            first is None or path != first:
+        return ("the worked example does not name the "
+                "pinned case's first glossary address; "
+                "the demonstration is of the first file "
+                "the briefcase map names")
+    result = example.get("result")
+    if not isinstance(result, dict) or \
+            set(result) != {"path", "content",
+                            "content_bytes",
+                            "content_sha256",
+                            "authority_path", "size_bytes",
+                            "line_count"}:
+        return ("the worked example's result is not "
+                "the listing performer's whole result")
+    content = result.get("content")
+    if result.get("path") != path or \
+            not isinstance(content, str) or \
+            result.get("content_bytes") != len(
+                content.encode("utf-8")) or \
+            result.get("content_sha256") != hashlib.sha256(
+                content.encode("utf-8")).hexdigest() or \
+            result.get("authority_path") not in (
+                "source", "scratch") or \
+            not isinstance(result.get("size_bytes"), int) \
+            or isinstance(result.get("size_bytes"), bool) \
+            or result.get("size_bytes") < 0 or \
+            not isinstance(result.get("line_count"), int) \
+            or isinstance(result.get("line_count"), bool) \
+            or result.get("line_count") < 0:
+        return ("the worked example's result is not "
+                "internally consistent (its hash and "
+                "byte count are its content's, its path "
+                "the call's)")
+    return None
 
 
 class Generator:
@@ -255,7 +328,8 @@ class Generator:
                  retrieval=False, probe=False, exec_room=False,
                  freshness_suspended=False,
                  delivery_declaration=False,
-                 presentation_declaration=False):
+                 presentation_declaration=False,
+                 worked_example=None):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -340,7 +414,26 @@ class Generator:
         honour it there, so the record must not claim
         it. The default declares nothing: every other
         generation's packages present exactly as they
-        always have."""
+        always have.
+
+        `worked_example` (round nine's correction pair,
+        INDEX 548): the office's demonstration call for
+        the staged files stage — a real sandbox.list call
+        on the pinned case's first glossary file, made
+        through the executor's governed performer while
+        the briefcase was stocked, whose result the
+        sealed record carries so the loop can present it
+        and the checker can re-derive the presentation.
+        The example seals only beside the presentation
+        contract, names the case's first glossary address
+        exactly, and carries its result whole and
+        internally consistent (the result's hash and byte
+        count are its content's) — a generation asked to
+        seal anything else fails preflight whole. The
+        default seals nothing: where the first glossary
+        file cannot be listed, the office omits the
+        example rather than present one that was never
+        made, and the files stage presents none."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -403,6 +496,24 @@ class Generator:
                         "grants), the only population the "
                         "contract stands for"],
                     "seat": seat_id}
+        if worked_example is not None:
+            # Round nine's correction pair (INDEX 548):
+            # the worked example seals only beside the
+            # presentation contract, on the pinned case's
+            # first glossary file, its result whole and
+            # internally consistent — the loop presents
+            # the seal and the checker re-derives it, so
+            # a seal naming anything else would claim a
+            # demonstration the office never made. Fail
+            # preflight whole, as the declarations do.
+            example_problem = _worked_example_problem(
+                worked_example,
+                (eff.get("content") or {}).get("glossary"),
+                presentation_declaration)
+            if example_problem is not None:
+                return {"ok": False,
+                        "problems": [example_problem],
+                        "seat": seat_id}
         n = self._next_number(state)
         instance_id = f"inst-{seat_id}-{n}"
         assembly_id = f"assembly-{seat_id}-{n}"
@@ -454,6 +565,15 @@ class Generator:
             # the declaration anywhere else.
             record["presentation_contract"] = \
                 _tool_policy.PRESENTATION_CONTRACT
+        if worked_example is not None:
+            # Round nine's correction pair (INDEX 548),
+            # sealed beside the presentation contract
+            # whose files stage presents it — preflight
+            # above has already refused the example
+            # anywhere else, on any other file, or with
+            # any other result.
+            record["worked_example"] = copy.deepcopy(
+                worked_example)
         if delivery_declaration:
             record["delivery"] = copy.deepcopy(delivery)
         if freshness_suspended:

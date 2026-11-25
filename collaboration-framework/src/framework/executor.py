@@ -918,6 +918,25 @@ class Executor:
                 f"sandbox.flaky: unknown mode {mode!r}")
         raise RuntimeError(f"no performer for tool {tool!r}")
 
+    def worked_example_list(self, path):
+        """The office's demonstration call (round nine's
+        correction pair, INDEX 548): a sandbox.list on
+        `path`, performed through this executor's own
+        governed performer — the same authority check,
+        containment and ceiling a worker's dispatch runs —
+        but no dispatch: the call is the office's, made
+        while the briefcase is stocked, and its result is
+        sealed into the assembly's record as the worked
+        example the files stage presents. It gathers
+        nothing for any worker and stands in no dispatch's
+        accounting. Raises as the performer raises where
+        the file does not stand or no authority admits
+        the path — the caller omits the example rather
+        than present one that was never made."""
+        _kind, result = self._perform(
+            "sandbox.list", {"path": path})
+        return result
+
     # ---------------------------------------------------- execute
     def execute(self, dispatch_id):
         """Execute one standing dispatch, exactly once: claim

@@ -733,18 +733,72 @@ STAGED_MEMORY_INTRO = (
     "below is empty, this role carries no standing "
     "memory yet.")
 STAGED_FILES_INTRO = (
-    "Your briefcase holds the job's files. What stands "
-    "below are pointers — each file's address and what "
-    "it is — not contents: the contents are yours to "
-    "pull when the work needs them, through the doorway "
-    "tools (sandbox.list shows a file's size, line "
-    "count and headings; sandbox.read pulls a whole "
-    "file) or the shell in your room. That is how the "
-    "briefcase works: what you pull is carried forward "
-    "in front of you at later wakes, so you never need "
-    "to pull the same thing twice. Your tools are "
-    "offered from this wake on — if you want, list a "
-    "file from the map now and see its shape standing.")
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings; sandbox.read pulls a "
+    "whole file) or the shell in your room. That is "
+    "how the briefcase works: what you pull is "
+    "carried forward in front of you at later wakes, "
+    "so you never need to pull the same thing twice. "
+    "Your tools are offered from this wake on. Below "
+    "the map, one call stands worked as an example — "
+    "a real call the office made on the first file "
+    "while your briefcase was being stocked, with "
+    "what came back; yours will look like this.")
+STAGED_FILES_INTRO_NO_EXAMPLE = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings; sandbox.read pulls a "
+    "whole file) or the shell in your room. That is "
+    "how the briefcase works: what you pull is "
+    "carried forward in front of you at later wakes, "
+    "so you never need to pull the same thing twice. "
+    "Your tools are offered from this wake on — if "
+    "you want, list a file from the map now and see "
+    "its shape standing.")
+STAGED_EXAMPLE_LABEL = (
+    "A worked example — the office's own call, made "
+    "while your briefcase was stocked: a real call, "
+    "and what came back. It is an example of your "
+    "next move, not your work and not material you "
+    "have gathered; the file's contents are still "
+    "yours to pull.")
+STAGED_SNAPSHOT_NOTE = (
+    "Where you stand: before you were woken, an "
+    "opening conversation settled what stands below. "
+    "It is recorded work state — what was settled "
+    "before you arrived — not your memory; your "
+    "memory follows it.")
+STAGED_SNAPSHOT_EMPTY = (
+    "Where you stand: nothing was settled before "
+    "this wake — no settled results of an opening "
+    "conversation stand in your case. What precedes "
+    "you is this role's standing memory, below.")
+STAGED_STAGE_GATE_INSTRUCTION = (
+    "Nothing was filed. Delivery opens with your "
+    "task: your task has not been presented yet — "
+    "it arrives at the fourth wake of your "
+    "onboarding (stage 4: your task), and from "
+    "that wake on your contribution is the "
+    "deliverable's arrival and the office files "
+    "it. What is needed until then is the work "
+    "itself: walk the stages as they come, pull "
+    "what your task needs, and contribute once "
+    "your task stands in front of you. The text "
+    "you sent stands in the record, set aside "
+    "unfiled; if it is the brief you mean to "
+    "deliver, send it again after your task has "
+    "been presented.")
 STAGED_JOURNAL_POINTER = (
     "your journal — your notebook: notes, decisions, "
     "where you left off. Yours to write and rewrite; "
@@ -817,6 +871,107 @@ def _staged_journal_path(content):
             ".." in designated.split("/"):
         return None
     return designated
+
+
+def _staged_snapshot(content):
+    """Where the worker stands at his first wake (INDEX
+    549): the settled results of the case's opening
+    conversation, verbatim, where an opening record
+    stands with settled results; the plain statement
+    that nothing was settled where none stand.
+    Record-derived only — the case's own opening
+    record, never a composed picture of the worker or
+    the job."""
+    opening = (content or {}).get("opening")
+    settled = opening.get("settled") \
+        if isinstance(opening, dict) else None
+    if isinstance(settled, list) and settled and \
+            all(isinstance(item, str) for item in settled):
+        return {"note": STAGED_SNAPSHOT_NOTE,
+                "settled": copy.deepcopy(settled)}
+    return {"note": STAGED_SNAPSHOT_EMPTY, "settled": []}
+
+
+def _staged_access_way(catalogue, address):
+    """A needed file's way in (INDEX 549): the concrete
+    call that pulls it — sandbox.read where a catalogue
+    entry grants it over the file's address, else
+    sandbox.list likewise — read from the catalogue the
+    package itself offers, so the way names a tool the
+    worker actually holds, over that file's own
+    address. None where no granted read covers the
+    address: the entry then carries no way rather than
+    a call the worker cannot make."""
+    if not isinstance(address, str):
+        return None
+    for tool in ("sandbox.read", "sandbox.list"):
+        for entry in catalogue or []:
+            if not isinstance(entry, dict) or \
+                    entry.get("tool") != tool:
+                continue
+            ceiling = entry.get("scope_ceiling")
+            prefix = ceiling.get("path_prefix") \
+                if isinstance(ceiling, dict) else None
+            if isinstance(prefix, str) and (
+                    address == prefix
+                    or address.startswith(prefix + "/")):
+                return {"tool": tool,
+                        "parameters": {"path": address}}
+    return None
+
+
+def _worked_example_honoured(example):
+    """The sealed worked example the loop presents
+    (round nine's correction pair, INDEX 548): the
+    generated record's example, where it stands
+    well-formed — the demonstration call and the
+    listing performer's whole result, internally
+    consistent (its hash and byte count its content's,
+    its path the call's). A seal standing in any other
+    shape is not presented; the checker reports it."""
+    if not isinstance(example, dict) or \
+            set(example) != {"tool", "path", "result"}:
+        return None
+    if example.get("tool") != "sandbox.list":
+        return None
+    path = example.get("path")
+    result = example.get("result")
+    if not isinstance(path, str) or not path or \
+            not isinstance(result, dict) or \
+            set(result) != {"path", "content",
+                            "content_bytes",
+                            "content_sha256",
+                            "authority_path", "size_bytes",
+                            "line_count"}:
+        return None
+    content = result.get("content")
+    if result.get("path") != path or \
+            not isinstance(content, str) or \
+            result.get("content_bytes") != len(
+                content.encode("utf-8")) or \
+            result.get("content_sha256") != hashlib.sha256(
+                content.encode("utf-8")).hexdigest() or \
+            result.get("authority_path") not in (
+                "source", "scratch") or \
+            not isinstance(result.get("size_bytes"), int) \
+            or isinstance(result.get("size_bytes"), bool) \
+            or result.get("size_bytes") < 0 or \
+            not isinstance(result.get("line_count"), int) \
+            or isinstance(result.get("line_count"), bool) \
+            or result.get("line_count") < 0:
+        return None
+    return copy.deepcopy(example)
+
+
+def _stage_gate_what_arrived(stage):
+    """What the stage gate's correction says arrived
+    (round nine's correction pair, INDEX 548): a
+    contribution, at the stage it was offered, before
+    the task had been presented — the gate event's own
+    stage, in the worker's terms."""
+    return (f"a contribution, offered at the {stage} "
+            f"stage of your onboarding, before your "
+            f"task had been presented")
 
 
 def _presentation_core(package, working_set_hash):
@@ -1141,20 +1296,34 @@ class Loop:
                 and (content or {}).get("delivery")
                 == _delivery):
             _delivery = None
+        _presentation_declared = \
+            _generated.get("presentation_contract") \
+            == _tool_policy.PRESENTATION_CONTRACT
+        # Round nine's correction pair (INDEX 548): the
+        # worked example the files stage presents is the
+        # one the generator sealed into the assembly's
+        # record, honoured only under the presentation
+        # contract and only standing well-formed — the
+        # seal's word, never a loop-side composition.
+        _worked_example = _worked_example_honoured(
+            _generated.get("worked_example")) \
+            if _presentation_declared else None
         return {
             "delivery": copy.deepcopy(_delivery),
             "working_set_declared":
                 _generated.get("working_set_contract")
                 == _tool_policy.WORKING_SET_CONTRACT,
             "presentation_declared":
-                _generated.get("presentation_contract")
-                == _tool_policy.PRESENTATION_CONTRACT,
+                _presentation_declared,
+            "worked_example": _worked_example,
             "presentation_hash": None,
             "freshness_suspended":
                 _generated.get("freshness_guard")
                 == _tool_policy.FRESHNESS_GUARD_SUSPENDED,
             "deliverable_filed": None,
             "delivery_gate_correction": None,
+            "delivery_stage_gate_correction": None,
+            "delivery_stage_gate_error": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -1285,6 +1454,7 @@ class Loop:
                            f"recorded: {refusal.ground}")
             ctx["iterations"] = iteration
             ctx["recorded"].append(ev)
+            ctx["iteration_event_seq"] = ev["event_seq"]
             # The cursor advances only to the head actually
             # presented; the iteration event itself stands
             # after that head and is presented in the next
@@ -1426,6 +1596,11 @@ class Loop:
                     return self._stall(
                         ctx, "runtime_failure",
                         detail=ctx["delivery_filing_error"])
+                if ctx.get("delivery_stage_gate_error"):
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=ctx[
+                            "delivery_stage_gate_error"])
                 if ctx.get("deliverable_filed") is not None:
                     return self._delivered_result(ctx)
 
@@ -1709,6 +1884,10 @@ class Loop:
             return self._stall(
                 ctx, "runtime_failure",
                 detail=ctx["delivery_filing_error"])
+        if ctx.get("delivery_stage_gate_error"):
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=ctx["delivery_stage_gate_error"])
         if ctx.get("deliverable_filed") is not None:
             return self._delivered_result(ctx)
         return "continue"
@@ -2362,6 +2541,11 @@ class Loop:
                     is not None:
                 ordered["delivery_gate_correction"] = \
                     ctx.pop("delivery_gate_correction")
+            if ctx.get("delivery_stage_gate_correction") \
+                    is not None:
+                ordered["delivery_stage_gate_correction"] \
+                    = ctx.pop(
+                        "delivery_stage_gate_correction")
             ordered["case"] = package["case"]
             if working_set is not None:
                 ordered["working_set"] = working_set
@@ -2458,6 +2642,12 @@ class Loop:
             "deliverable": deliverable_text,
             "statement": cover_statement}
         if stage == "memory":
+            # The snapshot (INDEX 549): where he stands
+            # when he wakes — what was settled before he
+            # arrived — riding before his memory, small,
+            # and derived from the case's opening record
+            # alone.
+            staged["snapshot"] = _staged_snapshot(content)
             role_memory = content.get("role_memory")
             staged["memory"] = {
                 "introduction": STAGED_MEMORY_INTRO,
@@ -2486,7 +2676,23 @@ class Loop:
                     opening)
             staged["case_essentials"] = essentials
         elif stage == "files":
-            files = {"introduction": STAGED_FILES_INTRO,
+            # The needed files (INDEX 549): the case's
+            # glossary — the case's own statement of what
+            # the job needs — each entry carrying its way
+            # in beside its address: the concrete call,
+            # naming a granted tool, that pulls that file.
+            # And the worked example (INDEX 548): the
+            # office's real call on the first file, with
+            # its real result, sealed at generation —
+            # shown, not described. Where no example was
+            # sealed (the first file could not be listed),
+            # none is presented and the introduction says
+            # so by its shape.
+            example = ctx.get("worked_example")
+            files = {"introduction":
+                     STAGED_FILES_INTRO
+                     if example is not None
+                     else STAGED_FILES_INTRO_NO_EXAMPLE,
                      "briefcase": []}
             glossary = content.get("glossary")
             if isinstance(glossary, list):
@@ -2494,15 +2700,29 @@ class Loop:
                     if isinstance(entry, dict) and \
                             isinstance(
                                 entry.get("address"), str):
-                        files["briefcase"].append({
+                        brief = {
                             "address": entry["address"],
                             "description":
-                                entry.get("description")})
+                                entry.get("description")}
+                        way = _staged_access_way(
+                            catalogue, entry["address"])
+                        if way is not None:
+                            brief["access"] = way
+                        files["briefcase"].append(brief)
             journal_path = _staged_journal_path(content)
             if journal_path is not None:
                 files["journal"] = {
                     "path": journal_path,
                     "label": STAGED_JOURNAL_POINTER}
+            if example is not None:
+                files["worked_example"] = {
+                    "label": STAGED_EXAMPLE_LABEL,
+                    "call": {
+                        "tool": example["tool"],
+                        "parameters": {
+                            "path": example["path"]}},
+                    "result": copy.deepcopy(
+                        example["result"])}
             staged["files"] = files
         elif stage == "task":
             task = {"assignment": content.get("assignment"),
@@ -2560,6 +2780,10 @@ class Loop:
                 is not None:
             staged["delivery_gate_correction"] = \
                 ordered["delivery_gate_correction"]
+        if ordered.get("delivery_stage_gate_correction") \
+                is not None:
+            staged["delivery_stage_gate_correction"] = \
+                ordered["delivery_stage_gate_correction"]
         staged["tool_results"] = base["tool_results"]
         if ordered.get("working_set") is not None:
             staged["working_set"] = ordered["working_set"]
@@ -3765,6 +3989,61 @@ class Loop:
                 "contribution>\"}.")}
         return True
 
+    def _try_delivery_stage_gate(self, ctx, proposal, ev):
+        """The stage gate's decision (round nine's
+        correction pair, INDEX 548): True where this
+        contribution is gated — offered under the
+        presentation contract at the memory, case or
+        files stage, before its task had been presented.
+        The contribution act itself already stands in the
+        record (the doorway recorded it before this
+        decision, as it records every act); the gate
+        records its own event naming that contribution
+        and stashes the correction for the next wake's
+        package. Nothing is filed and the loop does not
+        complete; the firing consumes the iteration, as
+        the envelope gate's does, and it may fire again
+        on a later pre-task iteration within the step
+        budget. A gate that cannot be recorded names its
+        error on the context and still returns True —
+        an unrecorded gate must never silently become a
+        filing — and the caller stalls on the error.
+        Everywhere else (no presentation contract, no
+        delivery declaration, the task stage or later)
+        the contribution is not the gate's business and
+        adjudication proceeds exactly as it stands."""
+        if not ctx.get("presentation_declared") or \
+                ctx.get("delivery") is None:
+            return False
+        stage = _staged_stage(ctx["iterations"])
+        if stage not in ("memory", "case", "files"):
+            return False
+        text = proposal["payload"].get("text")
+        if not isinstance(text, str):
+            return False
+        digest = hashlib.sha256(
+            text.encode("utf-8")).hexdigest()
+        try:
+            gate_ev = \
+                self.doorway.record_delivery_stage_gate(
+                    ctx["assembly_id"],
+                    ctx.get("iteration_event_seq"), stage,
+                    ev["event_seq"], digest)
+        except Exception as exc:  # noqa: BLE001
+            ctx["delivery_stage_gate_error"] = (
+                f"the delivery stage gate could not be "
+                f"recorded: {type(exc).__name__}: {exc}")
+            return True
+        ctx["recorded"].append(gate_ev)
+        ctx["delivery_stage_gate_correction"] = {
+            "what_arrived": _stage_gate_what_arrived(
+                stage),
+            "stage": stage,
+            "contribution_seq": ev["event_seq"],
+            "text_sha256": digest,
+            "instruction": STAGED_STAGE_GATE_INSTRUCTION}
+        return True
+
     # ---------------------------------------------- adjudication
     def _adjudicate(self, ctx, data):
         """Effect a validated response, per act and per
@@ -3806,6 +4085,20 @@ class Loop:
                         is None \
                         and not ctx.get(
                             "delivery_filing_error"):
+                    # The stage gate first (round nine's
+                    # correction pair, INDEX 548): under
+                    # the presentation contract, a
+                    # contribution offered before the task
+                    # stage is set aside unfiled and
+                    # answered with a correction — it is
+                    # not adjudicated as a delivery, and
+                    # the response's remaining acts and
+                    # requests proceed as they ordinarily
+                    # would; the gate refuses the
+                    # delivery, not the answer.
+                    if self._try_delivery_stage_gate(
+                            ctx, proposal, ev):
+                        continue
                     # The door (door scope, 2026-11-24):
                     # under the sealed declaration this
                     # contribution is the deliverable's

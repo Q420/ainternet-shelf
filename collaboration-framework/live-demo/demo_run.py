@@ -1080,6 +1080,42 @@ def run_demo():
               "staged at the glossary's addresses, each "
               "hash-verified against the manifest")
 
+        # THE WORKED EXAMPLE (round nine, INDEX 548):
+        # the office performs the demonstration call on
+        # the glossary's first file against the staged
+        # sandbox, through the same governed performer a
+        # dispatch runs, BEFORE generation — the call's
+        # real result is what generation seals beside
+        # the presentation contract, and the files stage
+        # shows it at the worker's third wake. Where the
+        # call cannot be made, no example stands and
+        # generation proceeds without one.
+        worked_example = None
+        example_executor = Executor(
+            doorway, str(run_dir / "sandbox"),
+            claim_dir=str(run_dir / "claims"),
+            deadline=150.0)
+        try:
+            example_result = \
+                example_executor.worked_example_list(
+                    GLOSSARY[0]["address"])
+            worked_example = {
+                "tool": "sandbox.list",
+                "path": GLOSSARY[0]["address"],
+                "result": example_result}
+            print("worked example: the office's "
+                  "sandbox.list call on "
+                  f"{GLOSSARY[0]['address']} stands "
+                  "performed against the staged sandbox; "
+                  "its result is sealed with the "
+                  "assembly")
+        except Exception as exc:  # noqa: BLE001 — the
+            # call cannot be made: no example stands.
+            print("worked example: the demonstration "
+                  "call could not be made "
+                  f"({type(exc).__name__}: {exc}); no "
+                  "example stands in the seal")
+
         # ASSEMBLE — the adapter on the NVIDIA route's
         # real seam: the typed transport through the
         # capture pass-through to the registered
@@ -1112,7 +1148,8 @@ def run_demo():
                 model_requested=MODEL, probe=True,
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
-                presentation_declaration=True)
+                presentation_declaration=True,
+                worked_example=worked_example)
         except ModelPinMismatchError as mismatch:
             # The flagged conflict (paper §3.6 gate 5's
             # rule, carried to this run's pin): the route
@@ -1680,6 +1717,35 @@ def verify_config():
                    and raised.provider_model_id
                    == "nvidia/some-other-model")
 
+            # The worked example (round nine, INDEX
+            # 548): this path's own staging stands at
+            # (6b), after generation, so the
+            # demonstration call is performed here on a
+            # throwaway staging of the same verified
+            # set, through the governed performer, and
+            # passed to the generation below — the seal
+            # this path verifies carries the real call's
+            # result on the glossary's first file.
+            example_problem = _stage_sandbox_sources(
+                tmp / "sandbox-example", manifest)
+            verify_example = None
+            if example_problem is None:
+                try:
+                    verify_example = {
+                        "tool": "sandbox.list",
+                        "path": GLOSSARY[0]["address"],
+                        "result": Executor(
+                            doorway,
+                            str(tmp / "sandbox-example"),
+                            claim_dir=str(
+                                tmp / "claims-example"),
+                            deadline=150.0
+                        ).worked_example_list(
+                            GLOSSARY[0]["address"])}
+                except Exception:  # noqa: BLE001 — the
+                    # call cannot be made: no example.
+                    verify_example = None
+
             # (6) Generation under a stub identity: the
             # sealed record declares the exec catalogue
             # contract and the probe contract, and holds
@@ -1697,7 +1763,8 @@ def verify_config():
                 model_requested=MODEL, probe=True,
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
-                presentation_declaration=True)
+                presentation_declaration=True,
+                worked_example=verify_example)
             expect("generation: stub-identity generation "
                    "succeeds",
                    generated.get("ok") is True,
@@ -1753,6 +1820,29 @@ def verify_config():
                        == tool_policy.PRESENTATION_CONTRACT,
                        f"got "
                        f"{sealed.get('presentation_contract')}")
+                expect("generation: the sealed record "
+                       "carries the worked example — the "
+                       "office's sandbox.list call on the "
+                       "glossary's first file, its result "
+                       "the governed performer's own over "
+                       "the staged bytes (round nine, "
+                       "INDEX 548)",
+                       verify_example is not None
+                       and sealed.get("worked_example")
+                       == verify_example,
+                       f"got "
+                       f"{sealed.get('worked_example')}")
+                expect("generation: the worked example's "
+                       "result is the staged file's real "
+                       "listing — its size is the staged "
+                       "bytes' length",
+                       verify_example is not None
+                       and verify_example["result"].get(
+                           "size_bytes")
+                       == len((tmp / "sandbox-example"
+                               / GLOSSARY[0]["address"])
+                              .read_bytes()),
+                       "size against the staged file")
                 expect("generation: the sealed record "
                        "declares the freshness guard "
                        "suspended (Ben's R31 ruling, "

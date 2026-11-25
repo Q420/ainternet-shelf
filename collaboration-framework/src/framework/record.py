@@ -97,6 +97,12 @@ EVENT_TYPES = {
     # envelope gate's correction record for a recognisable
     # but unparseable contribution response.
     "DELIVERABLE_FILED", "DELIVERY_GATE",
+    # Round nine's correction pair (INDEX 548): the stage
+    # gate's record — a contribution offered under the
+    # staged-onboarding presentation contract before its
+    # task stage, set aside unfiled and answered with a
+    # correction, in the envelope gate's shape.
+    "DELIVERY_STAGE_GATE",
 }
 
 # R14: a case's content fields, over which a correction's

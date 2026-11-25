@@ -2242,18 +2242,72 @@ _STAGED_MEMORY_INTRO = (
     "below is empty, this role carries no standing "
     "memory yet.")
 _STAGED_FILES_INTRO = (
-    "Your briefcase holds the job's files. What stands "
-    "below are pointers — each file's address and what "
-    "it is — not contents: the contents are yours to "
-    "pull when the work needs them, through the doorway "
-    "tools (sandbox.list shows a file's size, line "
-    "count and headings; sandbox.read pulls a whole "
-    "file) or the shell in your room. That is how the "
-    "briefcase works: what you pull is carried forward "
-    "in front of you at later wakes, so you never need "
-    "to pull the same thing twice. Your tools are "
-    "offered from this wake on — if you want, list a "
-    "file from the map now and see its shape standing.")
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings; sandbox.read pulls a "
+    "whole file) or the shell in your room. That is "
+    "how the briefcase works: what you pull is "
+    "carried forward in front of you at later wakes, "
+    "so you never need to pull the same thing twice. "
+    "Your tools are offered from this wake on. Below "
+    "the map, one call stands worked as an example — "
+    "a real call the office made on the first file "
+    "while your briefcase was being stocked, with "
+    "what came back; yours will look like this.")
+_STAGED_FILES_INTRO_NO_EXAMPLE = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings; sandbox.read pulls a "
+    "whole file) or the shell in your room. That is "
+    "how the briefcase works: what you pull is "
+    "carried forward in front of you at later wakes, "
+    "so you never need to pull the same thing twice. "
+    "Your tools are offered from this wake on — if "
+    "you want, list a file from the map now and see "
+    "its shape standing.")
+_STAGED_EXAMPLE_LABEL = (
+    "A worked example — the office's own call, made "
+    "while your briefcase was stocked: a real call, "
+    "and what came back. It is an example of your "
+    "next move, not your work and not material you "
+    "have gathered; the file's contents are still "
+    "yours to pull.")
+_STAGED_SNAPSHOT_NOTE = (
+    "Where you stand: before you were woken, an "
+    "opening conversation settled what stands below. "
+    "It is recorded work state — what was settled "
+    "before you arrived — not your memory; your "
+    "memory follows it.")
+_STAGED_SNAPSHOT_EMPTY = (
+    "Where you stand: nothing was settled before "
+    "this wake — no settled results of an opening "
+    "conversation stand in your case. What precedes "
+    "you is this role's standing memory, below.")
+_STAGED_STAGE_GATE_INSTRUCTION = (
+    "Nothing was filed. Delivery opens with your "
+    "task: your task has not been presented yet — "
+    "it arrives at the fourth wake of your "
+    "onboarding (stage 4: your task), and from "
+    "that wake on your contribution is the "
+    "deliverable's arrival and the office files "
+    "it. What is needed until then is the work "
+    "itself: walk the stages as they come, pull "
+    "what your task needs, and contribute once "
+    "your task stands in front of you. The text "
+    "you sent stands in the record, set aside "
+    "unfiled; if it is the brief you mean to "
+    "deliver, send it again after your task has "
+    "been presented.")
 _STAGED_JOURNAL_POINTER = (
     "your journal — your notebook: notes, decisions, "
     "where you left off. Yours to write and rewrite; "
@@ -2305,6 +2359,96 @@ def _staged_stage(iteration):
     if 1 <= iteration <= 4:
         return _PRESENTATION_STAGES[iteration - 1]
     return _PRESENTATION_STAGES[4]
+
+
+def _staged_snapshot(content):
+    """Where the worker stands at his first wake —
+    this checker's copy of the loop's derivation
+    (INDEX 549): the case's opening record's settled
+    results, verbatim, where they stand; the plain
+    empty statement where none stand."""
+    opening = (content or {}).get("opening")
+    settled = opening.get("settled") \
+        if isinstance(opening, dict) else None
+    if isinstance(settled, list) and settled and \
+            all(isinstance(item, str) for item in settled):
+        return {"note": _STAGED_SNAPSHOT_NOTE,
+                "settled": copy.deepcopy(settled)}
+    return {"note": _STAGED_SNAPSHOT_EMPTY, "settled": []}
+
+
+def _staged_access_way(catalogue, address):
+    """A needed file's way in — this checker's copy
+    of the loop's derivation (INDEX 549): the
+    concrete call naming a granted tool over the
+    file's own address, read from the catalogue the
+    package itself offers."""
+    if not isinstance(address, str):
+        return None
+    for tool in ("sandbox.read", "sandbox.list"):
+        for entry in catalogue or []:
+            if not isinstance(entry, dict) or \
+                    entry.get("tool") != tool:
+                continue
+            ceiling = entry.get("scope_ceiling")
+            prefix = ceiling.get("path_prefix") \
+                if isinstance(ceiling, dict) else None
+            if isinstance(prefix, str) and (
+                    address == prefix
+                    or address.startswith(prefix + "/")):
+                return {"tool": tool,
+                        "parameters": {"path": address}}
+    return None
+
+
+def _worked_example_well_formed(example):
+    """The sealed worked example's shape — this
+    checker's copy of the loop's honour rule (INDEX
+    548): the demonstration call and the listing
+    performer's whole result, internally consistent.
+    A seal standing in any other shape is presented
+    by no derivation and reported at the assembly
+    level."""
+    if not isinstance(example, dict) or \
+            set(example) != {"tool", "path", "result"}:
+        return False
+    if example.get("tool") != "sandbox.list":
+        return False
+    path = example.get("path")
+    result = example.get("result")
+    if not isinstance(path, str) or not path or \
+            not isinstance(result, dict) or \
+            set(result) != {"path", "content",
+                            "content_bytes",
+                            "content_sha256",
+                            "authority_path", "size_bytes",
+                            "line_count"}:
+        return False
+    content = result.get("content")
+    return not (
+        result.get("path") != path or
+        not isinstance(content, str) or
+        result.get("content_bytes") != len(
+            content.encode("utf-8")) or
+        result.get("content_sha256") != hashlib.sha256(
+            content.encode("utf-8")).hexdigest() or
+        result.get("authority_path") not in (
+            "source", "scratch") or
+        not isinstance(result.get("size_bytes"), int) or
+        isinstance(result.get("size_bytes"), bool) or
+        result.get("size_bytes") < 0 or
+        not isinstance(result.get("line_count"), int) or
+        isinstance(result.get("line_count"), bool) or
+        result.get("line_count") < 0)
+
+
+def _stage_gate_what_arrived(stage):
+    """What the stage gate's correction says arrived
+    — this checker's copy of the loop's text (INDEX
+    548)."""
+    return (f"a contribution, offered at the {stage} "
+            f"stage of your onboarding, before your "
+            f"task had been presented")
 
 
 def _staged_tool_purpose(tool, description):
@@ -2690,7 +2834,20 @@ def _derive_staged_core(events, state, gen, content,
         "deliverable": deliverable_text,
         "statement": cover_statement}
     content = content or {}
+    # The catalogue is derived here, ahead of the
+    # stage components, because the files stage's
+    # access ways are read from it (INDEX 549); the
+    # derivation and its failure are otherwise exactly
+    # as they stood below the components.
+    version = payload.get("registry_version")
+    per_grant = gp.get("catalogue_contract") in \
+        (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
+    catalogue, _ground = _derive_catalogue(
+        gp.get("grants"), version, per_grant=per_grant)
+    if catalogue is None:
+        return None
     if stage == "memory":
+        staged["snapshot"] = _staged_snapshot(content)
         role_memory = content.get("role_memory")
         staged["memory"] = {
             "introduction": _STAGED_MEMORY_INTRO,
@@ -2718,22 +2875,46 @@ def _derive_staged_core(events, state, gen, content,
             essentials["opening"] = copy.deepcopy(opening)
         staged["case_essentials"] = essentials
     elif stage == "files":
-        files = {"introduction": _STAGED_FILES_INTRO,
+        # The needed files with their ways in (INDEX
+        # 549) and the worked example (INDEX 548): the
+        # example is the generated record's seal,
+        # presented where it stands well-formed — the
+        # loop's honour rule, derived identically here.
+        example = gp.get("worked_example")
+        if not _worked_example_well_formed(example):
+            example = None
+        files = {"introduction":
+                 _STAGED_FILES_INTRO
+                 if example is not None
+                 else _STAGED_FILES_INTRO_NO_EXAMPLE,
                  "briefcase": []}
         glossary = content.get("glossary")
         if isinstance(glossary, list):
             for entry in glossary:
                 if isinstance(entry, dict) and \
                         isinstance(entry.get("address"), str):
-                    files["briefcase"].append({
+                    brief = {
                         "address": entry["address"],
                         "description":
-                            entry.get("description")})
+                            entry.get("description")}
+                    way = _staged_access_way(
+                        catalogue, entry["address"])
+                    if way is not None:
+                        brief["access"] = way
+                    files["briefcase"].append(brief)
         journal_path = _staged_journal_path(content)
         if journal_path is not None:
             files["journal"] = {
                 "path": journal_path,
                 "label": _STAGED_JOURNAL_POINTER}
+        if example is not None:
+            files["worked_example"] = {
+                "label": _STAGED_EXAMPLE_LABEL,
+                "call": {
+                    "tool": example["tool"],
+                    "parameters": {
+                        "path": example["path"]}},
+                "result": copy.deepcopy(example["result"])}
         staged["files"] = files
     elif stage == "task":
         task = {"assignment": content.get("assignment"),
@@ -2806,13 +2987,29 @@ def _derive_staged_core(events, state, gen, content,
                     "instruction": _STAGED_GATE_INSTRUCTION}
         if correction is not None:
             staged["delivery_gate_correction"] = correction
-    version = payload.get("registry_version")
-    per_grant = gp.get("catalogue_contract") in \
-        (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
-    catalogue, _ground = _derive_catalogue(
-        gp.get("grants"), version, per_grant=per_grant)
-    if catalogue is None:
-        return None
+        stage_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_STAGE_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                sp = ev["payload"]
+                stage_correction = {
+                    "what_arrived":
+                        _stage_gate_what_arrived(
+                            sp.get("stage")),
+                    "stage": sp.get("stage"),
+                    "contribution_seq":
+                        sp.get("contribution_seq"),
+                    "text_sha256": sp.get("text_sha256"),
+                    "instruction":
+                        _STAGED_STAGE_GATE_INSTRUCTION}
+        if stage_correction is not None:
+            staged["delivery_stage_gate_correction"] = \
+                stage_correction
     if stage == "task":
         staged["tool_list"] = _staged_tool_menu(
             catalogue, deliverable=deliverable)
@@ -3134,6 +3331,7 @@ def _loop_result(events, state, run_dir=None):
     translations = {}
     deliverable_filings = {}
     delivery_gates = {}
+    delivery_stage_gates = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -3212,6 +3410,17 @@ def _loop_result(events, state, run_dir=None):
             if binding_problems("delivery_gate", ev, aid):
                 continue
             delivery_gates.setdefault(aid, []).append(ev)
+        elif t == "DELIVERY_STAGE_GATE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("delivery_stage_gate_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("delivery_stage_gate",
+                                ev, aid):
+                continue
+            delivery_stage_gates.setdefault(
+                aid, []).append(ev)
         elif t == "TRANSLATION_RECORDED":
             # Native adapter piece (N32/N33): the
             # translation record — the loop machinery's
@@ -3297,6 +3506,50 @@ def _loop_result(events, state, run_dir=None):
             problem("presentation_without_working_set",
                     assembly_id=aid, at_seq=activated[aid],
                     working_set_contract=ws_contract)
+        # The worked example's seal (round nine's
+        # correction pair, INDEX 548): the generator
+        # seals the office's demonstration call beside
+        # the presentation contract, on the pinned
+        # case's first glossary file, its result whole
+        # and internally consistent. A seal standing
+        # anywhere else, in any other shape, or on any
+        # other file claims a demonstration the office
+        # never made and is divergent in itself,
+        # reported once here; the presentation itself
+        # is verified per iteration in the staged
+        # core's reconstruction.
+        example = gen["payload"].get("worked_example") \
+            if gen is not None else None
+        if example is not None:
+            if presentation != _PRESENTATION_CONTRACT:
+                problem("worked_example_without_"
+                        "presentation",
+                        assembly_id=aid,
+                        at_seq=activated[aid],
+                        presentation_contract=presentation)
+            elif not _worked_example_well_formed(example):
+                problem("worked_example_malformed",
+                        assembly_id=aid,
+                        at_seq=activated[aid])
+            else:
+                glossary = pinned_case_content(aid).get(
+                    "glossary")
+                first = None
+                if isinstance(glossary, list):
+                    for entry in glossary:
+                        if isinstance(entry, dict) and \
+                                isinstance(
+                                    entry.get("address"),
+                                    str):
+                            first = entry["address"]
+                            break
+                if first is None or \
+                        example.get("path") != first:
+                    problem("worked_example_path_mismatch",
+                            assembly_id=aid,
+                            at_seq=activated[aid],
+                            path=example.get("path"),
+                            first_glossary_address=first)
         # The delivery declaration (door scope,
         # 2026-11-24): the generator seals the pinned
         # case's declaration into the assembly's record;
@@ -3605,6 +3858,18 @@ def _loop_result(events, state, run_dir=None):
                     stalls[aid]["event_seq"] > seq:
                 problem("stall_after_filing",
                         assembly_id=aid, at_seq=seq)
+            # The stage gate's word (INDEX 548): a
+            # contribution the gate set aside unfiled
+            # may never stand filed — a filing naming a
+            # gated contribution is the shortcut the
+            # gate exists to close, recorded as done.
+            if any(g["payload"].get("contribution_seq")
+                   == p.get("contribution_seq")
+                   for g in delivery_stage_gates.get(
+                       aid, [])):
+                problem("deliverable_filed_from_stage_"
+                        "gated_contribution",
+                        assembly_id=aid, at_seq=seq)
     for aid, evs in delivery_gates.items():
         iteration_seqs = {ev["event_seq"] for ev in
                           iterations.get(aid, [])}
@@ -3626,6 +3891,63 @@ def _loop_result(events, state, run_dir=None):
                         p.get("parse_error"), str) or \
                     not p.get("parse_error"):
                 problem("delivery_gate_payload_malformed",
+                        assembly_id=aid, at_seq=seq)
+
+    # The stage gate's events (round nine's correction
+    # pair, INDEX 548), verified against the record
+    # itself: a gate binds a standing iteration of a
+    # presentation-declared assembly, names the stage
+    # that iteration's wake presented — one of the
+    # three stages before the task — and the
+    # contribution it set aside, whose text must hash
+    # to the gate's digest, with nothing filed. The
+    # correction the gate owes the next package is
+    # verified in the staged core's reconstruction
+    # above: a package omitting it diverges from its
+    # recorded commitment.
+    for aid, evs in delivery_stage_gates.items():
+        gen = generated.get(aid)
+        declared = gen is not None and \
+            gen["payload"].get("presentation_contract") \
+            == _PRESENTATION_CONTRACT
+        iteration_numbers = {
+            ev["event_seq"]: ev["payload"].get("iteration")
+            for ev in iterations.get(aid, [])}
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if not declared:
+                problem("delivery_stage_gate_without_"
+                        "presentation",
+                        assembly_id=aid, at_seq=seq)
+            number = iteration_numbers.get(
+                p.get("iteration_seq"))
+            if number is None:
+                problem("delivery_stage_gate_iteration_"
+                        "mismatch",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            if p.get("stage") != _staged_stage(number) \
+                    or p.get("stage") not in (
+                        "memory", "case", "files"):
+                problem("delivery_stage_gate_stage_"
+                        "mismatch",
+                        assembly_id=aid, at_seq=seq)
+            contribution = _events_by_seq.get(
+                p.get("contribution_seq"))
+            text = (contribution or {}).get(
+                "payload", {}).get("text") \
+                if contribution is not None else None
+            digest = hashlib.sha256(
+                text.encode("utf-8")).hexdigest() \
+                if isinstance(text, str) else None
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION" \
+                    or digest is None or \
+                    digest != p.get("text_sha256") or \
+                    p.get("filed") is not False:
+                problem("delivery_stage_gate_payload_"
+                        "malformed",
                         assembly_id=aid, at_seq=seq)
 
     # Dispatch standing by instance, for the stall checks:
