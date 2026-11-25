@@ -615,8 +615,35 @@ def _checker_extract_calls(message):
     return records
 
 
+# The route whose provider reads tool names in their
+# wire form (Ben's ruling, 2026-11-24): the value the
+# assembly's own ASSEMBLY_PROBED act records for the
+# NVIDIA route. The checker's statement of the wire
+# derivation is its own, as its other contracts are
+# (N33's independence rule): a canonical name's wire
+# form is the name with each dot a dash, derived over
+# the reconstructed catalogue's own names.
+_CHECKER_WIRE_ROUTE = "nvidia"
+
+
+def _checker_wire_reverse(catalogue):
+    """The checker's own reverse wire map for one
+    catalogue: each catalogue name's wire form (each
+    dot a dash) back to the canonical name. An emitted
+    name stands in this map only where it is the wire
+    form of a catalogued tool — the not-guessed-back
+    rule, stated independently: no other emitted name
+    is translated, and a name outside the map stands
+    exactly as emitted for the determination."""
+    reverse = {}
+    for entry in catalogue:
+        canonical = entry["tool"]
+        reverse[canonical.replace(".", "-")] = canonical
+    return reverse
+
+
 def _checker_classify(records, catalogue, instance_id,
-                      iteration):
+                      iteration, route=None):
     """The checker's own classification of an extraction
     (N33 (i)–(iii)), in the ruled order (INDEX 408):
     call-ID integrity, the per-response cap, name
@@ -632,20 +659,37 @@ def _checker_classify(records, catalogue, instance_id,
     unknown name does not skip parsing, and a call
     whose arguments then fail stands malformed_call
     with resolution not_reached, as the loop's entry
-    stands."""
+    stands. On the wire route (the assembly's recorded
+    route, Ben's ruling 2026-11-24) an emitted name that
+    is a catalogued tool's wire form is first carried
+    back to the canonical name by the checker's own
+    derivation above, and the entry keeps both names —
+    the canonical name it judges and the wire name as
+    emitted — exactly as the recorded entry must stand
+    for the two to agree."""
     by_name = {}
     for entry in catalogue:
         by_name.setdefault(entry["tool"], entry)
+    wire_reverse = _checker_wire_reverse(catalogue) \
+        if route == _CHECKER_WIRE_ROUTE else None
     entries = []
     seen_ids = {}
     presented = 0
     for record in records:
         ordinal = record["provider_ordinal"]
         call_id = record["provider_call_id"]
+        emitted = record["name"]
+        name = emitted
+        wire_name = None
+        if wire_reverse is not None and emitted is not None:
+            wire_canonical = wire_reverse.get(emitted)
+            if wire_canonical is not None:
+                name = wire_canonical
+                wire_name = emitted
         entry = {
             "provider_ordinal": ordinal,
             "provider_call_id": call_id,
-            "name": record["name"],
+            "name": name,
             "arguments_sha256": None,
             "resolution": "not_reached",
             "validation": "not_reached",
@@ -653,6 +697,8 @@ def _checker_classify(records, catalogue, instance_id,
             "refusal_class": None,
             "refusal_detail": None,
             "loop_request_id": None}
+        if wire_name is not None:
+            entry["wire_name"] = wire_name
         entries.append(entry)
         if call_id is not None and call_id not in seen_ids:
             seen_ids[call_id] = ordinal
@@ -675,7 +721,7 @@ def _checker_classify(records, catalogue, instance_id,
         if ordinal > _CHECKER_CALL_CAP:
             entry["refusal_class"] = "call_cap_exceeded"
             continue
-        if record["name"] is None:
+        if name is None:
             entry["refusal_class"] = "malformed_call"
             entry["refusal_detail"] = \
                 "its name could not be read"
@@ -687,7 +733,7 @@ def _checker_classify(records, catalogue, instance_id,
         # no refused call above reached it, and no
         # argument work precedes it.
         target = _checker_resolve_against_catalogue(
-            by_name, record["name"])
+            by_name, name)
         # Argument parsing stands after the
         # determination in the checker's own
         # classification (INDEX 406/408), with the
@@ -2105,6 +2151,7 @@ def _loop_result(events, state, run_dir=None):
     activated = {}
     judged_modes = {}
     packed_modes = {}
+    probed_routes = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -2119,6 +2166,14 @@ def _loop_result(events, state, run_dir=None):
         elif t == "ASSEMBLY_PACKED":
             packed_modes.setdefault(p.get("assembly_id"),
                                     p.get("adapter_mode"))
+        elif t == "ASSEMBLY_PROBED":
+            # The assembly's own recorded route (Ben's
+            # ruling, 2026-11-24): the translation
+            # reconstruction below reads the wire-name
+            # translation from it — the record's field,
+            # never an inference from a model name.
+            probed_routes.setdefault(p.get("assembly_id"),
+                                     p.get("route"))
 
     def pinned_bounds(aid):
         """The loop bounds of the assembly's pinned case
@@ -3302,7 +3357,8 @@ def _loop_result(events, state, run_dir=None):
                     else:
                         expected = _checker_classify(
                             records, catalogue, iid,
-                            ip.get("iteration"))
+                            ip.get("iteration"),
+                            route=probed_routes.get(aid))
                         recorded = tp.get("calls")
                         detail = None
                         if not isinstance(recorded, list) or \

@@ -2113,6 +2113,15 @@ class Doorway:
                 return ("a translation entry's name is "
                         "the emitted string or unreadable "
                         "(N6)")
+            wire_name = entry.get("wire_name")
+            if wire_name is not None and (
+                    not isinstance(wire_name, str)
+                    or not wire_name):
+                return ("a translation entry's wire name, "
+                        "where the route's translation "
+                        "renamed the call, is the emitted "
+                        "wire string (Ben's ruling, "
+                        "2026-11-24)")
             digest = entry.get("arguments_sha256")
             if digest is not None and (
                     not isinstance(digest, str)

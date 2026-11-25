@@ -598,6 +598,46 @@ check("parity existing modes: the chat path's call() "
       isinstance(parsed, dict) and
       parsed.get("id") == "chatcmpl-raw")
 
+# -- The typed path's provider-error envelope (the helper
+# correction of 2026-11-24, under Ben's Nemotron
+# name-translator order): a provider HTTP error on the
+# typed chat path is framed into the helper's result —
+# its actual status and its own body, bounded — instead
+# of escaping as an HTTPError (the first live Nemotron
+# run stalled with the helper exiting 1 as a traceback,
+# and the provider's validation reason never reached the
+# record). The simulated 400 body is the provider's own
+# shape from that run's captured evidence.
+ERR_400_BODY = json.dumps({
+    "message": "Validation: Function at index 0 has an "
+               "invalid name: \"probe.lookup\". Only "
+               "a-z, A-Z, 0-9, underscores, and dashes "
+               "are allowed.",
+    "type": "Bad Request", "code": 400}).encode("utf-8")
+framed = with_opener(
+    ScenarioOpener(error=http_error(ERR_400_BODY, 400)),
+    helper_mod.call)
+check("parity typed path: a provider HTTP 400 is framed "
+      "as an envelope carrying the provider's own body — "
+      "no HTTPError escapes the typed path",
+      isinstance(framed, dict) and
+      framed.get("status") == 400 and
+      isinstance(framed.get("error"), dict) and
+      framed["error"].get("code") == 400 and
+      "invalid name" in str(framed["error"].get("message"))
+      and framed.get("body") == ERR_400_BODY.decode(),
+      f"framed={str(framed)[:200]}")
+framed = with_opener(
+    ScenarioOpener(error=http_error(ERR_LONG_BODY, 502)),
+    helper_mod.call)
+check("parity typed path: the framed error body is "
+      "bounded at the helper's error-body limit",
+      isinstance(framed, dict) and
+      framed.get("status") == 502 and
+      len(str(framed.get("body"))) <= 2000 and
+      len(str(framed.get("error"))) <= 2000,
+      f"lengths={ {k: (len(v) if isinstance(v, str) else v) for k, v in (framed or {}).items()} }")
+
 # ================================================================
 # The helper's main() framing, and the real transport
 # over the wrapped real helper.
@@ -629,6 +669,11 @@ ERR_XL_BODY = json.dumps({"error": {
 ERR_LONG_BODY = json.dumps({"error": {
     "message": "x" * 5000, "code": "long_error"}}
 ).encode("utf-8")
+ERR_400_BODY = json.dumps({
+    "message": "Validation: Function at index 0 has an "
+               "invalid name. Only a-z, A-Z, 0-9, "
+               "underscores, and dashes are allowed.",
+    "type": "Bad Request", "code": 400}).encode("utf-8")
 MIDREAD_BODY = b"q" * 50000
 BAD_BYTES = b"\\xff\\xfe\\x00\\x01binary\\x80\\x81"
 
@@ -733,6 +778,8 @@ SCENARIOS = {
         response=FakeRawResponse(200, OK_BODY)),
     "errxl": ScenarioOpener(
         error=http_error(ERR_XL_BODY, 400)),
+    "err400": ScenarioOpener(
+        error=http_error(ERR_400_BODY, 400)),
     "errbnd": ScenarioOpener(
         error=http_error(ERR_LONG_BODY, 400)),
     "badutf8": ScenarioOpener(
@@ -812,6 +859,34 @@ check("parity existing modes: the helper with no "
       proc.returncode == 2 and
       b"chat-raw-bounded" in proc.stdout and
       b"models" in proc.stdout)
+
+# -- The typed chat path end to end through the wrapped
+# real helper (the helper correction of 2026-11-24): a
+# simulated provider HTTP 400 returns the error envelope
+# on stdout — the status and the provider's own body —
+# with exit 0 (the envelope IS the result) and no
+# traceback anywhere: before the correction this exact
+# shape exited 1 with an uncaught HTTPError traceback
+# and the provider's reason was lost.
+proc = run_wrapper("err400", "chat", PIN)
+typed_env = None
+try:
+    typed_env = json.loads(proc.stdout.decode("utf-8"))
+except ValueError:
+    typed_env = None
+check("parity typed path end to end: a simulated HTTP "
+      "400 on chat returns the error envelope, exit 0, "
+      "no traceback",
+      proc.returncode == 0
+      and b"Traceback" not in proc.stderr
+      and isinstance(typed_env, dict)
+      and typed_env.get("status") == 400
+      and isinstance(typed_env.get("error"), dict)
+      and typed_env["error"].get("code") == 400
+      and "invalid name" in str(
+          typed_env["error"].get("message")),
+      f"rc={proc.returncode} "
+      f"stderr={proc.stderr[:200]!r}")
 
 # -- Through the real transport over the wrapped REAL
 # helper: the full provider-to-probe seam.

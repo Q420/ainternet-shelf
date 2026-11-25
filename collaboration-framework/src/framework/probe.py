@@ -41,11 +41,14 @@ Completeness is judged per object, and evidence cut by the
 ceiling is incomplete, never labelled complete.
 """
 
+import copy
 import hashlib
 import json
 import re
 
 from fabric.canonical import canonical
+
+from . import nemotron_names as _nemotron_names
 
 
 # The sealed declaration value that activates the probe regime
@@ -183,17 +186,32 @@ def configuration_fingerprint(route, model):
     }))
 
 
-def build_request(model):
+def build_request(model, translator=None):
     """One trial's request: the synthetic case with the probe
     tools offered natively AND the text contract described, at
     the suite's pinned parameters, tool choice left at the
-    provider default (no tool_choice key is sent)."""
+    provider default (no tool_choice key is sent). The suite
+    definition the hash and fingerprint bind is the canonical
+    one; where a name translator stands (the NVIDIA route's,
+    Ben's ruling 2026-11-24), the offered definitions travel
+    under their wire names — a copy is renamed, never the
+    suite's own definitions."""
+    tools = TOOL_DEFINITIONS
+    if translator is not None:
+        tools = []
+        for definition in TOOL_DEFINITIONS:
+            renamed = copy.deepcopy(definition)
+            wire = translator.to_wire(
+                renamed["function"]["name"])
+            if wire is not None:
+                renamed["function"]["name"] = wire
+            tools.append(renamed)
     return {
         "model": model,
         "messages": [
             {"role": "system", "content": SYSTEM_TEXT},
             {"role": "user", "content": CASE_TEXT}],
-        "tools": TOOL_DEFINITIONS,
+        "tools": tools,
         "temperature": PARAMETERS["temperature"],
     }
 
@@ -231,7 +249,25 @@ def _parse_arguments(value):
     return value
 
 
-def _classify_calls(calls):
+def _canonical_name(name, translator):
+    """A returned call's name in canonical terms, where a
+    name translator stands (the NVIDIA route's, Ben's
+    ruling 2026-11-24): an emitted wire name in the
+    translator's map reads back as its canonical name, so
+    a call to the offered probe tool is recognised as the
+    probe tool. A name outside the map is NOT guessed
+    back — it stands exactly as emitted, and the offered
+    determination below judges it as emitted. The
+    retained evidence is never rewritten by this: the
+    normalisation lives only in classification."""
+    if translator is None or not isinstance(name, str):
+        return name
+    wire_canonical = translator.to_canonical(name)
+    return wire_canonical if wire_canonical is not None \
+        else name
+
+
+def _classify_calls(calls, translator=None):
     """Behaviour for a set of attributable calls, each a
     (name, arguments) pair. payload_form records the hybrid
     detail: an unoffered call whose arguments carry the text
@@ -240,6 +276,8 @@ def _classify_calls(calls):
     not a class of its own."""
     if any(args is _UNPARSEABLE for _, args in calls):
         return "malformed", None
+    calls = [(_canonical_name(name, translator), args)
+             for name, args in calls]
     payload_form = None
     for name, args in calls:
         if name not in OFFERED_NAMES and isinstance(args, dict) \
@@ -304,13 +342,16 @@ def _calls_from_error_body(error_body):
     return None
 
 
-def classify_capture(capture):
+def classify_capture(capture, translator=None):
     """(behaviour, delivery, payload_form) for one raw capture.
 
     A capture is the raw-call protocol's return: `body` (the
     provider response body as received), `error_body` (the exact
     provider error body), `http_status`, `diagnostics` (the
-    transport's own output, its own object) and `metadata`."""
+    transport's own output, its own object) and `metadata`.
+    Where a name translator stands (the NVIDIA route's), the
+    calls classification reads are recognised through it —
+    the capture itself stands as received."""
     body = capture.get("body")
     if isinstance(body, str):
         completion = None
@@ -332,7 +373,7 @@ def classify_capture(capture):
             return "malformed", "provider_accepted", None
         calls = _calls_from_message(message)
         if calls is not None:
-            behaviour, payload_form = _classify_calls(calls)
+            behaviour, payload_form = _classify_calls(calls, translator)
             return behaviour, "provider_accepted", payload_form
         content = message.get("content")
         if isinstance(content, str) and content.strip():
@@ -349,7 +390,7 @@ def classify_capture(capture):
     if isinstance(error_body, str):
         calls = _calls_from_error_body(error_body)
         if calls is not None:
-            behaviour, payload_form = _classify_calls(calls)
+            behaviour, payload_form = _classify_calls(calls, translator)
             return behaviour, "provider_refused", payload_form
         return ("no_observable_behaviour", "provider_failed",
                 None)
@@ -378,13 +419,14 @@ def _retain(text, budget):
     return raw[:budget].decode("utf-8", "replace"), False
 
 
-def trial_evidence(index, capture):
+def trial_evidence(index, capture, translator=None):
     """One trial's recorded evidence: the two-dimension
     classification, the settled flag, and the per-object retained
     evidence with its hashes. Truncation takes diagnostics first
     and the provider body last; the trial's evidence is complete
     exactly when the provider body stands complete."""
-    behaviour, delivery, payload_form = classify_capture(capture)
+    behaviour, delivery, payload_form = classify_capture(
+        capture, translator=translator)
     body_text = capture.get("body")
     if not isinstance(body_text, str):
         body_text = capture.get("error_body")
@@ -511,16 +553,27 @@ def evidence_hash(probed):
     return _sha256(canonical(evidence_projection(probed)))
 
 
-def run_trials(raw_call, model):
+def run_trials(raw_call, model, route=None):
     """The bounded trial run: TRIAL_COUNT single generations
     through the injected raw-call callable. A raw call that
     raises, or returns no capture, is itself evidence — a
     delivery failure with the failure as its diagnostic — never
     a probe-stage exception: the stage records what happened,
-    including that nothing could be observed."""
+    including that nothing could be observed.
+
+    The route is the assembly's recorded route, as the
+    generator's probe act carries it: on the NVIDIA route the
+    trials travel under the name translator (Ben's ruling,
+    2026-11-24) — the offered definitions under their wire
+    names, and a returned wire name recognised as the probe
+    tool it names. Every other route runs exactly as before:
+    the canonical names on the wire, the suite definition the
+    hash binds untouched either way."""
+    translator = _nemotron_names.translator_for_route(
+        route, OFFERED_NAMES)
     trials = []
     for index in range(1, TRIAL_COUNT + 1):
-        request = build_request(model)
+        request = build_request(model, translator=translator)
         try:
             capture = raw_call(request)
             if not isinstance(capture, dict):
@@ -530,5 +583,6 @@ def run_trials(raw_call, model):
         except Exception as exc:  # the capture IS the failure
             capture = {
                 "diagnostics": f"{type(exc).__name__}: {exc}"}
-        trials.append(trial_evidence(index, capture))
+        trials.append(trial_evidence(
+            index, capture, translator=translator))
     return trials

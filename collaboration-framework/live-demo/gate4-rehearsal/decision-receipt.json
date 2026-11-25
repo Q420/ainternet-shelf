@@ -3,10 +3,10 @@
  "assembly_id": "assembly-crew-1-1",
  "generated_record_hash": "ff225d62f6aff1d7bb677fbf3f710159977e0e6b0aa7967521ac8c73bd5d4913",
  "probed_seq": 12,
- "probe_evidence_hash": "c779015bade8f6c5cfa7a093a2d207d5997448471327c929baf27e1bbb1d92e7",
+ "probe_evidence_hash": "5212bfd4bad9c8c60e7ad94d225083eb12b6b322b55047b1b2af48270b200ef5",
  "fingerprint": "2a0f4d19419907f4c7a2f77781ff9cc2ce5db074e61e3fa471787ae49d732310",
  "adapter_mode": "native",
  "mode_grounds": "Gate 4 offline rehearsal: the scripted stand-in's probe trials settled 5/5 native (probe.lookup), and the demonstration preparation paper \u00a73.1 proposes native for the room configuration. This judgement is rehearsal furniture by a scripted stand-in examiner; the live run's mode judgement is the examiner's at the release gate.",
  "examiner": "gate-4 rehearsal (scripted stand-in examiner)",
- "decided_at": "2026-11-25T00:55:46Z"
+ "decided_at": "2026-11-25T01:26:20Z"
 }

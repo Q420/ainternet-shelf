@@ -25,9 +25,9 @@
     "indeterminate": 0
    }
   },
-  "evidence_hash": "c779015bade8f6c5cfa7a093a2d207d5997448471327c929baf27e1bbb1d92e7"
+  "evidence_hash": "5212bfd4bad9c8c60e7ad94d225083eb12b6b322b55047b1b2af48270b200ef5"
  },
- "decision_receipt_hash": "0ea4f2bfbd3606842ef9ff48c88d5c33a6dc020052d7487ae3f138f05b355ba7",
+ "decision_receipt_hash": "c7dd72ad29252c6fc7a1ec9aec4d9a45bb26d76426bbcd601017f138a477d47b",
  "loop_result": {
   "ok": true,
   "outcome": "yield",

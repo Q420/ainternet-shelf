@@ -1662,18 +1662,27 @@ class Loop:
         INDEX 406), "object" (the arguments stand as the
         emitted object) or "non_object" (the arguments
         stand as emitted, neither string nor object) — and
-        the arguments in the form's shape. Anything else is
-        malformed whole: the loop classifies records it can
-        trust, and trusts only this shape."""
+        the arguments in the form's shape. One further field
+        may stand: wire_name, the name as it stood on the
+        wire, present exactly where the route's name
+        translation renamed the call at extraction (Ben's
+        ruling, 2026-11-24) — the record's name is then the
+        canonical name, and the wire name is kept beside it
+        so both stand visible. Anything else is malformed
+        whole: the loop classifies records it can trust,
+        and trusts only this shape."""
         if not isinstance(raw, list) or not raw:
             return None
         out = []
         for position, entry in enumerate(raw, start=1):
             if not isinstance(entry, dict) or \
-                    set(entry) != {"provider_ordinal",
-                                   "provider_call_id", "name",
-                                   "arguments_form",
-                                   "arguments"}:
+                    not {"provider_ordinal",
+                         "provider_call_id", "name",
+                         "arguments_form",
+                         "arguments"} <= set(entry) <= \
+                    {"provider_ordinal", "provider_call_id",
+                     "name", "arguments_form", "arguments",
+                     "wire_name"}:
                 return None
             if entry["provider_ordinal"] != position:
                 return None
@@ -1684,6 +1693,11 @@ class Loop:
             name = entry["name"]
             if name is not None and (
                     not isinstance(name, str) or not name):
+                return None
+            wire_name = entry.get("wire_name")
+            if wire_name is not None and (
+                    not isinstance(wire_name, str)
+                    or not wire_name):
                 return None
             form = entry["arguments_form"]
             if form == "object":
@@ -1698,12 +1712,15 @@ class Loop:
                     return None
             else:
                 return None
-            out.append({
+            validated = {
                 "provider_ordinal": position,
                 "provider_call_id": call_id,
                 "name": name,
                 "arguments_form": form,
-                "arguments": entry["arguments"]})
+                "arguments": entry["arguments"]}
+            if wire_name is not None:
+                validated["wire_name"] = wire_name
+            out.append(validated)
         return out
 
     @staticmethod
@@ -1800,6 +1817,14 @@ class Loop:
                 "refusal_class": None,
                 "refusal_detail": None,
                 "loop_request_id": None}
+            # The wire name, where the route's translation
+            # renamed the call at extraction (Ben's ruling,
+            # 2026-11-24): the translation record keeps
+            # both names visible — the canonical name the
+            # determination judges, and the name as it
+            # stood on the wire.
+            if record.get("wire_name") is not None:
+                entry["wire_name"] = record["wire_name"]
             entries.append(entry)
             if call_id is not None and call_id not in seen_ids:
                 seen_ids[call_id] = ordinal

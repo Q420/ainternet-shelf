@@ -352,7 +352,12 @@ class Generator:
         state = self.doorway.state()
         entry = self._entry(state, assembly_id)
         generated = self.doorway._generated_payload(assembly_id)
-        trials = _probe.run_trials(raw_call, model)
+        # The route recorded here is the assembly's own:
+        # the trials read it for the route's name
+        # translation (the NVIDIA route's wire names,
+        # Ben's ruling 2026-11-24) — the same value this
+        # act records below and the fingerprint binds.
+        trials = _probe.run_trials(raw_call, model, route=route)
         counts, settled, recommended = _probe.summarise(trials)
         payload = {
             "assembly_id": assembly_id,

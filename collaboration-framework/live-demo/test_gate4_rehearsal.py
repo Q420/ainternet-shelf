@@ -21,8 +21,11 @@ by hop, the evidence the rehearsal produced:
   room state before any worker execution;
 - hop 3: the transmitted requests, captured at the seam —
   every loop-iteration request carries exactly one offered
-  tool definition, container.exec, with the registry's own
-  description; the captures hash to their own bytes;
+  tool definition, container-exec (the route's wire name
+  for the framework's container.exec — the route's name
+  translation, Ben's ruling 2026-11-24), with the
+  registry's own description; the captures hash to their
+  own bytes;
 - hop 4: a captured response-evidence disposition for
   every iteration, each cross-checked against its filed
   artifact;
@@ -239,15 +242,16 @@ def main():
             tools = req.get("tools") or []
             ok = len(tools) == 1 and \
                 tools[0].get("function", {}).get("name") == \
-                "container.exec" and \
+                "container-exec" and \
                 tools[0]["function"].get("description") == \
                 facing["description"] and \
                 tools[0]["function"].get("parameters") == \
                 expected_schema and \
                 req.get("model") == rehearsal.MODEL
             check(f"hop 3: iteration {idx}'s transmitted "
-                  f"request offers exactly container.exec, "
-                  f"with the registry's description and its "
+                  f"request offers exactly container-exec, "
+                  f"the wire name for container.exec, with "
+                  f"the registry's description and its "
                   f"declared cmd schema", ok)
 
         # ---------- hop 4: response evidence

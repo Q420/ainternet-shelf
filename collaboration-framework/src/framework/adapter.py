@@ -133,6 +133,8 @@ import time
 import urllib.parse
 import urllib.request
 
+from . import nemotron_names as _nemotron_names
+
 DEFAULT_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 _CONTRACT = """You are a seat in a recorded collaborative run. \
@@ -305,13 +307,29 @@ class OpenAICompatibleAdapter:
     def __init__(self, endpoint=DEFAULT_ENDPOINT, model=None,
                  api_key=None, api_key_env="NVIDIA_API_KEY",
                  timeout=120.0, mode="text",
-                 disable_tool_validation=True):
+                 disable_tool_validation=True, route=None):
         if mode not in ("text", "native"):
             raise ValueError(
                 f"adapter mode {mode!r} is not a mode; the "
                 f"modes are text and native (probe scope §6)")
         self.endpoint = endpoint
         self.model = model
+        # The assembly's route, as the driver that
+        # assembled it recorded it (the value the run's
+        # ASSEMBLY_PROBED act carries) — a provider field
+        # of this adapter's configuration, supplied by
+        # that driver. The adapter never infers a route
+        # from the model name string. Its one consequence
+        # is the Nemotron name translation (Ben's ruling,
+        # 2026-11-24; framework.nemotron_names): on the
+        # NVIDIA route the offered definitions carry the
+        # route's wire names and extraction translates an
+        # emitted wire name back; on every other route —
+        # and where no route was supplied — nothing is
+        # translated and the definitions and extraction
+        # are exactly as they have always been.
+        self.route = route
+        self._active_name_translator = None
         self._api_key = api_key
         self._api_key_env = api_key_env
         self.timeout = timeout
@@ -998,6 +1016,7 @@ class OpenAICompatibleAdapter:
         self._begin_deadline(budget, deadline)
         self.last_render_s = None
         self._last_message = None
+        self._active_name_translator = None
         render_started = time.monotonic()
         prompt = _render_prompt(
             package, native=effective_mode == "native")
@@ -1017,7 +1036,18 @@ class OpenAICompatibleAdapter:
         self._pending_tools = None
         self._pending_disable_tool_validation = None
         if effective_mode == "native":
-            definitions = self._native_tool_definitions(package)
+            # The route's name translator for this call,
+            # built over the package's own offered names:
+            # on the NVIDIA route the definitions carry
+            # the wire names, and the same translator
+            # stands stashed for the extraction of this
+            # call's response. Off that route it is None
+            # and nothing in this call is translated.
+            translator = _nemotron_names.translator_for_package(
+                self.route, package)
+            self._active_name_translator = translator
+            definitions = self._native_tool_definitions(
+                package, translator=translator)
             if definitions:
                 self._pending_tools = definitions
             self._pending_disable_tool_validation = \
@@ -1135,7 +1165,7 @@ class OpenAICompatibleAdapter:
         return result
 
     @staticmethod
-    def _native_tool_definitions(package):
+    def _native_tool_definitions(package, translator=None):
         """The native tool definitions for a package (A8):
         derived from the package's own tool catalogue — the
         same per-grant derivation the loop renders as text —
@@ -1148,7 +1178,17 @@ class OpenAICompatibleAdapter:
         own schema and stands exactly as it stands; the
         registry's list-form metadata is translated by
         _native_parameters_schema, field for field; anything
-        else carries the empty object schema, as before."""
+        else carries the empty object schema, as before.
+
+        Where a name translator stands (the NVIDIA route's,
+        Ben's ruling 2026-11-24), a definition's name is the
+        name's wire form — the one renaming this derivation
+        performs, at the route's boundary, of the name
+        alone: description and parameters remain the
+        catalogue's own, and the framework's name for the
+        tool is unchanged everywhere else. Without a
+        translator the definitions are exactly as they have
+        always been."""
         tools = package.get("tools") \
             if isinstance(package, dict) else None
         definitions = []
@@ -1171,8 +1211,10 @@ class OpenAICompatibleAdapter:
                 schema = _native_parameters_schema(parameters)
             else:
                 schema = {"type": "object", "properties": {}}
+            wire = translator.to_wire(name) \
+                if translator is not None else None
             definitions.append({"type": "function", "function": {
-                "name": name,
+                "name": wire if wire is not None else name,
                 "description": description
                 if isinstance(description, str) else "",
                 "parameters": schema}})
@@ -1206,7 +1248,14 @@ class OpenAICompatibleAdapter:
         which per-call extraction cannot begin at all (N13's
         boundary). Extraction classifies nothing and permits
         nothing: resolution, validation, the translation
-        record and dispatch are the loop's corridor."""
+        record and dispatch are the loop's corridor. The one
+        transformation extraction performs is the route's
+        name translation (Ben's ruling, 2026-11-24): where
+        the call's translator stands, an emitted wire name
+        is carried back to its canonical name and the wire
+        name kept beside it in the record — a renaming at
+        the route's boundary, deciding nothing about the
+        call."""
         if not isinstance(calls, list) or not calls:
             raise AdapterFailure(
                 "malformed_response",
@@ -1233,12 +1282,32 @@ class OpenAICompatibleAdapter:
                 form, value = "object", arguments
             else:
                 form, value = "non_object", arguments
-            records.append({
+            record = {
                 "provider_ordinal": ordinal,
                 "provider_call_id": call_id,
                 "name": name,
                 "arguments_form": form,
-                "arguments": value})
+                "arguments": value}
+            # The route's name translation, inbound (the
+            # NVIDIA route's translator, Ben's ruling
+            # 2026-11-24): an emitted name that is a wire
+            # form in the translator's map is translated
+            # back to its canonical name here, before
+            # classification, and the record carries the
+            # emitted wire name beside it — both names
+            # visible downstream. An emitted name that is
+            # not in the map is NOT guessed back: it stands
+            # exactly as emitted, for classification's
+            # closed-world catalogue determination to
+            # refuse like any unknown tool. Off the route
+            # no translator stands and nothing here runs.
+            translator = self._active_name_translator
+            if translator is not None and name is not None:
+                wire_canonical = translator.to_canonical(name)
+                if wire_canonical is not None:
+                    record["wire_name"] = name
+                    record["name"] = wire_canonical
+            records.append(record)
         return records
 
     @staticmethod

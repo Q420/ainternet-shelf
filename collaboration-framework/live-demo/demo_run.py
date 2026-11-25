@@ -139,7 +139,7 @@ for _p in (str(SRC), str(HERE), str(RIG)):
 
 from fabric.canonical import canonical  # noqa: E402
 
-from framework import tool_policy  # noqa: E402
+from framework import nemotron_names, tool_policy  # noqa: E402
 from framework.adapter import (  # noqa: E402
     AdapterFailure, OpenAICompatibleAdapter)
 from framework.doorway import (  # noqa: E402
@@ -176,7 +176,8 @@ ENDPOINT = ("https://integrate.api.nvidia.com/v1/chat/"
             "completions")
 ROUTE = "nvidia"
 
-DEMO_DIR = HERE / "demo-nemotron1"
+DEMO_DIR = HERE / os.environ.get("DEMO_RUN_DIR",
+                                 "demo-nemotron1")
 
 # The paper §3.3 adapter per-call span.
 ADAPTER_TIMEOUT = 300.0
@@ -572,7 +573,7 @@ def run_demo():
         # before activation, as a flagged conflict.
         adapter = OpenAICompatibleAdapter(
             endpoint=ENDPOINT, model=MODEL,
-            timeout=ADAPTER_TIMEOUT)
+            timeout=ADAPTER_TIMEOUT, route=ROUTE)
         install_connector_transport(
             adapter, str(wrapper_path), MODEL)
         gen.propose(
@@ -1035,7 +1036,7 @@ def verify_config():
             # capture seam; the raw call is callable.
             adapter = OpenAICompatibleAdapter(
                 endpoint=ENDPOINT, model=MODEL,
-                timeout=ADAPTER_TIMEOUT)
+                timeout=ADAPTER_TIMEOUT, route=ROUTE)
             installed = install_connector_transport(
                 adapter, str(wrapper_path), MODEL)
             expect("transport: real connector transport "
@@ -1188,6 +1189,41 @@ def verify_config():
                                  or {})
                    and params.get("required") == ["cmd"],
                    json.dumps(definitions)[:300])
+
+            # (8b) The route's name translation (Ben's
+            # ruling, 2026-11-24): on this route the
+            # transmitted definition carries the wire
+            # name — exactly container-exec — because the
+            # route's provider refuses dotted function
+            # names (the first run's recorded 400 bodies).
+            # The canonical derivation above stands
+            # untouched beside it: the framework's name
+            # for the tool does not change.
+            wire_translator = nemotron_names \
+                .translator_for_package(
+                    ROUTE, {"tools": [
+                        {"tool": "container.exec",
+                         **(facing or {})}]})
+            wire_definitions = OpenAICompatibleAdapter \
+                ._native_tool_definitions(
+                    {"tools": [
+                        {"tool": "container.exec",
+                         **(facing or {})}]},
+                    translator=wire_translator)
+            wire_fn = (wire_definitions[0].get(
+                "function", {}) if wire_definitions
+                else {})
+            expect("adapter: on the NVIDIA route the "
+                   "transmitted definition's tool name is "
+                   "exactly container-exec",
+                   len(wire_definitions) == 1
+                   and wire_fn.get("name")
+                   == "container-exec"
+                   and wire_fn.get("description")
+                   == facing["description"]
+                   and wire_fn.get("parameters")
+                   == params,
+                   json.dumps(wire_definitions)[:300])
 
             # (9) Nothing activated, nothing probed:
             # verify mode records no live step.

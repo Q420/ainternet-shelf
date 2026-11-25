@@ -230,3 +230,65 @@ paper folded its route into this gate line — and the
 rehearsal above now witnesses the same seam on the real
 path. The probe construction's disposition under the
 corrected derivation is the examiner's to rule.
+
+---
+
+## Addendum — 2026-11-24 (evening): the route's name translation
+
+Under Ben's ruling of 2026-11-24 (~18:08 MST) — "we create
+a separate translater for nemotron. he says the dot, but
+the - is what is read" — the kept pack above was
+regenerated whole with the Nemotron/NVIDIA route name
+translation in place (`src/framework/nemotron_names.py`:
+an exact, reversible bijection built from the offered
+names; canonical dotted names inside the framework, dash
+forms on this route's wire, nothing guessed back). What
+changed in the pack, and only that:
+
+- **Transmitted definitions:** every iteration request in
+  `captures.jsonl` now offers exactly one tool definition
+  named **`container-exec`** — the wire form of the
+  framework's `container.exec`. Its description and its
+  declared `cmd` schema are byte-identical to the
+  pre-translation pack (the registry's own words; the
+  INDEX 471 schema correction stands untouched).
+- **Probe requests:** the five probe captures offer
+  `probe-lookup` (and `probe-note`), the wire forms of the
+  probe suite's canonical definitions; the suite's bound
+  definitions, hash and fingerprint are unchanged.
+- **The stand-in's replies** name the offered tools in
+  their wire forms, as this route's provider would emit
+  them; the one ungranted reach (step 4) still names
+  `sandbox.read` in canonical form and is still refused
+  at translation as `unknown_tool`.
+- **Translation records** now carry both names where the
+  translation renamed a call: `name` the canonical
+  `container.exec`, `wire_name` the emitted
+  `container-exec` (verified first-hand in the pack's
+  `run/run.db`, iteration 1: resolved, valid).
+- **Everything else stands as before:** outcome yield,
+  8 iterations, the brief's SHA-256 unchanged
+  (`0041ab58…`), the checker reconstructing the run from
+  its record, the readout rendering the canonical names.
+
+Witness: **77/77 ALL PASS, twice**, on this regenerated
+pack — the hop-3 assertions updated in place to the wire
+name (the count is unchanged; the schema assertions
+stand). The demo driver's `--verify-config` carries the
+same assertion for the live path and passes. Suites on
+the route's other side stand unchanged in outcome:
+native adapter, native-offer, P1, P2, paced, A3-CAT ALL
+PASS; the assembly probe suite at exactly its standing
+54 pass / 3 ruled-superseded failures (§6, P10, P7); the
+NVIDIA probe suite at 46 pass (its 43 standing passes
+plus three new helper-envelope witnesses) with the same
+three INDEX 471 construction-hash failures and the same
+construction-reproduction refusal — its bound hashes were
+again **not** re-pinned. The translator's own witness
+(`tests/unit/test_nemotron_names.py`) passes 26/26,
+including the collision check over the full standing
+vocabulary. The same build also framed the NVIDIA
+helper's typed-path provider errors into its envelope
+(status + bounded body, no traceback) — witnessed in the
+NVIDIA probe suite's parity section, module-level and
+end to end through the wrapped real helper.

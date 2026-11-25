@@ -196,7 +196,18 @@ def _text_response(call_id, content):
 def build_stub_script():
     """The stand-in's script: five probe trials settling
     native, then the chat sequence — identify, the eight
-    rehearsal iterations in order."""
+    rehearsal iterations in order.
+
+    The stand-in answers in the names the route's provider
+    would emit: it was offered the wire names (the route's
+    name translation, Ben's ruling 2026-11-24), so its
+    calls to the offered tools carry the dash forms —
+    container-exec, probe-lookup — and the framework's
+    translation carries them back. The one exception is
+    step (d)'s ungranted reach, which names a framework
+    tool it was never offered, in that tool's canonical
+    form: it stands as emitted and is refused at
+    translation like any unknown name."""
     brief_b64 = base64.b64encode(
         BRIEF_TEXT.encode("utf-8")).decode("ascii")
     write_brief_cmd = [
@@ -212,7 +223,7 @@ def build_stub_script():
         "cat /room/scratch/draft.txt"]
     probe_step = {
         "respond": _native_call(
-            "fc-probe", "probe.lookup",
+            "fc-probe", "probe-lookup",
             {"object": "brass lantern"}),
         "action": None}
     chat = [
@@ -226,17 +237,17 @@ def build_stub_script():
          "action": None},
         # 1 — (a) read a source inside the room.
         {"respond": _native_call(
-            "fc-g4-1", "container.exec",
+            "fc-g4-1", "container-exec",
             {"cmd": ["/bin/cat", "sources/stock-take.md"]}),
          "action": None},
         # 2 — (b) write scratch work, and read it back.
         {"respond": _native_call(
-            "fc-g4-2", "container.exec",
+            "fc-g4-2", "container-exec",
             {"cmd": write_draft_cmd}),
          "action": None},
         # 3 — (c) write the deliverable.
         {"respond": _native_call(
-            "fc-g4-3", "container.exec",
+            "fc-g4-3", "container-exec",
             {"cmd": write_brief_cmd}),
          "action": None},
         # 4 — (d) an ungranted tool name: refused at
@@ -249,7 +260,7 @@ def build_stub_script():
         # not an array — schema-valid at translation,
         # refused at the doorway's shape check.
         {"respond": _native_call(
-            "fc-g4-5", "container.exec",
+            "fc-g4-5", "container-exec",
             {"cmd": "/bin/cat sources/stock-take.md"}),
          "action": None},
         # 6 — (e) the rig state tampered before this call:
@@ -257,14 +268,14 @@ def build_stub_script():
         # rig-integrity precondition; the refusal returns
         # as a result in the contract.
         {"respond": _native_call(
-            "fc-g4-6", "container.exec",
+            "fc-g4-6", "container-exec",
             {"cmd": ["/bin/cat", "sources/a3-pass.md"]}),
          "action": "tamper_reaper"},
         # 7 — the rig state restored before this call: a
         # clean execution, its output the third source's
         # in-room hash.
         {"respond": _native_call(
-            "fc-g4-7", "container.exec",
+            "fc-g4-7", "container-exec",
             {"cmd": ["/usr/bin/sha256sum",
                      "sources/index-tail.md"]}),
          "action": "restore_reaper"},
@@ -495,9 +506,13 @@ def run_rehearsal(work_dir):
         # ASSEMBLE — the adapter on the NVIDIA route's seam,
         # its transport the stub helper; generation under
         # the probe contract and the exec catalogue
-        # contract, grants the execution tool only.
+        # contract, grants the execution tool only. The
+        # adapter carries the route the probe act records
+        # below ("nvidia"), so the route's name translation
+        # governs its definitions and extraction.
         adapter = OpenAICompatibleAdapter(
-            endpoint=ENDPOINT, model=MODEL, timeout=300.0)
+            endpoint=ENDPOINT, model=MODEL, timeout=300.0,
+            route="nvidia")
         install_connector_transport(
             adapter, str(stub_path), MODEL)
         gen.propose(
