@@ -191,6 +191,9 @@ from connector_transport import (  # noqa: E402
 from groq_connector_transport import (  # noqa: E402
     install_groq_connector_raw_call,
     install_groq_connector_transport)
+from cloudflare_connector_transport import (  # noqa: E402
+    install_cloudflare_connector_raw_call,
+    install_cloudflare_connector_transport)
 from nvidia_connector_transport import (  # noqa: E402
     install_nvidia_connector_raw_call)
 from first_worker_run import (  # noqa: E402
@@ -203,6 +206,21 @@ from first_worker_run import (  # noqa: E402
 import room as room_mod  # noqa: E402
 import stock_demo  # noqa: E402
 
+# The Cloudflare route's constants (INDEX 563): the
+# registered connector helper for the route (the
+# sanctioned Secure Vault credential path, provider
+# custom.cloudflare) and the account-bound Workers AI
+# endpoint. The account id is the Pulse HQ account the
+# vault's token sees — an identifier, not a credential.
+CLOUDFLARE_CONNECTOR_HELPER = os.path.expanduser(
+    "~/workspace/custom-connectors/custom.cloudflare/"
+    "bin/cf_ai.py")
+CLOUDFLARE_ACCOUNT_ID = "1c7b1bdeb7c8306a5c7cfdf6c4dee9cf"
+CLOUDFLARE_MODEL = "@cf/zai-org/glm-4.7-flash"
+CLOUDFLARE_ENDPOINT = (
+    "https://api.cloudflare.com/client/v4/accounts/"
+    f"{CLOUDFLARE_ACCOUNT_ID}/ai/run/{CLOUDFLARE_MODEL}")
+
 # The occupant configuration (INDEX 560): the role,
 # the case and the gates are occupant-neutral; what
 # differs per occupant is the pin, the route, the
@@ -210,8 +228,9 @@ import stock_demo  # noqa: E402
 # DEMO_OCCUPANT selects the configuration, fail-closed
 # in the harness's route-selection discipline: unset or
 # empty preserves the Nemotron configuration — the
-# default, byte-identical in behaviour — and "quinn"
-# selects the Qwen occupant; any other value is
+# default, byte-identical in behaviour — "quinn"
+# selects the Qwen occupant and "glm" the Cloudflare
+# occupant (INDEX 563); any other value is
 # refused, so a typo can never silently change the
 # experiment.
 def _resolve_occupant(raw):
@@ -219,15 +238,19 @@ def _resolve_occupant(raw):
         return "nemotron"
     if raw == "quinn":
         return "quinn"
+    if raw == "glm":
+        return "glm"
     raise ValueError(
         f"DEMO_OCCUPANT={raw!r} is not a recognised "
         f"occupant (expected unset for the Nemotron "
-        f"configuration, or 'quinn'); refusing to run")
+        f"configuration, 'quinn' or 'glm'); refusing "
+        f"to run")
 
 
 OCCUPANT = _resolve_occupant(
     os.environ.get("DEMO_OCCUPANT"))
 QUINN = OCCUPANT == "quinn"
+GLM = OCCUPANT == "glm"
 
 # The run's pin: the director's named model on the
 # occupant's route (Ben's order, 2026-11-24, for
@@ -237,33 +260,44 @@ QUINN = OCCUPANT == "quinn"
 # aborts the run before activation as a flagged
 # conflict.
 MODEL = ("qwen/qwen3.8-27b" if QUINN else
+         CLOUDFLARE_MODEL if GLM else
          "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
 ENDPOINT = (GROQ_ENDPOINT if QUINN else
+            CLOUDFLARE_ENDPOINT if GLM else
             "https://integrate.api.nvidia.com/v1/chat/"
             "completions")
-ROUTE = "groq" if QUINN else "nvidia"
+ROUTE = ("groq" if QUINN else
+         "cloudflare" if GLM else "nvidia")
 
 # The mode the occupant's order/direction judges:
 # Nemotron native by the director's order; Quinn text
 # by the director's direction — the Groq route's
 # native path carries the open BD-1 defect (INDEX
 # 411-420) and this run does not route through it.
-ADAPTER_MODE = "text" if QUINN else "native"
+# The Cloudflare occupant text by the director's
+# direction (INDEX 563): a new route whose native
+# tool-calling has never been witnessed on the live
+# path, and no finding about its native reach is made.
+ADAPTER_MODE = "text" if (QUINN or GLM) else "native"
 
 # The route's registered connector helper — the
 # sanctioned Secure Vault credential path the capture
 # seam delegates to.
 DELEGATE_HELPER = (GROQ_CONNECTOR_HELPER if QUINN
-                   else CONNECTOR_HELPER)
+                   else CLOUDFLARE_CONNECTOR_HELPER
+                   if GLM else CONNECTOR_HELPER)
 ROUTE_REPORT_LABEL = (
     "groq (live, via the registered connector helper "
     "through the capture seam)" if QUINN else
+    "cloudflare (live, via the registered connector "
+    "helper through the capture seam)" if GLM else
     "nvidia (live, via the registered connector "
     "helper through the capture seam)")
 
 DEMO_DIR = HERE / os.environ.get(
     "DEMO_RUN_DIR",
-    "demo-quinn1" if QUINN else "demo-nemotron1")
+    "demo-quinn1" if QUINN else
+    "demo-glm1" if GLM else "demo-nemotron1")
 
 # The paper §3.3 adapter per-call span.
 ADAPTER_TIMEOUT = 300.0
@@ -274,8 +308,14 @@ ADAPTER_TIMEOUT = 300.0
 # is claimed for it. Quinn's interval is sized to the
 # Groq free plan's published token cap (8,000 TPM):
 # her wake packages run ~5-7K tokens, so successive
-# calls must land in separate minute windows.
-PACING_INTERVAL_SECONDS = 65.0 if QUINN else 20.0
+# calls must land in separate minute windows. The
+# Cloudflare occupant's interval is courtesy only: the
+# route's documented free text-generation ceiling is
+# 300 RPM, far above anything this driver sends, and
+# the budget that binds the route is its daily Neuron
+# allowance, which pacing does not govern.
+PACING_INTERVAL_SECONDS = (65.0 if QUINN else
+                           5.0 if GLM else 20.0)
 PACING_NOTE = (
     "a fixed operating choice of this driver between "
     "successive outbound iteration calls, sized to "
@@ -284,6 +324,14 @@ PACING_NOTE = (
     "tokens, so successive calls land in separate "
     "minute windows; no finer provider figure is "
     "claimed" if QUINN else
+    "a fixed operating choice of this driver between "
+    "successive outbound iteration calls, set as "
+    "courtesy on a route whose documented free "
+    "text-generation ceiling is 300 RPM: no survival "
+    "spacing is needed, and the budget that binds "
+    "this route is the free plan's daily Neuron "
+    "allowance, which pacing does not govern"
+    if GLM else
     "a fixed operating choice of this driver between "
     "successive outbound iteration calls; NVIDIA "
     "pacing is unestablished and no provider figure "
@@ -721,6 +769,24 @@ BOUNDS_DERIVATION = (
     "single call may still lawfully take its 300 s "
     "adapter span within it. Grant counts stand as "
     "commissioned." if QUINN else
+    "step ceiling 20 (unchanged): the honest path is "
+    "5 steps, as the Nemotron derivation records. "
+    "Deadline 1,200 s: the step ceiling at this "
+    "configuration's 5 s courtesy pacing leaves the "
+    "span the Nemotron derivation's per-call "
+    "allowances already cover — the deadline is not "
+    "sized by pacing on this route. The budget that "
+    "binds this route is the free plan's 10,000 "
+    "Neurons/day, of which one full run is estimated "
+    "at roughly a third (the research figure, INDEX "
+    "563); no Neuron figure is enforced by this "
+    "driver — the allowance is the provider's, and a "
+    "run that exhausted it would fail at the provider "
+    "as a provider failure, on the record. The "
+    "deadline remains the one authoritative clock; a "
+    "single call may still lawfully take its 300 s "
+    "adapter span within it. Grant counts stand as "
+    "commissioned." if GLM else
     "step ceiling 20: the honest path is 5 steps (three "
     "whole reads, one write, one yield); pulling "
     "index-tail by ranges instead of whole adds up to 6; "
@@ -775,6 +841,7 @@ def _stage_sandbox_sources(sandbox_dir, manifest):
 ORDER_WORDS = (
     "Let's try Quinn... we should be able to just "
     "drop her right in" if QUINN else
+    "Cloudflare it is" if GLM else
     "just run it with nemotron, see how he reacts... "
     "lets start doing. im done guessing")
 ORDER_GROUNDS = (
@@ -793,6 +860,22 @@ ORDER_GROUNDS = (
     "The probe stage ran live and its recommendation "
     "stands in the record as evidence; it does not "
     "decide this run's mode." if QUINN else
+    "Director's direction (Ben, 2026-11-25): adopt "
+    "the Cloudflare Workers AI route (INDEX 563) — "
+    "the GLM occupant dropped into the same role, "
+    "the same case and the same gates. The direction "
+    "replaces the probe-phase examiner judgement for "
+    "this run: the mode is judged text by the "
+    "direction — the occupant answers in the package "
+    "protocol as plain-text JSON, the loop's standing "
+    "text population. This route's native "
+    "tool-calling has never been witnessed on the "
+    "live path, and no finding about its native "
+    "reach is made or needed until a native witness "
+    "exists. The probe stage ran live and its "
+    "recommendation stands in the record as "
+    "evidence; it does not decide this run's mode."
+    if GLM else
     "Director's order (Ben, 2026-11-24): run the "
     "demonstration with Nemotron on NVIDIA and see how "
     "he reacts. The order replaces the probe-phase "
@@ -806,9 +889,10 @@ ORDER_GROUNDS = (
     "recommendation stands in the record as evidence; "
     "it does not decide this run's mode.")
 ORDER_EXAMINER = ("Ben (director) — direction of "
-                  "2026-11-25" if QUINN else
+                  "2026-11-25" if (QUINN or GLM) else
                   "Ben (director) — order of 2026-11-24")
-ORDER_DATE = "2026-11-25" if QUINN else "2026-11-24"
+ORDER_DATE = ("2026-11-25" if (QUINN or GLM)
+              else "2026-11-24")
 ORDER_EFFECT = (
     "the director's direction replaces the "
     "probe-phase examiner judgement for "
@@ -819,7 +903,7 @@ ORDER_EFFECT = (
     "the record as evidence, not as "
     "the decision; the model's first "
     "live response is the delivery "
-    "evidence" if QUINN else
+    "evidence" if (QUINN or GLM) else
     "the director's order replaces the "
     "probe-phase examiner judgement for "
     "this run: the mode is judged "
@@ -930,8 +1014,19 @@ CAPTURE_HELPER_SOURCE_QUINN = (
     .replace("custom.nvidia", "custom.groq")
     .replace("nvidia_api.py", "groq_api.py")
     .replace("NVIDIA", "Groq"))
+# The Cloudflare occupant's capture helper: the same
+# pass-through, word for word, with the route's own
+# names — the delegate it names is the Cloudflare
+# connector's Workers AI helper. The Nemotron
+# configuration's helper source above stands untouched.
+CAPTURE_HELPER_SOURCE_GLM = (
+    CAPTURE_HELPER_SOURCE
+    .replace("custom.nvidia", "custom.cloudflare")
+    .replace("nvidia_api.py", "cf_ai.py")
+    .replace("NVIDIA", "Cloudflare"))
 CAPTURE_HELPER_SOURCE_SELECTED = (
     CAPTURE_HELPER_SOURCE_QUINN if QUINN
+    else CAPTURE_HELPER_SOURCE_GLM if GLM
     else CAPTURE_HELPER_SOURCE)
 
 
@@ -945,10 +1040,14 @@ def _write_capture_helper(path):
 def _install_typed_transport(adapter, wrapper_path):
     """The occupant route's typed connector transport
     on the adapter, through the capture seam: the Groq
-    twin on Quinn's route, the NVIDIA transport
+    twin on Quinn's route, the Cloudflare twin on the
+    GLM occupant's route, the NVIDIA transport
     otherwise — each route's sanctioned helper path."""
     if ROUTE == "groq":
         return install_groq_connector_transport(
+            adapter, str(wrapper_path), MODEL)
+    if ROUTE == "cloudflare":
+        return install_cloudflare_connector_transport(
             adapter, str(wrapper_path), MODEL)
     return install_connector_transport(
         adapter, str(wrapper_path), MODEL)
@@ -957,11 +1056,15 @@ def _install_typed_transport(adapter, wrapper_path):
 def _install_raw_call(adapter, wrapper_path):
     """The occupant route's probe raw call, through
     the capture seam: the Groq transport's raw call on
-    Quinn's route (its first argument is the adapter,
-    whose timeout bounds it), the NVIDIA bounded raw
-    call otherwise."""
+    Quinn's route and the Cloudflare transport's on
+    the GLM occupant's route (each takes the adapter
+    as its first argument, whose timeout bounds it),
+    the NVIDIA bounded raw call otherwise."""
     if ROUTE == "groq":
         return install_groq_connector_raw_call(
+            adapter, str(wrapper_path), MODEL)
+    if ROUTE == "cloudflare":
+        return install_cloudflare_connector_raw_call(
             adapter, str(wrapper_path), MODEL)
     return install_nvidia_connector_raw_call(
         helper_path=str(wrapper_path), model=MODEL)
@@ -1885,6 +1988,9 @@ def verify_config():
             expect("transport: real Groq raw call "
                    "installed for the probe stage"
                    if QUINN else
+                   "transport: real Cloudflare raw call "
+                   "installed for the probe stage"
+                   if GLM else
                    "transport: real NVIDIA raw call "
                    "installed for the probe stage",
                    callable(raw_call))
@@ -2221,14 +2327,18 @@ def verify_config():
             wire_fn = (wire_definitions[0].get(
                 "function", {}) if wire_definitions
                 else {})
-            if QUINN:
-                # Quinn's route carries no name
-                # translation (the translator exists for
-                # the NVIDIA route alone): no translator
-                # stands, and the transmitted definition
-                # carries the canonical dotted name
-                # exactly as the framework speaks it.
-                expect("adapter: on the Groq route no "
+            if QUINN or GLM:
+                # Quinn's and the GLM occupant's routes
+                # carry no name translation (the
+                # translator exists for the NVIDIA route
+                # alone): no translator stands, and the
+                # transmitted definition carries the
+                # canonical dotted name exactly as the
+                # framework speaks it.
+                _route_display = ("Groq" if QUINN else
+                                  "Cloudflare")
+                expect(f"adapter: on the {_route_display} "
+                       "route no "
                        "name translation stands — the "
                        "transmitted definition's tool name "
                        "is the canonical container.exec",
@@ -2299,9 +2409,10 @@ def verify_config():
             combined_names = [
                 d.get("function", {}).get("name")
                 for d in combined_definitions]
-            if QUINN:
+            if QUINN or GLM:
                 expect("adapter: the combined catalogue's "
-                       "transmitted names on the Groq "
+                       "transmitted names on the "
+                       f"{_route_display} "
                        "route are exactly the canonical "
                        "dotted set",
                        combined_translator is None
@@ -2315,7 +2426,7 @@ def verify_config():
                        == len(set(combined_names)),
                        json.dumps(combined_names)[:300])
                 expect("translator: no translator stands "
-                       "on the Groq route — "
+                       f"on the {_route_display} route — "
                        "sandbox.read_range travels as "
                        "itself, the canonical name",
                        combined_translator is None
