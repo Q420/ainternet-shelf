@@ -343,7 +343,7 @@ def _commission_brief(assignment, manifest_hash,
                       glossary=None, bounds=None,
                       journal=None, onboarding=None,
                       delivery=None, role_memory=None,
-                      opening=None):
+                      opening=None, delivery_evidence=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
@@ -394,6 +394,15 @@ def _commission_brief(assignment, manifest_hash,
         brief["onboarding"] = dict(onboarding)
     if delivery is not None:
         brief["delivery"] = dict(delivery)
+    if delivery_evidence is not None:
+        # Round ten (INDEX 552): the case's own word on
+        # the evidence a delivery must rest on — the
+        # addresses whose whole content must stand in
+        # the worker's working set before his
+        # contribution is adjudicated as a delivery.
+        brief["delivery_evidence"] = {
+            "addresses": list(
+                delivery_evidence["addresses"])}
     if role_memory is not None:
         brief["role_memory"] = [dict(item)
                                 for item in role_memory]

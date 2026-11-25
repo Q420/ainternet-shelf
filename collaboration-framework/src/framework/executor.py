@@ -175,6 +175,24 @@ def _authority_or_raise(tool, path):
     return authority
 
 
+def _list_authority_or_raise(path):
+    """sandbox.list's authority path: the policy's list
+    authority — the standing retrieval authority extended
+    at the bare granted prefixes themselves, the one
+    operation whose path may BE the scope. Every other
+    retrieval operation keeps the strict shape; this
+    extension is exercised only here, in the list
+    performer's own authority check, and the doorway and
+    the checker read the same helper's word."""
+    authority = _tool_policy.list_authority(path)
+    if authority is None:
+        raise RuntimeError(
+            f"sandbox.list: path {path!r} lies under "
+            f"neither the sources/ scope nor the scratch/ "
+            f"scope; no authority path admits it")
+    return authority
+
+
 class Executor:
     def __init__(self, doorway, sandbox_dir, claim_dir=None,
                  deadline=5.0, executor_id="executor-1",
@@ -580,15 +598,30 @@ class Executor:
         }
 
     def _perform_list(self, parameters):
-        """sandbox.list: discovery without contents — the
-        file's size, line count, and (for markdown/text) its
-        headings with line numbers. No body text crosses."""
+        """sandbox.list: discovery without contents. On a
+        file — the file's size, line count, and (for
+        markdown/text) its headings with line numbers; no
+        body text crosses. On a directory (round ten,
+        INDEX 552) — the directory's entries: each entry's
+        address, its kind, and each file's size. The path
+        is canonicalised the way the ceiling canonicalises
+        it — exactly one trailing slash stripped — so a
+        directory's two spellings return the one result,
+        recorded under the canonical address."""
         path = parameters["path"]
-        authority = _authority_or_raise("sandbox.list", path)
+        if isinstance(path, str) and len(path) > 1 \
+                and path.endswith("/"):
+            path = path[:-1]
+        authority = _list_authority_or_raise(path)
+        if os.path.isdir(self._sandbox_path(path)):
+            return self._perform_list_directory(
+                path, authority)
         if not os.path.isfile(self._sandbox_path(path)):
             raise RuntimeError(
-                f"sandbox.list: {path} is not a file in the "
-                f"sandbox")
+                f"sandbox.list: {path} is neither a file "
+                f"nor a directory in the sandbox; list a "
+                f"file that stands in the sandbox, or a "
+                f"directory itself — sources or scratch")
         data = self._read_bytes(path)
         lines = _split_lines(data)
         kind = path.rsplit(".", 1)[-1].lower() \
@@ -621,6 +654,46 @@ class Executor:
             path, content, authority,
             {"size_bytes": len(data),
              "line_count": len(lines)})
+
+    def _perform_list_directory(self, path, authority):
+        """sandbox.list on a directory: the directory's
+        entries, sorted by name — each entry's address, its
+        kind (file, directory, or other — kinds are taken
+        without following symlinks, so a planted link
+        reports as other, never as the file it points at),
+        and each regular file's byte size. No file's
+        contents cross. The rendered map is the result's
+        whole substance, as the file form's is; the scalar
+        entry count rides as provenance."""
+        full = self._sandbox_path(path)
+        with os.scandir(full) as scan:
+            entries = sorted(scan, key=lambda e: e.name)
+        rendered = [f"{path} — directory, "
+                    f"{len(entries)} entries"]
+        for entry in entries:
+            entry_path = f"{path}/{entry.name}"
+            if entry.is_dir(follow_symlinks=False):
+                rendered.append(f"{entry_path} — directory")
+            elif entry.is_file(follow_symlinks=False):
+                size = entry.stat(
+                    follow_symlinks=False).st_size
+                rendered.append(
+                    f"{entry_path} — file, {size} bytes")
+            else:
+                rendered.append(f"{entry_path} — other")
+        content = "\n".join(rendered)
+        ceiling = _tool_policy.RETRIEVAL_RESULT_CEILING
+        if len(content.encode("utf-8")) > ceiling:
+            raise RuntimeError(
+                f"sandbox.list of {path} produces a "
+                f"structure map of "
+                f"{len(content.encode('utf-8'))} bytes, "
+                f"exceeding the per-result ceiling of "
+                f"{ceiling} bytes; the listing is refused "
+                f"and nothing is returned")
+        return _retrieval_result(
+            path, content, authority,
+            {"entry_count": len(entries)})
 
     def _perform_read_range(self, parameters):
         """sandbox.read_range: a bounded slice — a heading's

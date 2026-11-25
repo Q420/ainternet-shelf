@@ -103,6 +103,12 @@ EVENT_TYPES = {
     # task stage, set aside unfiled and answered with a
     # correction, in the envelope gate's shape.
     "DELIVERY_STAGE_GATE",
+    # Round ten (INDEX 552): the delivery-evidence gate's
+    # record — a contribution offered while the case's
+    # named delivery evidence did not stand gathered, set
+    # aside unfiled and answered with a correction naming
+    # what is missing, in the same shape.
+    "DELIVERY_EVIDENCE_GATE",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -160,7 +166,8 @@ CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority", "loop_bounds",
                        "glossary", "journal", "onboarding",
-                       "delivery", "role_memory", "opening")
+                       "delivery", "role_memory", "opening",
+                       "delivery_evidence")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

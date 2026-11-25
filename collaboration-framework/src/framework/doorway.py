@@ -1233,8 +1233,22 @@ class Doorway:
         if path is None and tool != "sandbox.search":
             return (f"{tool} requires a path parameter "
                     f"(retrieval scope §2)")
-        authority = "source" if path is None else \
-            _tool_policy.retrieval_authority(path)
+        if tool == "sandbox.list" and \
+                isinstance(path, str):
+            # The directory form (round ten, INDEX 552):
+            # the list path is canonicalised — exactly
+            # one trailing slash stripped, so the granted
+            # directory's two spellings meet at this one
+            # governed route — and its authority is the
+            # list authority, which admits the granted
+            # directory's own address. Every other tool
+            # keeps the strict shape below.
+            if len(path) > 1 and path.endswith("/"):
+                path = path[:-1]
+            authority = _tool_policy.list_authority(path)
+        else:
+            authority = "source" if path is None else \
+                _tool_policy.retrieval_authority(path)
         if authority is None:
             return (f"path {path!r} lies under neither the "
                     f"sources/ scope nor the scratch/ scope; "
@@ -1290,8 +1304,15 @@ class Doorway:
             content = self._pinned_case_content(state, entry)
             boundary = (content or {}).get(
                 "evidence_boundary")
-            if not _tool_policy.boundary_member(boundary,
-                                                path):
+            # sandbox.list's directory form (round ten)
+            # is a member where the boundary names
+            # material under the directory — the listing
+            # shows only what stands there.
+            member = _tool_policy.boundary_member_for_list(
+                boundary, path) \
+                if tool == "sandbox.list" else \
+                _tool_policy.boundary_member(boundary, path)
+            if not member:
                 return (f"path {path!r} is not a member of "
                         f"the pinned case's sealed evidence "
                         f"boundary; source retrieval requires "
@@ -2687,6 +2708,79 @@ class Doorway:
                 "filed": False}
             ev = self.store.append(
                 "DELIVERY_STAGE_GATE", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
+    def record_delivery_evidence_gate(self, assembly_id,
+                                      iteration_seq,
+                                      contribution_seq,
+                                      text_sha256, missing):
+        """The delivery-evidence gate's record (round ten,
+        INDEX 552): where the case declares the evidence a
+        delivery must rest on, a contribution offered while
+        some of that evidence does not stand gathered in
+        the worker's working set is not adjudicated as a
+        delivery — it stands in the record as the worker's
+        act, set aside unfiled, and this event answers it:
+        the contribution it names (by its event position,
+        with its text's SHA-256), the named addresses whose
+        whole content did not stand, in the declaration's
+        own order, and the fact that nothing was filed. The
+        correction the next wake's package carries is
+        derived from this event by the loop and re-derived
+        by the checker, exactly as the stage gate's is. The
+        named contribution must stand in the record as this
+        instance's worker's act, and its text must hash to
+        the named digest — a gate names the contribution it
+        set aside, never another."""
+        with self.store.serialized():
+            state, entry = self._door_event_binding(
+                assembly_id, "DELIVERY_EVIDENCE_GATE")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if not any(it.get("event_seq") == iteration_seq
+                       for it in loop.get("iterations")
+                       or []):
+                self._loop_refuse(
+                    "DELIVERY_EVIDENCE_GATE", instance_id,
+                    "the named iteration does not stand "
+                    "for this activation; a gate binds an "
+                    "existing iteration")
+            contribution = None
+            for ev in self.store.all_events():
+                if ev["event_seq"] == contribution_seq:
+                    contribution = ev
+                    break
+            text = (contribution or {}).get(
+                "payload", {}).get("text")
+            digest = hashlib.sha256(
+                text.encode("utf-8")).hexdigest() \
+                if isinstance(text, str) else None
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION" \
+                    or digest is None or \
+                    digest != text_sha256:
+                self._loop_refuse(
+                    "DELIVERY_EVIDENCE_GATE", instance_id,
+                    "the named contribution does not stand "
+                    "in the record with the named text "
+                    "hash; a gate names the contribution "
+                    "it set aside")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration_seq": iteration_seq,
+                "contribution_seq": contribution_seq,
+                "text_sha256": text_sha256,
+                "missing": list(missing),
+                "filed": False}
+            ev = self.store.append(
+                "DELIVERY_EVIDENCE_GATE", LOOP_ACTOR,
                 [instance_id], payload)
             self.store.commit()
             return ev

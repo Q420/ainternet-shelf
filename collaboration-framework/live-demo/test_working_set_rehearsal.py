@@ -1901,6 +1901,387 @@ def main():
         print(f"staged-onboarding section: "
               f"{CHECKS[0] - staged_before} checks")
 
+        # ============ round ten: the directory form ==
+        # (INDEX 552, Part A): sandbox.list on a
+        # directory returns the directory's entries
+        # through the same governed performer; the two
+        # spellings of the directory meet at the one
+        # route; the file form is byte-identical to the
+        # listing the performer has always returned.
+        directory_before = CHECKS[0]
+        drep = reports["directory"]
+        dwork = work / "directory"
+        devs = _events(dwork)
+        check("directory: the run completes in six "
+              "iterations",
+              drep["outcome"] == "yield"
+              and drep["iterations"] == 6,
+              f"{drep['outcome']} / {drep['iterations']}")
+        dtool = {_payload(e).get("dispatch_id"):
+                 _payload(e).get("tool")
+                 for e in devs
+                 if e["type"] == "TOOL_DISPATCHED"}
+        dlist = [_payload(e) for e in devs
+                 if e["type"] == "TOOL_OUTCOME"
+                 and _payload(e).get("outcome") == "result"
+                 and dtool.get(
+                     _payload(e).get("dispatch_id"))
+                 == "sandbox.list"]
+        dresults = [p.get("result") or {} for p in dlist]
+        dir_results = [r for r in dresults
+                       if r.get("path") == "sources"]
+        # The expected directory map, built from the
+        # staged sandbox itself: the entries standing
+        # there, sorted, with their kinds and sizes.
+        dsources = dwork / "run" / "sandbox" / "sources"
+        expected_entries = []
+        for name in sorted(os.listdir(dsources)):
+            entry_path = dsources / name
+            if entry_path.is_dir():
+                expected_entries.append(
+                    f"sources/{name} — directory")
+            else:
+                expected_entries.append(
+                    f"sources/{name} — file, "
+                    f"{entry_path.stat().st_size} bytes")
+        expected_dir_map = "\n".join(
+            [f"sources — directory, "
+             f"{len(expected_entries)} entries"]
+            + expected_entries)
+        check("directory: both spellings of the "
+              "directory stand dispatched and return the "
+              "one result — the directory's entries, "
+              "each with its address, kind and size",
+              len(dir_results) == 2
+              and all(r.get("content") == expected_dir_map
+                      for r in dir_results)
+              and all(r.get("entry_count") == 3
+                      for r in dir_results),
+              f"{[r.get('content') for r in dir_results]}")
+        scratch_results = [r for r in dresults
+                           if r.get("path") == "scratch"]
+        check("directory: the scratch directory lists "
+              "as his own, empty",
+              len(scratch_results) == 1
+              and scratch_results[0].get("content")
+              == "scratch — directory, 0 entries"
+              and scratch_results[0].get("entry_count")
+              == 0,
+              f"{scratch_results}")
+        file_results = [r for r in dresults
+                        if r.get("path")
+                        == "sources/stock-take.md"]
+        raw = (dwork / "run" / "sandbox"
+               / "sources" / "stock-take.md").read_bytes()
+        text_lines = []
+        start = 0
+        while start < len(raw):
+            nl = raw.find(b"\n", start)
+            piece = raw[start:] if nl == -1 \
+                else raw[start:nl + 1]
+            start = len(raw) if nl == -1 else nl + 1
+            piece_text = piece.decode("utf-8")
+            text_lines.append(
+                piece_text[:-1]
+                if piece_text.endswith("\n")
+                else piece_text)
+        expected_file_map = (
+            f"sources/stock-take.md — {len(raw)} bytes, "
+            f"{len(text_lines)} lines")
+        for number, line_text in enumerate(
+                text_lines, start=1):
+            match = re.match(r"^(#{1,6})\s+(.*?)\s*$",
+                             line_text)
+            if match:
+                expected_file_map += (
+                    f"\nline {number}: "
+                    f"{'#' * len(match.group(1))} "
+                    f"{match.group(2)}")
+        check("directory: the file form is the listing "
+              "it has always been — recomputed from the "
+              "staged file's bytes in this witness, and "
+              "equal to the staged run's sealed worked "
+              "example over the same file",
+              len(file_results) == 1
+              and file_results[0].get("content")
+              == expected_file_map
+              and file_results[0].get("content")
+              == (reports["staged"][
+                      "sealed_worked_example"]
+                  or {})["result"]["content"]
+              and file_results[0].get("size_bytes")
+              == len(raw)
+              and file_results[0].get("line_count")
+              == len(text_lines),
+              f"{file_results}")
+        drejections = [_payload(e) for e in devs
+                       if e["type"] == "REJECTION"]
+        check("directory: a directory under no grant "
+              "refuses at the doorway, the refusal "
+              "naming the scopes that stand instead — "
+              "and only the four lawful lists stand "
+              "dispatched",
+              len([e for e in devs
+                   if e["type"] == "TOOL_DISPATCHED"
+                   and _payload(e).get("tool")
+                   == "sandbox.list"]) == 4
+              and any("room" in str(r.get("ground", ""))
+                      and "lies under neither"
+                      in str(r.get("ground", ""))
+                      and "sources/ scope"
+                      in str(r.get("ground", ""))
+                      for r in drejections),
+              f"{drejections}")
+        _check_checker("directory", drep)
+        print(f"directory-form section: "
+              f"{CHECKS[0] - directory_before} checks")
+
+        # ============ round ten: the evidence gate ===
+        # (INDEX 552, Part B): the case declares the
+        # evidence a delivery must rest on; the door
+        # adjudicates a contribution against it.
+        evidence_before = CHECKS[0]
+        addresses = rehearsal.DELIVERY_EVIDENCE[
+            "addresses"]
+
+        def evidence_parts(scenario_work):
+            evs = _events(scenario_work)
+            gates = [_payload(e) for e in evs
+                     if e["type"]
+                     == "DELIVERY_EVIDENCE_GATE"]
+            filings = [_payload(e) for e in evs
+                       if e["type"] == "DELIVERABLE_FILED"]
+            contribs = {e["event_seq"]: _payload(e)
+                        for e in evs
+                        if e["type"] == "CONTRIBUTION"}
+            return evs, gates, filings, contribs
+
+        # ---- the progressive gates: nothing gathered,
+        # then one source, then two, then the last by
+        # ranges composing its whole.
+        egrep = reports["evidence_gates"]
+        egwork = work / "evidence-gates"
+        check("evidence-gates: the generation seals "
+              "the case's delivery-evidence declaration",
+              egrep["sealed_delivery_evidence"]
+              == rehearsal.DELIVERY_EVIDENCE,
+              f"{egrep['sealed_delivery_evidence']}")
+        check("evidence-gates: the run completes on "
+              "the fourth contribution, in twelve "
+              "iterations — the rehearsal's standing "
+              "step ceiling, each gate consuming "
+              "exactly its own",
+              egrep["outcome"] == "yield"
+              and egrep["iterations"] == 12,
+              f"{egrep['outcome']} / {egrep['iterations']}")
+        egevs, eggates, egfilings, egcontribs = \
+            evidence_parts(egwork)
+        check("evidence-gates: three gates stand, "
+              "naming what was missing at each — all "
+              "three sources, then the two unread, then "
+              "the last one — each recording that "
+              "nothing was filed",
+              [g.get("missing") for g in eggates]
+              == [addresses,
+                  ["sources/a3-pass.md",
+                   "sources/index-tail.md"],
+                  ["sources/index-tail.md"]]
+              and all(g.get("filed") is False
+                      for g in eggates),
+              f"{eggates}")
+        check("evidence-gates: each gate names its own "
+              "contribution, whose text is the brief's, "
+              "by its hash",
+              all(egcontribs.get(
+                      g.get("contribution_seq"), {})
+                  .get("text")
+                  == rehearsal.EVIDENCE_BRIEF_TEXT
+                  and g.get("text_sha256")
+                  == hashlib.sha256(
+                      rehearsal.EVIDENCE_BRIEF_TEXT
+                      .encode("utf-8")).hexdigest()
+                  for g in eggates),
+              f"{eggates}")
+        check("evidence-gates: the only filing names "
+              "the fourth contribution — no gated "
+              "contribution was ever filed",
+              len(egfilings) == 1
+              and egfilings[0].get("contribution_seq")
+              not in [g.get("contribution_seq")
+                      for g in eggates]
+              and egfilings[0].get("content_sha256")
+              == hashlib.sha256(
+                  rehearsal.EVIDENCE_BRIEF_TEXT
+                  .encode("utf-8")).hexdigest(),
+              f"{egfilings}")
+        egpkgs = {k: v[0] for k, v in
+                  _staged_packages(egwork).items()}
+        for wake, gate in ((5, eggates[0] if eggates
+                            else {}),
+                           (7, eggates[1] if len(eggates) > 1
+                            else {}),
+                           (9, eggates[2] if len(eggates) > 2
+                            else {})):
+            corr = egpkgs[wake].get(
+                "delivery_evidence_gate_correction") or {}
+            check(f"evidence-gates: the correction "
+                  f"rides wake {wake}, naming each "
+                  f"missing file with its way in",
+                  corr.get("missing")
+                  == gate.get("missing")
+                  and corr.get("contribution_seq")
+                  == gate.get("contribution_seq")
+                  and corr.get("text_sha256")
+                  == gate.get("text_sha256")
+                  and all(f"sandbox.read on {a}"
+                          in corr.get("instruction", "")
+                          for a in
+                          gate.get("missing") or []),
+                  f"{corr}")
+        check("evidence-gates: no other wake carries "
+              "the correction",
+              all("delivery_evidence_gate_correction"
+                  not in egpkgs[k]
+                  for k in egpkgs if k not in (5, 7, 9)),
+              f"{sorted(egpkgs)}")
+        egranges = []
+        for e in egevs:
+            if e["type"] == "TOOL_OUTCOME":
+                p = _payload(e)
+                result = p.get("result") or {}
+                if result.get("path") \
+                        == "sources/index-tail.md" and \
+                        "start_line" in result:
+                    egranges.append(
+                        (result.get("start_line"),
+                         result.get("end_line")))
+        egasked = [_payload(e).get("parameters") or {}
+                   for e in egevs
+                   if e["type"] == "TOOL_REQUESTED"
+                   and (_payload(e).get("parameters")
+                        or {}).get("path")
+                   == "sources/index-tail.md"]
+        check("evidence-gates: the last source stands "
+              "gathered by four ranges composing its "
+              "whole line range — the first pulled at "
+              "the files stage, before any gate — and "
+              "the final range's asked end ran past "
+              "the file's end, the performer clamping "
+              "it to line 24 (the record fact that "
+              "establishes the whole)",
+              egranges == [(1, 6), (7, 13), (14, 20),
+                           (21, 24)]
+              and any(p.get("end_line") == 9999
+                      for p in egasked),
+              f"{egranges} / {egasked}")
+        egrec_ph = {}
+        for e in egevs:
+            if e["type"] == "LOOP_ITERATION":
+                p = _payload(e)
+                egrec_ph[p.get("iteration")] = \
+                    p.get("presentation_hash")
+        for k in range(1, 13):
+            check(f"evidence-gates: iteration {k}'s "
+                  f"commitment is the hash of the "
+                  f"staged package its captured wake "
+                  f"presented",
+                  egrec_ph.get(k)
+                  == _presentation_hash_of(egpkgs[k]),
+                  f"recorded={egrec_ph.get(k)}")
+        _check_commitments(
+            "evidence-gates", egwork, egpkgs, 12)
+        _check_checker("evidence-gates", egrep)
+
+        # ---- listed is not gathered: shape is not
+        # substance.
+        elrep = reports["evidence_listed"]
+        elwork = work / "evidence-listed"
+        check("evidence-listed: the run completes on "
+              "the second contribution, in ten "
+              "iterations — the gate consumed one",
+              elrep["outcome"] == "yield"
+              and elrep["iterations"] == 10,
+              f"{elrep['outcome']} / {elrep['iterations']}")
+        elevs, elgates, elfilings, elcontribs = \
+            evidence_parts(elwork)
+        elists = [e["event_seq"] for e in elevs
+                  if e["type"] == "TOOL_OUTCOME"
+                  and (_payload(e).get("result") or {})
+                  .get("path") in addresses
+                  and "line_count" in (
+                      _payload(e).get("result") or {})]
+        check("evidence-listed: one gate stands, "
+              "naming all three sources — although all "
+              "three stood listed before the "
+              "contribution, a listing is shape, not "
+              "substance",
+              len(elgates) == 1
+              and elgates[0].get("missing") == addresses
+              and len(elists) == 3
+              and all(s < elgates[0].get(
+                  "contribution_seq") for s in elists)
+              and len(elfilings) == 1
+              and elfilings[0].get("contribution_seq")
+              != elgates[0].get("contribution_seq"),
+              f"{elgates} / lists {elists}")
+        elpkgs = {k: v[0] for k, v in
+                  _staged_packages(elwork).items()}
+        elcorr = elpkgs[7].get(
+            "delivery_evidence_gate_correction") or {}
+        check("evidence-listed: the correction rides "
+              "the wake after the gate, naming all "
+              "three",
+              elcorr.get("missing") == addresses
+              and "delivery_evidence_gate_correction"
+              not in elpkgs[6],
+              f"{elcorr}")
+        _check_commitments(
+            "evidence-listed", elwork, elpkgs, 10)
+        _check_checker("evidence-listed", elrep)
+
+        # ---- the clean pass: everything read whole,
+        # no gate fires.
+        ewrep = reports["evidence_whole"]
+        ewwork = work / "evidence-whole"
+        ewevs, ewgates, ewfilings, ewcontribs = \
+            evidence_parts(ewwork)
+        check("evidence-whole: with all three sources "
+              "read whole, no gate fires — the run "
+              "completes on the first contribution, in "
+              "seven iterations, one filing",
+              ewrep["outcome"] == "yield"
+              and ewrep["iterations"] == 7
+              and ewgates == []
+              and len(ewfilings) == 1
+              and ewrep["sealed_delivery_evidence"]
+              == rehearsal.DELIVERY_EVIDENCE,
+              f"{ewrep['outcome']} / "
+              f"{ewrep['iterations']} / {ewgates}")
+        ewpkgs = {k: v[0] for k, v in
+                  _staged_packages(ewwork).items()}
+        _check_commitments(
+            "evidence-whole", ewwork, ewpkgs, 7)
+        _check_checker("evidence-whole", ewrep)
+
+        # ---- the control: scenario G seals no
+        # evidence declaration; its worker read two
+        # sources whole and only listed the third, and
+        # his contribution was filed exactly as it
+        # always has been.
+        _sevs, sgates, _sfilings, _scontribs = \
+            evidence_parts(swork)
+        check("evidence control: the staged run seals "
+              "no delivery-evidence declaration and no "
+              "evidence gate stands in its record — "
+              "absent the declaration, adjudication is "
+              "exactly as it was",
+              reports["staged"][
+                  "sealed_delivery_evidence"] is None
+              and sgates == [],
+              f"{sgates}")
+        print(f"delivery-evidence section: "
+              f"{CHECKS[0] - evidence_before} checks")
+
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):
         # the journal's resting places are the worker's

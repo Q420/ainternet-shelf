@@ -127,6 +127,13 @@ _CASE_CONTENT = _fields({
         "office_answers": _list(_STR),
         "settled": _list(_STR),
         "unresolved": _list(_STR)})),
+    # Round ten's case component (INDEX 552): the
+    # delivery-evidence declaration — the addresses whose
+    # whole content must stand in the worker's working
+    # set before a contribution is adjudicated as a
+    # delivery.
+    "delivery_evidence": _opt(_obj({
+        "addresses": _list(_STR)})),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({

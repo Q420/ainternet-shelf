@@ -216,7 +216,12 @@ SCHEMA = {
                             "settled": {
                                 "t": "list", "v": {"t": "str"}},
                             "unresolved": {
-                                "t": "list", "v": {"t": "str"}}}}}},
+                                "t": "list", "v": {"t": "str"}}}}},
+                    "delivery_evidence": {"t": "opt", "v": {
+                        "t": "obj", "f": {
+                            "addresses": {
+                                "t": "list",
+                                "v": {"t": "str"}}}}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

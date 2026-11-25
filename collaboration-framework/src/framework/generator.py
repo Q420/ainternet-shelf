@@ -328,6 +328,7 @@ class Generator:
                  retrieval=False, probe=False, exec_room=False,
                  freshness_suspended=False,
                  delivery_declaration=False,
+                 delivery_evidence_declaration=False,
                  presentation_declaration=False,
                  worked_example=None):
         """Assemble one instance for a seat slot (R37/R38).
@@ -415,6 +416,28 @@ class Generator:
         it. The default declares nothing: every other
         generation's packages present exactly as they
         always have.
+
+        `delivery_evidence_declaration` (round ten,
+        INDEX 552): where the case declares the evidence
+        a delivery must rest on — a `delivery_evidence`
+        component naming the addresses whose whole
+        content must stand in the worker's working set
+        before a contribution is adjudicated as a
+        delivery — sealing it binds that declaration to
+        this assembly beside the delivery declaration,
+        so the loop's door adjudicates against the
+        case's own word. The declaration seals only
+        where the delivery declaration seals with it
+        (without the door there is nothing for the gate
+        to guard) and only in the combined configuration
+        (the working-set population — the declaration
+        speaks of the worker's working set, a structure
+        that stands declared only there). A generation
+        asked to seal it anywhere else, or against a
+        case carrying it missing or malformed, fails
+        preflight whole. The default seals nothing:
+        every other generation's contributions are
+        adjudicated exactly as they always have been.
 
         `worked_example` (round nine's correction pair,
         INDEX 548): the office's demonstration call for
@@ -514,6 +537,69 @@ class Generator:
                 return {"ok": False,
                         "problems": [example_problem],
                         "seat": seat_id}
+        delivery_evidence = None
+        if delivery_evidence_declaration:
+            # Round ten (INDEX 552): the delivery-evidence
+            # declaration stands in the pinned case's
+            # content as its own component beside the
+            # delivery declaration — the addresses whose
+            # whole content must stand in the worker's
+            # working set before his contribution is
+            # adjudicated as a delivery. Sealing binds it
+            # to this assembly exactly as the delivery
+            # declaration is bound. It seals only with the
+            # door (the delivery declaration sealed in the
+            # same generation) and only in the combined
+            # configuration, the working-set population —
+            # anywhere else the record would claim a gate
+            # that never stands. Fail preflight whole, as
+            # the other declarations do.
+            if not delivery_declaration:
+                return {"ok": False,
+                        "problems": [
+                            "the delivery-evidence "
+                            "declaration was asked to be "
+                            "sealed but this generation does "
+                            "not seal the delivery "
+                            "declaration; without the door "
+                            "there is nothing for the "
+                            "evidence gate to guard"],
+                        "seat": seat_id}
+            if not combined:
+                return {"ok": False,
+                        "problems": [
+                            "the delivery-evidence "
+                            "declaration was asked to be "
+                            "sealed but this generation is "
+                            "not the combined configuration "
+                            "(an exec-room generation "
+                            "carrying retrieval grants), "
+                            "the working-set population the "
+                            "declaration speaks of"],
+                        "seat": seat_id}
+            content = eff.get("content") or {}
+            evidence = content.get("delivery_evidence")
+            if not isinstance(evidence, dict) or \
+                    set(evidence) != {"addresses"} or \
+                    not isinstance(
+                        evidence.get("addresses"), list) or \
+                    not evidence["addresses"] or \
+                    any(not isinstance(address, str)
+                        or not address
+                        for address in
+                        evidence["addresses"]):
+                return {"ok": False,
+                        "problems": [
+                            "the delivery-evidence "
+                            "declaration was asked to be "
+                            "sealed but the pinned case "
+                            "carries no well-formed "
+                            "delivery-evidence declaration "
+                            "(a mapping naming exactly "
+                            "addresses: a non-empty list of "
+                            "sandbox addresses)"],
+                        "seat": seat_id}
+            delivery_evidence = evidence
         n = self._next_number(state)
         instance_id = f"inst-{seat_id}-{n}"
         assembly_id = f"assembly-{seat_id}-{n}"
@@ -576,6 +662,13 @@ class Generator:
                 worked_example)
         if delivery_declaration:
             record["delivery"] = copy.deepcopy(delivery)
+        if delivery_evidence_declaration:
+            # Round ten (INDEX 552), sealed beside the
+            # delivery declaration it guards — preflight
+            # above has already refused it anywhere else
+            # or against a case carrying it malformed.
+            record["delivery_evidence"] = copy.deepcopy(
+                delivery_evidence)
         if freshness_suspended:
             # Ben's R31 ruling (2026-11-24), sealed as a
             # declaration beside the contracts: the

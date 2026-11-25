@@ -148,7 +148,8 @@ class Office:
         # declaration, its role-memory snapshot, or its
         # opening record, the draft carries each unchanged
         # as its own component, by the same route.
-        for _field in ("delivery", "role_memory", "opening"):
+        for _field in ("delivery", "role_memory", "opening",
+                       "delivery_evidence"):
             if brief.get(_field) is not None:
                 content[_field] = copy.deepcopy(
                     brief[_field])
@@ -187,7 +188,8 @@ class Office:
                 if f not in ("loop_bounds", "glossary",
                              "journal", "onboarding",
                              "delivery", "role_memory",
-                             "opening")):
+                             "opening",
+                             "delivery_evidence")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
@@ -249,6 +251,22 @@ class Office:
                     "object of exactly two non-empty "
                     "strings: the destination and the "
                     "route")
+        if content.get("delivery_evidence") is not None:
+            evidence = content["delivery_evidence"]
+            if not isinstance(evidence, dict) or \
+                    set(evidence) != {"addresses"} or \
+                    not isinstance(
+                        evidence.get("addresses"), list) or \
+                    not evidence["addresses"] or \
+                    any(not isinstance(address, str)
+                        or not address
+                        for address in
+                        evidence["addresses"]):
+                problems.append(
+                    "the delivery-evidence declaration "
+                    "must be an object naming exactly "
+                    "addresses: a non-empty list of "
+                    "non-empty sandbox addresses")
         if content.get("role_memory") is not None:
             role_memory = content["role_memory"]
             if not isinstance(role_memory, list) or any(
@@ -373,7 +391,7 @@ class Office:
             if field in ("loop_bounds", "glossary",
                          "journal", "onboarding",
                          "delivery", "role_memory",
-                         "opening") and \
+                         "opening", "delivery_evidence") and \
                     field not in current and \
                     field not in changes:
                 continue

@@ -424,6 +424,17 @@ JOURNAL_PATH = "scratch/journal.md"
 DELIVERY = {"destination": "scratch/brief.md",
             "route": "contribution-v1"}
 
+# The delivery-evidence declaration (round ten, INDEX
+# 552): the evidence this job's delivery must rest on —
+# the three sources' whole content standing in the
+# worker's working set before his contribution is
+# adjudicated as a delivery. The case carries it as its
+# own component and the generation seals it beside the
+# delivery declaration; the door adjudicates against it.
+DELIVERY_EVIDENCE = {"addresses": [
+    "sources/stock-take.md", "sources/a3-pass.md",
+    "sources/index-tail.md"]}
+
 ROLE_MEMORY = [
     {"observation": "Delivers finished writing as "
                     "plain prose in the reply itself.",
@@ -789,6 +800,7 @@ def _commission_and_issue(store, manifest_hash,
                           glossary=GLOSSARY,
                           onboarding=ONBOARDING,
                           delivery=DELIVERY,
+                          delivery_evidence=DELIVERY_EVIDENCE,
                           role_memory=ROLE_MEMORY,
                           opening=None):
     """Commission, material sealing, office issue and
@@ -808,6 +820,8 @@ def _commission_and_issue(store, manifest_hash,
                               journal=JOURNAL_PATH,
                               onboarding=onboarding,
                               delivery=delivery,
+                              delivery_evidence=
+                              delivery_evidence,
                               role_memory=role_memory,
                               opening=opening)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
@@ -878,6 +892,13 @@ def _commission_and_issue(store, manifest_hash,
         raise RuntimeError(
             "the issued case does not carry the "
             "delivery declaration as its own component")
+    if delivery_evidence is not None and \
+            (content or {}).get("delivery_evidence") \
+            != delivery_evidence:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "delivery-evidence declaration as its own "
+            "component")
     if role_memory is not None and \
             (content or {}).get("role_memory") \
             != role_memory:
@@ -1148,6 +1169,7 @@ def run_demo():
                 model_requested=MODEL, probe=True,
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
+                delivery_evidence_declaration=True,
                 presentation_declaration=True,
                 worked_example=worked_example)
         except ModelPinMismatchError as mismatch:
@@ -1763,6 +1785,7 @@ def verify_config():
                 model_requested=MODEL, probe=True,
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
+                delivery_evidence_declaration=True,
                 presentation_declaration=True,
                 worked_example=verify_example)
             expect("generation: stub-identity generation "
@@ -1884,6 +1907,20 @@ def verify_config():
                            "delivery") == DELIVERY,
                        json.dumps(
                            sealed.get("delivery"))[:300])
+                expect("generation: the sealed record "
+                       "carries the delivery-evidence "
+                       "declaration, bound to the case's "
+                       "own word (round ten, INDEX 552 — "
+                       "the three sources are the evidence "
+                       "this job's delivery must rest on)",
+                       sealed.get("delivery_evidence")
+                       == DELIVERY_EVIDENCE
+                       and (case_content or {}).get(
+                           "delivery_evidence")
+                       == DELIVERY_EVIDENCE,
+                       json.dumps(
+                           sealed.get(
+                               "delivery_evidence"))[:300])
                 expect("commission: the issued case "
                        "carries the role-memory snapshot "
                        "as its own component, unchanged "

@@ -87,7 +87,9 @@ from checker.tool_policy import (EXEC_CATALOGUE_CONTRACT,
                                  RETRIEVAL_TOOLS,
                                  WORKING_SET_CONTENT_BUDGET,
                                  boundary_member,
+                                 boundary_member_for_list,
                                  check_ceiling, known_version,
+                                 list_authority,
                                  registered, request_fingerprint,
                                  retrieval_authority,
                                  worker_facing)
@@ -1471,6 +1473,12 @@ def _dispatch_result(events, state):
         path = parameters.get("path")
         authority = "source" if path is None else \
             retrieval_authority(path)
+        if authority is None and tool == "sandbox.list":
+            # The directory form (round ten): the list
+            # authority admits the granted directory's
+            # own address, the path canonicalised as the
+            # ceiling canonicalises it.
+            authority = list_authority(path)
         if authority is None:
             return None, None, (
                 f"path {path!r} lies under neither the "
@@ -1691,14 +1699,29 @@ def _dispatch_result(events, state):
                         req_path = (req["parameters"] or {}).get(
                             "path")
                         if authority == "source" and \
-                                req_path is not None and \
-                                not boundary_member(
+                                req_path is not None:
+                            if p.get("tool") == "sandbox.list":
+                                canon = req_path[:-1] \
+                                    if isinstance(
+                                        req_path, str) \
+                                    and len(req_path) > 1 \
+                                    and req_path.endswith(
+                                        "/") else req_path
+                                member = \
+                                    boundary_member_for_list(
+                                        pinned_boundary(iid),
+                                        canon)
+                            else:
+                                member = boundary_member(
                                     pinned_boundary(iid),
-                                    req_path):
-                            problem(
-                                "retrieval_boundary_violation",
-                                dispatch_id=did, at_seq=seq,
-                                path=req_path)
+                                    req_path)
+                            if not member:
+                                problem(
+                                    "retrieval_boundary_"
+                                    "violation",
+                                    dispatch_id=did,
+                                    at_seq=seq,
+                                    path=req_path)
                         bound = admitting.get("bound")
                         limit = bound.get("count") if isinstance(
                             bound, dict) else None
@@ -1756,6 +1779,8 @@ def _dispatch_result(events, state):
                     "path")
                 dispatches[did]["authority"] = "source" \
                     if req_path is None else \
+                    list_authority(req_path) \
+                    if p.get("tool") == "sandbox.list" else \
                     retrieval_authority(req_path)
         elif t == "TOOL_STARTED":
             did = p.get("dispatch_id")
@@ -1884,9 +1909,26 @@ def _dispatch_result(events, state):
                                 authority_path=result.get(
                                     "authority_path"),
                                 expected=d.get("authority"))
+                        req_result_path = (
+                            d.get("parameters") or {}).get(
+                                "path")
+                        if d.get("tool") == "sandbox.list" \
+                                and isinstance(
+                                    req_result_path, str) \
+                                and len(req_result_path) > 1 \
+                                and req_result_path.endswith(
+                                    "/"):
+                            # The directory form (round
+                            # ten): the performer's result
+                            # records the canonical address
+                            # — the request's path with
+                            # exactly one trailing slash
+                            # stripped, as the ceiling
+                            # canonicalises it.
+                            req_result_path = \
+                                req_result_path[:-1]
                         if result.get("path") != \
-                                (d.get("parameters") or {}).get(
-                                    "path"):
+                                req_result_path:
                             problem(
                                 "retrieval_authority_mismatch",
                                 dispatch_id=did, at_seq=seq,
@@ -2249,8 +2291,10 @@ _STAGED_FILES_INTRO = (
     "naming a tool you hold. The contents are yours "
     "to pull when the work needs them, through the "
     "doorway tools (sandbox.list shows a file's size, "
-    "line count and headings; sandbox.read pulls a "
-    "whole file) or the shell in your room. That is "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
     "how the briefcase works: what you pull is "
     "carried forward in front of you at later wakes, "
     "so you never need to pull the same thing twice. "
@@ -2267,8 +2311,10 @@ _STAGED_FILES_INTRO_NO_EXAMPLE = (
     "naming a tool you hold. The contents are yours "
     "to pull when the work needs them, through the "
     "doorway tools (sandbox.list shows a file's size, "
-    "line count and headings; sandbox.read pulls a "
-    "whole file) or the shell in your room. That is "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
     "how the briefcase works: what you pull is "
     "carried forward in front of you at later wakes, "
     "so you never need to pull the same thing twice. "
@@ -2314,6 +2360,136 @@ _STAGED_JOURNAL_POINTER = (
     "orientation, not record and not memory. Its "
     "contents are not carried in your packages — pull "
     "it when you want it.")
+# The delivery-evidence gate (round ten, INDEX 552):
+# this checker's copies of the correction's wording and
+# of the standing computation — the framework's stand in
+# loop.py. The correction is re-derived from the gate
+# event's payload and the catalogue; the standing
+# computation is re-derived from the recorded dispatches
+# and outcomes alone.
+_STAGED_EVIDENCE_GATE_WHAT_ARRIVED = (
+    "a contribution, offered as your delivery, before "
+    "the evidence your case names for a delivery stood "
+    "gathered in front of you")
+_STAGED_EVIDENCE_GATE_INSTRUCTION_HEAD = (
+    "Nothing was filed. Your case names the evidence "
+    "a delivery must rest on: the whole content of "
+    "each named file must stand gathered in your "
+    "working set before your contribution can be "
+    "filed as the deliverable. Still missing:")
+_STAGED_EVIDENCE_GATE_INSTRUCTION_TAIL = (
+    "Gather what is missing, then offer your "
+    "contribution again. Listing a file shows its "
+    "shape, not its contents — a listing does not "
+    "gather it; pull the whole file, or pull ranges "
+    "that together cover the whole file. The text "
+    "you sent stands in the record, set aside "
+    "unfiled.")
+
+
+def _evidence_gate_instruction(catalogue, missing):
+    lines = [_STAGED_EVIDENCE_GATE_INSTRUCTION_HEAD]
+    for address in missing:
+        way = _staged_access_way(catalogue, address)
+        if way is not None:
+            lines.append(
+                f"- {address}: {way['tool']} on {address} "
+                f"pulls the whole file.")
+        else:
+            lines.append(
+                f"- {address}: no tool you hold reaches "
+                f"it — say so in your yield, and the "
+                f"office will stock a route.")
+    lines.append(_STAGED_EVIDENCE_GATE_INSTRUCTION_TAIL)
+    return "\n".join(lines)
+
+
+def _evidence_address_stands(entries, requested, address):
+    """Whether one named address's whole content stands
+    in the reconstructed working set: a carried whole
+    read of it, or carried line ranges together covering
+    the file's whole line range — the total established
+    by a listing outcome's recorded line count for the
+    address, or by a range request whose asked end_line
+    the performer clamped to the served end. Byte-window
+    ranges, listings, searches, and entries standing by
+    provenance alone never count; container.exec outcomes
+    never enter the working set, so no exec carriage can
+    stand — the record carries no attribution of room
+    stdout to a named address, and none is invented."""
+    mine = [e for e in entries
+            if e.get("path") == address]
+    for entry in mine:
+        if entry.get("tool") == "sandbox.read" and \
+                entry.get("content_carried"):
+            return True
+    total = None
+    for entry in mine:
+        if entry.get("tool") == "sandbox.list":
+            line_count = (entry.get("served") or {}).get(
+                "line_count")
+            if isinstance(line_count, int) and \
+                    not isinstance(line_count, bool):
+                total = line_count
+    intervals = []
+    for entry in mine:
+        if entry.get("tool") != "sandbox.read_range" or \
+                not entry.get("content_carried"):
+            continue
+        served = entry.get("served") or {}
+        if served.get("byte_start") is not None:
+            continue
+        start = served.get("start_line")
+        end = served.get("end_line")
+        if not isinstance(start, int) or \
+                isinstance(start, bool) or \
+                not isinstance(end, int) or \
+                isinstance(end, bool):
+            continue
+        intervals.append((start, end))
+        if total is None:
+            asked = (requested.get(
+                entry.get("request_id")) or {}).get(
+                    "end_line")
+            if isinstance(asked, int) and \
+                    not isinstance(asked, bool) and \
+                    asked > end:
+                total = end
+    if total is None or total < 1 or not intervals:
+        return False
+    covered_to = 0
+    for start, end in sorted(intervals):
+        if start > covered_to + 1:
+            return False
+        covered_to = max(covered_to, end)
+        if covered_to >= total:
+            return True
+    return covered_to >= total
+
+
+def _delivery_evidence_missing(events, instance_id, head,
+                               addresses):
+    """The declared delivery evidence that does not
+    stand at `head`, in the declaration's own order,
+    reconstructed from the record alone: the working set
+    at the head, weighed address by address, with the
+    requested parameters read from the record's
+    TOOL_REQUESTED events."""
+    working_set = _derive_working_set(
+        events, instance_id, head)
+    requested = {}
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        if ev["type"] != "TOOL_REQUESTED":
+            continue
+        payload = ev["payload"]
+        parameters = payload.get("parameters")
+        if isinstance(parameters, dict):
+            requested[payload.get("request_id")] = parameters
+    return [address for address in addresses
+            if not _evidence_address_stands(
+                working_set["entries"], requested, address)]
 _STAGED_DIRECTIONS = {
     "memory": (
         "Onboarding stage 1 of 4: your memory. Nothing "
@@ -3010,6 +3186,32 @@ def _derive_staged_core(events, state, gen, content,
         if stage_correction is not None:
             staged["delivery_stage_gate_correction"] = \
                 stage_correction
+        evidence_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_EVIDENCE_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                ep = ev["payload"]
+                missing = ep.get("missing")
+                evidence_correction = {
+                    "what_arrived":
+                        _STAGED_EVIDENCE_GATE_WHAT_ARRIVED,
+                    "contribution_seq":
+                        ep.get("contribution_seq"),
+                    "text_sha256": ep.get("text_sha256"),
+                    "missing": missing,
+                    "instruction":
+                        _evidence_gate_instruction(
+                            catalogue, missing)
+                        if isinstance(missing, list)
+                        else None}
+        if evidence_correction is not None:
+            staged["delivery_evidence_gate_correction"] = \
+                evidence_correction
     if stage == "task":
         staged["tool_list"] = _staged_tool_menu(
             catalogue, deliverable=deliverable)
@@ -3332,6 +3534,7 @@ def _loop_result(events, state, run_dir=None):
     deliverable_filings = {}
     delivery_gates = {}
     delivery_stage_gates = {}
+    delivery_evidence_gates = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -3420,6 +3623,18 @@ def _loop_result(events, state, run_dir=None):
                                 ev, aid):
                 continue
             delivery_stage_gates.setdefault(
+                aid, []).append(ev)
+        elif t == "DELIVERY_EVIDENCE_GATE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem(
+                    "delivery_evidence_gate_wrong_actor",
+                    assembly_id=aid, at_seq=seq,
+                    actor=ev["actor"])
+            if binding_problems("delivery_evidence_gate",
+                                ev, aid):
+                continue
+            delivery_evidence_gates.setdefault(
                 aid, []).append(ev)
         elif t == "TRANSLATION_RECORDED":
             # Native adapter piece (N32/N33): the
@@ -3588,6 +3803,57 @@ def _loop_result(events, state, run_dir=None):
                         at_seq=activated[aid])
         elif case_delivery is not None:
             problem("delivery_declaration_unsealed",
+                    assembly_id=aid, at_seq=activated[aid])
+        # The delivery-evidence declaration (round ten,
+        # INDEX 552): the generator seals the pinned
+        # case's component into the assembly's record
+        # beside the delivery declaration; the two must
+        # be one declaration, well-formed — and the seal
+        # stands only where the door it guards and the
+        # working-set contract stand, since the gate it
+        # names reads the worker's working set.
+        evidence = gen["payload"].get(
+            "delivery_evidence") if gen is not None \
+            else None
+        case_evidence = pinned_case_content(aid).get(
+            "delivery_evidence")
+        if evidence is not None:
+            if not isinstance(evidence, dict) or \
+                    set(evidence) != {"addresses"} or \
+                    not isinstance(
+                        evidence.get("addresses"), list) or \
+                    not evidence["addresses"] or \
+                    any(not isinstance(address, str)
+                        or not address
+                        for address in
+                        evidence["addresses"]):
+                problem(
+                    "delivery_evidence_declaration_"
+                    "malformed",
+                    assembly_id=aid,
+                    at_seq=activated[aid],
+                    delivery_evidence=evidence)
+            elif case_evidence != evidence:
+                problem(
+                    "delivery_evidence_declaration_"
+                    "mismatch",
+                    assembly_id=aid,
+                    at_seq=activated[aid])
+            elif delivery is None:
+                problem("delivery_evidence_without_"
+                        "delivery",
+                        assembly_id=aid,
+                        at_seq=activated[aid])
+            elif gen["payload"].get(
+                    "working_set_contract") != \
+                    _WORKING_SET_CONTRACT:
+                problem("delivery_evidence_without_"
+                        "working_set",
+                        assembly_id=aid,
+                        at_seq=activated[aid])
+        elif case_evidence is not None:
+            problem("delivery_evidence_declaration_"
+                    "unsealed",
                     assembly_id=aid, at_seq=activated[aid])
 
     for aid, evs in iterations.items():
@@ -3870,6 +4136,41 @@ def _loop_result(events, state, run_dir=None):
                 problem("deliverable_filed_from_stage_"
                         "gated_contribution",
                         assembly_id=aid, at_seq=seq)
+            # The evidence gate's word (INDEX 552): a
+            # contribution the gate set aside unfiled
+            # may never stand filed, and no filing may
+            # stand at all where the case's named
+            # evidence did not stand gathered at the
+            # filing's own contribution — the standing
+            # computation is re-derived here from the
+            # recorded dispatches and outcomes alone.
+            if any(g["payload"].get("contribution_seq")
+                   == p.get("contribution_seq")
+                   for g in delivery_evidence_gates.get(
+                       aid, [])):
+                problem("deliverable_filed_from_evidence_"
+                        "gated_contribution",
+                        assembly_id=aid, at_seq=seq)
+            evidence = (gen or {}).get("payload", {}).get(
+                "delivery_evidence")
+            if isinstance(evidence, dict) and \
+                    set(evidence) == {"addresses"} and \
+                    isinstance(
+                        evidence.get("addresses"), list) \
+                    and evidence["addresses"] and \
+                    pinned_case_content(aid).get(
+                        "delivery_evidence") == evidence:
+                missing = _delivery_evidence_missing(
+                    events,
+                    (gen or {}).get("payload", {}).get(
+                        "instance_id"),
+                    p.get("contribution_seq"),
+                    evidence["addresses"])
+                if missing:
+                    problem("deliverable_filed_with_"
+                            "evidence_missing",
+                            assembly_id=aid, at_seq=seq,
+                            missing=missing)
     for aid, evs in delivery_gates.items():
         iteration_seqs = {ev["event_seq"] for ev in
                           iterations.get(aid, [])}
@@ -3949,6 +4250,78 @@ def _loop_result(events, state, run_dir=None):
                 problem("delivery_stage_gate_payload_"
                         "malformed",
                         assembly_id=aid, at_seq=seq)
+
+    # The evidence gate's events (round ten, INDEX 552),
+    # verified against the record itself: a gate binds a
+    # standing iteration of an evidence-declared
+    # assembly, names the contribution it set aside —
+    # whose text must hash to the gate's digest, with
+    # nothing filed — and names exactly the addresses
+    # the standing computation, re-derived at that
+    # contribution from the recorded dispatches and
+    # outcomes alone, finds missing. The correction the
+    # gate owes the next package is verified in the
+    # staged core's reconstruction above where the
+    # presentation contract stands.
+    for aid, evs in delivery_evidence_gates.items():
+        gen = generated.get(aid)
+        evidence = (gen or {}).get("payload", {}).get(
+            "delivery_evidence")
+        declared = isinstance(evidence, dict) and \
+            set(evidence) == {"addresses"} and \
+            isinstance(evidence.get("addresses"), list) \
+            and bool(evidence["addresses"]) and \
+            all(isinstance(address, str) and address
+                for address in evidence["addresses"]) and \
+            pinned_case_content(aid).get(
+                "delivery_evidence") == evidence
+        iteration_seqs = {ev["event_seq"] for ev in
+                          iterations.get(aid, [])}
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if not declared:
+                problem("delivery_evidence_gate_without_"
+                        "declaration",
+                        assembly_id=aid, at_seq=seq)
+            if p.get("iteration_seq") not in \
+                    iteration_seqs:
+                problem("delivery_evidence_gate_"
+                        "iteration_mismatch",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            contribution = _events_by_seq.get(
+                p.get("contribution_seq"))
+            text = (contribution or {}).get(
+                "payload", {}).get("text") \
+                if contribution is not None else None
+            digest = hashlib.sha256(
+                text.encode("utf-8")).hexdigest() \
+                if isinstance(text, str) else None
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION" \
+                    or digest is None or \
+                    digest != p.get("text_sha256") or \
+                    p.get("filed") is not False or \
+                    not isinstance(
+                        p.get("missing"), list):
+                problem("delivery_evidence_gate_payload_"
+                        "malformed",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            if declared:
+                recomputed = _delivery_evidence_missing(
+                    events,
+                    (gen or {}).get("payload", {}).get(
+                        "instance_id"),
+                    p.get("contribution_seq"),
+                    evidence["addresses"])
+                if p.get("missing") != recomputed:
+                    problem("delivery_evidence_gate_"
+                            "missing_mismatch",
+                            assembly_id=aid, at_seq=seq,
+                            recorded=p.get("missing"),
+                            recomputed=recomputed)
 
     # Dispatch standing by instance, for the stall checks:
     # each dispatch's first outcome position, and whether an

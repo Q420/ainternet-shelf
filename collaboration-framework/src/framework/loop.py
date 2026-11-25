@@ -740,8 +740,10 @@ STAGED_FILES_INTRO = (
     "naming a tool you hold. The contents are yours "
     "to pull when the work needs them, through the "
     "doorway tools (sandbox.list shows a file's size, "
-    "line count and headings; sandbox.read pulls a "
-    "whole file) or the shell in your room. That is "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
     "how the briefcase works: what you pull is "
     "carried forward in front of you at later wakes, "
     "so you never need to pull the same thing twice. "
@@ -758,8 +760,10 @@ STAGED_FILES_INTRO_NO_EXAMPLE = (
     "naming a tool you hold. The contents are yours "
     "to pull when the work needs them, through the "
     "doorway tools (sandbox.list shows a file's size, "
-    "line count and headings; sandbox.read pulls a "
-    "whole file) or the shell in your room. That is "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
     "how the briefcase works: what you pull is "
     "carried forward in front of you at later wakes, "
     "so you never need to pull the same thing twice. "
@@ -805,6 +809,179 @@ STAGED_JOURNAL_POINTER = (
     "orientation, not record and not memory. Its "
     "contents are not carried in your packages — pull "
     "it when you want it.")
+# The delivery-evidence gate (round ten, INDEX 552):
+# where the case declares the evidence a delivery must
+# rest on, a contribution offered before that evidence
+# stands gathered is set aside unfiled and answered with
+# this correction — in the INDEX 475 shape the other
+# gates use: what arrived, what is missing (each address
+# named, with its way in, as the files stage states
+# them), and the route onward. The wording is a pure
+# function of the gate event's own payload and the
+# catalogue, so the checker re-derives it byte-exact
+# from the record; its copy stands in checker.py.
+STAGED_EVIDENCE_GATE_WHAT_ARRIVED = (
+    "a contribution, offered as your delivery, before "
+    "the evidence your case names for a delivery stood "
+    "gathered in front of you")
+STAGED_EVIDENCE_GATE_INSTRUCTION_HEAD = (
+    "Nothing was filed. Your case names the evidence "
+    "a delivery must rest on: the whole content of "
+    "each named file must stand gathered in your "
+    "working set before your contribution can be "
+    "filed as the deliverable. Still missing:")
+STAGED_EVIDENCE_GATE_INSTRUCTION_TAIL = (
+    "Gather what is missing, then offer your "
+    "contribution again. Listing a file shows its "
+    "shape, not its contents — a listing does not "
+    "gather it; pull the whole file, or pull ranges "
+    "that together cover the whole file. The text "
+    "you sent stands in the record, set aside "
+    "unfiled.")
+
+
+def _evidence_gate_instruction(catalogue, missing):
+    """The evidence gate correction's instruction: the
+    fixed head, one line per missing address naming its
+    way in (the files stage's own access way for that
+    address, from the catalogue), and the fixed tail. A
+    pure function of the missing list and the catalogue,
+    so the loop's package and the checker's re-derivation
+    agree byte for byte."""
+    lines = [STAGED_EVIDENCE_GATE_INSTRUCTION_HEAD]
+    for address in missing:
+        way = _staged_access_way(catalogue, address)
+        if way is not None:
+            lines.append(
+                f"- {address}: {way['tool']} on {address} "
+                f"pulls the whole file.")
+        else:
+            lines.append(
+                f"- {address}: no tool you hold reaches "
+                f"it — say so in your yield, and the "
+                f"office will stock a route.")
+    lines.append(STAGED_EVIDENCE_GATE_INSTRUCTION_TAIL)
+    return "\n".join(lines)
+
+
+def _evidence_gate_correction(catalogue, contribution_seq,
+                              text_sha256, missing):
+    """The correction a delivery-evidence gate leaves for
+    the next wake's package, derived from the gate
+    event's facts: what arrived, the contribution it
+    names, what is missing, and the instruction."""
+    return {
+        "what_arrived": STAGED_EVIDENCE_GATE_WHAT_ARRIVED,
+        "contribution_seq": contribution_seq,
+        "text_sha256": text_sha256,
+        "missing": list(missing),
+        "instruction": _evidence_gate_instruction(
+            catalogue, missing)}
+
+
+def _evidence_address_stands(entries, requested, address):
+    """Whether one named address's whole content stands
+    in the working set, from the set's entries and the
+    record's requested parameters alone (round ten,
+    INDEX 552). An address stands where a whole-file
+    read of it stands carried, or where carried line
+    ranges together cover the file's whole line range.
+    The whole line range is itself a record fact,
+    established one of two ways: a listing outcome for
+    the address recording its line count, or a range
+    request whose asked end_line the performer clamped
+    — the performer clamps only at the file's end, so
+    the served end of a clamped range IS the file's
+    last line. A byte-window range never counts (a
+    window of one line is not the line's whole content,
+    and the record cannot show the window spans the
+    line); a listing or a search never counts as
+    content (shape is not substance); an entry standing
+    by provenance alone, its content not carried, never
+    counts — the content does not stand in front of the
+    worker. container.exec outcomes never enter the
+    working set at all — the execution tool is not a
+    retrieval tool, and its room result is stdout
+    carrying no recorded binding to a path — so no exec
+    carriage can stand here: the record cannot attribute
+    it, and the gate does not invent attribution."""
+    mine = [e for e in entries
+            if e.get("path") == address]
+    for entry in mine:
+        if entry.get("tool") == "sandbox.read" and \
+                entry.get("content_carried"):
+            return True
+    total = None
+    for entry in mine:
+        if entry.get("tool") == "sandbox.list":
+            line_count = (entry.get("served") or {}).get(
+                "line_count")
+            if isinstance(line_count, int) and \
+                    not isinstance(line_count, bool):
+                total = line_count
+    intervals = []
+    for entry in mine:
+        if entry.get("tool") != "sandbox.read_range" or \
+                not entry.get("content_carried"):
+            continue
+        served = entry.get("served") or {}
+        if served.get("byte_start") is not None:
+            continue
+        start = served.get("start_line")
+        end = served.get("end_line")
+        if not isinstance(start, int) or \
+                isinstance(start, bool) or \
+                not isinstance(end, int) or \
+                isinstance(end, bool):
+            continue
+        intervals.append((start, end))
+        if total is None:
+            asked = (requested.get(
+                entry.get("request_id")) or {}).get(
+                    "end_line")
+            if isinstance(asked, int) and \
+                    not isinstance(asked, bool) and \
+                    asked > end:
+                total = end
+    if total is None or total < 1 or not intervals:
+        return False
+    covered_to = 0
+    for start, end in sorted(intervals):
+        if start > covered_to + 1:
+            return False
+        covered_to = max(covered_to, end)
+        if covered_to >= total:
+            return True
+    return covered_to >= total
+
+
+def _delivery_evidence_missing(events, dispatches,
+                               instance_id, head,
+                               addresses):
+    """The declared delivery evidence that does not
+    stand at `head`, in the declaration's own order:
+    the working set is derived at the head from the
+    record, and each named address is weighed by
+    _evidence_address_stands. The requested parameters
+    the computation reads stand in the record's
+    TOOL_REQUESTED events, keyed by request identity —
+    the computation is reconstructible from the recorded
+    dispatches and outcomes alone, and the checker
+    derives the same list from its own copies."""
+    working_set = _derive_working_set(
+        events, dispatches, instance_id, head)
+    requested = {}
+    for ev in events:
+        if ev["event_seq"] > head or \
+                ev["type"] != "TOOL_REQUESTED":
+            continue
+        payload = ev["payload"]
+        parameters = payload.get("parameters")
+        if isinstance(parameters, dict):
+            requested[payload.get("request_id")] = parameters
+    return [address for address in addresses
+            if not _evidence_address_stands(
+                working_set["entries"], requested, address)]
 STAGED_DIRECTIONS = {
     "memory": (
         "Onboarding stage 1 of 4: your memory. Nothing "
@@ -1308,6 +1485,31 @@ class Loop:
         _worked_example = _worked_example_honoured(
             _generated.get("worked_example")) \
             if _presentation_declared else None
+        # Round ten (INDEX 552): the delivery-evidence
+        # declaration the loop's door honours is read the
+        # same way — the generator's seal, where it equals
+        # the pinned case's own component exactly, standing
+        # well-formed, and only where the delivery itself
+        # stands (the gate guards the door; where no door
+        # stands there is nothing to guard) and the
+        # working-set contract stands declared (the
+        # declaration speaks of the worker's working set).
+        _delivery_evidence = _generated.get(
+            "delivery_evidence")
+        if not (isinstance(_delivery_evidence, dict)
+                and set(_delivery_evidence) == {"addresses"}
+                and isinstance(
+                    _delivery_evidence.get("addresses"), list)
+                and _delivery_evidence["addresses"]
+                and all(isinstance(address, str) and address
+                        for address in
+                        _delivery_evidence["addresses"])
+                and (content or {}).get("delivery_evidence")
+                == _delivery_evidence
+                and _delivery is not None
+                and _generated.get("working_set_contract")
+                == _tool_policy.WORKING_SET_CONTRACT):
+            _delivery_evidence = None
         return {
             "delivery": copy.deepcopy(_delivery),
             "working_set_declared":
@@ -1321,9 +1523,13 @@ class Loop:
                 _generated.get("freshness_guard")
                 == _tool_policy.FRESHNESS_GUARD_SUSPENDED,
             "deliverable_filed": None,
+            "delivery_evidence": copy.deepcopy(
+                _delivery_evidence),
             "delivery_gate_correction": None,
             "delivery_stage_gate_correction": None,
             "delivery_stage_gate_error": None,
+            "delivery_evidence_gate_correction": None,
+            "delivery_evidence_gate_error": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -1601,6 +1807,11 @@ class Loop:
                         ctx, "runtime_failure",
                         detail=ctx[
                             "delivery_stage_gate_error"])
+                if ctx.get("delivery_evidence_gate_error"):
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=ctx[
+                            "delivery_evidence_gate_error"])
                 if ctx.get("deliverable_filed") is not None:
                     return self._delivered_result(ctx)
 
@@ -1888,6 +2099,10 @@ class Loop:
             return self._stall(
                 ctx, "runtime_failure",
                 detail=ctx["delivery_stage_gate_error"])
+        if ctx.get("delivery_evidence_gate_error"):
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=ctx["delivery_evidence_gate_error"])
         if ctx.get("deliverable_filed") is not None:
             return self._delivered_result(ctx)
         return "continue"
@@ -2546,6 +2761,13 @@ class Loop:
                 ordered["delivery_stage_gate_correction"] \
                     = ctx.pop(
                         "delivery_stage_gate_correction")
+            if ctx.get(
+                    "delivery_evidence_gate_correction") \
+                    is not None:
+                ordered[
+                    "delivery_evidence_gate_correction"] \
+                    = ctx.pop(
+                        "delivery_evidence_gate_correction")
             ordered["case"] = package["case"]
             if working_set is not None:
                 ordered["working_set"] = working_set
@@ -2784,6 +3006,12 @@ class Loop:
                 is not None:
             staged["delivery_stage_gate_correction"] = \
                 ordered["delivery_stage_gate_correction"]
+        if ordered.get(
+                "delivery_evidence_gate_correction") \
+                is not None:
+            staged["delivery_evidence_gate_correction"] \
+                = ordered[
+                    "delivery_evidence_gate_correction"]
         staged["tool_results"] = base["tool_results"]
         if ordered.get("working_set") is not None:
             staged["working_set"] = ordered["working_set"]
@@ -4044,6 +4272,63 @@ class Loop:
             "instruction": STAGED_STAGE_GATE_INSTRUCTION}
         return True
 
+    def _try_delivery_evidence_gate(self, ctx, proposal,
+                                    ev):
+        """The delivery-evidence gate's decision (round
+        ten, INDEX 552): True where this contribution is
+        gated — the case declares the evidence a delivery
+        must rest on, and at the contribution's own
+        position in the record some of that evidence does
+        not stand gathered in the worker's working set.
+        The standing computation runs over the record at
+        the contribution's event position, from the
+        recorded dispatches and outcomes alone. The gate
+        records its own event naming the contribution and
+        the missing addresses, and stashes the correction
+        for the next wake's package; nothing is filed and
+        the loop does not complete. The firing consumes
+        the iteration, as the other gates' do, and it may
+        fire again on a later contribution while evidence
+        stands missing. A gate that cannot be recorded
+        names its error on the context and still returns
+        True — an unrecorded gate must never silently
+        become a filing — and the caller stalls on the
+        error. Everywhere else (no declaration standing)
+        the contribution is not the gate's business and
+        adjudication proceeds exactly as it stands."""
+        declaration = ctx.get("delivery_evidence")
+        if declaration is None:
+            return False
+        text = proposal["payload"].get("text")
+        if not isinstance(text, str):
+            return False
+        events = self.doorway.store.all_events()
+        dispatches = self.doorway.state()["dispatches"]
+        missing = _delivery_evidence_missing(
+            events, dispatches, ctx["instance_id"],
+            ev["event_seq"], declaration["addresses"])
+        if not missing:
+            return False
+        digest = hashlib.sha256(
+            text.encode("utf-8")).hexdigest()
+        try:
+            gate_ev = \
+                self.doorway.record_delivery_evidence_gate(
+                    ctx["assembly_id"],
+                    ctx.get("iteration_event_seq"),
+                    ev["event_seq"], digest, missing)
+        except Exception as exc:  # noqa: BLE001
+            ctx["delivery_evidence_gate_error"] = (
+                f"the delivery evidence gate could not be "
+                f"recorded: {type(exc).__name__}: {exc}")
+            return True
+        ctx["recorded"].append(gate_ev)
+        ctx["delivery_evidence_gate_correction"] = \
+            _evidence_gate_correction(
+                ctx.get("catalogue") or [],
+                ev["event_seq"], digest, missing)
+        return True
+
     # ---------------------------------------------- adjudication
     def _adjudicate(self, ctx, data):
         """Effect a validated response, per act and per
@@ -4097,6 +4382,21 @@ class Loop:
                     # would; the gate refuses the
                     # delivery, not the answer.
                     if self._try_delivery_stage_gate(
+                            ctx, proposal, ev):
+                        continue
+                    # The evidence gate (round ten,
+                    # INDEX 552): where the case declares
+                    # the evidence a delivery must rest
+                    # on, a contribution offered while
+                    # that evidence does not stand
+                    # gathered is set aside unfiled and
+                    # answered with a correction naming
+                    # what is missing — it is not
+                    # adjudicated as a delivery. The
+                    # stage gate keeps its own earlier
+                    # watch: before the task stage this
+                    # gate is never reached.
+                    if self._try_delivery_evidence_gate(
                             ctx, proposal, ev):
                         continue
                     # The door (door scope, 2026-11-24):

@@ -267,6 +267,52 @@ def boundary_member(boundary, path) -> bool:
             return True
     return False
 
+
+def list_authority(path):
+    """sandbox.list's authority path (round ten, INDEX
+    552): the standing retrieval authority, extended at
+    exactly one point — the bare granted prefixes
+    themselves ("sources", "scratch"), which
+    retrieval_authority does not admit because its paths
+    lie strictly under a scope. Listing a directory is
+    the one operation whose path may BE the scope. The
+    path is canonicalised first — exactly one trailing
+    slash stripped — as the ceiling canonicalises it,
+    so the directory's two spellings share the one
+    authority. Every other retrieval operation keeps
+    the strict shape."""
+    if isinstance(path, str) and len(path) > 1 \
+            and path.endswith("/"):
+        path = path[:-1]
+    if path == SOURCE_SCOPE_PREFIX:
+        return "source"
+    if path == SCRATCH_SCOPE_PREFIX:
+        return "scratch"
+    return retrieval_authority(path)
+
+
+def boundary_member_for_list(boundary, path) -> bool:
+    """Whether a sandbox.list path stands within a
+    case's sealed evidence boundary (round ten): a file
+    path by the standing membership; a directory — a
+    scope prefix itself, in canonical form — where the
+    boundary names material under it: the listing shows
+    only what stands in the directory, and the
+    boundary's members under it are exactly what may be
+    seen."""
+    if boundary_member(boundary, path):
+        return True
+    if path not in (SOURCE_SCOPE_PREFIX,
+                    SCRATCH_SCOPE_PREFIX) or \
+            not isinstance(boundary, list):
+        return False
+    prefix = path + "/"
+    for item in boundary:
+        if isinstance(item, str) and \
+                item.split(" ")[0].startswith(prefix):
+            return True
+    return False
+
 # sandbox.flaky's modes (scope point 6): the first three are
 # the outcome shapes; the fourth performs the operation and
 # loses the report — execution happened, the outcome is what
@@ -431,17 +477,24 @@ _TOOLS_V3 = _freeze({
         "ceiling_keys": {"path_prefix"},
         "param_keys": {"path"},
         "description":
-            "List a text file's structure inside the sandbox "
-            "without returning its contents: its byte size, "
-            "its line count, and — for markdown or text "
-            "files — its headings with their line numbers. "
-            "The structure map is returned as the result's "
-            "content. Use it to discover what a file holds "
-            "before retrieving any of it.",
+            "List what stands at a path inside the sandbox "
+            "without returning any file's contents. On a "
+            "file: its structure — its byte size, its line "
+            "count, and — for markdown or text files — its "
+            "headings with their line numbers. On a "
+            "directory — a granted prefix itself, such as "
+            "sources, spelled with or without a trailing "
+            "slash: its entries — each entry's address, "
+            "whether it is a file or a directory, and each "
+            "file's byte size. The map is returned as the "
+            "result's content. Use it to discover what "
+            "stands where before retrieving any of it.",
         "parameters": [
             {"name": "path", "required": True,
-             "meaning": "the file's path inside the sandbox, "
-                        "relative, under the grant's prefix"},
+             "meaning": "the path inside the sandbox, "
+                        "relative, under the grant's prefix — "
+                        "a file's path, or a granted "
+                        "directory's own path"},
         ],
     },
     "sandbox.read_range": {
@@ -662,12 +715,14 @@ def request_fingerprint(tool, parameters) -> str:
         {"tool": tool, "parameters": parameters}))
 
 
-def _path_problem(path, prefix):
+def _path_problem(path, prefix, allow_prefix_itself=False):
     """Why a sandbox path may not be used, or None: the path
     is a relative, normalised file path inside the sandbox —
     no absolute paths, no empty, dot or dot-dot segments — and,
     where the ceiling names a prefix, it lies strictly under
-    that prefix."""
+    that prefix. Where allow_prefix_itself stands (sandbox.list's
+    directory form, round ten): the path may also BE the prefix
+    itself — the granted directory's own address."""
     if not isinstance(path, str) or not path:
         return "the path is not a non-empty string"
     if path.startswith("/"):
@@ -683,7 +738,9 @@ def _path_problem(path, prefix):
                 "non-empty string"
         prefix_parts = [p for p in prefix.split("/") if p]
         if parts[:len(prefix_parts)] != prefix_parts or \
-                len(parts) <= len(prefix_parts):
+                len(parts) < len(prefix_parts) or \
+                (len(parts) == len(prefix_parts)
+                 and not allow_prefix_itself):
             return f"path {path!r} lies outside the grant's " \
                 f"ceiling prefix {prefix!r}"
     return None
@@ -832,7 +889,21 @@ def check_ceiling(tool, ceiling, parameters, version=None):
     elif tool == "sandbox.list":
         if "path" not in parameters:
             return False, "sandbox.list requires a path parameter"
-        problem = _path_problem(parameters.get("path"), prefix)
+        # The directory form (round ten): a list path is
+        # canonicalised before the ceiling is applied —
+        # exactly one trailing slash is stripped, so the
+        # granted directory's two spellings ("sources" and
+        # "sources/") meet the one governed route — and the
+        # path may be the grant's prefix itself, the
+        # directory's own address. Every other tool keeps
+        # the strict shape: strictly under the prefix, no
+        # spelling forgiven.
+        list_path = parameters.get("path")
+        if isinstance(list_path, str) and len(list_path) > 1 \
+                and list_path.endswith("/"):
+            list_path = list_path[:-1]
+        problem = _path_problem(list_path, prefix,
+                                allow_prefix_itself=True)
         if problem is not None:
             return False, problem
     elif tool == "sandbox.read_range":

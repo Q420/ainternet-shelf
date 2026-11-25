@@ -727,6 +727,295 @@ def build_script_staged_noexample():
     return script
 
 
+# Round ten's scenarios (INDEX 552): the directory form
+# of sandbox.list, and the delivery-evidence gate. The
+# declaration this job's case carries — the three
+# sources, the standing assignment's evidence.
+DELIVERY_EVIDENCE = {"addresses": [
+    "sources/stock-take.md", "sources/a3-pass.md",
+    "sources/index-tail.md"]}
+
+# The evidence scenarios' contributed brief: the
+# scripted worker's deliverable text, filed by the
+# office through the contribution door once the named
+# evidence stands gathered.
+EVIDENCE_BRIEF_TEXT = (
+    "The collaborative agent framework, briefly: "
+    "generated workers do bounded jobs in their own "
+    "offices, under a governed record — assembly, "
+    "grants and the bounded loop stand proven, and one "
+    "worker has now completed the standing assignment "
+    "end to end in the office; genuine collaboration "
+    "between workers does not yet stand. (Scripted "
+    "stand-in's contribution for the delivery-evidence "
+    "rehearsal; the office files it at "
+    "scratch/brief.md.)")
+
+
+def build_script_directory():
+    """Round ten's directory scenario (the continuity
+    configuration — Part A is population-independent):
+    the stand-in lists his briefcase's directory both
+    ways it can be spelled, lists his empty scratch,
+    lists a file (the standing form), asks for a
+    directory no grant covers, and yields. The two
+    directory spellings must return the one result; the
+    file's result must be the listing the performer has
+    always returned for it."""
+    chat = [
+        _identify_step("directory"),
+        # 1 — the directory, spelled bare.
+        {"respond": _native_call(
+            "fc-d-1", "sandbox-list",
+            {"path": "sources"}),
+         "action": None},
+        # 2 — the same directory, spelled with the
+        # trailing slash: the one governed route.
+        {"respond": _native_call(
+            "fc-d-2", "sandbox-list",
+            {"path": "sources/"}),
+         "action": None},
+        # 3 — the scratch directory: empty, and his.
+        {"respond": _native_call(
+            "fc-d-3", "sandbox-list",
+            {"path": "scratch"}),
+         "action": None},
+        # 4 — a file: the standing form of the tool.
+        {"respond": _native_call(
+            "fc-d-4", "sandbox-list",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — a directory under no grant's prefix: the
+        # doorway refuses it, naming the ceiling prefix.
+        {"respond": _native_call(
+            "fc-d-5", "sandbox-list",
+            {"path": "room/"}),
+         "action": None},
+        # 6 — the yield.
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Listed the briefcase both "
+                           "ways, the scratch, and one "
+                           "file; asked for a directory "
+                           "outside my grants."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def _evidence_walk_steps(label):
+    """The staged evidence scenarios' shared opening:
+    acknowledge memory, acknowledge case, and at the
+    files stage list the first source from the
+    pointers — the habit pull, shape only."""
+    return [
+        _identify_step(label),
+        {"respond": _text_response(
+            f"{label}-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        {"respond": _text_response(
+            f"{label}-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        {"respond": _native_call(
+            f"fc-{label}-1", "sandbox-list",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+    ]
+
+
+def build_script_evidence_gates():
+    """Round ten's progressive gate scenario: the
+    stand-in begins the last source at the files stage
+    with one range of it (a partial gather — it does
+    not make the file stand), contributes at the task
+    stage — the gate names all three sources; he reads
+    one whole and contributes again — the gate names
+    the other two; reads the second — the gate names
+    the last; then completes the last file's ranges,
+    which together compose its whole line range (the
+    final range's asked end runs past the file's end
+    and the performer clamps it — the record fact that
+    establishes the file's whole line range, no listing
+    of that file standing), and contributes a fourth
+    time: filed, completing the run in twelve
+    iterations — the rehearsal's standing step ceiling,
+    each gate consuming exactly its own iteration."""
+    chat = [
+        _identify_step("evidence-gates"),
+        # 1 — the memory stage: acknowledge.
+        {"respond": _text_response(
+            "eg-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 2 — the case stage: acknowledge.
+        {"respond": _text_response(
+            "eg-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: the first range of the
+        # last source — lines 1–6 of its 24, a partial
+        # gather only.
+        {"respond": _native_call(
+            "fc-eg-1", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 1, "end_line": 6}),
+         "action": None},
+        # 4 — the task stage: the first contribution.
+        # Gate: all three missing — the partial range
+        # does not make its file stand.
+        {"respond": _text_response(
+            "eg-contribute-1",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 5 — read the first source whole.
+        {"respond": _native_call(
+            "fc-eg-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 6 — contribute again. Gate: two missing.
+        {"respond": _text_response(
+            "eg-contribute-2",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 7 — read the second source whole.
+        {"respond": _native_call(
+            "fc-eg-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 8 — contribute again. Gate: one missing.
+        {"respond": _text_response(
+            "eg-contribute-3",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 9–11 — the last source's remaining ranges:
+        # 7–13, 14–20, and 21 to the file's end — the
+        # asked end runs past it and the performer
+        # clamps it to line 24. With the files stage's
+        # 1–6, the four ranges compose the whole file.
+        {"respond": _native_call(
+            "fc-eg-4", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 7, "end_line": 13}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-eg-5", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 14, "end_line": 20}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-eg-6", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 21, "end_line": 9999}),
+         "action": None},
+        # 12 — the fourth contribution: every named
+        # address stands; filed, completing the run.
+        {"respond": _text_response(
+            "eg-contribute-4",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_evidence_listed():
+    """Round ten's shape-is-not-substance scenario: the
+    stand-in lists all three sources — every one of
+    them stands listed in his working set — and
+    contributes: the gate still names all three,
+    because a listing is a file's shape, not its
+    content. He then reads all three whole and
+    contributes again: filed."""
+    chat = _evidence_walk_steps("evidence-listed") + [
+        # 4 — the task stage: list the second source.
+        {"respond": _native_call(
+            "fc-el-2", "sandbox-list",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 5 — list the third source.
+        {"respond": _native_call(
+            "fc-el-3", "sandbox-list",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 6 — contribute with all three listed and none
+        # read. Gate: all three missing.
+        {"respond": _text_response(
+            "el-contribute-1",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 7–9 — read all three whole.
+        {"respond": _native_call(
+            "fc-el-4", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-el-5", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-el-6", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 10 — contribute again: filed.
+        {"respond": _text_response(
+            "el-contribute-2",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_evidence_whole():
+    """Round ten's clean pass: the stand-in lists one
+    file at the files stage, reads all three sources
+    whole, and contributes — no gate fires, the filing
+    stands, the run completes in seven iterations."""
+    chat = _evidence_walk_steps("evidence-whole") + [
+        # 4 — the task stage: read the first source.
+        {"respond": _native_call(
+            "fc-ew-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — read the second source whole.
+        {"respond": _native_call(
+            "fc-ew-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 6 — read the third source whole.
+        {"respond": _native_call(
+            "fc-ew-4", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 7 — the contribution: filed, no gate.
+        {"respond": _text_response(
+            "ew-contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -831,6 +1120,7 @@ def _run_scenario(work_dir, *, scenario, brief,
                   script, grounds, adapter_mode="native",
                   freshness_suspended=False,
                   delivery_declaration=False,
+                  delivery_evidence_declaration=False,
                   presentation_declaration=False):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
@@ -982,6 +1272,8 @@ def _run_scenario(work_dir, *, scenario, brief,
         model_requested=MODEL, probe=True, exec_room=True,
         freshness_suspended=freshness_suspended,
         delivery_declaration=delivery_declaration,
+        delivery_evidence_declaration=
+        delivery_evidence_declaration,
         presentation_declaration=presentation_declaration,
         worked_example=worked_example)
     if not generated.get("ok"):
@@ -1079,6 +1371,8 @@ def _run_scenario(work_dir, *, scenario, brief,
             (sealed or {}).get("freshness_guard"),
         "sealed_delivery":
             (sealed or {}).get("delivery"),
+        "sealed_delivery_evidence":
+            (sealed or {}).get("delivery_evidence"),
         "sealed_presentation_contract":
             (sealed or {}).get("presentation_contract"),
         "sealed_worked_example":
@@ -1494,6 +1788,113 @@ def run_rehearsal(work_dir):
         freshness_suspended=True,
         delivery_declaration=True,
         presentation_declaration=True)
+    # Round ten's scenarios (INDEX 552). The directory
+    # scenario runs in the continuity configuration —
+    # sandbox.list's directory form is the performer's
+    # and the ceiling's, standing in every population.
+    # The evidence scenarios run in the staged
+    # configuration with the case additionally carrying
+    # the delivery-evidence declaration, sealed at
+    # generation: the three sources are the evidence
+    # this job's delivery must rest on. Scenario G
+    # above stands as the control beside them: its
+    # generation seals no evidence declaration, its
+    # worker reads two sources whole and only lists
+    # the third, and his contribution is adjudicated
+    # exactly as it always has been — filed.
+    directory = _run_scenario(
+        work_dir / "directory",
+        scenario="directory",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY, onboarding=ONBOARDING),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_directory(),
+        grounds="Directory-form rehearsal (INDEX 552): "
+                "the scripted stand-in's probe trials "
+                "settled 5/5 native, and the combined "
+                "configuration's judgement is native. "
+                "Rehearsal furniture by a scripted "
+                "stand-in examiner.")
+    evidence_brief = _commission_brief(
+        ASSIGNMENT_COMBINED, manifest_hash,
+        glossary=GLOSSARY,
+        journal="scratch/journal.md",
+        onboarding=ONBOARDING,
+        delivery={"destination": "scratch/brief.md",
+                  "route": "contribution-v1"},
+        role_memory=ROLE_MEMORY,
+        opening={
+            "worker_statements": [
+                "The job is to read the three "
+                "sources and write the brief; the "
+                "deliverable is the file "
+                "scratch/brief.md."],
+            "office_answers": [
+                "Confirmed: the sources stand in "
+                "sources/, named in the glossary; "
+                "the brief is plain prose, at most "
+                "~600 words."],
+            "settled": [
+                "No work product is produced in "
+                "the opening; the work happens in "
+                "the room."],
+            "unresolved": []},
+        delivery_evidence=DELIVERY_EVIDENCE)
+    evidence_grounds = (
+        "Delivery-evidence rehearsal (INDEX 552): the "
+        "scripted stand-in's probe trials settled 5/5 "
+        "native, and the combined configuration's "
+        "judgement is native. The generation seals the "
+        "staged-onboarding presentation contract and "
+        "the case's delivery-evidence declaration. "
+        "Rehearsal furniture by a scripted stand-in "
+        "examiner.")
+    evidence_gates = _run_scenario(
+        work_dir / "evidence-gates",
+        scenario="evidence-gates",
+        brief=evidence_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_evidence_gates(),
+        grounds=evidence_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        presentation_declaration=True)
+    evidence_listed = _run_scenario(
+        work_dir / "evidence-listed",
+        scenario="evidence-listed",
+        brief=evidence_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_evidence_listed(),
+        grounds=evidence_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        presentation_declaration=True)
+    evidence_whole = _run_scenario(
+        work_dir / "evidence-whole",
+        scenario="evidence-whole",
+        brief=evidence_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_evidence_whole(),
+        grounds=evidence_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        presentation_declaration=True)
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
@@ -1501,4 +1902,8 @@ def run_rehearsal(work_dir):
             "staged": staged,
             "staged_gate_files": staged_gate_files,
             "staged_gate_memory": staged_gate_memory,
-            "staged_noexample": staged_noexample}
+            "staged_noexample": staged_noexample,
+            "directory": directory,
+            "evidence_gates": evidence_gates,
+            "evidence_listed": evidence_listed,
+            "evidence_whole": evidence_whole}
