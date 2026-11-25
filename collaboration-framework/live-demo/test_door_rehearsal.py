@@ -61,10 +61,20 @@ contacted — and asserts, per part:
   double failure a durable reconciliation note beside
   the destination names the incomplete filing.
 
+  FILING-COMMIT (the examiner's round-six correction,
+  counted separately again): the filing's event insert
+  genuinely happens and the store's commit fails at
+  that exact commit — the pending filing insert must
+  stand rolled back before the stall is recorded, so
+  the exported record contains no DELIVERABLE_FILED
+  for a filing that was rolled back on disk, and the
+  destination stands at the draft's exact bytes.
+
 Run: python3 live-demo/test_door_rehearsal.py
 Exits 0 when every check passes. Per-part counts are
 printed separately (door / gate / carriage / opening,
-and filing for the correction's witnesses).
+filing for the correction's witnesses, and
+filing-commit for the round-six witness).
 """
 
 import hashlib
@@ -546,13 +556,45 @@ def main():
                   "brief.md.filing-incomplete.json"],
               f"{_scratch_names(f4work)}")
         _checker_ok("filing", "double-failure", f4rep)
+
+        # ================ FILING-COMMIT ===============
+        # The round-six correction's witness, counted
+        # separately under "filing-commit": the filing's
+        # insert genuinely happened and its commit
+        # failed — the pending insert must be rolled
+        # back before the stall records, so no filing
+        # event stands in the exported record.
+        f5rep = reports["commit_fails"]
+        f5work = work / "filing-commit-fails"
+        f5evs = _events(f5work)
+        _filing_stall("filing-commit", "commit-fails",
+                      f5rep, f5evs)
+        f5dest = f5work / "run" / "sandbox" / \
+            "scratch" / "brief.md"
+        check("filing-commit",
+              "commit-fails: the destination holds the "
+              "worker's draft bytes exactly — the "
+              "filing's rename was rolled back on disk "
+              "as its insert was rolled back in the "
+              "record",
+              f5dest.exists()
+              and f5dest.read_bytes() == draft_bytes)
+        check("filing-commit",
+              "commit-fails: no staging residue and no "
+              "reconciliation note stand in the scratch "
+              "directory — both rollbacks completed "
+              "the account",
+              _scratch_names(f5work) == ["brief.md"],
+              f"{_scratch_names(f5work)}")
+        _checker_ok("filing-commit", "commit-fails",
+                    f5rep)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
     total_pass = sum(v[0] for v in COUNTS.values())
     total = sum(v[1] for v in COUNTS.values())
     for part in ("door", "gate", "carriage", "opening",
-                 "filing"):
+                 "filing", "filing-commit"):
         passed, count = COUNTS.get(part, [0, 0])
         print(f"{part}: {passed}/{count} checks passed")
     print(f"\n{total_pass}/{total} checks passed")

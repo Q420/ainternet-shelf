@@ -65,6 +65,15 @@ rollback's restore write fails: a durable
 reconciliation note stands beside the destination
 naming the incomplete filing.
 
+COMMIT-FAILS — the filing's event INSERT genuinely
+happens and the store's commit is doubled to fail
+at that exact commit (the examiner's round-six
+correction, 2026-11-24): the pending filing insert
+must be rolled back before the stall is recorded,
+so no filing event stands in the exported record
+for a filing that was rolled back on disk, and the
+destination returns to the draft's exact bytes.
+
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario, in the working-set
 rehearsal's shape (report.json, captures, export,
@@ -84,6 +93,7 @@ import stock_demo
 
 import framework.loop as _loop_module  # noqa: E402
 from framework.doorway import Doorway  # noqa: E402
+from framework.record import FrameworkStore  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 
@@ -289,6 +299,53 @@ def _double_failure():
     return stack
 
 
+@contextlib.contextmanager
+def _filing_commit_fails():
+    """The commit-failure double (the examiner's
+    round-six correction): unlike the record-failure
+    double above — which raises before the insert —
+    this one lets the filing's event INSERT genuinely
+    happen through the store's real append, then
+    doubles the store's commit (FrameworkStore.commit,
+    the store's own commit seam: the method whose one
+    job is the connection's commit, called by
+    record_deliverable_filed immediately after its
+    append) to raise once, at exactly the filing's
+    commit, without calling through. The filing insert
+    stands pending in the store's open transaction
+    when the failure fires; every later commit
+    delegates to the real commit, so the stall's own
+    recording proceeds — and would land the pending
+    filing alongside the terminal if the filing path
+    did not roll the transaction back first."""
+    original_append = FrameworkStore.append
+    original_commit = FrameworkStore.commit
+    armed = {"on": False}
+
+    def append_double(self, type_, *args, **kwargs):
+        ev = original_append(self, type_, *args,
+                             **kwargs)
+        if type_ == "DELIVERABLE_FILED":
+            armed["on"] = True
+        return ev
+
+    def commit_double(self):
+        if armed["on"]:
+            armed["on"] = False
+            raise RuntimeError(
+                "injected filing-commit failure (door "
+                "rehearsal double)")
+        return original_commit(self)
+
+    FrameworkStore.append = append_double
+    FrameworkStore.commit = commit_double
+    try:
+        yield
+    finally:
+        FrameworkStore.append = original_append
+        FrameworkStore.commit = original_commit
+
+
 def _run(work_dir, *, scenario, declared, script,
          stage=None, patch=None):
     brief, manifest, manifest_hash = _brief(
@@ -318,13 +375,14 @@ def _run(work_dir, *, scenario, declared, script,
 
 
 def run_rehearsal(work_dir):
-    """Run all eight scenarios under `work_dir`
+    """Run all nine scenarios under `work_dir`
     (created fresh): the four door/gate scenarios and
-    the four filing-failure scenarios. Returns
+    the five filing-failure scenarios. Returns
     {"door": report, "control": report, "gate":
     report, "refusal": report, "record_fails": report,
     "record_fails_nodraft": report, "partial_write":
-    report, "double_failure": report}."""
+    report, "double_failure": report, "commit_fails":
+    report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -365,12 +423,19 @@ def run_rehearsal(work_dir):
         declared=True, script=build_script_door(),
         stage=_stage_with_draft,
         patch=_double_failure())
+    commit_fails = _run(
+        work_dir / "filing-commit-fails",
+        scenario="door-filing-commit-fails",
+        declared=True, script=build_script_door(),
+        stage=_stage_with_draft,
+        patch=_filing_commit_fails())
     return {"door": door, "control": control,
             "gate": gate, "refusal": refusal,
             "record_fails": record_fails,
             "record_fails_nodraft": record_fails_nodraft,
             "partial_write": partial_write,
-            "double_failure": double_failure}
+            "double_failure": double_failure,
+            "commit_fails": commit_fails}
 
 
 def main():

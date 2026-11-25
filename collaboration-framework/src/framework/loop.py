@@ -3140,11 +3140,37 @@ class Loop:
             # back to its captured prior state and fail
             # closed, claiming no completion and leaving
             # no unaccounted deliverable
+            #
+            # The record side first (the examiner's
+            # round-six correction): the filing's append
+            # may have landed while its commit failed, so
+            # the filing insert can stand pending in the
+            # store's open transaction. Roll the
+            # transaction back before anything else is
+            # recorded, so the stall's own commit can
+            # never land the discarded filing alongside
+            # the terminal — the INDEX 314 pattern on the
+            # disposition path. The only insert that can
+            # stand pending here is the filing's own: the
+            # contribution it files was committed by its
+            # own route before the filing was attempted.
+            # A rollback that itself fails is named in
+            # the detail, not hidden.
+            rollback_problem = None
+            try:
+                self.doorway.store.rollback()
+            except Exception as rb_exc:  # noqa: BLE001
+                rollback_problem = (
+                    f"{type(rb_exc).__name__}: {rb_exc}")
             problem = self._restore_filing_destination(
                 path, staging, prior)
             detail = (
                 f"the deliverable could not be filed: "
                 f"{type(exc).__name__}: {exc}")
+            if rollback_problem is not None:
+                detail += (
+                    "; the store transaction could not "
+                    f"be rolled back ({rollback_problem})")
             if problem is None:
                 detail += ("; the destination was rolled "
                            "back to its prior state")
