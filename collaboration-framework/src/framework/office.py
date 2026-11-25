@@ -116,7 +116,9 @@ class Office:
         # The journal designation (the orientation pass,
         # 2026-11-24): where the recorded brief names the
         # worker's journal — the path under his scratch of
-        # his own append-only notebook — the draft carries
+        # his own notebook (his to write and rewrite;
+        # appending is his convention, not an enforced
+        # mechanism) — the draft carries
         # it, by the same route as the glossary, so the
         # designation stands in the issued case and the
         # loop can present the notebook back to him at

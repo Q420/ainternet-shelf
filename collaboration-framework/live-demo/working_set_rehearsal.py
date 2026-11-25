@@ -108,11 +108,15 @@ Part A, on the combined configuration with the case
 designating scratch/journal.md as the worker's
 notebook:
   (1) write the first journal note (sandbox.write);
-  (2) write the journal again with a second note
-      appended — the package at each wake presents
-      the journal as it stands: the first wake empty,
-      then note one verbatim, then both notes in
-      order, appends never replacing;
+  (2) write the journal again carrying the first
+      note plus a second — the package at each wake
+      presents the journal as it stands: the first
+      wake empty, then note one verbatim, then both
+      notes in order. The append is the worker's own
+      cooperative convention (he rewrites the notebook
+      carrying what it held, plus the new note);
+      nothing mechanically enforces append-only, and
+      he could replace the notebook whole;
   (3) yield.
 
 Outputs land in the rehearsal work directory, one

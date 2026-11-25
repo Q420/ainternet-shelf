@@ -303,10 +303,12 @@ ASSIGNMENT_COMBINED = (
 
 # The journal the case designates (the orientation
 # pass, 2026-11-24 — Ben's ruling on the worker
-# consultation): the worker's own append-only
-# notebook, a path under his scratch, named in his
-# case as its own component; each wake package
-# presents it back to him as it stands.
+# consultation): the worker's own notebook, a path
+# under his scratch, named in his case as its own
+# component; each wake package presents it back to
+# him as it stands. His to write and rewrite —
+# appending is his habit, not a mechanism; nothing
+# enforces append-only.
 JOURNAL_PATH = "scratch/journal.md"
 
 # The case's glossary (Ben's briefcase design,

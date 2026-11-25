@@ -40,6 +40,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import threading
 import time
 
@@ -317,6 +318,77 @@ class Executor:
     def _sandbox_path(self, rel):
         return os.path.join(self.sandbox_dir, rel)
 
+    @staticmethod
+    def _read_contained_bytes(root, rel):
+        """The bytes of the regular file at `rel` under
+        `root`, read WITHOUT following any symlink and
+        without resolving outside `root` — or None where
+        the file does not stand as an ordinary regular
+        file under that root.
+
+        Both resting places a designated scratch file
+        can stand in are worker-writable: the room's
+        scratch is the worker's own writing space, and
+        a worker with a shell can plant a symlink at the
+        designated path pointing anywhere the host can
+        read. An ordinary host-side open() would follow
+        it in the HOST filesystem and turn a
+        presentation read into a host-file read
+        primitive (the examiner's journal finding,
+        2026-11-24). So the path is walked
+        descriptor-by-descriptor from the root: every
+        component is opened relative to its parent
+        directory's descriptor with O_NOFOLLOW, so a
+        symlink at any component — the scratch directory
+        itself, an intermediate directory, or the file —
+        refuses the read at that component; the
+        descriptor chain pins each directory as opened,
+        so a name swapped afterwards cannot redirect an
+        already-open descriptor. The final component
+        must verify by fstat as a regular file before a
+        single byte is read (O_NONBLOCK keeps a planted
+        FIFO from blocking the open; a non-regular file
+        is refused before reading). A refusal is silent
+        in the established way: the place contributes
+        nothing, exactly as if the file did not stand
+        there — the target's contents are never read,
+        let alone presented."""
+        if os.path.isabs(rel):
+            return None
+        parts = [p for p in rel.split("/")
+                 if p not in ("", ".")]
+        if not parts or any(p == ".." for p in parts):
+            return None
+        try:
+            fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY)
+        except OSError:
+            return None
+        try:
+            for part in parts[:-1]:
+                nfd = os.open(
+                    part, os.O_RDONLY | os.O_NOFOLLOW
+                    | os.O_DIRECTORY, dir_fd=fd)
+                os.close(fd)
+                fd = nfd
+            nfd = os.open(
+                parts[-1], os.O_RDONLY | os.O_NOFOLLOW
+                | os.O_NONBLOCK, dir_fd=fd)
+            os.close(fd)
+            fd = nfd
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                return None
+            chunks = []
+            while True:
+                chunk = os.read(fd, 65536)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            return b"".join(chunks)
+        except OSError:
+            return None
+        finally:
+            os.close(fd)
+
     def read_designated_scratch(self, rel):
         """The current bytes of a designated scratch file
         (the worker's journal — the orientation pass,
@@ -329,19 +401,28 @@ class Executor:
         the other resting place when the file stands in
         both, or None where it stands in neither. A read
         for presentation only: it performs nothing and
-        records nothing."""
+        records nothing.
+
+        Each resting place is read through
+        _read_contained_bytes: the scratch is the
+        worker's writing space, so the designated path
+        can be a worker-planted symlink, and this
+        host-side reader must never follow one out of
+        the scratch root (the examiner's journal
+        finding). A place whose designated path is a
+        symlink, escapes its root, or is not a regular
+        file contributes nothing — the presentation is
+        the established empty one, never the link
+        target's contents."""
         places = []
         if self.room is not None:
-            places.append(("room", os.path.join(
-                str(self.room.tree), rel)))
-        places.append(("sandbox", self._sandbox_path(rel)))
+            places.append(("room", str(self.room.tree)))
+        places.append(("sandbox", self.sandbox_dir))
         found = []
-        for name, path in places:
-            try:
-                with open(path, "rb") as fh:
-                    found.append((name, fh.read()))
-            except OSError:
-                continue
+        for name, root in places:
+            raw = self._read_contained_bytes(root, rel)
+            if raw is not None:
+                found.append((name, raw))
         if not found:
             return None
         name, raw = found[0]

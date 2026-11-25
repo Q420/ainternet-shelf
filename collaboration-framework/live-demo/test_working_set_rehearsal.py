@@ -90,6 +90,21 @@ wake, the first note verbatim at the second, both
 notes in order at the third; the checker stands
 eleven checks, all ok, over both records.
 
+The journal adversarial section answers the
+examiner's boundary finding on Part A: the journal's
+resting places are the worker's own writing space, so
+the designated path can be a worker-planted symlink
+to a host file. Exercised directly against the
+executor's host-side reader (the scripted worker
+cooperates and cannot plant links through the stub):
+an absolute symlink at the journal path, a relative
+symlink escaping the scratch root, and the scratch
+directory itself planted as a symlink are each
+refused — nothing is returned, the host sentinel's
+contents appear nowhere in the presented journal
+component — while a regular journal file in either
+resting place still presents verbatim.
+
 Run: python3 live-demo/test_working_set_rehearsal.py
 Exits 0 when every check passes.
 """
@@ -97,11 +112,13 @@ Exits 0 when every check passes.
 import base64
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -112,6 +129,10 @@ sys.path.insert(0, str(ROOT / "room" / "rig"))
 from fabric.canonical import canonical, sha256_hex  # noqa: E402
 
 from framework import tool_policy  # noqa: E402
+from framework.doorway import Doorway  # noqa: E402
+from framework.executor import Executor  # noqa: E402
+from framework.loop import Loop  # noqa: E402
+from framework.record import FrameworkStore  # noqa: E402
 import working_set_rehearsal as rehearsal  # noqa: E402
 import stock_demo  # noqa: E402
 
@@ -993,10 +1014,13 @@ def main():
         j_third = packages_j[3].get("journal") or {}
         both_notes = (rehearsal.JOURNAL_NOTE_1
                       + rehearsal.JOURNAL_NOTE_2)
-        check("journal (A): the second note appends "
-              "rather than replaces — the next wake's "
-              "journal carries both notes in order, "
-              "the first unchanged",
+        check("journal (A): the second note stands "
+              "appended to the first — the worker's own "
+              "cooperative convention (he rewrote the "
+              "notebook carrying both; append is not "
+              "mechanically enforced) — and the next "
+              "wake's journal carries both notes in "
+              "order, the first unchanged",
               j_third.get("content") == both_notes
               and j_third.get("bytes_total") == len(
                   both_notes.encode("utf-8"))
@@ -1005,6 +1029,132 @@ def main():
         _check_commitments("journal", jwork, packages_j,
                            3)
         _check_checker("journal", rep)
+
+        # ============ journal, adversarial ============
+        # The examiner's journal finding (2026-11-24):
+        # the journal's resting places are the worker's
+        # own writing space, so the designated path can
+        # be a worker-planted SYMLINK to a host file, and
+        # the host-side presentation reader must never
+        # follow it out of the scratch root. The scripted
+        # rehearsal's worker cooperates and cannot plant
+        # links through the stub, so this case is
+        # exercised directly against the reader that
+        # actually lives with the hazard — the executor's
+        # read_designated_scratch — and against the
+        # loop's journal component built on it.
+        adv = work / "journal-adversarial"
+        outside = adv / "outside"
+        outside.mkdir(parents=True)
+        sentinel = ("HOST-SENTINEL-4f2c: contents that "
+                    "must never be presented")
+        (outside / "sentinel.txt").write_text(sentinel)
+        room_tree = adv / "room-tree"
+        (room_tree / "scratch").mkdir(parents=True)
+        adv_sandbox = adv / "sandbox"
+        (adv_sandbox / "scratch").mkdir(parents=True)
+        adv_store = FrameworkStore(str(adv / "run.db"))
+        adv_executor = Executor(
+            Doorway(adv_store), str(adv_sandbox),
+            room=SimpleNamespace(tree=room_tree))
+        designated = "scratch/journal.md"
+        room_journal = room_tree / "scratch" / "journal.md"
+        box_journal = adv_sandbox / "scratch" / "journal.md"
+
+        # (1) an absolute symlink at the room's journal
+        # path, nothing in the sandbox: refused whole.
+        os.symlink(str(outside / "sentinel.txt"),
+                   room_journal)
+        found = adv_executor.read_designated_scratch(
+            designated)
+        check("journal adversarial: an absolute symlink "
+              "at the room's journal path is refused — "
+              "the reader returns nothing, never the "
+              "link target's contents",
+              found is None, f"{found}")
+
+        # (2) a relative symlink in the sandbox escaping
+        # the scratch root (../../): refused whole.
+        room_journal.unlink()
+        os.symlink("../../outside/sentinel.txt",
+                   box_journal)
+        found = adv_executor.read_designated_scratch(
+            designated)
+        check("journal adversarial: a relative symlink "
+              "escaping the sandbox scratch root is "
+              "refused — the reader returns nothing",
+              found is None, f"{found}")
+
+        # (3) both places hostile: the loop's journal
+        # component is the established empty
+        # presentation, and the sentinel appears
+        # nowhere in it.
+        os.symlink(str(outside / "sentinel.txt"),
+                   room_journal)
+        loop_shell = Loop.__new__(Loop)
+        loop_shell.executor = adv_executor
+        comp = loop_shell._journal_component(
+            {"content": {"journal": designated}})
+        check("journal adversarial: with both resting "
+              "places hostile, the presented journal "
+              "component is empty and the host sentinel "
+              "appears nowhere in it",
+              comp.get("content") == ""
+              and comp.get("bytes_total") == 0
+              and sentinel not in json.dumps(
+                  comp, sort_keys=True),
+              f"{comp}")
+        room_journal.unlink()
+        box_journal.unlink()
+
+        # (4) the scratch directory itself planted as a
+        # symlink to a directory holding a journal:
+        # refused at the component, nothing read.
+        (adv_sandbox / "scratch").rmdir()
+        elsewhere = adv / "elsewhere"
+        elsewhere.mkdir()
+        (elsewhere / "journal.md").write_text(
+            sentinel + " (second)")
+        os.symlink(str(elsewhere), adv_sandbox / "scratch")
+        found = adv_executor.read_designated_scratch(
+            designated)
+        check("journal adversarial: the scratch "
+              "directory itself planted as a symlink is "
+              "refused — no component of the path is "
+              "followed",
+              found is None, f"{found}")
+        (adv_sandbox / "scratch").unlink()
+        (adv_sandbox / "scratch").mkdir()
+
+        # (5) ordinary presentation preserved: a
+        # regular journal file in the room presents
+        # verbatim, from the room resting place.
+        room_journal.write_text("note one\n")
+        found = adv_executor.read_designated_scratch(
+            designated)
+        comp = loop_shell._journal_component(
+            {"content": {"journal": designated}})
+        check("journal adversarial: a regular journal "
+              "file in the room still presents normally "
+              "— verbatim, resting place room",
+              found == ("room", b"note one\n", None)
+              and comp.get("content") == "note one\n"
+              and comp.get("resting_place") == "room",
+              f"{found} / {comp}")
+
+        # (6) and a regular journal file in the sandbox
+        # presents normally when the room holds none.
+        room_journal.unlink()
+        box_journal.write_text("sandbox note\n")
+        found = adv_executor.read_designated_scratch(
+            designated)
+        check("journal adversarial: a regular journal "
+              "file in the sandbox still presents "
+              "normally — verbatim, resting place "
+              "sandbox",
+              found == ("sandbox", b"sandbox note\n",
+                        None),
+              f"{found}")
 
         # ---------- zero leftovers
         bwrap = subprocess.run(

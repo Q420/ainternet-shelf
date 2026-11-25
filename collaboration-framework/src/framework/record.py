@@ -121,10 +121,14 @@ EVENT_TYPES = {
 # The journal joins the fields as a tenth stored key
 # (2026-11-24, the orientation pass): Ben's ruling on the
 # worker consultation — the case designates the worker's
-# journal, a path under his scratch naming HIS append-only
-# notebook (where he was, what he noticed, what to do next),
-# so each wake package can present it back to him as it
-# stands. The designation is the case's; the notebook's
+# journal, a path under his scratch naming HIS notebook
+# (where he was, what he noticed, what to do next), so
+# each wake package can present it back to him as it
+# stands. The notebook is his to write and rewrite —
+# appending is his habit, not a mechanism: nothing
+# enforces append-only, and he may replace it whole.
+# It is orientation, disposable, not authoritative.
+# The designation is the case's; the notebook's
 # content is his, carried in the package, never in the
 # record. OPTIONAL like the glossary, by the same reasoning.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",

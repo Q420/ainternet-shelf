@@ -1880,6 +1880,11 @@ class Loop:
         collects his brief from — labelled as his own
         working notes: orientation, not record, not
         memory; the framework does not treat it as fact.
+        The notebook is his to write and rewrite:
+        appending is the convention he asked for and
+        follows, not a mechanism — nothing enforces
+        append-only, and a wake presents whatever
+        stands there, replaced whole if he replaced it.
         Carriage is bounded by the working-set budget's
         figure, honestly: whole where it fits; where it
         does not, the longest prefix of complete lines
