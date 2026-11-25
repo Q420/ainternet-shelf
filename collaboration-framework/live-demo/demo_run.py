@@ -188,10 +188,14 @@ from framework.record import (  # noqa: E402
 
 from connector_transport import (  # noqa: E402
     install_connector_transport)
+from groq_connector_transport import (  # noqa: E402
+    install_groq_connector_raw_call,
+    install_groq_connector_transport)
 from nvidia_connector_transport import (  # noqa: E402
     install_nvidia_connector_raw_call)
 from first_worker_run import (  # noqa: E402
     BOUNDS, CONNECTOR_HELPER, EXPECTED_MANIFEST_HASH,
+    GROQ_CONNECTOR_HELPER, GROQ_ENDPOINT,
     RUN_ID, IterationPacer, ModelPinMismatchError, _act,
     _commission_brief, check_model_pin, export_store,
     make_pinned_identify, run_checker)
@@ -199,18 +203,67 @@ from first_worker_run import (  # noqa: E402
 import room as room_mod  # noqa: E402
 import stock_demo  # noqa: E402
 
-# The run's pin: the director's named model on the
-# NVIDIA route (Ben's order, 2026-11-24). No fallback,
-# no alias, no automatic selection — a provider-reported
-# identity that is not this string aborts the run before
-# activation as a flagged conflict.
-MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
-ENDPOINT = ("https://integrate.api.nvidia.com/v1/chat/"
-            "completions")
-ROUTE = "nvidia"
+# The occupant configuration (INDEX 560): the role,
+# the case and the gates are occupant-neutral; what
+# differs per occupant is the pin, the route, the
+# judged mode, the transports and the operating bounds.
+# DEMO_OCCUPANT selects the configuration, fail-closed
+# in the harness's route-selection discipline: unset or
+# empty preserves the Nemotron configuration — the
+# default, byte-identical in behaviour — and "quinn"
+# selects the Qwen occupant; any other value is
+# refused, so a typo can never silently change the
+# experiment.
+def _resolve_occupant(raw):
+    if raw is None or raw == "":
+        return "nemotron"
+    if raw == "quinn":
+        return "quinn"
+    raise ValueError(
+        f"DEMO_OCCUPANT={raw!r} is not a recognised "
+        f"occupant (expected unset for the Nemotron "
+        f"configuration, or 'quinn'); refusing to run")
 
-DEMO_DIR = HERE / os.environ.get("DEMO_RUN_DIR",
-                                 "demo-nemotron1")
+
+OCCUPANT = _resolve_occupant(
+    os.environ.get("DEMO_OCCUPANT"))
+QUINN = OCCUPANT == "quinn"
+
+# The run's pin: the director's named model on the
+# occupant's route (Ben's order, 2026-11-24, for
+# Nemotron; Ben's direction, 2026-11-25, for Quinn).
+# No fallback, no alias, no automatic selection — a
+# provider-reported identity that is not this string
+# aborts the run before activation as a flagged
+# conflict.
+MODEL = ("qwen/qwen3.8-27b" if QUINN else
+         "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
+ENDPOINT = (GROQ_ENDPOINT if QUINN else
+            "https://integrate.api.nvidia.com/v1/chat/"
+            "completions")
+ROUTE = "groq" if QUINN else "nvidia"
+
+# The mode the occupant's order/direction judges:
+# Nemotron native by the director's order; Quinn text
+# by the director's direction — the Groq route's
+# native path carries the open BD-1 defect (INDEX
+# 411-420) and this run does not route through it.
+ADAPTER_MODE = "text" if QUINN else "native"
+
+# The route's registered connector helper — the
+# sanctioned Secure Vault credential path the capture
+# seam delegates to.
+DELEGATE_HELPER = (GROQ_CONNECTOR_HELPER if QUINN
+                   else CONNECTOR_HELPER)
+ROUTE_REPORT_LABEL = (
+    "groq (live, via the registered connector helper "
+    "through the capture seam)" if QUINN else
+    "nvidia (live, via the registered connector "
+    "helper through the capture seam)")
+
+DEMO_DIR = HERE / os.environ.get(
+    "DEMO_RUN_DIR",
+    "demo-quinn1" if QUINN else "demo-nemotron1")
 
 # The paper §3.3 adapter per-call span.
 ADAPTER_TIMEOUT = 300.0
@@ -218,8 +271,23 @@ ADAPTER_TIMEOUT = 300.0
 # Pacing between successive outbound iteration calls:
 # this driver's operating choice (see the docstring) —
 # NVIDIA pacing is unestablished and no provider figure
-# is claimed for it.
-PACING_INTERVAL_SECONDS = 20.0
+# is claimed for it. Quinn's interval is sized to the
+# Groq free plan's published token cap (8,000 TPM):
+# her wake packages run ~5-7K tokens, so successive
+# calls must land in separate minute windows.
+PACING_INTERVAL_SECONDS = 65.0 if QUINN else 20.0
+PACING_NOTE = (
+    "a fixed operating choice of this driver between "
+    "successive outbound iteration calls, sized to "
+    "the Groq free plan's published limits (8,000 "
+    "TPM, 30 RPM): the wake packages run ~5-7K "
+    "tokens, so successive calls land in separate "
+    "minute windows; no finer provider figure is "
+    "claimed" if QUINN else
+    "a fixed operating choice of this driver between "
+    "successive outbound iteration calls; NVIDIA "
+    "pacing is unestablished and no provider figure "
+    "is claimed")
 
 # The paper §3.4 assignment, with the sandbox now the
 # room (the gate 4 rehearsal's text, unchanged): the
@@ -637,8 +705,22 @@ GRANTS_COMBINED = (
 # Steps are accounting, not rationing: the ceiling is
 # sized to the honest path with slack, and the deadline
 # accommodates the step count at this driver's pacing.
-DEMO_BOUNDS = {"step_ceiling": 20, "deadline_seconds": 1200}
+DEMO_BOUNDS = {"step_ceiling": 20,
+               "deadline_seconds": 2400 if QUINN else 1200}
 BOUNDS_DERIVATION = (
+    "step ceiling 20 (unchanged): the honest path is "
+    "5 steps, as the Nemotron derivation records. "
+    "Deadline 2,400 s: 20 steps x (the 65 s pacing "
+    "interval + a 55 s per-call allowance) = 2,400 s — "
+    "the pacing is sized to the Groq free plan's "
+    "published token cap (8,000 TPM; the wake packages "
+    "run ~5-7K tokens, so successive calls land in "
+    "separate minute windows), and the deadline "
+    "accommodates the step count at that pacing. The "
+    "deadline remains the one authoritative clock; a "
+    "single call may still lawfully take its 300 s "
+    "adapter span within it. Grant counts stand as "
+    "commissioned." if QUINN else
     "step ceiling 20: the honest path is 5 steps (three "
     "whole reads, one write, one yield); pulling "
     "index-tail by ranges instead of whole adds up to 6; "
@@ -691,9 +773,26 @@ def _stage_sandbox_sources(sandbox_dir, manifest):
 # The director's order, verbatim as given, and the
 # judgement the order makes.
 ORDER_WORDS = (
+    "Let's try Quinn... we should be able to just "
+    "drop her right in" if QUINN else
     "just run it with nemotron, see how he reacts... "
     "lets start doing. im done guessing")
 ORDER_GROUNDS = (
+    "Director's direction (Ben, 2026-11-25): try "
+    "Quinn — the Qwen occupant dropped into the same "
+    "role, the same case and the same gates. The "
+    "direction replaces the probe-phase examiner "
+    "judgement for this run: the mode is judged text "
+    "by the direction — she answers in the package "
+    "protocol as plain-text JSON, the loop's standing "
+    "text population. The Groq route's native path is "
+    "not used: it carries the open BD-1 defect (INDEX "
+    "411-420 — the disable_tool_validation flag never "
+    "reached the live wire on that route), and no "
+    "finding about her native reach is made or needed. "
+    "The probe stage ran live and its recommendation "
+    "stands in the record as evidence; it does not "
+    "decide this run's mode." if QUINN else
     "Director's order (Ben, 2026-11-24): run the "
     "demonstration with Nemotron on NVIDIA and see how "
     "he reacts. The order replaces the probe-phase "
@@ -706,7 +805,31 @@ ORDER_GROUNDS = (
     "§3.1, §5 item 1). The probe stage ran live and its "
     "recommendation stands in the record as evidence; "
     "it does not decide this run's mode.")
-ORDER_EXAMINER = "Ben (director) — order of 2026-11-24"
+ORDER_EXAMINER = ("Ben (director) — direction of "
+                  "2026-11-25" if QUINN else
+                  "Ben (director) — order of 2026-11-24")
+ORDER_DATE = "2026-11-25" if QUINN else "2026-11-24"
+ORDER_EFFECT = (
+    "the director's direction replaces the "
+    "probe-phase examiner judgement for "
+    "this run: the mode is judged "
+    "text by the direction, whatever the "
+    "probe stage recommends; the "
+    "probe's recommendation stands in "
+    "the record as evidence, not as "
+    "the decision; the model's first "
+    "live response is the delivery "
+    "evidence" if QUINN else
+    "the director's order replaces the "
+    "probe-phase examiner judgement for "
+    "this run: the mode is judged "
+    "native by the order, whatever the "
+    "probe stage recommends; the "
+    "probe's recommendation stands in "
+    "the record as evidence, not as "
+    "the decision; the model's first "
+    "live response is the delivery "
+    "evidence")
 
 # The paper §1.1 source table: the in-room paths and
 # their SHA-256 identities, asserted at stocking time
@@ -798,11 +921,50 @@ if __name__ == "__main__":
 '''
 
 
+# Quinn's capture helper: the same pass-through, word
+# for word, with the route's own names — the delegate
+# it names is the Groq connector helper. The Nemotron
+# configuration's helper source above stands untouched.
+CAPTURE_HELPER_SOURCE_QUINN = (
+    CAPTURE_HELPER_SOURCE
+    .replace("custom.nvidia", "custom.groq")
+    .replace("nvidia_api.py", "groq_api.py")
+    .replace("NVIDIA", "Groq"))
+CAPTURE_HELPER_SOURCE_SELECTED = (
+    CAPTURE_HELPER_SOURCE_QUINN if QUINN
+    else CAPTURE_HELPER_SOURCE)
+
+
 def _write_capture_helper(path):
-    path.write_text(CAPTURE_HELPER_SOURCE,
+    path.write_text(CAPTURE_HELPER_SOURCE_SELECTED,
                     encoding="utf-8")
     path.chmod(0o755)
     return path
+
+
+def _install_typed_transport(adapter, wrapper_path):
+    """The occupant route's typed connector transport
+    on the adapter, through the capture seam: the Groq
+    twin on Quinn's route, the NVIDIA transport
+    otherwise — each route's sanctioned helper path."""
+    if ROUTE == "groq":
+        return install_groq_connector_transport(
+            adapter, str(wrapper_path), MODEL)
+    return install_connector_transport(
+        adapter, str(wrapper_path), MODEL)
+
+
+def _install_raw_call(adapter, wrapper_path):
+    """The occupant route's probe raw call, through
+    the capture seam: the Groq transport's raw call on
+    Quinn's route (its first argument is the adapter,
+    whose timeout bounds it), the NVIDIA bounded raw
+    call otherwise."""
+    if ROUTE == "groq":
+        return install_groq_connector_raw_call(
+            adapter, str(wrapper_path), MODEL)
+    return install_nvidia_connector_raw_call(
+        helper_path=str(wrapper_path), model=MODEL)
 
 
 def _commission_and_issue(store, manifest_hash,
@@ -970,22 +1132,13 @@ def _order_record(assembly_id, instance_id,
             "counts"),
         "fingerprint": (probed_payload or {}).get(
             "fingerprint"),
-        "adapter_mode": "native",
+        "adapter_mode": ADAPTER_MODE,
         "mode_grounds": ORDER_GROUNDS,
         "order": {
             "by": "Ben (director)",
-            "date": "2026-11-24",
+            "date": ORDER_DATE,
             "words": ORDER_WORDS,
-            "effect": "the director's order replaces the "
-                      "probe-phase examiner judgement for "
-                      "this run: the mode is judged "
-                      "native by the order, whatever the "
-                      "probe stage recommends; the "
-                      "probe's recommendation stands in "
-                      "the record as evidence, not as "
-                      "the decision; the model's first "
-                      "live response is the delivery "
-                      "evidence",
+            "effect": ORDER_EFFECT,
         },
         "model_pin": MODEL,
         "route": ROUTE,
@@ -1030,7 +1183,7 @@ def run_demo():
     captures_path.write_text("", encoding="utf-8")
     os.environ["DEMO_RUN_CAPTURES"] = str(captures_path)
     os.environ["DEMO_RUN_DELEGATE_HELPER"] = \
-        CONNECTOR_HELPER
+        DELEGATE_HELPER
 
     room = None
     store = None
@@ -1171,8 +1324,7 @@ def run_demo():
         adapter = OpenAICompatibleAdapter(
             endpoint=ENDPOINT, model=MODEL,
             timeout=ADAPTER_TIMEOUT, route=ROUTE)
-        install_connector_transport(
-            adapter, str(wrapper_path), MODEL)
+        _install_typed_transport(adapter, wrapper_path)
         gen.propose(
             tok["orch-1"], "crew-1", part="part-A",
             role_requirements="a model able to read three "
@@ -1244,8 +1396,7 @@ def run_demo():
         # pass-through. The stage's evidence stands in
         # the record; its recommendation does not judge
         # this run (the order does).
-        raw_call = install_nvidia_connector_raw_call(
-            helper_path=str(wrapper_path), model=MODEL)
+        raw_call = _install_raw_call(adapter, wrapper_path)
         probe_result = gen.probe(
             tok["orch-1"], assembly_id, raw_call,
             route=ROUTE, model=MODEL)
@@ -1277,7 +1428,7 @@ def run_demo():
             fh.write("\n")
         order_hash = _sha256_bytes(canonical(order))
         judgement = gen.judgement(
-            assembly_id, adapter_mode="native",
+            assembly_id, adapter_mode=ADAPTER_MODE,
             mode_grounds=ORDER_GROUNDS,
             decision_receipt_hash=order_hash,
             decision_examiner=ORDER_EXAMINER)
@@ -1285,8 +1436,8 @@ def run_demo():
              judgement)
         packed = gen.pack(tok["orch-1"], assembly_id)
         gen.authorise(tok["orch-1"], assembly_id)
-        print(f"judgement: native, by the director's "
-              f"order (order record sha256: "
+        print(f"judgement: {ADAPTER_MODE}, by the "
+              f"director's order (order record sha256: "
               f"{order_hash})")
 
         # RUN — the executor holds the room; the loop
@@ -1411,9 +1562,7 @@ def run_demo():
                     "report (derived matter, not record)",
             "run_id": RUN_ID,
             "model_pin": MODEL,
-            "route": "nvidia (live, via the registered "
-                     "connector helper through the "
-                     "capture seam)",
+            "route": ROUTE_REPORT_LABEL,
             "endpoint": ENDPOINT,
             "manifest_hash": manifest_hash,
             "assembly_id": assembly_id,
@@ -1452,18 +1601,13 @@ def run_demo():
             "order_record": {
                 "path": str(order_path),
                 "sha256": order_hash,
-                "adapter_mode": "native",
+                "adapter_mode": ADAPTER_MODE,
                 "decision_examiner": ORDER_EXAMINER,
             },
             "pacing": {
                 "min_interval_seconds":
                     PACING_INTERVAL_SECONDS,
-                "note": "a fixed operating choice of "
-                        "this driver between successive "
-                        "outbound iteration calls; "
-                        "NVIDIA pacing is unestablished "
-                        "and no provider figure is "
-                        "claimed",
+                "note": PACING_NOTE,
             },
             "bounds": {
                 "step_ceiling":
@@ -1720,24 +1864,28 @@ def verify_config():
                    == {"chat", "chat-raw-bounded"},
                    json.dumps(lines)[:300])
             os.environ["DEMO_RUN_DELEGATE_HELPER"] = \
-                CONNECTOR_HELPER
+                DELEGATE_HELPER
 
             # (4) The real transports install (no
             # invocation): the adapter's typed call is
-            # the connector transport's, bound to the
-            # capture seam; the raw call is callable.
+            # the occupant route's connector transport,
+            # bound to the capture seam; the raw call is
+            # callable.
             adapter = OpenAICompatibleAdapter(
                 endpoint=ENDPOINT, model=MODEL,
                 timeout=ADAPTER_TIMEOUT, route=ROUTE)
-            installed = install_connector_transport(
-                adapter, str(wrapper_path), MODEL)
+            installed = _install_typed_transport(
+                adapter, wrapper_path)
             expect("transport: real connector transport "
                    "installed on the adapter",
                    callable(installed)
                    and adapter._call is installed)
-            raw_call = install_nvidia_connector_raw_call(
-                helper_path=str(wrapper_path), model=MODEL)
-            expect("transport: real NVIDIA raw call "
+            raw_call = _install_raw_call(
+                adapter, wrapper_path)
+            expect("transport: real Groq raw call "
+                   "installed for the probe stage"
+                   if QUINN else
+                   "transport: real NVIDIA raw call "
                    "installed for the probe stage",
                    callable(raw_call))
 
@@ -1993,15 +2141,15 @@ def verify_config():
                            c in "0123456789abcdef"
                            for c in order_hash))
                 payload = gen.judgement(
-                    assembly_id, adapter_mode="native",
+                    assembly_id, adapter_mode=ADAPTER_MODE,
                     mode_grounds=ORDER_GROUNDS,
                     decision_receipt_hash=order_hash,
                     decision_examiner=ORDER_EXAMINER)
                 expect("judgement: payload carries the "
-                       "native mode, the order's grounds "
-                       "and the order-record hash",
+                       f"{ADAPTER_MODE} mode, the order's "
+                       "grounds and the order-record hash",
                        payload.get("adapter_mode")
-                       == "native"
+                       == ADAPTER_MODE
                        and payload.get("mode_grounds")
                        == ORDER_GROUNDS
                        and payload.get(
@@ -2073,17 +2221,38 @@ def verify_config():
             wire_fn = (wire_definitions[0].get(
                 "function", {}) if wire_definitions
                 else {})
-            expect("adapter: on the NVIDIA route the "
-                   "transmitted definition's tool name is "
-                   "exactly container-exec",
-                   len(wire_definitions) == 1
-                   and wire_fn.get("name")
-                   == "container-exec"
-                   and wire_fn.get("description")
-                   == facing["description"]
-                   and wire_fn.get("parameters")
-                   == params,
-                   json.dumps(wire_definitions)[:300])
+            if QUINN:
+                # Quinn's route carries no name
+                # translation (the translator exists for
+                # the NVIDIA route alone): no translator
+                # stands, and the transmitted definition
+                # carries the canonical dotted name
+                # exactly as the framework speaks it.
+                expect("adapter: on the Groq route no "
+                       "name translation stands — the "
+                       "transmitted definition's tool name "
+                       "is the canonical container.exec",
+                       wire_translator is None
+                       and len(wire_definitions) == 1
+                       and wire_fn.get("name")
+                       == "container.exec"
+                       and wire_fn.get("description")
+                       == facing["description"]
+                       and wire_fn.get("parameters")
+                       == params,
+                       json.dumps(wire_definitions)[:300])
+            else:
+                expect("adapter: on the NVIDIA route the "
+                       "transmitted definition's tool name is "
+                       "exactly container-exec",
+                       len(wire_definitions) == 1
+                       and wire_fn.get("name")
+                       == "container-exec"
+                       and wire_fn.get("description")
+                       == facing["description"]
+                       and wire_fn.get("parameters")
+                       == params,
+                       json.dumps(wire_definitions)[:300])
 
             # (6b) Sandbox staging: the pull door's
             # sources stage from the verified set and
@@ -2130,27 +2299,50 @@ def verify_config():
             combined_names = [
                 d.get("function", {}).get("name")
                 for d in combined_definitions]
-            expect("adapter: the combined catalogue's "
-                   "transmitted names on the NVIDIA "
-                   "route are exactly the dashed set",
-                   sorted(combined_names) == sorted([
-                       "container-exec", "sandbox-list",
-                       "sandbox-search", "sandbox-read_range",
-                       "sandbox-read", "sandbox-write"])
-                   and len(combined_names)
-                   == len(set(combined_names)),
-                   json.dumps(combined_names)[:300])
-            expect("translator: sandbox.read_range "
-                   "travels as sandbox-read_range "
-                   "(underscore preserved) and "
-                   "sandbox-read-range is not a wire "
-                   "name",
-                   combined_translator is not None
-                   and combined_translator.to_wire(
-                       "sandbox.read_range")
-                   == "sandbox-read_range"
-                   and combined_translator.to_canonical(
-                       "sandbox-read-range") is None)
+            if QUINN:
+                expect("adapter: the combined catalogue's "
+                       "transmitted names on the Groq "
+                       "route are exactly the canonical "
+                       "dotted set",
+                       combined_translator is None
+                       and sorted(combined_names)
+                       == sorted([
+                           "container.exec", "sandbox.list",
+                           "sandbox.search",
+                           "sandbox.read_range",
+                           "sandbox.read", "sandbox.write"])
+                       and len(combined_names)
+                       == len(set(combined_names)),
+                       json.dumps(combined_names)[:300])
+                expect("translator: no translator stands "
+                       "on the Groq route — "
+                       "sandbox.read_range travels as "
+                       "itself, the canonical name",
+                       combined_translator is None
+                       and "sandbox.read_range"
+                       in combined_names)
+            else:
+                expect("adapter: the combined catalogue's "
+                       "transmitted names on the NVIDIA "
+                       "route are exactly the dashed set",
+                       sorted(combined_names) == sorted([
+                           "container-exec", "sandbox-list",
+                           "sandbox-search", "sandbox-read_range",
+                           "sandbox-read", "sandbox-write"])
+                       and len(combined_names)
+                       == len(set(combined_names)),
+                       json.dumps(combined_names)[:300])
+                expect("translator: sandbox.read_range "
+                       "travels as sandbox-read_range "
+                       "(underscore preserved) and "
+                       "sandbox-read-range is not a wire "
+                       "name",
+                       combined_translator is not None
+                       and combined_translator.to_wire(
+                           "sandbox.read_range")
+                       == "sandbox-read_range"
+                       and combined_translator.to_canonical(
+                           "sandbox-read-range") is None)
 
             # (9) Nothing activated, nothing probed:
             # verify mode records no live step.
