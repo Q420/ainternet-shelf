@@ -317,6 +317,37 @@ class Executor:
     def _sandbox_path(self, rel):
         return os.path.join(self.sandbox_dir, rel)
 
+    def read_designated_scratch(self, rel):
+        """The current bytes of a designated scratch file
+        (the worker's journal — the orientation pass,
+        2026-11-24), read from its resting place: the
+        bound room's scratch first — the resting place
+        the combined configuration's collection treats
+        as primary for the brief — then this executor's
+        own sandbox scratch. Returns (resting_place,
+        bytes, also_stands_in), also_stands_in naming
+        the other resting place when the file stands in
+        both, or None where it stands in neither. A read
+        for presentation only: it performs nothing and
+        records nothing."""
+        places = []
+        if self.room is not None:
+            places.append(("room", os.path.join(
+                str(self.room.tree), rel)))
+        places.append(("sandbox", self._sandbox_path(rel)))
+        found = []
+        for name, path in places:
+            try:
+                with open(path, "rb") as fh:
+                    found.append((name, fh.read()))
+            except OSError:
+                continue
+        if not found:
+            return None
+        name, raw = found[0]
+        also = found[1][0] if len(found) > 1 else None
+        return name, raw, also
+
     def _retrieval_context(self, dispatch_id):
         """The dispatch's retrieval context (retrieval
         piece): (governed, boundary, working_set) — whether

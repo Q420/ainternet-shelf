@@ -279,11 +279,18 @@ ASSIGNMENT_COMBINED = (
     "Read the source documents for this assignment. "
     "Your briefcase carries a glossary: the three "
     "sources by their addresses, with what each one "
-    "is. The same addresses work both ways in — in "
-    "your office with your execution tool (your "
-    "working directory is /room/work), and by pulling "
-    "with the sandbox tools. The stocked sources are "
-    "yours to utilise: read them; do not alter them. "
+    "is. Your wake package lists your tools — every "
+    "tool you hold, what each one is for, and the "
+    "scope it works in — and that list is the "
+    "statement of how you reach the sources and your "
+    "scratch; work from it (your working directory "
+    "in your office is /room/work). The stocked "
+    "sources are yours to utilise: read them; do not "
+    "alter them. Your package also carries your "
+    "journal, scratch/journal.md: your own notebook — "
+    "where you were, what you noticed, what to do "
+    "next — which comes back to you at each wake "
+    "exactly as you left it; keep it as you go. "
     "Write the brief to scratch/brief.md — in your "
     "office with your execution tool, or with "
     "sandbox.write: a plain-words brief, at most ~600 "
@@ -293,6 +300,14 @@ ASSIGNMENT_COMBINED = (
     "remains to be built. Stay accurate to the "
     "sources; invent nothing; where the sources "
     "disagree with each other, say so.")
+
+# The journal the case designates (the orientation
+# pass, 2026-11-24 — Ben's ruling on the worker
+# consultation): the worker's own append-only
+# notebook, a path under his scratch, named in his
+# case as its own component; each wake package
+# presents it back to him as it stands.
+JOURNAL_PATH = "scratch/journal.md"
 
 # The case's glossary (Ben's briefcase design,
 # 2026-11-16): the pullable items for this case — the
@@ -564,7 +579,8 @@ def _commission_and_issue(store, manifest_hash,
     RuntimeError on any failure."""
     brief = _commission_brief(assignment, manifest_hash,
                               glossary=glossary,
-                              bounds=DEMO_BOUNDS)
+                              bounds=DEMO_BOUNDS,
+                              journal=JOURNAL_PATH)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -1464,6 +1480,15 @@ def verify_config():
                        json.dumps(
                            (case_content or {}).get(
                                "glossary"))[:300])
+                expect("commission: the issued case "
+                       "carries the journal designation "
+                       "as its own component, unchanged "
+                       "(the orientation pass)",
+                       (case_content or {}).get("journal")
+                       == JOURNAL_PATH,
+                       json.dumps(
+                           (case_content or {}).get(
+                               "journal"))[:300])
 
                 # (7) The judgement payload the order
                 # will bind: computed, not recorded —

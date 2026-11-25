@@ -191,7 +191,8 @@ SCHEMA = {
                     "glossary": {"t": "opt", "v": {
                         "t": "list", "v": {"t": "obj", "f": {
                             "address": {"t": "str"},
-                            "description": {"t": "str"}}}}}},
+                            "description": {"t": "str"}}}}},
+                    "journal": {"t": "opt", "v": {"t": "str"}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

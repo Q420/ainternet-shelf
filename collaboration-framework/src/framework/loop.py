@@ -342,6 +342,49 @@ def _derive_catalogue(grants, version=None, per_grant=False):
     return entries
 
 
+def _tool_purpose(tool, description):
+    """One line of plain purpose for the wake package's
+    tool list (the orientation pass, Ben's rulings on the
+    worker consultation, 2026-11-24): the registry
+    description's first sentence — except the execution
+    tool, whose line also states the first-class fact
+    the consultation established was invisible while it
+    stood buried in prose: a shell command in his room
+    can read a whole file at once."""
+    first = (description or "").split(". ")[0].strip()
+    if first and not first.endswith("."):
+        first += "."
+    if tool == "container.exec":
+        first = (first + " A shell command there is a "
+                 "first-class way to work: cat <path> "
+                 "reads a whole file at once, and "
+                 "commands can copy, combine and write "
+                 "files in your scratch.").strip()
+    return first
+
+
+def _derive_tool_list(catalogue):
+    """The wake package's explicit tool list (the
+    orientation pass): one entry per catalogue entry —
+    the catalogue derives from the sealed grants, so
+    the list IS the grant set (names, scopes, count),
+    never a hardcoded restatement that could drift from
+    it — each entry carrying its grant's scope and a
+    one-line purpose in plain words."""
+    out = []
+    for entry in catalogue or []:
+        ceiling = entry.get("scope_ceiling")
+        out.append({
+            "tool": entry.get("tool"),
+            "scope": ceiling.get("path_prefix")
+            if isinstance(ceiling, dict) else None,
+            "purpose": _tool_purpose(
+                entry.get("tool"),
+                entry.get("description")),
+        })
+    return out
+
+
 def _catalogue_hash(catalogue):
     """The catalogue's canonical hash: SHA-256 over the
     fabric canonical form of the catalogue itself — the
@@ -1671,8 +1714,9 @@ class Loop:
             # instruction — what was asked, why it failed
             # in plain terms, and the working alternative
             # that exists within his grants; an identical
-            # call that already failed is named as a
-            # repeat. A refusal is a gate, not a wall: the
+            # call whose failure was already presented in
+            # an earlier wake is named as a repeat. A
+            # refusal is a gate, not a wall: the
             # doorway's authority is unchanged — nothing
             # dispatched until the call was right — this
             # changes only what the refusal SAYS. Working-
@@ -1794,7 +1838,116 @@ class Loop:
         }
         if working_set is not None:
             package["working_set"] = working_set
+        if ws_applies:
+            # The orientation pass (Ben's rulings on the
+            # worker consultation, 2026-11-24 — the
+            # worker asked, from his side of the door,
+            # for his position, his tools stated plainly,
+            # his task state, and his own notebook back):
+            # a working-set package states where he
+            # stands in the run's bounds, that his task
+            # stands in progress, and his granted tools
+            # as an explicit list derived from the sealed
+            # grants — and, where the case designates a
+            # journal, presents the journal as it stands.
+            # Presentation only: no lifecycle machinery,
+            # no new authority. Working-set packages only;
+            # every other population's packages are
+            # byte-identical to what they were.
+            package["step_position"] = {
+                "statement":
+                    f"step {ctx['iterations'] + 1} of "
+                    f"{ctx['bounds']['step_ceiling']}",
+                "iteration": ctx["iterations"] + 1,
+                "step_ceiling":
+                    ctx["bounds"]["step_ceiling"]}
+            package["task_status"] = "in progress"
+            package["tool_list"] = _derive_tool_list(
+                catalogue)
+            journal = self._journal_component(ctx)
+            if journal is not None:
+                package["journal"] = journal
         return package, head
+
+    def _journal_component(self, ctx):
+        """The worker's journal, as it stands at this
+        wake (the orientation pass, Part A): the case
+        designates the journal's path inside his scratch
+        (the case content's "journal"); the component
+        presents its current content, read from its
+        resting place through the executor — the same
+        resting places the combined configuration
+        collects his brief from — labelled as his own
+        working notes: orientation, not record, not
+        memory; the framework does not treat it as fact.
+        Carriage is bounded by the working-set budget's
+        figure, honestly: whole where it fits; where it
+        does not, the longest prefix of complete lines
+        that fits, with the omission stated in the
+        component — never a silent cut (where not even
+        one line fits, the budget's worth of bytes
+        stands carried and the note says the cut stands
+        mid-note). No designation, no component; a
+        designated journal with nothing standing yet
+        presents empty, so he knows the notebook is his
+        to start."""
+        designated = (ctx["content"] or {}).get("journal")
+        if not isinstance(designated, str) or \
+                not designated.startswith("scratch/") or \
+                ".." in designated.split("/"):
+            return None
+        component = {
+            "path": designated,
+            "label": "your journal — your own working "
+                     "notes: where you were, what you "
+                     "noticed, what to do next. "
+                     "Orientation, not record and not "
+                     "memory: nothing here is treated "
+                     "as fact, and the notebook is "
+                     "yours to keep.",
+            "content": "",
+            "bytes_total": 0,
+            "bytes_carried": 0,
+            "complete": True,
+        }
+        executor = self.executor
+        if executor is None or not hasattr(
+                executor, "read_designated_scratch"):
+            return component
+        found = executor.read_designated_scratch(
+            designated)
+        if found is None:
+            return component
+        resting, raw, also = found
+        component["resting_place"] = resting
+        if also is not None:
+            component["also_stands_in"] = also
+        total = len(raw)
+        component["bytes_total"] = total
+        budget = _tool_policy.WORKING_SET_CONTENT_BUDGET
+        if total <= budget:
+            component["content"] = raw.decode(
+                "utf-8", errors="replace")
+            component["bytes_carried"] = total
+            return component
+        carried = 0
+        for line in raw.splitlines(keepends=True):
+            if carried + len(line) > budget:
+                break
+            carried += len(line)
+        if carried == 0:
+            carried = budget
+        component["content"] = raw[:carried].decode(
+            "utf-8", errors="replace")
+        component["bytes_carried"] = carried
+        component["complete"] = False
+        component["note"] = (
+            f"your journal stands at {total} bytes; "
+            f"the first {carried} bytes are carried "
+            f"here and the rest stands uncarried in "
+            f"your scratch this wake — it is not lost, "
+            f"and you can pull it with your read tools.")
+        return component
 
     def _attach_failure_instructions(self, tool_results,
                                      events, raw_delta, ctx,
@@ -1804,14 +1957,29 @@ class Loop:
         INDEX 475; the freedom-first setup pass): what was
         asked, why it failed in plain terms, the working
         alternative that exists within his grants, and —
-        where an identical call already failed — the repeat
-        named with the step it first failed at. Everything
-        is derived from the record snapshot the package
-        itself is built from; an alternative is named only
-        where his sealed grants and the case actually offer
-        one — never invented. Entries whose identity cannot
-        be established from the record carry no instruction
-        rather than a guessed one."""
+        where an identical call already failed in a failure
+        the worker was actually shown — the repeat named
+        with the step it failed at. A repeat is a
+        presentation fact, not a record fact (the
+        examiner's correction of the freedom-first pass):
+        the earlier failure must stand at or before the
+        cursor — the head the previous wake presented —
+        so it stood in an earlier package; an identical
+        failure from the same response batch stands after
+        the cursor, in this package's own delta, and is
+        not a repeat however identical, because the worker
+        had not seen it when he made the call. And the
+        repeat claims "for this reason" only where the
+        earlier failure's plain reason stands established
+        in the record and equals this entry's; otherwise
+        it claims only that the same call previously
+        failed. Everything is derived from the record
+        snapshot the package itself is built from; an
+        alternative is named only where his sealed grants
+        and the case actually offer one — never invented.
+        Entries whose identity cannot be established from
+        the record carry no instruction rather than a
+        guessed one."""
         content = ctx["content"] or {}
         requests = {}
         for ev in events:
@@ -1843,28 +2011,58 @@ class Loop:
         # not the delta: a repeat is a call that failed in an
         # EARLIER window, already presented and scrolled out
         # of the delta — the record remembers it even where
-        # the package no longer carries it.
+        # the package no longer carries it. Each occurrence
+        # carries the failure's plain reason, derived exactly
+        # as the presenting entry's why is derived below, so
+        # the repeat may claim "for this reason" only where
+        # the reasons stand established and equal; where a
+        # reason cannot be established from the record it
+        # stands as None, and the repeat claims the failure
+        # alone. The translation reason is the very error
+        # text the carriage derived for such an entry, from
+        # the same catalogue names.
+        catalogue_names = [t.get("tool") for t in
+                           ctx.get("catalogue") or []
+                           if isinstance(t, dict)
+                           and t.get("tool")]
+        if not catalogue_names:
+            catalogue_names = [t.get("tool") for t in
+                               content.get("tool_catalogue")
+                               or [] if isinstance(t, dict)
+                               and t.get("tool")]
         for ev in events:
             p = ev["payload"]
             if ev["type"] == "TOOL_OUTCOME" and \
                     p.get("outcome") == "failure":
                 tool, params = requests.get(
                     p.get("request_id"), (None, None))
+                reason = p.get("detail") or ""
+                if "No such file or directory" in reason \
+                        and isinstance(params, dict) and \
+                        isinstance(params.get("path"), str):
+                    reason = (f"no file stands at "
+                              f"{params['path']} in your "
+                              f"briefcase")
                 occurrences.append((ev["event_seq"], (
-                    "call", tool, canon(params))))
+                    "call", tool, canon(params)),
+                    reason or None))
             elif ev["type"] == "REJECTION" and \
                     p.get("attempted_type") == "TOOL_DISPATCHED":
                 grounds[p.get("request_id")] = p.get("ground")
                 tool, params = requests.get(
                     p.get("request_id"), (None, None))
                 occurrences.append((ev["event_seq"], (
-                    "call", tool, canon(params))))
+                    "call", tool, canon(params)),
+                    _plain_ground(p.get("ground")) or None))
             elif ev["type"] == "TRANSLATION_RECORDED":
                 for centry in p.get("calls") or []:
                     if centry.get("refusal_class"):
                         occurrences.append((ev["event_seq"], (
                             "translation", centry.get("name"),
-                            centry.get("arguments_sha256"))))
+                            centry.get("arguments_sha256")),
+                            _translation_error_text(
+                                centry, catalogue_names)
+                            or None))
 
         stocked = []
         for gentry in content.get("glossary") or []:
@@ -2000,17 +2198,50 @@ class Loop:
                 "why": why,
                 "alternative": alternative(tool, params, why),
             }
-            earlier = [s for s, ident in occurrences
+            # A repeat must have been PRESENTED in an
+            # earlier wake (the examiner's correction):
+            # the earlier occurrence stands at or before
+            # the cursor — the head the previous wake
+            # presented — so it stood in an earlier
+            # package. An identical failure from the same
+            # response batch stands after the cursor, in
+            # this package's own delta, presented now for
+            # the first time alongside this entry: not a
+            # repeat, however identical, because the
+            # worker had not seen it when he made this
+            # call. The step named is the step the
+            # relevant earlier failure was made at, by
+            # the same cursor derivation as above; where
+            # an earlier presented failure's plain reason
+            # stands established and equals this entry's
+            # why, the note may say "for this reason" —
+            # otherwise it claims only that the same call
+            # previously failed.
+            cursor = ctx.get("cursor")
+            earlier = [(s, r) for s, ident, r in occurrences
                        if ident == identity
-                       and isinstance(seq, int)
-                       and s < seq]
+                       and isinstance(cursor, int)
+                       and not isinstance(cursor, bool)
+                       and s <= cursor]
             if earlier:
-                first_step = step_of(max(earlier))
-                instruction["repeat"] = {
-                    "already_failed_step": first_step,
-                    "note": "this exact call already failed "
-                            f"at step {first_step} for this "
-                            "reason"}
+                matching = [s for s, r in earlier
+                            if r and why and r == why]
+                if matching:
+                    first_step = step_of(max(matching))
+                    instruction["repeat"] = {
+                        "already_failed_step": first_step,
+                        "note": "this exact call already "
+                                f"failed at step "
+                                f"{first_step} for this "
+                                "reason"}
+                else:
+                    first_step = step_of(max(
+                        s for s, _r in earlier))
+                    instruction["repeat"] = {
+                        "already_failed_step": first_step,
+                        "note": "this exact call already "
+                                f"failed at step "
+                                f"{first_step}"}
             entry["instruction"] = instruction
 
     def _relevant(self, ctx, ev):

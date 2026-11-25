@@ -118,10 +118,19 @@ EVENT_TYPES = {
 # agent cannot request what it cannot conceive of). OPTIONAL
 # like loop_bounds, by the same reasoning: a field the route
 # strips is not a usable case component.
+# The journal joins the fields as a tenth stored key
+# (2026-11-24, the orientation pass): Ben's ruling on the
+# worker consultation — the case designates the worker's
+# journal, a path under his scratch naming HIS append-only
+# notebook (where he was, what he noticed, what to do next),
+# so each wake package can present it back to him as it
+# stands. The designation is the case's; the notebook's
+# content is his, carried in the package, never in the
+# record. OPTIONAL like the glossary, by the same reasoning.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority", "loop_bounds",
-                       "glossary")
+                       "glossary", "journal")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

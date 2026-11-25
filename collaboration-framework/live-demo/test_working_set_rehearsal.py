@@ -64,6 +64,32 @@ carriable whole, the accumulated set carriable
 together), and a synthetic 70,001-byte required source
 refused at setup, named with its size and the budget.
 
+The orientation pass (Ben's rulings on the worker
+consultation, 2026-11-24) is witnessed on the freedom
+packages: every wake states its step position plainly
+(step k of the sealed ceiling, matching the record's
+iteration count) and its task status (in progress),
+and the package's tool list equals the sealed grant
+set exactly — names, scopes, count — with the
+execution tool's line presenting a shell command as a
+first-class method that can read a whole file (cat).
+
+The batch scenario witnesses the examiner's repeat
+correction (2026-11-24), judged text so one response
+carries two identical requests: both fail at the
+executor over a scratch file that does not stand, and
+the package presenting both failures names NEITHER as
+a repeat — neither had been presented when the calls
+were made — while the identical request made after
+those failures were presented IS named a repeat of
+step 1, for this reason. The journal scenario
+witnesses Part A of the orientation pass: the case
+designates scratch/journal.md, and the packages
+present the journal as it stands — empty at the first
+wake, the first note verbatim at the second, both
+notes in order at the third; the checker stands
+eleven checks, all ok, over both records.
+
 Run: python3 live-demo/test_working_set_rehearsal.py
 Exits 0 when every check passes.
 """
@@ -738,6 +764,70 @@ def main():
         _check_commitments("freedom", fwork, packages, 6)
         _check_checker("freedom", rep)
 
+        # ---------- orientation (Parts B, C, D) on the
+        # freedom packages: his position, his task
+        # state, and his tools stated plainly.
+        f_iterations = sorted(k for k in packages
+                              if k >= 1)
+        check("orientation (B): every freedom wake "
+              "states its step position plainly — "
+              "step k of the sealed ceiling, matching "
+              "the record's iteration count at that "
+              "wake",
+              f_iterations == [1, 2, 3, 4, 5, 6]
+              and all(
+                  (packages[k].get("step_position")
+                   or {}).get("statement")
+                  == f"step {k} of 12"
+                  and (packages[k].get("step_position")
+                       or {}).get("iteration") == k
+                  and (packages[k].get("step_position")
+                       or {}).get("step_ceiling") == 12
+                  for k in f_iterations),
+              f"{[(k, (packages[k].get('step_position') or {})) for k in f_iterations]}")
+        check("orientation (D): every freedom wake "
+              "states the task status plainly — "
+              "in progress",
+              all(packages[k].get("task_status")
+                  == "in progress"
+                  for k in f_iterations),
+              f"{[packages[k].get('task_status') for k in f_iterations]}")
+        sealed_grants = None
+        for e in evs:
+            if e["type"] == "ASSEMBLY_GENERATED":
+                sealed_grants = _payload(e).get("grants")
+        expected_tools = sorted(
+            (g.get("tool"),
+             (g.get("scope_ceiling") or {}).get(
+                 "path_prefix"))
+            for g in sealed_grants or [])
+        presented_tools = sorted(
+            (t.get("tool"), t.get("scope"))
+            for t in (packages[6].get("tool_list")
+                      or []))
+        check("orientation (C): the wake package's "
+              "tool list equals the sealed grant set "
+              "exactly — every grant's tool and scope, "
+              "the same count, nothing hardcoded",
+              sealed_grants is not None
+              and len(presented_tools) == 10
+              and presented_tools == expected_tools,
+              f"presented={presented_tools} "
+              f"expected={expected_tools}")
+        exec_lines = [t for t in
+                      (packages[6].get("tool_list") or [])
+                      if t.get("tool") == "container.exec"]
+        check("orientation (C): the execution tool's "
+              "line presents it as a first-class "
+              "working method — a shell command can "
+              "read a whole file at once (cat)",
+              len(exec_lines) == 1
+              and "cat" in (
+                  exec_lines[0].get("purpose") or "")
+              and "whole file" in (
+                  exec_lines[0].get("purpose") or ""),
+              f"{exec_lines}")
+
         # ---------- completability at stocking
         _manifest, _mhash, real_stock = \
             stock_demo.verify_source_set()
@@ -781,6 +871,140 @@ def main():
               and "70001" in refusal
               and str(BUDGET) in refusal,
               f"{refusal}")
+
+        # ================= batch =================
+        # The examiner's repeat correction: a repeat
+        # must have been PRESENTED in an earlier wake.
+        rep = reports["batch"]
+        bwork2 = work / "batch"
+        check("batch: the run yields in three "
+              "iterations",
+              rep["outcome"] == "yield"
+              and rep["iterations"] == 3,
+              f"{rep['outcome']} / {rep['iterations']}")
+        packages_b = _packages(bwork2)
+        evs_b = _events(bwork2)
+        b_dispatched = [_payload(e) for e in evs_b
+                        if e["type"] == "TOOL_DISPATCHED"]
+        b_failures = [_payload(e) for e in evs_b
+                      if e["type"] == "TOOL_OUTCOME"
+                      and _payload(e).get("outcome")
+                      == "failure"]
+        check("batch: all three identical requests "
+              "were dispatched (a granted door) and all "
+              "three failed at the executor — the file "
+              "does not stand",
+              len(b_dispatched) == 3
+              and len(b_failures) == 3,
+              f"dispatched={len(b_dispatched)} "
+              f"failures={len(b_failures)}")
+
+        def failure_entries(package):
+            return [tr for tr in
+                    (package.get("tool_results") or [])
+                    if tr.get("outcome") == "failure"]
+
+        batch_entries = failure_entries(packages_b[2])
+        check("batch (a): the package presenting the "
+              "batch's two failures carries both, each "
+              "with its failure instruction — and "
+              "NEITHER is named a repeat: neither "
+              "failure had been presented when the "
+              "calls were made, however identical they "
+              "are",
+              len(batch_entries) == 2
+              and all(
+                  (e.get("instruction") or {}).get(
+                      "asked") == {
+                          "tool": "sandbox.read",
+                          "parameters": {
+                              "path":
+                                  "scratch/not-here.md"}}
+                  and "no file stands at "
+                      "scratch/not-here.md"
+                      in ((e.get("instruction")
+                           or {}).get("why") or "")
+                  and "repeat" not in (
+                      e.get("instruction") or {})
+                  for e in batch_entries),
+              f"{batch_entries}")
+        third_entries = failure_entries(packages_b[3])
+        third_repeat = ((third_entries[0].get(
+            "instruction") or {}).get("repeat") or {}) \
+            if third_entries else {}
+        check("batch (b): the identical request made "
+              "after the batch failures were presented "
+              "IS named a repeat — of step 1, for this "
+              "reason: the earlier failures stand "
+              "presented in the wake between, with the "
+              "same plain reason",
+              len(third_entries) == 1
+              and third_repeat.get(
+                  "already_failed_step") == 1
+              and "step 1" in (
+                  third_repeat.get("note") or "")
+              and "for this reason" in (
+                  third_repeat.get("note") or ""),
+              f"{third_entries}")
+        _check_commitments("batch", bwork2, packages_b, 3)
+        _check_checker("batch", rep)
+
+        # ================= journal =================
+        # The orientation pass, Part A: his notebook,
+        # presented back as it stands.
+        rep = reports["journal"]
+        jwork = work / "journal"
+        check("journal: the run yields in three "
+              "iterations",
+              rep["outcome"] == "yield"
+              and rep["iterations"] == 3,
+              f"{rep['outcome']} / {rep['iterations']}")
+        packages_j = _packages(jwork)
+        j_first = packages_j[1].get("journal") or {}
+        check("journal (A): the first wake presents "
+              "the designated journal — his path, "
+              "labelled his own working notes, empty: "
+              "the notebook is his to start",
+              j_first.get("path")
+              == "scratch/journal.md"
+              and "your journal" in (
+                  j_first.get("label") or "")
+              and j_first.get("content") == ""
+              and j_first.get("bytes_total") == 0
+              and j_first.get("complete") is True,
+              f"{j_first}")
+        j_second = packages_j[2].get("journal") or {}
+        check("journal (A): the wake after the first "
+              "note presents the journal as it stands — "
+              "the note verbatim, complete, from his "
+              "sandbox scratch",
+              j_second.get("content")
+              == rehearsal.JOURNAL_NOTE_1
+              and j_second.get("bytes_total") == len(
+                  rehearsal.JOURNAL_NOTE_1.encode(
+                      "utf-8"))
+              and j_second.get("bytes_carried") == len(
+                  rehearsal.JOURNAL_NOTE_1.encode(
+                      "utf-8"))
+              and j_second.get("complete") is True
+              and j_second.get("resting_place")
+              == "sandbox",
+              f"{j_second}")
+        j_third = packages_j[3].get("journal") or {}
+        both_notes = (rehearsal.JOURNAL_NOTE_1
+                      + rehearsal.JOURNAL_NOTE_2)
+        check("journal (A): the second note appends "
+              "rather than replaces — the next wake's "
+              "journal carries both notes in order, "
+              "the first unchanged",
+              j_third.get("content") == both_notes
+              and j_third.get("bytes_total") == len(
+                  both_notes.encode("utf-8"))
+              and j_third.get("complete") is True,
+              f"{j_third}")
+        _check_commitments("journal", jwork, packages_j,
+                           3)
+        _check_checker("journal", rep)
 
         # ---------- zero leftovers
         bwrap = subprocess.run(

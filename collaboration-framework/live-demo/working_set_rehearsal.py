@@ -20,7 +20,7 @@ its provenance, marked not carried, never silently
 truncated.
 
 This rehearsal proves the correction offline, on the
-examiner's narrow examination list, in three scenarios
+examiner's narrow examination list, in five scenarios
 driven by a deterministic scripted stand-in through a
 stub at the real NVIDIA connector seam — the combined
 rehearsal's pattern. The REAL loop, native adapter (with
@@ -79,6 +79,41 @@ and the same released source set:
       presenting the second refusal names it as a
       repeat: this exact call already failed at step 4;
   (6) yield.
+Its packages also witness the orientation pass (Ben's
+rulings on the worker consultation, 2026-11-24): every
+wake states its step position and task status, and the
+tool list equals the sealed grant set exactly.
+
+Scenario D (batch) is the examiner's repeat-correction
+witness (2026-11-24), judged TEXT — the native
+per-response cap admits one call per response, so a
+batch is exercised through the text contract, which
+carries several tool requests in one response:
+  (1) ONE response carrying TWO identical requests —
+      read scratch/not-here.md, a granted door over a
+      file that does not stand: both dispatch, both
+      fail at the executor, and the package presenting
+      both failures must name NEITHER as a repeat,
+      because neither had been presented when the
+      calls were made;
+  (2) the identical request again in the next
+      response — the package presenting its failure
+      names it as a repeat of step 1, for this reason:
+      the batch failures WERE presented in the wake
+      between;
+  (3) yield.
+
+Scenario E (journal) witnesses the orientation pass's
+Part A, on the combined configuration with the case
+designating scratch/journal.md as the worker's
+notebook:
+  (1) write the first journal note (sandbox.write);
+  (2) write the journal again with a second note
+      appended — the package at each wake presents
+      the journal as it stands: the first wake empty,
+      then note one verbatim, then both notes in
+      order, appends never replacing;
+  (3) yield.
 
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario: the run record, the stub's
@@ -326,6 +361,95 @@ def build_script_freedom():
             "chat-raw-bounded": _probe_steps()}
 
 
+def _text_tool_requests(call_id, requests):
+    """One scripted text-contract response carrying
+    several tool requests — the batch shape the native
+    per-response cap cannot express. The adapter's
+    text contract names the list "requests"; the loop's
+    internal shape renames it, as the adapter's own
+    translation does."""
+    return _text_response(call_id, json.dumps({
+        "outcome": "tool_requests",
+        "requests": requests}))
+
+
+def build_script_batch():
+    missing = {"tool": "sandbox.read",
+               "parameters": {"path": "scratch/not-here.md"}}
+    chat = [
+        _identify_step("batch"),
+        # 1 — ONE response, TWO identical requests: a
+        # granted read of a file that does not stand.
+        # Both dispatch; both fail at the executor.
+        {"respond": _text_tool_requests(
+            "batch-1", [dict(missing), dict(missing)]),
+         "action": None},
+        # 2 — the identical request again, after the
+        # batch's failures were presented.
+        {"respond": _text_tool_requests(
+            "batch-2", [dict(missing)]),
+         "action": None},
+        # 3 — the yield.
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Asked three times for a "
+                           "scratch file that does not "
+                           "stand — twice in one response, "
+                           "once after seeing both "
+                           "failures."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+# Scenario E's journal notes: plain ASCII, each a
+# complete note ending in a newline, so the append is
+# visible byte for byte.
+JOURNAL_NOTE_1 = (
+    "Note 1 - where I was: started the assignment; "
+    "the three sources stand in sources/, named in "
+    "the glossary.\n")
+JOURNAL_NOTE_2 = (
+    "Note 2 - what to do next: pull index-tail whole "
+    "(it returns whole now) and draft the brief.\n")
+
+
+def build_script_journal():
+    chat = [
+        _identify_step("journal"),
+        # 1 — the first journal note, through the
+        # granted write door.
+        {"respond": _native_call(
+            "fc-j-1", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": JOURNAL_NOTE_1}),
+         "action": None},
+        # 2 — the second note appended: sandbox.write
+        # replaces the file, so the worker writes the
+        # journal back with the new note added — the
+        # journal his package carried, plus the note.
+        {"respond": _native_call(
+            "fc-j-2", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": JOURNAL_NOTE_1 + JOURNAL_NOTE_2}),
+         "action": None},
+        # 3 — the yield.
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Kept a journal across the "
+                           "run: two notes, appended in "
+                           "order."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -427,7 +551,7 @@ if __name__ == "__main__":
 
 def _run_scenario(work_dir, *, scenario, brief,
                   manifest_hash, seal_entries, stage_fn,
-                  script, grounds):
+                  script, grounds, adapter_mode="native"):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
     Returns the report dict (also written to
@@ -581,7 +705,7 @@ def _run_scenario(work_dir, *, scenario, brief,
         "probe_evidence_hash":
             probe_result["evidence_hash"],
         "fingerprint": probed_payload["fingerprint"],
-        "adapter_mode": "native",
+        "adapter_mode": adapter_mode,
         "mode_grounds": grounds,
         "examiner": "working-set rehearsal (scripted "
                     "stand-in examiner)",
@@ -594,7 +718,7 @@ def _run_scenario(work_dir, *, scenario, brief,
         fh.write("\n")
     receipt_hash = _sha256_bytes(canonical(receipt))
     judgement = gen.judgement(
-        assembly_id, adapter_mode="native",
+        assembly_id, adapter_mode=adapter_mode,
         mode_grounds=receipt["mode_grounds"],
         decision_receipt_hash=receipt_hash,
         decision_examiner=receipt["examiner"])
@@ -652,9 +776,10 @@ def _run_scenario(work_dir, *, scenario, brief,
 
 
 def run_rehearsal(work_dir):
-    """Run all three scenarios under `work_dir` (created
+    """Run all five scenarios under `work_dir` (created
     fresh). Returns {"continuity": report, "budget":
-    report, "freedom": report}."""
+    report, "freedom": report, "batch": report,
+    "journal": report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -760,5 +885,61 @@ def run_rehearsal(work_dir):
                 "combined configuration's judgement is "
                 "native. Rehearsal furniture by a "
                 "scripted stand-in examiner.")
+
+    # Scenario D — the examiner's repeat correction:
+    # the same combined configuration, judged TEXT so
+    # one response can carry a batch of identical
+    # requests (the native per-response cap admits one
+    # call per response; the batch shape is the text
+    # contract's). The probe's recommendation stands as
+    # evidence; the judgement is the stand-in examiner's
+    # decision, as the live phases judge.
+    batch = _run_scenario(
+        work_dir / "batch",
+        scenario="batch",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_batch(),
+        grounds="Working-set rehearsal, batch scenario "
+                "(the repeat correction): the scripted "
+                "stand-in's probe trials settled 5/5 "
+                "native — the recommendation stands as "
+                "evidence — and the stand-in examiner "
+                "judges TEXT, because the case under "
+                "examination is a batch of identical "
+                "requests in one response, a shape only "
+                "the text contract carries. Rehearsal "
+                "furniture by a scripted stand-in "
+                "examiner.",
+        adapter_mode="text")
+
+    # Scenario E — the orientation pass's journal: the
+    # combined configuration, the case designating the
+    # worker's notebook.
+    journal = _run_scenario(
+        work_dir / "journal",
+        scenario="journal",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY,
+            journal="scratch/journal.md"),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_journal(),
+        grounds="Working-set rehearsal, journal "
+                "scenario (the orientation pass): the "
+                "scripted stand-in's probe trials "
+                "settled 5/5 native, and the combined "
+                "configuration's judgement is native. "
+                "Rehearsal furniture by a scripted "
+                "stand-in examiner.")
     return {"continuity": continuity, "budget": budget,
-            "freedom": freedom}
+            "freedom": freedom, "batch": batch,
+            "journal": journal}

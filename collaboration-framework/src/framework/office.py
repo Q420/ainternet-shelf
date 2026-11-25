@@ -113,6 +113,18 @@ class Office:
         if brief.get("glossary") is not None:
             content["glossary"] = copy.deepcopy(
                 brief["glossary"])
+        # The journal designation (the orientation pass,
+        # 2026-11-24): where the recorded brief names the
+        # worker's journal — the path under his scratch of
+        # his own append-only notebook — the draft carries
+        # it, by the same route as the glossary, so the
+        # designation stands in the issued case and the
+        # loop can present the notebook back to him at
+        # each wake. A brief without a journal produces a
+        # case without the field, exactly as before.
+        if brief.get("journal") is not None:
+            content["journal"] = copy.deepcopy(
+                brief["journal"])
         return content
 
     # ---------------------------------------------------- preflight
@@ -132,17 +144,20 @@ class Office:
             problems.append(
                 f"cases are issued to crew seats; {seat_id} is "
                 f"{(seats[seat_id] or {}).get('role')}")
-        # loop_bounds and glossary are the optional content
-        # fields (Piece A3; the combined configuration): a
-        # case may lawfully carry neither — no loop runs on a
-        # boundless case, and a glossary-less case simply
-        # carries no map — so neither is an R14 grounding
+        # loop_bounds, glossary and journal are the optional
+        # content fields (Piece A3; the combined
+        # configuration; the orientation pass): a case may
+        # lawfully carry none of them — no loop runs on a
+        # boundless case, a glossary-less case simply
+        # carries no map, and a journal-less case designates
+        # no notebook — so none is an R14 grounding
         # requirement. When present each must be well-formed;
         # malformed optional content fails preflight whole,
         # never silently stripped.
         for field in ("case_id", "version", "seat") + tuple(
                 f for f in CASE_CONTENT_FIELDS
-                if f not in ("loop_bounds", "glossary")):
+                if f not in ("loop_bounds", "glossary",
+                             "journal")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
@@ -165,6 +180,15 @@ class Office:
                     "the glossary must be a non-empty list of "
                     "entries, each carrying a non-empty address "
                     "and a non-empty description")
+        if content.get("journal") is not None:
+            journal = content["journal"]
+            if not isinstance(journal, str) or \
+                    not journal.startswith("scratch/") or \
+                    ".." in journal.split("/"):
+                problems.append(
+                    "the journal must name a path under "
+                    "scratch/ — the worker's notebook stands "
+                    "in his own writing space")
         tree = content.get("tree")
         part = content.get("part")
         if isinstance(tree, dict) and part is not None:
@@ -239,12 +263,14 @@ class Office:
                  "version": current_version + 1,
                  "seat": current.get("seat")}
         for field in CASE_CONTENT_FIELDS:
-            # The optional fields (loop_bounds, glossary)
-            # ride forward only where they stand or are
-            # being set: a correction of a case that never
-            # carried one does not acquire a null field it
-            # never had (Piece A3, correction round 1).
-            if field in ("loop_bounds", "glossary") and \
+            # The optional fields (loop_bounds, glossary,
+            # journal) ride forward only where they stand
+            # or are being set: a correction of a case that
+            # never carried one does not acquire a null
+            # field it never had (Piece A3, correction
+            # round 1).
+            if field in ("loop_bounds", "glossary",
+                         "journal") and \
                     field not in current and \
                     field not in changes:
                 continue

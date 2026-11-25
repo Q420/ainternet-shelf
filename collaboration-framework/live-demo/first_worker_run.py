@@ -340,7 +340,8 @@ GRANTS_RETRIEVAL = (
 
 
 def _commission_brief(assignment, manifest_hash,
-                      glossary=None, bounds=None):
+                      glossary=None, bounds=None,
+                      journal=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
@@ -349,7 +350,13 @@ def _commission_brief(assignment, manifest_hash,
     configuration, 2026-11-24), the brief carries it as
     its own field: the map of what the worker may pull —
     Ben's briefcase design (2026-11-16) — which the office
-    carries into the issued case unchanged.
+    carries into the issued case unchanged. Where a
+    journal is given (the orientation pass, 2026-11-24),
+    the brief carries the designation as its own field:
+    the path under the worker's scratch naming his own
+    notebook, which the office carries into the issued
+    case unchanged and the loop presents back to him at
+    each wake.
 
     bounds defaults to this harness's standing BOUNDS; the
     live demonstration driver passes its own re-derived
@@ -373,6 +380,8 @@ def _commission_brief(assignment, manifest_hash,
     if glossary is not None:
         brief["glossary"] = [dict(entry)
                               for entry in glossary]
+    if journal is not None:
+        brief["journal"] = journal
     return brief
 
 

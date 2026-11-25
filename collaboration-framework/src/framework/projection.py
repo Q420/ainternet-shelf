@@ -103,6 +103,10 @@ _CASE_CONTENT = _fields({
     # (Ben's briefcase design, 2026-11-16).
     "glossary": _opt(_list(_obj({
         "address": _STR, "description": _STR}))),
+    # The journal designation a case may carry
+    # (2026-11-24, the orientation pass): the path under
+    # the worker's scratch naming his own notebook.
+    "journal": _opt(_STR),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({
