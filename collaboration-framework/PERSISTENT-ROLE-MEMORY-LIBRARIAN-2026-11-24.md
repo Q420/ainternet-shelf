@@ -50,3 +50,9 @@ Remmy's notes: two layers. Hot — the immediate past (the current run's working
 Ben sets the demotion trigger, in his words: "I'd base it off context limit. Aim for 75% context compact" — "That way they're still room to work with it."
 
 Remmy's notes: hot memory is carried until it approaches ~75% of the occupying model's context limit; at that point the oldest hot material compacts into a block with its summary, demoting to cold. The threshold is relative, not a fixed byte count — the same role compacts at different absolute sizes depending on who occupies it, which is correct because the constraint being respected is the occupant's context. The remaining 25% is deliberate headroom: compaction happens while there is still room to work with the result, not at the cliff edge (the same trip-curve thinking as Ben's spike/breaker catch on the room envelope, INDEX 448). A pulled cold block counts toward the hot load under the same rule. The framework's standing 64,000-byte working-set budget reads as a fixed special case of this principle.
+
+## Ben's sequencing ruling — 2026-11-24 ~20:47 MST
+
+Ben: "I'm going to push back let's prove the system before she starts building entire factories around it."
+
+Recorded as the governing sequence for this design: the librarian stays a filed idea at paper stage — no design paper, no build — until the system it would serve is proven: one worker, in the fixed room, producing the brief (run 5 under Vane's examination). Vane's five questions stand on file as the design paper's examination list for when Ben calls for the paper. Nothing about the librarian direction enlarges, delays, or reorders the live line: pass examination → run 5 → proof.
