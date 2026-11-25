@@ -109,6 +109,13 @@ EVENT_TYPES = {
     # aside unfiled and answered with a correction naming
     # what is missing, in the same shape.
     "DELIVERY_EVIDENCE_GATE",
+    # The third gate (INDEX 557): the delivery-length
+    # gate's record — a contribution offered below the
+    # case's declared length floor for a delivery, set
+    # aside unfiled and answered with a correction
+    # naming the count it arrived with, in the same
+    # shape.
+    "DELIVERY_LENGTH_GATE",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -167,7 +174,7 @@ CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "account", "authority", "loop_bounds",
                        "glossary", "journal", "onboarding",
                        "delivery", "role_memory", "opening",
-                       "delivery_evidence")
+                       "delivery_evidence", "delivery_floor")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

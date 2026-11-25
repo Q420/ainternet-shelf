@@ -24,7 +24,7 @@ CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "account", "authority", "loop_bounds",
                        "glossary", "journal", "onboarding",
                        "delivery", "role_memory", "opening",
-                       "delivery_evidence")
+                       "delivery_evidence", "delivery_floor")
 
 _STATUS_RANK = {"unverified": 0, "declared": 1,
                 "provider-confirmed": 2}
@@ -67,6 +67,9 @@ _KNOWN_TYPES = {
     # Round ten (INDEX 552): the delivery-evidence gate
     # event.
     "DELIVERY_EVIDENCE_GATE",
+    # The third gate (INDEX 557): the delivery-length
+    # gate event.
+    "DELIVERY_LENGTH_GATE",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",

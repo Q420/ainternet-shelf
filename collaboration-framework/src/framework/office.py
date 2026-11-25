@@ -149,7 +149,7 @@ class Office:
         # opening record, the draft carries each unchanged
         # as its own component, by the same route.
         for _field in ("delivery", "role_memory", "opening",
-                       "delivery_evidence"):
+                       "delivery_evidence", "delivery_floor"):
             if brief.get(_field) is not None:
                 content[_field] = copy.deepcopy(
                     brief[_field])
@@ -189,7 +189,8 @@ class Office:
                              "journal", "onboarding",
                              "delivery", "role_memory",
                              "opening",
-                             "delivery_evidence")):
+                             "delivery_evidence",
+                             "delivery_floor")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
@@ -267,6 +268,20 @@ class Office:
                     "must be an object naming exactly "
                     "addresses: a non-empty list of "
                     "non-empty sandbox addresses")
+        if content.get("delivery_floor") is not None:
+            floor = content["delivery_floor"]
+            if not isinstance(floor, dict) or \
+                    set(floor) != {"min_words"} or \
+                    not isinstance(
+                        floor.get("min_words"), int) or \
+                    isinstance(
+                        floor.get("min_words"), bool) or \
+                    floor["min_words"] < 1:
+                problems.append(
+                    "the delivery-length declaration "
+                    "must be an object naming exactly "
+                    "min_words: a positive whole number "
+                    "of words")
         if content.get("role_memory") is not None:
             role_memory = content["role_memory"]
             if not isinstance(role_memory, list) or any(
@@ -391,7 +406,8 @@ class Office:
             if field in ("loop_bounds", "glossary",
                          "journal", "onboarding",
                          "delivery", "role_memory",
-                         "opening", "delivery_evidence") and \
+                         "opening", "delivery_evidence",
+                         "delivery_floor") and \
                     field not in current and \
                     field not in changes:
                 continue

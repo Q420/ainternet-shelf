@@ -2404,6 +2404,34 @@ def _evidence_gate_instruction(catalogue, missing):
     return "\n".join(lines)
 
 
+# The delivery-length gate (the third gate, INDEX
+# 557): this checker's copies of the correction's
+# wording and of the task stage's floor statement —
+# the framework's stand in loop.py. The correction is
+# re-derived from the gate event's payload alone; the
+# count it names is re-derived from the recorded
+# contribution text itself.
+def _length_gate_what_arrived(word_count):
+    return (f"a contribution of {word_count} words, "
+            f"offered as your delivery")
+
+
+_STAGED_LENGTH_GATE_INSTRUCTION = (
+    "Nothing was filed. Your contribution arrived at "
+    "{word_count} words; the deliverable must run to "
+    "at least {min_words} words — the target stands "
+    "at about 600 words, and the floor is a minimum, "
+    "not the aim. Write to the full length from the "
+    "sources you have gathered, then offer your "
+    "contribution again. The text you sent stands in "
+    "the record, set aside unfiled.")
+_STAGED_TASK_FLOOR_STATEMENT = (
+    "The deliverable must run to at least {min_words} "
+    "words. A contribution shorter than that is set "
+    "aside unfiled, and you will be told the count "
+    "yours arrived with.")
+
+
 def _evidence_address_stands(entries, requested, address):
     """Whether one named address's whole content stands
     in the reconstructed working set: a carried whole
@@ -2974,6 +3002,22 @@ def _derive_staged_core(events, state, gen, content,
         == _DELIVERY_ROUTE_CONTRIBUTION
         and (content or {}).get("delivery")
         == sealed_delivery) else None
+    # The third gate's declaration (INDEX 557),
+    # honoured under the loop's own rule: the seal
+    # well-formed, the case's own component exactly,
+    # and the delivery itself standing.
+    sealed_floor = gp.get("delivery_floor")
+    honoured_floor = sealed_floor if (
+        isinstance(sealed_floor, dict)
+        and set(sealed_floor) == {"min_words"}
+        and isinstance(
+            sealed_floor.get("min_words"), int)
+        and not isinstance(
+            sealed_floor.get("min_words"), bool)
+        and sealed_floor["min_words"] >= 1
+        and (content or {}).get("delivery_floor")
+        == sealed_floor
+        and honoured_delivery is not None) else None
     if deliverable is None and \
             isinstance(honoured_delivery, dict):
         deliverable = honoured_delivery.get("destination")
@@ -3095,6 +3139,10 @@ def _derive_staged_core(events, state, gen, content,
     elif stage == "task":
         task = {"assignment": content.get("assignment"),
                 "deliverable": deliverable_text}
+        if honoured_floor is not None:
+            task["delivery_floor"] = \
+                _STAGED_TASK_FLOOR_STATEMENT.format(
+                    min_words=honoured_floor["min_words"])
         verification = content.get("verification_list")
         if isinstance(verification, list):
             task["verification_list"] = copy.deepcopy(
@@ -3212,6 +3260,41 @@ def _derive_staged_core(events, state, gen, content,
         if evidence_correction is not None:
             staged["delivery_evidence_gate_correction"] = \
                 evidence_correction
+        length_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_LENGTH_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                lp = ev["payload"]
+                count = lp.get("word_count")
+                floor = lp.get("min_words")
+                length_correction = {
+                    "what_arrived":
+                        _length_gate_what_arrived(count)
+                        if isinstance(count, int)
+                        and not isinstance(count, bool)
+                        else None,
+                    "contribution_seq":
+                        lp.get("contribution_seq"),
+                    "text_sha256": lp.get("text_sha256"),
+                    "word_count": count,
+                    "min_words": floor,
+                    "instruction":
+                        _STAGED_LENGTH_GATE_INSTRUCTION
+                        .format(word_count=count,
+                                min_words=floor)
+                        if isinstance(count, int)
+                        and not isinstance(count, bool)
+                        and isinstance(floor, int)
+                        and not isinstance(floor, bool)
+                        else None}
+        if length_correction is not None:
+            staged["delivery_length_gate_correction"] = \
+                length_correction
     if stage == "task":
         staged["tool_list"] = _staged_tool_menu(
             catalogue, deliverable=deliverable)
@@ -3535,6 +3618,7 @@ def _loop_result(events, state, run_dir=None):
     delivery_gates = {}
     delivery_stage_gates = {}
     delivery_evidence_gates = {}
+    delivery_length_gates = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -3635,6 +3719,18 @@ def _loop_result(events, state, run_dir=None):
                                 ev, aid):
                 continue
             delivery_evidence_gates.setdefault(
+                aid, []).append(ev)
+        elif t == "DELIVERY_LENGTH_GATE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem(
+                    "delivery_length_gate_wrong_actor",
+                    assembly_id=aid, at_seq=seq,
+                    actor=ev["actor"])
+            if binding_problems("delivery_length_gate",
+                                ev, aid):
+                continue
+            delivery_length_gates.setdefault(
                 aid, []).append(ev)
         elif t == "TRANSLATION_RECORDED":
             # Native adapter piece (N32/N33): the
@@ -3853,6 +3949,50 @@ def _loop_result(events, state, run_dir=None):
                         at_seq=activated[aid])
         elif case_evidence is not None:
             problem("delivery_evidence_declaration_"
+                    "unsealed",
+                    assembly_id=aid, at_seq=activated[aid])
+        # The delivery-length declaration (the third
+        # gate, INDEX 557): the generator seals the
+        # pinned case's component into the assembly's
+        # record beside the delivery declaration; the
+        # two must be one declaration, well-formed —
+        # and the seal stands only where the door it
+        # guards stands, since the floor is a property
+        # of the delivery. The working set is not asked
+        # of it: the floor's subject is the contributed
+        # text, which stands wherever the door stands.
+        floor = gen["payload"].get(
+            "delivery_floor") if gen is not None \
+            else None
+        case_floor = pinned_case_content(aid).get(
+            "delivery_floor")
+        if floor is not None:
+            if not isinstance(floor, dict) or \
+                    set(floor) != {"min_words"} or \
+                    not isinstance(
+                        floor.get("min_words"), int) or \
+                    isinstance(
+                        floor.get("min_words"), bool) or \
+                    floor["min_words"] < 1:
+                problem(
+                    "delivery_floor_declaration_"
+                    "malformed",
+                    assembly_id=aid,
+                    at_seq=activated[aid],
+                    delivery_floor=floor)
+            elif case_floor != floor:
+                problem(
+                    "delivery_floor_declaration_"
+                    "mismatch",
+                    assembly_id=aid,
+                    at_seq=activated[aid])
+            elif delivery is None:
+                problem("delivery_floor_without_"
+                        "delivery",
+                        assembly_id=aid,
+                        at_seq=activated[aid])
+        elif case_floor is not None:
+            problem("delivery_floor_declaration_"
                     "unsealed",
                     assembly_id=aid, at_seq=activated[aid])
 
@@ -4171,6 +4311,37 @@ def _loop_result(events, state, run_dir=None):
                             "evidence_missing",
                             assembly_id=aid, at_seq=seq,
                             missing=missing)
+            # The length gate's word (INDEX 557): a
+            # contribution the gate set aside unfiled
+            # may never stand filed, and no filing may
+            # stand at all where the filed text, counted
+            # from the record itself, falls short of
+            # the case's declared floor.
+            if any(g["payload"].get("contribution_seq")
+                   == p.get("contribution_seq")
+                   for g in delivery_length_gates.get(
+                       aid, [])):
+                problem("deliverable_filed_from_length_"
+                        "gated_contribution",
+                        assembly_id=aid, at_seq=seq)
+            floor = (gen or {}).get("payload", {}).get(
+                "delivery_floor")
+            if isinstance(floor, dict) and \
+                    set(floor) == {"min_words"} and \
+                    isinstance(
+                        floor.get("min_words"), int) and \
+                    not isinstance(
+                        floor.get("min_words"), bool) and \
+                    floor["min_words"] >= 1 and \
+                    pinned_case_content(aid).get(
+                        "delivery_floor") == floor and \
+                    isinstance(text, str):
+                if len(text.split()) < floor["min_words"]:
+                    problem("deliverable_filed_below_"
+                            "length_floor",
+                            assembly_id=aid, at_seq=seq,
+                            word_count=len(text.split()),
+                            min_words=floor["min_words"])
     for aid, evs in delivery_gates.items():
         iteration_seqs = {ev["event_seq"] for ev in
                           iterations.get(aid, [])}
@@ -4322,6 +4493,95 @@ def _loop_result(events, state, run_dir=None):
                             assembly_id=aid, at_seq=seq,
                             recorded=p.get("missing"),
                             recomputed=recomputed)
+
+    # The length gate's events (the third gate, INDEX
+    # 557), verified against the record itself: a gate
+    # binds a standing iteration of a floor-declared
+    # assembly, names the contribution it set aside —
+    # whose text must hash to the gate's digest, with
+    # nothing filed — and names the count that text
+    # arrived with, re-derived from the recorded text
+    # itself, and the floor it fell short of, which
+    # must be the declaration's own. The correction the
+    # gate owes the next package is verified in the
+    # staged core's reconstruction above where the
+    # presentation contract stands.
+    for aid, evs in delivery_length_gates.items():
+        gen = generated.get(aid)
+        floor = (gen or {}).get("payload", {}).get(
+            "delivery_floor")
+        declared = isinstance(floor, dict) and \
+            set(floor) == {"min_words"} and \
+            isinstance(floor.get("min_words"), int) and \
+            not isinstance(
+                floor.get("min_words"), bool) and \
+            floor["min_words"] >= 1 and \
+            pinned_case_content(aid).get(
+                "delivery_floor") == floor
+        iteration_seqs = {ev["event_seq"] for ev in
+                          iterations.get(aid, [])}
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if not declared:
+                problem("delivery_length_gate_without_"
+                        "declaration",
+                        assembly_id=aid, at_seq=seq)
+            if p.get("iteration_seq") not in \
+                    iteration_seqs:
+                problem("delivery_length_gate_"
+                        "iteration_mismatch",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            contribution = _events_by_seq.get(
+                p.get("contribution_seq"))
+            text = (contribution or {}).get(
+                "payload", {}).get("text") \
+                if contribution is not None else None
+            digest = hashlib.sha256(
+                text.encode("utf-8")).hexdigest() \
+                if isinstance(text, str) else None
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION" \
+                    or digest is None or \
+                    digest != p.get("text_sha256") or \
+                    p.get("filed") is not False or \
+                    not isinstance(
+                        p.get("word_count"), int) or \
+                    isinstance(
+                        p.get("word_count"), bool) or \
+                    not isinstance(
+                        p.get("min_words"), int) or \
+                    isinstance(
+                        p.get("min_words"), bool):
+                problem("delivery_length_gate_payload_"
+                        "malformed",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            if isinstance(text, str) and \
+                    p.get("word_count") \
+                    != len(text.split()):
+                problem("delivery_length_gate_count_"
+                        "mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        recorded=p.get("word_count"),
+                        recomputed=len(text.split()))
+            if declared and \
+                    p.get("min_words") \
+                    != floor["min_words"]:
+                problem("delivery_length_gate_floor_"
+                        "mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        recorded=p.get("min_words"),
+                        declared=floor["min_words"])
+            if isinstance(text, str) and \
+                    len(text.split()) \
+                    >= p.get("min_words"):
+                problem("delivery_length_gate_not_"
+                        "below_floor",
+                        assembly_id=aid, at_seq=seq,
+                        word_count=len(text.split()),
+                        min_words=p.get("min_words"))
 
     # Dispatch standing by instance, for the stall checks:
     # each dispatch's first outcome position, and whether an

@@ -329,6 +329,7 @@ class Generator:
                  freshness_suspended=False,
                  delivery_declaration=False,
                  delivery_evidence_declaration=False,
+                 delivery_floor_declaration=False,
                  presentation_declaration=False,
                  worked_example=None):
         """Assemble one instance for a seat slot (R37/R38).
@@ -435,6 +436,28 @@ class Generator:
         that stands declared only there). A generation
         asked to seal it anywhere else, or against a
         case carrying it missing or malformed, fails
+        preflight whole. The default seals nothing:
+        every other generation's contributions are
+        adjudicated exactly as they always have been.
+
+        `delivery_floor_declaration` (the third gate,
+        INDEX 557): where the case declares the length
+        a delivery must reach — a `delivery_floor`
+        component naming the deliverable's minimum
+        length in words — sealing it binds that
+        declaration to this assembly beside the
+        delivery declaration, so the loop's door
+        adjudicates a contribution's sufficiency
+        against the case's own word. The declaration
+        seals only with the door (the delivery
+        declaration sealed in the same generation):
+        the floor is a property of the delivery, and
+        its subject — the contributed text itself —
+        stands wherever the door stands, so unlike the
+        evidence declaration it does not require the
+        combined configuration. A generation asked to
+        seal it without the door, or against a case
+        carrying it missing or malformed, fails
         preflight whole. The default seals nothing:
         every other generation's contributions are
         adjudicated exactly as they always have been.
@@ -600,6 +623,56 @@ class Generator:
                             "sandbox addresses)"],
                         "seat": seat_id}
             delivery_evidence = evidence
+        delivery_floor = None
+        if delivery_floor_declaration:
+            # The third gate (INDEX 557): the
+            # delivery-length declaration stands in the
+            # pinned case's content as its own component
+            # beside the delivery declaration — the
+            # minimum word count a contribution must
+            # reach before it is adjudicated as a
+            # delivery. Sealing binds it to this assembly
+            # exactly as the delivery declaration is
+            # bound. It seals only with the door (the
+            # delivery declaration sealed in the same
+            # generation): the floor is a property of
+            # the delivery itself, and its subject — the
+            # contributed text — stands wherever the
+            # door stands, so the combined configuration
+            # is not required. Fail preflight whole, as
+            # the other declarations do.
+            if not delivery_declaration:
+                return {"ok": False,
+                        "problems": [
+                            "the delivery-length "
+                            "declaration was asked to be "
+                            "sealed but this generation "
+                            "does not seal the delivery "
+                            "declaration; without the door "
+                            "there is nothing for the "
+                            "length gate to guard"],
+                        "seat": seat_id}
+            content = eff.get("content") or {}
+            floor = content.get("delivery_floor")
+            if not isinstance(floor, dict) or \
+                    set(floor) != {"min_words"} or \
+                    not isinstance(
+                        floor.get("min_words"), int) or \
+                    isinstance(
+                        floor.get("min_words"), bool) or \
+                    floor["min_words"] < 1:
+                return {"ok": False,
+                        "problems": [
+                            "the delivery-length "
+                            "declaration was asked to be "
+                            "sealed but the pinned case "
+                            "carries no well-formed "
+                            "delivery-length declaration "
+                            "(a mapping naming exactly "
+                            "min_words: a positive whole "
+                            "number of words)"],
+                        "seat": seat_id}
+            delivery_floor = floor
         n = self._next_number(state)
         instance_id = f"inst-{seat_id}-{n}"
         assembly_id = f"assembly-{seat_id}-{n}"
@@ -669,6 +742,14 @@ class Generator:
             # or against a case carrying it malformed.
             record["delivery_evidence"] = copy.deepcopy(
                 delivery_evidence)
+        if delivery_floor_declaration:
+            # The third gate (INDEX 557), sealed beside
+            # the delivery declaration it guards —
+            # preflight above has already refused it
+            # without the door or against a case carrying
+            # it malformed.
+            record["delivery_floor"] = copy.deepcopy(
+                delivery_floor)
         if freshness_suspended:
             # Ben's R31 ruling (2026-11-24), sealed as a
             # declaration beside the contracts: the

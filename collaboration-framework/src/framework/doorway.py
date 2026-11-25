@@ -2785,6 +2785,81 @@ class Doorway:
             self.store.commit()
             return ev
 
+    def record_delivery_length_gate(self, assembly_id,
+                                    iteration_seq,
+                                    contribution_seq,
+                                    text_sha256, word_count,
+                                    min_words):
+        """The delivery-length gate's record (the third
+        gate, INDEX 557): where the case declares the
+        length a delivery must reach, a contribution
+        offered below that floor is not adjudicated as
+        a delivery — it stands in the record as the
+        worker's act, set aside unfiled, and this event
+        answers it: the contribution it names (by its
+        event position, with its text's SHA-256), the
+        word count its text arrived with, the floor it
+        fell short of, and the fact that nothing was
+        filed. The correction the next wake's package
+        carries is derived from this event by the loop
+        and re-derived by the checker, exactly as the
+        evidence gate's is. The named contribution must
+        stand in the record as this instance's worker's
+        act, and its text must hash to the named
+        digest — a gate names the contribution it set
+        aside, never another."""
+        with self.store.serialized():
+            state, entry = self._door_event_binding(
+                assembly_id, "DELIVERY_LENGTH_GATE")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if not any(it.get("event_seq") == iteration_seq
+                       for it in loop.get("iterations")
+                       or []):
+                self._loop_refuse(
+                    "DELIVERY_LENGTH_GATE", instance_id,
+                    "the named iteration does not stand "
+                    "for this activation; a gate binds an "
+                    "existing iteration")
+            contribution = None
+            for ev in self.store.all_events():
+                if ev["event_seq"] == contribution_seq:
+                    contribution = ev
+                    break
+            text = (contribution or {}).get(
+                "payload", {}).get("text")
+            digest = hashlib.sha256(
+                text.encode("utf-8")).hexdigest() \
+                if isinstance(text, str) else None
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION" \
+                    or digest is None or \
+                    digest != text_sha256:
+                self._loop_refuse(
+                    "DELIVERY_LENGTH_GATE", instance_id,
+                    "the named contribution does not stand "
+                    "in the record with the named text "
+                    "hash; a gate names the contribution "
+                    "it set aside")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration_seq": iteration_seq,
+                "contribution_seq": contribution_seq,
+                "text_sha256": text_sha256,
+                "word_count": word_count,
+                "min_words": min_words,
+                "filed": False}
+            ev = self.store.append(
+                "DELIVERY_LENGTH_GATE", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
     def record_loop_stalled(self, assembly_id, ground,
                             detail=None, terminal_step=None):
         """The loop's stall report (Piece A3, R50): the

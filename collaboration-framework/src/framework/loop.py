@@ -879,6 +879,59 @@ def _evidence_gate_correction(catalogue, contribution_seq,
             catalogue, missing)}
 
 
+# The delivery-length gate's texts (the third gate,
+# INDEX 557): what arrived names the count the
+# contribution arrived with; the instruction names
+# what is needed — the floor the case declares, with
+# the target standing where the job sets it — and what
+# to do. Both are pure functions of the gate event's
+# own payload, so the checker re-derives them
+# byte-exact from the record; its copies stand in
+# checker.py. The task stage's floor statement is the
+# same shape: the floor drawn in his task before it
+# can bite, as the evidence gate's edge is drawn by
+# the case that names it.
+def _length_gate_what_arrived(word_count):
+    return (f"a contribution of {word_count} words, "
+            f"offered as your delivery")
+
+
+STAGED_LENGTH_GATE_INSTRUCTION = (
+    "Nothing was filed. Your contribution arrived at "
+    "{word_count} words; the deliverable must run to "
+    "at least {min_words} words — the target stands "
+    "at about 600 words, and the floor is a minimum, "
+    "not the aim. Write to the full length from the "
+    "sources you have gathered, then offer your "
+    "contribution again. The text you sent stands in "
+    "the record, set aside unfiled.")
+STAGED_TASK_FLOOR_STATEMENT = (
+    "The deliverable must run to at least {min_words} "
+    "words. A contribution shorter than that is set "
+    "aside unfiled, and you will be told the count "
+    "yours arrived with.")
+
+
+def _length_gate_correction(contribution_seq,
+                            text_sha256, word_count,
+                            min_words):
+    """The correction a delivery-length gate leaves
+    for the next wake's package, derived from the gate
+    event's facts: what arrived (with its count), the
+    contribution it names, the count and the floor,
+    and the instruction."""
+    return {
+        "what_arrived": _length_gate_what_arrived(
+            word_count),
+        "contribution_seq": contribution_seq,
+        "text_sha256": text_sha256,
+        "word_count": word_count,
+        "min_words": min_words,
+        "instruction": STAGED_LENGTH_GATE_INSTRUCTION
+        .format(word_count=word_count,
+                min_words=min_words)}
+
+
 def _evidence_address_stands(entries, requested, address):
     """Whether one named address's whole content stands
     in the working set, from the set's entries and the
@@ -1510,6 +1563,29 @@ class Loop:
                 and _generated.get("working_set_contract")
                 == _tool_policy.WORKING_SET_CONTRACT):
             _delivery_evidence = None
+        # The third gate (INDEX 557): the
+        # delivery-length declaration the loop's door
+        # honours is read the same way — the generator's
+        # seal, where it equals the pinned case's own
+        # component exactly, standing well-formed, and
+        # only where the delivery itself stands (the
+        # gate guards the door; where no door stands
+        # there is nothing to guard). The floor speaks
+        # of the contributed text, which stands wherever
+        # the door stands, so no working-set declaration
+        # is asked of it.
+        _delivery_floor = _generated.get("delivery_floor")
+        if not (isinstance(_delivery_floor, dict)
+                and set(_delivery_floor) == {"min_words"}
+                and isinstance(
+                    _delivery_floor.get("min_words"), int)
+                and not isinstance(
+                    _delivery_floor.get("min_words"), bool)
+                and _delivery_floor["min_words"] >= 1
+                and (content or {}).get("delivery_floor")
+                == _delivery_floor
+                and _delivery is not None):
+            _delivery_floor = None
         return {
             "delivery": copy.deepcopy(_delivery),
             "working_set_declared":
@@ -1530,6 +1606,10 @@ class Loop:
             "delivery_stage_gate_error": None,
             "delivery_evidence_gate_correction": None,
             "delivery_evidence_gate_error": None,
+            "delivery_floor": copy.deepcopy(
+                _delivery_floor),
+            "delivery_length_gate_correction": None,
+            "delivery_length_gate_error": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -1812,6 +1892,11 @@ class Loop:
                         ctx, "runtime_failure",
                         detail=ctx[
                             "delivery_evidence_gate_error"])
+                if ctx.get("delivery_length_gate_error"):
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=ctx[
+                            "delivery_length_gate_error"])
                 if ctx.get("deliverable_filed") is not None:
                     return self._delivered_result(ctx)
 
@@ -2103,6 +2188,10 @@ class Loop:
             return self._stall(
                 ctx, "runtime_failure",
                 detail=ctx["delivery_evidence_gate_error"])
+        if ctx.get("delivery_length_gate_error"):
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=ctx["delivery_length_gate_error"])
         if ctx.get("deliverable_filed") is not None:
             return self._delivered_result(ctx)
         return "continue"
@@ -2768,6 +2857,13 @@ class Loop:
                     "delivery_evidence_gate_correction"] \
                     = ctx.pop(
                         "delivery_evidence_gate_correction")
+            if ctx.get(
+                    "delivery_length_gate_correction") \
+                    is not None:
+                ordered[
+                    "delivery_length_gate_correction"] \
+                    = ctx.pop(
+                        "delivery_length_gate_correction")
             ordered["case"] = package["case"]
             if working_set is not None:
                 ordered["working_set"] = working_set
@@ -2949,6 +3045,18 @@ class Loop:
         elif stage == "task":
             task = {"assignment": content.get("assignment"),
                     "deliverable": deliverable_text}
+            # The third gate drawn before it bites
+            # (INDEX 557): where the case declares the
+            # delivery's length floor and the door
+            # honours it, the task stage's deliverable
+            # statement states the floor in words — the
+            # worker reads the minimum in his task
+            # before he can deliver against it.
+            floor = ctx.get("delivery_floor")
+            if floor is not None:
+                task["delivery_floor"] = \
+                    STAGED_TASK_FLOOR_STATEMENT.format(
+                        min_words=floor["min_words"])
             verification = content.get("verification_list")
             if isinstance(verification, list):
                 task["verification_list"] = copy.deepcopy(
@@ -3012,6 +3120,12 @@ class Loop:
             staged["delivery_evidence_gate_correction"] \
                 = ordered[
                     "delivery_evidence_gate_correction"]
+        if ordered.get(
+                "delivery_length_gate_correction") \
+                is not None:
+            staged["delivery_length_gate_correction"] \
+                = ordered[
+                    "delivery_length_gate_correction"]
         staged["tool_results"] = base["tool_results"]
         if ordered.get("working_set") is not None:
             staged["working_set"] = ordered["working_set"]
@@ -4329,6 +4443,62 @@ class Loop:
                 ev["event_seq"], digest, missing)
         return True
 
+    def _try_delivery_length_gate(self, ctx, proposal,
+                                  ev):
+        """The delivery-length gate's decision (the
+        third gate, INDEX 557): True where this
+        contribution is gated — the case declares the
+        length a delivery must reach, and the
+        contribution's text, counted as the office
+        counts it, falls short of the floor. The count
+        is taken from the contribution's own text, the
+        very text the record holds. The gate records
+        its own event naming the contribution, the
+        count it arrived with and the floor, and
+        stashes the correction for the next wake's
+        package; nothing is filed and the loop does not
+        complete. The firing consumes the iteration, as
+        the other gates' do, and it may fire again on a
+        later contribution that still falls short. A
+        gate that cannot be recorded names its error on
+        the context and still returns True — an
+        unrecorded gate must never silently become a
+        filing — and the caller stalls on the error.
+        Everywhere else (no declaration standing, or
+        the floor met) the contribution is not the
+        gate's business and adjudication proceeds
+        exactly as it stands."""
+        declaration = ctx.get("delivery_floor")
+        if declaration is None:
+            return False
+        text = proposal["payload"].get("text")
+        if not isinstance(text, str):
+            return False
+        word_count = len(text.split())
+        min_words = declaration["min_words"]
+        if word_count >= min_words:
+            return False
+        digest = hashlib.sha256(
+            text.encode("utf-8")).hexdigest()
+        try:
+            gate_ev = \
+                self.doorway.record_delivery_length_gate(
+                    ctx["assembly_id"],
+                    ctx.get("iteration_event_seq"),
+                    ev["event_seq"], digest, word_count,
+                    min_words)
+        except Exception as exc:  # noqa: BLE001
+            ctx["delivery_length_gate_error"] = (
+                f"the delivery length gate could not be "
+                f"recorded: {type(exc).__name__}: {exc}")
+            return True
+        ctx["recorded"].append(gate_ev)
+        ctx["delivery_length_gate_correction"] = \
+            _length_gate_correction(
+                ev["event_seq"], digest, word_count,
+                min_words)
+        return True
+
     # ---------------------------------------------- adjudication
     def _adjudicate(self, ctx, data):
         """Effect a validated response, per act and per
@@ -4397,6 +4567,23 @@ class Loop:
                     # watch: before the task stage this
                     # gate is never reached.
                     if self._try_delivery_evidence_gate(
+                            ctx, proposal, ev):
+                        continue
+                    # The length gate (the third gate,
+                    # INDEX 557): where the case declares
+                    # the length a delivery must reach, a
+                    # contribution arriving under that
+                    # floor is set aside unfiled and
+                    # answered with a correction naming
+                    # the count it arrived with — it is
+                    # not adjudicated as a delivery. It
+                    # stands last in the family's order:
+                    # the stage gate watches the stages
+                    # before the task, the evidence gate
+                    # watches the gathering, and a brief
+                    # is not judged for sufficiency before
+                    # its evidence stands.
+                    if self._try_delivery_length_gate(
                             ctx, proposal, ev):
                         continue
                     # The door (door scope, 2026-11-24):

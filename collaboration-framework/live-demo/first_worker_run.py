@@ -343,7 +343,8 @@ def _commission_brief(assignment, manifest_hash,
                       glossary=None, bounds=None,
                       journal=None, onboarding=None,
                       delivery=None, role_memory=None,
-                      opening=None, delivery_evidence=None):
+                      opening=None, delivery_evidence=None,
+                      delivery_floor=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
@@ -403,6 +404,14 @@ def _commission_brief(assignment, manifest_hash,
         brief["delivery_evidence"] = {
             "addresses": list(
                 delivery_evidence["addresses"])}
+    if delivery_floor is not None:
+        # The third gate (INDEX 557): the case's own
+        # word on the length a delivery must reach —
+        # the minimum word count a contribution must
+        # arrive with before it is adjudicated as a
+        # delivery.
+        brief["delivery_floor"] = {
+            "min_words": delivery_floor["min_words"]}
     if role_memory is not None:
         brief["role_memory"] = [dict(item)
                                 for item in role_memory]

@@ -435,6 +435,16 @@ DELIVERY_EVIDENCE = {"addresses": [
     "sources/stock-take.md", "sources/a3-pass.md",
     "sources/index-tail.md"]}
 
+# The delivery-length declaration (the third gate,
+# INDEX 557): the floor under this job's brief — the
+# minimum word count a contribution must arrive with
+# before the door adjudicates it as a delivery, set
+# just under the agreed 590–610 band as its hard
+# floor. The case carries it as its own component and
+# the generation seals it beside the delivery
+# declaration; the door adjudicates against it.
+DELIVERY_FLOOR = {"min_words": 550}
+
 ROLE_MEMORY = [
     {"observation": "Delivers finished writing as "
                     "plain prose in the reply itself.",
@@ -801,6 +811,7 @@ def _commission_and_issue(store, manifest_hash,
                           onboarding=ONBOARDING,
                           delivery=DELIVERY,
                           delivery_evidence=DELIVERY_EVIDENCE,
+                          delivery_floor=DELIVERY_FLOOR,
                           role_memory=ROLE_MEMORY,
                           opening=None):
     """Commission, material sealing, office issue and
@@ -822,6 +833,7 @@ def _commission_and_issue(store, manifest_hash,
                               delivery=delivery,
                               delivery_evidence=
                               delivery_evidence,
+                              delivery_floor=delivery_floor,
                               role_memory=role_memory,
                               opening=opening)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
@@ -898,6 +910,13 @@ def _commission_and_issue(store, manifest_hash,
         raise RuntimeError(
             "the issued case does not carry the "
             "delivery-evidence declaration as its own "
+            "component")
+    if delivery_floor is not None and \
+            (content or {}).get("delivery_floor") \
+            != delivery_floor:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "delivery-length declaration as its own "
             "component")
     if role_memory is not None and \
             (content or {}).get("role_memory") \
@@ -1170,6 +1189,7 @@ def run_demo():
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
+                delivery_floor_declaration=True,
                 presentation_declaration=True,
                 worked_example=worked_example)
         except ModelPinMismatchError as mismatch:
@@ -1786,6 +1806,7 @@ def verify_config():
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
+                delivery_floor_declaration=True,
                 presentation_declaration=True,
                 worked_example=verify_example)
             expect("generation: stub-identity generation "
@@ -1921,6 +1942,21 @@ def verify_config():
                        json.dumps(
                            sealed.get(
                                "delivery_evidence"))[:300])
+                expect("generation: the sealed record "
+                       "carries the delivery-length "
+                       "declaration, bound to the case's "
+                       "own word (the third gate, INDEX "
+                       "557 — the brief must arrive with "
+                       "at least the declared floor of "
+                       "words before the door files it)",
+                       sealed.get("delivery_floor")
+                       == DELIVERY_FLOOR
+                       and (case_content or {}).get(
+                           "delivery_floor")
+                       == DELIVERY_FLOOR,
+                       json.dumps(
+                           sealed.get(
+                               "delivery_floor"))[:300])
                 expect("commission: the issued case "
                        "carries the role-memory snapshot "
                        "as its own component, unchanged "

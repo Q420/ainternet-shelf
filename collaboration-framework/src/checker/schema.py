@@ -221,7 +221,10 @@ SCHEMA = {
                         "t": "obj", "f": {
                             "addresses": {
                                 "t": "list",
-                                "v": {"t": "str"}}}}}},
+                                "v": {"t": "str"}}}}},
+                    "delivery_floor": {"t": "opt", "v": {
+                        "t": "obj", "f": {
+                            "min_words": {"t": "int"}}}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

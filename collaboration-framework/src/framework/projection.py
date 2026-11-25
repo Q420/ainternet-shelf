@@ -134,6 +134,12 @@ _CASE_CONTENT = _fields({
     # delivery.
     "delivery_evidence": _opt(_obj({
         "addresses": _list(_STR)})),
+    # The third gate's case component (INDEX 557): the
+    # delivery-length declaration — the minimum word
+    # count a contribution must reach before it is
+    # adjudicated as a delivery.
+    "delivery_floor": _opt(_obj({
+        "min_words": _INT})),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({

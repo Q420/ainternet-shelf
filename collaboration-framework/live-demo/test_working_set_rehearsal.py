@@ -2282,6 +2282,273 @@ def main():
         print(f"delivery-evidence section: "
               f"{CHECKS[0] - evidence_before} checks")
 
+        # ============ the third gate: length ========
+        # (INDEX 557): the case declares the length a
+        # delivery must reach; the door adjudicates a
+        # contribution's sufficiency against it — last
+        # in the family's order, after the stage gate
+        # and the evidence gate.
+        length_before = CHECKS[0]
+        floor = rehearsal.DELIVERY_FLOOR["min_words"]
+
+        def length_parts(scenario_work):
+            evs = _events(scenario_work)
+            gates = [_payload(e) for e in evs
+                     if e["type"]
+                     == "DELIVERY_LENGTH_GATE"]
+            egates = [_payload(e) for e in evs
+                      if e["type"]
+                      == "DELIVERY_EVIDENCE_GATE"]
+            sgates = [_payload(e) for e in evs
+                      if e["type"]
+                      == "DELIVERY_STAGE_GATE"]
+            filings = [_payload(e) for e in evs
+                       if e["type"] == "DELIVERABLE_FILED"]
+            contribs = {e["event_seq"]: _payload(e)
+                        for e in evs
+                        if e["type"] == "CONTRIBUTION"}
+            return evs, gates, egates, sgates, filings, \
+                contribs
+
+        check("length texts: the rehearsal's counted "
+              "texts stand at exactly one under the "
+              "floor and exactly at it, under the "
+              "office's own count",
+              len(rehearsal.LENGTH_TEXT_UNDER.split())
+              == floor - 1
+              and len(rehearsal.LENGTH_TEXT_AT.split())
+              == floor,
+              f"{len(rehearsal.LENGTH_TEXT_UNDER.split())}"
+              f" / {len(rehearsal.LENGTH_TEXT_AT.split())}"
+              f" of {floor}")
+
+        # ---- the boundary: evidence standing, one
+        # word under the floor gates; exactly at the
+        # floor files.
+        lgrep = reports["length_gate"]
+        lgwork = work / "length-gate"
+        check("length-gate: the generation seals the "
+              "case's delivery-length declaration beside "
+              "its evidence declaration",
+              lgrep["sealed_delivery_floor"]
+              == rehearsal.DELIVERY_FLOOR
+              and lgrep["sealed_delivery_evidence"]
+              == rehearsal.DELIVERY_EVIDENCE,
+              f"{lgrep['sealed_delivery_floor']}")
+        check("length-gate: the run completes on the "
+              "resubmission, in eight iterations — the "
+              "gate consuming exactly its own",
+              lgrep["outcome"] == "yield"
+              and lgrep["iterations"] == 8,
+              f"{lgrep['outcome']} / {lgrep['iterations']}")
+        _levs, lgates, legates, lsgates, lfilings, \
+            lcontribs = length_parts(lgwork)
+        check("length-gate: one length gate stands — "
+              "549 words arrived against the 550 floor, "
+              "nothing filed — and neither the evidence "
+              "gate nor the stage gate fired (the "
+              "evidence stood, the stage was the task's)",
+              len(lgates) == 1
+              and lgates[0].get("word_count") == floor - 1
+              and lgates[0].get("min_words") == floor
+              and lgates[0].get("filed") is False
+              and legates == [] and lsgates == [],
+              f"{lgates}")
+        check("length-gate: the gate names its own "
+              "contribution, whose text is the under-"
+              "floor brief, by its hash",
+              lcontribs.get(
+                  lgates[0].get("contribution_seq"), {})
+              .get("text") == rehearsal.LENGTH_TEXT_UNDER
+              and lgates[0].get("text_sha256")
+              == hashlib.sha256(
+                  rehearsal.LENGTH_TEXT_UNDER
+                  .encode("utf-8")).hexdigest(),
+              f"{lgates}")
+        check("length-gate: the only filing names the "
+              "resubmission at exactly the floor — the "
+              "gated contribution was never filed",
+              len(lfilings) == 1
+              and lfilings[0].get("contribution_seq")
+              != lgates[0].get("contribution_seq")
+              and lfilings[0].get("content_sha256")
+              == hashlib.sha256(
+                  rehearsal.LENGTH_TEXT_AT
+                  .encode("utf-8")).hexdigest(),
+              f"{lfilings}")
+        lgpkgs = {k: v[0] for k, v in
+                  _staged_packages(lgwork).items()}
+        lgcorr = lgpkgs[8].get(
+            "delivery_length_gate_correction") or {}
+        check("length-gate: the correction rides the "
+              "wake after the gate, naming both counts "
+              "— what arrived and what is needed",
+              lgcorr.get("word_count") == floor - 1
+              and lgcorr.get("min_words") == floor
+              and lgcorr.get("contribution_seq")
+              == lgates[0].get("contribution_seq")
+              and lgcorr.get("text_sha256")
+              == lgates[0].get("text_sha256")
+              and f"{floor - 1} words"
+              in lgcorr.get("what_arrived", "")
+              and f"{floor - 1} words"
+              in lgcorr.get("instruction", "")
+              and f"at least {floor} words"
+              in lgcorr.get("instruction", ""),
+              f"{lgcorr}")
+        check("length-gate: no other wake carries the "
+              "correction",
+              all("delivery_length_gate_correction"
+                  not in lgpkgs[k]
+                  for k in lgpkgs if k != 8),
+              f"{sorted(lgpkgs)}")
+        check("length-gate: the floor is stated in his "
+              "task before it can bite — the task stage's "
+              "deliverable statement names the minimum, "
+              "and no other stage's package states it",
+              f"at least {floor} words"
+              in (lgpkgs[4].get("task") or {}).get(
+                  "delivery_floor", "")
+              and all("task" not in lgpkgs[k]
+                      for k in lgpkgs if k != 4),
+              f"{lgpkgs[4].get('task')}")
+        _check_commitments(
+            "length-gate", lgwork, lgpkgs, 8)
+        _check_checker("length-gate", lgrep)
+
+        # ---- the order, from the evidence side: a
+        # short contribution with evidence missing is
+        # the evidence gate's, not the length gate's.
+        loerep = reports["length_order_evidence"]
+        loework = work / "length-order-evidence"
+        check("length-order-evidence: the run "
+              "completes in nine iterations — each gate "
+              "consuming exactly its own",
+              loerep["outcome"] == "yield"
+              and loerep["iterations"] == 9,
+              f"{loerep['outcome']} / "
+              f"{loerep['iterations']}")
+        _loeevs, loelgates, loeegates, loesgates, \
+            loefilings, loecontribs = length_parts(
+                loework)
+        short_count = len(
+            rehearsal.EVIDENCE_BRIEF_TEXT.split())
+        check("length-order-evidence: the first short "
+              "contribution — evidence missing — drew "
+              "the evidence gate alone; the same brief "
+              "with the evidence standing drew the "
+              "length gate, in that order",
+              len(loeegates) == 1
+              and loeegates[0].get("missing") == addresses
+              and len(loelgates) == 1
+              and loelgates[0].get("word_count")
+              == short_count
+              and loelgates[0].get("contribution_seq")
+              != loeegates[0].get("contribution_seq")
+              and loesgates == []
+              and len(loefilings) == 1
+              and loefilings[0].get("contribution_seq")
+              not in (
+                  loeegates[0].get("contribution_seq"),
+                  loelgates[0].get("contribution_seq")),
+              f"evidence {loeegates} / length {loelgates}")
+        loepkgs = {k: v[0] for k, v in
+                   _staged_packages(loework).items()}
+        check("length-order-evidence: the evidence "
+              "correction rides wake 5 and the length "
+              "correction wake 9 — each gate's answer at "
+              "its own next wake, neither standing in "
+              "for the other",
+              "delivery_evidence_gate_correction"
+              in loepkgs[5]
+              and "delivery_length_gate_correction"
+              not in loepkgs[5]
+              and "delivery_length_gate_correction"
+              in loepkgs[9]
+              and loepkgs[9][
+                  "delivery_length_gate_correction"]
+              .get("word_count") == short_count,
+              f"{sorted(loepkgs)}")
+        _check_commitments(
+            "length-order-evidence", loework, loepkgs, 9)
+        _check_checker("length-order-evidence", loerep)
+
+        # ---- the order, from the stage side: a short
+        # contribution before the task is the stage
+        # gate's, not the length gate's.
+        losrep = reports["length_order_stage"]
+        loswork = work / "length-order-stage"
+        check("length-order-stage: the run completes "
+              "in seven iterations — the stage gate "
+              "consuming exactly its own",
+              losrep["outcome"] == "yield"
+              and losrep["iterations"] == 7,
+              f"{losrep['outcome']} / "
+              f"{losrep['iterations']}")
+        _losevs, loslgates, losegates, lossgates, \
+            losfilings, loscontribs = length_parts(
+                loswork)
+        check("length-order-stage: the short "
+              "contribution at the files stage drew the "
+              "stage gate alone — no evidence gate, no "
+              "length gate stands for it — and the "
+              "at-floor contribution filed",
+              len(lossgates) == 1
+              and lossgates[0].get("stage") == "files"
+              and loslgates == [] and losegates == []
+              and len(losfilings) == 1
+              and losfilings[0].get("contribution_seq")
+              != lossgates[0].get("contribution_seq"),
+              f"stage {lossgates} / length {loslgates}")
+        lospkgs = {k: v[0] for k, v in
+                   _staged_packages(loswork).items()}
+        check("length-order-stage: the stage correction "
+              "rides wake 4, and no wake carries a "
+              "length correction",
+              "delivery_stage_gate_correction"
+              in lospkgs[4]
+              and all(
+                  "delivery_length_gate_correction"
+                  not in lospkgs[k] for k in lospkgs),
+              f"{sorted(lospkgs)}")
+        _check_commitments(
+            "length-order-stage", loswork, lospkgs, 7)
+        _check_checker("length-order-stage", losrep)
+
+        # ---- the control: no floor declared — the
+        # evidence scenarios' short brief files exactly
+        # as it always has, and scenario G's record
+        # holds no length gate either.
+        _ewevs, ewlgates, _ewegates, _ewsgates, \
+            ewfilings2, _ewcontribs = length_parts(
+                ewwork)
+        check("length control: with no floor declared, "
+              "the evidence-whole run seals none, holds "
+              "no length gate, and its short brief — "
+              "well under any floor — files exactly as "
+              "it always has",
+              ewrep["sealed_delivery_floor"] is None
+              and ewlgates == []
+              and len(ewfilings2) == 1
+              and ewfilings2[0].get("content_sha256")
+              == hashlib.sha256(
+                  rehearsal.EVIDENCE_BRIEF_TEXT
+                  .encode("utf-8")).hexdigest()
+              and len(rehearsal.EVIDENCE_BRIEF_TEXT
+                      .split()) < floor,
+              f"{ewlgates}")
+        _s2evs, slgates, _segates, _ssgates, \
+            _sfilings2, _scontribs2 = length_parts(swork)
+        check("length control: the staged run seals no "
+              "length declaration and no length gate "
+              "stands in its record",
+              reports["staged"][
+                  "sealed_delivery_floor"] is None
+              and slgates == [],
+              f"{slgates}")
+        print(f"delivery-length section: "
+              f"{CHECKS[0] - length_before} checks")
+
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):
         # the journal's resting places are the worker's

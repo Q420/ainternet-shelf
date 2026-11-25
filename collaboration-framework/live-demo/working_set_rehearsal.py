@@ -1016,6 +1016,192 @@ def build_script_evidence_whole():
             "chat-raw-bounded": _probe_steps()}
 
 
+# The third gate's scenarios (INDEX 557): the
+# delivery-length gate. The declaration this job's case
+# carries beside the evidence declaration — the floor
+# under the brief.
+DELIVERY_FLOOR = {"min_words": 550}
+
+
+def _counted_text(word_count):
+    """A contributed text of exactly `word_count` words
+    under the office's count (whitespace-split): the
+    evidence brief's own words, extended word by word
+    from a plain sentence to the exact count — the
+    scripted stand-in's deliverable at a governed
+    length, so the gate's arithmetic is exercised at
+    its boundary, not near it."""
+    words = EVIDENCE_BRIEF_TEXT.split()
+    filler = ("the framework's record stands exactly "
+              "as the sources state it").split()
+    i = 0
+    while len(words) < word_count:
+        words.append(filler[i % len(filler)])
+        i += 1
+    return " ".join(words[:word_count])
+
+
+# One word under the floor, and exactly at it.
+LENGTH_TEXT_UNDER = _counted_text(
+    DELIVERY_FLOOR["min_words"] - 1)
+LENGTH_TEXT_AT = _counted_text(
+    DELIVERY_FLOOR["min_words"])
+
+
+def build_script_length_gate():
+    """The third gate's boundary scenario: the
+    stand-in walks the staged onboarding, reads all
+    three sources whole — the evidence stands, so the
+    evidence gate has nothing to say — and contributes
+    a brief one word under the declared floor: the
+    length gate fires, naming the count it arrived
+    with. He resubmits at exactly the floor: filed,
+    completing the run in eight iterations."""
+    chat = _evidence_walk_steps("length-gate") + [
+        # 4 — the task stage: read the first source.
+        {"respond": _native_call(
+            "fc-lg-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — read the second source whole.
+        {"respond": _native_call(
+            "fc-lg-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 6 — read the third source whole.
+        {"respond": _native_call(
+            "fc-lg-4", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 7 — contribute one word under the floor.
+        # Length gate: 549 of 550.
+        {"respond": _text_response(
+            "lg-contribute-1",
+            json.dumps({
+                "outcome": "contribute",
+                "text": LENGTH_TEXT_UNDER})),
+         "action": None},
+        # 8 — resubmit at exactly the floor: filed.
+        {"respond": _text_response(
+            "lg-contribute-2",
+            json.dumps({
+                "outcome": "contribute",
+                "text": LENGTH_TEXT_AT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_length_order_evidence():
+    """The family's order, witnessed from the evidence
+    side: the stand-in contributes a short brief with
+    nothing read — the EVIDENCE gate fires (a brief is
+    not judged for sufficiency before its evidence
+    stands) and no length gate stands for that
+    contribution. He reads all three whole and
+    contributes the same short brief again: now the
+    LENGTH gate fires. At the floor: filed, in nine
+    iterations."""
+    chat = _evidence_walk_steps(
+        "length-order-evidence") + [
+        # 4 — the task stage: contribute short, with
+        # the evidence not gathered. Evidence gate.
+        {"respond": _text_response(
+            "loe-contribute-1",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 5–7 — read all three sources whole.
+        {"respond": _native_call(
+            "fc-loe-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-loe-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-loe-4", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 8 — the same short brief, evidence standing:
+        # the length gate fires.
+        {"respond": _text_response(
+            "loe-contribute-2",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 9 — at the floor: filed.
+        {"respond": _text_response(
+            "loe-contribute-3",
+            json.dumps({
+                "outcome": "contribute",
+                "text": LENGTH_TEXT_AT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_length_order_stage():
+    """The family's order, witnessed from the stage
+    side: the stand-in contributes a short brief at
+    the FILES stage, before his task has been
+    presented — the STAGE gate fires, and neither the
+    evidence gate nor the length gate stands for that
+    contribution. He then reads all three whole and
+    contributes at the floor: filed, in seven
+    iterations."""
+    chat = [
+        _identify_step("length-order-stage"),
+        # 1 — the memory stage: acknowledge.
+        {"respond": _text_response(
+            "los-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 2 — the case stage: acknowledge.
+        {"respond": _text_response(
+            "los-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: contribute short,
+        # before the task. Stage gate.
+        {"respond": _text_response(
+            "los-contribute-1",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+        # 4 — the task stage: read the first source.
+        {"respond": _native_call(
+            "fc-los-1", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — read the second source whole.
+        {"respond": _native_call(
+            "fc-los-2", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 6 — read the third source whole.
+        {"respond": _native_call(
+            "fc-los-3", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 7 — contribute at the floor: filed.
+        {"respond": _text_response(
+            "los-contribute-2",
+            json.dumps({
+                "outcome": "contribute",
+                "text": LENGTH_TEXT_AT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -1121,6 +1307,7 @@ def _run_scenario(work_dir, *, scenario, brief,
                   freshness_suspended=False,
                   delivery_declaration=False,
                   delivery_evidence_declaration=False,
+                  delivery_floor_declaration=False,
                   presentation_declaration=False):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
@@ -1274,6 +1461,8 @@ def _run_scenario(work_dir, *, scenario, brief,
         delivery_declaration=delivery_declaration,
         delivery_evidence_declaration=
         delivery_evidence_declaration,
+        delivery_floor_declaration=
+        delivery_floor_declaration,
         presentation_declaration=presentation_declaration,
         worked_example=worked_example)
     if not generated.get("ok"):
@@ -1373,6 +1562,8 @@ def _run_scenario(work_dir, *, scenario, brief,
             (sealed or {}).get("delivery"),
         "sealed_delivery_evidence":
             (sealed or {}).get("delivery_evidence"),
+        "sealed_delivery_floor":
+            (sealed or {}).get("delivery_floor"),
         "sealed_presentation_contract":
             (sealed or {}).get("presentation_contract"),
         "sealed_worked_example":
@@ -1895,6 +2086,97 @@ def run_rehearsal(work_dir):
         delivery_declaration=True,
         delivery_evidence_declaration=True,
         presentation_declaration=True)
+    # The third gate's scenarios (INDEX 557). The
+    # length scenarios run in the staged configuration
+    # with the case additionally carrying the
+    # delivery-length declaration beside the evidence
+    # declaration, sealed at generation: the brief must
+    # arrive with at least the declared floor of words
+    # before the door files it. The evidence scenarios
+    # above stand as the control beside them: their
+    # generation seals no length declaration, their
+    # worker's short brief is adjudicated exactly as it
+    # always has been — filed once its evidence stands.
+    length_brief = _commission_brief(
+        ASSIGNMENT_COMBINED, manifest_hash,
+        glossary=GLOSSARY,
+        journal="scratch/journal.md",
+        onboarding=ONBOARDING,
+        delivery={"destination": "scratch/brief.md",
+                  "route": "contribution-v1"},
+        role_memory=ROLE_MEMORY,
+        opening={
+            "worker_statements": [
+                "The job is to read the three "
+                "sources and write the brief; the "
+                "deliverable is the file "
+                "scratch/brief.md."],
+            "office_answers": [
+                "Confirmed: the sources stand in "
+                "sources/, named in the glossary; "
+                "the brief is plain prose, at most "
+                "~600 words."],
+            "settled": [
+                "No work product is produced in "
+                "the opening; the work happens in "
+                "the room."],
+            "unresolved": []},
+        delivery_evidence=DELIVERY_EVIDENCE,
+        delivery_floor=DELIVERY_FLOOR)
+    length_grounds = (
+        "Delivery-length rehearsal (INDEX 557): the "
+        "scripted stand-in's probe trials settled 5/5 "
+        "native, and the combined configuration's "
+        "judgement is native. The generation seals the "
+        "staged-onboarding presentation contract, the "
+        "case's delivery-evidence declaration and its "
+        "delivery-length declaration. Rehearsal "
+        "furniture by a scripted stand-in examiner.")
+    length_gate = _run_scenario(
+        work_dir / "length-gate",
+        scenario="length-gate",
+        brief=length_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_length_gate(),
+        grounds=length_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration=True)
+    length_order_evidence = _run_scenario(
+        work_dir / "length-order-evidence",
+        scenario="length-order-evidence",
+        brief=length_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_length_order_evidence(),
+        grounds=length_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration=True)
+    length_order_stage = _run_scenario(
+        work_dir / "length-order-stage",
+        scenario="length-order-stage",
+        brief=length_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_length_order_stage(),
+        grounds=length_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration=True)
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
@@ -1906,4 +2188,8 @@ def run_rehearsal(work_dir):
             "directory": directory,
             "evidence_gates": evidence_gates,
             "evidence_listed": evidence_listed,
-            "evidence_whole": evidence_whole}
+            "evidence_whole": evidence_whole,
+            "length_gate": length_gate,
+            "length_order_evidence":
+                length_order_evidence,
+            "length_order_stage": length_order_stage}
