@@ -665,6 +665,114 @@ def _working_set_hash(working_set):
         "entries": working_set["entries"]}))
 
 
+def _pointer_line_count(entry, outcome_result):
+    """A pointer entry's line count, where the record
+    knows one: the served descriptor's own line count
+    where it carries one (a listing names its file's
+    lines); a served range's span where the descriptor
+    names its lines; otherwise the recorded content's
+    own lines. None where the record knows none — the
+    pointer then stands without the field."""
+    served = entry.get("served")
+    if isinstance(served, dict):
+        line_count = served.get("line_count")
+        if isinstance(line_count, int):
+            return line_count
+        start = served.get("start_line")
+        end = served.get("end_line")
+        if isinstance(start, int) and isinstance(end, int):
+            return end - start + 1
+    if isinstance(outcome_result, dict):
+        content = outcome_result.get("content")
+        if isinstance(content, str):
+            return len(content.splitlines())
+    return None
+
+
+def _presented_working_set_pointers(working_set, events,
+                                    assembly_id, catalogue):
+    """The working set's pointer presentation (INDEX
+    568, the pointer rule applied to the set itself):
+    the record-side set rendered for a wake under the
+    successor contract. Each entry stands as a pointer
+    — its address and authority path, the tool that
+    gathered it and the step it was gathered at (the
+    iteration whose outcomes precede it in the record),
+    its size in bytes and lines where the record knows
+    them, its content hash, its served descriptor, its
+    dispatch and outcome identity, its content_carried
+    standing (and the reason where it did not carry),
+    the access call that pulls it again where a granted
+    call covers the address, and one plain sentence
+    naming the room, the address and the standing of
+    the office's record. No entry's content stands
+    here: content is presented exactly once, in the
+    first wake after the gather, as part of that wake's
+    newest results. The component's budget and content
+    figures keep their record meanings — they are the
+    office's carriage accounting for the set the
+    iteration's working_set_hash commits, not a claim
+    about this package's size. A pure function of the
+    record-side set, the record and the catalogue; the
+    checker's own copy derives the same form whole."""
+    outcomes = {}
+    steps = {}
+    for ev in events:
+        payload = ev.get("payload") or {}
+        if ev.get("type") == "TOOL_OUTCOME":
+            outcomes[ev.get("event_seq")] = payload
+        elif ev.get("type") == "LOOP_ITERATION" \
+                and payload.get("assembly_id") == assembly_id \
+                and isinstance(payload.get("iteration"), int):
+            steps[ev.get("event_seq")] = payload["iteration"]
+    entries = []
+    for entry in working_set["entries"]:
+        outcome = outcomes.get(entry["outcome_event_seq"]) or {}
+        gathered_step = 0
+        for seq, iteration in steps.items():
+            if isinstance(seq, int) \
+                    and seq < entry["outcome_event_seq"] \
+                    and iteration > gathered_step:
+                gathered_step = iteration
+        pointer = {
+            "tool": entry["tool"],
+            "path": entry["path"],
+            "authority_path": entry["authority_path"],
+            "content_sha256": entry["content_sha256"],
+            "content_bytes": entry["content_bytes"],
+        }
+        line_count = _pointer_line_count(
+            entry, outcome.get("result"))
+        if line_count is not None:
+            pointer["line_count"] = line_count
+        pointer["served"] = copy.deepcopy(entry["served"])
+        pointer["dispatch_id"] = entry["dispatch_id"]
+        pointer["request_id"] = entry["request_id"]
+        pointer["outcome_event_seq"] = \
+            entry["outcome_event_seq"]
+        pointer["gathered_step"] = gathered_step
+        pointer["content_carried"] = entry["content_carried"]
+        if "not_carried_reason" in entry:
+            pointer["not_carried_reason"] = \
+                entry["not_carried_reason"]
+        way = _staged_access_way(catalogue, entry["path"])
+        if way is not None:
+            pointer["access"] = way
+            pointer["note"] = STAGED_POINTER_SENTENCE.format(
+                path=entry["path"], tool=way["tool"])
+        else:
+            pointer["note"] = \
+                STAGED_POINTER_SENTENCE_NO_WAY.format(
+                    path=entry["path"])
+        entries.append(pointer)
+    return {
+        "budget_bytes": working_set["budget_bytes"],
+        "content_bytes": working_set["content_bytes"],
+        "note": WORKING_SET_POINTER_NOTE,
+        "entries": entries,
+    }
+
+
 def _carriage_stub(result, presented_in):
     """The single-carriage stub of a retrieval result: the
     provenance stands (path, authority path, content hash
@@ -1065,6 +1173,109 @@ STAGED_DIRECTIONS = {
         "and pointers back into your briefcase."),
 }
 
+# The pointer-rule successor's wording (INDEX 568): the
+# same stages and furniture as v1, with the two texts
+# that describe the package's own shape telling the
+# pointer truth — a pull's content is shown once, in
+# the wake right after the pull, and stands as a
+# pointer after; the files-stage introduction says so
+# where v1 promised the content would be carried
+# forward in front of him, and the dashboard direction
+# names pointers where v1 named everything gathered.
+STAGED_FILES_INTRO_V2 = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
+    "how the briefcase works: what you pull is shown "
+    "to you whole in the wake right after you pull "
+    "it, and after that it stands in your working set "
+    "as a pointer — its address, its size, and the "
+    "office's record of your having pulled it — so "
+    "pull it again whenever you need its words in "
+    "front of you. "
+    "Your tools are offered from this wake on. Below "
+    "the map, one call stands worked as an example — "
+    "a real call the office made on the first file "
+    "while your briefcase was being stocked, with "
+    "what came back; yours will look like this.")
+STAGED_FILES_INTRO_NO_EXAMPLE_V2 = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
+    "how the briefcase works: what you pull is shown "
+    "to you whole in the wake right after you pull "
+    "it, and after that it stands in your working set "
+    "as a pointer — its address, its size, and the "
+    "office's record of your having pulled it — so "
+    "pull it again whenever you need its words in "
+    "front of you. "
+    "Your tools are offered from this wake on — if "
+    "you want, list a file from the map now and see "
+    "its shape standing.")
+STAGED_DIRECTIONS_V2 = {
+    "memory": STAGED_DIRECTIONS["memory"],
+    "case": STAGED_DIRECTIONS["case"],
+    "files": STAGED_DIRECTIONS["files"],
+    "task": STAGED_DIRECTIONS["task"],
+    "dashboard": (
+        "Your onboarding is complete. This is your "
+        "dashboard wake: where you stand, your newest "
+        "results, pointers to everything you have "
+        "gathered so far, and pointers back into your "
+        "briefcase."),
+}
+
+# The pointer working set's own note (INDEX 568): the
+# component the dashboard carries in place of the
+# content-carrying set — orientation, not a data dump.
+WORKING_SET_POINTER_NOTE = (
+    "What you have gathered so far, standing as "
+    "pointers: each entry's content was shown to you "
+    "whole in the wake right after you gathered it, "
+    "and the material itself stands in your room at "
+    "its address — pull it again when you need its "
+    "words in front of you. The office's record of "
+    "what you have read stands in full behind these "
+    "pointers; an entry marked content_carried: false "
+    "did not fit the working-set budget when it was "
+    "gathered, and its provenance stands here the "
+    "same way.")
+
+# One plain sentence per pointer entry (INDEX 568):
+# the material is in his room at that address, he can
+# pull it again with the named access call when he
+# needs the words, and the office's record of his
+# having read it stands regardless. Where no granted
+# call covers the address, the sentence says that
+# instead of naming a call he does not hold.
+STAGED_POINTER_SENTENCE = (
+    "It stands in your room at {path} — pull it "
+    "again with {tool} on that address when you need "
+    "its words in front of you; the office's record "
+    "of your having read it stands regardless of "
+    "what any later package carries.")
+STAGED_POINTER_SENTENCE_NO_WAY = (
+    "It stands in your room at {path}; no tool you "
+    "hold pulls it directly, and the office's record "
+    "of your having read it stands regardless of "
+    "what any later package carries.")
+
 
 def _staged_stage(iteration):
     """The onboarding stage a wake presents, as a pure
@@ -1204,7 +1415,8 @@ def _stage_gate_what_arrived(stage):
             f"task had been presented")
 
 
-def _presentation_core(package, working_set_hash):
+def _presentation_core(package, working_set_hash,
+                       pointer_form=False):
     """The staged package's committed core: the package
     itself, with its two bulk references standing by
     their own commitments — the tool results by their
@@ -1214,7 +1426,17 @@ def _presentation_core(package, working_set_hash):
     other value stands verbatim, so a skipped stage, a
     reordered stage, a dashboard carrying the case dump,
     or any content standing twice diverges from the
-    record's re-derivation."""
+    record's re-derivation.
+
+    Under the pointer-rule successor contract (INDEX
+    568) the core takes the pointer form: the presented
+    working set — the pointers themselves — stands in
+    the core verbatim beside the record set's hash, so
+    the commitment binds both the set the office
+    derived and the exact pointer form the worker was
+    shown. The tool results still stand by their
+    identities: the pointer rule changes where content
+    is presented, not what the record holds."""
     core = copy.deepcopy(package)
     results = core.pop("tool_results", [])
     core["tool_result_refs"] = [
@@ -1223,12 +1445,14 @@ def _presentation_core(package, working_set_hash):
          "outcome": entry.get("outcome"),
          "event_seq": entry.get("event_seq")}
         for entry in results]
-    core.pop("working_set", None)
+    if not pointer_form:
+        core.pop("working_set", None)
     core["working_set_hash"] = working_set_hash
     return core
 
 
-def _presentation_hash(package, working_set_hash):
+def _presentation_hash(package, working_set_hash,
+                       pointer_form=False):
     """The staged presentation's commitment: SHA-256 over
     the canonical form of the package's core — the
     commitment LOOP_ITERATION records for an assembly
@@ -1236,7 +1460,8 @@ def _presentation_hash(package, working_set_hash):
     verifies by independent reconstruction from the
     record."""
     return sha256_hex(canonical(
-        _presentation_core(package, working_set_hash)))
+        _presentation_core(package, working_set_hash,
+                           pointer_form)))
 
 
 def _translation_error_text(entry, offered_names):
@@ -1526,9 +1751,21 @@ class Loop:
                 and (content or {}).get("delivery")
                 == _delivery):
             _delivery = None
-        _presentation_declared = \
-            _generated.get("presentation_contract") \
-            == _tool_policy.PRESENTATION_CONTRACT
+        # The presentation declaration (INDEX 544; the
+        # pointer-rule successor, INDEX 568): the seal
+        # names one of the two contracts — v1, or v2
+        # under which a gathered entry's content is
+        # presented once and stands as a pointer after.
+        # The declared value rides the context beside
+        # the boolean, so the staged builder renders the
+        # sealed contract's own presentation; any other
+        # seal declares nothing here, exactly as an
+        # absent one does.
+        _presentation_value = _generated.get(
+            "presentation_contract")
+        _presentation_declared = _presentation_value in (
+            _tool_policy.PRESENTATION_CONTRACT,
+            _tool_policy.PRESENTATION_CONTRACT_V2)
         # Round nine's correction pair (INDEX 548): the
         # worked example the files stage presents is the
         # one the generator sealed into the assembly's
@@ -1593,6 +1830,9 @@ class Loop:
                 == _tool_policy.WORKING_SET_CONTRACT,
             "presentation_declared":
                 _presentation_declared,
+            "presentation_contract":
+                _presentation_value
+                if _presentation_declared else None,
             "worked_example": _worked_example,
             "presentation_hash": None,
             "freshness_suspended":
@@ -2624,7 +2864,9 @@ class Loop:
             self._attach_failure_instructions(
                 tool_results, events, raw_delta, ctx,
                 generated)
-        if ws_applies:
+        if ws_applies and ctx.get(
+                "presentation_contract") != \
+                _tool_policy.PRESENTATION_CONTRACT_V2:
             # Working-set carriage: this delta's retrieval
             # results are presented in the working set (the
             # accumulated set built below), so their
@@ -2632,6 +2874,15 @@ class Loop:
             # provenance stub the delta's copy carries,
             # pointing at the working set — the content
             # appears exactly once in the package.
+            #
+            # Under the pointer-rule successor contract
+            # (INDEX 568) this stub does not stand: the
+            # working set is presented as pointers, so the
+            # one presentation of a result's content is
+            # here, in the newest results of the first
+            # wake after its gather — the content appears
+            # exactly once in the package still, and in
+            # no later package at all.
             dispatch_tools_all = {
                 did: d.get("tool")
                 for did, d in state["dispatches"].items()}
@@ -2891,7 +3142,9 @@ class Loop:
                     ctx, package, ordered, catalogue)
                 ctx["presentation_hash"] = \
                     _presentation_hash(
-                        package, ctx.get("working_set_hash"))
+                        package, ctx.get("working_set_hash"),
+                        pointer_form=ctx.get(
+                            "presentation_contract") == _tool_policy.PRESENTATION_CONTRACT_V2)
             else:
                 package = ordered
         return package, head
@@ -2950,11 +3203,22 @@ class Loop:
         for key in ("seat", "role", "instance_id",
                     "case_id", "case_version"):
             staged[key] = base[key]
+        # The sealed contract's own presentation (INDEX
+        # 544; the pointer-rule successor, INDEX 568):
+        # the component names the contract the assembly
+        # sealed — v1, or v2, whose directions and files
+        # introduction tell the pointer truth and whose
+        # working set stands as pointers below.
+        contract = ctx.get("presentation_contract") \
+            or _tool_policy.PRESENTATION_CONTRACT
+        pointer_form = contract == \
+            _tool_policy.PRESENTATION_CONTRACT_V2
+        directions = STAGED_DIRECTIONS_V2 \
+            if pointer_form else STAGED_DIRECTIONS
         staged["presentation"] = {
-            "contract":
-                _tool_policy.PRESENTATION_CONTRACT,
+            "contract": contract,
             "stage": stage,
-            "direction": STAGED_DIRECTIONS[stage]}
+            "direction": directions[stage]}
         staged["cover"] = {
             "headline": headline,
             "deliverable": deliverable_text,
@@ -3007,10 +3271,15 @@ class Loop:
             # none is presented and the introduction says
             # so by its shape.
             example = ctx.get("worked_example")
-            files = {"introduction":
-                     STAGED_FILES_INTRO
-                     if example is not None
-                     else STAGED_FILES_INTRO_NO_EXAMPLE,
+            if pointer_form:
+                intro = STAGED_FILES_INTRO_V2 \
+                    if example is not None \
+                    else STAGED_FILES_INTRO_NO_EXAMPLE_V2
+            else:
+                intro = STAGED_FILES_INTRO \
+                    if example is not None \
+                    else STAGED_FILES_INTRO_NO_EXAMPLE
+            files = {"introduction": intro,
                      "briefcase": []}
             glossary = content.get("glossary")
             if isinstance(glossary, list):
@@ -3128,7 +3397,20 @@ class Loop:
                     "delivery_length_gate_correction"]
         staged["tool_results"] = base["tool_results"]
         if ordered.get("working_set") is not None:
-            staged["working_set"] = ordered["working_set"]
+            if pointer_form:
+                # The pointer rule applied to the set
+                # itself (INDEX 568): the record-side set
+                # stands in this package as pointers —
+                # derived from the record at this moment,
+                # exactly as the record-side set was.
+                staged["working_set"] = \
+                    _presented_working_set_pointers(
+                        ordered["working_set"],
+                        self.doorway.store.all_events(),
+                        ctx["assembly_id"], catalogue)
+            else:
+                staged["working_set"] = \
+                    ordered["working_set"]
         if stage == "task":
             staged["tool_list"] = _derive_tool_menu(
                 catalogue, deliverable=deliverable)

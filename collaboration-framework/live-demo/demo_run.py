@@ -498,10 +498,13 @@ ONBOARDING = {
         "and where you stand; (2) your case — the "
         "assignment, and the glossary naming what "
         "you may pull; (3) your working set — "
-        "everything you have gathered so far, kept "
-        "in front of you: material you pulled in an "
-        "earlier wake is still there, so you never "
-        "need to pull the same thing twice; (4) your "
+        "pointers to everything you have gathered so "
+        "far: what you pull is shown to you whole in "
+        "the wake right after you pull it, and after "
+        "that its pointer stands here — its address, "
+        "its size, and the office's record of your "
+        "having pulled it — so pull it again whenever "
+        "you need its words in front of you; (4) your "
         "journal; (5) your tool list, a menu grouped "
         "by the job's phases — Gather, Compose, "
         "Deliver — every tool you hold, what each "
@@ -1536,7 +1539,7 @@ def run_demo():
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
                 delivery_floor_declaration=True,
-                presentation_declaration=True,
+                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V2,
                 worked_example=worked_example)
         except ModelPinMismatchError as mismatch:
             # The flagged conflict (paper §3.6 gate 5's
@@ -2152,7 +2155,7 @@ def verify_config():
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
                 delivery_floor_declaration=True,
-                presentation_declaration=True,
+                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V2,
                 worked_example=verify_example)
             expect("generation: stub-identity generation "
                    "succeeds",
@@ -2201,12 +2204,15 @@ def verify_config():
                        f"got "
                        f"{sealed.get('working_set_contract')}")
                 expect("generation: the sealed record "
-                       "declares the staged-onboarding "
+                       "declares the pointer-rule "
                        "presentation contract (Ben's "
-                       "direction, INDEX 544 — the "
-                       "worker-first package)",
+                       "direction, INDEX 544 as corrected "
+                       "by INDEX 568 — the worker-first "
+                       "package whose gathered content is "
+                       "presented once and stands as "
+                       "pointers after)",
                        sealed.get("presentation_contract")
-                       == tool_policy.PRESENTATION_CONTRACT,
+                       == tool_policy.PRESENTATION_CONTRACT_V2,
                        f"got "
                        f"{sealed.get('presentation_contract')}")
                 expect("generation: the sealed record "

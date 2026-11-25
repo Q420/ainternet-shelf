@@ -399,10 +399,16 @@ class Generator:
         generation exactly as it always has.
 
         `presentation_declaration` (staged onboarding,
-        INDEX 544): where a generation is made for the
-        combined configuration under Ben's direction, its
-        sealed record declares the staged-onboarding
-        presentation contract — the loop then onboards
+        INDEX 544): True seals the staged-onboarding
+        contract; the pointer-rule successor's name
+        (INDEX 568) seals that contract instead, under
+        which a gathered entry's content is presented
+        once and stands as a pointer after — any other
+        string fails preflight whole. Where a generation
+        is made for the combined configuration under
+        Ben's direction, its sealed record declares the
+        staged-onboarding presentation contract — the
+        loop then onboards
         the worker in stages across his first wakes
         instead of presenting the whole case verbatim at
         every wake, and each iteration record carries
@@ -524,6 +530,28 @@ class Generator:
             and g.get("tool")
             in _tool_policy.RETRIEVAL_TOOLS
             for g in grants or [])
+        if isinstance(presentation_declaration, str) \
+                and presentation_declaration not in (
+                    _tool_policy.PRESENTATION_CONTRACT,
+                    _tool_policy.PRESENTATION_CONTRACT_V2):
+            # The pointer-rule successor (INDEX 568): the
+            # declaration names one of the two contracts
+            # the framework knows — v1, or v2 under which
+            # a gathered entry's content is presented
+            # once and stands as a pointer after. Any
+            # other name is a contract nothing derives:
+            # fail preflight whole rather than seal a
+            # presentation no wake will ever make and no
+            # checker will ever verify.
+            return {"ok": False,
+                    "problems": [
+                        "the presentation declaration names "
+                        f"{presentation_declaration!r}, "
+                        "which is neither the staged-"
+                        "onboarding contract nor its pointer-"
+                        "rule successor; a generation seals "
+                        "one of the two or neither"],
+                    "seat": seat_id}
         if presentation_declaration and not combined:
             # The staged-onboarding contract's population
             # is the combined configuration alone (INDEX
@@ -721,9 +749,15 @@ class Generator:
             # Staged onboarding (INDEX 544), sealed beside
             # the working-set contract whose population it
             # shares — preflight above has already refused
-            # the declaration anywhere else.
-            record["presentation_contract"] = \
+            # the declaration anywhere else. True seals v1,
+            # exactly as it always has; the v2 name seals
+            # the pointer-rule successor (INDEX 568) under
+            # its own name — v1's meaning under its name
+            # does not change.
+            record["presentation_contract"] = (
                 _tool_policy.PRESENTATION_CONTRACT
+                if presentation_declaration is True
+                else presentation_declaration)
         if worked_example is not None:
             # Round nine's correction pair (INDEX 548),
             # sealed beside the presentation contract

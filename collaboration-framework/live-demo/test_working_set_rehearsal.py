@@ -153,6 +153,28 @@ door. The control stands in the same rehearsal run:
 the continuity scenario's generation seals no
 presentation declaration.
 
+The pointer scenario witnesses the pointer rule
+(INDEX 568, Ben's tap, 2026-11-25) in its own
+section, counted separately in the output: the same
+staged walk under the successor presentation
+contract, staged-onboarding-v2 — a gathered entry's
+content presented exactly once, in the first wake
+after its gather, as part of that wake's newest
+results, and standing as a pointer in every later
+package. The witnesses assert the pointer form's
+fields against the record, the content-once
+standings across all nine wakes (twice for the
+re-pulled source), the fully-gathered dashboard
+wake's size under its stated bound, every
+iteration's presentation commitment recomputed
+from the captured packages under the pointer-form
+core, the evidence gate filing on record-standing
+reads whose contents stand in no current package,
+and the checker clean over the record, deriving
+the pointer form independently. The v1 scenarios
+stand as its control: their seals and packages are
+exactly what they were.
+
 Run: python3 live-demo/test_working_set_rehearsal.py
 Exits 0 when every check passes.
 """
@@ -354,6 +376,41 @@ def _presentation_hash_of(package):
     core.pop("working_set", None)
     core["working_set_hash"] = _ws_hash_of(package)
     return sha256_hex(canonical(core))
+
+
+def _presentation_hash_of_v2(package, working_set_hash):
+    """The pointer-rule package's commitment, recomputed
+    from the captured package itself: its tool results
+    standing by their identities, its working set — the
+    pointers — standing verbatim in the core, and the
+    record set's own commitment hash beside it, exactly
+    as the loop's pointer-form core derivation builds
+    it."""
+    core = copy.deepcopy(package)
+    results = core.pop("tool_results", [])
+    core["tool_result_refs"] = [
+        {"dispatch_id": e.get("dispatch_id"),
+         "request_id": e.get("request_id"),
+         "outcome": e.get("outcome"),
+         "event_seq": e.get("event_seq")}
+        for e in results]
+    core["working_set_hash"] = working_set_hash
+    return sha256_hex(canonical(core))
+
+
+def _all_strings(value):
+    """Every string standing anywhere in a package —
+    the content-once witness's net: a source's body
+    counts as standing in a package only where the
+    whole body stands as one value in it."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _all_strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _all_strings(item)
 
 
 def _check_commitments(scenario, work, packages,
@@ -2548,6 +2605,395 @@ def main():
               f"{slgates}")
         print(f"delivery-length section: "
               f"{CHECKS[0] - length_before} checks")
+
+        # ============ pointer rule ===================
+        # INDEX 568 (Ben's tap, 2026-11-25): the staged
+        # walk under the successor presentation contract.
+        # The witnesses: the seal names v2 while the v1
+        # control in the same rehearsal seals v1 exactly
+        # as it always has; the stages walk in order with
+        # the standing furniture standing (snapshot,
+        # ways in, worked example, menu); the working set
+        # stands as pointers at every wake — no content
+        # key anywhere in it — each pointer carrying its
+        # address, hash, size, gathering step, way back
+        # in and sentence, its hash the one its outcome
+        # event recorded; each source's content stands
+        # in exactly one package (the wake after its
+        # gather) as a newest result — twice for the
+        # first source, whose re-pull is its second
+        # gather — and in no other; the fully-gathered
+        # dashboard wake renders under the stated bound;
+        # every iteration's presentation commitment is
+        # the hash of the pointer-form core of the very
+        # package its captured wake presented; the
+        # evidence gate files on the record while the
+        # contents stand in no current package; the
+        # checker stands eleven, all ok, deriving the
+        # pointer form independently.
+        pointer_before = CHECKS[0]
+        prep = reports["pointer"]
+        pwork = work / "pointer"
+        check("pointer: the run ends in nine "
+              "iterations — the four onboarding stages, "
+              "then five dashboard wakes — with the "
+              "yield the door's completion carries",
+              prep["outcome"] == "yield"
+              and prep["iterations"] == 9,
+              f"{prep['outcome']} / {prep['iterations']}")
+        check("pointer: the sealed record declares "
+              "the pointer-rule presentation contract "
+              "beside the working-set contract",
+              prep["sealed_presentation_contract"]
+              == "staged-onboarding-v2"
+              and prep["sealed_working_set_contract"]
+              == tool_policy.WORKING_SET_CONTRACT,
+              f"{prep['sealed_presentation_contract']} / "
+              f"{prep['sealed_working_set_contract']}")
+        check("pointer: the control stands in the same "
+              "rehearsal — the staged generation seals "
+              "v1 exactly as it always has, its meaning "
+              "under its name unchanged",
+              reports["staged"][
+                  "sealed_presentation_contract"]
+              == "staged-onboarding-v1",
+              "staged sealed presentation: "
+              + str(reports["staged"][
+                  "sealed_presentation_contract"]))
+        ppackages = _staged_packages(pwork)
+        check("pointer: ten chat captures (identify + "
+              "nine iterations), each carrying a staged "
+              "package",
+              sorted(ppackages)
+              == [1, 2, 3, 4, 5, 6, 7, 8, 9],
+              f"{sorted(ppackages)}")
+        ppkgs = {k: v[0] for k, v in ppackages.items()}
+        psizes = {k: v[1] for k, v in ppackages.items()}
+        print(f"pointer package sizes (rendered "
+              f"chars): {psizes}")
+        pstages = [(ppkgs[k].get("presentation") or {})
+                   .get("stage")
+                   for k in range(1, 10)]
+        check("pointer: the stages walk in order — "
+              "memory, case, files, task, then dashboard "
+              "wakes — and every package names the "
+              "pointer-rule contract as its own",
+              pstages == ["memory", "case", "files",
+                          "task", "dashboard", "dashboard",
+                          "dashboard", "dashboard",
+                          "dashboard"]
+              and all((ppkgs[k].get("presentation")
+                       or {}).get("contract")
+                      == "staged-onboarding-v2"
+                      for k in ppkgs),
+              f"{pstages}")
+        check("pointer: no package carries the case "
+              "dump, the view or the delta",
+              all("case" not in p and "view" not in p
+                  and "delta" not in p
+                  for p in ppkgs.values()))
+        check("pointer: every stage package stands "
+              "within the standing budgets (memory "
+              "< 8,000; case < 9,000; files < 17,000; "
+              "task < 22,000 rendered chars)",
+              psizes.get(1, 10 ** 9) < 8000
+              and psizes.get(2, 10 ** 9) < 9000
+              and psizes.get(3, 10 ** 9) < 17000
+              and psizes.get(4, 10 ** 9) < 22000,
+              f"{psizes}")
+        check("pointer: the files stage's "
+              "introduction tells the pointer truth — "
+              "a pull is shown whole in the wake right "
+              "after it and stands as a pointer after; "
+              "the carried-forward promise stands "
+              "nowhere in it",
+              "shown to you whole in the wake right "
+              "after you pull it" in ppkgs[3]["files"][
+                  "introduction"]
+              and "carried forward" not in ppkgs[3][
+                  "files"]["introduction"])
+        check("pointer: the dashboard direction names "
+              "pointers to everything gathered, not the "
+              "gatherings themselves",
+              "pointers to everything you have "
+              "gathered so far" in ppkgs[9][
+                  "presentation"]["direction"])
+        check("pointer: stage 1's snapshot carries "
+              "the opening record's settled results "
+              "verbatim, and the memory is the case's "
+              "role memory exactly",
+              ppkgs[1].get("snapshot", {}).get("settled")
+              == ["No work product is produced in "
+                  "the opening; the work happens in "
+                  "the room."]
+              and ppkgs[1]["memory"]["entries"]
+              == ROLE_MEMORY)
+        check("pointer: no tools are offered at the "
+              "memory or case stages — the offer opens "
+              "at the files stage",
+              "tools" not in ppkgs[1]
+              and "tools" not in ppkgs[2]
+              and "tools" in ppkgs[3])
+        check("pointer: stage 3's briefcase is the "
+              "glossary's pointers, each with its way "
+              "in; the journal stands as its pointer; "
+              "and the worked example stands — the "
+              "office's real list call on the first "
+              "file",
+              [e["address"] for e in
+               ppkgs[3]["files"]["briefcase"]]
+              == [e["address"] for e in GLOSSARY]
+              and all("access" in e for e in
+                      ppkgs[3]["files"]["briefcase"])
+              and ppkgs[3]["files"]["journal"]["path"]
+              == "scratch/journal.md"
+              and ppkgs[3]["files"]["worked_example"][
+                  "call"] == {
+                      "tool": "sandbox.list",
+                      "parameters": {
+                          "path": GLOSSARY[0]["address"]}})
+        check("pointer: stage 4 carries the "
+              "assignment text and the phase-grouped "
+              "menu — Gather, Compose, Deliver",
+              ppkgs[4]["task"]["assignment"]
+              == ASSIGNMENT_COMBINED
+              and [g["phase"] for g in
+                   ppkgs[4]["tool_list"]]
+              == ["Gather", "Compose", "Deliver"])
+        check("pointer: dashboard wakes carry the "
+              "five pointers back into the briefcase",
+              all([p["item"] for p in ppkgs[k]["pointers"]]
+                  == ["your memory", "your case",
+                      "your files", "your journal",
+                      "your task"]
+                  for k in (5, 6, 7, 8, 9)))
+        pevs = _events(pwork)
+        poutcomes = {e["event_seq"]: _payload(e)
+                     for e in pevs
+                     if e["type"] == "TOOL_OUTCOME"}
+        check("pointer: no working-set entry in any "
+              "package carries a content key — the set "
+              "is pointers at every wake, including the "
+              "first",
+              all("content" not in entry
+                  for k in ppkgs
+                  for entry in (ppkgs[k].get("working_set")
+                                or {}).get("entries")
+                  or []))
+        ws9 = ppkgs[9]["working_set"]
+        entries9 = ws9.get("entries") or []
+        check("pointer: at the final wake the working "
+              "set stands as five pointers — the files "
+              "stage's listing, the three whole reads, "
+              "and the second listing — under the "
+              "pointer note, its budget and carried "
+              "figures keeping their record meanings "
+              "(the sum of the entries' carried bytes)",
+              len(entries9) == 5
+              and ws9.get("note", "").startswith(
+                  "What you have gathered so far, "
+                  "standing as pointers")
+              and ws9.get("budget_bytes") == BUDGET
+              and ws9.get("content_bytes") == sum(
+                  e["content_bytes"] for e in entries9)
+              and all(e["content_carried"]
+                      for e in entries9),
+              f"{len(entries9)} entries; content_bytes "
+              f"{ws9.get('content_bytes')}")
+        check("pointer: the re-pull added no second "
+              "entry — at the wake after it the set "
+              "still stands at four pointers (the "
+              "gather dedupes on the record, pointers "
+              "or not)",
+              len((ppkgs[8].get("working_set") or {})
+                  .get("entries") or []) == 4)
+        reads9 = {e["path"]: e for e in entries9
+                  if e["tool"] == "sandbox.read"}
+        source_facts = {
+            "sources/stock-take.md": (
+                STOCK_TAKE_SHA256, 4),
+            "sources/a3-pass.md": (
+                A3_PASS_SHA256, 5),
+            "sources/index-tail.md": (
+                INDEX_TAIL_SHA256, 6)}
+        bodies = {}
+        for path, (sha, _step) in source_facts.items():
+            bodies[path] = (pwork / "run" / "sandbox"
+                            / path).read_bytes() \
+                .decode("utf-8")
+            entry = reads9.get(path) or {}
+            check(f"pointer: the {path} pointer "
+                  f"carries its address, hash, size and "
+                  f"lines exactly as the record stands",
+                  entry.get("content_sha256") == sha
+                  and entry.get("content_bytes")
+                  == len(bodies[path].encode("utf-8"))
+                  and entry.get("line_count")
+                  == len(bodies[path].splitlines())
+                  and entry.get("authority_path")
+                  == "source",
+                  f"{entry.get('content_sha256')} / "
+                  f"{entry.get('content_bytes')} / "
+                  f"{entry.get('line_count')}")
+            check(f"pointer: the {path} pointer names "
+                  f"the step that gathered it, its way "
+                  f"back in, and its sentence — the "
+                  f"material in his room at that "
+                  f"address, the pull named, the "
+                  f"office's record standing regardless",
+                  entry.get("gathered_step") == _step
+                  and entry.get("access") == {
+                      "tool": "sandbox.read",
+                      "parameters": {"path": path}}
+                  and entry.get("note") == (
+                      f"It stands in your room at "
+                      f"{path} — pull it again with "
+                      f"sandbox.read on that address "
+                      f"when you need its words in "
+                      f"front of you; the office's "
+                      f"record of your having read it "
+                      f"stands regardless of what any "
+                      f"later package carries."),
+                  f"step {entry.get('gathered_step')}")
+        check("pointer: every pointer's hash and "
+              "dispatch are the ones its outcome event "
+              "recorded — the pointers verify against "
+              "the record, entry by entry",
+              all(poutcomes.get(e["outcome_event_seq"],
+                                {}).get("result", {})
+                  .get("content_sha256")
+                  == e["content_sha256"]
+                  and poutcomes.get(
+                      e["outcome_event_seq"], {})
+                  .get("dispatch_id")
+                  == e["dispatch_id"]
+                  for k in ppkgs
+                  for e in (ppkgs[k].get("working_set")
+                            or {}).get("entries") or []))
+        listings9 = {e["path"]: e for e in entries9
+                     if e["tool"] == "sandbox.list"}
+        check("pointer: the two listing pointers "
+              "carry the listed files' line counts "
+              "from the record — a listing's pointer "
+              "names the shape it showed",
+              listings9.get("sources/stock-take.md", {})
+              .get("line_count")
+              == len(bodies["sources/stock-take.md"]
+                     .splitlines())
+              and listings9.get("sources/stock-take.md",
+                                {}).get("gathered_step")
+              == 3
+              and listings9.get("sources/a3-pass.md", {})
+              .get("line_count")
+              == len(bodies["sources/a3-pass.md"]
+                     .splitlines())
+              and listings9.get("sources/a3-pass.md", {})
+              .get("gathered_step") == 8)
+        expected_standings = {
+            "sources/stock-take.md": [5, 8],
+            "sources/a3-pass.md": [6],
+            "sources/index-tail.md": [7]}
+        for path, expected in expected_standings.items():
+            standings = [k for k in range(1, 10)
+                         if bodies[path] in set(
+                             _all_strings(ppkgs[k]))]
+            check(f"pointer: {path}'s content stands "
+                  f"in exactly the wake after its "
+                  f"gather"
+                  + (" and the wake after its re-pull"
+                     if len(expected) == 2 else "")
+                  + " — as a newest result each time, "
+                  "and in no other package",
+                  standings == expected
+                  and all(any(
+                      (te.get("result") or {})
+                      .get("content") == bodies[path]
+                      for te in ppkgs[k]["tool_results"])
+                      for k in expected),
+                  f"standings {standings}")
+        check("pointer: the fully-gathered dashboard "
+              "wake — all three sources gathered, "
+              "standing as pointers, only a small "
+              "listing in the newest results — renders "
+              "under 24,000 chars: the standing "
+              "dashboard furniture bound (14,000) plus "
+              "five pointers and the listing, nearer "
+              "the task stage's ~20,000 than the "
+              "85,862 bytes the full-set wake measured "
+              "on the live wire",
+              psizes.get(9, 10 ** 9) < 24000,
+              f"{psizes}")
+        recorded_ph = {}
+        recorded_ws = {}
+        for e in pevs:
+            if e["type"] == "LOOP_ITERATION":
+                p = _payload(e)
+                recorded_ph[p.get("iteration")] = \
+                    p.get("presentation_hash")
+                recorded_ws[p.get("iteration")] = \
+                    p.get("working_set_hash")
+        check("pointer: every LOOP_ITERATION carries "
+              "both commitments — the presentation "
+              "hash and the record working set's hash",
+              len(recorded_ph) == 9
+              and all(isinstance(h, str) and len(h) == 64
+                      for h in recorded_ph.values())
+              and all(isinstance(h, str) and len(h) == 64
+                      for h in recorded_ws.values()),
+              f"{recorded_ph}")
+        for k in range(1, 10):
+            check(f"pointer: iteration {k}'s "
+                  f"presentation commitment is the hash "
+                  f"of the pointer-form core of the "
+                  f"package its captured wake presented "
+                  f"— the pointers verbatim, the record "
+                  f"set's hash beside them",
+                  recorded_ph.get(k)
+                  == _presentation_hash_of_v2(
+                      ppkgs[k], recorded_ws.get(k)),
+                  f"recorded={recorded_ph.get(k)}")
+        pfilings = [_payload(e) for e in pevs
+                    if e["type"] == "DELIVERABLE_FILED"]
+        check("pointer: the assignment completes "
+              "through the door — one filing, authored "
+              "by the worker, filed by the office, at "
+              "the declared destination, its hash the "
+              "contribution's — adjudicated while the "
+              "three sources' contents stand in no "
+              "current package: the evidence gate read "
+              "the record, not the package",
+              len(pfilings) == 1
+              and pfilings[0].get("destination")
+              == "scratch/brief.md"
+              and pfilings[0].get("authored_by")
+              == "crew-1"
+              and pfilings[0].get("filed_by") == "office"
+              and pfilings[0].get("content_sha256")
+              == hashlib.sha256(
+                  rehearsal.EVIDENCE_BRIEF_TEXT
+                  .encode("utf-8")).hexdigest()
+              and not any(bodies[path] in set(
+                  _all_strings(ppkgs[9]))
+                  for path in bodies),
+              f"{pfilings}")
+        check("pointer: no evidence gate event "
+              "stands in the record — the delivery "
+              "stood the first time it was offered",
+              not any(e["type"]
+                      == "DELIVERY_EVIDENCE_GATE"
+                      for e in pevs))
+        pfiled = (pwork / "run" / "sandbox" / "scratch"
+                  / "brief.md")
+        check("pointer: the filed brief stands in "
+              "the sandbox at the declared "
+              "destination, verbatim",
+              pfiled.exists()
+              and pfiled.read_text(encoding="utf-8")
+              == rehearsal.EVIDENCE_BRIEF_TEXT,
+              f"{pfiled}")
+        _check_checker("pointer", prep)
+        print(f"pointer-rule section: "
+              f"{CHECKS[0] - pointer_before} checks")
 
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):

@@ -1202,6 +1202,90 @@ def build_script_length_order_stage():
             "chat-raw-bounded": _probe_steps()}
 
 
+def build_script_pointer():
+    """The pointer-rule scenario (INDEX 568): the
+    staged walk under the successor presentation
+    contract. The stand-in acknowledges his memory and
+    his case, lists the first source at the files stage
+    (the stage's real pull), then reads all three
+    sources whole, one per wake — each content stands
+    in exactly one package, as that wake's newest
+    result, and as a pointer in every package after.
+    He then pulls the first source AGAIN — the re-pull
+    a pointer invites — lists the second source (a
+    small newest result, so the final wake is a
+    dashboard wake with everything gathered and nothing
+    bulky in front of him), and contributes: the
+    evidence gate adjudicates on the record, where the
+    three reads stand whole, while their contents stand
+    in no current package — filed, completing the run
+    in nine iterations."""
+    chat = [
+        _identify_step("pointer"),
+        # 1 — the memory stage: acknowledge.
+        {"respond": _text_response(
+            "pointer-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 2 — the case stage: acknowledge.
+        {"respond": _text_response(
+            "pointer-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: list the first source
+        # from the pointers — the stage's real pull.
+        {"respond": _native_call(
+            "fc-pointer-1", "sandbox-list",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 4 — the task stage: read the first source
+        # whole.
+        {"respond": _native_call(
+            "fc-pointer-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — the first dashboard wake: read the second
+        # source whole.
+        {"respond": _native_call(
+            "fc-pointer-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 6 — read the third source whole.
+        {"respond": _native_call(
+            "fc-pointer-4", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 7 — the re-pull: read the first source again,
+        # as its pointer invites. The working set gains
+        # no second entry (the gather dedupes); the
+        # content arrives again as this wake's newest
+        # result — its second and only other standing.
+        {"respond": _native_call(
+            "fc-pointer-5", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 8 — list the second source: a small newest
+        # result, so the final wake stands with all
+        # three sources gathered, as pointers, and
+        # nothing bulky in front of him.
+        {"respond": _native_call(
+            "fc-pointer-6", "sandbox-list",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 9 — the contribution: every named address
+        # stands in the record; filed, completing the
+        # run.
+        {"respond": _text_response(
+            "pointer-contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": EVIDENCE_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -2177,6 +2261,37 @@ def run_rehearsal(work_dir):
         delivery_evidence_declaration=True,
         delivery_floor_declaration=True,
         presentation_declaration=True)
+    # The pointer-rule scenario (INDEX 568): the
+    # evidence brief under the successor presentation
+    # contract — the same case, the same declarations,
+    # the same sources; only the presentation of the
+    # working set changes. The v1 scenarios above stand
+    # as its control: their seals, packages and counts
+    # are exactly what they were.
+    pointer = _run_scenario(
+        work_dir / "pointer",
+        scenario="pointer",
+        brief=evidence_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_pointer(),
+        grounds="Pointer-rule rehearsal (INDEX 568): "
+                "the scripted stand-in's probe trials "
+                "settled 5/5 native, and the combined "
+                "configuration's judgement is native. "
+                "The generation seals the pointer-rule "
+                "presentation contract "
+                "(staged-onboarding-v2) and the case's "
+                "delivery-evidence declaration, under "
+                "the director's direction. Rehearsal "
+                "furniture by a scripted stand-in "
+                "examiner.",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        presentation_declaration="staged-onboarding-v2")
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
@@ -2192,4 +2307,5 @@ def run_rehearsal(work_dir):
             "length_gate": length_gate,
             "length_order_evidence":
                 length_order_evidence,
-            "length_order_stage": length_order_stage}
+            "length_order_stage": length_order_stage,
+            "pointer": pointer}

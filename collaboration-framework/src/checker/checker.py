@@ -2259,6 +2259,17 @@ def _working_set_hash(working_set):
 # identifiably. A declaration naming any other value is a
 # contract this checker does not understand.
 _PRESENTATION_CONTRACT = "staged-onboarding-v1"
+# The pointer-rule successor (INDEX 568): under this
+# contract a gathered entry's content is presented
+# exactly once, in the first wake after its gather, as
+# part of that wake's newest results, and stands as a
+# pointer in every later package; the staged core's
+# reconstruction below derives the pointer form whole
+# and the iteration's commitment binds it verbatim
+# beside the record set's hash. v1's meaning under its
+# name does not change; a declaration naming either
+# contract is governed, any other value is unknown.
+_PRESENTATION_CONTRACT_V2 = "staged-onboarding-v2"
 _PRESENTATION_STAGES = ("memory", "case", "files", "task",
                         "dashboard")
 # The staged presentation's wording — this checker's own
@@ -2318,6 +2329,58 @@ _STAGED_FILES_INTRO_NO_EXAMPLE = (
     "how the briefcase works: what you pull is "
     "carried forward in front of you at later wakes, "
     "so you never need to pull the same thing twice. "
+    "Your tools are offered from this wake on — if "
+    "you want, list a file from the map now and see "
+    "its shape standing.")
+# The pointer-rule successor's wording — this
+# checker's own copies of the loop's v2 texts (INDEX
+# 568): the files-stage introductions telling the
+# pointer truth, the dashboard direction naming
+# pointers, the pointer component's note, and the one
+# plain sentence each pointer entry carries.
+_STAGED_FILES_INTRO_V2 = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
+    "how the briefcase works: what you pull is shown "
+    "to you whole in the wake right after you pull "
+    "it, and after that it stands in your working set "
+    "as a pointer — its address, its size, and the "
+    "office's record of your having pulled it — so "
+    "pull it again whenever you need its words in "
+    "front of you. "
+    "Your tools are offered from this wake on. Below "
+    "the map, one call stands worked as an example — "
+    "a real call the office made on the first file "
+    "while your briefcase was being stocked, with "
+    "what came back; yours will look like this.")
+_STAGED_FILES_INTRO_NO_EXAMPLE_V2 = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The contents are yours "
+    "to pull when the work needs them, through the "
+    "doorway tools (sandbox.list shows a file's size, "
+    "line count and headings — or, on a directory "
+    "such as sources itself, the entries standing in "
+    "it; sandbox.read pulls a whole file) or the "
+    "shell in your room. That is "
+    "how the briefcase works: what you pull is shown "
+    "to you whole in the wake right after you pull "
+    "it, and after that it stands in your working set "
+    "as a pointer — its address, its size, and the "
+    "office's record of your having pulled it — so "
+    "pull it again whenever you need its words in "
+    "front of you. "
     "Your tools are offered from this wake on — if "
     "you want, list a file from the map now and see "
     "its shape standing.")
@@ -2547,6 +2610,41 @@ _STAGED_DIRECTIONS = {
         "results, everything you have gathered so far, "
         "and pointers back into your briefcase."),
 }
+_STAGED_DIRECTIONS_V2 = {
+    "memory": _STAGED_DIRECTIONS["memory"],
+    "case": _STAGED_DIRECTIONS["case"],
+    "files": _STAGED_DIRECTIONS["files"],
+    "task": _STAGED_DIRECTIONS["task"],
+    "dashboard": (
+        "Your onboarding is complete. This is your "
+        "dashboard wake: where you stand, your newest "
+        "results, pointers to everything you have "
+        "gathered so far, and pointers back into your "
+        "briefcase."),
+}
+_WORKING_SET_POINTER_NOTE = (
+    "What you have gathered so far, standing as "
+    "pointers: each entry's content was shown to you "
+    "whole in the wake right after you gathered it, "
+    "and the material itself stands in your room at "
+    "its address — pull it again when you need its "
+    "words in front of you. The office's record of "
+    "what you have read stands in full behind these "
+    "pointers; an entry marked content_carried: false "
+    "did not fit the working-set budget when it was "
+    "gathered, and its provenance stands here the "
+    "same way.")
+_STAGED_POINTER_SENTENCE = (
+    "It stands in your room at {path} — pull it "
+    "again with {tool} on that address when you need "
+    "its words in front of you; the office's record "
+    "of your having read it stands regardless of "
+    "what any later package carries.")
+_STAGED_POINTER_SENTENCE_NO_WAY = (
+    "It stands in your room at {path}; no tool you "
+    "hold pulls it directly, and the office's record "
+    "of your having read it stands regardless of "
+    "what any later package carries.")
 _STAGED_GATE_INSTRUCTION = (
     "Your previous response could not be read: it "
     "arrived as a contribution, but its envelope was "
@@ -2958,6 +3056,105 @@ def _staged_standing_dispatches(events, instance_id,
         if d.get("instance_id") == instance_id]
 
 
+def _pointer_line_count(entry, outcome_result):
+    """A pointer entry's line count, where the record
+    knows one — this checker's copy of the loop's
+    derivation (INDEX 568): the served descriptor's
+    own line count where it carries one; a served
+    range's span where the descriptor names its lines;
+    otherwise the recorded content's own lines."""
+    served = entry.get("served")
+    if isinstance(served, dict):
+        line_count = served.get("line_count")
+        if isinstance(line_count, int):
+            return line_count
+        start = served.get("start_line")
+        end = served.get("end_line")
+        if isinstance(start, int) and isinstance(end, int):
+            return end - start + 1
+    if isinstance(outcome_result, dict):
+        content = outcome_result.get("content")
+        if isinstance(content, str):
+            return len(content.splitlines())
+    return None
+
+
+def _derive_working_set_pointers(working_set, events,
+                                 assembly_id, catalogue):
+    """The working set's pointer presentation,
+    reconstructed from the record alone — this
+    checker's independent derivation of the loop's
+    pointer form (INDEX 568): each record-side entry
+    rendered as a pointer carrying its address and
+    authority path, the tool that gathered it and the
+    step it was gathered at (the iteration whose
+    LOOP_ITERATION event precedes its outcome), its
+    size in bytes and lines where the record knows
+    them, its content hash, its served descriptor, its
+    dispatch and outcome identity, its content_carried
+    standing, the access call that pulls it again
+    where a granted call covers the address, and the
+    one plain sentence. No entry's content stands in
+    the form. The component's budget and content
+    figures keep their record meanings."""
+    outcomes = {}
+    steps = {}
+    for ev in events:
+        payload = ev.get("payload") or {}
+        if ev.get("type") == "TOOL_OUTCOME":
+            outcomes[ev.get("event_seq")] = payload
+        elif ev.get("type") == "LOOP_ITERATION" \
+                and payload.get("assembly_id") == assembly_id \
+                and isinstance(payload.get("iteration"), int):
+            steps[ev.get("event_seq")] = payload["iteration"]
+    entries = []
+    for entry in working_set["entries"]:
+        outcome = outcomes.get(entry["outcome_event_seq"]) or {}
+        gathered_step = 0
+        for seq, iteration in steps.items():
+            if isinstance(seq, int) \
+                    and seq < entry["outcome_event_seq"] \
+                    and iteration > gathered_step:
+                gathered_step = iteration
+        pointer = {
+            "tool": entry["tool"],
+            "path": entry["path"],
+            "authority_path": entry["authority_path"],
+            "content_sha256": entry["content_sha256"],
+            "content_bytes": entry["content_bytes"],
+        }
+        line_count = _pointer_line_count(
+            entry, outcome.get("result"))
+        if line_count is not None:
+            pointer["line_count"] = line_count
+        pointer["served"] = copy.deepcopy(entry["served"])
+        pointer["dispatch_id"] = entry["dispatch_id"]
+        pointer["request_id"] = entry["request_id"]
+        pointer["outcome_event_seq"] = \
+            entry["outcome_event_seq"]
+        pointer["gathered_step"] = gathered_step
+        pointer["content_carried"] = entry["content_carried"]
+        if "not_carried_reason" in entry:
+            pointer["not_carried_reason"] = \
+                entry["not_carried_reason"]
+        way = _staged_access_way(catalogue, entry["path"])
+        if way is not None:
+            pointer["access"] = way
+            pointer["note"] = _STAGED_POINTER_SENTENCE.format(
+                path=entry["path"], tool=way["tool"])
+        else:
+            pointer["note"] = \
+                _STAGED_POINTER_SENTENCE_NO_WAY.format(
+                    path=entry["path"])
+        entries.append(pointer)
+    return {
+        "budget_bytes": working_set["budget_bytes"],
+        "content_bytes": working_set["content_bytes"],
+        "note": _WORKING_SET_POINTER_NOTE,
+        "entries": entries,
+    }
+
+
 def _derive_staged_core(events, state, gen, content,
                         iteration, payload,
                         prev_iteration_seq, bounds):
@@ -2977,6 +3174,18 @@ def _derive_staged_core(events, state, gen, content,
     catalogue cannot be derived (reported by the
     catalogue verification itself)."""
     gp = gen["payload"]
+    # The sealed contract this reconstruction derives
+    # (INDEX 544; the pointer-rule successor, INDEX
+    # 568): the generated record's own declaration —
+    # v1, or v2, whose files introduction and dashboard
+    # direction tell the pointer truth and whose core
+    # carries the working set's pointer form verbatim
+    # beside the record set's hash.
+    declared_contract = gp.get("presentation_contract")
+    pointer_form = declared_contract == \
+        _PRESENTATION_CONTRACT_V2
+    directions = _STAGED_DIRECTIONS_V2 \
+        if pointer_form else _STAGED_DIRECTIONS
     instance_id = gp.get("instance_id")
     seat = gp.get("seat")
     role = ((state.get("seats") or {}).get(seat)
@@ -3046,9 +3255,9 @@ def _derive_staged_core(events, state, gen, content,
     staged["case_id"] = gp.get("case_id")
     staged["case_version"] = gp.get("case_version")
     staged["presentation"] = {
-        "contract": _PRESENTATION_CONTRACT,
+        "contract": declared_contract,
         "stage": stage,
-        "direction": _STAGED_DIRECTIONS[stage]}
+        "direction": directions[stage]}
     staged["cover"] = {
         "headline": headline,
         "deliverable": deliverable_text,
@@ -3103,10 +3312,15 @@ def _derive_staged_core(events, state, gen, content,
         example = gp.get("worked_example")
         if not _worked_example_well_formed(example):
             example = None
-        files = {"introduction":
-                 _STAGED_FILES_INTRO
-                 if example is not None
-                 else _STAGED_FILES_INTRO_NO_EXAMPLE,
+        if pointer_form:
+            intro = _STAGED_FILES_INTRO_V2 \
+                if example is not None \
+                else _STAGED_FILES_INTRO_NO_EXAMPLE_V2
+        else:
+            intro = _STAGED_FILES_INTRO \
+                if example is not None \
+                else _STAGED_FILES_INTRO_NO_EXAMPLE
+        files = {"introduction": intro,
                  "briefcase": []}
         glossary = content.get("glossary")
         if isinstance(glossary, list):
@@ -3318,6 +3532,17 @@ def _derive_staged_core(events, state, gen, content,
         events, instance_id, payload["cursor_to"])
     staged["working_set_hash"] = _working_set_hash(
         expected_ws)
+    if pointer_form:
+        # The pointer form stands in the core verbatim
+        # (INDEX 568): this checker's own derivation of
+        # the pointers from the reconstructed set, the
+        # record and the catalogue — the commitment
+        # binds the exact form the worker was shown,
+        # beside the record set's hash above.
+        staged["working_set"] = \
+            _derive_working_set_pointers(
+                expected_ws, events,
+                gp.get("assembly_id"), catalogue)
     return staged
 
 
@@ -3808,11 +4033,15 @@ def _loop_result(events, state, run_dir=None):
             "presentation_contract") if gen is not None \
             else None
         if presentation is not None and \
-                presentation != _PRESENTATION_CONTRACT:
+                presentation not in (
+                    _PRESENTATION_CONTRACT,
+                    _PRESENTATION_CONTRACT_V2):
             problem("presentation_contract_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     presentation_contract=presentation)
-        elif presentation == _PRESENTATION_CONTRACT and \
+        elif presentation in (
+                _PRESENTATION_CONTRACT,
+                _PRESENTATION_CONTRACT_V2) and \
                 ws_contract != _WORKING_SET_CONTRACT:
             problem("presentation_without_working_set",
                     assembly_id=aid, at_seq=activated[aid],
@@ -3832,7 +4061,9 @@ def _loop_result(events, state, run_dir=None):
         example = gen["payload"].get("worked_example") \
             if gen is not None else None
         if example is not None:
-            if presentation != _PRESENTATION_CONTRACT:
+            if presentation not in (
+                    _PRESENTATION_CONTRACT,
+                    _PRESENTATION_CONTRACT_V2):
                 problem("worked_example_without_"
                         "presentation",
                         assembly_id=aid,
@@ -4171,7 +4402,8 @@ def _loop_result(events, state, run_dir=None):
             # above.
             pres_declared = gen is not None and \
                 gen["payload"].get("presentation_contract") \
-                == _PRESENTATION_CONTRACT
+                in (_PRESENTATION_CONTRACT,
+                    _PRESENTATION_CONTRACT_V2)
             recorded_ph = p.get("presentation_hash")
             if pres_declared and recorded_ph is None:
                 problem("presentation_commitment_missing",
@@ -4381,7 +4613,8 @@ def _loop_result(events, state, run_dir=None):
         gen = generated.get(aid)
         declared = gen is not None and \
             gen["payload"].get("presentation_contract") \
-            == _PRESENTATION_CONTRACT
+            in (_PRESENTATION_CONTRACT,
+                _PRESENTATION_CONTRACT_V2)
         iteration_numbers = {
             ev["event_seq"]: ev["payload"].get("iteration")
             for ev in iterations.get(aid, [])}

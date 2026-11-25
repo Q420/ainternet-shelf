@@ -200,6 +200,26 @@ DELIVERY_ROUTE_CONTRIBUTION = "contribution-v1"
 # declaration presents exactly as before. The checker
 # reads the same value from its own copy in checker.py.
 PRESENTATION_CONTRACT = "staged-onboarding-v1"
+
+# The pointer-rule successor contract (INDEX 568, Ben's
+# tap 2026-11-25, applying his pointer rule of INDEX 504
+# to the working set's own presentation). Under v1 a
+# gathered entry's content stands in every dashboard
+# package whole — the wake three free provider routes
+# refused at 79,660–85,862 bytes. Under v2 an entry's
+# content is presented exactly once, in the first wake
+# after it was gathered, as part of that wake's newest
+# results; in every later package the entry stands as a
+# pointer: its address, the tool and step that gathered
+# it, its size and content hash, its content_carried
+# standing, and one plain sentence naming the room, the
+# address and the access call. The record side is
+# untouched: derivation, carriage budget, dedupe, the
+# gates and filing are exactly v1's. v1's meaning under
+# its name does not change; an assembly seals one
+# contract or the other, and the loop and the checker
+# derive the sealed one's presentation whole.
+PRESENTATION_CONTRACT_V2 = "staged-onboarding-v2"
 # The onboarding's stages, in the order the wakes walk
 # them: the iteration number (1-based) selects the stage —
 # iterations 1..4 walk memory, case, files, task; every
