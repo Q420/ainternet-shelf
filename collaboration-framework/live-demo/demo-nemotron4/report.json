@@ -1,0 +1,175 @@
+{
+ "kind": "first-worker demonstration run report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "model_pin": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+ "route": "nvidia (live, via the registered connector helper through the capture seam)",
+ "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "assembly_id": "assembly-crew-1-1",
+ "instance_id": "inst-crew-1-1",
+ "identity_evidence": {
+  "declaration": "I\u2019m Nemotron, a large language model built by NVIDIA. I can understand natural\u2011language prompts, generate text, help with reasoning, explain concepts, write code, draft documents, and assist with many other language\u2011based tasks. My limits are that I only have knowledge up to my September\u202f2024 training cut\u2011off, I can\u2019t browse the web or access real\u2011time information, I don\u2019t have personal experiences or consciousness, and I may sometimes produce incorrect or incomplete answers, so it\u2019s best to verify critical information.",
+  "provider_model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+  "identity_status": "declared",
+  "pin_verified": true,
+  "note": "the pin was enforced inside generation, before activation (make_pinned_identify); the provider-reported id as recorded at onboarding stands here \u2014 it is the route's report, not independent proof of the model the provider actually served"
+ },
+ "probe": {
+  "settled_count": 5,
+  "recommended_mode": "text",
+  "counts": {
+   "behaviour": {
+    "text_contract": 3,
+    "native_catalogue": 2,
+    "environment_tool_attempt": 0,
+    "mixed": 0,
+    "refusal": 0,
+    "malformed": 0,
+    "no_observable_behaviour": 0
+   },
+   "delivery": {
+    "provider_accepted": 5,
+    "provider_refused": 0,
+    "provider_failed": 0,
+    "indeterminate": 0
+   }
+  },
+  "evidence_hash": "7752a5b9ac6cef5c06bf2ac0551db272f2f99f83b8523aaa6234a4675140099c",
+  "note": "the probe's recommendation is evidence in the record; this run's mode was judged by the director's order, not by it"
+ },
+ "order_record": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron4/order-record.json",
+  "sha256": "12267646d0cc2d0781a2991393c23e11428d4bf8c9a2ca600bddc1e94c487ac6",
+  "adapter_mode": "native",
+  "decision_examiner": "Ben (director) \u2014 order of 2026-11-24"
+ },
+ "pacing": {
+  "min_interval_seconds": 20.0,
+  "note": "a fixed operating choice of this driver between successive outbound iteration calls; NVIDIA pacing is unestablished and no provider figure is claimed"
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "outcome_summary": "stalled",
+  "ground": "step_ceiling",
+  "iterations": 12
+ },
+ "stall": {
+  "ground": "step_ceiling",
+  "event_seq": 102
+ },
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-1-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-2",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-2-1",
+   "outcome": "failure"
+  },
+  {
+   "dispatch_id": "dispatch-3",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-4-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-4",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-5-1",
+   "outcome": "failure"
+  },
+  {
+   "dispatch_id": "dispatch-5",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-6-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-6",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-7-1",
+   "outcome": "failure"
+  },
+  {
+   "dispatch_id": "dispatch-7",
+   "tool": "sandbox.list",
+   "request_id": "loop-inst-crew-1-1-8-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-8",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-11-1",
+   "outcome": "failure"
+  }
+ ],
+ "brief": {
+  "exists": false,
+  "path_used": null,
+  "sha256_at_wall": null,
+  "word_count": null,
+  "collected_path": null,
+  "room": {
+   "exists": false,
+   "sha256_at_wall": null,
+   "word_count": null
+  },
+  "framework_scratch": {
+   "exists": false,
+   "sha256_at_wall": null,
+   "word_count": null,
+   "collected_path": null
+  },
+  "note": "the brief may land by either write path \u2014 the room's scratch (via container.exec) or the framework sandbox's scratch (via sandbox.write); the room's is primary when both stand, and the two are never merged"
+ },
+ "captures": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron4/captures.jsonl",
+  "transmitted_requests": 18
+ },
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ },
+ "event_count": 102,
+ "terminal_readout": {
+  "rendered": true,
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron4/terminal-readout.md",
+  "stderr": null
+ }
+}
