@@ -2622,7 +2622,11 @@ def main():
         # in exactly one package (the wake after its
         # gather) as a newest result — twice for the
         # first source, whose re-pull is its second
-        # gather — and in no other; the fully-gathered
+        # gather — and in no other, save the second
+        # source, whose content also stands at the
+        # files stage as the calibration's worked
+        # example (the office's demonstration read,
+        # witnessed below); the fully-gathered
         # dashboard wake renders under the stated bound;
         # every iteration's presentation commitment is
         # the hash of the pointer-form core of the very
@@ -2694,11 +2698,19 @@ def main():
                   for p in ppkgs.values()))
         check("pointer: every stage package stands "
               "within the standing budgets (memory "
-              "< 8,000; case < 9,000; files < 17,000; "
-              "task < 22,000 rendered chars)",
+              "< 8,000; case < 9,000; files < 24,000; "
+              "task < 22,000 rendered chars) — the "
+              "files stage's bound is the population's "
+              "standing maximum package bound, the "
+              "dashboard bound: under the calibration "
+              "the stage carries the worked example as "
+              "a whole real read, the one stage that "
+              "shows a whole file, and it stands within "
+              "the bound the dashboard wakes already "
+              "observe",
               psizes.get(1, 10 ** 9) < 8000
               and psizes.get(2, 10 ** 9) < 9000
-              and psizes.get(3, 10 ** 9) < 17000
+              and psizes.get(3, 10 ** 9) < 24000
               and psizes.get(4, 10 ** 9) < 22000,
               f"{psizes}")
         check("pointer: the files stage's "
@@ -2738,8 +2750,11 @@ def main():
               "glossary's pointers, each with its way "
               "in; the journal stands as its pointer; "
               "and the worked example stands — the "
-              "office's real list call on the first "
-              "file",
+              "office's real read call on the smallest "
+              "file in the map (the calibration: the "
+              "demonstration is the pull his job is "
+              "made of, on the file whose whole content "
+              "keeps the stage within its bound)",
               [e["address"] for e in
                ppkgs[3]["files"]["briefcase"]]
               == [e["address"] for e in GLOSSARY]
@@ -2749,9 +2764,87 @@ def main():
               == "scratch/journal.md"
               and ppkgs[3]["files"]["worked_example"][
                   "call"] == {
-                      "tool": "sandbox.list",
+                      "tool": "sandbox.read",
                       "parameters": {
-                          "path": GLOSSARY[0]["address"]}})
+                          "path": "sources/a3-pass.md"}})
+        pexample = ppkgs[3]["files"]["worked_example"]
+        check("pointer: the presented example is the "
+              "sealed record's own — the loop presents "
+              "the seal, not a reconstruction of it",
+              pexample.get("result")
+              == (prep.get("sealed_worked_example")
+                  or {}).get("result")
+              and (prep.get("sealed_worked_example")
+                   or {}).get("tool") == "sandbox.read"
+              and (prep.get("sealed_worked_example")
+                   or {}).get("path")
+              == "sources/a3-pass.md",
+              f"{prep.get('sealed_worked_example')}")
+        # The example is REAL: recompute the read from
+        # the staged file's raw bytes, here,
+        # independently of the framework, and compare
+        # whole — the content itself, its byte count
+        # and its hash. The choice of file is
+        # recomputed too: the smallest of the map's
+        # staged files.
+        praw = {e["address"]: (pwork / "run" / "sandbox"
+                               / e["address"]).read_bytes()
+                for e in GLOSSARY
+                if (pwork / "run" / "sandbox"
+                    / e["address"]).is_file()}
+        pchosen = min(praw, key=lambda a: len(praw[a]))
+        check("pointer: the worked example's result "
+              "is the staged file's real read — "
+              "recomputed from its raw bytes in this "
+              "witness, not trusted from the seal — and "
+              "the file it names is the map's smallest, "
+              "recomputed from the staged bytes",
+              pchosen == "sources/a3-pass.md"
+              and pexample["result"].get("content")
+              == praw[pchosen].decode("utf-8")
+              and pexample["result"].get("content_bytes")
+              == len(praw[pchosen])
+              and pexample["result"].get("content_sha256")
+              == hashlib.sha256(praw[pchosen]).hexdigest()
+              and pexample["result"].get("authority_path")
+              == "source",
+              "chosen: " + pchosen)
+        check("pointer: the room-proof line stands "
+              "beside the worked example — the example "
+              "is a real call made in his room, and his "
+              "tools answer the same way in the shape "
+              "shown",
+              pexample.get("proof") == (
+                  "This example is a real call the "
+                  "office made in your room, on a file "
+                  "from your own briefcase; your tools "
+                  "answer the same way when you call "
+                  "them in the shape shown."),
+              f"{pexample.get('proof')}")
+        check("pointer: stage 3's journal pointer "
+              "carries the journal's contract (the "
+              "calibration) — after each file you read, "
+              "log its name and the key points you took "
+              "from it, in one or two plain lines; the "
+              "office reads it at every wake to resume "
+              "you; the director may audit it; nothing "
+              "parses it",
+              ppkgs[3]["files"]["journal"]["label"] == (
+                  "your journal — your notebook: notes, "
+                  "decisions, where you left off. Yours "
+                  "to write and rewrite; orientation, "
+                  "not record and not memory. Keep it as "
+                  "you work: after each file you read, "
+                  "log its name and the key points you "
+                  "took from it, in one or two plain "
+                  "lines. The office reads your journal "
+                  "at every wake to resume you, and the "
+                  "director may audit it; nothing parses "
+                  "it — it is read as you wrote it. Its "
+                  "contents are not carried in your "
+                  "packages — pull it when you want "
+                  "it."),
+              f"{ppkgs[3]['files']['journal']['label']}")
         check("pointer: stage 4 carries the "
               "assignment text and the phase-grouped "
               "menu — Gather, Compose, Deliver",
@@ -2891,7 +2984,6 @@ def main():
               .get("gathered_step") == 8)
         expected_standings = {
             "sources/stock-take.md": [5, 8],
-            "sources/a3-pass.md": [6],
             "sources/index-tail.md": [7]}
         for path, expected in expected_standings.items():
             standings = [k for k in range(1, 10)
@@ -2911,6 +3003,30 @@ def main():
                       for te in ppkgs[k]["tool_results"])
                       for k in expected),
                   f"standings {standings}")
+        check("pointer: the second source's content "
+              "stands in exactly two packages — the "
+              "files stage, as the office's worked "
+              "example (the calibration's demonstration "
+              "read, labelled the office's example and "
+              "never entering his working set), and the "
+              "wake after his own gather of it, as his "
+              "newest result — and in no other package",
+              [k for k in range(1, 10)
+               if bodies["sources/a3-pass.md"] in set(
+                   _all_strings(ppkgs[k]))] == [3, 6]
+              and ppkgs[3]["files"]["worked_example"][
+                  "result"]["content"]
+              == bodies["sources/a3-pass.md"]
+              and any(
+                  (te.get("result") or {}).get("content")
+                  == bodies["sources/a3-pass.md"]
+                  for te in ppkgs[6]["tool_results"])
+              and all(
+                  bodies["sources/a3-pass.md"] not in
+                  json.dumps(ppkgs[k].get("working_set")
+                             or {})
+                  for k in range(1, 10)),
+              "a3-pass standings")
         check("pointer: the fully-gathered dashboard "
               "wake — all three sources gathered, "
               "standing as pointers, only a small "
@@ -2994,6 +3110,181 @@ def main():
         _check_checker("pointer", prep)
         print(f"pointer-rule section: "
               f"{CHECKS[0] - pointer_before} checks")
+
+        # ============ the calibration =================
+        # The GPT-OSS worker's debrief as blueprint
+        # (INDEX 571; Ben's direction, 2026-11-25):
+        # the tool-shape gate and the number where he
+        # plans, witnessed over the two scenarios above.
+        # In the first, the stand-in's native reach at
+        # the task stage meets the provider's refusal
+        # body — HTTP 400's shape, code tool_use_failed,
+        # the failed generation preserved — and the
+        # refusal becomes a gate: its event stands in
+        # the record with what arrived verbatim, the
+        # next wake's package carries the correction
+        # byte-exact (what arrived, what is needed, one
+        # concrete well-formed example, the
+        # instruction), the iteration is consumed, and
+        # the run continues to a filed brief. In the
+        # second, the same position meets a rate-limit
+        # refusal: no gate event, no correction, the
+        # stall a provider failure exactly as before —
+        # the gate's narrowness witnessed beside its
+        # firing. The task stage's deliverable statement
+        # carries the figures before any refusal can.
+        calibration_before = CHECKS[0]
+        trep = reports["toolshape"]
+        twork = work / "toolshape"
+        check("calibration: the tool-shape run "
+              "completes in six iterations — the four "
+              "onboarding stages, the gate's consumed "
+              "iteration among them, and the delivery — "
+              "with the yield the door's completion "
+              "carries",
+              trep["outcome"] == "yield"
+              and trep["iterations"] == 6,
+              f"{trep['outcome']} / {trep['iterations']}")
+        tpackages = _staged_packages(twork)
+        tpkgs = {k: v[0] for k, v in tpackages.items()}
+        check("calibration: the task stage's "
+              "deliverable statement states the figures "
+              "before any refusal can — about 600 "
+              "words; the door will not file a brief "
+              "under 550 words",
+              tpkgs[4]["task"].get("delivery_floor") == (
+                  "The brief runs to about 600 words, "
+                  "and the door will not file a brief "
+                  "under 550 words. A contribution "
+                  "shorter than that is set aside "
+                  "unfiled, and you will be told the "
+                  "count yours arrived with."),
+              f"{tpkgs[4]['task'].get('delivery_floor')}")
+        tevs = _events(twork)
+        tgates = [_payload(e) for e in tevs
+                  if e["type"] == "TOOL_SHAPE_GATE"]
+        titer4 = [e["event_seq"] for e in tevs
+                  if e["type"] == "LOOP_ITERATION"
+                  and _payload(e).get("iteration") == 4]
+        check("calibration: exactly one tool-shape "
+              "gate event stands in the record, bound "
+              "to the task-stage iteration, carrying "
+              "what arrived verbatim — the refusal's "
+              "code and message, the tool the failed "
+              "generation named, and the failed "
+              "generation itself, preserved whole; the "
+              "seam observed no status, and none is "
+              "claimed",
+              len(tgates) == 1
+              and len(titer4) == 1
+              and tgates[0].get("iteration_seq")
+              == titer4[0]
+              and tgates[0].get("tool_name")
+              == "container.exec"
+              and tgates[0].get("error_code")
+              == "tool_use_failed"
+              and tgates[0].get("error_message") == (
+                  "Tool choice is none, but model "
+                  "called a tool")
+              and tgates[0].get("failed_generation")
+              == rehearsal.TOOLSHAPE_FAILED_GENERATION
+              and tgates[0].get("http_status") is None,
+              f"{tgates}")
+        expected_correction = {
+            "what_arrived": (
+                "a native tool call — your answer "
+                "named container.exec in the provider's "
+                "own tool-call shape, and the provider "
+                "refused the whole answer for it (its "
+                "refusal carries the code "
+                "tool_use_failed). No tool ran, and "
+                "nothing from that answer was carried "
+                "out"),
+            "what_is_needed": (
+                "In this room your tools are called in "
+                "the text shape: your answer is one "
+                "JSON object whose outcome is "
+                "\"tool_requests\", with a requests "
+                "list naming each call — the tool's "
+                "name and its parameters — as the "
+                "example shows. Only calls in that "
+                "shape reach your tools; a native tool "
+                "call cannot be carried out here."),
+            "example": {
+                "outcome": "tool_requests",
+                "requests": [{
+                    "tool": "sandbox.read",
+                    "parameters": {
+                        "path": "sources/stock-take.md"}}]},
+            "instruction": (
+                "Nothing was filed, and nothing was "
+                "lost: your gathered work stands as it "
+                "stood. Make the call again in the text "
+                "shape and carry on with the job. The "
+                "refusal cost this one step and nothing "
+                "else.")}
+        check("calibration: the wake after the gate "
+              "carries the correction byte-exact — what "
+              "arrived (the native call, named), what "
+              "is needed (the text shape), one concrete "
+              "well-formed tool_requests example for a "
+              "read of the first glossary file, and the "
+              "instruction — and no other package "
+              "carries it",
+              tpkgs[5].get("tool_shape_gate_correction")
+              == expected_correction
+              and all(
+                  "tool_shape_gate_correction" not in
+                  tpkgs[k]
+                  for k in tpkgs if k != 5),
+              f"{tpkgs[5].get('tool_shape_gate_correction')}")
+        tfilings = [_payload(e) for e in tevs
+                    if e["type"] == "DELIVERABLE_FILED"]
+        tfiled = (twork / "run" / "sandbox" / "scratch"
+                  / "brief.md")
+        check("calibration: the run continues past "
+              "the gate to a filed brief — one filing "
+              "at the declared destination, the brief "
+              "standing verbatim in the sandbox, its "
+              "length over the floor the task stage "
+              "stated",
+              len(tfilings) == 1
+              and tfilings[0].get("destination")
+              == "scratch/brief.md"
+              and tfiled.exists()
+              and tfiled.read_text(encoding="utf-8")
+              == rehearsal.TOOLSHAPE_BRIEF_TEXT
+              and len(rehearsal.TOOLSHAPE_BRIEF_TEXT
+                      .split()) >= 550,
+              f"{tfilings}")
+        _check_checker("toolshape", trep)
+        rrep = reports["toolshape_refused"]
+        rwork = work / "toolshape-refused"
+        revs = _events(rwork)
+        rstalls = [_payload(e) for e in revs
+                   if e["type"] == "LOOP_STALLED"]
+        rpackages = _staged_packages(rwork)
+        check("calibration: the rate-limit refusal "
+              "is not the gate's business — the run "
+              "stalls at the task stage as a provider "
+              "failure, no tool-shape gate event stands "
+              "in its record, and no package carries a "
+              "tool-shape correction",
+              rrep["outcome"] == "stalled"
+              and rrep["iterations"] == 4
+              and len(rstalls) == 1
+              and rstalls[0].get("ground")
+              == "provider_failure"
+              and not any(e["type"] == "TOOL_SHAPE_GATE"
+                          for e in revs)
+              and all(
+                  "tool_shape_gate_correction" not in pkg
+                  for pkg, _size in
+                  rpackages.values()),
+              f"{rrep['outcome']} / {rstalls}")
+        _check_checker("toolshape-refused", rrep)
+        print(f"calibration section: "
+              f"{CHECKS[0] - calibration_before} checks")
 
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):

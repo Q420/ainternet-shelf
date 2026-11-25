@@ -443,14 +443,20 @@ ASSIGNMENT_COMBINED = (
     "designates your journal, scratch/journal.md — "
     "your personal notebook: capture ideas, "
     "decisions, reflections, and progress as you "
-    "work. Its contents are not carried in your "
-    "packages — pull it when you want it, and write "
-    "to it with your tools.\n\n"
-    "Write a plain-words brief, at most ~600 words, "
+    "work. Keep it as you work: after each file you "
+    "read, log its name and the key points you took "
+    "from it, in one or two plain lines — the "
+    "office reads your journal at every wake to "
+    "resume you, and the director may audit it. Its "
+    "contents are not carried in your packages — "
+    "pull it when you want it, and write to it with "
+    "your tools.\n\n"
+    "Write a plain-words brief of about 600 words, "
     "that a newcomer could read to learn what this "
     "framework is, what has actually been proven, "
     "what has not been proven, and what remains to "
-    "be built.\n\n"
+    "be built. The door will not file a brief under "
+    "550 words.\n\n"
     "CHECKLIST BEFORE YOU FINISH: all three sources "
     "read; the brief covers what the framework is, "
     "what has actually been proven, what has not "
@@ -1024,6 +1030,29 @@ def _sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _worked_example_address(sandbox_dir):
+    """The office's choice of demonstration file (the
+    calibration): the glossary's smallest stocked
+    source, by its staged bytes — the demonstration
+    is a whole read of a real source, and the one
+    stage that shows a whole file stays within the
+    pointer-rule population's package bound (24,000
+    rendered chars, the standing dashboard bound).
+    Ties stand in glossary order. The seal names the
+    address; the checker verifies it is one of the
+    map's, and the rehearsal recomputes the choice
+    from the staged bytes themselves."""
+    best = None
+    for entry in GLOSSARY:
+        staged = Path(sandbox_dir) / entry["address"]
+        if not staged.is_file():
+            continue
+        size = len(staged.read_bytes())
+        if best is None or size < best[1]:
+            best = (entry["address"], size)
+    return best[0]
+
+
 CAPTURE_HELPER_SOURCE = '''#!/usr/bin/env python3
 """The demonstration run's capture pass-through helper.
 
@@ -1470,15 +1499,21 @@ def run_demo():
               "staged at the glossary's addresses, each "
               "hash-verified against the manifest")
 
-        # THE WORKED EXAMPLE (round nine, INDEX 548):
-        # the office performs the demonstration call on
-        # the glossary's first file against the staged
-        # sandbox, through the same governed performer a
-        # dispatch runs, BEFORE generation — the call's
-        # real result is what generation seals beside
-        # the presentation contract, and the files stage
-        # shows it at the worker's third wake. Where the
-        # call cannot be made, no example stands and
+        # THE WORKED EXAMPLE (round nine, INDEX 548;
+        # the calibration): the office performs the
+        # demonstration call against the staged sandbox,
+        # through the same governed performer a dispatch
+        # runs, BEFORE generation — the call's real
+        # result is what generation seals beside the
+        # presentation contract, and the files stage
+        # shows it at the worker's third wake. Under the
+        # pointer-rule contract the demonstration is a
+        # READ — the pull the worker's job is made of,
+        # the call his debrief showed he copies — of the
+        # glossary's smallest stocked source, so the one
+        # stage that shows a whole file stays within the
+        # population's package bound. Where the call
+        # cannot be made, no example stands and
         # generation proceeds without one.
         worked_example = None
         example_executor = Executor(
@@ -1486,16 +1521,18 @@ def run_demo():
             claim_dir=str(run_dir / "claims"),
             deadline=150.0)
         try:
+            example_address = _worked_example_address(
+                run_dir / "sandbox")
             example_result = \
-                example_executor.worked_example_list(
-                    GLOSSARY[0]["address"])
+                example_executor.worked_example_read(
+                    example_address)
             worked_example = {
-                "tool": "sandbox.list",
-                "path": GLOSSARY[0]["address"],
+                "tool": "sandbox.read",
+                "path": example_address,
                 "result": example_result}
             print("worked example: the office's "
-                  "sandbox.list call on "
-                  f"{GLOSSARY[0]['address']} stands "
+                  "sandbox.read call on "
+                  f"{example_address} stands "
                   "performed against the staged sandbox; "
                   "its result is sealed with the "
                   "assembly")
@@ -2108,30 +2145,36 @@ def verify_config():
                    == "nvidia/some-other-model")
 
             # The worked example (round nine, INDEX
-            # 548): this path's own staging stands at
-            # (6b), after generation, so the
-            # demonstration call is performed here on a
-            # throwaway staging of the same verified
-            # set, through the governed performer, and
-            # passed to the generation below — the seal
-            # this path verifies carries the real call's
-            # result on the glossary's first file.
+            # 548; the calibration): this path's own
+            # staging stands at (6b), after generation,
+            # so the demonstration call is performed
+            # here on a throwaway staging of the same
+            # verified set, through the governed
+            # performer, and passed to the generation
+            # below — the seal this path verifies
+            # carries the real call's result: a read of
+            # the glossary's smallest stocked source,
+            # the office's choice under the pointer-rule
+            # contract.
             example_problem = _stage_sandbox_sources(
                 tmp / "sandbox-example", manifest)
             verify_example = None
             if example_problem is None:
                 try:
+                    verify_address = \
+                        _worked_example_address(
+                            tmp / "sandbox-example")
                     verify_example = {
-                        "tool": "sandbox.list",
-                        "path": GLOSSARY[0]["address"],
+                        "tool": "sandbox.read",
+                        "path": verify_address,
                         "result": Executor(
                             doorway,
                             str(tmp / "sandbox-example"),
                             claim_dir=str(
                                 tmp / "claims-example"),
                             deadline=150.0
-                        ).worked_example_list(
-                            GLOSSARY[0]["address"])}
+                        ).worked_example_read(
+                            verify_address)}
                 except Exception:  # noqa: BLE001 — the
                     # call cannot be made: no example.
                     verify_example = None
@@ -2217,11 +2260,12 @@ def verify_config():
                        f"{sealed.get('presentation_contract')}")
                 expect("generation: the sealed record "
                        "carries the worked example — the "
-                       "office's sandbox.list call on the "
-                       "glossary's first file, its result "
-                       "the governed performer's own over "
-                       "the staged bytes (round nine, "
-                       "INDEX 548)",
+                       "office's sandbox.read call on the "
+                       "glossary's smallest stocked "
+                       "source, its result the governed "
+                       "performer's own over the staged "
+                       "bytes (round nine, INDEX 548; the "
+                       "calibration)",
                        verify_example is not None
                        and sealed.get("worked_example")
                        == verify_example,
@@ -2229,15 +2273,27 @@ def verify_config():
                        f"{sealed.get('worked_example')}")
                 expect("generation: the worked example's "
                        "result is the staged file's real "
-                       "listing — its size is the staged "
-                       "bytes' length",
+                       "read — its content is the staged "
+                       "bytes themselves, its byte count "
+                       "and hash theirs",
                        verify_example is not None
                        and verify_example["result"].get(
-                           "size_bytes")
+                           "content")
+                       == (tmp / "sandbox-example"
+                           / verify_example["path"])
+                       .read_bytes().decode("utf-8")
+                       and verify_example["result"].get(
+                           "content_bytes")
                        == len((tmp / "sandbox-example"
-                               / GLOSSARY[0]["address"])
-                              .read_bytes()),
-                       "size against the staged file")
+                               / verify_example["path"])
+                              .read_bytes())
+                       and verify_example["result"].get(
+                           "content_sha256")
+                       == _sha256_bytes(
+                           (tmp / "sandbox-example"
+                            / verify_example["path"])
+                           .read_bytes()),
+                       "content against the staged file")
                 expect("generation: the sealed record "
                        "declares the freshness guard "
                        "suspended (Ben's R31 ruling, "

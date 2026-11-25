@@ -116,6 +116,13 @@ EVENT_TYPES = {
     # naming the count it arrived with, in the same
     # shape.
     "DELIVERY_LENGTH_GATE",
+    # The tool-shape gate's record (the calibration):
+    # the provider refused an iteration's generation
+    # for the tool-use shape — a native tool call in a
+    # text-judged run — and the refusal is answered
+    # with a correction, in the same shape: what
+    # arrived stands preserved in the event, verbatim.
+    "TOOL_SHAPE_GATE",
 }
 
 # R14: a case's content fields, over which a correction's

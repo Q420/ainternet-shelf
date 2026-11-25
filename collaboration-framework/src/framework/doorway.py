@@ -2640,6 +2640,60 @@ class Doorway:
             self.store.commit()
             return ev
 
+    def record_tool_shape_gate(self, assembly_id,
+                               iteration_seq, http_status,
+                               error_code, error_message,
+                               tool_name, failed_generation):
+        """The tool-shape gate's record (the
+        calibration, from the GPT-OSS worker's
+        debrief): the provider refused the iteration's
+        generation for the tool-use shape — the worker
+        called a tool natively in a room whose tools
+        are called in the text shape — and under Ben's
+        gate ruling (INDEX 475) the refusal is answered
+        with a correction, not a stall. The event
+        carries what arrived, exactly as the provider's
+        refusal stated it: the status it observed (or
+        None where the seam observed none), the error's
+        code and message, the tool the failed
+        generation named, and the failed generation
+        itself, preserved verbatim. The correction the
+        next wake's package carries is derived from
+        this event by the loop and re-derived by the
+        checker, exactly as the other gates'
+        corrections are."""
+        with self.store.serialized():
+            state, entry = self._door_event_binding(
+                assembly_id, "TOOL_SHAPE_GATE")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if not any(it.get("event_seq") == iteration_seq
+                       for it in loop.get("iterations")
+                       or []):
+                self._loop_refuse(
+                    "TOOL_SHAPE_GATE", instance_id,
+                    "the named iteration does not stand "
+                    "for this activation; a gate binds an "
+                    "existing iteration")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration_seq": iteration_seq,
+                "http_status": http_status,
+                "error_code": error_code,
+                "error_message": error_message,
+                "tool_name": tool_name,
+                "failed_generation": failed_generation}
+            ev = self.store.append(
+                "TOOL_SHAPE_GATE", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
     def record_delivery_stage_gate(self, assembly_id,
                                    iteration_seq, stage,
                                    contribution_seq,

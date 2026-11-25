@@ -121,12 +121,24 @@ def _worked_example_problem(example, glossary,
     correction pair, INDEX 548): the problem a supplied
     example stands under, or None where it may seal. The
     example seals only beside the presentation contract,
-    names the pinned case's first glossary address
-    exactly, and carries the listing performer's whole
-    result, internally consistent — its hash and byte
-    count its content's, its path the call's. Anything
-    else would claim a demonstration the office never
-    made, so the generation fails preflight whole."""
+    names a glossary address of the pinned case, and
+    carries the performer's whole result, internally
+    consistent — its hash and byte count its content's,
+    its path the call's. Anything else would claim a
+    demonstration the office never made, so the
+    generation fails preflight whole.
+
+    The demonstration's form is the contract's own
+    (the calibration, from the GPT-OSS worker's
+    debrief): under the first contract the example is
+    the listing call on the glossary's first address,
+    exactly as round nine sealed it; under the
+    pointer-rule successor the example is a read — a
+    whole pull of one of the glossary's files, the
+    office's choice of file, because the worker copies
+    the call he is shown and his job is made of reads.
+    Each population's rule is its own; neither seals
+    under the other's."""
     if not presentation_declaration:
         return ("the worked example was asked to be "
                 "sealed but this generation does not "
@@ -138,6 +150,10 @@ def _worked_example_problem(example, glossary,
         return ("the worked example is not a call and "
                 "its result (a mapping naming exactly "
                 "tool, path and result)")
+    if presentation_declaration == \
+            _tool_policy.PRESENTATION_CONTRACT_V2:
+        return _worked_example_problem_read(
+            example, glossary)
     if example.get("tool") != "sandbox.list":
         return ("the worked example's call is not "
                 "sandbox.list, the demonstration call "
@@ -180,6 +196,64 @@ def _worked_example_problem(example, glossary,
             not isinstance(result.get("line_count"), int) \
             or isinstance(result.get("line_count"), bool) \
             or result.get("line_count") < 0:
+        return ("the worked example's result is not "
+                "internally consistent (its hash and "
+                "byte count are its content's, its path "
+                "the call's)")
+    return None
+
+
+def _worked_example_problem_read(example, glossary):
+    """The read demonstration's preflight (the
+    calibration): under the pointer-rule contract the
+    worked example is a sandbox.read of one of the
+    pinned case's glossary addresses, carrying the
+    read performer's whole result under the
+    working-set contract — the file's whole content
+    with its hash, its byte count and its authority
+    path, and nothing else. The address is the
+    office's choice among the map's files (the office
+    demonstrates on the smallest, so the one stage
+    that shows a whole file stays within the
+    population's package bound); what preflight
+    governs is that the demonstration is real: a
+    glossary address, a real read's result, internally
+    consistent."""
+    if example.get("tool") != "sandbox.read":
+        return ("the worked example's call is not "
+                "sandbox.read, the demonstration call "
+                "the files stage presents under the "
+                "pointer-rule presentation contract")
+    path = example.get("path")
+    addresses = []
+    if isinstance(glossary, list):
+        for entry in glossary:
+            if isinstance(entry, dict) and \
+                    isinstance(entry.get("address"), str):
+                addresses.append(entry["address"])
+    if not isinstance(path, str) or not path or \
+            path not in addresses:
+        return ("the worked example does not name one "
+                "of the pinned case's glossary addresses; "
+                "the demonstration is of a file the "
+                "briefcase map names")
+    result = example.get("result")
+    if not isinstance(result, dict) or \
+            set(result) != {"path", "content",
+                            "content_bytes",
+                            "content_sha256",
+                            "authority_path"}:
+        return ("the worked example's result is not "
+                "the read performer's whole result")
+    content = result.get("content")
+    if result.get("path") != path or \
+            not isinstance(content, str) or \
+            result.get("content_bytes") != len(
+                content.encode("utf-8")) or \
+            result.get("content_sha256") != hashlib.sha256(
+                content.encode("utf-8")).hexdigest() or \
+            result.get("authority_path") not in (
+                "source", "scratch"):
         return ("the worked example's result is not "
                 "internally consistent (its hash and "
                 "byte count are its content's, its path "
@@ -571,13 +645,17 @@ class Generator:
                         "contract stands for"],
                     "seat": seat_id}
         if worked_example is not None:
-            # Round nine's correction pair (INDEX 548):
+            # Round nine's correction pair (INDEX 548),
+            # as the calibration forked it by contract:
             # the worked example seals only beside the
-            # presentation contract, on the pinned case's
-            # first glossary file, its result whole and
-            # internally consistent — the loop presents
-            # the seal and the checker re-derives it, so
-            # a seal naming anything else would claim a
+            # presentation contract, on a glossary file
+            # of the pinned case, its result whole and
+            # internally consistent — under v1 the
+            # listing of the first file, under the
+            # pointer-rule successor a read of one of
+            # the map's files. The loop presents the
+            # seal and the checker re-derives it, so a
+            # seal naming anything else would claim a
             # demonstration the office never made. Fail
             # preflight whole, as the declarations do.
             example_problem = _worked_example_problem(

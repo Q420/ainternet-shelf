@@ -885,6 +885,20 @@ STAGED_EXAMPLE_LABEL = (
     "next move, not your work and not material you "
     "have gathered; the file's contents are still "
     "yours to pull.")
+# The room-proof line (the calibration, from the
+# GPT-OSS worker's debrief): one line standing beside
+# the worked example under the pointer-rule contract,
+# answering the doubt his testimony named — that the
+# JSON door might be "just a protocol" over some
+# other real engine. The example is a real call the
+# office made in his room, through the same performer
+# his own calls run; his tools answer the same way
+# when he calls them in the shape shown.
+STAGED_EXAMPLE_PROOF = (
+    "This example is a real call the office made in "
+    "your room, on a file from your own briefcase; "
+    "your tools answer the same way when you call "
+    "them in the shape shown.")
 STAGED_SNAPSHOT_NOTE = (
     "Where you stand: before you were woken, an "
     "opening conversation settled what stands below. "
@@ -917,6 +931,29 @@ STAGED_JOURNAL_POINTER = (
     "orientation, not record and not memory. Its "
     "contents are not carried in your packages — pull "
     "it when you want it.")
+# The journal's contract under the pointer-rule
+# successor (the calibration, from the GPT-OSS
+# worker's debrief): the same pointer, with the
+# directive he asked for stated in it — what to log
+# and when, in what shape; why (the office reads the
+# journal at every wake when it builds his package —
+# the journal component reads it from its resting
+# place each time — and the director may audit it);
+# and the truth that nothing parses it: it is read as
+# he wrote it, never checked or scored. The first
+# contract's note stands exactly as it stood.
+STAGED_JOURNAL_POINTER_V2 = (
+    "your journal — your notebook: notes, decisions, "
+    "where you left off. Yours to write and rewrite; "
+    "orientation, not record and not memory. Keep it "
+    "as you work: after each file you read, log its "
+    "name and the key points you took from it, in "
+    "one or two plain lines. The office reads your "
+    "journal at every wake to resume you, and the "
+    "director may audit it; nothing parses it — it "
+    "is read as you wrote it. Its contents are not "
+    "carried in your packages — pull it when you "
+    "want it.")
 # The delivery-evidence gate (round ten, INDEX 552):
 # where the case declares the evidence a delivery must
 # rest on, a contribution offered before that evidence
@@ -1018,6 +1055,21 @@ STAGED_TASK_FLOOR_STATEMENT = (
     "words. A contribution shorter than that is set "
     "aside unfiled, and you will be told the count "
     "yours arrived with.")
+# The task stage's deliverable statement under the
+# pointer-rule successor (the calibration, from the
+# GPT-OSS worker's debrief): the figures stand where
+# he plans, before any refusal can — the target the
+# job sets and the floor the door enforces, in one
+# statement. He had compressed "short" to under 250
+# words; the number was in his case all along, but
+# never where he formed his plan. The first
+# contract's statement stands exactly as it stood.
+STAGED_TASK_FLOOR_STATEMENT_V2 = (
+    "The brief runs to about 600 words, and the "
+    "door will not file a brief under {min_words} "
+    "words. A contribution shorter than that is set "
+    "aside unfiled, and you will be told the count "
+    "yours arrived with.")
 
 
 def _length_gate_correction(contribution_seq,
@@ -1038,6 +1090,134 @@ def _length_gate_correction(contribution_seq,
         "instruction": STAGED_LENGTH_GATE_INSTRUCTION
         .format(word_count=word_count,
                 min_words=min_words)}
+
+
+# The tool-shape gate's texts (the calibration, from
+# the GPT-OSS worker's debrief): where the provider
+# refuses a generation for the tool-use shape — the
+# worker reached for a tool natively in a room whose
+# tools are called in the text shape, and the
+# provider refused the whole answer — the refusal is
+# a gate under Ben's ruling (INDEX 475), answered
+# with a correction in the family's shape: what
+# arrived (the native call, named), what is needed
+# (the text shape), one concrete well-formed example,
+# and the instruction. Both texts are pure functions
+# of the gate event's facts and the case's first
+# glossary address, so the checker re-derives the
+# correction byte-exact from the record; its copies
+# stand in checker.py.
+def _tool_shape_what_arrived(tool_name):
+    return (f"a native tool call — your answer named "
+            f"{tool_name} in the provider's own "
+            f"tool-call shape, and the provider refused "
+            f"the whole answer for it (its refusal "
+            f"carries the code tool_use_failed). No "
+            f"tool ran, and nothing from that answer "
+            f"was carried out")
+
+
+TOOL_SHAPE_GATE_WHAT_IS_NEEDED = (
+    "In this room your tools are called in the text "
+    "shape: your answer is one JSON object whose "
+    "outcome is \"tool_requests\", with a requests "
+    "list naming each call — the tool's name and its "
+    "parameters — as the example shows. Only calls "
+    "in that shape reach your tools; a native tool "
+    "call cannot be carried out here.")
+TOOL_SHAPE_GATE_INSTRUCTION = (
+    "Nothing was filed, and nothing was lost: your "
+    "gathered work stands as it stood. Make the call "
+    "again in the text shape and carry on with the "
+    "job. The refusal cost this one step and nothing "
+    "else.")
+
+
+def _tool_shape_gate_correction(tool_name,
+                                example_address):
+    """The correction a tool-shape gate leaves for the
+    next wake's package, derived from the gate event's
+    facts: what arrived (the native call, named), what
+    is needed (the text shape), one concrete
+    well-formed tool_requests example — a read of the
+    case's first glossary file — and the instruction."""
+    return {
+        "what_arrived": _tool_shape_what_arrived(
+            tool_name),
+        "what_is_needed": TOOL_SHAPE_GATE_WHAT_IS_NEEDED,
+        "example": {
+            "outcome": "tool_requests",
+            "requests": [{
+                "tool": "sandbox.read",
+                "parameters": {"path": example_address}}]},
+        "instruction": TOOL_SHAPE_GATE_INSTRUCTION}
+
+
+def _tool_shape_failure(failure, seam):
+    """The tool-shape refusal's facts, where this
+    provider failure is one (the calibration): the
+    provider refused the generation for the tool-use
+    shape — an HTTP 400 (or a seam that observed no
+    status) whose error body carries the code
+    tool_use_failed (or the refusal's own words, that
+    a tool was called while the tool choice is none)
+    and preserves the failed generation, which parses
+    to a call naming its tool. Returns the facts the
+    gate event records, or None where the failure is
+    any other kind — rate limits, byte ceilings,
+    timeouts and server errors are not this gate's
+    business and stall as provider failures exactly
+    as they always have. The body is read from the
+    seam's own captured bytes, the same evidence the
+    disposition settled."""
+    if failure.kind != "provider_error":
+        return None
+    if not isinstance(seam, dict):
+        return None
+    status = seam.get("http_status")
+    if status is not None and status != 400:
+        return None
+    body = seam.get("l1_bytes")
+    if isinstance(body, (bytes, bytearray)):
+        try:
+            body = bytes(body).decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+    if not isinstance(body, str):
+        return None
+    try:
+        parsed = json.loads(body)
+    except ValueError:
+        return None
+    error = parsed.get("error") \
+        if isinstance(parsed, dict) else None
+    if not isinstance(error, dict):
+        return None
+    code = error.get("code")
+    message = error.get("message")
+    if code != "tool_use_failed" and not (
+            isinstance(message, str)
+            and "model called a tool" in message):
+        return None
+    failed = error.get("failed_generation")
+    if not isinstance(failed, str) or not failed:
+        return None
+    try:
+        generation = json.loads(failed)
+    except ValueError:
+        return None
+    name = generation.get("name") \
+        if isinstance(generation, dict) else None
+    if not isinstance(name, str) or not name:
+        return None
+    return {
+        "http_status": status,
+        "error_code": code
+        if isinstance(code, str) else "tool_use_failed",
+        "error_message": message
+        if isinstance(message, str) else "",
+        "tool_name": name,
+        "failed_generation": failed}
 
 
 def _evidence_address_stands(entries, requested, address):
@@ -1203,9 +1383,10 @@ STAGED_FILES_INTRO_V2 = (
     "front of you. "
     "Your tools are offered from this wake on. Below "
     "the map, one call stands worked as an example — "
-    "a real call the office made on the first file "
-    "while your briefcase was being stocked, with "
-    "what came back; yours will look like this.")
+    "a real call the office made on one of the files "
+    "in the map while your briefcase was being "
+    "stocked, with what came back; yours will look "
+    "like this.")
 STAGED_FILES_INTRO_NO_EXAMPLE_V2 = (
     "Your briefcase holds the job's files — the files "
     "your task needs. What stands below are pointers, "
@@ -1361,18 +1542,29 @@ def _staged_access_way(catalogue, address):
     return None
 
 
-def _worked_example_honoured(example):
+def _worked_example_honoured(example, contract=None):
     """The sealed worked example the loop presents
     (round nine's correction pair, INDEX 548): the
     generated record's example, where it stands
     well-formed — the demonstration call and the
-    listing performer's whole result, internally
-    consistent (its hash and byte count its content's,
-    its path the call's). A seal standing in any other
-    shape is not presented; the checker reports it."""
+    performer's whole result, internally consistent
+    (its hash and byte count its content's, its path
+    the call's). A seal standing in any other shape is
+    not presented; the checker reports it.
+
+    The well-formed shape is the sealed contract's
+    own (the calibration): under the first contract,
+    the listing call and the listing performer's
+    result, exactly as round nine presented them;
+    under the pointer-rule successor, the read call
+    and the read performer's whole result. Each
+    population honours only its own form."""
     if not isinstance(example, dict) or \
             set(example) != {"tool", "path", "result"}:
         return None
+    if contract == \
+            _tool_policy.PRESENTATION_CONTRACT_V2:
+        return _worked_example_read_honoured(example)
     if example.get("tool") != "sandbox.list":
         return None
     path = example.get("path")
@@ -1400,6 +1592,40 @@ def _worked_example_honoured(example):
             not isinstance(result.get("line_count"), int) \
             or isinstance(result.get("line_count"), bool) \
             or result.get("line_count") < 0:
+        return None
+    return copy.deepcopy(example)
+
+
+def _worked_example_read_honoured(example):
+    """The read demonstration's honour rule (the
+    calibration): the sealed example under the
+    pointer-rule contract, where it stands well-formed
+    — a sandbox.read call and the read performer's
+    whole result under the working-set contract (the
+    file's whole content with its hash, byte count and
+    authority path), internally consistent. A seal
+    standing in any other shape is not presented; the
+    checker reports it."""
+    if example.get("tool") != "sandbox.read":
+        return None
+    path = example.get("path")
+    result = example.get("result")
+    if not isinstance(path, str) or not path or \
+            not isinstance(result, dict) or \
+            set(result) != {"path", "content",
+                            "content_bytes",
+                            "content_sha256",
+                            "authority_path"}:
+        return None
+    content = result.get("content")
+    if result.get("path") != path or \
+            not isinstance(content, str) or \
+            result.get("content_bytes") != len(
+                content.encode("utf-8")) or \
+            result.get("content_sha256") != hashlib.sha256(
+                content.encode("utf-8")).hexdigest() or \
+            result.get("authority_path") not in (
+                "source", "scratch"):
         return None
     return copy.deepcopy(example)
 
@@ -1773,7 +1999,8 @@ class Loop:
         # contract and only standing well-formed — the
         # seal's word, never a loop-side composition.
         _worked_example = _worked_example_honoured(
-            _generated.get("worked_example")) \
+            _generated.get("worked_example"),
+            _presentation_value) \
             if _presentation_declared else None
         # Round ten (INDEX 552): the delivery-evidence
         # declaration the loop's door honours is read the
@@ -1850,6 +2077,8 @@ class Loop:
                 _delivery_floor),
             "delivery_length_gate_correction": None,
             "delivery_length_gate_error": None,
+            "tool_shape_gate_correction": None,
+            "tool_shape_gate_error": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -2271,6 +2500,24 @@ class Loop:
                         detail=ctx["delivery_gate_error"])
                 return self._stall(ctx, "provider_failure",
                                    detail=failure.detail)
+            if failure.kind == "provider_error":
+                # The tool-shape gate (the calibration):
+                # a provider refusal of the tool-use
+                # shape alone — the worker reached for a
+                # tool natively where no native tools
+                # were offered — is answered with a
+                # correction and the run continues within
+                # its budget, a gate under Ben's ruling
+                # (INDEX 475), not a stall. Every other
+                # provider failure stalls exactly as it
+                # always has, below.
+                if self._try_tool_shape_gate(
+                        ctx, iteration_seq, failure, seam):
+                    return "continue"
+                if ctx.get("tool_shape_gate_error"):
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=ctx["tool_shape_gate_error"])
             return self._stall(
                 ctx, "provider_failure",
                 detail=f"{failure.kind}: {failure.detail}")
@@ -3115,6 +3362,10 @@ class Loop:
                     "delivery_length_gate_correction"] \
                     = ctx.pop(
                         "delivery_length_gate_correction")
+            if ctx.get("tool_shape_gate_correction") \
+                    is not None:
+                ordered["tool_shape_gate_correction"] \
+                    = ctx.pop("tool_shape_gate_correction")
             ordered["case"] = package["case"]
             if working_set is not None:
                 ordered["working_set"] = working_set
@@ -3264,12 +3515,17 @@ class Loop:
             # in beside its address: the concrete call,
             # naming a granted tool, that pulls that file.
             # And the worked example (INDEX 548): the
-            # office's real call on the first file, with
-            # its real result, sealed at generation —
-            # shown, not described. Where no example was
-            # sealed (the first file could not be listed),
-            # none is presented and the introduction says
-            # so by its shape.
+            # office's real call, with its real result,
+            # sealed at generation — shown, not
+            # described. Under the first contract the
+            # call is the listing of the first file;
+            # under the pointer-rule successor it is a
+            # read of one of the map's files, with the
+            # room-proof line standing beside it (the
+            # calibration). Where no example was sealed
+            # (the call could not be made), none is
+            # presented and the introduction says so by
+            # its shape.
             example = ctx.get("worked_example")
             if pointer_form:
                 intro = STAGED_FILES_INTRO_V2 \
@@ -3300,7 +3556,9 @@ class Loop:
             if journal_path is not None:
                 files["journal"] = {
                     "path": journal_path,
-                    "label": STAGED_JOURNAL_POINTER}
+                    "label": STAGED_JOURNAL_POINTER_V2
+                    if pointer_form
+                    else STAGED_JOURNAL_POINTER}
             if example is not None:
                 files["worked_example"] = {
                     "label": STAGED_EXAMPLE_LABEL,
@@ -3310,6 +3568,14 @@ class Loop:
                             "path": example["path"]}},
                     "result": copy.deepcopy(
                         example["result"])}
+                if pointer_form:
+                    # The room-proof line (the
+                    # calibration): the proof stands
+                    # beside the example only under the
+                    # successor contract, whose example
+                    # is the read the line speaks of.
+                    files["worked_example"]["proof"] = \
+                        STAGED_EXAMPLE_PROOF
             staged["files"] = files
         elif stage == "task":
             task = {"assignment": content.get("assignment"),
@@ -3323,9 +3589,12 @@ class Loop:
             # before he can deliver against it.
             floor = ctx.get("delivery_floor")
             if floor is not None:
-                task["delivery_floor"] = \
-                    STAGED_TASK_FLOOR_STATEMENT.format(
-                        min_words=floor["min_words"])
+                statement = \
+                    STAGED_TASK_FLOOR_STATEMENT_V2 \
+                    if pointer_form \
+                    else STAGED_TASK_FLOOR_STATEMENT
+                task["delivery_floor"] = statement.format(
+                    min_words=floor["min_words"])
             verification = content.get("verification_list")
             if isinstance(verification, list):
                 task["verification_list"] = copy.deepcopy(
@@ -3395,6 +3664,10 @@ class Loop:
             staged["delivery_length_gate_correction"] \
                 = ordered[
                     "delivery_length_gate_correction"]
+        if ordered.get("tool_shape_gate_correction") \
+                is not None:
+            staged["tool_shape_gate_correction"] = \
+                ordered["tool_shape_gate_correction"]
         staged["tool_results"] = base["tool_results"]
         if ordered.get("working_set") is not None:
             if pointer_form:
@@ -4611,6 +4884,71 @@ class Loop:
                 "and nothing else: {\"outcome\": "
                 "\"contribute\", \"text\": \"<your "
                 "contribution>\"}.")}
+        return True
+
+    def _try_tool_shape_gate(self, ctx, iteration_seq,
+                             failure, seam):
+        """The tool-shape gate's decision (the
+        calibration, from the GPT-OSS worker's
+        debrief): True where this provider failure is
+        the tool-use shape's refusal — the worker
+        called a tool natively in a run judged for the
+        text shape, where no native tools were offered,
+        and the provider refused the whole generation,
+        preserving the failed call in its error body.
+        The gate event is recorded and the correction
+        stashed for the next wake's package; the firing
+        consumes the iteration, as the other gates'
+        firings do, and it may fire again on a later
+        iteration within the step budget. Narrow by
+        construction: any other provider failure —
+        rate limits, byte ceilings, timeouts, server
+        errors — is not this gate's business and stalls
+        as a provider failure exactly as it always
+        has. A gate that cannot be recorded names its
+        error on the context and returns False, and the
+        caller stalls on the error — an unrecorded gate
+        never becomes a continuation. The gate fires
+        only on the governed path, where the refusal's
+        evidence stands preserved and settled before
+        this decision, as the envelope gate's does."""
+        if ctx.get("adapter_mode") == "native":
+            return False
+        facts = _tool_shape_failure(failure, seam)
+        if facts is None:
+            return False
+        address = None
+        glossary = (ctx.get("content") or {}).get(
+            "glossary")
+        if isinstance(glossary, list):
+            for entry in glossary:
+                if isinstance(entry, dict) and \
+                        isinstance(
+                            entry.get("address"), str):
+                    address = entry["address"]
+                    break
+        if address is None:
+            # The correction's example names the case's
+            # first glossary file; where no glossary
+            # stands there is no example to teach with,
+            # and the refusal is not converted.
+            return False
+        try:
+            ev = self.doorway.record_tool_shape_gate(
+                ctx["assembly_id"], iteration_seq,
+                facts["http_status"], facts["error_code"],
+                facts["error_message"],
+                facts["tool_name"],
+                facts["failed_generation"])
+        except Exception as exc:  # noqa: BLE001
+            ctx["tool_shape_gate_error"] = (
+                f"the tool-shape gate could not be "
+                f"recorded: {type(exc).__name__}: {exc}")
+            return False
+        ctx["recorded"].append(ev)
+        ctx["tool_shape_gate_correction"] = \
+            _tool_shape_gate_correction(
+                facts["tool_name"], address)
         return True
 
     def _try_delivery_stage_gate(self, ctx, proposal, ev):

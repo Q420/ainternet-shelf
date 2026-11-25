@@ -70,6 +70,10 @@ _KNOWN_TYPES = {
     # The third gate (INDEX 557): the delivery-length
     # gate event.
     "DELIVERY_LENGTH_GATE",
+    # The tool-shape gate (the calibration): the
+    # provider's tool-use-shape refusal, answered with
+    # a correction.
+    "TOOL_SHAPE_GATE",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",

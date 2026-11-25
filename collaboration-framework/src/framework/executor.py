@@ -1010,6 +1010,32 @@ class Executor:
             "sandbox.list", {"path": path})
         return result
 
+    def worked_example_read(self, path):
+        """The office's demonstration call under the
+        calibration (the GPT-OSS debrief's blueprint):
+        a sandbox.read on `path`, performed exactly as
+        the governed performer performs a worker's read
+        under the working-set contract — the whole file,
+        its content carried in the retrieval result's
+        own shape — but no dispatch: the call is the
+        office's, made while the briefcase is stocked,
+        and its result is sealed into the assembly's
+        record as the worked example the files stage
+        presents under the pointer-rule contract. The
+        demonstration is a read because the worker's
+        own testimony was that he copied the call he
+        was shown: shown a listing, he listed; the
+        calibration shows him the pull his job is made
+        of. Raises as the performer raises where the
+        file does not stand or no authority admits the
+        path — the caller omits the example rather than
+        present one that was never made."""
+        authority = _authority_or_raise(
+            "sandbox.read", path)
+        data = self._read_bytes(path)
+        return _retrieval_result(
+            path, data.decode("utf-8"), authority)
+
     # ---------------------------------------------------- execute
     def execute(self, dispatch_id):
         """Execute one standing dispatch, exactly once: claim

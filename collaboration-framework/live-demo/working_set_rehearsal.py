@@ -200,6 +200,7 @@ from framework.loop import Loop  # noqa: E402
 from framework.office import Office  # noqa: E402
 from framework.record import (  # noqa: E402
     CONSTITUTION_HASH, FrameworkStore)
+from framework import tool_policy  # noqa: E402
 
 from connector_transport import (  # noqa: E402
     install_connector_transport)
@@ -1286,6 +1287,218 @@ def build_script_pointer():
             "chat-raw-bounded": _probe_steps()}
 
 
+# The tool-shape scenario's failed generation: the
+# stand-in's native reach, in the shape the live
+# GPT-OSS run's refusal preserved — a container.exec
+# call in the provider's own tool-call shape, testing
+# whether the room is alive. The provider's refusal
+# names it in its error body.
+TOOLSHAPE_FAILED_GENERATION = json.dumps({
+    "name": "container.exec",
+    "arguments": {"cmd": [
+        "bash", "-lc",
+        "python3 - <<'PY'\nprint('test')\nPY"]}})
+
+TOOLSHAPE_ERROR_BODY = {
+    "error": {
+        "message": "Tool choice is none, but model "
+                   "called a tool",
+        "type": "invalid_request_error",
+        "code": "tool_use_failed",
+        "failed_generation": TOOLSHAPE_FAILED_GENERATION}}
+
+TOOLSHAPE_429_BODY = {
+    "error": {
+        "message": "Rate limit reached for model "
+                   "openai/gpt-oss-120b in organization "
+                   "org-rehearsal on tokens per minute "
+                   "(TPM): Limit 8000, Used 7900, "
+                   "Requested 900. Please try again in "
+                   "30s.",
+        "type": "tokens",
+        "code": "rate_limit_exceeded"}}
+
+# The tool-shape scenario's brief: plain words over
+# the three sources, long enough to stand over the
+# declared floor — the run must end in a filing, so
+# the text is written to the job's own figures (about
+# 600 words; the door files nothing under 550).
+TOOLSHAPE_BRIEF_TEXT = (
+    "The collaborative agent framework is a way for "
+    "several agents to work on the same job together, "
+    "through shared work rather than through messages "
+    "about the work. A director decides what is to be "
+    "done. An office assembles a worker for one bounded "
+    "piece of that work: it chooses the model, states "
+    "the worker's identity, grants exactly the tools "
+    "the job needs, and packs a briefcase holding the "
+    "assignment, the sources the job rests on, and the "
+    "terms the work is judged under. The worker wakes "
+    "in a room of its own, reads what it was given, "
+    "gathers what it needs through the tools it holds, "
+    "and delivers its work back through the office's "
+    "door, where the delivery is checked against the "
+    "record before it is filed. Everything that happens "
+    "stands in a durable record, so the work survives "
+    "any one worker: a second worker, assembled later, "
+    "can be handed the same briefcase and continue from "
+    "the record rather than from anyone's memory of it. "
+    "What has been proven so far is the ground floor of "
+    "that design. An assembly can be generated with its "
+    "identity and its grants sealed, and the grants are "
+    "enforced: a worker can call only what it was "
+    "granted, in the scope it was granted. A worker can "
+    "pull real source documents through the doorway, "
+    "keep what it gathers in front of it across wakes, "
+    "and write a deliverable that the office files, with "
+    "the filing itself standing in the record. The "
+    "record can be replayed and checked independently, "
+    "event by event, and the checks derive what the "
+    "worker was shown rather than trusting what the "
+    "machinery says it showed. The door the worker "
+    "delivers through is gated, and the gates correct "
+    "rather than merely refuse: a delivery offered "
+    "before its evidence stands gathered is set aside "
+    "with the missing files named, a delivery under "
+    "the declared length is set aside with its count "
+    "named, and each correction stands in the record "
+    "beside the act it answered, so a later reader "
+    "can see not only what was delivered but what was "
+    "turned back on the way, and why it was turned "
+    "back, and what the worker did next with the "
+    "correction in front of him. One worker has "
+    "completed "
+    "a real assignment end to end in its own office: it "
+    "read three real sources and its brief was filed "
+    "through the door it was given. What is not proven "
+    "is everything above that ground floor. No two "
+    "workers have yet collaborated on one piece of "
+    "work, changing it in ways that change each other's "
+    "next steps; the framework's claim to collaboration, "
+    "as against one worker working alone in a well-kept "
+    "room, stands untested. The worker's composition "
+    "has been exercised only on short briefs, and its "
+    "behaviour over long jobs, under failing tools, and "
+    "across changes of occupant in the same role is "
+    "largely unmeasured. Several doors the design names "
+    "are still unbuilt: the worker cannot yet knock and "
+    "ask the office a question mid-job, and the process "
+    "tree that would show him the whole job with his "
+    "own part lit exists as a design, not as machinery. "
+    "The honest next step is the smallest one that "
+    "tests the framework's actual claim: put a second "
+    "worker in the same role's room, on the same files, "
+    "with the role's memory carried between them, and "
+    "watch whether the work continues from the record "
+    "without the first worker's help. Until that runs, "
+    "the framework is a well-built office with one "
+    "proven tenant, and it should be described as "
+    "exactly that and no more than that today.")
+
+
+def build_script_toolshape():
+    """The tool-shape scenario (the calibration): the
+    calibrated room under the pointer-rule contract,
+    judged TEXT — the GPT-OSS configuration. The
+    stand-in walks the stages, reads the first source
+    at the task stage, and then reaches for a tool
+    natively: the stub answers with the provider's
+    refusal body (HTTP 400's shape, code
+    tool_use_failed, the failed generation preserved),
+    exactly as the live run's wire carried it. The
+    gate answers with its correction; the next wake
+    carries it, and the stand-in — taught — reads the
+    remaining sources in the text shape and delivers
+    a brief that stands over the floor: filed,
+    completing the run."""
+    chat = [
+        _identify_step("toolshape"),
+        # 1 — the memory stage: acknowledge.
+        {"respond": _text_response(
+            "toolshape-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 2 — the case stage: acknowledge.
+        {"respond": _text_response(
+            "toolshape-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: the stand-in reads the
+        # first source — the stage's own pull, in the
+        # text shape — so gathering stands underway
+        # when the refusal comes at the task stage.
+        {"respond": _text_tool_requests(
+            "toolshape-read-1", [{
+                "tool": "sandbox.read",
+                "parameters": {
+                    "path": "sources/stock-take.md"}}]),
+         "action": None},
+        # 4 — the task stage: the native reach. The
+        # stub's answer is the provider's refusal body
+        # itself, standing on the helper's stdout
+        # exactly as an OpenAI-style error body stands
+        # there on the live seam.
+        {"respond": TOOLSHAPE_ERROR_BODY,
+         "action": None},
+        # 5 — the first dashboard wake: the correction
+        # rides this package. Taught, the stand-in
+        # reads the two remaining sources in the text
+        # shape, in one response.
+        {"respond": _text_tool_requests(
+            "toolshape-read-2", [
+                {"tool": "sandbox.read",
+                 "parameters": {
+                     "path": "sources/a3-pass.md"}},
+                {"tool": "sandbox.read",
+                 "parameters": {
+                     "path": "sources/index-tail.md"}}]),
+         "action": None},
+        # 6 — the contribution: every named address
+        # stands read whole in the record, and the
+        # text stands over the floor; filed, completing
+        # the run.
+        {"respond": _text_response(
+            "toolshape-contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": TOOLSHAPE_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_toolshape_refused():
+    """The tool-shape scenario's narrowness control:
+    the same walk, but the provider's answer at the
+    task stage is a rate-limit refusal (429's shape,
+    code rate_limit_exceeded). That class is not the
+    gate's business: no gate event stands, no
+    correction is owed, and the run stalls as a
+    provider failure exactly as it always has."""
+    chat = [
+        _identify_step("toolshape-refused"),
+        {"respond": _text_response(
+            "tsr-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        {"respond": _text_response(
+            "tsr-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        {"respond": _text_tool_requests(
+            "tsr-read-1", [{
+                "tool": "sandbox.read",
+                "parameters": {
+                    "path": "sources/stock-take.md"}}]),
+         "action": None},
+        {"respond": TOOLSHAPE_429_BODY,
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -1488,27 +1701,57 @@ def _run_scenario(work_dir, *, scenario, brief,
 
     # THE WORKED EXAMPLE (round nine's correction pair,
     # INDEX 548): under the presentation declaration the
-    # office performs the demonstration call on the
-    # case's first glossary file against the staged
-    # sandbox, through the same governed performer a
-    # dispatch runs, BEFORE the assembly is generated —
-    # the call's real result is what generation seals.
-    # Where the call cannot be made (the file is not
-    # there to be listed), no example stands and
-    # generation proceeds without one.
+    # office performs the demonstration call against the
+    # staged sandbox, through the same governed
+    # performer a dispatch runs, BEFORE the assembly is
+    # generated — the call's real result is what
+    # generation seals. Where the call cannot be made
+    # (the file is not there to be called on), no
+    # example stands and generation proceeds without
+    # one. The call is the contract's own (the
+    # calibration): under the first contract, the
+    # listing of the case's first glossary file; under
+    # the pointer-rule successor, a read of the
+    # glossary's smallest stocked file, by its staged
+    # bytes — the office's choice, so the one stage
+    # that shows a whole file stays within the
+    # population's package bound.
     worked_example = None
     if presentation_declaration:
-        first_address = None
+        glossary_addresses = []
         for entry in (content or {}).get("glossary") or []:
             if isinstance(entry, dict) and isinstance(
                     entry.get("address"), str):
-                first_address = entry["address"]
-                break
-        if first_address is not None:
-            example_executor = Executor(
-                doorway, str(run_dir / "sandbox"),
-                claim_dir=str(run_dir / "claims"),
-                deadline=150.0)
+                glossary_addresses.append(entry["address"])
+        example_executor = Executor(
+            doorway, str(run_dir / "sandbox"),
+            claim_dir=str(run_dir / "claims"),
+            deadline=150.0)
+        if presentation_declaration == \
+                tool_policy.PRESENTATION_CONTRACT_V2:
+            chosen = None
+            for address in glossary_addresses:
+                try:
+                    size = len((run_dir / "sandbox"
+                                / address).read_bytes())
+                except OSError:
+                    continue
+                if chosen is None or size < chosen[1]:
+                    chosen = (address, size)
+            if chosen is not None:
+                try:
+                    example_result = \
+                        example_executor.worked_example_read(
+                            chosen[0])
+                    worked_example = {
+                        "tool": "sandbox.read",
+                        "path": chosen[0],
+                        "result": example_result}
+                except Exception:  # noqa: BLE001 — the
+                    # call cannot be made: no example.
+                    worked_example = None
+        elif glossary_addresses:
+            first_address = glossary_addresses[0]
             try:
                 example_result = \
                     example_executor.worked_example_list(
@@ -2292,6 +2535,63 @@ def run_rehearsal(work_dir):
         delivery_declaration=True,
         delivery_evidence_declaration=True,
         presentation_declaration="staged-onboarding-v2")
+    # The calibration's scenarios: the pointer-rule
+    # room with the length declaration standing (the
+    # length brief), judged TEXT — the GPT-OSS
+    # configuration, whose worker's debrief is the
+    # calibration's blueprint. In the first, the
+    # stand-in's native reach at the task stage meets
+    # the provider's tool-shape refusal and the gate
+    # answers it; in the second, the same position
+    # meets a rate-limit refusal and the run stalls as
+    # it always has — the gate's narrowness, witnessed
+    # beside its firing.
+    toolshape_grounds = (
+        "Tool-shape rehearsal (the calibration): the "
+        "scripted stand-in's probe trials settled 5/5 "
+        "native — the recommendation stands as "
+        "evidence — and the stand-in examiner judges "
+        "TEXT, the GPT-OSS configuration's judgement "
+        "(Vane's INDEX 300 judgement, under which the "
+        "live GPT-OSS runs ran): no native tools are "
+        "offered, so a native reach is the provider's "
+        "to refuse. The generation seals the "
+        "pointer-rule presentation contract and the "
+        "case's delivery, delivery-evidence and "
+        "delivery-length declarations. Rehearsal "
+        "furniture by a scripted stand-in examiner.")
+    toolshape = _run_scenario(
+        work_dir / "toolshape",
+        scenario="toolshape",
+        brief=length_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_toolshape(),
+        grounds=toolshape_grounds,
+        adapter_mode="text",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="staged-onboarding-v2")
+    toolshape_refused = _run_scenario(
+        work_dir / "toolshape-refused",
+        scenario="toolshape-refused",
+        brief=length_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_toolshape_refused(),
+        grounds=toolshape_grounds,
+        adapter_mode="text",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="staged-onboarding-v2")
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
@@ -2308,4 +2608,6 @@ def run_rehearsal(work_dir):
             "length_order_evidence":
                 length_order_evidence,
             "length_order_stage": length_order_stage,
-            "pointer": pointer}
+            "pointer": pointer,
+            "toolshape": toolshape,
+            "toolshape_refused": toolshape_refused}

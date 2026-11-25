@@ -2359,9 +2359,10 @@ _STAGED_FILES_INTRO_V2 = (
     "front of you. "
     "Your tools are offered from this wake on. Below "
     "the map, one call stands worked as an example — "
-    "a real call the office made on the first file "
-    "while your briefcase was being stocked, with "
-    "what came back; yours will look like this.")
+    "a real call the office made on one of the files "
+    "in the map while your briefcase was being "
+    "stocked, with what came back; yours will look "
+    "like this.")
 _STAGED_FILES_INTRO_NO_EXAMPLE_V2 = (
     "Your briefcase holds the job's files — the files "
     "your task needs. What stands below are pointers, "
@@ -2391,6 +2392,15 @@ _STAGED_EXAMPLE_LABEL = (
     "next move, not your work and not material you "
     "have gathered; the file's contents are still "
     "yours to pull.")
+# The room-proof line (the calibration): this
+# checker's copy of the loop's line standing beside
+# the worked example under the pointer-rule
+# contract.
+_STAGED_EXAMPLE_PROOF = (
+    "This example is a real call the office made in "
+    "your room, on a file from your own briefcase; "
+    "your tools answer the same way when you call "
+    "them in the shape shown.")
 _STAGED_SNAPSHOT_NOTE = (
     "Where you stand: before you were woken, an "
     "opening conversation settled what stands below. "
@@ -2423,6 +2433,25 @@ _STAGED_JOURNAL_POINTER = (
     "orientation, not record and not memory. Its "
     "contents are not carried in your packages — pull "
     "it when you want it.")
+# The journal's contract under the pointer-rule
+# successor (the calibration): this checker's copy of
+# the loop's v2 note — the directive (log each read
+# file's name and key points, one or two plain
+# lines), the office reading the journal at every
+# wake to resume him, the director's audit, and the
+# truth that nothing parses it.
+_STAGED_JOURNAL_POINTER_V2 = (
+    "your journal — your notebook: notes, decisions, "
+    "where you left off. Yours to write and rewrite; "
+    "orientation, not record and not memory. Keep it "
+    "as you work: after each file you read, log its "
+    "name and the key points you took from it, in "
+    "one or two plain lines. The office reads your "
+    "journal at every wake to resume you, and the "
+    "director may audit it; nothing parses it — it "
+    "is read as you wrote it. Its contents are not "
+    "carried in your packages — pull it when you "
+    "want it.")
 # The delivery-evidence gate (round ten, INDEX 552):
 # this checker's copies of the correction's wording and
 # of the standing computation — the framework's stand in
@@ -2493,6 +2522,63 @@ _STAGED_TASK_FLOOR_STATEMENT = (
     "words. A contribution shorter than that is set "
     "aside unfiled, and you will be told the count "
     "yours arrived with.")
+# The task stage's deliverable statement under the
+# pointer-rule successor (the calibration): this
+# checker's copy of the loop's v2 statement — the
+# target and the floor standing where he plans.
+_STAGED_TASK_FLOOR_STATEMENT_V2 = (
+    "The brief runs to about 600 words, and the "
+    "door will not file a brief under {min_words} "
+    "words. A contribution shorter than that is set "
+    "aside unfiled, and you will be told the count "
+    "yours arrived with.")
+
+
+# The tool-shape gate (the calibration): this
+# checker's copies of the correction's wording — the
+# framework's stand in loop.py. The correction is
+# re-derived from the gate event's payload (the tool
+# the failed generation named) and the pinned case's
+# first glossary address, exactly as the loop derived
+# it when it stashed the correction.
+def _tool_shape_what_arrived(tool_name):
+    return (f"a native tool call — your answer named "
+            f"{tool_name} in the provider's own "
+            f"tool-call shape, and the provider refused "
+            f"the whole answer for it (its refusal "
+            f"carries the code tool_use_failed). No "
+            f"tool ran, and nothing from that answer "
+            f"was carried out")
+
+
+_TOOL_SHAPE_GATE_WHAT_IS_NEEDED = (
+    "In this room your tools are called in the text "
+    "shape: your answer is one JSON object whose "
+    "outcome is \"tool_requests\", with a requests "
+    "list naming each call — the tool's name and its "
+    "parameters — as the example shows. Only calls "
+    "in that shape reach your tools; a native tool "
+    "call cannot be carried out here.")
+_TOOL_SHAPE_GATE_INSTRUCTION = (
+    "Nothing was filed, and nothing was lost: your "
+    "gathered work stands as it stood. Make the call "
+    "again in the text shape and carry on with the "
+    "job. The refusal cost this one step and nothing "
+    "else.")
+
+
+def _tool_shape_gate_correction(tool_name,
+                                example_address):
+    return {
+        "what_arrived": _tool_shape_what_arrived(
+            tool_name),
+        "what_is_needed": _TOOL_SHAPE_GATE_WHAT_IS_NEEDED,
+        "example": {
+            "outcome": "tool_requests",
+            "requests": [{
+                "tool": "sandbox.read",
+                "parameters": {"path": example_address}}]},
+        "instruction": _TOOL_SHAPE_GATE_INSTRUCTION}
 
 
 def _evidence_address_stands(entries, requested, address):
@@ -2703,17 +2789,23 @@ def _staged_access_way(catalogue, address):
     return None
 
 
-def _worked_example_well_formed(example):
+def _worked_example_well_formed(example, contract=None):
     """The sealed worked example's shape — this
     checker's copy of the loop's honour rule (INDEX
-    548): the demonstration call and the listing
-    performer's whole result, internally consistent.
-    A seal standing in any other shape is presented
-    by no derivation and reported at the assembly
-    level."""
+    548): the demonstration call and the performer's
+    whole result, internally consistent. A seal
+    standing in any other shape is presented by no
+    derivation and reported at the assembly level.
+    The shape is the sealed contract's own (the
+    calibration): under the first contract, the
+    listing call and its result; under the
+    pointer-rule successor, the read call and the
+    read performer's whole result."""
     if not isinstance(example, dict) or \
             set(example) != {"tool", "path", "result"}:
         return False
+    if contract == _PRESENTATION_CONTRACT_V2:
+        return _worked_example_read_well_formed(example)
     if example.get("tool") != "sandbox.list":
         return False
     path = example.get("path")
@@ -2742,6 +2834,36 @@ def _worked_example_well_formed(example):
         not isinstance(result.get("line_count"), int) or
         isinstance(result.get("line_count"), bool) or
         result.get("line_count") < 0)
+
+
+def _worked_example_read_well_formed(example):
+    """The read demonstration's shape — this checker's
+    copy of the loop's read honour rule (the
+    calibration): a sandbox.read call and the read
+    performer's whole result under the working-set
+    contract, internally consistent (its hash and
+    byte count its content's, its path the call's)."""
+    if example.get("tool") != "sandbox.read":
+        return False
+    path = example.get("path")
+    result = example.get("result")
+    if not isinstance(path, str) or not path or \
+            not isinstance(result, dict) or \
+            set(result) != {"path", "content",
+                            "content_bytes",
+                            "content_sha256",
+                            "authority_path"}:
+        return False
+    content = result.get("content")
+    return not (
+        result.get("path") != path or
+        not isinstance(content, str) or
+        result.get("content_bytes") != len(
+            content.encode("utf-8")) or
+        result.get("content_sha256") != hashlib.sha256(
+            content.encode("utf-8")).hexdigest() or
+        result.get("authority_path") not in (
+            "source", "scratch"))
 
 
 def _stage_gate_what_arrived(stage):
@@ -3310,7 +3432,8 @@ def _derive_staged_core(events, state, gen, content,
         # presented where it stands well-formed — the
         # loop's honour rule, derived identically here.
         example = gp.get("worked_example")
-        if not _worked_example_well_formed(example):
+        if not _worked_example_well_formed(
+                example, declared_contract):
             example = None
         if pointer_form:
             intro = _STAGED_FILES_INTRO_V2 \
@@ -3340,7 +3463,9 @@ def _derive_staged_core(events, state, gen, content,
         if journal_path is not None:
             files["journal"] = {
                 "path": journal_path,
-                "label": _STAGED_JOURNAL_POINTER}
+                "label": _STAGED_JOURNAL_POINTER_V2
+                if pointer_form
+                else _STAGED_JOURNAL_POINTER}
         if example is not None:
             files["worked_example"] = {
                 "label": _STAGED_EXAMPLE_LABEL,
@@ -3349,14 +3474,19 @@ def _derive_staged_core(events, state, gen, content,
                     "parameters": {
                         "path": example["path"]}},
                 "result": copy.deepcopy(example["result"])}
+            if pointer_form:
+                files["worked_example"]["proof"] = \
+                    _STAGED_EXAMPLE_PROOF
         staged["files"] = files
     elif stage == "task":
         task = {"assignment": content.get("assignment"),
                 "deliverable": deliverable_text}
         if honoured_floor is not None:
-            task["delivery_floor"] = \
-                _STAGED_TASK_FLOOR_STATEMENT.format(
-                    min_words=honoured_floor["min_words"])
+            statement = _STAGED_TASK_FLOOR_STATEMENT_V2 \
+                if pointer_form \
+                else _STAGED_TASK_FLOOR_STATEMENT
+            task["delivery_floor"] = statement.format(
+                min_words=honoured_floor["min_words"])
         verification = content.get("verification_list")
         if isinstance(verification, list):
             task["verification_list"] = copy.deepcopy(
@@ -3509,6 +3639,37 @@ def _derive_staged_core(events, state, gen, content,
         if length_correction is not None:
             staged["delivery_length_gate_correction"] = \
                 length_correction
+        shape_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "TOOL_SHAPE_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                tool_name = ev["payload"].get("tool_name")
+                first_address = None
+                glossary = (content or {}).get("glossary")
+                if isinstance(glossary, list):
+                    for entry in glossary:
+                        if isinstance(entry, dict) and \
+                                isinstance(
+                                    entry.get("address"),
+                                    str):
+                            first_address = \
+                                entry["address"]
+                            break
+                shape_correction = \
+                    _tool_shape_gate_correction(
+                        tool_name, first_address) \
+                    if isinstance(tool_name, str) \
+                    and tool_name \
+                    and first_address is not None \
+                    else None
+        if shape_correction is not None:
+            staged["tool_shape_gate_correction"] = \
+                shape_correction
     if stage == "task":
         staged["tool_list"] = _staged_tool_menu(
             catalogue, deliverable=deliverable)
@@ -3844,6 +4005,7 @@ def _loop_result(events, state, run_dir=None):
     delivery_stage_gates = {}
     delivery_evidence_gates = {}
     delivery_length_gates = {}
+    tool_shape_gates = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -3957,6 +4119,17 @@ def _loop_result(events, state, run_dir=None):
                 continue
             delivery_length_gates.setdefault(
                 aid, []).append(ev)
+        elif t == "TOOL_SHAPE_GATE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("tool_shape_gate_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("tool_shape_gate",
+                                ev, aid):
+                continue
+            tool_shape_gates.setdefault(
+                aid, []).append(ev)
         elif t == "TRANSLATION_RECORDED":
             # Native adapter piece (N32/N33): the
             # translation record — the loop machinery's
@@ -4049,15 +4222,21 @@ def _loop_result(events, state, run_dir=None):
         # The worked example's seal (round nine's
         # correction pair, INDEX 548): the generator
         # seals the office's demonstration call beside
-        # the presentation contract, on the pinned
-        # case's first glossary file, its result whole
-        # and internally consistent. A seal standing
-        # anywhere else, in any other shape, or on any
-        # other file claims a demonstration the office
-        # never made and is divergent in itself,
-        # reported once here; the presentation itself
-        # is verified per iteration in the staged
-        # core's reconstruction.
+        # the presentation contract, on a glossary file
+        # of the pinned case, its result whole and
+        # internally consistent. A seal standing
+        # anywhere else, or in any other shape, claims
+        # a demonstration the office never made and is
+        # divergent in itself, reported once here; the
+        # presentation itself is verified per iteration
+        # in the staged core's reconstruction. The file
+        # it names is the contract's own rule (the
+        # calibration): under the first contract, the
+        # glossary's first address exactly; under the
+        # pointer-rule successor, one of the glossary's
+        # addresses — the office's choice, the read it
+        # demonstrates on the smallest file so the
+        # stage stays within its bound.
         example = gen["payload"].get("worked_example") \
             if gen is not None else None
         if example is not None:
@@ -4069,29 +4248,36 @@ def _loop_result(events, state, run_dir=None):
                         assembly_id=aid,
                         at_seq=activated[aid],
                         presentation_contract=presentation)
-            elif not _worked_example_well_formed(example):
+            elif not _worked_example_well_formed(
+                    example, presentation):
                 problem("worked_example_malformed",
                         assembly_id=aid,
                         at_seq=activated[aid])
             else:
                 glossary = pinned_case_content(aid).get(
                     "glossary")
-                first = None
+                addresses = []
                 if isinstance(glossary, list):
                     for entry in glossary:
                         if isinstance(entry, dict) and \
                                 isinstance(
                                     entry.get("address"),
                                     str):
-                            first = entry["address"]
-                            break
-                if first is None or \
-                        example.get("path") != first:
+                            addresses.append(
+                                entry["address"])
+                if presentation == \
+                        _PRESENTATION_CONTRACT_V2:
+                    path_ok = example.get("path") \
+                        in addresses
+                else:
+                    path_ok = bool(addresses) and \
+                        example.get("path") == addresses[0]
+                if not path_ok:
                     problem("worked_example_path_mismatch",
                             assembly_id=aid,
                             at_seq=activated[aid],
                             path=example.get("path"),
-                            first_glossary_address=first)
+                            glossary_addresses=addresses)
         # The delivery declaration (door scope,
         # 2026-11-24): the generator seals the pinned
         # case's declaration into the assembly's record;
@@ -4815,6 +5001,60 @@ def _loop_result(events, state, run_dir=None):
                         assembly_id=aid, at_seq=seq,
                         word_count=len(text.split()),
                         min_words=p.get("min_words"))
+
+    # The tool-shape gate's events (the calibration),
+    # verified against the record itself: a gate binds
+    # a standing iteration of a text-judged assembly
+    # (the refusal exists only where no native tools
+    # were offered), and its payload is the provider's
+    # refusal as it arrived — the status it observed
+    # (400, or None where the seam observed none), the
+    # tool_use_failed code, the refusal's message, the
+    # tool the failed generation named, and the failed
+    # generation itself, which must parse to a call
+    # naming that same tool. The correction the gate
+    # owes the next package is verified in the staged
+    # core's reconstruction above where the
+    # presentation contract stands.
+    for aid, evs in tool_shape_gates.items():
+        judged_text = judged_modes.get(aid) == "text"
+        iteration_seqs = {ev["event_seq"] for ev in
+                          iterations.get(aid, [])}
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if not judged_text:
+                problem("tool_shape_gate_without_text_"
+                        "judgement",
+                        assembly_id=aid, at_seq=seq)
+            if p.get("iteration_seq") not in \
+                    iteration_seqs:
+                problem("tool_shape_gate_iteration_"
+                        "mismatch",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            status = p.get("http_status")
+            failed = p.get("failed_generation")
+            generation = None
+            if isinstance(failed, str) and failed:
+                try:
+                    generation = json.loads(failed)
+                except ValueError:
+                    generation = None
+            if (status is not None and status != 400) \
+                    or p.get("error_code") \
+                    != "tool_use_failed" \
+                    or not isinstance(
+                        p.get("error_message"), str) \
+                    or not isinstance(
+                        p.get("tool_name"), str) \
+                    or not p.get("tool_name") \
+                    or not isinstance(generation, dict) \
+                    or generation.get("name") \
+                    != p.get("tool_name"):
+                problem("tool_shape_gate_payload_"
+                        "malformed",
+                        assembly_id=aid, at_seq=seq)
 
     # Dispatch standing by instance, for the stall checks:
     # each dispatch's first outcome position, and whether an
