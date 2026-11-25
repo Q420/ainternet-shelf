@@ -461,6 +461,51 @@ ROLE_MEMORY = [
      "conditions": "Run 5 debrief (INDEX 513); the "
                    "purpose label was added in the "
                    "INDEX 516 package."},
+    {"observation": "In this role you have a working "
+                    "shell in your room (the execution "
+                    "tool), and you use it as part of "
+                    "the job's ordinary steps — for "
+                    "example, reading a whole source "
+                    "file at once with a single shell "
+                    "command, or checking a file's size "
+                    "before reading it. Its command "
+                    "takes a list of strings; results "
+                    "come back as the room's receipt.",
+     "basis": "inference",
+     "conditions": "Office-stated standing knowledge, "
+                   "authored by the office 2026-11-24 "
+                   "(INDEX 539-540): injected context. "
+                   "No occupant has yet used the shell "
+                   "successfully in a framework run — "
+                   "round six: granted, listed, unused "
+                   "(INDEX 530). Whether the behaviour "
+                   "transfers is this run's measure."},
+    {"observation": "Your last completed brief "
+                    "covered all four points but came "
+                    "in at about 405 words against the "
+                    "roughly 600-word target — a third "
+                    "short. In this role you write to "
+                    "the full length the brief asks "
+                    "for.",
+     "basis": "demonstrated",
+     "conditions": "Round six (INDEX 530): the "
+                   "report's count was 405 words "
+                   "against the agreed 590-610."},
+    {"observation": "If a job needs something that is "
+                    "not in your briefcase, the route "
+                    "is stated in the job: ask the "
+                    "office, or pull it from the shelf "
+                    "using the glossary in your case. "
+                    "An unstated route is not a gap to "
+                    "improvise around silently — name "
+                    "what you need.",
+     "basis": "inference",
+     "conditions": "Office-stated standing knowledge "
+                   "(INDEX 539-540), per the "
+                   "director's pull direction (INDEX "
+                   "476, 479) and the worker's own "
+                   "tools consultation (INDEX 537), "
+                   "which converged on the same route."},
 ]
 
 

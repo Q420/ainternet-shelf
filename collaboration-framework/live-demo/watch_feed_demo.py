@@ -251,7 +251,7 @@ def main():
     from framework.record import FrameworkStore
     run_log = open(os.path.join(FEED, "run.log"), "a")
     worker_log = open(os.path.join(FEED, "worker.log"), "a")
-    run_log.write("\n=== ROUND SIX (NEMOTRON) — feed started "
+    run_log.write("\n=== ROUND SEVEN (NEMOTRON) — feed started "
                   f"{time.strftime('%H:%M:%S')} ===\n")
     run_log.flush()
     threading.Thread(target=pusher, daemon=True).start()
@@ -299,7 +299,7 @@ def main():
                                  f"{outcome_line} ===\n")
             phase = "FINISHED"
         status = (
-            f"ROUND SIX (NEMOTRON) — {phase}\n"
+            f"ROUND SEVEN (NEMOTRON) — {phase}\n"
             f"elapsed: {int(time.time() - started)}s\n"
             f"events in the record: {len(events)}\n"
             f"worker steps: {iters} of 20\n"
