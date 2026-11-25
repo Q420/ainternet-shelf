@@ -783,6 +783,18 @@ def _response_content_of(seam):
     return None
 
 
+def _filing_write(path, data):
+    """The office filing's one write of bytes to disk
+    (door scope): the staging write through which every
+    filing and every filing rollback passes, named as a
+    single seam so the filing's failure paths can be
+    witnessed against the real call — the door
+    rehearsal's partial-write double replaces exactly
+    this function, and nothing else in the filing path
+    writes content bytes."""
+    path.write_bytes(data)
+
+
 class Loop:
     """One activation's bounded run.
 
@@ -3056,7 +3068,28 @@ class Loop:
         as DELIVERABLE_FILED with authorship and filing
         kept distinct. A filing that cannot be performed
         or recorded is the machinery's failure, named on
-        the context for the caller's stall."""
+        the context for the caller's stall.
+
+        The filing's integrity shape (the examiner's
+        filing-integrity correction, 2026-11-24): the
+        destination's prior state — absent, or its exact
+        prior bytes — is captured before anything is
+        written; the contributed bytes are written to a
+        staging path in the same directory and renamed
+        atomically onto the destination, so a partial
+        write only ever exists at the staging path, never
+        at the destination; the filing is then recorded.
+        If any step of that sequence fails, the
+        destination is rolled back to its prior state
+        through the same staging route — a pre-existing
+        worker draft is restored exactly, never deleted —
+        and the loop stalls fail-closed with no filing
+        standing and no unaccounted deliverable at the
+        destination. If the rollback itself fails, a
+        durable reconciliation note stands beside the
+        destination naming the incomplete filing, so the
+        state left behind is explicit and recoverable
+        rather than silent."""
         text = proposal["payload"].get("text")
         destination = ctx["delivery"]["destination"]
         if not isinstance(text, str) or not text:
@@ -3078,21 +3111,62 @@ class Loop:
             return
         data = text.encode("utf-8")
         digest = hashlib.sha256(data).hexdigest()
+        path = Path(self.executor.sandbox_dir) / \
+            destination
+        staging = path.with_name(
+            path.name + ".filing-staging")
         try:
-            path = Path(self.executor.sandbox_dir) / \
-                destination
+            prior = path.read_bytes() \
+                if path.exists() else None
+        except Exception as exc:  # noqa: BLE001 — the
+            # prior state cannot even be read: fail closed
+            # before anything is written, the destination
+            # standing untouched
+            ctx["delivery_filing_error"] = (
+                f"the deliverable could not be filed: "
+                f"the destination's prior state could "
+                f"not be read ({type(exc).__name__}: "
+                f"{exc})")
+            return
+        try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(data)
+            _filing_write(staging, data)
+            staging.replace(path)
             filed_ev = self.doorway.record_deliverable_filed(
                 ctx["assembly_id"], ev["event_seq"],
                 destination, digest, ctx["seat"])
         except Exception as exc:  # noqa: BLE001 — the
-            # filing machinery itself: fail closed, claim
-            # no completion
-            ctx["delivery_filing_error"] = (
+            # filing machinery itself: roll the destination
+            # back to its captured prior state and fail
+            # closed, claiming no completion and leaving
+            # no unaccounted deliverable
+            problem = self._restore_filing_destination(
+                path, staging, prior)
+            detail = (
                 f"the deliverable could not be filed: "
                 f"{type(exc).__name__}: {exc}")
+            if problem is None:
+                detail += ("; the destination was rolled "
+                           "back to its prior state")
+            else:
+                self._leave_filing_reconciliation_note(
+                    path, destination=destination,
+                    contribution_seq=ev["event_seq"],
+                    digest=digest, seat=ctx["seat"],
+                    prior=prior,
+                    failure=f"{type(exc).__name__}: "
+                            f"{exc}",
+                    rollback_problem=problem)
+                detail += (
+                    f"; the rollback also failed "
+                    f"({problem}) and a reconciliation "
+                    f"note stands beside the destination")
+            ctx["delivery_filing_error"] = detail
             return
+        try:
+            staging.unlink(missing_ok=True)
+        except OSError:
+            pass
         ctx["recorded"].append(filed_ev)
         ctx["deliverable_filed"] = {
             "destination": destination,
@@ -3101,6 +3175,87 @@ class Loop:
             "filed_by": "office",
             "contribution_seq": ev["event_seq"],
             "filing_seq": filed_ev["event_seq"]}
+
+    def _restore_filing_destination(self, path, staging,
+                                    prior):
+        """Roll a failed filing's destination back to its
+        captured prior state, through the same staging +
+        atomic-rename route the filing itself used: the
+        prior bytes are restored exactly (a pre-existing
+        worker draft is preserved, never deleted), or —
+        where the destination stood absent — the file the
+        office's rename placed there is removed (it is
+        the office's own by construction). Staging
+        residue is cleared either way. Returns None where
+        the prior state stands restored, else a
+        description of the rollback's own failure."""
+        problem = None
+        try:
+            if prior is None:
+                path.unlink(missing_ok=True)
+            else:
+                _filing_write(staging, prior)
+                staging.replace(path)
+        except Exception as exc:  # noqa: BLE001
+            problem = f"{type(exc).__name__}: {exc}"
+        try:
+            staging.unlink(missing_ok=True)
+        except OSError:
+            pass
+        return problem
+
+    def _leave_filing_reconciliation_note(
+            self, path, *, destination, contribution_seq,
+            digest, seat, prior, failure,
+            rollback_problem):
+        """The double failure's durable account (the
+        examiner's filing-integrity correction): where a
+        filing failed AND its rollback failed, a JSON
+        note stands beside the destination —
+        <destination>.filing-incomplete.json in the run's
+        sandbox — carrying what was attempted, the
+        contribution the filing files (its record
+        position and its content hash), the destination's
+        captured prior state, and both failures, so the
+        incomplete filing is explicit and recoverable: an
+        examiner finds the note beside the deliverable
+        destination, and the bytes the destination may
+        hold are identified by the contribution's hash.
+        A failure to leave even the note is swallowed —
+        the stall's detail already names the rollback
+        failure; there is no third line of defence to
+        pretend at."""
+        note = {
+            "incomplete_filing": True,
+            "destination": destination,
+            "attempted": (
+                "the office attempted to file the "
+                "accepted contribution at the declared "
+                "destination and record DELIVERABLE_"
+                "FILED; the filing failed and the "
+                "rollback to the destination's prior "
+                "state also failed, so the destination "
+                "may hold the contributed bytes with no "
+                "filing event standing in the record"),
+            "contribution_seq": contribution_seq,
+            "content_sha256": digest,
+            "authored_by": seat,
+            "filed_by": "office",
+            "prior_state": (
+                "absent" if prior is None else {
+                    "sha256": hashlib.sha256(
+                        prior).hexdigest(),
+                    "bytes": len(prior)}),
+            "failure": failure,
+            "rollback_failure": rollback_problem}
+        note_path = path.with_name(
+            path.name + ".filing-incomplete.json")
+        try:
+            note_path.write_text(
+                json.dumps(note, indent=1) + "\n",
+                encoding="utf-8")
+        except OSError:
+            pass
 
     def _try_delivery_gate(self, ctx, iteration_seq,
                            failure, seam):

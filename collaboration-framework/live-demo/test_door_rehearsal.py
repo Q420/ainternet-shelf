@@ -45,9 +45,26 @@ contacted — and asserts, per part:
   case and presented exactly in the first wake's
   package, its four lists distinct and exact.
 
+  FILING (the examiner's filing-integrity correction,
+  counted separately from the four parts above): under
+  injected filing failures — RECORD-FAILS (the filing
+  append raises after the write landed, a worker draft
+  at the destination), RECORD-FAILS-NO-DRAFT (the
+  same, no pre-existing file), PARTIAL-WRITE (the
+  staging write writes partial bytes and raises),
+  DOUBLE-FAILURE (the record append raises and the
+  rollback's restore write fails) — a failed filing
+  leaves no unaccounted deliverable at the declared
+  destination: the prior state stands restored exactly
+  (the draft's bytes, or absence), no filing event
+  stands, the loop stalls fail-closed, and in the
+  double failure a durable reconciliation note beside
+  the destination names the incomplete filing.
+
 Run: python3 live-demo/test_door_rehearsal.py
 Exits 0 when every check passes. Per-part counts are
-printed separately (door / gate / carriage / opening).
+printed separately (door / gate / carriage / opening,
+and filing for the correction's witnesses).
 """
 
 import hashlib
@@ -369,12 +386,173 @@ def main():
                          "sealed",
               case_content.get("opening")
               == rehearsal.OPENING)
+
+        # ================== FILING ====================
+        # The filing-integrity correction's witnesses,
+        # counted separately under "filing".
+        draft_bytes = rehearsal.DRAFT_TEXT.encode(
+            "utf-8")
+        brief_bytes = rehearsal.BRIEF_TEXT.encode(
+            "utf-8")
+        draft_digest = hashlib.sha256(
+            draft_bytes).hexdigest()
+
+        def _filing_stall(part, scenario, rep, evs):
+            stalls = _of_type(evs, "LOOP_STALLED")
+            check(part, f"{scenario}: the run stalls "
+                        f"fail-closed (runtime_failure) "
+                        f"in one iteration — no "
+                        f"completion is claimed",
+                  rep["outcome"] == "stalled"
+                  and rep["iterations"] == 1
+                  and len(stalls) == 1
+                  and _payload(stalls[0]).get("ground")
+                  == "runtime_failure",
+                  f"{rep.get('outcome')} / "
+                  f"{rep.get('iterations')} / {stalls}")
+            check(part, f"{scenario}: the contribution "
+                        f"stands recorded and no filing "
+                        f"event stands",
+                  len(_of_type(evs, "CONTRIBUTION"))
+                  == 1
+                  and not _of_type(
+                      evs, "DELIVERABLE_FILED"))
+
+        def _scratch_names(swork):
+            scratch = swork / "run" / "sandbox" / \
+                "scratch"
+            if not scratch.exists():
+                return []
+            return sorted(p.name for p in
+                          scratch.iterdir())
+
+        # record-fails (draft at the destination)
+        f1rep = reports["record_fails"]
+        f1work = work / "filing-record-fails"
+        f1evs = _events(f1work)
+        _filing_stall("filing", "record-fails", f1rep,
+                      f1evs)
+        f1dest = f1work / "run" / "sandbox" / \
+            "scratch" / "brief.md"
+        check("filing", "record-fails: the destination "
+                        "holds the worker's draft bytes "
+                        "exactly — rolled back, not the "
+                        "contribution, not a partial, "
+                        "not deleted",
+              f1dest.exists()
+              and f1dest.read_bytes() == draft_bytes)
+        check("filing", "record-fails: no staging "
+                        "residue and no reconciliation "
+                        "note stand in the scratch "
+                        "directory — the rollback "
+                        "completed the account",
+              _scratch_names(f1work) == ["brief.md"],
+              f"{_scratch_names(f1work)}")
+        _checker_ok("filing", "record-fails", f1rep)
+
+        # record-fails, no pre-existing draft
+        f2rep = reports["record_fails_nodraft"]
+        f2work = work / "filing-record-fails-nodraft"
+        f2evs = _events(f2work)
+        _filing_stall("filing", "record-fails-nodraft",
+                      f2rep, f2evs)
+        check("filing", "record-fails-nodraft: the "
+                        "destination is absent "
+                        "afterwards — the file the "
+                        "office's rename placed there "
+                        "was removed, and nothing else "
+                        "stands in the scratch directory",
+              not (f2work / "run" / "sandbox" / "scratch"
+                   / "brief.md").exists()
+              and _scratch_names(f2work) == [],
+              f"{_scratch_names(f2work)}")
+        _checker_ok("filing", "record-fails-nodraft",
+                    f2rep)
+
+        # partial write at the staging seam
+        f3rep = reports["partial_write"]
+        f3work = work / "filing-partial-write"
+        f3evs = _events(f3work)
+        _filing_stall("filing", "partial-write", f3rep,
+                      f3evs)
+        f3dest = f3work / "run" / "sandbox" / \
+            "scratch" / "brief.md"
+        check("filing", "partial-write: the "
+                        "destination never held partial "
+                        "content — it holds the "
+                        "worker's draft bytes exactly; "
+                        "the partial bytes existed "
+                        "only at the staging path",
+              f3dest.exists()
+              and f3dest.read_bytes() == draft_bytes)
+        check("filing", "partial-write: no staging "
+                        "residue and no reconciliation "
+                        "note stand in the scratch "
+                        "directory",
+              _scratch_names(f3work) == ["brief.md"],
+              f"{_scratch_names(f3work)}")
+        _checker_ok("filing", "partial-write", f3rep)
+
+        # double failure: record fails, rollback fails
+        f4rep = reports["double_failure"]
+        f4work = work / "filing-double-failure"
+        f4evs = _events(f4work)
+        _filing_stall("filing", "double-failure", f4rep,
+                      f4evs)
+        f4scratch = f4work / "run" / "sandbox" / \
+            "scratch"
+        note_path = f4scratch / \
+            "brief.md.filing-incomplete.json"
+        note = {}
+        if note_path.exists():
+            note = json.loads(note_path.read_text())
+        f4contribs = _of_type(f4evs, "CONTRIBUTION")
+        check("filing", "double-failure: a durable "
+                        "reconciliation note stands "
+                        "beside the destination, "
+                        "carrying the declared "
+                        "destination, the contribution "
+                        "it files (its record position "
+                        "and content hash), the prior "
+                        "state (the draft's hash), and "
+                        "both failures",
+              note.get("incomplete_filing") is True
+              and note.get("destination")
+              == DELIVERY["destination"]
+              and f4contribs
+              and note.get("contribution_seq")
+              == f4contribs[0]["event_seq"]
+              and note.get("content_sha256") == digest
+              and (note.get("prior_state") or {}).get(
+                  "sha256") == draft_digest
+              and bool(note.get("failure"))
+              and bool(note.get("rollback_failure")),
+              f"{note}")
+        check("filing", "double-failure: the "
+                        "destination holds exactly the "
+                        "contributed bytes the note "
+                        "accounts for — the incomplete "
+                        "filing is explicit, identified "
+                        "by the note's hash, not silent",
+              (f4scratch / "brief.md").read_bytes()
+              == brief_bytes)
+        check("filing", "double-failure: no staging "
+                        "residue stands in the scratch "
+                        "directory — only the "
+                        "destination and its "
+                        "reconciliation note",
+              _scratch_names(f4work) == [
+                  "brief.md",
+                  "brief.md.filing-incomplete.json"],
+              f"{_scratch_names(f4work)}")
+        _checker_ok("filing", "double-failure", f4rep)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
     total_pass = sum(v[0] for v in COUNTS.values())
     total = sum(v[1] for v in COUNTS.values())
-    for part in ("door", "gate", "carriage", "opening"):
+    for part in ("door", "gate", "carriage", "opening",
+                 "filing"):
         passed, count = COUNTS.get(part, [0, 0])
         print(f"{part}: {passed}/{count} checks passed")
     print(f"\n{total_pass}/{total} checks passed")

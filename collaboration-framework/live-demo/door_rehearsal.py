@@ -39,6 +39,32 @@ response is malformed prose with no contribute
 discriminator. No gate fires; the run takes today's
 stall path (provider_failure) unchanged.
 
+FILING-FAILURE scenarios — the declared configuration
+under injected filing failures (the examiner's
+filing-integrity correction, 2026-11-24), each driven
+through a double at one real seam, restored after the
+scenario:
+
+RECORD-FAILS — a worker draft stands at the
+destination; the doorway's filing append is doubled
+to raise after the write has landed. The destination
+is rolled back to the draft's exact bytes; the loop
+stalls fail-closed; no filing event stands.
+
+RECORD-FAILS-NO-DRAFT — the same record failure with
+no pre-existing file: the destination is absent
+afterwards.
+
+PARTIAL-WRITE — the filing's staging write is doubled
+to write partial bytes and raise on its first call:
+the destination never holds partial content — the
+draft's bytes stand intact — and the loop stalls.
+
+DOUBLE-FAILURE — the record append raises AND the
+rollback's restore write fails: a durable
+reconciliation note stands beside the destination
+naming the incomplete filing.
+
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario, in the working-set
 rehearsal's shape (report.json, captures, export,
@@ -47,6 +73,7 @@ readout).
 
 from __future__ import annotations
 
+import contextlib
 import json
 from pathlib import Path
 
@@ -54,6 +81,9 @@ import working_set_rehearsal as _ws
 from demo_run import DELIVERY, ROLE_MEMORY
 from first_worker_run import _commission_brief
 import stock_demo
+
+import framework.loop as _loop_module  # noqa: E402
+from framework.doorway import Doorway  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 
@@ -171,24 +201,130 @@ def _brief(*, declared):
     return brief, manifest, manifest_hash
 
 
-def _run(work_dir, *, scenario, declared, script):
+# The filing-failure scenarios' pre-existing worker
+# draft: the worker's own unfinished brief, standing
+# at the deliverable destination before the office's
+# filing is attempted. A failed filing must restore
+# these bytes exactly — never delete them, never leave
+# the contribution or a partial in their place.
+DRAFT_TEXT = (
+    "Draft in progress — my brief so far, unfinished. "
+    "(Scripted stand-in draft for the door rehearsal's "
+    "filing-failure scenarios.)")
+
+
+def _stage_with_draft(sandbox, manifest):
+    """Stage the sandbox sources as usual, then place
+    the worker's draft at the declared destination."""
+    problem = _ws._stage_sandbox_sources(sandbox,
+                                         manifest)
+    if problem is not None:
+        return problem
+    dest = Path(sandbox) / DELIVERY["destination"]
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(DRAFT_TEXT.encode("utf-8"))
+    return None
+
+
+@contextlib.contextmanager
+def _record_append_fails():
+    """The record-failure double: the doorway's filing
+    append (Doorway.record_deliverable_filed — the
+    exact seam the loop calls) raises, for the
+    scenario's duration. The filing's write has already
+    landed when this fires, which is the examiner's
+    case: write succeeded, recording failed."""
+    original = Doorway.record_deliverable_filed
+
+    def double(self, *args, **kwargs):
+        raise RuntimeError(
+            "injected filing-record failure (door "
+            "rehearsal double)")
+
+    Doorway.record_deliverable_filed = double
+    try:
+        yield
+    finally:
+        Doorway.record_deliverable_filed = original
+
+
+@contextlib.contextmanager
+def _staging_write_fails(fail_on):
+    """The write-failure double: the filing's staging
+    write (framework.loop._filing_write — the filing's
+    one write seam) writes partial bytes and raises on
+    the calls numbered in `fail_on` (1-based), and
+    delegates to the real write on every other call.
+    fail_on={1} fails the filing's own staging write;
+    fail_on={2} lets the filing's write land and fails
+    the rollback's restore write."""
+    original = _loop_module._filing_write
+    calls = {"n": 0}
+
+    def double(path, data):
+        calls["n"] += 1
+        if calls["n"] in fail_on:
+            Path(path).write_bytes(
+                data[:len(data) // 2])
+            raise OSError(
+                "injected partial filing write (door "
+                "rehearsal double)")
+        return original(path, data)
+
+    _loop_module._filing_write = double
+    try:
+        yield
+    finally:
+        _loop_module._filing_write = original
+
+
+def _double_failure():
+    """Both failures at once: the record append raises
+    and the rollback's restore write (the staging
+    write's second call) fails — the path that must
+    leave the reconciliation note."""
+    stack = contextlib.ExitStack()
+    stack.enter_context(_record_append_fails())
+    stack.enter_context(_staging_write_fails({2}))
+    return stack
+
+
+def _run(work_dir, *, scenario, declared, script,
+         stage=None, patch=None):
     brief, manifest, manifest_hash = _brief(
         declared=declared)
-    return _ws._run_scenario(
-        work_dir, scenario=scenario, brief=brief,
-        manifest_hash=manifest_hash,
-        seal_entries=manifest["sources"],
-        stage_fn=lambda sandbox:
-            _ws._stage_sandbox_sources(sandbox, manifest),
-        script=script, grounds=GROUNDS,
-        adapter_mode="text", freshness_suspended=True,
-        delivery_declaration=declared)
+    if stage is None:
+        stage_fn = lambda sandbox: \
+            _ws._stage_sandbox_sources(sandbox, manifest)
+    else:
+        stage_fn = lambda sandbox: stage(sandbox,
+                                         manifest)
+
+    def go():
+        return _ws._run_scenario(
+            work_dir, scenario=scenario, brief=brief,
+            manifest_hash=manifest_hash,
+            seal_entries=manifest["sources"],
+            stage_fn=stage_fn,
+            script=script, grounds=GROUNDS,
+            adapter_mode="text",
+            freshness_suspended=True,
+            delivery_declaration=declared)
+
+    if patch is not None:
+        with patch:
+            return go()
+    return go()
 
 
 def run_rehearsal(work_dir):
-    """Run all four scenarios under `work_dir` (created
-    fresh). Returns {"door": report, "control": report,
-    "gate": report, "refusal": report}."""
+    """Run all eight scenarios under `work_dir`
+    (created fresh): the four door/gate scenarios and
+    the four filing-failure scenarios. Returns
+    {"door": report, "control": report, "gate":
+    report, "refusal": report, "record_fails": report,
+    "record_fails_nodraft": report, "partial_write":
+    report, "double_failure": report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -206,8 +342,35 @@ def run_rehearsal(work_dir):
     refusal = _run(work_dir / "refusal",
                    scenario="door-refusal", declared=True,
                    script=build_script_refusal())
+    record_fails = _run(
+        work_dir / "filing-record-fails",
+        scenario="door-filing-record-fails",
+        declared=True, script=build_script_door(),
+        stage=_stage_with_draft,
+        patch=_record_append_fails())
+    record_fails_nodraft = _run(
+        work_dir / "filing-record-fails-nodraft",
+        scenario="door-filing-record-fails-nodraft",
+        declared=True, script=build_script_door(),
+        patch=_record_append_fails())
+    partial_write = _run(
+        work_dir / "filing-partial-write",
+        scenario="door-filing-partial-write",
+        declared=True, script=build_script_door(),
+        stage=_stage_with_draft,
+        patch=_staging_write_fails({1}))
+    double_failure = _run(
+        work_dir / "filing-double-failure",
+        scenario="door-filing-double-failure",
+        declared=True, script=build_script_door(),
+        stage=_stage_with_draft,
+        patch=_double_failure())
     return {"door": door, "control": control,
-            "gate": gate, "refusal": refusal}
+            "gate": gate, "refusal": refusal,
+            "record_fails": record_fails,
+            "record_fails_nodraft": record_fails_nodraft,
+            "partial_write": partial_write,
+            "double_failure": double_failure}
 
 
 def main():
