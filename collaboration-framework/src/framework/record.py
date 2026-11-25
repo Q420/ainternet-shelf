@@ -92,6 +92,11 @@ EVENT_TYPES = {
     # and before the first dispatch of the iteration, bound to
     # the exact response-evidence artifact hash.
     "TRANSLATION_RECORDED",
+    # Door scope (2026-11-24): the office's filing of an
+    # accepted contribution as the deliverable, and the
+    # envelope gate's correction record for a recognisable
+    # but unparseable contribution response.
+    "DELIVERABLE_FILED", "DELIVERY_GATE",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -148,7 +153,8 @@ EVENT_TYPES = {
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority", "loop_bounds",
-                       "glossary", "journal", "onboarding")
+                       "glossary", "journal", "onboarding",
+                       "delivery", "role_memory", "opening")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

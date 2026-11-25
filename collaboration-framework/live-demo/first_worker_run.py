@@ -341,7 +341,9 @@ GRANTS_RETRIEVAL = (
 
 def _commission_brief(assignment, manifest_hash,
                       glossary=None, bounds=None,
-                      journal=None, onboarding=None):
+                      journal=None, onboarding=None,
+                      delivery=None, role_memory=None,
+                      opening=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
@@ -390,6 +392,17 @@ def _commission_brief(assignment, manifest_hash,
         brief["journal"] = journal
     if onboarding is not None:
         brief["onboarding"] = dict(onboarding)
+    if delivery is not None:
+        brief["delivery"] = dict(delivery)
+    if role_memory is not None:
+        brief["role_memory"] = [dict(item)
+                                for item in role_memory]
+    if opening is not None:
+        brief["opening"] = {
+            key: list(opening.get(key) or [])
+            for key in ("worker_statements",
+                        "office_answers", "settled",
+                        "unresolved")}
     return brief
 
 

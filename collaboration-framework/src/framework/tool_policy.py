@@ -164,6 +164,13 @@ WORKING_SET_CONTRACT = "working-set-v1"
 # A record declaring any other value under the field
 # declares a state this framework does not understand.
 FRESHNESS_GUARD_SUSPENDED = "r31-suspended-v1"
+# The delivery declaration's one known route (door scope,
+# 2026-11-24): a sealed generated record declaring this
+# route under "delivery" stands under Ben's ruling that
+# the worker's contribution is the deliverable's arrival
+# and the office files it. The checker reads the same
+# value from its own copy in checker.py.
+DELIVERY_ROUTE_CONTRIBUTION = "contribution-v1"
 SEARCH_PAGE_LINE_CAP = 40
 RETRIEVAL_TOOLS = frozenset({
     "sandbox.list", "sandbox.read_range", "sandbox.search",

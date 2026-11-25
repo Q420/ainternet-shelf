@@ -412,6 +412,76 @@ ONBOARDING = {
 # enforces append-only.
 JOURNAL_PATH = "scratch/journal.md"
 
+# The door scope's configuration (2026-11-24): the
+# delivery declaration this run's case carries and its
+# generation seals — the worker's contribution is the
+# deliverable's arrival, and the office files it at the
+# declared destination — and Gary's role-memory
+# snapshot, the calibration the assembly carries into
+# his first package (each item's basis class and
+# conditions stated, per the examiner's discipline).
+DELIVERY = {"destination": "scratch/brief.md",
+            "route": "contribution-v1"}
+
+ROLE_MEMORY = [
+    {"observation": "Delivers finished writing as "
+                    "plain prose in the reply itself.",
+     "basis": "demonstrated",
+     "conditions": "Conversation lane, 2026-11-24 "
+                   "try-out (INDEX 521): chose plain "
+                   "prose when asked his format."},
+    {"observation": "Reaches for the contribute "
+                    "outcome as his delivery route, "
+                    "even when a write tool is offered "
+                    "and the deliverable statement "
+                    "names it.",
+     "basis": "demonstrated",
+     "conditions": "Framework runs 5 and 6 (INDEX "
+                   "512, 517) and the conversation "
+                   "try-out (INDEX 521)."},
+    {"observation": "Wants assigned sources in one "
+                    "clearly labelled batch, up front.",
+     "basis": "worker_reported",
+     "conditions": "His closing suggestions in the "
+                   "try-out conversation, 2026-11-24 "
+                   "(INDEX 521)."},
+    {"observation": "Wants style preferences (tone, "
+                    "structure) stated at the outset.",
+     "basis": "worker_reported",
+     "conditions": "Same."},
+    {"observation": "Wants a bounded word-count "
+                    "target; he suggested about 600, "
+                    "plus or minus 10.",
+     "basis": "worker_reported",
+     "conditions": "Same."},
+    {"observation": "Does not notice the journal "
+                    "unless its purpose is stated in "
+                    "plain words beside it.",
+     "basis": "demonstrated",
+     "conditions": "Run 5 debrief (INDEX 513); the "
+                   "purpose label was added in the "
+                   "INDEX 516 package."},
+]
+
+
+def _load_opening(demo_dir, run_dir):
+    """The run's opening inputs (door scope, Part 3):
+    the structured record at opening.json and the
+    source conversation at opening-transcript.json,
+    read from the run directory (or its record
+    subdirectory) where they stand. Returns the
+    structured record, or None where no input stands —
+    the case then carries no opening, exactly as
+    before. The transcript file is never written by
+    the driver: it is retained among the run outputs
+    untouched."""
+    for base in (demo_dir, run_dir):
+        path = base / "opening.json"
+        if path.exists():
+            with open(path, encoding="utf-8") as fh:
+                return json.load(fh)
+    return None
+
 # The case's glossary (Ben's briefcase design,
 # 2026-11-16): the pullable items for this case — the
 # three sources by their shelf addresses (the paths
@@ -671,7 +741,10 @@ def _write_capture_helper(path):
 def _commission_and_issue(store, manifest_hash,
                           assignment=ASSIGNMENT_COMBINED,
                           glossary=GLOSSARY,
-                          onboarding=ONBOARDING):
+                          onboarding=ONBOARDING,
+                          delivery=DELIVERY,
+                          role_memory=ROLE_MEMORY,
+                          opening=None):
     """Commission, material sealing, office issue and
     the pre-activation verification, exactly as the gate
     4 rehearsal and the harness carry them: the issued
@@ -687,7 +760,10 @@ def _commission_and_issue(store, manifest_hash,
                               glossary=glossary,
                               bounds=DEMO_BOUNDS,
                               journal=JOURNAL_PATH,
-                              onboarding=onboarding)
+                              onboarding=onboarding,
+                              delivery=delivery,
+                              role_memory=role_memory,
+                              opening=opening)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -751,6 +827,22 @@ def _commission_and_issue(store, manifest_hash,
         raise RuntimeError(
             "the issued case does not carry the "
             "commissioned onboarding as its own component")
+    if delivery is not None and \
+            (content or {}).get("delivery") != delivery:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "delivery declaration as its own component")
+    if role_memory is not None and \
+            (content or {}).get("role_memory") \
+            != role_memory:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "role-memory snapshot as its own component")
+    if opening is not None and \
+            (content or {}).get("opening") != opening:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "opening record as its own component")
     return doorway, office, gen, tok, issued
 
 
@@ -908,8 +1000,10 @@ def run_demo():
         # source set, the pre-activation verification.
         store = FrameworkStore(store_path)
         store.insert_run(RUN_ID, CONSTITUTION_HASH)
+        opening = _load_opening(demo_dir, run_dir)
         doorway, office, gen, tok, issued = \
-            _commission_and_issue(store, manifest_hash)
+            _commission_and_issue(
+                store, manifest_hash, opening=opening)
         print("pre-activation verification: manifest hash "
               "in the issued case's evidence boundary; "
               "bounds as scoped; the case carries the "
@@ -962,7 +1056,8 @@ def run_demo():
                 tok["orch-1"], "crew-1", identify_callable,
                 skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
-                exec_room=True, freshness_suspended=True)
+                exec_room=True, freshness_suspended=True,
+                delivery_declaration=True)
         except ModelPinMismatchError as mismatch:
             # The flagged conflict (paper §3.6 gate 5's
             # rule, carried to this run's pin): the route
@@ -1162,6 +1257,16 @@ def run_demo():
             "stalled": "stalled",
             "not_run": "not_run",
         }.get(result.get("outcome"), result.get("outcome"))
+        _filings = [e for e in events
+                    if e["type"] == "DELIVERABLE_FILED"]
+        brief_filed = None
+        if _filings:
+            _fp = _filings[-1]["payload"]
+            brief_filed = {
+                "destination": _fp.get("destination"),
+                "sha256": _fp.get("content_sha256"),
+                "authored_by": _fp.get("authored_by"),
+                "filed_by": _fp.get("filed_by")}
         captures_count = sum(
             1 for line in
             captures_path.read_text(
@@ -1233,6 +1338,7 @@ def run_demo():
                     DEMO_BOUNDS["deadline_seconds"],
                 "derivation": BOUNDS_DERIVATION,
             },
+            "brief_filed": brief_filed,
             "loop_result": {
                 "ok": result.get("ok"),
                 "outcome": result.get("outcome"),
@@ -1534,7 +1640,8 @@ def verify_config():
                  "provider_model_id": MODEL},
                 skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
-                exec_room=True, freshness_suspended=True)
+                exec_room=True, freshness_suspended=True,
+                delivery_declaration=True)
             expect("generation: stub-identity generation "
                    "succeeds",
                    generated.get("ok") is True,
@@ -1611,6 +1718,26 @@ def verify_config():
                        json.dumps(
                            (case_content or {}).get(
                                "journal"))[:300])
+                expect("generation: the sealed record "
+                       "carries the delivery declaration, "
+                       "bound to the case's own word (the "
+                       "door scope — the contribution is "
+                       "the deliverable's arrival, the "
+                       "office files it)",
+                       sealed.get("delivery") == DELIVERY
+                       and (case_content or {}).get(
+                           "delivery") == DELIVERY,
+                       json.dumps(
+                           sealed.get("delivery"))[:300])
+                expect("commission: the issued case "
+                       "carries the role-memory snapshot "
+                       "as its own component, unchanged "
+                       "(the door scope's carriage)",
+                       (case_content or {}).get(
+                           "role_memory") == ROLE_MEMORY,
+                       json.dumps(
+                           (case_content or {}).get(
+                               "role_memory"))[:300])
                 expect("commission: the issued case "
                        "carries the onboarding as its own "
                        "component, unchanged (the run-6 "

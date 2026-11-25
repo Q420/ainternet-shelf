@@ -143,6 +143,15 @@ class Office:
         if brief.get("onboarding") is not None:
             content["onboarding"] = copy.deepcopy(
                 brief["onboarding"])
+        # The door scope's components (2026-11-24): where
+        # the recorded brief names the case's delivery
+        # declaration, its role-memory snapshot, or its
+        # opening record, the draft carries each unchanged
+        # as its own component, by the same route.
+        for _field in ("delivery", "role_memory", "opening"):
+            if brief.get(_field) is not None:
+                content[_field] = copy.deepcopy(
+                    brief[_field])
         return content
 
     # ---------------------------------------------------- preflight
@@ -176,7 +185,9 @@ class Office:
         for field in ("case_id", "version", "seat") + tuple(
                 f for f in CASE_CONTENT_FIELDS
                 if f not in ("loop_bounds", "glossary",
-                             "journal", "onboarding")):
+                             "journal", "onboarding",
+                             "delivery", "role_memory",
+                             "opening")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
@@ -224,6 +235,61 @@ class Office:
                     "exactly three non-empty strings: the "
                     "job's headline, the deliverable's "
                     "statement, and the onboarding text")
+        if content.get("delivery") is not None:
+            delivery = content["delivery"]
+            if not isinstance(delivery, dict) or \
+                    set(delivery) != {"destination",
+                                      "route"} or \
+                    any(not isinstance(
+                            delivery.get(key), str)
+                        or not delivery.get(key)
+                        for key in ("destination", "route")):
+                problems.append(
+                    "the delivery declaration must be an "
+                    "object of exactly two non-empty "
+                    "strings: the destination and the "
+                    "route")
+        if content.get("role_memory") is not None:
+            role_memory = content["role_memory"]
+            if not isinstance(role_memory, list) or any(
+                    not isinstance(item, dict)
+                    or set(item) != {"observation", "basis",
+                                     "conditions"}
+                    or any(not isinstance(
+                               item.get(key), str)
+                           or not item.get(key)
+                           for key in ("observation",
+                                       "conditions"))
+                    or item.get("basis") not in (
+                        "demonstrated", "worker_reported",
+                        "inference")
+                    for item in role_memory):
+                problems.append(
+                    "the role memory must be a list of "
+                    "items, each an object of exactly an "
+                    "observation, a basis (demonstrated, "
+                    "worker_reported or inference) and "
+                    "conditions, all non-empty strings")
+        if content.get("opening") is not None:
+            opening = content["opening"]
+            if not isinstance(opening, dict) or \
+                    set(opening) != {
+                        "worker_statements", "office_answers",
+                        "settled", "unresolved"} or \
+                    any(not isinstance(
+                            opening.get(key), list)
+                        or any(not isinstance(x, str)
+                               for x in opening.get(key)
+                               or [])
+                        for key in (
+                            "worker_statements",
+                            "office_answers", "settled",
+                            "unresolved")):
+                problems.append(
+                    "the opening record must be an object "
+                    "of exactly four lists of strings: "
+                    "worker_statements, office_answers, "
+                    "settled and unresolved")
         tree = content.get("tree")
         part = content.get("part")
         if isinstance(tree, dict) and part is not None:
@@ -305,7 +371,9 @@ class Office:
             # acquire a null field it never had (Piece A3,
             # correction round 1).
             if field in ("loop_bounds", "glossary",
-                         "journal", "onboarding") and \
+                         "journal", "onboarding",
+                         "delivery", "role_memory",
+                         "opening") and \
                     field not in current and \
                     field not in changes:
                 continue

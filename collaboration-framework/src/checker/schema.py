@@ -197,7 +197,26 @@ SCHEMA = {
                         "t": "obj", "f": {
                             "headline": {"t": "str"},
                             "deliverable": {"t": "str"},
-                            "text": {"t": "str"}}}}},
+                            "text": {"t": "str"}}}},
+                    "delivery": {"t": "opt", "v": {
+                        "t": "obj", "f": {
+                            "destination": {"t": "str"},
+                            "route": {"t": "str"}}}},
+                    "role_memory": {"t": "opt", "v": {
+                        "t": "list", "v": {"t": "obj", "f": {
+                            "observation": {"t": "str"},
+                            "basis": {"t": "str"},
+                            "conditions": {"t": "str"}}}}},
+                    "opening": {"t": "opt", "v": {
+                        "t": "obj", "f": {
+                            "worker_statements": {
+                                "t": "list", "v": {"t": "str"}},
+                            "office_answers": {
+                                "t": "list", "v": {"t": "str"}},
+                            "settled": {
+                                "t": "list", "v": {"t": "str"}},
+                            "unresolved": {
+                                "t": "list", "v": {"t": "str"}}}}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

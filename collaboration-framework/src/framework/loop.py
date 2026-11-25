@@ -162,9 +162,11 @@ shape from an activation's bounded run, and stands unchanged.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
 import time
+from pathlib import Path
 
 from fabric.canonical import canonical, sha256_hex
 
@@ -736,6 +738,51 @@ def _plain_ground(ground):
     return re.sub(r"\s+", " ", plain).strip()
 
 
+# The envelope gate's recogniser (door scope, 2026-11-24):
+# the exact rule, stated once. A response that has ALREADY
+# failed the text-outcome JSON parse is an attempted
+# contribution when, and only when, its trimmed form opens
+# with "{" and its first two keys are, in order, the
+# outcome discriminator naming contribute and the text
+# key opening a string value:
+#   { "outcome" : "contribute" , "text" : " ...
+# (whitespace flexible, nothing else admitted before or
+# between the two keys). Anything else — malformed prose,
+# another outcome's envelope, a contribute named later in
+# the object — is not recognised and keeps the stall path.
+_CONTRIBUTE_ENVELOPE_RE = re.compile(
+    r'^\{\s*"outcome"\s*:\s*"contribute"\s*,'
+    r'\s*"text"\s*:\s*"')
+
+
+def _recognised_contribution_attempt(raw):
+    """Whether `raw` (a response's exact content) is a
+    recognisable attempted contribution under the gate's
+    rule above."""
+    if not isinstance(raw, str):
+        return False
+    return _CONTRIBUTE_ENVELOPE_RE.match(
+        raw.strip()) is not None
+
+
+def _response_content_of(seam):
+    """The exact response content a seam observation
+    carries: its own content field where the transport
+    recorded one, else the L4 text derived from its
+    captured L1 bytes, else None."""
+    if not isinstance(seam, dict):
+        return None
+    content = seam.get("content")
+    if isinstance(content, str):
+        return content
+    l1 = seam.get("l1_bytes")
+    if isinstance(l1, (bytes, bytearray)):
+        l4 = _evidence.derive_layers(bytes(l1)).get("L4") or {}
+        if l4.get("present"):
+            return l4.get("text")
+    return None
+
+
 class Loop:
     """One activation's bounded run.
 
@@ -890,7 +937,30 @@ class Loop:
             packed = doorway._event_at(entry.get("packed_seq"))
             adapter_mode = (packed or {}).get(
                 "payload", {}).get("adapter_mode")
+        # The door scope (2026-11-24): the delivery
+        # declaration the loop honours is the one the
+        # generator sealed into the assembly's record,
+        # where it equals the pinned case's declaration
+        # exactly — the case's word and the assembly's
+        # seal, never one without the other. The working-
+        # set declaration is read the same way, for the
+        # gate's population.
+        _generated = doorway._generated_payload(
+            assembly_id) or {}
+        _delivery = _generated.get("delivery")
+        if not (isinstance(_delivery, dict)
+                and _delivery.get("route") == _tool_policy
+                .DELIVERY_ROUTE_CONTRIBUTION
+                and (content or {}).get("delivery")
+                == _delivery):
+            _delivery = None
         return {
+            "delivery": copy.deepcopy(_delivery),
+            "working_set_declared":
+                _generated.get("working_set_contract")
+                == _tool_policy.WORKING_SET_CONTRACT,
+            "deliverable_filed": None,
+            "delivery_gate_correction": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -1156,6 +1226,12 @@ class Loop:
                     return native_result
             else:
                 self._adjudicate(ctx, data)
+                if ctx.get("delivery_filing_error"):
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=ctx["delivery_filing_error"])
+                if ctx.get("deliverable_filed") is not None:
+                    return self._delivered_result(ctx)
 
     # --------------------------------- response evidence
     def _stage_flag_snapshot(self, ctx):
@@ -1270,6 +1346,22 @@ class Loop:
             if self._deadline_passed(ctx):
                 return self._stall(ctx, "deadline")
             if failure.kind == "malformed_response":
+                # The envelope gate (door scope,
+                # 2026-11-24): a recognisable attempted
+                # contribution that failed the parse is
+                # answered with a correction and the run
+                # continues within its budget — a gate,
+                # not a stall. The raw response and the
+                # parse failure already stand preserved in
+                # this iteration's response-evidence
+                # disposition, settled above.
+                if self._try_delivery_gate(
+                        ctx, iteration_seq, failure, seam):
+                    return "continue"
+                if ctx.get("delivery_gate_error"):
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=ctx["delivery_gate_error"])
                 return self._stall(ctx, "provider_failure",
                                    detail=failure.detail)
             return self._stall(
@@ -1417,6 +1509,12 @@ class Loop:
                 ctx, data, iteration_seq,
                 disposition["payload"].get("artifact_sha256"))
         self._adjudicate(ctx, data)
+        if ctx.get("delivery_filing_error"):
+            return self._stall(
+                ctx, "runtime_failure",
+                detail=ctx["delivery_filing_error"])
+        if ctx.get("deliverable_filed") is not None:
+            return self._delivered_result(ctx)
         return "continue"
 
     def _seam_from_failure(self, failure):
@@ -2041,8 +2139,33 @@ class Loop:
                             f"briefcase guide — stands "
                             f"at the head of your first "
                             f"wake's package."}
+            if ctx["iterations"] == 0:
+                # The door scope's carriage (2026-11-24):
+                # at the first wake only, the role-memory
+                # snapshot rides with the onboarding
+                # material, and the opening record stands
+                # immediately after it — the settled
+                # results of the opening conversation,
+                # carried into the room as recorded work
+                # state. Both are the case's own components,
+                # presented exactly as sealed.
+                _role_memory = (ctx["content"] or {}).get(
+                    "role_memory")
+                if isinstance(_role_memory, list) \
+                        and _role_memory:
+                    ordered["role_memory"] = copy.deepcopy(
+                        _role_memory)
+                _opening = (ctx["content"] or {}).get(
+                    "opening")
+                if isinstance(_opening, dict) and _opening:
+                    ordered["opening"] = copy.deepcopy(
+                        _opening)
             ordered["step_position"] = step_position
             ordered["task_status"] = "in progress"
+            if ctx.get("delivery_gate_correction") \
+                    is not None:
+                ordered["delivery_gate_correction"] = \
+                    ctx.pop("delivery_gate_correction")
             ordered["case"] = package["case"]
             if working_set is not None:
                 ordered["working_set"] = working_set
@@ -2902,6 +3025,137 @@ class Loop:
                                "tool_requests": converted})
         return "continue"
 
+    # --------------------------------------------------- door
+    def _delivered_result(self, ctx):
+        """The loop's completion on a filing (door scope,
+        2026-11-24): the successful-completion semantics
+        are the yield's — the run stands complete because
+        the deliverable stands filed — with the filing's
+        facts carried in the result beside the summary."""
+        return {"ok": True, "outcome": "yield",
+                "summary": "the contributed deliverable "
+                           "was filed by the office at "
+                           + ctx["deliverable_filed"][
+                               "destination"],
+                "deliverable_filed":
+                    ctx["deliverable_filed"],
+                "instance_id": ctx["instance_id"],
+                "assembly_id": ctx["assembly_id"],
+                "iterations": ctx["iterations"],
+                "recorded": ctx["recorded"],
+                "refused": ctx["refused"],
+                "dispatched": ctx["dispatched"],
+                "call_timings": ctx["call_timings"]}
+
+    def _file_deliverable(self, ctx, proposal, ev):
+        """File one accepted contribution at the declared
+        destination (door scope): the office's own write,
+        through the loop/office layer's channel — the
+        executor's sandbox tree, the run's scratch — never
+        through the worker's sandbox grants, and recorded
+        as DELIVERABLE_FILED with authorship and filing
+        kept distinct. A filing that cannot be performed
+        or recorded is the machinery's failure, named on
+        the context for the caller's stall."""
+        text = proposal["payload"].get("text")
+        destination = ctx["delivery"]["destination"]
+        if not isinstance(text, str) or not text:
+            ctx["delivery_filing_error"] = (
+                "the accepted contribution carries no "
+                "text to file")
+            return
+        if self.executor is None or not getattr(
+                self.executor, "sandbox_dir", None):
+            ctx["delivery_filing_error"] = (
+                "no office channel stands to file the "
+                "deliverable (the loop holds no executor)")
+            return
+        if not destination.startswith("scratch/") or \
+                ".." in destination.split("/"):
+            ctx["delivery_filing_error"] = (
+                f"the declared destination {destination!r} "
+                f"does not stand under the run's scratch")
+            return
+        data = text.encode("utf-8")
+        digest = hashlib.sha256(data).hexdigest()
+        try:
+            path = Path(self.executor.sandbox_dir) / \
+                destination
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            filed_ev = self.doorway.record_deliverable_filed(
+                ctx["assembly_id"], ev["event_seq"],
+                destination, digest, ctx["seat"])
+        except Exception as exc:  # noqa: BLE001 — the
+            # filing machinery itself: fail closed, claim
+            # no completion
+            ctx["delivery_filing_error"] = (
+                f"the deliverable could not be filed: "
+                f"{type(exc).__name__}: {exc}")
+            return
+        ctx["recorded"].append(filed_ev)
+        ctx["deliverable_filed"] = {
+            "destination": destination,
+            "sha256": digest,
+            "authored_by": ctx["seat"],
+            "filed_by": "office",
+            "contribution_seq": ev["event_seq"],
+            "filing_seq": filed_ev["event_seq"]}
+
+    def _try_delivery_gate(self, ctx, iteration_seq,
+                           failure, seam):
+        """The envelope gate's decision (door scope,
+        2026-11-24): True where this failure is a
+        recognisable attempted contribution under a
+        standing delivery declaration in the working-set
+        population — the gate event is recorded and the
+        correction stashed for the next wake's package.
+        The gate fires only on the governed path: the raw
+        response and the parse failure stand preserved in
+        the iteration's response-evidence artifact and
+        disposition, settled before this decision. It may
+        fire again on a later iteration within the step
+        budget (each firing consumes its step); it grants
+        nothing and dispatches nothing."""
+        if self.evidence_store is None or \
+                ctx.get("delivery") is None or \
+                not ctx.get("working_set_declared"):
+            return False
+        raw = _response_content_of(seam)
+        if raw is None or not \
+                _recognised_contribution_attempt(raw):
+            return False
+        try:
+            json.loads(raw.strip())
+            return False  # it parses: not the gate's case
+        except ValueError as exc:
+            parse_error = f"{failure.detail} ({exc})"
+        excerpt = raw[:500]
+        try:
+            ev = self.doorway.record_delivery_gate(
+                ctx["assembly_id"], iteration_seq, excerpt,
+                len(raw), parse_error)
+        except Exception as exc:  # noqa: BLE001
+            ctx["delivery_gate_error"] = (
+                f"the delivery gate could not be "
+                f"recorded: {type(exc).__name__}: {exc}")
+            return False
+        ctx["recorded"].append(ev)
+        ctx["delivery_gate_correction"] = {
+            "what_arrived": excerpt,
+            "response_length": len(raw),
+            "what_failed": parse_error,
+            "instruction": (
+                "Your previous response could not be "
+                "read: it arrived as a contribution, but "
+                "its envelope was not valid JSON, so "
+                "nothing in it was accepted. Resend the "
+                "contribution plainly, as one JSON object "
+                "and nothing else: {\"outcome\": "
+                "\"contribute\", \"text\": \"<your "
+                "contribution>\"}.")}
+        return True
+
     # ---------------------------------------------- adjudication
     def _adjudicate(self, ctx, data):
         """Effect a validated response, per act and per
@@ -2937,6 +3191,22 @@ class Loop:
                     proposal["payload"],
                     view_seq=ctx["cursor"])
                 ctx["recorded"].append(ev)
+                if proposal["type"] == "CONTRIBUTION" \
+                        and ctx.get("delivery") is not None \
+                        and ctx.get("deliverable_filed") \
+                        is None \
+                        and not ctx.get(
+                            "delivery_filing_error"):
+                    # The door (door scope, 2026-11-24):
+                    # under the sealed declaration this
+                    # contribution is the deliverable's
+                    # arrival; the office files it, and
+                    # the response's remaining acts do not
+                    # proceed — the first accepted
+                    # contribution completes the assignment.
+                    self._file_deliverable(ctx, proposal,
+                                           ev)
+                    return
             except DoorwayRefusal as refusal:
                 ctx["refused"].append(
                     {"type": proposal["type"],

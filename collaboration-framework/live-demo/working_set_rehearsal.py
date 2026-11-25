@@ -625,7 +625,8 @@ if __name__ == "__main__":
 def _run_scenario(work_dir, *, scenario, brief,
                   manifest_hash, seal_entries, stage_fn,
                   script, grounds, adapter_mode="native",
-                  freshness_suspended=False):
+                  freshness_suspended=False,
+                  delivery_declaration=False):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
     Returns the report dict (also written to
@@ -739,7 +740,8 @@ def _run_scenario(work_dir, *, scenario, brief,
         tok["orch-1"], "crew-1", adapter.identify,
         skills=[], grants=GRANTS_COMBINED,
         model_requested=MODEL, probe=True, exec_room=True,
-        freshness_suspended=freshness_suspended)
+        freshness_suspended=freshness_suspended,
+        delivery_declaration=delivery_declaration)
     if not generated.get("ok"):
         raise RuntimeError(
             f"generation failed: "
@@ -833,6 +835,8 @@ def _run_scenario(work_dir, *, scenario, brief,
             (sealed or {}).get("working_set_contract"),
         "sealed_freshness_guard":
             (sealed or {}).get("freshness_guard"),
+        "sealed_delivery":
+            (sealed or {}).get("delivery"),
         "sealed_catalogue_contract":
             (sealed or {}).get("catalogue_contract"),
         "manifest_hash": manifest_hash,

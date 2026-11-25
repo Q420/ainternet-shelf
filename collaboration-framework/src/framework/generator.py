@@ -253,7 +253,8 @@ class Generator:
     def generate(self, token, seat_id, identify, skills=(),
                  grants=None, model_requested=None,
                  retrieval=False, probe=False, exec_room=False,
-                 freshness_suspended=False):
+                 freshness_suspended=False,
+                 delivery_declaration=False):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -328,6 +329,36 @@ class Generator:
                     "seat": seat_id}
         proposal = self._open_proposal(state, seat_id)
         eff = effective_case(state, seat_id)
+        delivery = None
+        if delivery_declaration:
+            # The door scope (2026-11-24): the delivery
+            # declaration stands in the pinned case's
+            # content; sealing it is the generator's act —
+            # the sealed generated record carries the exact
+            # declaration the case stands under, bound to
+            # this assembly, so the doorway, the loop and
+            # the checker read one declaration, never a
+            # mutable preference. A generation asked to
+            # seal a declaration the case does not carry
+            # (or carries malformed) fails preflight whole.
+            content = eff.get("content") or {}
+            delivery = content.get("delivery")
+            if not isinstance(delivery, dict) or \
+                    set(delivery) != {"destination",
+                                      "route"} or \
+                    any(not isinstance(
+                            delivery.get(key), str)
+                        or not delivery.get(key)
+                        for key in ("destination",
+                                    "route")):
+                return {"ok": False,
+                        "problems": [
+                            "the delivery declaration was "
+                            "asked to be sealed but the "
+                            "pinned case carries no "
+                            "well-formed delivery "
+                            "declaration"],
+                        "seat": seat_id}
         n = self._next_number(state)
         instance_id = f"inst-{seat_id}-{n}"
         assembly_id = f"assembly-{seat_id}-{n}"
@@ -376,6 +407,8 @@ class Generator:
             # gathered material forward.
             record["working_set_contract"] = \
                 _tool_policy.WORKING_SET_CONTRACT
+        if delivery_declaration:
+            record["delivery"] = copy.deepcopy(delivery)
         if freshness_suspended:
             # Ben's R31 ruling (2026-11-24), sealed as a
             # declaration beside the contracts: the

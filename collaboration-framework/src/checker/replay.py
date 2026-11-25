@@ -22,7 +22,8 @@ position (scope Rev 4, C6). It never escapes as an exception.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority", "loop_bounds",
-                       "glossary", "journal", "onboarding")
+                       "glossary", "journal", "onboarding",
+                       "delivery", "role_memory", "opening")
 
 _STATUS_RANK = {"unverified": 0, "declared": 1,
                 "provider-confirmed": 2}
@@ -56,6 +57,9 @@ _KNOWN_TYPES = {
     "CALL_ENTERED", "RESPONSE_EVIDENCE", "EVIDENCE_CAPTURE_FAILED",
     # Native adapter piece (N32): the translation record.
     "TRANSLATION_RECORDED",
+    # Door scope (2026-11-24): the office filing and the
+    # envelope gate events.
+    "DELIVERABLE_FILED", "DELIVERY_GATE",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",

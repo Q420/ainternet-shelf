@@ -2075,6 +2075,13 @@ _WORKING_SET_CONTRACT = "working-set-v1"
 # checker does not understand.
 _FRESHNESS_GUARD_SUSPENDED = "r31-suspended-v1"
 
+# The delivery declaration's one known route (door scope,
+# 2026-11-24; the framework copy stands in tool_policy):
+# an assembly declaring it under "delivery" stands under
+# the ruling that the worker's contribution is the
+# deliverable's arrival and the office files it.
+_DELIVERY_ROUTE_CONTRIBUTION = "contribution-v1"
+
 
 def _working_set_served(tool, result):
     """The served descriptor of one retrieval result, in
@@ -2437,6 +2444,19 @@ def _loop_result(events, state, run_dir=None):
             return True
         return False
 
+    def pinned_case_content(aid):
+        """The assembly's pinned case version's content,
+        from this checker's replayed state — or {} where
+        it does not stand."""
+        gen = generated.get(aid)
+        if gen is None:
+            return {}
+        case = (state.get("cases") or {}).get(
+            gen["payload"].get("case_id"))
+        ver = ((case or {}).get("versions") or {}).get(
+            str(gen["payload"].get("case_version"))) or {}
+        return ver.get("content") or {}
+
     def binding_problems(kind, ev, aid):
         """Whether a loop event's binding fields name the
         standing activation exactly; returns True when a
@@ -2466,6 +2486,8 @@ def _loop_result(events, state, run_dir=None):
     dispositions = {}
     evidence_failures = {}
     translations = {}
+    deliverable_filings = {}
+    delivery_gates = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -2524,6 +2546,26 @@ def _loop_result(events, state, run_dir=None):
                         assembly_id=aid, at_seq=seq)
             evidence_failures.setdefault(aid, []).append(ev)
             binding_problems("evidence_failure", ev, aid)
+        elif t == "DELIVERABLE_FILED":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("deliverable_filed_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("deliverable_filed", ev,
+                                aid):
+                continue
+            deliverable_filings.setdefault(
+                aid, []).append(ev)
+        elif t == "DELIVERY_GATE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("delivery_gate_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("delivery_gate", ev, aid):
+                continue
+            delivery_gates.setdefault(aid, []).append(ev)
         elif t == "TRANSLATION_RECORDED":
             # Native adapter piece (N32/N33): the
             # translation record — the loop machinery's
@@ -2586,6 +2628,45 @@ def _loop_result(events, state, run_dir=None):
             problem("freshness_guard_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     freshness_guard=freshness)
+        # The delivery declaration (door scope,
+        # 2026-11-24): the generator seals the pinned
+        # case's declaration into the assembly's record;
+        # the two must be one declaration. A sealed route
+        # this checker does not know is divergent in
+        # itself; a case declaration standing unsealed, or
+        # a seal naming anything but the case's word, is
+        # a broken binding.
+        delivery = gen["payload"].get(
+            "delivery") if gen is not None else None
+        case_delivery = pinned_case_content(aid).get(
+            "delivery")
+        if delivery is not None:
+            if not isinstance(delivery, dict) or \
+                    set(delivery) != {"destination",
+                                      "route"} or \
+                    not isinstance(
+                        delivery.get("destination"), str) \
+                    or not delivery.get("destination") \
+                    or not isinstance(
+                        delivery.get("route"), str) \
+                    or not delivery.get("route"):
+                problem("delivery_declaration_malformed",
+                        assembly_id=aid,
+                        at_seq=activated[aid],
+                        delivery=delivery)
+            elif delivery.get("route") != \
+                    _DELIVERY_ROUTE_CONTRIBUTION:
+                problem("delivery_route_unknown",
+                        assembly_id=aid,
+                        at_seq=activated[aid],
+                        route=delivery.get("route"))
+            elif case_delivery != delivery:
+                problem("delivery_declaration_mismatch",
+                        assembly_id=aid,
+                        at_seq=activated[aid])
+        elif case_delivery is not None:
+            problem("delivery_declaration_unsealed",
+                    assembly_id=aid, at_seq=activated[aid])
 
     for aid, evs in iterations.items():
         bounds = pinned_bounds(aid)
@@ -2752,6 +2833,91 @@ def _loop_result(events, state, run_dir=None):
                     problem("iteration_after_stall",
                             assembly_id=aid,
                             at_seq=ev["event_seq"])
+
+    # The door's events (door scope, 2026-11-24),
+    # verified against the events themselves: a filing
+    # files a standing contribution of this assembly's
+    # instance, at the declared destination, with the
+    # filed hash equal to the contribution text's hash,
+    # authored by the worker and filed by the office —
+    # and it is the activation's last word: no iteration
+    # and no stall follows it. A gate binds a standing
+    # iteration and carries a bounded excerpt of what
+    # arrived and the parse failure that answered it.
+    _events_by_seq = {ev["event_seq"]: ev for ev in events}
+    for aid, evs in deliverable_filings.items():
+        gen = generated.get(aid)
+        delivery = gen["payload"].get("delivery") \
+            if gen is not None else None
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if not isinstance(delivery, dict) or \
+                    p.get("destination") != delivery.get(
+                        "destination"):
+                problem("deliverable_filed_destination_"
+                        "mismatch", assembly_id=aid,
+                        at_seq=seq)
+            contribution = _events_by_seq.get(
+                p.get("contribution_seq"))
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION":
+                problem("deliverable_filed_without_"
+                        "contribution", assembly_id=aid,
+                        at_seq=seq)
+                continue
+            cp = contribution["payload"]
+            if cp.get("instance_id") != (gen or {}).get(
+                    "payload", {}).get("instance_id"):
+                problem("deliverable_filed_contribution_"
+                        "binding_mismatch", assembly_id=aid,
+                        at_seq=seq)
+            if p.get("authored_by") != \
+                    contribution["actor"]:
+                problem("deliverable_filed_author_mismatch",
+                        assembly_id=aid, at_seq=seq)
+            if p.get("filed_by") != "office":
+                problem("deliverable_filed_filer_mismatch",
+                        assembly_id=aid, at_seq=seq)
+            text = cp.get("text")
+            digest = hashlib.sha256(
+                text.encode("utf-8")).hexdigest() \
+                if isinstance(text, str) else None
+            if digest is None or \
+                    p.get("content_sha256") != digest:
+                problem("deliverable_filed_hash_mismatch",
+                        assembly_id=aid, at_seq=seq)
+            for later in iterations.get(aid, []):
+                if later["event_seq"] > seq:
+                    problem("iteration_after_filing",
+                            assembly_id=aid,
+                            at_seq=later["event_seq"])
+            if aid in stalls and \
+                    stalls[aid]["event_seq"] > seq:
+                problem("stall_after_filing",
+                        assembly_id=aid, at_seq=seq)
+    for aid, evs in delivery_gates.items():
+        iteration_seqs = {ev["event_seq"] for ev in
+                          iterations.get(aid, [])}
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if p.get("iteration_seq") not in \
+                    iteration_seqs:
+                problem("delivery_gate_iteration_mismatch",
+                        assembly_id=aid, at_seq=seq)
+            excerpt = p.get("raw_excerpt")
+            length = p.get("raw_length")
+            if not isinstance(excerpt, str) or \
+                    len(excerpt) > 500 or \
+                    not isinstance(length, int) or \
+                    isinstance(length, bool) or \
+                    length < len(excerpt) or \
+                    not isinstance(
+                        p.get("parse_error"), str) or \
+                    not p.get("parse_error"):
+                problem("delivery_gate_payload_malformed",
+                        assembly_id=aid, at_seq=seq)
 
     # Dispatch standing by instance, for the stall checks:
     # each dispatch's first outcome position, and whether an

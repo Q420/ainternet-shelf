@@ -2484,6 +2484,126 @@ class Doorway:
             self.store.commit()
             return ev
 
+    def _door_event_binding(self, assembly_id, type_):
+        """The standing activation binding for a door-scope
+        loop event (2026-11-24): the assembly's entry and
+        its instance, or a refusal in the loop route's
+        shape. Called inside the store's serialized
+        boundary by the routes below."""
+        state = self.state()
+        entry = state["assemblies"].get(assembly_id)
+        if entry is None or \
+                entry.get("activated_seq") is None:
+            self._loop_refuse(
+                type_, (entry or {}).get("instance_id"),
+                f"no standing activation for assembly "
+                f"{assembly_id}; a {type_} records only "
+                f"against an activated instance")
+        loop = state["loop_activations"].get(
+            assembly_id) or {}
+        if loop.get("stalled") is not None:
+            self._loop_refuse(
+                type_, entry.get("instance_id"),
+                "the activation stands stalled; no door "
+                "event records after a terminal")
+        if loop.get("evidence_failed") is not None:
+            self._loop_refuse(
+                type_, entry.get("instance_id"),
+                "the activation stands ended by an "
+                "evidence capture failure; nothing "
+                "further records for it (R8-2)")
+        return state, entry
+
+    def record_deliverable_filed(self, assembly_id,
+                                 contribution_seq,
+                                 destination, content_sha256,
+                                 authored_by):
+        """The office's filing of an accepted contribution
+        as the deliverable (door scope, 2026-11-24): a
+        distinct recorded act, under the loop machinery's
+        identity, carrying the filing's own facts — the
+        declared destination, the filed content's hash,
+        the contribution it files (by its event position),
+        its author (the contributing worker) and its
+        filer ("office"). The contribution stands recorded
+        first; this route admits the filing only against
+        that standing contribution of this activation's
+        instance."""
+        with self.store.serialized():
+            state, entry = self._door_event_binding(
+                assembly_id, "DELIVERABLE_FILED")
+            instance_id = entry.get("instance_id")
+            contribution = None
+            for ev in self.store.all_events():
+                if ev["event_seq"] == contribution_seq:
+                    contribution = ev
+                    break
+            if contribution is None or \
+                    contribution["type"] != "CONTRIBUTION" or \
+                    contribution["actor"] != authored_by:
+                self._loop_refuse(
+                    "DELIVERABLE_FILED", instance_id,
+                    "the named contribution does not stand "
+                    "in the record under the named author; "
+                    "a filing files a standing contribution")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "contribution_seq": contribution_seq,
+                "destination": destination,
+                "content_sha256": content_sha256,
+                "authored_by": authored_by,
+                "filed_by": "office"}
+            ev = self.store.append(
+                "DELIVERABLE_FILED", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
+    def record_delivery_gate(self, assembly_id,
+                             iteration_seq, raw_excerpt,
+                             raw_length, parse_error):
+        """The envelope gate's record (door scope,
+        2026-11-24): a recognisable but unparseable
+        contribution response was preserved through the
+        response-evidence path and answered with a
+        correction, not a stall. The event carries what
+        arrived (a bounded excerpt and the response's
+        length) and what failed (the parse error), bound
+        to the iteration it answers."""
+        with self.store.serialized():
+            state, entry = self._door_event_binding(
+                assembly_id, "DELIVERY_GATE")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if not any(it.get("event_seq") == iteration_seq
+                       for it in loop.get("iterations")
+                       or []):
+                self._loop_refuse(
+                    "DELIVERY_GATE", instance_id,
+                    "the named iteration does not stand "
+                    "for this activation; a gate binds an "
+                    "existing iteration")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration_seq": iteration_seq,
+                "raw_excerpt": raw_excerpt,
+                "raw_length": raw_length,
+                "parse_error": parse_error}
+            ev = self.store.append(
+                "DELIVERY_GATE", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
     def record_loop_stalled(self, assembly_id, ground,
                             detail=None, terminal_step=None):
         """The loop's stall report (Piece A3, R50): the

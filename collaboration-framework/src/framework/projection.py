@@ -114,6 +114,19 @@ _CASE_CONTENT = _fields({
     "onboarding": _opt(_obj({
         "headline": _STR, "deliverable": _STR,
         "text": _STR})),
+    # The door scope's case components (2026-11-24): the
+    # delivery declaration, the role-memory snapshot and
+    # the opening record.
+    "delivery": _opt(_obj({
+        "destination": _STR, "route": _STR})),
+    "role_memory": _opt(_list(_obj({
+        "observation": _STR, "basis": _STR,
+        "conditions": _STR}))),
+    "opening": _opt(_obj({
+        "worker_statements": _list(_STR),
+        "office_answers": _list(_STR),
+        "settled": _list(_STR),
+        "unresolved": _list(_STR)})),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({
