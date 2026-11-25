@@ -127,6 +127,22 @@ class Office:
         if brief.get("journal") is not None:
             content["journal"] = copy.deepcopy(
                 brief["journal"])
+        # The onboarding (the run-6 package, 2026-11-24;
+        # Ben's ruling: "his first prompt should be his
+        # onboarding file with specific instructions on
+        # how to navigate his briefcase"): where the
+        # recorded brief names the case's onboarding —
+        # the job's headline, the deliverable's statement
+        # and the onboarding text itself — the draft
+        # carries it, by the same route as the journal, so
+        # it stands in the issued case as its own
+        # component and the loop can present it at the
+        # head of the worker's first wake package. A brief
+        # without an onboarding produces a case without
+        # the field, exactly as before.
+        if brief.get("onboarding") is not None:
+            content["onboarding"] = copy.deepcopy(
+                brief["onboarding"])
         return content
 
     # ---------------------------------------------------- preflight
@@ -146,20 +162,21 @@ class Office:
             problems.append(
                 f"cases are issued to crew seats; {seat_id} is "
                 f"{(seats[seat_id] or {}).get('role')}")
-        # loop_bounds, glossary and journal are the optional
-        # content fields (Piece A3; the combined
-        # configuration; the orientation pass): a case may
-        # lawfully carry none of them — no loop runs on a
-        # boundless case, a glossary-less case simply
-        # carries no map, and a journal-less case designates
-        # no notebook — so none is an R14 grounding
-        # requirement. When present each must be well-formed;
-        # malformed optional content fails preflight whole,
-        # never silently stripped.
+        # loop_bounds, glossary, journal and onboarding are
+        # the optional content fields (Piece A3; the
+        # combined configuration; the orientation pass; the
+        # run-6 package): a case may lawfully carry none of
+        # them — no loop runs on a boundless case, a
+        # glossary-less case simply carries no map, a
+        # journal-less case designates no notebook, and an
+        # onboarding-less case opens with no guide — so none
+        # is an R14 grounding requirement. When present each
+        # must be well-formed; malformed optional content
+        # fails preflight whole, never silently stripped.
         for field in ("case_id", "version", "seat") + tuple(
                 f for f in CASE_CONTENT_FIELDS
                 if f not in ("loop_bounds", "glossary",
-                             "journal")):
+                             "journal", "onboarding")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
@@ -191,6 +208,22 @@ class Office:
                     "the journal must name a path under "
                     "scratch/ — the worker's notebook stands "
                     "in his own writing space")
+        if content.get("onboarding") is not None:
+            onboarding = content["onboarding"]
+            if not isinstance(onboarding, dict) or \
+                    set(onboarding) != {"headline",
+                                        "deliverable",
+                                        "text"} or \
+                    any(not isinstance(
+                            onboarding.get(key), str)
+                        or not onboarding.get(key)
+                        for key in ("headline", "deliverable",
+                                    "text")):
+                problems.append(
+                    "the onboarding must be an object of "
+                    "exactly three non-empty strings: the "
+                    "job's headline, the deliverable's "
+                    "statement, and the onboarding text")
         tree = content.get("tree")
         part = content.get("part")
         if isinstance(tree, dict) and part is not None:
@@ -266,13 +299,13 @@ class Office:
                  "seat": current.get("seat")}
         for field in CASE_CONTENT_FIELDS:
             # The optional fields (loop_bounds, glossary,
-            # journal) ride forward only where they stand
-            # or are being set: a correction of a case that
-            # never carried one does not acquire a null
-            # field it never had (Piece A3, correction
-            # round 1).
+            # journal, onboarding) ride forward only where
+            # they stand or are being set: a correction of
+            # a case that never carried one does not
+            # acquire a null field it never had (Piece A3,
+            # correction round 1).
             if field in ("loop_bounds", "glossary",
-                         "journal") and \
+                         "journal", "onboarding") and \
                     field not in current and \
                     field not in changes:
                 continue

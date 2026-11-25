@@ -1091,6 +1091,42 @@ class Doorway:
             generated.get("working_set_contract") == \
             _tool_policy.WORKING_SET_CONTRACT
 
+    def _freshness_suspended(self, state, presented_instance):
+        """Whether the instance an act is presented under
+        stands under Ben's R31 ruling (2026-11-24: "Disable
+        R31 until we need to worry about that"): its sealed
+        generated record declares the freshness guard
+        suspended (tool_policy.FRESHNESS_GUARD_SUSPENDED).
+        The ruling's ground is recorded with the constant:
+        the one-worker demonstration excludes the staleness
+        hazard by construction, and the guard as it stood
+        refused the worker's deliveries for record movement
+        the framework's own bookkeeping caused (run 5: each
+        governed iteration's response-evidence event names
+        the case, so every contribution answered from a
+        frozen view stood "changed since view" by the time
+        it was adjudicated). The declaration is the
+        discriminator, read from the sealed record exactly
+        as the contracts are; an unrecognised value is not
+        the suspension (the guard stands — a declaration
+        never loosens a guard by being misunderstood), and
+        an act presented under no instance credential, or
+        an instance with no declaration, stands under the
+        guard exactly as every act always has."""
+        if presented_instance is None:
+            return False
+        assembly_id = None
+        for aid, entry in state["assemblies"].items():
+            if entry.get("instance_id") == presented_instance:
+                assembly_id = aid
+                break
+        if assembly_id is None:
+            return False
+        generated = self._generated_payload(assembly_id)
+        return isinstance(generated, dict) and \
+            generated.get("freshness_guard") == \
+            _tool_policy.FRESHNESS_GUARD_SUSPENDED
+
     def _dispatch_check(self, state, assembly_id, entry,
                         instance_id, tool, parameters):
         """Why a dispatch may not be recorded, or None (Piece
@@ -2937,6 +2973,19 @@ class Doorway:
         # event touched that subject, the view it was made from is
         # stale about the thing that matters — reject. Otherwise a
         # behind view is flagged, not refused.
+        #
+        # Ben's ruling (2026-11-24: "Disable R31 until we need
+        # to worry about that"): where the act is presented
+        # under an instance whose sealed record declares the
+        # freshness guard suspended, the rejection does not
+        # stand for that instance's acts — the act records,
+        # flagged stale_basis like any behind-view act, and
+        # the subject check is not run. The rule itself is
+        # untouched: for every other act — a seat's own, an
+        # undeclared instance's — the rejection stands
+        # exactly as it always has, and the declaration's
+        # return to force needs no code change, only a
+        # generation made without it.
         payload = dict(payload)
         head = state["head_seq"]
         if view_seq < head:
@@ -2946,11 +2995,16 @@ class Doorway:
             subjects = [payload.get(k) for k in
                         ("subject_id", "claim_id", "contribution_id",
                          "tree_part", "case_id")]
-            for subject in subjects:
-                if subject and self._subject_changed(subject, view_seq):
-                    self._refuse(seat_id, type_,
-                                 f"subject {subject} changed since view "
-                                 f"at seq {view_seq} (R31)", view_seq)
+            if not self._freshness_suspended(
+                    state, presented_instance):
+                for subject in subjects:
+                    if subject and self._subject_changed(
+                            subject, view_seq):
+                        self._refuse(
+                            seat_id, type_,
+                            f"subject {subject} changed since "
+                            f"view at seq {view_seq} (R31)",
+                            view_seq)
             payload["stale_basis"] = True
 
         # Piece A3 (correction round 1): instance provenance.

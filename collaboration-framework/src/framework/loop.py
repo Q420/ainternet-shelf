@@ -385,6 +385,128 @@ def _derive_tool_list(catalogue):
     return out
 
 
+def _menu_example(phase, tool, scope):
+    """A short example for one tool-menu entry (the
+    run-6 package): what a call to this tool looks like
+    in the phase it stands in, in the same plain terms
+    as the purposes. Illustrative only — the grant set
+    and the doorway decide what may actually be called."""
+    if tool == "container.exec":
+        if phase == "Gather":
+            return ("e.g. the command [\"cat\", "
+                    "\"<path>\"] reads that whole file "
+                    "at once.")
+        return ("e.g. commands in your room can copy "
+                "and combine files, and write drafts "
+                "in your scratch.")
+    if tool == "sandbox.write":
+        return ("e.g. sandbox.write with a path under "
+                "your scratch and the text to store "
+                "writes that file.")
+    where = f"{scope}/" if scope else ""
+    if tool == "sandbox.list":
+        return (f"e.g. sandbox.list on {where} lists "
+                f"what stands there — each file's size "
+                f"and line count.")
+    if tool == "sandbox.search":
+        return (f"e.g. sandbox.search in {where} for a "
+                f"phrase returns the passages that "
+                f"carry it, with their file and line "
+                f"numbers.")
+    if tool == "sandbox.read_range":
+        return (f"e.g. sandbox.read_range on a file in "
+                f"{where}, lines 1 to 4, pulls just "
+                f"those lines.")
+    if tool == "sandbox.read":
+        return (f"e.g. sandbox.read on a file in "
+                f"{where} pulls the whole file at "
+                f"once.")
+    return None
+
+
+def _derive_tool_menu(catalogue, deliverable=None):
+    """The wake package's tool list as a step-driven
+    menu (the run-6 package; the worker's briefcase
+    consultation, Q5 — his tools grouped by the job's
+    phases, each a card with a label, a description and
+    an example): the flat per-grant list grouped under
+    Gather, Compose, Deliver, in that order. Grouping
+    is presentation only: every entry derives per grant
+    from the same flat derivation the tool list has
+    always used, no tool is invented and none is
+    dropped — the set of (tool, scope) pairs across the
+    groups is exactly the sealed grant set. The
+    execution tool stands in Gather (a way to read) and
+    in Compose (a way to work); the write tool stands
+    in Compose and in Deliver, where its entry names
+    the deliverable — the case's own deliverable
+    statement, where the case carries one — and the
+    group names the yield outcome: the assignment
+    completes by the deliverable file standing, and
+    the yield is how he says so. A phase with no
+    granted tool does not stand."""
+    flat = _derive_tool_list(catalogue)
+    by_pair = {}
+    for entry in flat:
+        by_pair.setdefault(
+            (entry["tool"], entry["scope"]), entry)
+
+    def pick(tool, scope, phase, purpose_suffix=None):
+        base = by_pair.get((tool, scope))
+        if base is None:
+            return None
+        entry = {"tool": tool, "scope": scope,
+                 "purpose": base["purpose"]}
+        if purpose_suffix:
+            entry["purpose"] = (
+                entry["purpose"] + " " + purpose_suffix)
+        example = _menu_example(phase, tool, scope)
+        if example:
+            entry["example"] = example
+        return entry
+
+    gather = []
+    compose = []
+    deliver = []
+    for entry in flat:
+        tool, scope = entry["tool"], entry["scope"]
+        if tool in _tool_policy.RETRIEVAL_TOOLS or \
+                tool == "container.exec":
+            picked = pick(tool, scope, "Gather")
+            if picked is not None:
+                gather.append(picked)
+        if tool in ("container.exec", "sandbox.write"):
+            picked = pick(tool, scope, "Compose")
+            if picked is not None:
+                compose.append(picked)
+        if tool == "sandbox.write":
+            suffix = None
+            if deliverable:
+                suffix = ("This is the deliverable "
+                          f"door: the deliverable is "
+                          f"{deliverable}.")
+            picked = pick(tool, scope, "Deliver",
+                          purpose_suffix=suffix)
+            if picked is not None:
+                deliver.append(picked)
+    groups = []
+    if gather:
+        groups.append({"phase": "Gather",
+                       "tools": gather})
+    if compose:
+        groups.append({"phase": "Compose",
+                       "tools": compose})
+    if deliver:
+        groups.append({
+            "phase": "Deliver",
+            "tools": deliver,
+            "note": "When the deliverable stands "
+                    "written, answer with the yield "
+                    "outcome — the file standing is "
+                    "the completed assignment."})
+    return groups
+
+
 def _catalogue_hash(catalogue):
     """The catalogue's canonical hash: SHA-256 over the
     fabric canonical form of the catalogue itself — the
@@ -1854,19 +1976,87 @@ class Loop:
             # no new authority. Working-set packages only;
             # every other population's packages are
             # byte-identical to what they were.
-            package["step_position"] = {
+            #
+            # The run-6 package (Ben's rulings and the
+            # worker's briefcase consultation, 2026-11-24)
+            # orders a working-set package as his
+            # briefcase is laid out: his onboarding at
+            # the head — at the first wake the full text
+            # the case carries; at later wakes a short
+            # cover in its place, his dashboard: the
+            # job's headline, the deliverable, his step
+            # and his task's state — then his position
+            # and status, then the case itself (the
+            # brief: the assignment and the glossary),
+            # then his working set, then his journal,
+            # then his tools as a phase-grouped menu,
+            # then the record's own furniture — the view,
+            # the delta and the outcomes — as it has
+            # always stood. The components' values are
+            # the same values the package has always
+            # carried; only their order, the onboarding
+            # and cover, the journal's purpose label and
+            # the menu's grouping are new. A case carrying
+            # no onboarding opens with no guide, exactly
+            # as a case designating no journal presents
+            # no notebook.
+            step_position = {
                 "statement":
                     f"step {ctx['iterations'] + 1} of "
                     f"{ctx['bounds']['step_ceiling']}",
                 "iteration": ctx["iterations"] + 1,
                 "step_ceiling":
                     ctx["bounds"]["step_ceiling"]}
-            package["task_status"] = "in progress"
-            package["tool_list"] = _derive_tool_list(
-                catalogue)
             journal = self._journal_component(ctx)
+            onboarding = (ctx["content"] or {}).get(
+                "onboarding")
+            if not (isinstance(onboarding, dict)
+                    and isinstance(
+                        onboarding.get("headline"), str)
+                    and isinstance(
+                        onboarding.get("deliverable"), str)
+                    and isinstance(
+                        onboarding.get("text"), str)):
+                onboarding = None
+            deliverable = onboarding["deliverable"] \
+                if onboarding is not None else None
+            ordered = {}
+            if onboarding is not None:
+                if ctx["iterations"] == 0:
+                    ordered["onboarding"] = \
+                        onboarding["text"]
+                else:
+                    ordered["cover"] = {
+                        "headline":
+                            onboarding["headline"],
+                        "deliverable": deliverable,
+                        "statement":
+                            f"{onboarding['headline']} "
+                            f"— the deliverable: "
+                            f"{deliverable}. Step "
+                            f"{ctx['iterations'] + 1} of "
+                            f"{ctx['bounds']['step_ceiling']}"
+                            f"; task in progress. Your "
+                            f"onboarding — the full "
+                            f"briefcase guide — stands "
+                            f"at the head of your first "
+                            f"wake's package."}
+            ordered["step_position"] = step_position
+            ordered["task_status"] = "in progress"
+            ordered["case"] = package["case"]
+            if working_set is not None:
+                ordered["working_set"] = working_set
             if journal is not None:
-                package["journal"] = journal
+                ordered["journal"] = journal
+            ordered["tool_list"] = _derive_tool_menu(
+                catalogue, deliverable=deliverable)
+            for key in ("seat", "role", "instance_id",
+                        "case_id", "case_version", "view",
+                        "delta", "tools", "tool_results",
+                        "standing_dispatches", "bounds",
+                        "position"):
+                ordered[key] = package[key]
+            package = ordered
         return package, head
 
     def _journal_component(self, ctx):
@@ -1885,6 +2075,13 @@ class Loop:
         follows, not a mechanism — nothing enforces
         append-only, and a wake presents whatever
         stands there, replaced whole if he replaced it.
+        The label states the notebook's purpose in the
+        terms his briefcase consultation gave it (run 6,
+        2026-11-24): run 5's debrief established the
+        journal stood in his packages unnoticed — present
+        but unlabelled as his — so the component now
+        names what it is for, in his words' substance,
+        where it cannot sit as wallpaper.
         Carriage is bounded by the working-set budget's
         figure, honestly: whole where it fits; where it
         does not, the longest prefix of complete lines
@@ -1903,13 +2100,14 @@ class Loop:
             return None
         component = {
             "path": designated,
-            "label": "your journal — your own working "
-                     "notes: where you were, what you "
-                     "noticed, what to do next. "
+            "label": "your journal — your notebook: "
+                     "notes, decisions, where you left "
+                     "off. It returns to you at every "
+                     "wake, exactly as you left it, and "
+                     "it is yours to write and rewrite. "
                      "Orientation, not record and not "
                      "memory: nothing here is treated "
-                     "as fact, and the notebook is "
-                     "yours to keep.",
+                     "as fact.",
             "content": "",
             "bytes_total": 0,
             "bytes_carried": 0,

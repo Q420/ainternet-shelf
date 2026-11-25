@@ -119,6 +119,32 @@ notebook:
       he could replace the notebook whole;
   (3) yield.
 
+Scenario F (freshness) is the run-6 package's R31
+witness (Ben's ruling, 2026-11-24: "Disable R31 until
+we need to worry about that"), run as a pair on the
+same combined configuration, judged TEXT — a
+contribution is the text contract's outcome:
+  (1) the worker answers his first wake with a
+      contribution — the run-5 shape, the finished
+      brief submitted as a contribute outcome. The
+      answer is adjudicated after the iteration's
+      response-evidence event has advanced the record
+      past the package's frozen view, and that event
+      names the case: the exact position in which
+      run 5's deliveries were freshness-refused twice.
+  (2) the yield.
+The declared run's generation seals the freshness
+guard's suspension, and the contribution records; the
+control run seals nothing, and the same answer in the
+same position stands refused under R31 — the pair
+proves the switch works and the rule lives. Every
+scenario's case also carries the run-6 package's
+onboarding, and their packages witness the package's
+structure: the onboarding at the first wake's head, a
+short cover at later wakes, the deliverable statement
+opening the assignment, the journal's purpose label,
+and the tool list grouped by the job's phases.
+
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario: the run record, the stub's
 captures, the decision receipt, the terminal readout,
@@ -166,7 +192,7 @@ from first_worker_run import (  # noqa: E402
     _commission_brief, export_store, run_checker)
 from demo_run import (  # noqa: E402
     ASSIGNMENT_COMBINED, GLOSSARY, GRANTS_COMBINED, MODEL,
-    _stage_sandbox_sources)
+    ONBOARDING, _stage_sandbox_sources)
 
 import stock_demo  # noqa: E402
 
@@ -454,6 +480,49 @@ def build_script_journal():
             "chat-raw-bounded": _probe_steps()}
 
 
+# Scenario F's contribution text: a short brief-shaped
+# contribution — the run-5 shape, in which the worker
+# submitted his finished brief as a contribute outcome
+# and the freshness guard refused it twice.
+CONTRIBUTION_TEXT = (
+    "The collaborative agent framework lets generated "
+    "agents work under a governed record: the substrate "
+    "pieces and the agent layer's assembly, grants and "
+    "bounded loop stand proven; a live worker completing "
+    "the standing assignment, and genuine multi-agent "
+    "collaboration, do not yet. (Scripted stand-in "
+    "contribution for the freshness rehearsal; no brief "
+    "file is written.)")
+
+
+def build_script_contribution(label):
+    chat = [
+        _identify_step(label),
+        # 1 — the contribution: the run-5 shape. The
+        # answer is adjudicated after the iteration's
+        # response-evidence event has advanced the
+        # record past the package's frozen view, and
+        # that event names the case — the exact position
+        # run 5's two refused deliveries stood in.
+        {"respond": _text_response(
+            "contribute-1",
+            json.dumps({
+                "outcome": "contribute",
+                "text": CONTRIBUTION_TEXT})),
+         "action": None},
+        # 2 — the yield.
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Contributed the brief text "
+                           "as a contribution."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -555,7 +624,8 @@ if __name__ == "__main__":
 
 def _run_scenario(work_dir, *, scenario, brief,
                   manifest_hash, seal_entries, stage_fn,
-                  script, grounds, adapter_mode="native"):
+                  script, grounds, adapter_mode="native",
+                  freshness_suspended=False):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
     Returns the report dict (also written to
@@ -668,7 +738,8 @@ def _run_scenario(work_dir, *, scenario, brief,
     generated = gen.generate(
         tok["orch-1"], "crew-1", adapter.identify,
         skills=[], grants=GRANTS_COMBINED,
-        model_requested=MODEL, probe=True, exec_room=True)
+        model_requested=MODEL, probe=True, exec_room=True,
+        freshness_suspended=freshness_suspended)
     if not generated.get("ok"):
         raise RuntimeError(
             f"generation failed: "
@@ -760,6 +831,8 @@ def _run_scenario(work_dir, *, scenario, brief,
         "iterations": result.get("iterations"),
         "sealed_working_set_contract":
             (sealed or {}).get("working_set_contract"),
+        "sealed_freshness_guard":
+            (sealed or {}).get("freshness_guard"),
         "sealed_catalogue_contract":
             (sealed or {}).get("catalogue_contract"),
         "manifest_hash": manifest_hash,
@@ -780,10 +853,11 @@ def _run_scenario(work_dir, *, scenario, brief,
 
 
 def run_rehearsal(work_dir):
-    """Run all five scenarios under `work_dir` (created
+    """Run all seven scenarios under `work_dir` (created
     fresh). Returns {"continuity": report, "budget":
     report, "freedom": report, "batch": report,
-    "journal": report}."""
+    "journal": report, "freshness": report,
+    "freshness_control": report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -802,7 +876,7 @@ def run_rehearsal(work_dir):
         scenario="continuity",
         brief=_commission_brief(
             ASSIGNMENT_COMBINED, manifest_hash,
-            glossary=GLOSSARY),
+            glossary=GLOSSARY, onboarding=ONBOARDING),
         manifest_hash=manifest_hash,
         seal_entries=manifest["sources"],
         stage_fn=lambda sandbox: _stage_sandbox_sources(
@@ -852,6 +926,7 @@ def run_rehearsal(work_dir):
         "loop_bounds": dict(BOUNDS),
         "glossary": [dict(entry)
                      for entry in GLOSSARY_BUDGET],
+        "onboarding": dict(ONBOARDING),
     }
     budget = _run_scenario(
         work_dir / "budget",
@@ -876,7 +951,7 @@ def run_rehearsal(work_dir):
         scenario="freedom",
         brief=_commission_brief(
             ASSIGNMENT_COMBINED, manifest_hash,
-            glossary=GLOSSARY),
+            glossary=GLOSSARY, onboarding=ONBOARDING),
         manifest_hash=manifest_hash,
         seal_entries=manifest["sources"],
         stage_fn=lambda sandbox: _stage_sandbox_sources(
@@ -903,7 +978,7 @@ def run_rehearsal(work_dir):
         scenario="batch",
         brief=_commission_brief(
             ASSIGNMENT_COMBINED, manifest_hash,
-            glossary=GLOSSARY),
+            glossary=GLOSSARY, onboarding=ONBOARDING),
         manifest_hash=manifest_hash,
         seal_entries=manifest["sources"],
         stage_fn=lambda sandbox: _stage_sandbox_sources(
@@ -931,7 +1006,8 @@ def run_rehearsal(work_dir):
         brief=_commission_brief(
             ASSIGNMENT_COMBINED, manifest_hash,
             glossary=GLOSSARY,
-            journal="scratch/journal.md"),
+            journal="scratch/journal.md",
+            onboarding=ONBOARDING),
         manifest_hash=manifest_hash,
         seal_entries=manifest["sources"],
         stage_fn=lambda sandbox: _stage_sandbox_sources(
@@ -944,6 +1020,65 @@ def run_rehearsal(work_dir):
                 "configuration's judgement is native. "
                 "Rehearsal furniture by a scripted "
                 "stand-in examiner.")
+
+    # Scenario F — the run-6 package's freshness pair
+    # (Ben's R31 ruling, 2026-11-24): the run-5
+    # contribution shape, judged TEXT — a contribution
+    # is the text contract's outcome; the probe's
+    # recommendation stands as evidence and the
+    # judgement is the stand-in examiner's, as the live
+    # phases judge. The declared run seals the
+    # suspension; the control run seals nothing.
+    freshness = _run_scenario(
+        work_dir / "freshness",
+        scenario="freshness",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY, onboarding=ONBOARDING),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_contribution("freshness"),
+        grounds="Working-set rehearsal, freshness "
+                "scenario (the run-6 package; Ben's "
+                "R31 ruling): the scripted stand-in's "
+                "probe trials settled 5/5 native — the "
+                "recommendation stands as evidence — "
+                "and the stand-in examiner judges TEXT, "
+                "because the case under examination is "
+                "a contribution, a shape only the text "
+                "contract carries. The generation seals "
+                "the freshness guard's suspension under "
+                "the director's ruling. Rehearsal "
+                "furniture by a scripted stand-in "
+                "examiner.",
+        adapter_mode="text",
+        freshness_suspended=True)
+    freshness_control = _run_scenario(
+        work_dir / "freshness-control",
+        scenario="freshness-control",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY, onboarding=ONBOARDING),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_contribution(
+            "freshness-control"),
+        grounds="Working-set rehearsal, freshness "
+                "control scenario (the run-6 package): "
+                "the same contribution shape as the "
+                "freshness scenario, judged TEXT for "
+                "the same reason, but the generation "
+                "seals NO suspension — the control that "
+                "proves the rule lives: the same answer "
+                "in the same position stands refused "
+                "under R31. Rehearsal furniture by a "
+                "scripted stand-in examiner.",
+        adapter_mode="text")
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
-            "journal": journal}
+            "journal": journal, "freshness": freshness,
+            "freshness_control": freshness_control}

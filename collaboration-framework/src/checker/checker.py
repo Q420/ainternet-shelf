@@ -2060,6 +2060,21 @@ _GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
 # value is a contract this checker does not understand.
 _WORKING_SET_CONTRACT = "working-set-v1"
 
+# The freshness guard's suspension declaration (Ben's
+# ruling, 2026-11-24: "Disable R31 until we need to worry
+# about that"; the framework copy stands in tool_policy):
+# an assembly declaring it under "freshness_guard" stands
+# under the ruling that the doorway's R31 freshness
+# rejection does not apply to its instance's answers. This
+# checker does not re-derive R31 for single acts — it
+# never has; rejections fold as recorded — so its honouring
+# of the declaration is the assembly-level validation
+# below, in the contracts' third-case shape: the known
+# value is lawful, absence is the guard standing as it
+# always has, and any other value is a declaration this
+# checker does not understand.
+_FRESHNESS_GUARD_SUSPENDED = "r31-suspended-v1"
+
 
 def _working_set_served(tool, result):
     """The served descriptor of one retrieval result, in
@@ -2558,6 +2573,19 @@ def _loop_result(events, state, run_dir=None):
             problem("working_set_contract_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     working_set_contract=ws_contract)
+        # The freshness guard suspension's third case, in
+        # the same shape (Ben's R31 ruling, 2026-11-24):
+        # the one known value is the ruling's suspension;
+        # a declaration naming anything else is a state
+        # this checker does not understand, reported once
+        # at the assembly level.
+        freshness = gen["payload"].get(
+            "freshness_guard") if gen is not None else None
+        if freshness is not None and \
+                freshness != _FRESHNESS_GUARD_SUSPENDED:
+            problem("freshness_guard_unknown",
+                    assembly_id=aid, at_seq=activated[aid],
+                    freshness_guard=freshness)
 
     for aid, evs in iterations.items():
         bounds = pinned_bounds(aid)

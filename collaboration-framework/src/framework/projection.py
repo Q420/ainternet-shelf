@@ -107,6 +107,13 @@ _CASE_CONTENT = _fields({
     # (2026-11-24, the orientation pass): the path under
     # the worker's scratch naming his own notebook.
     "journal": _opt(_STR),
+    # The onboarding a case may carry (2026-11-24, the
+    # run-6 package): the job's headline, the deliverable's
+    # statement, and the onboarding text the loop presents
+    # at the head of the worker's first wake package.
+    "onboarding": _opt(_obj({
+        "headline": _STR, "deliverable": _STR,
+        "text": _STR})),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({

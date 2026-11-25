@@ -105,6 +105,32 @@ contents appear nowhere in the presented journal
 component — while a regular journal file in either
 resting place still presents verbatim.
 
+The run-6 package (Ben's rulings and the worker's
+briefcase consultation, 2026-11-24) is witnessed on
+the same packages: every scenario's case carries the
+onboarding, and the first wake's package opens with
+it verbatim while later wakes carry the short cover
+in its place; the components stand in the briefcase's
+order; the carried assignment opens with the
+deliverable statement (the file, the write door,
+contribute-is-not-the-deliverable) before the task
+text; the journal component carries its purpose
+label in the worker's terms; and the tool list is
+the phase-grouped menu — Gather, Compose, Deliver in
+order — whose distinct tools are exactly the sealed
+grant set (the orientation (C) checks below read the
+menu's grouped shape; the property they assert is
+the orientation pass's own: the presented set equals
+the sealed grants, nothing hardcoded). The freshness
+pair witnesses Ben's R31 ruling: the declared run's
+contribution — run 5's shape, answered from a frozen
+view the record has since advanced past — RECORDS,
+flagged stale_basis, with no R31 rejection in the
+record; the control run, sealing no declaration,
+refuses the same answer in the same position under
+R31; the checker stands eleven checks, all ok, over
+both records.
+
 Run: python3 live-demo/test_working_set_rehearsal.py
 Exits 0 when every check passes.
 """
@@ -135,6 +161,7 @@ from framework.loop import Loop  # noqa: E402
 from framework.record import FrameworkStore  # noqa: E402
 import working_set_rehearsal as rehearsal  # noqa: E402
 import stock_demo  # noqa: E402
+from demo_run import ONBOARDING  # noqa: E402
 
 FAILURES = []
 CHECKS = [0]
@@ -822,24 +849,38 @@ def main():
              (g.get("scope_ceiling") or {}).get(
                  "path_prefix"))
             for g in sealed_grants or [])
+        # The run-6 package groups the tool list by the
+        # job's phases; the (C) property is unchanged —
+        # the presented set equals the sealed grant set
+        # exactly — read across the menu's groups: the
+        # distinct (tool, scope) pairs standing in the
+        # groups, the groups in the phase order.
+        menu = packages[6].get("tool_list") or []
         presented_tools = sorted(
-            (t.get("tool"), t.get("scope"))
-            for t in (packages[6].get("tool_list")
-                      or []))
+            {(t.get("tool"), t.get("scope"))
+             for group in menu
+             for t in (group.get("tools") or [])})
         check("orientation (C): the wake package's "
-              "tool list equals the sealed grant set "
-              "exactly — every grant's tool and scope, "
-              "the same count, nothing hardcoded",
+              "tool list — the phase-grouped menu — "
+              "presents the sealed grant set exactly: "
+              "groups in the phase order Gather, "
+              "Compose, Deliver, and the distinct tools "
+              "across the groups are every grant's tool "
+              "and scope, the same count, nothing "
+              "hardcoded",
               sealed_grants is not None
+              and [g.get("phase") for g in menu]
+              == ["Gather", "Compose", "Deliver"]
               and len(presented_tools) == 10
               and presented_tools == expected_tools,
               f"presented={presented_tools} "
               f"expected={expected_tools}")
-        exec_lines = [t for t in
-                      (packages[6].get("tool_list") or [])
+        exec_lines = [t for group in menu
+                      if group.get("phase") == "Gather"
+                      for t in (group.get("tools") or [])
                       if t.get("tool") == "container.exec"]
         check("orientation (C): the execution tool's "
-              "line presents it as a first-class "
+              "Gather line presents it as a first-class "
               "working method — a shell command can "
               "read a whole file at once (cat)",
               len(exec_lines) == 1
@@ -1029,6 +1070,197 @@ def main():
         _check_commitments("journal", jwork, packages_j,
                            3)
         _check_checker("journal", rep)
+
+        # ============ run-6 package structure ========
+        # Ben's rulings and the worker's briefcase
+        # consultation (2026-11-24), witnessed on the
+        # continuity packages (the onboarding and the
+        # cover), the journal packages (the component
+        # order with a journal standing), and the
+        # carried assignment itself.
+        packages_c6 = _packages(work / "continuity")
+        first6 = packages_c6[1]
+        later6 = packages_c6[2]
+        check("run-6 package (1): the first wake's "
+              "package opens with the onboarding, "
+              "verbatim — its first component is the "
+              "case's onboarding text, word for word",
+              list(first6.keys())[0] == "onboarding"
+              and first6.get("onboarding")
+              == ONBOARDING["text"],
+              f"{list(first6.keys())[:3]}")
+        cover6 = later6.get("cover") or {}
+        check("run-6 package (1): a later wake carries "
+              "the short cover, not the onboarding — "
+              "the cover stands first, names the "
+              "headline and the deliverable, and states "
+              "his step and his task's state",
+              list(later6.keys())[0] == "cover"
+              and "onboarding" not in later6
+              and cover6.get("headline")
+              == ONBOARDING["headline"]
+              and cover6.get("deliverable")
+              == ONBOARDING["deliverable"]
+              and "Step 2 of 12" in (
+                  cover6.get("statement") or "")
+              and "in progress" in (
+                  cover6.get("statement") or "")
+              and len(cover6.get("statement") or "")
+              < 400,
+              f"{cover6}")
+        check("run-6 package (3): the first wake's "
+              "components stand in the briefcase's "
+              "order — onboarding, position, status, "
+              "the case, the working set, the tool "
+              "menu, then the record's furniture",
+              list(first6.keys())[:6]
+              == ["onboarding", "step_position",
+                  "task_status", "case", "working_set",
+                  "tool_list"],
+              f"{list(first6.keys())}")
+        check("run-6 package (3): with a journal "
+              "standing, it stands in the order between "
+              "the working set and the tool menu",
+              list(packages_j[1].keys())[:7]
+              == ["onboarding", "step_position",
+                  "task_status", "case", "working_set",
+                  "journal", "tool_list"],
+              f"{list(packages_j[1].keys())}")
+        assignment6 = (first6.get("case") or {}).get(
+            "assignment") or ""
+        check("run-6 package (2): the carried "
+              "assignment opens with the deliverable "
+              "statement — the file scratch/brief.md, "
+              "the write door named, and submitting "
+              "the text as a contribute outcome stated "
+              "NOT to be the deliverable — before the "
+              "task text",
+              assignment6.startswith("THE DELIVERABLE")
+              and "scratch/brief.md" in assignment6
+              and "sandbox.write" in assignment6
+              and "NOT the deliverable" in assignment6
+              and assignment6.index("THE DELIVERABLE")
+              < assignment6.index("THE TASK"),
+              f"{assignment6[:160]}")
+        label6 = (packages_j[1].get("journal") or {}).get(
+            "label") or ""
+        check("run-6 package (3): the journal "
+              "component carries its purpose label in "
+              "his terms — your notebook: notes, "
+              "decisions, where you left off; it "
+              "returns to you at every wake; it is "
+              "yours to write and rewrite",
+              "your notebook" in label6
+              and "notes, decisions" in label6
+              and "returns to you at every wake"
+              in label6
+              and "yours to write and rewrite"
+              in label6,
+              f"{label6}")
+        menu6 = first6.get("tool_list") or []
+        entries6 = [t for group in menu6
+                    for t in (group.get("tools") or [])]
+        deliver6 = next(
+            (g for g in menu6
+             if g.get("phase") == "Deliver"), {})
+        deliver_entries6 = deliver6.get("tools") or []
+        check("run-6 package (4): the Deliver group "
+              "names the deliverable and the yield — "
+              "its one entry is the write tool, its "
+              "purpose names scratch/brief.md as the "
+              "deliverable, the group states the yield "
+              "outcome, and every menu entry carries a "
+              "purpose and an example",
+              len(deliver_entries6) == 1
+              and deliver_entries6[0].get("tool")
+              == "sandbox.write"
+              and "scratch/brief.md" in (
+                  deliver_entries6[0].get("purpose")
+                  or "")
+              and "yield" in (
+                  deliver6.get("note") or "")
+              and all(t.get("purpose")
+                      and t.get("example")
+                      for t in entries6),
+              f"{deliver6}")
+
+        # ============ freshness (R31 pair) ===========
+        # Ben's ruling (2026-11-24): the freshness
+        # rejection is declaration-governed. The
+        # declared run's contribution — run 5's shape,
+        # answered from a frozen view the record has
+        # since advanced past (the iteration's own
+        # response-evidence event names the case) —
+        # records; the control's identical answer in
+        # the identical position stands refused.
+        rep = reports["freshness"]
+        fwork6 = work / "freshness"
+        check("freshness: the declared run yields in "
+              "two iterations, its sealed record "
+              "declaring the freshness guard suspended",
+              rep["outcome"] == "yield"
+              and rep["iterations"] == 2
+              and rep["sealed_freshness_guard"]
+              == "r31-suspended-v1",
+              f"{rep['outcome']} / {rep['iterations']} / "
+              f"{rep['sealed_freshness_guard']}")
+        fevs = _events(fwork6)
+        f_contribs = [_payload(e) for e in fevs
+                      if e["type"] == "CONTRIBUTION"]
+        f_r31 = [e for e in fevs
+                 if e["type"] == "REJECTION"
+                 and "(R31)" in (
+                     _payload(e).get("ground") or "")]
+        check("freshness (5): under the declaration, "
+              "the contribution in run 5's position "
+              "RECORDS — it stands in the record with "
+              "its text, flagged stale_basis, and no "
+              "R31 rejection stands anywhere in the "
+              "record",
+              len(f_contribs) == 1
+              and f_contribs[0].get("text")
+              == rehearsal.CONTRIBUTION_TEXT
+              and f_contribs[0].get("stale_basis")
+              is True
+              and not f_r31,
+              f"contribs={len(f_contribs)} "
+              f"r31={len(f_r31)}")
+        _check_commitments("freshness", fwork6,
+                           _packages(fwork6), 2)
+        _check_checker("freshness", rep)
+
+        rep = reports["freshness_control"]
+        fcwork6 = work / "freshness-control"
+        check("freshness control: the undeclared run "
+              "yields in two iterations, its sealed "
+              "record declaring no suspension",
+              rep["outcome"] == "yield"
+              and rep["iterations"] == 2
+              and rep["sealed_freshness_guard"] is None,
+              f"{rep['outcome']} / {rep['iterations']} / "
+              f"{rep['sealed_freshness_guard']}")
+        fcevs = _events(fcwork6)
+        fc_contribs = [e for e in fcevs
+                       if e["type"] == "CONTRIBUTION"]
+        fc_r31 = [_payload(e) for e in fcevs
+                  if e["type"] == "REJECTION"
+                  and "(R31)" in (
+                      _payload(e).get("ground") or "")]
+        check("freshness control (5): without the "
+              "declaration the same answer in the same "
+              "position is REFUSED under R31 — no "
+              "contribution stands, and the rejection "
+              "names the changed subject since view "
+              "(the rule lives)",
+              not fc_contribs
+              and len(fc_r31) == 1
+              and "changed since view" in (
+                  fc_r31[0].get("ground") or ""),
+              f"contribs={len(fc_contribs)} "
+              f"r31={fc_r31}")
+        _check_commitments("freshness control", fcwork6,
+                           _packages(fcwork6), 2)
+        _check_checker("freshness control", rep)
 
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):

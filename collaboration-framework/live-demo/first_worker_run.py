@@ -341,7 +341,7 @@ GRANTS_RETRIEVAL = (
 
 def _commission_brief(assignment, manifest_hash,
                       glossary=None, bounds=None,
-                      journal=None):
+                      journal=None, onboarding=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
@@ -356,7 +356,13 @@ def _commission_brief(assignment, manifest_hash,
     the path under the worker's scratch naming his own
     notebook, which the office carries into the issued
     case unchanged and the loop presents back to him at
-    each wake.
+    each wake. Where an onboarding is given (the run-6
+    package, 2026-11-24 — Ben's ruling: "his first prompt
+    should be his onboarding file"), the brief carries it
+    as its own field: the job's headline, the deliverable's
+    statement and the onboarding text, which the office
+    carries into the issued case unchanged and the loop
+    presents at the head of his first wake package.
 
     bounds defaults to this harness's standing BOUNDS; the
     live demonstration driver passes its own re-derived
@@ -382,6 +388,8 @@ def _commission_brief(assignment, manifest_hash,
                               for entry in glossary]
     if journal is not None:
         brief["journal"] = journal
+    if onboarding is not None:
+        brief["onboarding"] = dict(onboarding)
     return brief
 
 

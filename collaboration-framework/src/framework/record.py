@@ -131,10 +131,24 @@ EVENT_TYPES = {
 # The designation is the case's; the notebook's
 # content is his, carried in the package, never in the
 # record. OPTIONAL like the glossary, by the same reasoning.
+# The onboarding joins the fields as an eleventh stored key
+# (2026-11-24, the run-6 package): Ben's ruling — "his
+# first prompt should be his onboarding file with specific
+# instructions on how to navigate his briefcase." The case
+# carries the worker's onboarding as its own component —
+# an object of three strings: the job's headline, the
+# deliverable's statement, and the onboarding text itself,
+# which teaches him what he is, how his briefcase is laid
+# out, how to pull, how to deliver, and what his journal
+# and step counter are. The loop presents it at the head
+# of his first wake package (a short cover at later
+# wakes). OPTIONAL like the glossary, by the same
+# reasoning: a field the route strips is not a usable
+# case component.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
                        "account", "authority", "loop_bounds",
-                       "glossary", "journal")
+                       "glossary", "journal", "onboarding")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

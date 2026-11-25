@@ -252,7 +252,8 @@ class Generator:
 
     def generate(self, token, seat_id, identify, skills=(),
                  grants=None, model_requested=None,
-                 retrieval=False, probe=False, exec_room=False):
+                 retrieval=False, probe=False, exec_room=False,
+                 freshness_suspended=False):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -305,7 +306,19 @@ class Generator:
         registry v4 contains the v3 regime whole. The
         `retrieval` flag remains the declaration for a
         retrieval-only assembly; it is not set for the
-        combined one."""
+        combined one.
+
+        `freshness_suspended` (Ben's ruling, 2026-11-24:
+        "Disable R31 until we need to worry about that"):
+        where a generation is made under the ruling, its
+        sealed record declares the freshness guard
+        suspended — the declaration the doorway honours
+        for that instance's acts and the checker reads
+        from its own copy. The declaration rides outside
+        the record's canonical hash fields, like the
+        catalogue contract's. The default declares
+        nothing: the guard stands for every other
+        generation exactly as it always has."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -363,6 +376,17 @@ class Generator:
             # gathered material forward.
             record["working_set_contract"] = \
                 _tool_policy.WORKING_SET_CONTRACT
+        if freshness_suspended:
+            # Ben's R31 ruling (2026-11-24), sealed as a
+            # declaration beside the contracts: the
+            # doorway does not raise the freshness
+            # rejection for this instance's answers. A
+            # switch with a name and a ruling behind it —
+            # the rule's code stands untouched, and a
+            # generation made without the ruling declares
+            # nothing.
+            record["freshness_guard"] = \
+                _tool_policy.FRESHNESS_GUARD_SUSPENDED
         ev = self.doorway.act(token, "ASSEMBLY_GENERATED", record,
                               view_seq=self.store.head_seq())
         return {"ok": True, "assembly_id": assembly_id,

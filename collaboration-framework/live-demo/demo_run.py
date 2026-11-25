@@ -276,30 +276,131 @@ COMBINED_TRACE = (
     "shelf, the glossary carried in his case")
 
 ASSIGNMENT_COMBINED = (
-    "Read the source documents for this assignment. "
-    "Your briefcase carries a glossary: the three "
-    "sources by their addresses, with what each one "
-    "is. Your wake package lists your tools — every "
-    "tool you hold, what each one is for, and the "
-    "scope it works in — and that list is the "
-    "statement of how you reach the sources and your "
-    "scratch; work from it (your working directory "
-    "in your office is /room/work). The stocked "
-    "sources are yours to utilise: read them; do not "
-    "alter them. Your package also carries your "
-    "journal, scratch/journal.md: your own notebook — "
-    "where you were, what you noticed, what to do "
-    "next — which comes back to you at each wake "
-    "exactly as you left it; keep it as you go. "
-    "Write the brief to scratch/brief.md — in your "
-    "office with your execution tool, or with "
-    "sandbox.write: a plain-words brief, at most ~600 "
-    "words, that a newcomer could read to learn what "
-    "this framework is, what has actually been "
-    "proven, what has not been proven, and what "
-    "remains to be built. Stay accurate to the "
-    "sources; invent nothing; where the sources "
-    "disagree with each other, say so.")
+    "THE DELIVERABLE: the file scratch/brief.md. "
+    "Write it with a tool — sandbox.write, or a shell "
+    "command in your room (for example a heredoc that "
+    "writes the file). Submitting the brief's text as "
+    "a \"contribute\" outcome is NOT the deliverable "
+    "and does not complete the assignment; only the "
+    "file standing at scratch/brief.md completes "
+    "it.\n\n"
+    "THE TASK: read the three source documents for "
+    "this assignment. Your briefcase carries a "
+    "glossary: the three sources by their addresses, "
+    "with what each one is. Your wake package lists "
+    "your tools as a menu grouped by the job's "
+    "phases — Gather, Compose, Deliver — every tool "
+    "you hold, what each one is for, and the scope "
+    "it works in; that menu is the statement of how "
+    "you reach the sources and your scratch (your "
+    "working directory in your office is /room/work). "
+    "The stocked sources are yours to utilise: read "
+    "them; do not alter them. Your package also "
+    "carries your journal, scratch/journal.md — your "
+    "personal notebook: capture ideas, decisions, "
+    "reflections, and progress for this wake; it "
+    "comes back to you at each wake exactly as you "
+    "left it.\n\n"
+    "Write a plain-words brief, at most ~600 words, "
+    "that a newcomer could read to learn what this "
+    "framework is, what has actually been proven, "
+    "what has not been proven, and what remains to "
+    "be built.\n\n"
+    "CHECKLIST BEFORE YOU FINISH: all three sources "
+    "read; the brief covers what the framework is, "
+    "what has actually been proven, what has not "
+    "been proven, and what remains to be built; "
+    "nothing invented — stay accurate to the "
+    "sources, and where the sources disagree with "
+    "each other, say so; the file stands at exactly "
+    "scratch/brief.md; then yield.")
+
+# The case's onboarding (the run-6 package, 2026-11-24 —
+# Ben's ruling: "his first prompt should be his
+# onboarding file with specific instructions on how to
+# navigate his briefcase"). The office carries it into
+# the issued case as its own component; the loop
+# presents its text at the head of his first wake
+# package, and at later wakes a short cover drawn from
+# its headline and deliverable. Its substance is the
+# worker's own briefcase consultation (2026-11-24)
+# translated from his imagined layout into this
+# package's real one: the deliverable stated first and
+# exactly, the briefcase's map in the package's actual
+# order, both doors named, the journal in his terms,
+# his position stated, and — under Ben's R31 ruling —
+# the standing word that no freshness refusal applies
+# to this job.
+ONBOARDING = {
+    "headline": "Write a short brief on the "
+                "collaborative agent framework",
+    "deliverable": "the file scratch/brief.md, "
+                   "written with a tool",
+    "text": (
+        "You are a worker in the collaborative agent "
+        "framework, assembled for one job. This is "
+        "your onboarding: how your briefcase is laid "
+        "out, and how to work in it. Your job is to "
+        "read three source documents and write a "
+        "short brief; the assignment itself stands "
+        "in your package as the case, right after "
+        "this page.\n\n"
+        "HOW YOUR BRIEFCASE IS LAID OUT. Each package "
+        "you are woken with carries, in order: (1) "
+        "this onboarding at your first wake — at "
+        "later wakes a short cover stands here "
+        "instead, naming the job, the deliverable, "
+        "and where you stand; (2) your case — the "
+        "assignment, and the glossary naming what "
+        "you may pull; (3) your working set — "
+        "everything you have gathered so far, kept "
+        "in front of you: material you pulled in an "
+        "earlier wake is still there, so you never "
+        "need to pull the same thing twice; (4) your "
+        "journal; (5) your tool list, a menu grouped "
+        "by the job's phases — Gather, Compose, "
+        "Deliver — every tool you hold, what each "
+        "one is for, and an example; (6) the outcomes "
+        "of your calls since your last wake.\n\n"
+        "HOW TO PULL A SOURCE. Two doors reach the "
+        "same shelf. Through the doorway: sandbox.list "
+        "shows a file's size and shape, sandbox.search "
+        "finds passages, sandbox.read_range pulls a "
+        "range of lines, sandbox.read pulls a whole "
+        "file. In your room: a shell command through "
+        "your execution tool — cat <path> reads a "
+        "whole file at once. The glossary in your "
+        "case names the three sources by their "
+        "addresses, with their sizes. The stocked "
+        "sources are yours to utilise: read them; "
+        "never alter them.\n\n"
+        "THE DELIVERABLE. The deliverable is the "
+        "file scratch/brief.md, and it is delivered "
+        "by writing that file with a tool — "
+        "sandbox.write, or a shell command in your "
+        "room. Submitting the brief's text as a "
+        "\"contribute\" outcome is not the "
+        "deliverable and does not complete the "
+        "assignment. When the file stands at "
+        "scratch/brief.md, answer with the yield "
+        "outcome, and the assignment is complete.\n\n"
+        "YOUR JOURNAL. scratch/journal.md is your "
+        "personal notebook — capture ideas, "
+        "decisions, reflections, and progress for "
+        "this wake: where you were, what you noticed, "
+        "what to do next. It comes back to you at "
+        "every wake exactly as you left it; it is "
+        "yours to write and rewrite.\n\n"
+        "WHERE YOU STAND. Each package states your "
+        "step — step k of your step ceiling — and "
+        "your task's status. No freshness refusal "
+        "applies to this job: your answers are judged "
+        "on the work, never refused because the "
+        "record moved while you were thinking. If a "
+        "tool call fails, the package tells you what "
+        "was asked, why it failed in plain terms, "
+        "and the working alternative."),
+}
 
 # The journal the case designates (the orientation
 # pass, 2026-11-24 — Ben's ruling on the worker
@@ -569,20 +670,24 @@ def _write_capture_helper(path):
 
 def _commission_and_issue(store, manifest_hash,
                           assignment=ASSIGNMENT_COMBINED,
-                          glossary=GLOSSARY):
+                          glossary=GLOSSARY,
+                          onboarding=ONBOARDING):
     """Commission, material sealing, office issue and
     the pre-activation verification, exactly as the gate
     4 rehearsal and the harness carry them: the issued
     case must identify the manifest by hash in its
     evidence boundary, carry the scoped bounds, and —
     where a glossary is commissioned — carry the brief's
-    glossary unchanged as its own component.
+    glossary unchanged as its own component; where an
+    onboarding is commissioned (the run-6 package), the
+    brief carries it likewise, as its own component.
     Returns (doorway, office, gen, tok, issued). Raises
     RuntimeError on any failure."""
     brief = _commission_brief(assignment, manifest_hash,
                               glossary=glossary,
                               bounds=DEMO_BOUNDS,
-                              journal=JOURNAL_PATH)
+                              journal=JOURNAL_PATH,
+                              onboarding=onboarding)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -641,6 +746,11 @@ def _commission_and_issue(store, manifest_hash,
         raise RuntimeError(
             "the issued case does not carry the "
             "commissioned glossary as its own component")
+    if onboarding is not None and \
+            (content or {}).get("onboarding") != onboarding:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "commissioned onboarding as its own component")
     return doorway, office, gen, tok, issued
 
 
@@ -852,7 +962,7 @@ def run_demo():
                 tok["orch-1"], "crew-1", identify_callable,
                 skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
-                exec_room=True)
+                exec_room=True, freshness_suspended=True)
         except ModelPinMismatchError as mismatch:
             # The flagged conflict (paper §3.6 gate 5's
             # rule, carried to this run's pin): the route
@@ -1424,7 +1534,7 @@ def verify_config():
                  "provider_model_id": MODEL},
                 skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
-                exec_room=True)
+                exec_room=True, freshness_suspended=True)
             expect("generation: stub-identity generation "
                    "succeeds",
                    generated.get("ok") is True,
@@ -1471,6 +1581,16 @@ def verify_config():
                        == tool_policy.WORKING_SET_CONTRACT,
                        f"got "
                        f"{sealed.get('working_set_contract')}")
+                expect("generation: the sealed record "
+                       "declares the freshness guard "
+                       "suspended (Ben's R31 ruling, "
+                       "2026-11-24 — the run-6 "
+                       "configuration)",
+                       sealed.get("freshness_guard")
+                       == tool_policy
+                       .FRESHNESS_GUARD_SUSPENDED,
+                       f"got "
+                       f"{sealed.get('freshness_guard')}")
                 case_content, _case_version = \
                     established_case_content(
                         doorway.state(), issued["case_id"])
@@ -1491,6 +1611,16 @@ def verify_config():
                        json.dumps(
                            (case_content or {}).get(
                                "journal"))[:300])
+                expect("commission: the issued case "
+                       "carries the onboarding as its own "
+                       "component, unchanged (the run-6 "
+                       "package — his first prompt is his "
+                       "onboarding file)",
+                       (case_content or {}).get("onboarding")
+                       == ONBOARDING,
+                       json.dumps(
+                           (case_content or {}).get(
+                               "onboarding"))[:300])
 
                 # (7) The judgement payload the order
                 # will bind: computed, not recorded —

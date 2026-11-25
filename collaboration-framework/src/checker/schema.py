@@ -192,7 +192,12 @@ SCHEMA = {
                         "t": "list", "v": {"t": "obj", "f": {
                             "address": {"t": "str"},
                             "description": {"t": "str"}}}}},
-                    "journal": {"t": "opt", "v": {"t": "str"}}},
+                    "journal": {"t": "opt", "v": {"t": "str"}},
+                    "onboarding": {"t": "opt", "v": {
+                        "t": "obj", "f": {
+                            "headline": {"t": "str"},
+                            "deliverable": {"t": "str"},
+                            "text": {"t": "str"}}}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

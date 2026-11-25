@@ -144,6 +144,26 @@ WORKING_SET_CONTENT_BUDGET = 64000
 # declares it and the checker reads it (the checker's own
 # copy stands in checker.py, as its other contracts do).
 WORKING_SET_CONTRACT = "working-set-v1"
+# The freshness guard's suspension declaration (Ben's
+# ruling, 2026-11-24: "Disable R31 until we need to worry
+# about that"): a sealed generated record declaring this
+# value under "freshness_guard" stands under the ruling
+# that the doorway's R31 freshness rejection does not
+# apply to its instance's answers. The ruling's ground:
+# the one-worker demonstration excludes the staleness
+# hazard by construction — nothing outside the worker's
+# own run changes the case while he answers it — and the
+# guard as it stood refused his deliveries for record
+# movement the framework's own bookkeeping caused. The
+# declaration is a switch, not a deletion: the rule's
+# code stands untouched, the doorway honours the
+# declaration only for the declaring instance's acts (the
+# act records, flagged stale_basis where its view is
+# behind, never freshness-refused), and the checker
+# reads the same value from its own copy in checker.py.
+# A record declaring any other value under the field
+# declares a state this framework does not understand.
+FRESHNESS_GUARD_SUSPENDED = "r31-suspended-v1"
 SEARCH_PAGE_LINE_CAP = 40
 RETRIEVAL_TOOLS = frozenset({
     "sandbox.list", "sandbox.read_range", "sandbox.search",
