@@ -229,8 +229,9 @@ CLOUDFLARE_ENDPOINT = (
 # in the harness's route-selection discipline: unset or
 # empty preserves the Nemotron configuration — the
 # default, byte-identical in behaviour — "quinn"
-# selects the Qwen occupant and "glm" the Cloudflare
-# occupant (INDEX 563); any other value is
+# selects the Qwen occupant, "glm" the Cloudflare
+# occupant (INDEX 563) and "gptoss" the GPT-OSS
+# occupant on Quinn's Groq route; any other value is
 # refused, so a typo can never silently change the
 # experiment.
 def _resolve_occupant(raw):
@@ -240,33 +241,38 @@ def _resolve_occupant(raw):
         return "quinn"
     if raw == "glm":
         return "glm"
+    if raw == "gptoss":
+        return "gptoss"
     raise ValueError(
         f"DEMO_OCCUPANT={raw!r} is not a recognised "
         f"occupant (expected unset for the Nemotron "
-        f"configuration, 'quinn' or 'glm'); refusing "
-        f"to run")
+        f"configuration, 'quinn', 'glm' or 'gptoss'); "
+        f"refusing to run")
 
 
 OCCUPANT = _resolve_occupant(
     os.environ.get("DEMO_OCCUPANT"))
 QUINN = OCCUPANT == "quinn"
 GLM = OCCUPANT == "glm"
+GPTOSS = OCCUPANT == "gptoss"
 
 # The run's pin: the director's named model on the
 # occupant's route (Ben's order, 2026-11-24, for
-# Nemotron; Ben's direction, 2026-11-25, for Quinn).
+# Nemotron; Ben's direction, 2026-11-25, for Quinn
+# and for the GPT-OSS occupant).
 # No fallback, no alias, no automatic selection — a
 # provider-reported identity that is not this string
 # aborts the run before activation as a flagged
 # conflict.
 MODEL = ("qwen/qwen3.8-27b" if QUINN else
+         "openai/gpt-oss-120b" if GPTOSS else
          CLOUDFLARE_MODEL if GLM else
          "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
-ENDPOINT = (GROQ_ENDPOINT if QUINN else
+ENDPOINT = (GROQ_ENDPOINT if (QUINN or GPTOSS) else
             CLOUDFLARE_ENDPOINT if GLM else
             "https://integrate.api.nvidia.com/v1/chat/"
             "completions")
-ROUTE = ("groq" if QUINN else
+ROUTE = ("groq" if (QUINN or GPTOSS) else
          "cloudflare" if GLM else "nvidia")
 
 # The mode the occupant's order/direction judges:
@@ -278,17 +284,25 @@ ROUTE = ("groq" if QUINN else
 # direction (INDEX 563): a new route whose native
 # tool-calling has never been witnessed on the live
 # path, and no finding about its native reach is made.
-ADAPTER_MODE = "text" if (QUINN or GLM) else "native"
+# The GPT-OSS occupant text under the examiner's
+# standing judgement for this model on this route
+# (INDEX 300, on probe evidence: four settled
+# text-contract observations, no empirical basis for
+# native on it).
+ADAPTER_MODE = ("text" if (QUINN or GLM or GPTOSS)
+                else "native")
 
 # The route's registered connector helper — the
 # sanctioned Secure Vault credential path the capture
 # seam delegates to.
-DELEGATE_HELPER = (GROQ_CONNECTOR_HELPER if QUINN
+DELEGATE_HELPER = (GROQ_CONNECTOR_HELPER
+                   if (QUINN or GPTOSS)
                    else CLOUDFLARE_CONNECTOR_HELPER
                    if GLM else CONNECTOR_HELPER)
 ROUTE_REPORT_LABEL = (
     "groq (live, via the registered connector helper "
-    "through the capture seam)" if QUINN else
+    "through the capture seam)" if (QUINN or GPTOSS)
+    else
     "cloudflare (live, via the registered connector "
     "helper through the capture seam)" if GLM else
     "nvidia (live, via the registered connector "
@@ -297,6 +311,7 @@ ROUTE_REPORT_LABEL = (
 DEMO_DIR = HERE / os.environ.get(
     "DEMO_RUN_DIR",
     "demo-quinn1" if QUINN else
+    "demo-gptoss1" if GPTOSS else
     "demo-glm1" if GLM else "demo-nemotron1")
 
 # The paper §3.3 adapter per-call span.
@@ -313,9 +328,13 @@ ADAPTER_TIMEOUT = 300.0
 # route's documented free text-generation ceiling is
 # 300 RPM, far above anything this driver sends, and
 # the budget that binds the route is its daily Neuron
-# allowance, which pacing does not govern.
-PACING_INTERVAL_SECONDS = (65.0 if QUINN else
-                           5.0 if GLM else 20.0)
+# allowance, which pacing does not govern. The
+# GPT-OSS occupant shares Quinn's interval — the same
+# route and the same courtesy; its own per-model
+# limits on this account are unread (see the bounds
+# derivation).
+PACING_INTERVAL_SECONDS = (65.0 if (QUINN or GPTOSS)
+                           else 5.0 if GLM else 20.0)
 PACING_NOTE = (
     "a fixed operating choice of this driver between "
     "successive outbound iteration calls, sized to "
@@ -324,6 +343,15 @@ PACING_NOTE = (
     "tokens, so successive calls land in separate "
     "minute windows; no finer provider figure is "
     "claimed" if QUINN else
+    "a fixed operating choice of this driver between "
+    "successive outbound iteration calls: the Groq "
+    "route's pacing this driver already uses (65 s "
+    "between calls, Quinn's configuration). No "
+    "per-model figure for this model on this account "
+    "is claimed — the account's authenticated limits "
+    "for it have never been read, and whether they "
+    "pass a full-working-set wake is the open "
+    "question this run answers" if GPTOSS else
     "a fixed operating choice of this driver between "
     "successive outbound iteration calls, set as "
     "courtesy on a route whose documented free "
@@ -754,7 +782,8 @@ GRANTS_COMBINED = (
 # sized to the honest path with slack, and the deadline
 # accommodates the step count at this driver's pacing.
 DEMO_BOUNDS = {"step_ceiling": 20,
-               "deadline_seconds": 2400 if QUINN else 1200}
+               "deadline_seconds": 2400 if (QUINN or GPTOSS)
+               else 1200}
 BOUNDS_DERIVATION = (
     "step ceiling 20 (unchanged): the honest path is "
     "5 steps, as the Nemotron derivation records. "
@@ -769,6 +798,27 @@ BOUNDS_DERIVATION = (
     "single call may still lawfully take its 300 s "
     "adapter span within it. Grant counts stand as "
     "commissioned." if QUINN else
+    "step ceiling 20 (unchanged): the honest path is "
+    "5 steps, as the Nemotron derivation records. "
+    "Deadline 2,400 s: 20 steps x (the 65 s pacing "
+    "interval + a 55 s per-call allowance) = 2,400 s — "
+    "the pacing is the Groq-route courtesy this "
+    "driver already uses (Quinn's configuration), and "
+    "the deadline accommodates the step count at that "
+    "pacing. The open question this run answers is "
+    "whether this account's actual per-model limits "
+    "pass a full-working-set wake for THIS model: "
+    "Quinn's TPM refusal (INDEX 562) is her model's "
+    "evidence, not this one's; attempt 6 (INDEX 234) "
+    "met a byte ceiling — a 134,844-byte push package "
+    "refused with HTTP 413 — not a rate limit, and "
+    "that package shape no longer exists; the "
+    "account's authenticated limits for this model "
+    "have never been read. The deadline remains the "
+    "one authoritative clock; a single call may still "
+    "lawfully take its 300 s adapter span within it. "
+    "Grant counts stand as commissioned." if GPTOSS
+    else
     "step ceiling 20 (unchanged): the honest path is "
     "5 steps, as the Nemotron derivation records. "
     "Deadline 1,200 s: the step ceiling at this "
@@ -841,6 +891,8 @@ def _stage_sandbox_sources(sandbox_dir, manifest):
 ORDER_WORDS = (
     "Let's try Quinn... we should be able to just "
     "drop her right in" if QUINN else
+    "Build the GPT-OSS seat on the Groq route and "
+    "run it" if GPTOSS else
     "Cloudflare it is" if GLM else
     "just run it with nemotron, see how he reacts... "
     "lets start doing. im done guessing")
@@ -860,6 +912,30 @@ ORDER_GROUNDS = (
     "The probe stage ran live and its recommendation "
     "stands in the record as evidence; it does not "
     "decide this run's mode." if QUINN else
+    "Director's direction (Ben, 2026-11-25 — his tap "
+    "on the scope card and his own words: \"Build the "
+    "GPT-OSS seat on the Groq route and run it\"): "
+    "the GPT-OSS occupant dropped into the same role, "
+    "the same case and the same gates. The mode is "
+    "judged text under the examiner's standing "
+    "judgement for this model on this route (INDEX "
+    "300, on probe evidence: four settled "
+    "text-contract observations, no empirical basis "
+    "for native) — the occupant answers in the "
+    "package protocol as plain-text JSON, the loop's "
+    "standing text population. The precedent stands "
+    "at INDEX 234: attempt 6 ran this exact pin on "
+    "this exact route, its provider-reported identity "
+    "verified against the pin; that run's failure was "
+    "the old harness's 134,844-byte push package "
+    "(HTTP 413), a shape the current driver no longer "
+    "produces. The probe stage ran live and its "
+    "recommendation stands in the record as evidence; "
+    "it does not decide this run's mode. The run is "
+    "the empirical test of this model's "
+    "full-working-set wake against this account's "
+    "actual per-model limits, which have never been "
+    "read." if GPTOSS else
     "Director's direction (Ben, 2026-11-25): adopt "
     "the Cloudflare Workers AI route (INDEX 563) — "
     "the GLM occupant dropped into the same role, "
@@ -889,11 +965,21 @@ ORDER_GROUNDS = (
     "recommendation stands in the record as evidence; "
     "it does not decide this run's mode.")
 ORDER_EXAMINER = ("Ben (director) — direction of "
-                  "2026-11-25" if (QUINN or GLM) else
+                  "2026-11-25" if (QUINN or GLM or GPTOSS)
+                  else
                   "Ben (director) — order of 2026-11-24")
-ORDER_DATE = ("2026-11-25" if (QUINN or GLM)
+ORDER_DATE = ("2026-11-25" if (QUINN or GLM or GPTOSS)
               else "2026-11-24")
 ORDER_EFFECT = (
+    "the director's direction adopts the "
+    "examiner's standing judgement for this "
+    "model on this route (INDEX 300): the "
+    "mode is judged text, whatever the probe "
+    "stage recommends; the probe's "
+    "recommendation stands in the record as "
+    "evidence, not as the decision; the "
+    "model's first live response is the "
+    "delivery evidence" if GPTOSS else
     "the director's direction replaces the "
     "probe-phase examiner judgement for "
     "this run: the mode is judged "
@@ -1024,8 +1110,11 @@ CAPTURE_HELPER_SOURCE_GLM = (
     .replace("custom.nvidia", "custom.cloudflare")
     .replace("nvidia_api.py", "cf_ai.py")
     .replace("NVIDIA", "Cloudflare"))
+# The GPT-OSS occupant shares Quinn's capture helper
+# source word for word — the same Groq route, the same
+# delegate; no second derivation is needed or made.
 CAPTURE_HELPER_SOURCE_SELECTED = (
-    CAPTURE_HELPER_SOURCE_QUINN if QUINN
+    CAPTURE_HELPER_SOURCE_QUINN if (QUINN or GPTOSS)
     else CAPTURE_HELPER_SOURCE_GLM if GLM
     else CAPTURE_HELPER_SOURCE)
 
@@ -1040,9 +1129,10 @@ def _write_capture_helper(path):
 def _install_typed_transport(adapter, wrapper_path):
     """The occupant route's typed connector transport
     on the adapter, through the capture seam: the Groq
-    twin on Quinn's route, the Cloudflare twin on the
-    GLM occupant's route, the NVIDIA transport
-    otherwise — each route's sanctioned helper path."""
+    twin on Quinn's and the GPT-OSS occupant's route,
+    the Cloudflare twin on the GLM occupant's route,
+    the NVIDIA transport otherwise — each route's
+    sanctioned helper path."""
     if ROUTE == "groq":
         return install_groq_connector_transport(
             adapter, str(wrapper_path), MODEL)
@@ -1056,10 +1146,11 @@ def _install_typed_transport(adapter, wrapper_path):
 def _install_raw_call(adapter, wrapper_path):
     """The occupant route's probe raw call, through
     the capture seam: the Groq transport's raw call on
-    Quinn's route and the Cloudflare transport's on
-    the GLM occupant's route (each takes the adapter
-    as its first argument, whose timeout bounds it),
-    the NVIDIA bounded raw call otherwise."""
+    Quinn's and the GPT-OSS occupant's route and the
+    Cloudflare transport's on the GLM occupant's
+    route (each takes the adapter as its first
+    argument, whose timeout bounds it), the NVIDIA
+    bounded raw call otherwise."""
     if ROUTE == "groq":
         return install_groq_connector_raw_call(
             adapter, str(wrapper_path), MODEL)
@@ -1987,7 +2078,7 @@ def verify_config():
                 adapter, wrapper_path)
             expect("transport: real Groq raw call "
                    "installed for the probe stage"
-                   if QUINN else
+                   if (QUINN or GPTOSS) else
                    "transport: real Cloudflare raw call "
                    "installed for the probe stage"
                    if GLM else
@@ -2327,15 +2418,17 @@ def verify_config():
             wire_fn = (wire_definitions[0].get(
                 "function", {}) if wire_definitions
                 else {})
-            if QUINN or GLM:
-                # Quinn's and the GLM occupant's routes
-                # carry no name translation (the
-                # translator exists for the NVIDIA route
-                # alone): no translator stands, and the
-                # transmitted definition carries the
-                # canonical dotted name exactly as the
-                # framework speaks it.
-                _route_display = ("Groq" if QUINN else
+            if QUINN or GLM or GPTOSS:
+                # Quinn's, the GLM occupant's and the
+                # GPT-OSS occupant's routes carry no
+                # name translation (the translator
+                # exists for the NVIDIA route alone): no
+                # translator stands, and the transmitted
+                # definition carries the canonical
+                # dotted name exactly as the framework
+                # speaks it.
+                _route_display = ("Groq" if (QUINN or
+                                             GPTOSS) else
                                   "Cloudflare")
                 expect(f"adapter: on the {_route_display} "
                        "route no "
@@ -2409,7 +2502,7 @@ def verify_config():
             combined_names = [
                 d.get("function", {}).get("name")
                 for d in combined_definitions]
-            if QUINN or GLM:
+            if QUINN or GLM or GPTOSS:
                 expect("adapter: the combined catalogue's "
                        "transmitted names on the "
                        f"{_route_display} "
