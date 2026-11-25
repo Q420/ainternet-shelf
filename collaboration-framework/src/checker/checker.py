@@ -84,7 +84,9 @@ from checker.tool_policy import (EXEC_CATALOGUE_CONTRACT,
                                  RETRIEVAL_AGGREGATE_CEILING,
                                  RETRIEVAL_REGISTRY_VERSION,
                                  RETRIEVAL_RESULT_CEILING,
-                                 RETRIEVAL_TOOLS, boundary_member,
+                                 RETRIEVAL_TOOLS,
+                                 WORKING_SET_CONTENT_BUDGET,
+                                 boundary_member,
                                  check_ceiling, known_version,
                                  registered, request_fingerprint,
                                  retrieval_authority,
@@ -2010,6 +2012,141 @@ _GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
                                  _RETRIEVAL_CONTRACT,
                                  _EXEC_CONTRACT)
 
+# The working-set contract's declaration value (the run-3
+# correction, examiner's ruling 2026-11-24): an assembly
+# declaring it — the combined configuration, generated with
+# the execution room and retrieval grants — presents a
+# working set in each wake package and owes the set's
+# commitment hash on every iteration, verified below by
+# this checker's independent reconstruction from the
+# recorded outcomes. An assembly carrying no declaration
+# predates or stands outside the contract; its iterations
+# are exempt identifiably. A declaration naming any other
+# value is a contract this checker does not understand.
+_WORKING_SET_CONTRACT = "working-set-v1"
+
+
+def _working_set_served(tool, result):
+    """The served descriptor of one retrieval result, in
+    this checker's own reconstruction: the range or window
+    actually retrieved, in the result's recorded terms — a
+    range read stands as the range it served, never
+    expanded; a search stands by its query and totals, its
+    passages bound by their canonical hash."""
+    if tool == "sandbox.read_range":
+        return {"kind": "range",
+                "start_line": result.get("start_line"),
+                "end_line": result.get("end_line"),
+                "byte_start": result.get("byte_start"),
+                "byte_end": result.get("byte_end"),
+                "heading": result.get("heading")}
+    if tool == "sandbox.search":
+        return {"kind": "search",
+                "query": result.get("query"),
+                "total_matches": result.get("total_matches"),
+                "returned": result.get("returned"),
+                "continuation_offset":
+                    result.get("continuation_offset"),
+                "passages_sha256": sha256_hex(canonical(
+                    result.get("passages")))}
+    if tool == "sandbox.list":
+        return {"kind": "list",
+                "size_bytes": result.get("size_bytes"),
+                "line_count": result.get("line_count")}
+    if tool == "sandbox.read":
+        return {"kind": "whole"}
+    return {"kind": "result"}
+
+
+def _derive_working_set(events, instance_id, head):
+    """The working set a package at `head` must have
+    presented, reconstructed from the record alone: every
+    successful retrieval outcome of the instance at or
+    before the head, in outcome order, deduplicated on
+    (tool, path, served descriptor, content hash) — the
+    first gathering dispatch's identity stands — with the
+    aggregate content budget applied in gather order: an
+    entry that fits is carried with its content; one that
+    does not fit stands by its provenance alone, marked not
+    carried. Dispatch identities and tools are read from
+    the record's own dispatch events, never from the
+    package under examination."""
+    dispatch_info = {}
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        if ev["type"] == "TOOL_DISPATCHED":
+            p = ev["payload"]
+            dispatch_info[p.get("dispatch_id")] = (
+                p.get("instance_id"), p.get("tool"))
+    entries = []
+    seen = set()
+    remaining = WORKING_SET_CONTENT_BUDGET
+    carried_bytes = 0
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        if ev["type"] != "TOOL_OUTCOME":
+            continue
+        payload = ev["payload"]
+        if payload.get("outcome") != "result":
+            continue
+        info = dispatch_info.get(payload.get("dispatch_id"))
+        if info is None or info[0] != instance_id:
+            continue
+        tool = info[1]
+        if tool not in RETRIEVAL_TOOLS:
+            continue
+        result = payload.get("result")
+        if not isinstance(result, dict) or \
+                "content" not in result:
+            continue
+        served = _working_set_served(tool, result)
+        key = canonical([tool, result.get("path"), served,
+                         result.get("content_sha256")])
+        if key in seen:
+            continue
+        seen.add(key)
+        size = result.get("content_bytes")
+        if not isinstance(size, int) or \
+                isinstance(size, bool):
+            size = len(result["content"].encode("utf-8"))
+        entry = {
+            "tool": tool,
+            "path": result.get("path"),
+            "authority_path": result.get("authority_path"),
+            "content_sha256": result.get("content_sha256"),
+            "content_bytes": size,
+            "served": served,
+            "dispatch_id": payload.get("dispatch_id"),
+            "request_id": payload.get("request_id"),
+            "outcome_event_seq": ev["event_seq"],
+        }
+        if size <= remaining:
+            entry["content"] = result["content"]
+            entry["content_carried"] = True
+            remaining -= size
+            carried_bytes += size
+        else:
+            entry["content_carried"] = False
+            entry["not_carried_reason"] = \
+                "working_set_budget"
+        entries.append(entry)
+    return {
+        "budget_bytes": WORKING_SET_CONTENT_BUDGET,
+        "content_bytes": carried_bytes,
+        "entries": entries,
+    }
+
+
+def _working_set_hash(working_set):
+    """The working set's commitment, as this checker
+    computes it: SHA-256 over the canonical form of the
+    reconstructed set's budget and entries."""
+    return sha256_hex(canonical({
+        "budget_bytes": working_set["budget_bytes"],
+        "entries": working_set["entries"]}))
+
 # Response-evidence piece (WORKER-RESPONSE-EVIDENCE-SCOPE
 # Rev 8): the disposition contract's tables — this
 # checker's own copies, reconstructed independently of
@@ -2374,6 +2511,18 @@ def _loop_result(events, state, run_dir=None):
             problem("catalogue_contract_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     catalogue_contract=contract)
+        # The working-set contract's third case, in the
+        # same shape: a declaration present but not the
+        # contract this checker knows is divergent in
+        # itself, reported once at the assembly level.
+        ws_contract = gen["payload"].get(
+            "working_set_contract") if gen is not None \
+            else None
+        if ws_contract is not None and \
+                ws_contract != _WORKING_SET_CONTRACT:
+            problem("working_set_contract_unknown",
+                    assembly_id=aid, at_seq=activated[aid],
+                    working_set_contract=ws_contract)
 
     for aid, evs in iterations.items():
         bounds = pinned_bounds(aid)
@@ -2499,6 +2648,40 @@ def _loop_result(events, state, run_dir=None):
                             != recorded_hash:
                         problem("catalogue_hash_mismatch",
                                 assembly_id=aid, at_seq=seq)
+            # Working-set carriage (the run-3 correction):
+            # the commitment of the presented working set.
+            # The assembly's sealed declaration governs, in
+            # the catalogue commitment's shape: a declared
+            # assembly owes the hash on every iteration, and
+            # its absence is divergent in itself; where a
+            # hash stands it is verified against the working
+            # set this checker independently reconstructs
+            # from the recorded outcomes at or before the
+            # iteration's cursor close — the exact set the
+            # package at that head must have presented,
+            # contents, provenance, dedupe and budget
+            # behaviour alike. An assembly declaring an
+            # unknown working-set contract is not governed
+            # here; it stands reported once at the assembly
+            # level above.
+            ws_declared = gen is not None and \
+                gen["payload"].get("working_set_contract") \
+                == _WORKING_SET_CONTRACT
+            recorded_ws = p.get("working_set_hash")
+            if ws_declared and recorded_ws is None:
+                problem("working_set_commitment_missing",
+                        assembly_id=aid, at_seq=seq)
+            elif recorded_ws is not None and \
+                    gen is not None and \
+                    isinstance(p.get("cursor_to"), int) and \
+                    not isinstance(p.get("cursor_to"), bool):
+                expected_ws = _derive_working_set(
+                    events, gen["payload"].get("instance_id"),
+                    p.get("cursor_to"))
+                if _working_set_hash(expected_ws) \
+                        != recorded_ws:
+                    problem("working_set_hash_mismatch",
+                            assembly_id=aid, at_seq=seq)
         stall = stalls.get(aid)
         if stall is not None:
             for ev in evs:

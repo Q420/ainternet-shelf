@@ -124,6 +124,26 @@ RETRIEVAL_REGISTRY_VERSION = "tool-registry-v3"
 RETRIEVAL_CATALOGUE_CONTRACT = "retrieval-v3"
 RETRIEVAL_RESULT_CEILING = 12000
 RETRIEVAL_AGGREGATE_CEILING = 36000
+# Working-set carriage (the run-3 correction, examiner's
+# ruling 2026-11-24): the aggregate content budget of a wake
+# package's working set — the successful retrieval material
+# an assembly under the working-set contract carries forward
+# from wake to wake. The figure: the demonstration's three
+# stocked sources measure 57,562 content bytes in total
+# (11,946 + 4,663 + 40,953), so 64,000 holds the whole
+# stocked set whole, with headroom — and it is a hard stop
+# against unbounded prompt growth: past it, an entry stands
+# in the working set by its provenance alone, marked
+# not-carried, never silently truncated. It is roughly five
+# times the per-result ceiling (12,000) and deliberately a
+# different bound from the per-package aggregate ceiling
+# above: that ceiling governs what one package may SERVE;
+# this one governs what a package may CARRY FORWARD.
+WORKING_SET_CONTENT_BUDGET = 64000
+# The working-set contract's name, as the generated record
+# declares it and the checker reads it (the checker's own
+# copy stands in checker.py, as its other contracts do).
+WORKING_SET_CONTRACT = "working-set-v1"
 SEARCH_PAGE_LINE_CAP = 40
 RETRIEVAL_TOOLS = frozenset({
     "sandbox.list", "sandbox.read_range", "sandbox.search",

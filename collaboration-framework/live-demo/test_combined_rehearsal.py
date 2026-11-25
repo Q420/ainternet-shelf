@@ -31,8 +31,13 @@ and asserts the evidence the rehearsal produced:
   "source"); the in-room exec read of
   sources/a3-pass.md cites its glossary entry and its
   stdout is the shelf file exactly; the pulled
-  content is carried once in the next package (single
-  carriage);
+  content is carried once in the next package — in
+  its working set, under the working-set contract
+  this configuration declares (the run-3 correction):
+  the full content stands in the working-set entry
+  with its provenance, and both the tool_results
+  entry and the delta's copy carry the stub pointing
+  there;
 - the dispatches: four, in script order, all stamped
   registry v4; exactly one REJECTION — the
   out-of-grants sandbox.write under sources/;
@@ -362,16 +367,41 @@ def main():
         delta_result = ((delta_outcomes[0].get(
             "payload") or {}).get("result")
             if delta_outcomes else None) or {}
+        ws_entries = [
+            e for e in ((second_package or {}).get(
+                "working_set") or {}).get("entries") or []
+            if e.get("dispatch_id")
+            == read_dispatch.get("dispatch_id")]
         check("chain: the pulled content is carried "
-              "once in the next package (full content "
-              "in tool_results; the delta's copy stubbed "
-              "with the single-carriage marker)",
+              "once in the next package — in its "
+              "working set (full content with its "
+              "provenance: the manifest hash, the "
+              "source authority path, the whole-file "
+              "served descriptor, the gathering "
+              "dispatch's identity); the tool_results "
+              "entry and the delta's copy both carry "
+              "the stub pointing at the working set",
+              len(ws_entries) == 1 and
+              ws_entries[0].get("content")
+              == shelf_stock_take.decode("utf-8") and
+              ws_entries[0].get("content_carried")
+              is True and
+              ws_entries[0].get("content_sha256")
+              == STOCK_TAKE_SHA256 and
+              ws_entries[0].get("authority_path")
+              == "source" and
+              (ws_entries[0].get("served") or {}).get(
+                  "kind") == "whole" and
               len(carried) == 1 and
               (carried[0].get("result") or {}).get(
-                  "content")
-              == shelf_stock_take.decode("utf-8") and
+                  "presented_in") == "working_set" and
+              "content" not in (
+                  carried[0].get("result") or {}) and
               delta_result.get("single_carriage") is True
+              and delta_result.get("presented_in")
+              == "working_set"
               and "content" not in delta_result,
+              f"ws={len(ws_entries)} "
               f"carried={len(carried)} "
               f"delta={delta_result}")
 

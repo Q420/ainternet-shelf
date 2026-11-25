@@ -2231,7 +2231,8 @@ class Doorway:
                               catalogue_hash=None,
                               registry_version=None,
                               evidence_governed=False,
-                              disable_tool_validation=None):
+                              disable_tool_validation=None,
+                              working_set_hash=None):
         """The loop's iteration report (Piece A3, R49): one
         event per model call, recorded before the call it
         accounts, under the loop identity. The route derives
@@ -2395,6 +2396,18 @@ class Doorway:
                 # cannot drift apart silently.
                 payload["disable_tool_validation"] = \
                     bool(disable_tool_validation)
+            if working_set_hash is not None:
+                # Working-set carriage (the run-3
+                # correction): the presented working set's
+                # commitment, recorded in the iteration
+                # beside the catalogue hash — the loop
+                # derives the set from the record's own
+                # outcomes and hashes the exact structure
+                # the package presents, so the commitment
+                # and the presentation cannot drift apart
+                # silently; the checker reconstructs both.
+                payload["working_set_hash"] = \
+                    working_set_hash
             ev = self.store.append(
                 "LOOP_ITERATION", LOOP_ACTOR, [instance_id],
                 payload)

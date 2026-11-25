@@ -388,7 +388,8 @@ def _shape_problem(ev):
                                    (int, float))):
             return "LOOP_ITERATION deadline_seconds is not a " \
                 "number"
-        for key in ("catalogue_hash", "registry_version"):
+        for key in ("catalogue_hash", "registry_version",
+                    "working_set_hash"):
             if bad_opt_str(key):
                 return f"LOOP_ITERATION {key} is not a string"
         if "disable_tool_validation" in p and \

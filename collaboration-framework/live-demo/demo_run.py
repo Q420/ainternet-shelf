@@ -1367,6 +1367,15 @@ def verify_config():
                        "configuration)",
                        doorway._retrieval_governed(sealed)
                        is True)
+                expect("generation: the sealed record "
+                       "declares the working-set contract "
+                       "(the combined configuration carries "
+                       "its gathered material forward, the "
+                       "run-3 correction)",
+                       sealed.get("working_set_contract")
+                       == tool_policy.WORKING_SET_CONTRACT,
+                       f"got "
+                       f"{sealed.get('working_set_contract')}")
                 case_content, _case_version = \
                     established_case_content(
                         doorway.state(), issued["case_id"])

@@ -1,0 +1,672 @@
+#!/usr/bin/env python3
+"""Working-set carriage — the run-3 correction's OFFLINE
+rehearsal (examiner's ruling, 2026-11-24).
+
+Run 3's finding (INDEX 484/486): the full Nemotron run
+stalled at the step ceiling having made twelve successful
+retrieval dispatches and no progress, because each wake
+package carried only the worker's most recent tool result
+— the record retained the outcomes, but the worker's next
+package did not retain their contents. The examiner's
+ruling accepted working-set carriage under five
+properties: accumulated, not latest-only; content and
+provenance travel together (the served range preserved,
+never expanded); no duplicate copies within a package;
+reconstructable from the recorded outcomes, with the
+checker independently reconstructing the exact set
+presented at each iteration; and bounded, honestly — an
+aggregate budget with over-budget material standing by
+its provenance, marked not carried, never silently
+truncated.
+
+This rehearsal proves the correction offline, on the
+examiner's narrow examination list, in two scenarios
+driven by a deterministic scripted stand-in through a
+stub at the real NVIDIA connector seam — the combined
+rehearsal's pattern. The REAL loop, native adapter (with
+the route's name translation), doorway and executor run;
+no room is stocked (the scripts never call the execution
+tool — the exec door is the combined rehearsal's proven
+ground) and no provider is contacted.
+
+Scenario A (continuity) runs the live driver's own
+combined configuration — its grants, assignment and
+glossary, imported from demo_run — against the released
+source set, staged for the pull door exactly as the
+driver stages it:
+  (1) read sources/stock-take.md whole;
+  (2) read sources/a3-pass.md whole;
+  (3) read sources/stock-take.md AGAIN (the repeat);
+  (4) read sources/index-tail.md in a range (lines
+      1–4 — the file's lines run long, and a wider
+      range would exceed the per-result ceiling and be
+      refused whole), as its glossary entry directs;
+  (5) yield.
+The witness reads the packages from the captured
+requests and the outcomes from the record, and asserts
+the set's growth, the dedupe, the range's preservation,
+and the single presentation of every content.
+
+Scenario B (budget) seals two synthetic sources of
+40,000 bytes each (400 lines of exactly 100 bytes) into
+the same configuration and pulls eight 100-line ranges
+and one 10-line range across the two files — about
+71,000 bytes of gatherings against the working set's
+64,000-byte budget — so the final packages exercise the
+stated over-budget behaviour: the entry that does not
+fit stands by its provenance alone, marked not carried,
+while a later smaller entry that does fit is still
+carried.
+
+Outputs land in the rehearsal work directory, one
+subdirectory per scenario: the run record, the stub's
+captures, the decision receipt, the terminal readout,
+and report.json.
+"""
+
+from __future__ import annotations
+
+import base64
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
+SRC = ROOT / "src"
+RIG = ROOT / "room" / "rig"
+for _p in (str(SRC), str(HERE), str(RIG)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from fabric.canonical import canonical  # noqa: E402
+
+from framework.adapter import (  # noqa: E402
+    OpenAICompatibleAdapter)
+from framework.doorway import (  # noqa: E402
+    Doorway, established_case_content)
+from framework.executor import Executor  # noqa: E402
+from framework.generator import Generator  # noqa: E402
+from framework.loop import Loop  # noqa: E402
+from framework.office import Office  # noqa: E402
+from framework.record import (  # noqa: E402
+    CONSTITUTION_HASH, FrameworkStore)
+
+from connector_transport import (  # noqa: E402
+    install_connector_transport)
+from nvidia_connector_transport import (  # noqa: E402
+    install_nvidia_connector_raw_call)
+from first_worker_run import (  # noqa: E402
+    BOUNDS, RUN_ID, VERIFICATION_LIST, _act,
+    _commission_brief, export_store, run_checker)
+from demo_run import (  # noqa: E402
+    ASSIGNMENT_COMBINED, GLOSSARY, GRANTS_COMBINED, MODEL,
+    _stage_sandbox_sources)
+
+import stock_demo  # noqa: E402
+
+ENDPOINT = ("https://integrate.api.nvidia.com/v1/chat/"
+            "completions")
+ROUTE = "nvidia"
+
+# Scenario B's synthetic sources: 400 lines of exactly
+# 100 bytes each — 40,000 bytes a file, every line
+# distinct, so any range's content is exactly the file's
+# bytes for those lines and its size is known to the
+# byte before anything runs.
+SYNTH_LINES = 400
+SYNTH_LINE_BYTES = 100
+
+
+def _sha256_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def _synth_bytes(tag):
+    lines = []
+    for i in range(1, SYNTH_LINES + 1):
+        head = f"{tag}{i:04d} "
+        line = head + "x" * (SYNTH_LINE_BYTES - 1
+                             - len(head)) + "\n"
+        assert len(line.encode("utf-8")) == SYNTH_LINE_BYTES
+        lines.append(line)
+    return "".join(lines).encode("utf-8")
+
+
+SYNTH_A = _synth_bytes("A")
+SYNTH_B = _synth_bytes("B")
+
+ASSIGNMENT_BUDGET = (
+    "Read the two source documents named in the "
+    "glossary, in ranges, and keep what you gather in "
+    "front of you. (Working-set rehearsal, budget "
+    "scenario: a scripted stand-in follows a fixed "
+    "pull sequence; no brief is written.)")
+
+GLOSSARY_BUDGET = [
+    {"address": "sources/synth-a.md",
+     "description": "Synthetic source A: 400 lines of "
+                    "exactly 100 bytes. Pull it in "
+                    "ranges."},
+    {"address": "sources/synth-b.md",
+     "description": "Synthetic source B: 400 lines of "
+                    "exactly 100 bytes. Pull it in "
+                    "ranges."},
+    {"address": "scratch/",
+     "description": "Your writing space."},
+]
+
+
+def _native_call(call_id, name, arguments):
+    """One scripted provider response carrying a single
+    native tool call — the combined rehearsal's shape."""
+    return {
+        "id": f"stub-{call_id}",
+        "model": MODEL,
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{
+                    "id": call_id,
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": json.dumps(arguments),
+                    },
+                }],
+            },
+            "finish_reason": "tool_calls",
+        }],
+    }
+
+
+def _text_response(call_id, content):
+    return {
+        "id": f"stub-{call_id}",
+        "model": MODEL,
+        "choices": [{
+            "message": {"role": "assistant",
+                        "content": content},
+            "finish_reason": "stop",
+        }],
+    }
+
+
+def _probe_steps():
+    step = {
+        "respond": _native_call(
+            "fc-probe", "probe-lookup",
+            {"object": "brass lantern"}),
+        "action": None}
+    return [dict(step) for _ in range(5)]
+
+
+def _identify_step(scenario):
+    return {"respond": _text_response(
+        "identify",
+        f"I am {MODEL}, a model served on the NVIDIA "
+        f"route. (Scripted stand-in declaration for "
+        f"the working-set offline rehearsal, "
+        f"{scenario} scenario; no provider was "
+        f"contacted.)"),
+        "action": None}
+
+
+def build_script_continuity():
+    chat = [
+        _identify_step("continuity"),
+        # 1 — read the first source whole.
+        {"respond": _native_call(
+            "fc-ws-1", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 2 — read the second source whole.
+        {"respond": _native_call(
+            "fc-ws-2", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 3 — the repeat: the same read again.
+        {"respond": _native_call(
+            "fc-ws-3", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 4 — the third source in a range, as its
+        # glossary entry directs.
+        {"respond": _native_call(
+            "fc-ws-4", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 1, "end_line": 4}),
+         "action": None},
+        # 5 — the yield.
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Read the stock-take, the "
+                           "A3 pass, the stock-take "
+                           "again, and a range of the "
+                           "index tail."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_budget():
+    def rr(call_id, path, start, end):
+        return {"respond": _native_call(
+            call_id, "sandbox-read_range",
+            {"path": path, "start_line": start,
+             "end_line": end}),
+            "action": None}
+
+    chat = [
+        _identify_step("budget"),
+        rr("fc-wb-1", "sources/synth-a.md", 1, 100),
+        rr("fc-wb-2", "sources/synth-a.md", 101, 200),
+        rr("fc-wb-3", "sources/synth-a.md", 201, 300),
+        rr("fc-wb-4", "sources/synth-a.md", 301, 400),
+        rr("fc-wb-5", "sources/synth-b.md", 1, 100),
+        rr("fc-wb-6", "sources/synth-b.md", 101, 200),
+        rr("fc-wb-7", "sources/synth-b.md", 201, 210),
+        rr("fc-wb-8", "sources/synth-b.md", 211, 310),
+        {"respond": _text_response(
+            "yield",
+            json.dumps({
+                "outcome": "yield",
+                "summary": "Pulled eight ranges across "
+                           "the two synthetic sources."})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+STUB_SOURCE = '''#!/usr/bin/env python3
+"""The working-set rehearsal's stub helper: stands in
+for the NVIDIA connector helper at its own seam.
+Invoked exactly as the real helper is — [python,
+helper, "chat"|"chat-raw-bounded", model], the request
+JSON on stdin — it records the exact request bytes to
+the captures file and answers from the script: the
+provider JSON itself for "chat"; for
+"chat-raw-bounded", the bounded envelope the real
+helper frames, wrapping the same provider JSON. No
+network, no credential, no provider."""
+import base64
+import hashlib
+import json
+import os
+import sys
+
+
+def main():
+    mode = sys.argv[1]
+    model = sys.argv[2]
+    body = sys.stdin.buffer.read()
+    with open(os.environ["WS_STUB_SCRIPT"],
+              encoding="utf-8") as fh:
+        script = json.load(fh)
+    state_path = os.environ["WS_STUB_STATE"]
+    try:
+        with open(state_path, encoding="utf-8") as fh:
+            state = json.load(fh)
+    except (OSError, ValueError):
+        state = {}
+    index = int(state.get(mode, 0))
+    state[mode] = index + 1
+    with open(state_path, "w", encoding="utf-8") as fh:
+        json.dump(state, fh)
+    with open(os.environ["WS_STUB_CAPTURES"], "a",
+              encoding="utf-8") as fh:
+        fh.write(json.dumps({
+            "mode": mode, "model": model, "index": index,
+            "request_sha256": hashlib.sha256(body).hexdigest(),
+            "request_bytes": len(body),
+            "request_b64": base64.b64encode(body).decode(
+                "ascii")}) + "\\n")
+    steps = script.get(mode) or []
+    if index >= len(steps):
+        sys.stderr.write(
+            f"working-set stub: script exhausted for "
+            f"mode {mode} at index {index}\\n")
+        return 3
+    payload = json.dumps(
+        steps[index]["respond"]).encode("utf-8")
+    if mode == "chat-raw-bounded":
+        envelope = {
+            "phase": "response_received", "status": 200,
+            "body_b64": base64.b64encode(payload).decode(
+                "ascii"),
+            "body_complete": True, "stop_reason": "eof",
+            "error_kind": None, "read_error_kind": None}
+        sys.stdout.write(json.dumps(envelope))
+    else:
+        sys.stdout.buffer.write(payload)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
+def _run_scenario(work_dir, *, scenario, brief,
+                  manifest_hash, seal_entries, stage_fn,
+                  script, grounds):
+    """Run one scenario's rehearsal in `work_dir`
+    (created fresh; must not already hold a rehearsal).
+    Returns the report dict (also written to
+    work_dir/report.json)."""
+    work_dir = Path(work_dir).resolve()
+    if work_dir.exists() and any(work_dir.iterdir()):
+        raise RuntimeError(
+            f"rehearsal work directory {work_dir} is not "
+            f"empty; refusing to overwrite a standing "
+            f"rehearsal")
+    run_dir = work_dir / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    stub_path = work_dir / "stub_helper.py"
+    stub_path.write_text(STUB_SOURCE, encoding="utf-8")
+    stub_path.chmod(0o755)
+    script_path = work_dir / "stub_script.json"
+    script_path.write_text(
+        json.dumps(script, indent=1), encoding="utf-8")
+    state_path = work_dir / "stub_state.json"
+    state_path.write_text("{}", encoding="utf-8")
+    captures_path = work_dir / "captures.jsonl"
+    captures_path.write_text("", encoding="utf-8")
+    os.environ["WS_STUB_SCRIPT"] = str(script_path)
+    os.environ["WS_STUB_STATE"] = str(state_path)
+    os.environ["WS_STUB_CAPTURES"] = str(captures_path)
+
+    # COMMISSION — the case under the scenario's brief,
+    # the scenario's source set sealed as its boundary.
+    store_path = str(run_dir / "run.db")
+    store = FrameworkStore(store_path)
+    store.insert_run(RUN_ID, CONSTITUTION_HASH)
+    store.append("RUN_COMMISSIONED", "dir-1", [], {
+        "run_id": RUN_ID,
+        "tree": {"part-A": []},
+        "seats": {
+            "orch-1": {"role": "orchestrator",
+                       "identity_status": "declared"},
+            "exam-1": {"role": "examiner",
+                       "identity_status": "declared"},
+            "dir-1": {"role": "director",
+                      "identity_status": "declared"},
+            "crew-1": {"role": "crew",
+                       "identity_status": "unverified"},
+        },
+        "briefs": {"crew-1": brief},
+    })
+    store.commit()
+    doorway = Doorway(store)
+    office = Office(doorway)
+    gen = Generator(doorway)
+    tok = {s: doorway.issue_token(s)
+           for s in ("orch-1", "exam-1", "dir-1",
+                     "crew-1")}
+    _act(doorway, tok["orch-1"], "MATERIAL_SEALED", {
+        "material_id": f"source-manifest sha256:"
+                       f"{manifest_hash}",
+        "boundary": ["crew-1"]})
+    for entry in seal_entries:
+        _act(doorway, tok["orch-1"], "MATERIAL_SEALED", {
+            "material_id": f"{entry['path']} "
+                           f"sha256:{entry['sha256']}",
+            "boundary": ["crew-1"]})
+    issued = office.issue_new(tok["orch-1"], "crew-1")
+    if not issued.get("ok"):
+        raise RuntimeError(
+            f"case issue failed: {issued.get('problems')}")
+    _act(doorway, tok["exam-1"], "CASE_JUDGED",
+         {"case_id": issued["case_id"],
+          "version": issued["version"]})
+    office.authorise(tok["orch-1"], issued["case_id"],
+                     issued["version"])
+    content, _version = established_case_content(
+        doorway.state(), issued["case_id"])
+    boundary = (content or {}).get("evidence_boundary") \
+        or []
+    if not any(manifest_hash in str(item)
+               for item in boundary):
+        raise RuntimeError(
+            "the issued case's evidence boundary does "
+            "not identify the source manifest hash")
+    if (content or {}).get("loop_bounds") != BOUNDS:
+        raise RuntimeError(
+            "the issued case's loop_bounds are not the "
+            "scoped bounds")
+
+    # STAGE THE PULL DOOR — the executor sandbox's
+    # sources, hash-verified by the staging itself.
+    staging_problem = stage_fn(run_dir / "sandbox")
+    if staging_problem is not None:
+        raise RuntimeError(
+            f"sandbox staging failed: {staging_problem}")
+
+    # ASSEMBLE — the adapter on the NVIDIA route's seam,
+    # its transport the stub helper; generation under the
+    # probe contract and the exec catalogue contract,
+    # grants the combined set (the working-set contract's
+    # population).
+    adapter = OpenAICompatibleAdapter(
+        endpoint=ENDPOINT, model=MODEL, timeout=300.0,
+        route=ROUTE)
+    install_connector_transport(
+        adapter, str(stub_path), MODEL)
+    gen.propose(
+        tok["orch-1"], "crew-1", part="part-A",
+        role_requirements="a model able to pull source "
+                          "documents through the doorway "
+                          "and keep what it gathers in "
+                          "front of it")
+    generated = gen.generate(
+        tok["orch-1"], "crew-1", adapter.identify,
+        skills=[], grants=GRANTS_COMBINED,
+        model_requested=MODEL, probe=True, exec_room=True)
+    if not generated.get("ok"):
+        raise RuntimeError(
+            f"generation failed: "
+            f"{generated.get('problems')}")
+    assembly_id = generated["assembly_id"]
+    sealed = None
+    for ev in store.all_events():
+        if ev["type"] == "ASSEMBLY_GENERATED" and \
+                ev["payload"].get(
+                    "assembly_id") == assembly_id:
+            sealed = ev["payload"]
+
+    # PROBE — five scripted trials through the real
+    # NVIDIA raw-call seam over the stub.
+    raw_call = install_nvidia_connector_raw_call(
+        helper_path=str(stub_path), model=MODEL)
+    probe_result = gen.probe(
+        tok["orch-1"], assembly_id, raw_call,
+        route=ROUTE, model=MODEL)
+    gen.verify(tok["orch-1"], assembly_id)
+
+    # JUDGE — the rehearsal's decision receipt, retained
+    # before the judgement is recorded; the judgement
+    # binds its canonical hash, as the live phases bind
+    # the examiner's.
+    probed_payload = None
+    for ev in store.all_events():
+        if ev["type"] == "ASSEMBLY_PROBED" and \
+                ev["payload"].get(
+                    "assembly_id") == assembly_id:
+            probed_payload = ev["payload"]
+    receipt = {
+        "run_id": RUN_ID,
+        "assembly_id": assembly_id,
+        "generated_record_hash":
+            probed_payload["generated_record_hash"],
+        "probed_seq": probe_result["probed_seq"],
+        "probe_evidence_hash":
+            probe_result["evidence_hash"],
+        "fingerprint": probed_payload["fingerprint"],
+        "adapter_mode": "native",
+        "mode_grounds": grounds,
+        "examiner": "working-set rehearsal (scripted "
+                    "stand-in examiner)",
+        "decided_at": time.strftime(
+            "%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    receipt_path = work_dir / "decision-receipt.json"
+    with open(receipt_path, "w", encoding="utf-8") as fh:
+        json.dump(receipt, fh, indent=1)
+        fh.write("\n")
+    receipt_hash = _sha256_bytes(canonical(receipt))
+    judgement = gen.judgement(
+        assembly_id, adapter_mode="native",
+        mode_grounds=receipt["mode_grounds"],
+        decision_receipt_hash=receipt_hash,
+        decision_examiner=receipt["examiner"])
+    _act(doorway, tok["exam-1"], "ASSEMBLY_JUDGED",
+         judgement)
+    packed = gen.pack(tok["orch-1"], assembly_id)
+    gen.authorise(tok["orch-1"], assembly_id)
+
+    # RUN — the executor holds the staged sandbox (no
+    # room: the scripts never call the execution tool);
+    # the loop drives the real adapter/doorway path.
+    executor = Executor(
+        doorway, str(run_dir / "sandbox"),
+        claim_dir=str(run_dir / "claims"), deadline=150.0)
+    gen.activate(tok["orch-1"], assembly_id)
+    result = Loop(doorway, packed["instance_token"],
+                  adapter, executor=executor,
+                  evidence_store=str(run_dir)).run()
+
+    # COLLECT — the checker, the export, the readout.
+    events = store.all_events()
+    verdict = run_checker(store)
+    export_store(store_path,
+                 str(run_dir / "run-export.json"))
+    readout_path = work_dir / "terminal-readout.md"
+    readout = subprocess.run(
+        [sys.executable, str(HERE / "terminal_readout.py"),
+         "render", str(run_dir / "run-export.json"),
+         "-o", str(readout_path)],
+        capture_output=True, text=True)
+
+    report = {
+        "scenario": scenario,
+        "outcome": result.get("outcome"),
+        "iterations": result.get("iterations"),
+        "sealed_working_set_contract":
+            (sealed or {}).get("working_set_contract"),
+        "sealed_catalogue_contract":
+            (sealed or {}).get("catalogue_contract"),
+        "manifest_hash": manifest_hash,
+        "manifest_sha": {e["path"]: e["sha256"]
+                         for e in seal_entries},
+        "checker": verdict["checks"],
+        "terminal_readout": {
+            "rendered": readout.returncode == 0
+            and readout_path.exists()},
+        "captures": str(captures_path),
+        "export": str(run_dir / "run-export.json"),
+    }
+    with open(work_dir / "report.json", "w",
+              encoding="utf-8") as fh:
+        json.dump(report, fh, indent=1)
+        fh.write("\n")
+    return report
+
+
+def run_rehearsal(work_dir):
+    """Run both scenarios under `work_dir` (created
+    fresh). Returns {"continuity": report, "budget":
+    report}."""
+    work_dir = Path(work_dir).resolve()
+    if work_dir.exists() and any(work_dir.iterdir()):
+        raise RuntimeError(
+            f"rehearsal work directory {work_dir} is not "
+            f"empty; refusing to overwrite a standing "
+            f"rehearsal")
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Scenario A — the released source set, verified by
+    # stock_demo's own check (no room is stocked; the
+    # pull door serves the same verified bytes).
+    manifest, manifest_hash, _stock = \
+        stock_demo.verify_source_set()
+    continuity = _run_scenario(
+        work_dir / "continuity",
+        scenario="continuity",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_continuity(),
+        grounds="Working-set rehearsal, continuity "
+                "scenario: the scripted stand-in's probe "
+                "trials settled 5/5 native, and the "
+                "combined configuration's judgement is "
+                "native. Rehearsal furniture by a "
+                "scripted stand-in examiner.")
+
+    # Scenario B — the synthetic oversized gather.
+    entries_b = [
+        {"path": "sources/synth-a.md",
+         "sha256": _sha256_bytes(SYNTH_A)},
+        {"path": "sources/synth-b.md",
+         "sha256": _sha256_bytes(SYNTH_B)},
+    ]
+    manifest_b = {"sources": entries_b}
+    manifest_hash_b = stock_demo.manifest_hash_of(
+        manifest_b)
+
+    def stage_budget(sandbox):
+        sandbox = Path(sandbox)
+        for rel, data in (("sources/synth-a.md", SYNTH_A),
+                          ("sources/synth-b.md", SYNTH_B)):
+            dest = sandbox / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data)
+            if _sha256_bytes(dest.read_bytes()) != \
+                    _sha256_bytes(data):
+                return f"the staged {rel} does not hash " \
+                    f"to its manifest entry"
+        (sandbox / "scratch").mkdir(parents=True,
+                                    exist_ok=True)
+        return None
+
+    brief_b = {
+        "part": "part-A",
+        "assignment": ASSIGNMENT_BUDGET,
+        "verification_list": list(VERIFICATION_LIST),
+        "evidence_boundary":
+            f"source manifest sha256:{manifest_hash_b}; "
+            "sources: sources/synth-a.md, "
+            "sources/synth-b.md",
+        "loop_bounds": dict(BOUNDS),
+        "glossary": [dict(entry)
+                     for entry in GLOSSARY_BUDGET],
+    }
+    budget = _run_scenario(
+        work_dir / "budget",
+        scenario="budget",
+        brief=brief_b,
+        manifest_hash=manifest_hash_b,
+        seal_entries=entries_b,
+        stage_fn=stage_budget,
+        script=build_script_budget(),
+        grounds="Working-set rehearsal, budget scenario: "
+                "the scripted stand-in's probe trials "
+                "settled 5/5 native, and the combined "
+                "configuration's judgement is native. "
+                "Rehearsal furniture by a scripted "
+                "stand-in examiner.")
+    return {"continuity": continuity, "budget": budget}

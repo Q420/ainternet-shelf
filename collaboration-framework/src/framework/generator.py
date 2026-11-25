@@ -73,6 +73,20 @@ from .record import (assembly_record_hash, declaration_fingerprint,
 # are.
 CATALOGUE_CONTRACT = "a3-cat"
 
+# The working-set contract (the run-3 correction, examiner's
+# ruling 2026-11-24): an assembly generated for the combined
+# configuration — the execution room AND retrieval grants,
+# the configuration the ruling addresses — declares the
+# contract (tool_policy.WORKING_SET_CONTRACT) in its sealed
+# record beside the catalogue contract; its wake packages
+# then present a working set (the successful retrieval
+# material gathered so far, accumulated) and its iterations
+# carry the working set's commitment hash. Assemblies under
+# any other configuration declare nothing: the retrieval
+# piece's examined carriage stands untouched for them, and
+# historical records are exempt identifiably rather than by
+# inference.
+
 # The decision-recording note (INDEX 293): a probe-governed
 # judgement binds the hash of the examiner's durable decision
 # receipt, and the payload states plainly what the recording
@@ -337,6 +351,18 @@ class Generator:
         }
         if probe:
             record["probe_contract"] = _probe.PROBE_CONTRACT
+        if exec_room and any(
+                isinstance(g, dict)
+                and g.get("tool")
+                in _tool_policy.RETRIEVAL_TOOLS
+                for g in grants or []):
+            # The combined configuration declares the
+            # working-set contract (see the constant above):
+            # the execution room plus retrieval grants is
+            # the population whose wake packages carry the
+            # gathered material forward.
+            record["working_set_contract"] = \
+                _tool_policy.WORKING_SET_CONTRACT
         ev = self.doorway.act(token, "ASSEMBLY_GENERATED", record,
                               view_seq=self.store.head_seq())
         return {"ok": True, "assembly_id": assembly_id,

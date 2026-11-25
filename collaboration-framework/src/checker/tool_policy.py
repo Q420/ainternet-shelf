@@ -71,6 +71,12 @@ RETRIEVAL_REGISTRY_VERSION = "tool-registry-v3"
 RETRIEVAL_CATALOGUE_CONTRACT = "retrieval-v3"
 RETRIEVAL_RESULT_CEILING = 12000
 RETRIEVAL_AGGREGATE_CEILING = 36000
+# Working-set carriage (the run-3 correction, examiner's
+# ruling 2026-11-24): the checker's own copy of the working
+# set's aggregate content budget — the bound its independent
+# reconstruction of a presented working set applies. The
+# framework copy states the figure's grounds.
+WORKING_SET_CONTENT_BUDGET = 64000
 SEARCH_PAGE_LINE_CAP = 40
 RETRIEVAL_TOOLS = frozenset({
     "sandbox.list", "sandbox.read_range", "sandbox.search",

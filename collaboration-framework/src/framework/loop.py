@@ -351,6 +351,167 @@ def _catalogue_hash(catalogue):
     return sha256_hex(canonical(catalogue))
 
 
+# Working-set carriage (the run-3 correction, examiner's
+# ruling 2026-11-24): under the working-set contract, a wake
+# package presents the successful retrieval material the
+# worker has gathered so far in the run — accumulated, not
+# latest-only — because the record retaining an outcome is
+# not the worker remembering it: run 3's worker re-read two
+# sources in alternation to the step ceiling because each
+# wake carried only his most recent result. The set is
+# derived here from the record's own outcome events, never
+# from an in-memory cache, and the iteration records its
+# commitment hash for the checker's independent
+# reconstruction. The wording the worker reads with it:
+WORKING_SET_NOTE = (
+    "Your working set: the material you have gathered "
+    "with your retrieval tools so far in this run, carried "
+    "forward from wake to wake so it stays in front of "
+    "you. An entry marked content_carried: false did not "
+    "fit the working-set budget; its provenance stands "
+    "here and its full content stands in the run's "
+    "record — retrieve it again with your retrieval "
+    "tools when you need it.")
+
+
+def _working_set_served(tool, result):
+    """The served descriptor of one retrieval result: the
+    range or window actually retrieved, in the result's own
+    recorded terms — a range read stands as the range it
+    served, never expanded into the whole file; a search
+    stands by its query and totals, its passages bound by
+    their hash (the passages themselves are the entry's
+    content)."""
+    if tool == "sandbox.read_range":
+        return {"kind": "range",
+                "start_line": result.get("start_line"),
+                "end_line": result.get("end_line"),
+                "byte_start": result.get("byte_start"),
+                "byte_end": result.get("byte_end"),
+                "heading": result.get("heading")}
+    if tool == "sandbox.search":
+        return {"kind": "search",
+                "query": result.get("query"),
+                "total_matches": result.get("total_matches"),
+                "returned": result.get("returned"),
+                "continuation_offset":
+                    result.get("continuation_offset"),
+                "passages_sha256": sha256_hex(canonical(
+                    result.get("passages")))}
+    if tool == "sandbox.list":
+        return {"kind": "list",
+                "size_bytes": result.get("size_bytes"),
+                "line_count": result.get("line_count")}
+    if tool == "sandbox.read":
+        return {"kind": "whole"}
+    return {"kind": "result"}
+
+
+def _derive_working_set(events, dispatches, instance_id,
+                        head):
+    """The working set a package at `head` presents: every
+    successful retrieval outcome of the instance standing in
+    the record at or before the head, in outcome order,
+    deduplicated on (tool, path, served descriptor, content
+    hash) — a repeated read of identical content adds no
+    second entry, and the entry keeps the first gathering
+    dispatch's identity. Content and provenance travel
+    together: each entry carries its source path, authority
+    path, content hash and size, the served range or window
+    actually retrieved, and its dispatch identity. The
+    aggregate content budget (tool_policy) is applied in
+    gather order: an entry that fits is carried with its
+    content; one that does not fit stands by its provenance
+    alone, marked not carried, with the reason named —
+    never silently truncated, never pretended present."""
+    entries = []
+    seen = set()
+    remaining = _tool_policy.WORKING_SET_CONTENT_BUDGET
+    carried_bytes = 0
+    for ev in events:
+        if ev["event_seq"] > head or \
+                ev["type"] != "TOOL_OUTCOME":
+            continue
+        payload = ev["payload"]
+        if payload.get("outcome") != "result":
+            continue
+        dispatch = dispatches.get(payload.get("dispatch_id"))
+        if dispatch is None or \
+                dispatch.get("instance_id") != instance_id:
+            continue
+        tool = dispatch.get("tool")
+        if tool not in _tool_policy.RETRIEVAL_TOOLS:
+            continue
+        result = payload.get("result")
+        if not isinstance(result, dict) or \
+                "content" not in result:
+            continue
+        served = _working_set_served(tool, result)
+        key = canonical([tool, result.get("path"), served,
+                         result.get("content_sha256")])
+        if key in seen:
+            continue
+        seen.add(key)
+        size = result.get("content_bytes")
+        if not isinstance(size, int) or \
+                isinstance(size, bool):
+            size = len(result["content"].encode("utf-8"))
+        entry = {
+            "tool": tool,
+            "path": result.get("path"),
+            "authority_path": result.get("authority_path"),
+            "content_sha256": result.get("content_sha256"),
+            "content_bytes": size,
+            "served": served,
+            "dispatch_id": payload.get("dispatch_id"),
+            "request_id": payload.get("request_id"),
+            "outcome_event_seq": ev["event_seq"],
+        }
+        if size <= remaining:
+            entry["content"] = result["content"]
+            entry["content_carried"] = True
+            remaining -= size
+            carried_bytes += size
+        else:
+            entry["content_carried"] = False
+            entry["not_carried_reason"] = \
+                "working_set_budget"
+        entries.append(entry)
+    return {
+        "budget_bytes":
+            _tool_policy.WORKING_SET_CONTENT_BUDGET,
+        "content_bytes": carried_bytes,
+        "note": WORKING_SET_NOTE,
+        "entries": entries,
+    }
+
+
+def _working_set_hash(working_set):
+    """The working set's commitment: SHA-256 over the
+    canonical form of its budget and entries — the
+    commitment LOOP_ITERATION records for an assembly under
+    the working-set contract, which the checker verifies by
+    independent reconstruction from the recorded outcomes.
+    The note is package wording, not committed content."""
+    return sha256_hex(canonical({
+        "budget_bytes": working_set["budget_bytes"],
+        "entries": working_set["entries"]}))
+
+
+def _carriage_stub(result, presented_in):
+    """The single-carriage stub of a retrieval result: the
+    provenance stands (path, authority path, content hash
+    and size, served range or window, search totals); the
+    content-bearing fields are replaced by the marker
+    naming where the content is presented."""
+    stub = {key: value for key, value in result.items()
+            if key not in ("content", "passages",
+                           "headings")}
+    stub["single_carriage"] = True
+    stub["presented_in"] = presented_in
+    return stub
+
+
 def _translation_error_text(entry, offered_names):
     """The N16 error result for a translation refusal
     (native adapter piece): the examined templates of the
@@ -664,7 +825,9 @@ class Loop:
                         "registry_version"),
                     evidence_governed=self.evidence_store
                     is not None,
-                    disable_tool_validation=native_flag)
+                    disable_tool_validation=native_flag,
+                    working_set_hash=ctx.get(
+                        "working_set_hash"))
             except DoorwayRefusal as refusal:
                 if refusal.ground == \
                         LOOP_ITERATION_DEADLINE_GROUND:
@@ -1338,6 +1501,17 @@ class Loop:
         # assembly derives under the current version and
         # presents its outcomes exactly as it always has.
         governed = doorway._retrieval_governed(generated)
+        # Working-set carriage (the run-3 correction): the
+        # combined configuration's assemblies declare the
+        # working-set contract in their sealed record; their
+        # packages present the gathered material accumulated
+        # in a working set (below) instead of letting each
+        # result evaporate with its delta. Every other
+        # assembly's package is exactly as it has always
+        # been.
+        ws_applies = governed and (generated or {}).get(
+            "working_set_contract") == \
+            _tool_policy.WORKING_SET_CONTRACT
         version = _tool_policy.EXEC_REGISTRY_VERSION \
             if doorway._exec_governed(generated) else \
             _tool_policy.RETRIEVAL_REGISTRY_VERSION \
@@ -1367,7 +1541,10 @@ class Loop:
         # tool_results is built from the record's own events,
         # before the delta's copy is stubbed for single
         # carriage below: this is the one place the package
-        # carries a retrieval result's content.
+        # carries a retrieval result's content — except
+        # under the working-set contract, where the entries
+        # are stubbed in their turn (below) and the content
+        # stands in the working set.
         tool_results = [{
             "dispatch_id": ev["payload"].get("dispatch_id"),
             "request_id": ev["payload"].get("request_id"),
@@ -1474,12 +1651,36 @@ class Loop:
                 (1, 0, entry.get("event_seq") or 0)))
             for entry in tool_results:
                 entry.pop("_translation_seq", None)
+        if ws_applies:
+            # Working-set carriage: this delta's retrieval
+            # results are presented in the working set (the
+            # accumulated set built below), so their
+            # tool_results entries stand by the same
+            # provenance stub the delta's copy carries,
+            # pointing at the working set — the content
+            # appears exactly once in the package.
+            dispatch_tools_all = {
+                did: d.get("tool")
+                for did, d in state["dispatches"].items()}
+            for entry in tool_results:
+                if entry.get("outcome") != "result":
+                    continue
+                if dispatch_tools_all.get(
+                        entry.get("dispatch_id")) not in \
+                        _tool_policy.RETRIEVAL_TOOLS:
+                    continue
+                result = entry.get("result")
+                if not isinstance(result, dict) or \
+                        "content" not in result:
+                    continue
+                entry["result"] = _carriage_stub(
+                    result, "working_set")
         delta = copy.deepcopy(raw_delta)
         if governed:
             # Single carriage (retrieval piece; INDEX 249):
             # the record retains each retrieval outcome in
             # full, but the package presents its content
-            # exactly once — in tool_results, below, with its
+            # exactly once — in tool_results, with its
             # provenance. The delta's rendering of the same
             # outcome carries the provenance without the
             # content: the fields that bear content (the
@@ -1491,7 +1692,12 @@ class Loop:
             # search's totals — stands as recorded. A later
             # package does not re-present the result at all:
             # the cursor has passed it, as it passes every
-            # event exactly once.
+            # event exactly once. Under the working-set
+            # contract the one presentation moves: the
+            # content stands in the package's working set
+            # (accumulated across wakes), and both the
+            # delta's copy and the tool_results entry carry
+            # the stub pointing there.
             dispatch_tools = {
                 did: d.get("tool")
                 for did, d in state["dispatches"].items()}
@@ -1507,13 +1713,23 @@ class Loop:
                         not isinstance(result, dict) or \
                         "content" not in result:
                     continue
-                stub = {key: value for key, value
-                        in result.items()
-                        if key not in ("content", "passages",
-                                       "headings")}
-                stub["single_carriage"] = True
-                stub["presented_in"] = "tool_results"
-                payload["result"] = stub
+                payload["result"] = _carriage_stub(
+                    result,
+                    "working_set" if ws_applies
+                    else "tool_results")
+        # The working set itself: derived from the whole
+        # snapshot's recorded outcomes (not the delta), so
+        # material gathered in any earlier wake is still in
+        # front of the worker at this one. Its commitment
+        # hash is stashed on the context for the iteration
+        # event to record, beside the catalogue's.
+        working_set = None
+        if ws_applies:
+            working_set = _derive_working_set(
+                events, state["dispatches"],
+                ctx["instance_id"], head)
+            ctx["working_set_hash"] = _working_set_hash(
+                working_set)
         standing = [{
             "dispatch_id": did,
             "request_id": d.get("request_id"),
@@ -1546,6 +1762,8 @@ class Loop:
             },
             "position": head,
         }
+        if working_set is not None:
+            package["working_set"] = working_set
         return package, head
 
     def _relevant(self, ctx, ev):
