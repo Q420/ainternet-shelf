@@ -917,7 +917,15 @@ def run_demo():
     run directory already stands. The room is destroyed
     before this returns, on every path."""
     demo_dir = DEMO_DIR.resolve()
-    if demo_dir.exists() and any(demo_dir.iterdir()):
+    # The run's opening inputs (door scope, Part 3) are
+    # inputs, not a standing run: a directory holding
+    # only opening.json / opening-transcript.json does
+    # not refuse. Anything else standing there does.
+    _OPENING_INPUTS = {"opening.json",
+                       "opening-transcript.json"}
+    if demo_dir.exists() and any(
+            entry.name not in _OPENING_INPUTS
+            for entry in demo_dir.iterdir()):
         print(f"ABORT: run directory {demo_dir} already "
               f"stands and is not empty; refusing to "
               f"overwrite a standing run", file=sys.stderr)

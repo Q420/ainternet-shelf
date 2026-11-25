@@ -1,0 +1,161 @@
+{
+ "kind": "first-worker demonstration run report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "model_pin": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+ "route": "nvidia (live, via the registered connector helper through the capture seam)",
+ "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "assembly_id": "assembly-crew-1-1",
+ "instance_id": "inst-crew-1-1",
+ "identity_evidence": {
+  "declaration": "I\u2019m Nemotron, a large language model built by NVIDIA. I can understand natural\u2011language prompts, generate text, reason through problems, write code, summarize information, and help with many kinds of creative or analytical tasks. My limits are that I only have knowledge up to my September\u202f2021 training cut\u2011off (with some updates through 2024), I can\u2019t browse the web or access real\u2011time data, I don\u2019t have personal experiences or consciousness, and I may sometimes produce incorrect or incomplete information, so it\u2019s best to verify critical facts.",
+  "provider_model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+  "identity_status": "declared",
+  "pin_verified": true,
+  "note": "the pin was enforced inside generation, before activation (make_pinned_identify); the provider-reported id as recorded at onboarding stands here \u2014 it is the route's report, not independent proof of the model the provider actually served"
+ },
+ "probe": {
+  "settled_count": 5,
+  "recommended_mode": "text",
+  "counts": {
+   "behaviour": {
+    "text_contract": 4,
+    "native_catalogue": 1,
+    "environment_tool_attempt": 0,
+    "mixed": 0,
+    "refusal": 0,
+    "malformed": 0,
+    "no_observable_behaviour": 0
+   },
+   "delivery": {
+    "provider_accepted": 5,
+    "provider_refused": 0,
+    "provider_failed": 0,
+    "indeterminate": 0
+   }
+  },
+  "evidence_hash": "74146cff1180d479fe852be862a652ec582daa60e925165748555d6c6cc2ed28",
+  "note": "the probe's recommendation is evidence in the record; this run's mode was judged by the director's order, not by it"
+ },
+ "order_record": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-round6/order-record.json",
+  "sha256": "803efd150a0e0dee10e51811556b1970c03eddd4e0cb30a20b1e0b924f506a5a",
+  "adapter_mode": "native",
+  "decision_examiner": "Ben (director) \u2014 order of 2026-11-24"
+ },
+ "pacing": {
+  "min_interval_seconds": 20.0,
+  "note": "a fixed operating choice of this driver between successive outbound iteration calls; NVIDIA pacing is unestablished and no provider figure is claimed"
+ },
+ "bounds": {
+  "step_ceiling": 20,
+  "deadline_seconds": 1200,
+  "derivation": "step ceiling 20: the honest path is 5 steps (three whole reads, one write, one yield); pulling index-tail by ranges instead of whole adds up to 6; slack of 9 covers the missteps, retries, lists and searches runs 3-4 actually spent (7-8 steps on failures, repeats and silence) \u2014 20 steps is four times the honest path. Deadline 1,200 s: 20 steps x (the 20 s pacing interval + a 40 s per-call allowance, ~4x this route's observed per-call latency; runs 3-4 ran 12 iterations in ~240-290 s) = 1,200 s. The deadline remains the one authoritative clock; a single call may still lawfully take its 300 s adapter span within it. Grant counts stand as commissioned (exec 12, retrieval 12 per tool and prefix, write 4): they do not bind the honest or the ranged path, so the re-derivation leaves them."
+ },
+ "brief_filed": {
+  "destination": "scratch/brief.md",
+  "sha256": "666fe9e51860af4e0f762de24b9b9f6020b4ba0031c63e6d9e96a686bb9066d5",
+  "authored_by": "crew-1",
+  "filed_by": "office"
+ },
+ "loop_result": {
+  "ok": true,
+  "outcome": "yield",
+  "outcome_summary": "completed",
+  "ground": null,
+  "iterations": 5
+ },
+ "stall": null,
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-2-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-2",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-3-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-3",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-4-1",
+   "outcome": "result"
+  }
+ ],
+ "brief": {
+  "exists": true,
+  "path_used": "framework_scratch",
+  "sha256_at_wall": "666fe9e51860af4e0f762de24b9b9f6020b4ba0031c63e6d9e96a686bb9066d5",
+  "word_count": 405,
+  "collected_path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-round6/brief.md",
+  "room": {
+   "exists": false,
+   "sha256_at_wall": null,
+   "word_count": null
+  },
+  "framework_scratch": {
+   "exists": true,
+   "sha256_at_wall": "666fe9e51860af4e0f762de24b9b9f6020b4ba0031c63e6d9e96a686bb9066d5",
+   "word_count": 405,
+   "collected_path": null
+  },
+  "note": "the brief may land by either write path \u2014 the room's scratch (via container.exec) or the framework sandbox's scratch (via sandbox.write); the room's is primary when both stand, and the two are never merged"
+ },
+ "captures": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-round6/captures.jsonl",
+  "transmitted_requests": 11
+ },
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "divergent",
+   "problems": [
+    {
+     "kind": "dispatch_without_translation",
+     "assembly_id": "assembly-crew-1-1",
+     "at_seq": 18,
+     "iteration_seq": 18
+    }
+   ]
+  }
+ },
+ "event_count": 51,
+ "terminal_readout": {
+  "rendered": true,
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-round6/terminal-readout.md",
+  "stderr": null
+ }
+}
