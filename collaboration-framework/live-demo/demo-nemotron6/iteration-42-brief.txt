@@ -1,0 +1,75 @@
+Collaborative Agent Framework – Brief for Newcomers
+
+The collaborative agent framework is a system that lets persistent “seats” (agents) work together through a bounded record‑and‑doorway mechanism. A seat is created, its grants are sealed, and it runs inside a bounded loop that perceives the shared work, makes tool requests, accounts for outcomes, and can yield (finish) so another seat can continue.
+
+What has been proven
+
+* Stage 2 accountability foundation – the core of record, doorway, bubble, seat drivers, office, onboarding, gates, orchestrator, observer and checker is implemented, recorded, and independently checked. This gives a reliable substrate for persistent‑seat collaboration.
+
+* A1–A3 – the first three pieces of the generated‑worker layer are passed mechanisms:
+  – A1: assembling a worker instance with a task and identity, sealing its grants.
+  – A2: mediating tool dispatch and accounting under the framework rules.
+  – A3: running a bounded loop with record perception, tool requests, temporal limits and outcome accounting.
+
+These three show that the framework can create, activate and manage bounded worker instances.
+
+What has not been proven
+
+* The complete generated‑worker proposition – a worker can be created for a specific task, use only its authorized resources, make useful progress, record its actions, yield, and allow another independently generated worker to pick up the work. No end‑to‑end run demonstrating this has been shown.
+
+* A4, A5 and A6 – the remaining agent‑lifecycle pieces are not yet authorised:
+  – A4: governed access to the shared “brain” and skills, and controlled publication of durable work.
+  – A5: a real boundary between a worker’s active authority and the continuing work, including yield, termination and continuation.
+  – A6: a blind‑handoff demonstration that continuity belongs to the work, not to the outgoing agent’s private context.
+
+* Live‑record replay of the adapter and any end‑to‑end generated‑worker job are still outstanding.
+
+Remaining to be built
+
+* An end‑to‑end generated‑worker run that completes a modest real assignment and yields in a way that another worker can continue.
+
+* Implementation of A4–A6, especially the blind‑handoff and continuation mechanisms, to turn the proven mechanisms into a full agentic collaboration.
+
+* Evidence that the system works outside controlled simulations – real work products, actual tool effects, and independent assessment of quality.
+
+In short, the framework has a solid, tested foundation and three proven worker‑assembly pieces, but the full agent lifecycle and real‑world collaboration have not yet been demonstrated. The next step is to build and show a complete, end‑to‑end generated‑worker job that satisfies the unproven claims.",
+  "tool_requests": [
+    {
+      "tool": "sandbox.write",
+      "parameters": {
+        "path": "scratch/brief.md",
+        "content": "Collaborative Agent Framework – Brief for Newcomers
+
+The collaborative agent framework is a system that lets persistent “seats” (agents) work together through a bounded record‑and‑doorway mechanism. A seat is created, its grants are sealed, and it runs inside a bounded loop that perceives the shared work, makes tool requests, accounts for outcomes, and can yield (finish) so another seat can continue.
+
+What has been proven
+
+* Stage 2 accountability foundation – the core of record, doorway, bubble, seat drivers, office, onboarding, gates, orchestrator, observer and checker is implemented, recorded, and independently checked. This gives a reliable substrate for persistent‑seat collaboration.
+
+* A1–A3 – the first three pieces of the generated‑worker layer are passed mechanisms:
+  – A1: assembling a worker instance with a task and identity, sealing its grants.
+  – A2: mediating tool dispatch and accounting under the framework rules.
+  – A3: running a bounded loop with record perception, tool requests, temporal limits and outcome accounting.
+
+These three show that the framework can create, activate and manage bounded worker instances.
+
+What has not been proven
+
+* The complete generated‑worker proposition – a worker can be created for a specific task, use only its authorized resources, make useful progress, record its actions, yield, and allow another independently generated worker to pick up the work. No end‑to‑end run demonstrating this has been shown.
+
+* A4, A5 and A6 – the remaining agent‑lifecycle pieces are not yet authorised:
+  – A4: governed access to the shared “brain” and skills, and controlled publication of durable work.
+  – A5: a real boundary between a worker’s active authority and the continuing work, including yield, termination and continuation.
+  – A6: a blind‑handoff demonstration that continuity belongs to the work, not to the outgoing agent’s private context.
+
+* Live‑record replay of the adapter and any end‑to‑end generated‑worker job are still outstanding.
+
+Remaining to be built
+
+* An end‑to‑end generated‑worker run that completes a modest real assignment and yields in a way that another worker can continue.
+
+* Implementation of A4–A6, especially the blind‑handoff and continuation mechanisms, to turn the proven mechanisms into a full agentic collaboration.
+
+* Evidence that the system works outside controlled simulations – real work products, actual tool effects, and independent assessment of quality.
+
+In short, the framework has a solid, tested foundation and three proven worker‑assembly pieces, but the full agent lifecycle and real‑world collaboration have not yet been demonstrated. The next step is to build and show a complete, end‑to‑end generated‑worker job that satisfies the unproven claims.
