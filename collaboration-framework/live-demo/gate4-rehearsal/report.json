@@ -27,7 +27,7 @@
   },
   "evidence_hash": "c779015bade8f6c5cfa7a093a2d207d5997448471327c929baf27e1bbb1d92e7"
  },
- "decision_receipt_hash": "6e78cf23cbb56fc2a23349590d4dec966919bf2cde8ade07bce92860c9b1f16e",
+ "decision_receipt_hash": "0ea4f2bfbd3606842ef9ff48c88d5c33a6dc020052d7487ae3f138f05b355ba7",
  "loop_result": {
   "ok": true,
   "outcome": "yield",

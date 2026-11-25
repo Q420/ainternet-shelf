@@ -127,3 +127,106 @@ defect.
 - The wider unit sweep also stands green; the probe suite
   stands at its known 54 pass / 3 ruled-superseded failures
   (INDEX 403), unchanged.
+
+---
+
+## Addendum — the Gate 5 schema qualification, resolved (2026-11-24)
+
+Vane's Gate 4 closure (INDEX 469) carried one qualification
+to the Gate 5 ledger: the transmitted function definition
+for `container.exec` bore an empty parameters schema,
+`{"type": "object", "properties": {}}`. The registry
+supplies `cmd` as list-form parameter metadata, but the
+adapter passed through only a dictionary-form schema and
+otherwise substituted the empty object — so the
+provider-facing definition did not itself declare the `cmd`
+property the prompt catalogue describes and the doorway
+enforces. The rehearsal's witness asserted the empty
+schema; it was not to be mistaken for a complete typed
+signature. This addendum records the correction. The pack
+at `live-demo/gate4-rehearsal/` was regenerated whole by a
+fresh rehearsal run under the corrected definition (never
+hand-edited); the outcome stands as before — yield, 8
+iterations, 70 events, the brief's hash unchanged
+(`0041ab58…`).
+
+**The fix** (`src/framework/adapter.py`): a dictionary-form
+parameters value still stands exactly as the catalogue
+carries it, and an absent one still carries the empty
+object schema — but list-form metadata is now translated,
+field for field, by `_native_parameters_schema`: one
+property per declared parameter, the declaration's meaning
+standing as the property's description, and the required
+declarations as the schema's `required` list, in
+declaration order. The translation is general over the
+registry's one schema form; nothing in it names
+`container.exec`.
+
+**The corrected schema, as transmitted** (iteration 1's
+captured request in the regenerated pack; every iteration
+request carries the same definition):
+
+```json
+"parameters": {
+  "type": "object",
+  "properties": {
+    "cmd": {"description": "the command to execute, as an array of strings: the program followed by its arguments"}
+  },
+  "required": ["cmd"]
+}
+```
+
+The definition now declares `cmd`, as required, with its
+form stated in the property's description — the registry's
+own words.
+
+**The limit, named:** the registry's parameter metadata
+carries no machine-readable types — `worker_facing` and
+the translation boundary's validator both settle the
+declaration form as exactly name / required / meaning — so
+no JSON type is asserted for any property: `cmd`'s
+array-of-strings form stands in its description's words,
+and the doorway's ceiling check, not the transmitted
+schema, remains what enforces the shape. Asserting a typed
+`{"type": "array", "items": {"type": "string"}}` for `cmd`
+would require either a per-tool hardcode in the adapter —
+invention the adapter's settled discipline forbids — or a
+registry-format extension across both `tool_policy` copies
+and the checker's own validator, neither of which this
+correction undertakes. Whether the description-carried form
+suffices for the live route is the release examination's
+question, as the qualification itself framed it.
+
+**Proof and suites** (all on the final code): before/after
+capture of the adapter's derivation over representative
+packages — dictionary-form definitions byte-identical,
+no-parameters definitions byte-identical, list-form
+definitions changed in `parameters` only (name and
+description untouched). Gate 4 witness: **77/77 ALL PASS,
+twice**, its hop-3 assertions now asserting the corrected
+schema (the empty-schema assertion replaced, not kept
+alongside; the expectation is built from the registry's
+worker-facing layer, not from the adapter's output). Native
+adapter suite: ALL PASS. Native-offer probe suite: ALL
+PASS. A3-CAT catalogue suite: ALL PASS. Rig suite: **34
+passed, 0 failed of 34**. Track G suite: **22 passed, 0
+failed of 22**. Also run: the native-probe P1, P2 and paced
+suites, ALL PASS; the assembly probe suite stands at its
+unchanged 54 pass / 3 ruled-superseded failures (verified
+identical with and without this change — §6, P10, P7, the
+INDEX 403 three).
+
+**One consequence, stated plainly:** the NVIDIA-route
+probe build (closed, INDEX 404) binds its construction to
+the pre-correction derivation's hashes in its scope, and
+its suite now refuses the construction reproduction — the
+derived definitions hash to `30a01adf…` and the modified
+request to `884e06f5…`, not the bound `6f3331ac…` /
+`0229b0f0…` (baseline reproduced without this change: ALL
+PASS). The bound hashes were **not** re-pinned here:
+re-pinning would falsify that build's examined scope. The
+probe's live run was never released — the demonstration
+paper folded its route into this gate line — and the
+rehearsal above now witnesses the same seam on the real
+path. The probe construction's disposition under the
+corrected derivation is the examiner's to rule.

@@ -219,6 +219,21 @@ def main():
         facing = tool_policy.worker_facing(
             "container.exec",
             version=tool_policy.EXEC_REGISTRY_VERSION)
+        # The corrected typed schema (gate 5 qualification,
+        # INDEX 469): the transmitted definition declares the
+        # registry's own parameters — one property per
+        # declared parameter, its meaning as the property's
+        # description, the required declarations as the
+        # required list. The expectation is built from the
+        # registry's worker-facing layer, not from the
+        # adapter's output.
+        expected_schema = {
+            "type": "object",
+            "properties": {
+                p["name"]: {"description": p["meaning"]}
+                for p in facing["parameters"]},
+            "required": [p["name"] for p in
+                         facing["parameters"] if p["required"]]}
         for idx in range(1, 9):
             req = json.loads(bodies[idx])
             tools = req.get("tools") or []
@@ -228,11 +243,12 @@ def main():
                 tools[0]["function"].get("description") == \
                 facing["description"] and \
                 tools[0]["function"].get("parameters") == \
-                {"type": "object", "properties": {}} and \
+                expected_schema and \
                 req.get("model") == rehearsal.MODEL
             check(f"hop 3: iteration {idx}'s transmitted "
                   f"request offers exactly container.exec, "
-                  f"with the registry's description", ok)
+                  f"with the registry's description and its "
+                  f"declared cmd schema", ok)
 
         # ---------- hop 4: response evidence
         dispositions = payloads("RESPONSE_EVIDENCE")

@@ -54,7 +54,7 @@
    "mechanism": "tmpfs-sized",
    "size_bytes": 536870912,
    "mount_point": "/home/hatch/workspace/collaboration-framework/live-demo/gate4-rehearsal/rooms/demo-tree",
-   "mount_id": 4314,
+   "mount_id": 4398,
    "mount_major_minor": "0:141",
    "mount_fs_type": "tmpfs",
    "identity_note": "the mount identity (mount id + device) and size recorded here are re-verified against the LIVE mount table at every execution (Room._verify_storage_live); the recorded label alone never authorises a run",
@@ -93,7 +93,7 @@
   "mechanism": "tmpfs-sized",
   "size_bytes": 536870912,
   "mount_point": "/home/hatch/workspace/collaboration-framework/live-demo/gate4-rehearsal/rooms/demo-tree",
-  "mount_id": 4314,
+  "mount_id": 4398,
   "mount_major_minor": "0:141",
   "mount_fs_type": "tmpfs",
   "identity_note": "the mount identity (mount id + device) and size recorded here are re-verified against the LIVE mount table at every execution (Room._verify_storage_live); the recorded label alone never authorises a run",
@@ -159,7 +159,7 @@
   "boundary": "per worker run",
   "contract": "the CPU limit is a cumulative accounting budget, not a hard execution ceiling \u2014 in-flight enforcement acts on what the census observes; work that completes between observations can exceed the budget; the excess is charged exactly and further calls are refused",
   "budget_seconds": 600.0,
-  "consumed_seconds": 0.116,
+  "consumed_seconds": 0.112,
   "calls": [
    {
     "argv": [
@@ -181,12 +181,12 @@
      "sources/a3-pass.md",
      "sources/index-tail.md",
      "sources/stock-take.md",
-     "smoke-1795566263.706",
+     "smoke-1795568144.359",
      "/room/scratch/brief.md"
     ],
     "charged_seconds": 0.05,
     "census_seconds": 0.05,
-    "reaper_seconds": 0.041,
+    "reaper_seconds": 0.039,
     "refused": false,
     "refusal_kind": null
    },
@@ -195,8 +195,8 @@
      "/bin/cat",
      "sources/stock-take.md"
     ],
-    "charged_seconds": 0.01,
-    "census_seconds": 0.01,
+    "charged_seconds": 0.002,
+    "census_seconds": 0.0,
     "reaper_seconds": 0.002,
     "refused": false,
     "refusal_kind": null
@@ -207,8 +207,8 @@
      "-c",
      "printf '%s' 'draft: stock-take read in-room; brief in progress\n' > /room/scratch/draft.txt && cat /room/scratch/draft.txt"
     ],
-    "charged_seconds": 0.01,
-    "census_seconds": 0.01,
+    "charged_seconds": 0.004,
+    "census_seconds": 0.0,
     "reaper_seconds": 0.004,
     "refused": false,
     "refusal_kind": null
@@ -219,9 +219,9 @@
      "-c",
      "import base64, pathlib; pathlib.Path('/room/scratch/brief.md').write_bytes(base64.b64decode('IyBCcmllZiDigJQgdGhlIGNvbGxhYm9yYXRpdmUgYWdlbnQgZnJhbWV3b3JrCgpUaGUgZnJhbWV3b3JrIGFzc2VtYmxlcyBvbmUgZ2VuZXJhdGVkIGFnZW50IGZvciBvbmUgYm91bmRlZCB0YXNrOiBhIG1vZGVsLCBhbiBpZGVudGl0eSBkZWNsYXJlZCBhdCBhc3NlbWJseSwgdGhlIHNraWxscyB0aGUgdGFzayBuZWVkcywgZXhhY3RseSB0aGUgdG9vbCBncmFudHMgdGhlIGNhc2UgYWxsb3dzLCBhbmQgdGhlIGNhc2UgaXRzZWxmLiBUaGUgd29yayBpcyBjYXJyaWVkIGluIGEgZHVyYWJsZSByZWNvcmQ7IGEgZG9vcndheSBjaGVja3MgZXZlcnkgZnJhbWV3b3JrIHRvb2wgY2FsbCBhZ2FpbnN0IHRoZSBzZWFsZWQgZ3JhbnRzIGJlZm9yZSBhbnl0aGluZyBpcyBkaXNwYXRjaGVkLCBhbmQgYW4gaW5kZXBlbmRlbnQgY2hlY2tlciByZWNvbnN0cnVjdHMgZWFjaCBydW4gZnJvbSBpdHMgcmVjb3JkIGFmdGVyd2FyZHMuCgpXaGF0IGhhcyBiZWVuIHByb3ZlbjogdGhlIHJlY29yZCwgZG9vcndheSwgYXNzZW1ibHkgYW5kIGJvdW5kZWQgbG9vcCBzdGFuZCBidWlsdCBhbmQgZXhhbWluZWQ7IGEgd29ya2VyIGhhcyByZWFkIGl0cyBzb3VyY2VzIHRocm91Z2ggdGhlIGRvb3J3YXkgdW5kZXIgdGhlIHJlY29yZC4gV2hhdCBoYXMgbm90IGJlZW4gcHJvdmVuOiBhIHdvcmtlciBjb21wb3NpbmcgYW4gYXNzaWdubWVudCBlbmQgdG8gZW5kLCBhbmQgYWdlbnRzIGNvbGxhYm9yYXRpbmcgdGhyb3VnaCBzaGFyZWQgd29yayDigJQgdGhlIGRlbW9uc3RyYXRpb24gdGhpcyBicmllZiB3YXMgd3JpdHRlbiBpbnNpZGUgaXMgdGhlIGZpcnN0IHJvb20gcnVuLCBhbmQgaXRzIG93biByZXN1bHQgaXMgbm90IGNsYWltZWQgaGVyZS4K'))"
     ],
-    "charged_seconds": 0.039,
-    "census_seconds": 0.03,
-    "reaper_seconds": 0.039,
+    "charged_seconds": 0.05,
+    "census_seconds": 0.05,
+    "reaper_seconds": 0.04,
     "refused": false,
     "refusal_kind": null
    },
@@ -241,9 +241,9 @@
      "/usr/bin/sha256sum",
      "sources/index-tail.md"
     ],
-    "charged_seconds": 0.004,
+    "charged_seconds": 0.003,
     "census_seconds": 0.0,
-    "reaper_seconds": 0.004,
+    "reaper_seconds": 0.003,
     "refused": false,
     "refusal_kind": null
    }
@@ -256,7 +256,7 @@
     "-c",
     "echo shell-ok && test -r sources/stock-take.md && echo source-visible"
    ],
-   "started_at": 1795566263.5282104,
+   "started_at": 1795568144.181903,
    "rc": 0,
    "timed_out": false,
    "refused": false,
@@ -266,7 +266,7 @@
    "rig_integrity": null,
    "envelope_termination": null,
    "pressure_events": [],
-   "peak_aggregate_rss_bytes": 10149888,
+   "peak_aggregate_rss_bytes": 9863168,
    "peak_process_count": 2,
    "aggregate_cpu_seconds": 0.003,
    "cpu_accounting": {
@@ -286,37 +286,37 @@
    "lifecycle": [
     {
      "event": "birth",
-     "pid": 8291,
+     "pid": 24668,
      "ns_pid": 1,
-     "ppid": 8288,
-     "session": 8288,
+     "ppid": 24665,
+     "session": 24665,
      "comm": "bwrap",
      "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
-     "t": 0.025
+     "t": 0.024
     },
     {
      "event": "birth",
-     "pid": 8292,
+     "pid": 24669,
      "ns_pid": 2,
-     "ppid": 8291,
-     "session": 8288,
+     "ppid": 24668,
+     "session": 24665,
      "comm": "python3",
-     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 5 --gate-file /room/rig/.start-gate-3e39273dcea04a86 -- /bin/bash -c echo shell-ok && test -r sources/stock-tak",
-     "t": 0.025
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 5 --gate-file /room/rig/.start-gate-928af7a334f3db5f -- /bin/bash -c echo shell-ok && test -r sources/stock-tak",
+     "t": 0.024
     },
     {
      "event": "death",
-     "pid": 8291,
+     "pid": 24668,
      "comm": "bwrap",
      "cause": "exited",
-     "t": 0.176
+     "t": 0.175
     },
     {
      "event": "death",
-     "pid": 8292,
+     "pid": 24669,
      "comm": "python3",
      "cause": "exited",
-     "t": 0.176
+     "t": 0.175
     }
    ],
    "lifecycle_kind": "observed (census-sampled)",
@@ -330,10 +330,10 @@
     "sources/a3-pass.md",
     "sources/index-tail.md",
     "sources/stock-take.md",
-    "smoke-1795566263.706",
+    "smoke-1795568144.359",
     "/room/scratch/brief.md"
    ],
-   "started_at": 1795566263.7071662,
+   "started_at": 1795568144.3598304,
    "rc": 0,
    "timed_out": false,
    "refused": false,
@@ -343,7 +343,7 @@
    "rig_integrity": null,
    "envelope_termination": null,
    "pressure_events": [],
-   "peak_aggregate_rss_bytes": 28491776,
+   "peak_aggregate_rss_bytes": 29507584,
    "peak_process_count": 3,
    "aggregate_cpu_seconds": 0.05,
    "cpu_accounting": {
@@ -351,7 +351,7 @@
     "budget_seconds": 600.0,
     "run_consumed_before_seconds": 0.003,
     "census_seconds": 0.05,
-    "reaper_seconds": 0.041,
+    "reaper_seconds": 0.039,
     "reaper_processes_reaped": 1,
     "charged_seconds": 0.05,
     "run_consumed_after_seconds": 0.053
@@ -363,51 +363,51 @@
    "lifecycle": [
     {
      "event": "birth",
-     "pid": 8297,
+     "pid": 24674,
      "ns_pid": 1,
-     "ppid": 8294,
-     "session": 8294,
+     "ppid": 24671,
+     "session": 24671,
      "comm": "bwrap",
      "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
      "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8298,
+     "pid": 24675,
      "ns_pid": 2,
-     "ppid": 8297,
-     "session": 8294,
+     "ppid": 24674,
+     "session": 24671,
      "comm": "python3",
-     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 5 --gate-file /room/rig/.start-gate-80d6d7a77bbf12e6 -- /usr/bin/python3 -c \nimport hashlib, json, os, sys\nout ",
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 5 --gate-file /room/rig/.start-gate-1a485bc9cd84b033 -- /usr/bin/python3 -c \nimport hashlib, json, os, sys\nout ",
      "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8299,
+     "pid": 24676,
      "ns_pid": 3,
-     "ppid": 8298,
-     "session": 8294,
+     "ppid": 24675,
+     "session": 24671,
      "comm": "python3",
      "cmdline": "/usr/bin/python3 -c \nimport hashlib, json, os, sys\nout = {\"cwd\": os.getcwd()}\nok = True\nhashes = {}\nfor rel in sys.argv[1:4]:\n    try:\n        with open(rel, \"r",
      "t": 0.074
     },
     {
      "event": "death",
-     "pid": 8297,
+     "pid": 24674,
      "comm": "bwrap",
      "cause": "exited",
      "t": 0.225
     },
     {
      "event": "death",
-     "pid": 8298,
+     "pid": 24675,
      "comm": "python3",
      "cause": "exited",
      "t": 0.225
     },
     {
      "event": "death",
-     "pid": 8299,
+     "pid": 24676,
      "comm": "python3",
      "cause": "exited",
      "t": 0.225
@@ -421,7 +421,7 @@
     "/bin/cat",
     "sources/stock-take.md"
    ],
-   "started_at": 1795566265.1947324,
+   "started_at": 1795568146.822304,
    "rc": 0,
    "timed_out": false,
    "refused": false,
@@ -431,18 +431,18 @@
    "rig_integrity": null,
    "envelope_termination": null,
    "pressure_events": [],
-   "peak_aggregate_rss_bytes": 11087872,
+   "peak_aggregate_rss_bytes": 11444224,
    "peak_process_count": 2,
-   "aggregate_cpu_seconds": 0.01,
+   "aggregate_cpu_seconds": 0.002,
    "cpu_accounting": {
     "boundary": "per worker run",
     "budget_seconds": 600.0,
     "run_consumed_before_seconds": 0.053,
-    "census_seconds": 0.01,
+    "census_seconds": 0.0,
     "reaper_seconds": 0.002,
     "reaper_processes_reaped": 1,
-    "charged_seconds": 0.01,
-    "run_consumed_after_seconds": 0.063
+    "charged_seconds": 0.002,
+    "run_consumed_after_seconds": 0.055
    },
    "stdout_bytes": 11946,
    "stderr_bytes": 0,
@@ -451,34 +451,34 @@
    "lifecycle": [
     {
      "event": "birth",
-     "pid": 8315,
+     "pid": 24708,
      "ns_pid": 1,
-     "ppid": 8312,
-     "session": 8312,
+     "ppid": 24705,
+     "session": 24705,
      "comm": "bwrap",
      "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
      "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8316,
+     "pid": 24709,
      "ns_pid": 2,
-     "ppid": 8315,
-     "session": 8312,
+     "ppid": 24708,
+     "session": 24705,
      "comm": "python3",
-     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-f11d47cb40431a59 -- /bin/cat sources/stock-take.md",
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-ac6d01d6f452ee7e -- /bin/cat sources/stock-take.md",
      "t": 0.023
     },
     {
      "event": "death",
-     "pid": 8315,
+     "pid": 24708,
      "comm": "bwrap",
      "cause": "exited",
      "t": 0.174
     },
     {
      "event": "death",
-     "pid": 8316,
+     "pid": 24709,
      "comm": "python3",
      "cause": "exited",
      "t": 0.174
@@ -493,7 +493,7 @@
     "-c",
     "printf '%s' 'draft: stock-take read in-room; brief in progress\n' > /room/scratch/draft.txt && cat /room/scratch/draft.txt"
    ],
-   "started_at": 1795566265.7390513,
+   "started_at": 1795568147.3597755,
    "rc": 0,
    "timed_out": false,
    "refused": false,
@@ -503,18 +503,18 @@
    "rig_integrity": null,
    "envelope_termination": null,
    "pressure_events": [],
-   "peak_aggregate_rss_bytes": 11329536,
+   "peak_aggregate_rss_bytes": 11300864,
    "peak_process_count": 2,
-   "aggregate_cpu_seconds": 0.01,
+   "aggregate_cpu_seconds": 0.004,
    "cpu_accounting": {
     "boundary": "per worker run",
     "budget_seconds": 600.0,
-    "run_consumed_before_seconds": 0.063,
-    "census_seconds": 0.01,
+    "run_consumed_before_seconds": 0.055,
+    "census_seconds": 0.0,
     "reaper_seconds": 0.004,
     "reaper_processes_reaped": 1,
-    "charged_seconds": 0.01,
-    "run_consumed_after_seconds": 0.073
+    "charged_seconds": 0.004,
+    "run_consumed_after_seconds": 0.059
    },
    "stdout_bytes": 50,
    "stderr_bytes": 0,
@@ -523,37 +523,37 @@
    "lifecycle": [
     {
      "event": "birth",
-     "pid": 8328,
+     "pid": 24726,
      "ns_pid": 1,
-     "ppid": 8325,
-     "session": 8325,
+     "ppid": 24723,
+     "session": 24723,
      "comm": "bwrap",
      "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
-     "t": 0.025
+     "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8329,
+     "pid": 24727,
      "ns_pid": 2,
-     "ppid": 8328,
-     "session": 8325,
+     "ppid": 24726,
+     "session": 24723,
      "comm": "python3",
-     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-49b2cbff85a9453c -- /bin/bash -c printf '%s' 'draft: stock-take read in-roo",
-     "t": 0.025
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-80573f052c7bf9bc -- /bin/bash -c printf '%s' 'draft: stock-take read in-roo",
+     "t": 0.023
     },
     {
      "event": "death",
-     "pid": 8328,
+     "pid": 24726,
      "comm": "bwrap",
      "cause": "exited",
-     "t": 0.176
+     "t": 0.174
     },
     {
      "event": "death",
-     "pid": 8329,
+     "pid": 24727,
      "comm": "python3",
      "cause": "exited",
-     "t": 0.176
+     "t": 0.174
     }
    ],
    "lifecycle_kind": "observed (census-sampled)",
@@ -565,7 +565,7 @@
     "-c",
     "import base64, pathlib; pathlib.Path('/room/scratch/brief.md').write_bytes(base64.b64decode('IyBCcmllZiDigJQgdGhlIGNvbGxhYm9yYXRpdmUgYWdlbnQgZnJhbWV3b3JrCgpUaGUgZnJhbWV3b3JrIGFzc2VtYmxlcyBvbmUgZ2VuZXJhdGVkIGFnZW50IGZvciBvbmUgYm91bmRlZCB0YXNrOiBhIG1vZGVsLCBhbiBpZGVudGl0eSBkZWNsYXJlZCBhdCBhc3NlbWJseSwgdGhlIHNraWxscyB0aGUgdGFzayBuZWVkcywgZXhhY3RseSB0aGUgdG9vbCBncmFudHMgdGhlIGNhc2UgYWxsb3dzLCBhbmQgdGhlIGNhc2UgaXRzZWxmLiBUaGUgd29yayBpcyBjYXJyaWVkIGluIGEgZHVyYWJsZSByZWNvcmQ7IGEgZG9vcndheSBjaGVja3MgZXZlcnkgZnJhbWV3b3JrIHRvb2wgY2FsbCBhZ2FpbnN0IHRoZSBzZWFsZWQgZ3JhbnRzIGJlZm9yZSBhbnl0aGluZyBpcyBkaXNwYXRjaGVkLCBhbmQgYW4gaW5kZXBlbmRlbnQgY2hlY2tlciByZWNvbnN0cnVjdHMgZWFjaCBydW4gZnJvbSBpdHMgcmVjb3JkIGFmdGVyd2FyZHMuCgpXaGF0IGhhcyBiZWVuIHByb3ZlbjogdGhlIHJlY29yZCwgZG9vcndheSwgYXNzZW1ibHkgYW5kIGJvdW5kZWQgbG9vcCBzdGFuZCBidWlsdCBhbmQgZXhhbWluZWQ7IGEgd29ya2VyIGhhcyByZWFkIGl0cyBzb3VyY2VzIHRocm91Z2ggdGhlIGRvb3J3YXkgdW5kZXIgdGhlIHJlY29yZC4gV2hhdCBoYXMgbm90IGJlZW4gcHJvdmVuOiBhIHdvcmtlciBjb21wb3NpbmcgYW4gYXNzaWdubWVudCBlbmQgdG8gZW5kLCBhbmQgYWdlbnRzIGNvbGxhYm9yYXRpbmcgdGhyb3VnaCBzaGFyZWQgd29yayDigJQgdGhlIGRlbW9uc3RyYXRpb24gdGhpcyBicmllZiB3YXMgd3JpdHRlbiBpbnNpZGUgaXMgdGhlIGZpcnN0IHJvb20gcnVuLCBhbmQgaXRzIG93biByZXN1bHQgaXMgbm90IGNsYWltZWQgaGVyZS4K'))"
    ],
-   "started_at": 1795566266.3141212,
+   "started_at": 1795568147.859429,
    "rc": 0,
    "timed_out": false,
    "refused": false,
@@ -575,18 +575,18 @@
    "rig_integrity": null,
    "envelope_termination": null,
    "pressure_events": [],
-   "peak_aggregate_rss_bytes": 25014272,
+   "peak_aggregate_rss_bytes": 25702400,
    "peak_process_count": 3,
-   "aggregate_cpu_seconds": 0.039,
+   "aggregate_cpu_seconds": 0.05,
    "cpu_accounting": {
     "boundary": "per worker run",
     "budget_seconds": 600.0,
-    "run_consumed_before_seconds": 0.073,
-    "census_seconds": 0.03,
-    "reaper_seconds": 0.039,
+    "run_consumed_before_seconds": 0.059,
+    "census_seconds": 0.05,
+    "reaper_seconds": 0.04,
     "reaper_processes_reaped": 1,
-    "charged_seconds": 0.039,
-    "run_consumed_after_seconds": 0.112
+    "charged_seconds": 0.05,
+    "run_consumed_after_seconds": 0.109
    },
    "stdout_bytes": 0,
    "stderr_bytes": 0,
@@ -595,51 +595,51 @@
    "lifecycle": [
     {
      "event": "birth",
-     "pid": 8355,
+     "pid": 24734,
      "ns_pid": 1,
-     "ppid": 8351,
-     "session": 8351,
+     "ppid": 24731,
+     "session": 24731,
      "comm": "bwrap",
      "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
      "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8358,
+     "pid": 24735,
      "ns_pid": 2,
-     "ppid": 8355,
-     "session": 8351,
+     "ppid": 24734,
+     "session": 24731,
      "comm": "python3",
-     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-0acf0f52c5a23fd4 -- /usr/bin/python3 -c import base64, pathlib; pathlib.Pat",
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-36c99abebd781f6f -- /usr/bin/python3 -c import base64, pathlib; pathlib.Pat",
      "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8363,
+     "pid": 24736,
      "ns_pid": 3,
-     "ppid": 8358,
-     "session": 8351,
+     "ppid": 24735,
+     "session": 24731,
      "comm": "python3",
      "cmdline": "/usr/bin/python3 -c import base64, pathlib; pathlib.Path('/room/scratch/brief.md').write_bytes(base64.b64decode('IyBCcmllZiDigJQgdGhlIGNvbGxhYm9yYXRpdmUgYWdlbnQ",
      "t": 0.073
     },
     {
      "event": "death",
-     "pid": 8355,
+     "pid": 24734,
      "comm": "bwrap",
      "cause": "exited",
      "t": 0.225
     },
     {
      "event": "death",
-     "pid": 8358,
+     "pid": 24735,
      "comm": "python3",
      "cause": "exited",
      "t": 0.225
     },
     {
      "event": "death",
-     "pid": 8363,
+     "pid": 24736,
      "comm": "python3",
      "cause": "exited",
      "t": 0.225
@@ -653,7 +653,7 @@
     "/bin/cat",
     "sources/a3-pass.md"
    ],
-   "started_at": 1795566267.3980396,
+   "started_at": 1795568148.8687513,
    "rc": null,
    "timed_out": false,
    "refused": true,
@@ -661,7 +661,7 @@
    "failed_precondition": "rig-integrity",
    "refusal_reason": "the in-tree rig instruments do not match the stock manifest recorded at creation \u2014 rig/reaper.py: changed (expected a2fcd7d2a00bd840\u2026, actual 22ebe45c3933d841\u2026); execution is refused, and the instruments are NOT silently restored (an operator, or a fresh stocking, restores them)",
    "rig_integrity": {
-    "checked_at": 1795566267.3980184,
+    "checked_at": 1795568148.868729,
     "ok": false,
     "files": [
      {
@@ -697,7 +697,7 @@
     "/usr/bin/sha256sum",
     "sources/index-tail.md"
    ],
-   "started_at": 1795566267.824026,
+   "started_at": 1795568149.32923,
    "rc": 0,
    "timed_out": false,
    "refused": false,
@@ -707,18 +707,18 @@
    "rig_integrity": null,
    "envelope_termination": null,
    "pressure_events": [],
-   "peak_aggregate_rss_bytes": 9920512,
+   "peak_aggregate_rss_bytes": 11264000,
    "peak_process_count": 2,
-   "aggregate_cpu_seconds": 0.004,
+   "aggregate_cpu_seconds": 0.003,
    "cpu_accounting": {
     "boundary": "per worker run",
     "budget_seconds": 600.0,
-    "run_consumed_before_seconds": 0.112,
+    "run_consumed_before_seconds": 0.109,
     "census_seconds": 0.0,
-    "reaper_seconds": 0.004,
+    "reaper_seconds": 0.003,
     "reaper_processes_reaped": 1,
-    "charged_seconds": 0.004,
-    "run_consumed_after_seconds": 0.116
+    "charged_seconds": 0.003,
+    "run_consumed_after_seconds": 0.112
    },
    "stdout_bytes": 88,
    "stderr_bytes": 0,
@@ -727,34 +727,34 @@
    "lifecycle": [
     {
      "event": "birth",
-     "pid": 8375,
+     "pid": 24753,
      "ns_pid": 1,
-     "ppid": 8372,
-     "session": 8372,
+     "ppid": 24750,
+     "session": 24750,
      "comm": "bwrap",
      "cmdline": "bwrap --unshare-pid --unshare-ipc --unshare-uts --hostname room-demo --die-with-parent --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind",
      "t": 0.023
     },
     {
      "event": "birth",
-     "pid": 8376,
+     "pid": 24754,
      "ns_pid": 2,
-     "ppid": 8375,
-     "session": 8372,
+     "ppid": 24753,
+     "session": 24750,
      "comm": "python3",
-     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-ef291025911527a0 -- /usr/bin/sha256sum sources/index-tail.md",
+     "cmdline": "/usr/bin/python3 /room/rig/reaper.py --report-fd 8 --gate-file /room/rig/.start-gate-d203d355ca4ebc90 -- /usr/bin/sha256sum sources/index-tail.md",
      "t": 0.023
     },
     {
      "event": "death",
-     "pid": 8375,
+     "pid": 24753,
      "comm": "bwrap",
      "cause": "exited",
      "t": 0.175
     },
     {
      "event": "death",
-     "pid": 8376,
+     "pid": 24754,
      "comm": "python3",
      "cause": "exited",
      "t": 0.175
@@ -767,7 +767,7 @@
  "pressure_events": [],
  "rig_integrity_events": [
   {
-   "at": 1795566267.3980396,
+   "at": 1795568148.8687513,
    "argv": [
     "/bin/cat",
     "sources/a3-pass.md"

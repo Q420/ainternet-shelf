@@ -256,6 +256,47 @@ def _extract_json_object(text):
     return obj if isinstance(obj, dict) else None
 
 
+def _native_parameters_schema(parameters):
+    """The JSON Schema a native definition carries for a
+    catalogue entry's list-form parameter metadata — the
+    registry's one schema form: a list of declarations, each
+    naming exactly a name, a required flag and a meaning.
+    The translation is the metadata's own, field for field:
+    one property per declared parameter, the declaration's
+    meaning standing as the property's description, and the
+    required declarations as the schema's required list, in
+    declaration order. The metadata declares no
+    machine-readable parameter types, so no property asserts
+    one: a parameter's form stands in its meaning's words,
+    exactly as the catalogue's own text rendering presents
+    it, and the doorway's ceiling check — not this schema —
+    enforces the shape. A declaration that is not a
+    well-formed name/required/meaning mapping contributes
+    nothing: definition construction stays total over its
+    input, and a malformed schema is the translation
+    boundary's refusal, not the offer's to repair."""
+    properties = {}
+    required = []
+    for declaration in parameters:
+        if not isinstance(declaration, dict):
+            continue
+        name = declaration.get("name")
+        if not isinstance(name, str) or not name \
+                or name in properties:
+            continue
+        prop = {}
+        meaning = declaration.get("meaning")
+        if isinstance(meaning, str) and meaning:
+            prop["description"] = meaning
+        properties[name] = prop
+        if declaration.get("required") is True:
+            required.append(name)
+    schema = {"type": "object", "properties": properties}
+    if required:
+        schema["required"] = required
+    return schema
+
+
 class OpenAICompatibleAdapter:
     """Callable with the driver's boundary signature:
     adapter(package) -> typed outcome (or raises AdapterFailure).
@@ -1102,7 +1143,12 @@ class OpenAICompatibleAdapter:
         a tool once per grant; a native offer names it once —
         the doorway still adjudicates per grant). Name,
         description and parameters are the catalogue's own;
-        the adapter invents, renames and supplements nothing."""
+        the adapter invents, renames and supplements nothing.
+        A dictionary-form parameters value is the catalogue's
+        own schema and stands exactly as it stands; the
+        registry's list-form metadata is translated by
+        _native_parameters_schema, field for field; anything
+        else carries the empty object schema, as before."""
         tools = package.get("tools") \
             if isinstance(package, dict) else None
         definitions = []
@@ -1119,13 +1165,17 @@ class OpenAICompatibleAdapter:
             seen.add(name)
             description = entry.get("description")
             parameters = entry.get("parameters")
+            if isinstance(parameters, dict):
+                schema = parameters
+            elif isinstance(parameters, list):
+                schema = _native_parameters_schema(parameters)
+            else:
+                schema = {"type": "object", "properties": {}}
             definitions.append({"type": "function", "function": {
                 "name": name,
                 "description": description
                 if isinstance(description, str) else "",
-                "parameters": parameters
-                if isinstance(parameters, dict)
-                else {"type": "object", "properties": {}}}})
+                "parameters": schema}})
         return definitions
 
     def _extract_tool_calls(self, calls):
