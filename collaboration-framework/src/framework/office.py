@@ -149,7 +149,8 @@ class Office:
         # opening record, the draft carries each unchanged
         # as its own component, by the same route.
         for _field in ("delivery", "role_memory", "opening",
-                       "delivery_evidence", "delivery_floor"):
+                       "delivery_evidence", "delivery_floor",
+                       "process_tree"):
             if brief.get(_field) is not None:
                 content[_field] = copy.deepcopy(
                     brief[_field])
@@ -190,7 +191,8 @@ class Office:
                              "delivery", "role_memory",
                              "opening",
                              "delivery_evidence",
-                             "delivery_floor")):
+                             "delivery_floor",
+                             "process_tree")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
@@ -282,6 +284,34 @@ class Office:
                     "must be an object naming exactly "
                     "min_words: a positive whole number "
                     "of words")
+        if content.get("process_tree") is not None:
+            tree = content["process_tree"]
+            steps = tree.get("steps") \
+                if isinstance(tree, dict) else None
+            if not isinstance(tree, dict) or \
+                    set(tree) != {"root", "steps"} or \
+                    not isinstance(tree.get("root"), str) or \
+                    not tree.get("root") or \
+                    not isinstance(steps, list) or \
+                    len(steps) < 3 or \
+                    steps[0] != {"node": "orient"} or \
+                    steps[-2] != {"node": "compose"} or \
+                    steps[-1] != {"node": "deliver"} or \
+                    any(not isinstance(step, dict)
+                        or set(step) != {"node", "address"}
+                        or step.get("node") != "gather"
+                        or not isinstance(
+                            step.get("address"), str)
+                        or not step.get("address")
+                        for step in steps[1:-2]):
+                problems.append(
+                    "the process tree must be an object "
+                    "naming exactly its root (a non-empty "
+                    "address) and its steps: orient first, "
+                    "then one gather step per source — "
+                    "each an object naming exactly its "
+                    "node and its address — then compose, "
+                    "then deliver")
         if content.get("role_memory") is not None:
             role_memory = content["role_memory"]
             if not isinstance(role_memory, list) or any(
@@ -407,7 +437,8 @@ class Office:
                          "journal", "onboarding",
                          "delivery", "role_memory",
                          "opening", "delivery_evidence",
-                         "delivery_floor") and \
+                         "delivery_floor",
+                         "process_tree") and \
                     field not in current and \
                     field not in changes:
                 continue

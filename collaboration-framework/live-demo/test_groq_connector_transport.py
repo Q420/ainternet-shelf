@@ -57,6 +57,18 @@ W10 native-mode staging (INDEX 289 release preparation):
    staged, with a staged tool choice as tool_choice;
    with nothing staged the body is byte-identical to the
    pre-change construction and carries no tools field.
+   (One INDEX 289 expectation is superseded by the room
+   rebuild's brief, 2026-11-25: where definitions stand
+   staged with no choice staged, the body now carries
+   tool_choice "auto" — the request must permit the
+   calls it offers.)
+W12 BD-1's correction (the room rebuild): the adapter's
+   staged disable_tool_validation crosses the transport
+   exactly as staged — true as true, false as false —
+   beside the staged tools, witnessed in the body the
+   helper actually received; with nothing staged the
+   body is byte-identical to the historical construction
+   and carries neither the flag nor a tool_choice.
 W11 the probe raw call over this transport (capture
    contract corrected at INDEX 293): the helper is
    invoked in its raw mode, whose framed envelope
@@ -899,11 +911,16 @@ check("W10: with definitions staged, the body the helper "
       "received carries exactly those definitions as its "
       "tools field", sent10.get("tools") == DEFS10)
 check("W10: the staged body carries the adapter's own "
-      "fields unchanged and no tool_choice stands in it",
+      "fields unchanged, and — no choice staged, "
+      "definitions staged — the call-permitting choice "
+      "the room rebuild's brief requires stands in it "
+      "(the INDEX 289 expectation of no tool_choice is "
+      "superseded by that brief: the request the "
+      "witness reads must permit the calls it offers)",
       sent10.get("model") == PIN and
       sent10.get("messages") == MESSAGES and
       sent10.get("temperature") == 0.2 and
-      "tool_choice" not in sent10)
+      sent10.get("tool_choice") == "auto")
 adapter10._call(MESSAGES)
 with open(RECORD, "rb") as fh:
     raw10b = fh.read()
@@ -923,6 +940,54 @@ check("W10: a staged tool choice crosses as the body's "
       "tool_choice field, beside the staged definitions",
       sent10c.get("tool_choice") == "auto" and
       sent10c.get("tools") == DEFS10)
+
+# -- W12: BD-1's correction crosses the transport (the
+# room rebuild, 2026-11-25). The adapter stages its
+# disable_tool_validation state beside the offered
+# definitions for the one call — the state its
+# iteration commitment records — and the built-in
+# _dispatch carries it in the body exactly as staged.
+# This transport read the tools but never the flag:
+# the flag fell off here, on the live path, and the
+# provider refused the native call shape it exists to
+# permit (INDEX 411-420). The witness is the body the
+# helper actually received — the captures seam — not
+# the staging.
+adapter10._pending_tools = DEFS10
+adapter10._pending_disable_tool_validation = True
+adapter10._call(MESSAGES)
+adapter10._pending_tools = None
+adapter10._pending_disable_tool_validation = None
+with open(RECORD, "rb") as fh:
+    sent12 = json.loads(fh.read().decode("utf-8"))
+check("W12: with the flag staged true, the body the "
+      "helper received carries disable_tool_validation "
+      "exactly as staged, beside the staged tools and "
+      "the call-permitting tool_choice",
+      sent12.get("disable_tool_validation") is True and
+      sent12.get("tools") == DEFS10 and
+      sent12.get("tool_choice") == "auto")
+adapter10._pending_disable_tool_validation = False
+adapter10._call(MESSAGES)
+adapter10._pending_disable_tool_validation = None
+with open(RECORD, "rb") as fh:
+    raw12b = fh.read()
+check("W12: a staged false crosses as false — the "
+      "value crosses as staged, not as a constant",
+      json.loads(raw12b.decode("utf-8")).get(
+          "disable_tool_validation") is False)
+adapter10._call(MESSAGES)
+with open(RECORD, "rb") as fh:
+    raw12c = fh.read()
+check("W12: with nothing staged the body is byte-"
+      "identical to the pre-change construction and "
+      "carries neither the flag nor a tool_choice — "
+      "every text-judged call's wire is unchanged",
+      raw12c == expected_body and
+      "disable_tool_validation" not in json.loads(
+          raw12c.decode("utf-8")) and
+      "tool_choice" not in json.loads(
+          raw12c.decode("utf-8")))
 os.environ.pop("STUB_RECORD", None)
 
 # -- W11: the probe raw call over this transport. The

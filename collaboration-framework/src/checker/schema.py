@@ -224,7 +224,18 @@ SCHEMA = {
                                 "v": {"t": "str"}}}}},
                     "delivery_floor": {"t": "opt", "v": {
                         "t": "obj", "f": {
-                            "min_words": {"t": "int"}}}}},
+                            "min_words": {"t": "int"}}}},
+                    "process_tree": {"t": "opt", "v": {
+                        "t": "obj", "f": {
+                            "root": {"t": "str"},
+                            "steps": {
+                                "t": "list", "v": {
+                                    "t": "fields", "f": {
+                                        "node": {
+                                            "t": "str"},
+                                        "address": {
+                                            "t": "str"}},
+                                    "req": ["node"]}}}}}},
                     "req": ["case_id", "version"]}},
                 "corrected": {"t": "bool"},
                 "corrected_seq": {"t": "opt", "v": {"t": "int"}},

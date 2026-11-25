@@ -2694,6 +2694,58 @@ class Doorway:
             self.store.commit()
             return ev
 
+    def record_step_gate(self, assembly_id,
+                         iteration_seq, step, address,
+                         missing):
+        """The step gate's record (the room rebuild, the
+        process-tree contract): at a wake whose package
+        is being built, the tree's current GATHER step
+        stands incomplete and the record shows the step
+        partly done or work standing ahead of it — its
+        source's read stands carried without the journal
+        bits that complete the step, or a later step's
+        source stands gathered while this step's has not
+        been read. The event names the step, its source,
+        and what the step still needs (the missing list,
+        in the loop's derivation: "read" and/or
+        "journal"), true against the record as it stands
+        when the package is built. The correction the
+        wake's package carries is derived from this
+        event by the loop and re-derived by the checker,
+        exactly as the other gates' corrections are. The
+        worker's work itself is never refused by this
+        gate: requests execute as they arrive, and the
+        gate governs only the presentation's advance."""
+        with self.store.serialized():
+            state, entry = self._door_event_binding(
+                assembly_id, "STEP_GATE")
+            instance_id = entry.get("instance_id")
+            loop = state["loop_activations"].get(
+                assembly_id) or {}
+            if not any(it.get("event_seq") == iteration_seq
+                       for it in loop.get("iterations")
+                       or []):
+                self._loop_refuse(
+                    "STEP_GATE", instance_id,
+                    "the named iteration does not stand "
+                    "for this activation; a gate binds an "
+                    "existing iteration")
+            payload = {
+                "assembly_id": assembly_id,
+                "instance_id": instance_id,
+                "activated_seq": entry.get("activated_seq"),
+                "case_id": entry.get("case_id"),
+                "case_version": entry.get("case_version"),
+                "iteration_seq": iteration_seq,
+                "step": step,
+                "address": address,
+                "missing": list(missing)}
+            ev = self.store.append(
+                "STEP_GATE", LOOP_ACTOR,
+                [instance_id], payload)
+            self.store.commit()
+            return ev
+
     def record_delivery_stage_gate(self, assembly_id,
                                    iteration_seq, stage,
                                    contribution_seq,

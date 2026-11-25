@@ -123,6 +123,19 @@ EVENT_TYPES = {
     # with a correction, in the same shape: what
     # arrived stands preserved in the event, verbatim.
     "TOOL_SHAPE_GATE",
+    # The step gate's record (the room rebuild, the
+    # process-tree contract): a GATHER step of the
+    # sealed tree stands incomplete at a wake where the
+    # record shows the step partly done or work standing
+    # ahead of it — the read stands without its journal
+    # bits, or a later step's source stands gathered
+    # while this step's has not been read — and the
+    # wake's package answers with a correction naming
+    # what the current step still needs, in the same
+    # shape. His work itself is never refused: requests
+    # execute as they arrive; the gate governs only the
+    # presentation's advance, one step at a time.
+    "STEP_GATE",
 }
 
 # R14: a case's content fields, over which a correction's
@@ -181,7 +194,8 @@ CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "account", "authority", "loop_bounds",
                        "glossary", "journal", "onboarding",
                        "delivery", "role_memory", "opening",
-                       "delivery_evidence", "delivery_floor")
+                       "delivery_evidence", "delivery_floor",
+                       "process_tree")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

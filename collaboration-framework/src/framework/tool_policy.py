@@ -220,6 +220,40 @@ PRESENTATION_CONTRACT = "staged-onboarding-v1"
 # contract or the other, and the loop and the checker
 # derive the sealed one's presentation whole.
 PRESENTATION_CONTRACT_V2 = "staged-onboarding-v2"
+# The process-tree successor contract (the room rebuild,
+# Ben's "Make it so" 2026-11-25 15:02 MST on the basics
+# design of INDEX 554/572, with his 15:03 additions):
+# one opening package — no staged acknowledge wakes —
+# carrying his identity and role memory, the office-
+# authored process tree sealed in the case (ORIENT →
+# one GATHER step per declared source, in declaration
+# order → COMPOSE → DELIVER; root the brief filed at
+# the delivery destination), the case essentials, the
+# files map with access ways, the tool catalogue once,
+# and the journal with its contract. Every later
+# package carries the tree with node states derived
+# from the record alone (pending / current / done), the
+# current step spelled out with its tool and its earned
+# workaround, his journal verbatim, at most the current
+# step's fresh content presented exactly once at its
+# step, and pointers for everything else. A GATHER step
+# completes iff its source's read stands carried (the
+# standing evidence computation) AND a sandbox.write to
+# the journal path stands in the record after that
+# read; completion initiates the next step. Requests
+# execute as they arrive — his work is never refused —
+# but presentation advances one step at a time; where
+# he works ahead, the next package carries a step-gate
+# correction naming what the current step still needs.
+# The contribution door opens at DELIVER (the tree's
+# progression replaces the stage gate under this
+# contract); the standing evidence and length gates
+# adjudicate as built. v1's and v2's meanings under
+# their names do not change; an assembly seals one
+# contract, and the loop and the checker derive the
+# sealed one's presentation whole. The checker reads
+# the same value from its own copy in checker.py.
+PRESENTATION_CONTRACT_V3 = "process-tree-v1"
 # The onboarding's stages, in the order the wakes walk
 # them: the iteration number (1-based) selects the stage —
 # iterations 1..4 walk memory, case, files, task; every

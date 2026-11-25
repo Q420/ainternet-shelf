@@ -2270,6 +2270,17 @@ _PRESENTATION_CONTRACT = "staged-onboarding-v1"
 # name does not change; a declaration naming either
 # contract is governed, any other value is unknown.
 _PRESENTATION_CONTRACT_V2 = "staged-onboarding-v2"
+# The process-tree successor (the room rebuild, Ben's
+# "Make it so" 2026-11-25): one opening package, then
+# one package per step of the office-authored process
+# tree sealed in the case — node states, the current
+# step, his journal and at most one step's fresh
+# content, all derived from the record alone, with the
+# step gate's corrections answered from their events.
+# Its core's reconstruction stands below beside the
+# staged one's; v1's and v2's meanings under their
+# names do not change.
+_PRESENTATION_CONTRACT_V3 = "process-tree-v1"
 _PRESENTATION_STAGES = ("memory", "case", "files", "task",
                         "dashboard")
 # The staged presentation's wording — this checker's own
@@ -2804,7 +2815,8 @@ def _worked_example_well_formed(example, contract=None):
     if not isinstance(example, dict) or \
             set(example) != {"tool", "path", "result"}:
         return False
-    if contract == _PRESENTATION_CONTRACT_V2:
+    if contract in (_PRESENTATION_CONTRACT_V2,
+                    _PRESENTATION_CONTRACT_V3):
         return _worked_example_read_well_formed(example)
     if example.get("tool") != "sandbox.list":
         return False
@@ -3707,6 +3719,1029 @@ def _derive_staged_core(events, state, gen, content,
     return staged
 
 
+# ------------------------------------------------------------
+# The process-tree contract (the room rebuild): this
+# checker's own copies of the tree presentation's
+# wording and derivations, reconstructed independently
+# of the loop's, as its other contracts' copies stand
+# here; the framework's stand in loop.py.
+_TREE_COVER_FIRST = (
+    "You are {seat}, the {role} in this office, "
+    "assembled for one job. The shape of the work here "
+    "is simple: you are woken with a package, you act, "
+    "and the record keeps everything. This package is "
+    "your whole opening — your memory, your case, your "
+    "files, your tools and your journal, all of it once "
+    "— and the process tree below walks the job step by "
+    "step from here: one step in front of you at a "
+    "time, each step's content presented at its step "
+    "and never twice. Nothing needs acknowledging; "
+    "your first answer is work. The job: {headline}. "
+    "The deliverable: {deliverable}.")
+_TREE_DIRECTION_OPENING = (
+    "Your opening package: everything in it is "
+    "presented once, here — your memory, the process "
+    "tree that walks this job, your case's essentials, "
+    "your files with their ways in, your tool "
+    "catalogue, and your journal with its contract. "
+    "Begin work in your first answer.")
+_TREE_DIRECTION_STEP = (
+    "A step package: the tree as it stands, your "
+    "current step spelled out, your journal as you "
+    "left it, and at most this step's fresh content — "
+    "presented once, at its step. Everything else "
+    "stands as pointers.")
+_TREE_FILES_INTRO = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The tree walks them one "
+    "at a time: when a file's gather step is current, "
+    "read it whole, and its content is presented to "
+    "you at that step, once. What you pull is yours "
+    "from your room at any time — the tree governs "
+    "what stands in front of you, not what you may "
+    "reach for.")
+_TREE_JOURNAL_LABEL = (
+    "your journal — your notebook: notes, decisions, "
+    "where you left off. Yours to write and rewrite; "
+    "orientation, not record and not memory. Keep it "
+    "as you work: after each file you read, log its "
+    "name and the key points you took from it, in "
+    "one or two plain lines. The office reads your "
+    "journal at every wake to resume you, and the "
+    "director may audit it; nothing parses it — it "
+    "is read as you wrote it. It rides in every "
+    "package, exactly as you left it, below.")
+_TREE_COMPOSE_POINTS = [
+    "what this framework is",
+    "what has actually been proven",
+    "what has not been proven",
+    "what remains to be built"]
+_TREE_COMPOSE_INSTRUCTION = (
+    "Compile the brief from your journal entries — "
+    "the bits you logged at each gather step are the "
+    "brief's substance, in your own words. Your "
+    "journal stands above, verbatim. Cover the four "
+    "points: what this framework is; what has "
+    "actually been proven; what has not been proven; "
+    "what remains to be built. Stay accurate to what "
+    "you gathered; invent nothing; where the sources "
+    "disagree with each other, say so. Pull a source "
+    "again only if a gap shows in your entries — its "
+    "pointer stands in your working set. When the "
+    "brief is ready, move to DELIVER: your "
+    "contribution is the delivery.")
+_TREE_DELIVER_INSTRUCTION = (
+    "Deliver now: answer with outcome \"contribute\" "
+    "and the brief's text as its text. The "
+    "contribution is the delivery — the office files "
+    "it at {destination}. The standing gates "
+    "adjudicate it as they stand: the evidence (every "
+    "gather step's source read and standing in the "
+    "record) and the length floor the figures name. "
+    "Nothing else is asked of you at this step.")
+_TREE_DELIVER_AGAIN_INSTRUCTION = (
+    "A contribution stands in the record, set aside "
+    "unfiled by a gate — its correction stands in "
+    "this package. Deliver again: answer with outcome "
+    "\"contribute\" and the brief's text as its text. "
+    "The contribution is the delivery — the office "
+    "files it at {destination}.")
+_TREE_ORIENT_INSTRUCTION = (
+    "Take this opening in — it is the whole of it, "
+    "and nothing in it will be presented again. Your "
+    "first step is the tree's first gather step: "
+    "read {address} whole, then log its journal "
+    "bits. You may begin that work in your first "
+    "answer; no acknowledgement is asked or needed.")
+_TREE_GATHER_INSTRUCTION = (
+    "Read {address} whole: {tool} on {address} pulls "
+    "the whole file. Read it, don't list it — a "
+    "listing gives you its shape, not its words. "
+    "Then log the journal bits for this file: a "
+    "sandbox.write to {journal} carrying your "
+    "journal as it stands plus one or two plain "
+    "lines naming this file and the key points you "
+    "took from it. When the read stands carried and "
+    "the journal bits stand after it, this step is "
+    "done and the tree moves on.")
+_TREE_GATHER_READ_STANDS_INSTRUCTION = (
+    "{address} stands read — its content is in front "
+    "of you at this step, once. What this step still "
+    "needs is the journal move: a sandbox.write to "
+    "{journal} carrying your journal as it stands "
+    "plus one or two plain lines naming this file "
+    "and the key points you took from it. When the "
+    "journal bits stand after the read, this step is "
+    "done and the tree moves on.")
+
+
+def _step_gate_what_arrived(missing, address,
+                            ahead_address):
+    if "read" in missing:
+        return (f"work ahead of the tree — "
+                f"{ahead_address} stands gathered — "
+                f"while this step's file, {address}, "
+                f"has not been read")
+    if ahead_address is not None:
+        return (f"your read of {address} — the whole "
+                f"file stands gathered in the record — "
+                f"and work ahead of the tree: "
+                f"{ahead_address} stands gathered too, "
+                f"before this step completed")
+    return (f"your read of {address} — the whole file "
+            f"stands gathered in the record")
+
+
+_STEP_GATE_INSTRUCTION = (
+    "Nothing was refused, and nothing is lost: every "
+    "call you made stands executed in the record. "
+    "Presentation walks the tree one step at a time, "
+    "and this step is still current — it completes "
+    "when {needs}. Then the tree moves on and the "
+    "next step's content stands in front of you. "
+    "Work already gathered for later steps stands in "
+    "the record and will be presented at its step, "
+    "once; you do not need to pull it again.")
+
+
+def _step_gate_needs(missing, address, journal_path):
+    parts = []
+    if "read" in missing:
+        parts.append(
+            f"the read of {address} stands carried "
+            f"(read the file whole — a listing gives "
+            f"its shape, not its words)")
+    if "journal" in missing:
+        parts.append(
+            f"the journal bits for {address} stand "
+            f"in {journal_path} after that read (one "
+            f"or two plain lines naming the file and "
+            f"the key points you took from it)")
+    return " and ".join(parts)
+
+
+def _step_gate_correction(step, address, missing,
+                          ahead_address, journal_path):
+    """The step gate's correction, re-derived from
+    the gate event's facts — this checker's copy of
+    the loop's derivation."""
+    return {
+        "what_arrived": _step_gate_what_arrived(
+            missing, address, ahead_address),
+        "step": step,
+        "address": address,
+        "missing": list(missing),
+        "instruction": _STEP_GATE_INSTRUCTION.format(
+            needs=_step_gate_needs(
+                missing, address, journal_path))}
+
+
+def _tree_stage_gate_what_arrived(stage):
+    if stage.startswith("gather:"):
+        return (f"a contribution, offered while the "
+                f"tree stood at the gather step for "
+                f"{stage[len('gather:'):]}, before "
+                f"the tree reached the delivery step")
+    return (f"a contribution, offered while the tree "
+            f"stood at the {stage} step, before the "
+            f"tree reached the delivery step")
+
+
+_TREE_STAGE_GATE_INSTRUCTION = (
+    "Nothing was filed. The contribution door opens "
+    "when the tree reaches DELIVER: walk the steps — "
+    "read each file the tree names whole, log its "
+    "journal bits, and the tree moves on; at COMPOSE "
+    "you compile the brief from your journal "
+    "entries, and at DELIVER your contribution is "
+    "the delivery and the office files it. The text "
+    "you sent stands in the record, set aside "
+    "unfiled; if it is the brief you mean to "
+    "deliver, send it again when the tree reaches "
+    "DELIVER.")
+
+
+def _tree_nodes(content):
+    """The sealed process tree's node list — this
+    checker's copy of the loop's derivation: the
+    pinned case's process_tree component, standing
+    well-formed in exactly the sealed shape, or
+    None."""
+    tree = (content or {}).get("process_tree")
+    if not isinstance(tree, dict):
+        return None
+    if set(tree) != {"root", "steps"}:
+        return None
+    root = tree.get("root")
+    steps = tree.get("steps")
+    if not isinstance(root, str) or not root:
+        return None
+    if not isinstance(steps, list) or not steps:
+        return None
+    nodes = []
+    for step in steps:
+        if not isinstance(step, dict):
+            return None
+        kind = step.get("node")
+        if kind in ("orient", "compose", "deliver"):
+            if set(step) != {"node"}:
+                return None
+            nodes.append({"id": kind, "kind": kind})
+        elif kind == "gather":
+            if set(step) != {"node", "address"}:
+                return None
+            address = step.get("address")
+            if not isinstance(address, str) or \
+                    not address:
+                return None
+            nodes.append({"id": f"gather:{address}",
+                          "kind": "gather",
+                          "address": address})
+        else:
+            return None
+    kinds = [node["kind"] for node in nodes]
+    if kinds[0] != "orient" or \
+            kinds[-2:] != ["compose", "deliver"] or \
+            any(kind != "gather"
+                for kind in kinds[1:-2]) or \
+            "gather" not in kinds:
+        return None
+    return {"root": root, "nodes": nodes}
+
+
+def _tree_requested(events, head):
+    """The record's requested parameters at a head,
+    keyed by request identity — this checker's copy."""
+    requested = {}
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        if ev["type"] != "TOOL_REQUESTED":
+            continue
+        payload = ev["payload"]
+        parameters = payload.get("parameters")
+        if isinstance(parameters, dict):
+            requested[payload.get("request_id")] = \
+                parameters
+    return requested
+
+
+def _tree_dispatch_info(events, head):
+    """Dispatch identities and tools from the record's
+    own dispatch events at a head — the same record
+    fact the working set's reconstruction reads."""
+    info = {}
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        if ev["type"] == "TOOL_DISPATCHED":
+            p = ev["payload"]
+            info[p.get("dispatch_id")] = (
+                p.get("instance_id"), p.get("tool"))
+    return info
+
+
+def _tree_read_stands(entries, requested, address):
+    """Whether one address's whole content stands
+    carried, and the satisfying read's outcome
+    position — this checker's copy of the loop's
+    derivation, weighed by its own evidence
+    computation."""
+    mine = [entry for entry in entries
+            if entry.get("path") == address]
+    for entry in mine:
+        if entry.get("tool") == "sandbox.read" and \
+                entry.get("content_carried"):
+            return True, entry.get("outcome_event_seq")
+    if not _evidence_address_stands(
+            entries, requested, address):
+        return False, None
+    seqs = [entry.get("outcome_event_seq")
+            for entry in mine
+            if entry.get("tool") == "sandbox.read_range"
+            and entry.get("content_carried")
+            and isinstance(
+                entry.get("outcome_event_seq"), int)
+            and not isinstance(
+                entry.get("outcome_event_seq"), bool)]
+    return True, (max(seqs) if seqs else None)
+
+
+def _tree_journal_writes(events, dispatch_info,
+                         requested, instance_id, head,
+                         journal_path):
+    """The journal's standing writes at a head — this
+    checker's copy of the loop's derivation."""
+    writes = []
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        if ev["type"] != "TOOL_OUTCOME":
+            continue
+        payload = ev["payload"]
+        if payload.get("outcome") != "result":
+            continue
+        info = dispatch_info.get(
+            payload.get("dispatch_id"))
+        if info is None or info[0] != instance_id or \
+                info[1] != "sandbox.write":
+            continue
+        parameters = requested.get(
+            payload.get("request_id")) or {}
+        if parameters.get("path") != journal_path:
+            continue
+        content = parameters.get("content")
+        writes.append((ev["event_seq"],
+                       content if isinstance(
+                           content, str) else ""))
+    return writes
+
+
+def _tree_state(events, instance_id, head, content,
+                iteration):
+    """The tree's state at one package head — this
+    checker's independent derivation, from the record
+    alone: node states, the current node, the gather
+    facts, the journal's content as it stands, and
+    the working set the derivation weighed. The
+    derivation's rules are the loop's: ORIENT done
+    after the first wake; a GATHER step done iff its
+    read stands carried and a journal write stands
+    after that read, the writes consumed in step
+    order, one write closing at most one step;
+    COMPOSE done where a contribution stands (and
+    the gathers stand done); DELIVER done where the
+    filing stands; the current node the first not
+    done."""
+    tree = _tree_nodes(content)
+    if tree is None:
+        return None
+    nodes = tree["nodes"]
+    working_set = _derive_working_set(
+        events, instance_id, head)
+    entries = working_set["entries"]
+    requested = _tree_requested(events, head)
+    dispatch_info = _tree_dispatch_info(events, head)
+    journal_path = _staged_journal_path(content)
+    writes = _tree_journal_writes(
+        events, dispatch_info, requested, instance_id,
+        head, journal_path) \
+        if journal_path is not None else []
+    gather_facts = {}
+    consumed = 0
+    for node in nodes:
+        if node["kind"] != "gather":
+            continue
+        stands, read_seq = _tree_read_stands(
+            entries, requested, node["address"])
+        journal_stands = False
+        if stands and read_seq is not None:
+            for write_seq, _written in writes:
+                if write_seq > max(read_seq, consumed):
+                    journal_stands = True
+                    consumed = write_seq
+                    break
+        gather_facts[node["id"]] = {
+            "read_stands": stands,
+            "read_seq": read_seq,
+            "journal_stands": journal_stands}
+    gathers_done = all(
+        gather_facts[node["id"]]["read_stands"]
+        and gather_facts[node["id"]]["journal_stands"]
+        for node in nodes if node["kind"] == "gather")
+    contribution_stands = any(
+        ev["type"] == "CONTRIBUTION"
+        and ev["event_seq"] <= head
+        and (ev["payload"].get("contribution_id")
+             == instance_id
+             or instance_id in (ev.get("affected")
+                                or []))
+        for ev in events)
+    filed = any(
+        ev["type"] == "DELIVERABLE_FILED"
+        and ev["event_seq"] <= head
+        and ev["payload"].get("instance_id")
+        == instance_id
+        for ev in events)
+    states = {}
+    current = None
+    for node in nodes:
+        kind = node["kind"]
+        if kind == "orient":
+            done = iteration > 1
+        elif kind == "gather":
+            facts = gather_facts[node["id"]]
+            done = facts["read_stands"] and \
+                facts["journal_stands"]
+        elif kind == "compose":
+            done = gathers_done and contribution_stands
+        else:
+            done = filed
+        states[node["id"]] = "done" if done else "pending"
+        if not done and current is None:
+            current = node
+            states[node["id"]] = "current"
+    journal_content = writes[-1][1] if writes else ""
+    return {
+        "root": tree["root"],
+        "nodes": nodes,
+        "states": states,
+        "current": current,
+        "gather_facts": gather_facts,
+        "journal_path": journal_path,
+        "journal_content": journal_content,
+        "working_set": working_set,
+        "entries": entries,
+        "requested": requested}
+
+
+def _tree_step_gate_owed(state):
+    """What the step gate owes at a wake — this
+    checker's copy of the loop's derivation: the
+    correction is owed only where the current gather
+    step stands incomplete with work standing ahead
+    of it (a later gather step's read stands carried);
+    it names the journal bits alone where the current
+    read already stands, the read and then the
+    journal bits where it does not."""
+    current = state["current"]
+    if current is None or \
+            current["kind"] != "gather":
+        return None
+    facts = state["gather_facts"][current["id"]]
+    if facts["read_stands"] and facts["journal_stands"]:
+        return None
+    ahead = None
+    seen_current = False
+    for node in state["nodes"]:
+        if node["id"] == current["id"]:
+            seen_current = True
+            continue
+        if not seen_current or \
+                node["kind"] != "gather":
+            continue
+        if state["gather_facts"][node["id"]][
+                "read_stands"]:
+            ahead = node["address"]
+            break
+    if ahead is None:
+        return None
+    missing = ["journal"] if facts["read_stands"] \
+        else ["read", "journal"]
+    return (current["id"], current["address"],
+            missing, ahead)
+
+
+def _tree_presented_addresses(events, instance_id,
+                              content,
+                              iteration_numbers):
+    """The gather addresses whose content an earlier
+    wake already presented — this checker's copy of
+    the loop's derivation."""
+    presented = set()
+    for number, head in iteration_numbers:
+        earlier = _tree_state(
+            events, instance_id, head, content, number)
+        if earlier is None:
+            continue
+        current = earlier["current"]
+        if current is None or \
+                current["kind"] != "gather":
+            continue
+        facts = earlier["gather_facts"][current["id"]]
+        if facts["read_stands"]:
+            presented.add(current["address"])
+    return presented
+
+
+def _tree_step_component(tstate, catalogue,
+                         deliverable_text, honoured_floor,
+                         judged_mode):
+    """The current step, spelled out — this checker's
+    copy of the loop's derivation."""
+    current = tstate["current"]
+    journal_path = tstate["journal_path"]
+    step = {"node": current["id"],
+            "kind": current["kind"]}
+    figures = _STAGED_TASK_FLOOR_STATEMENT_V2.format(
+        min_words=honoured_floor["min_words"]) \
+        if honoured_floor is not None else \
+        "The brief runs to about 600 words."
+    if current["kind"] == "gather":
+        address = current["address"]
+        step["address"] = address
+        facts = tstate["gather_facts"][current["id"]]
+        if facts["read_stands"]:
+            step["instruction"] = \
+                _TREE_GATHER_READ_STANDS_INSTRUCTION \
+                .format(address=address,
+                        journal=journal_path)
+        else:
+            step["instruction"] = \
+                _TREE_GATHER_INSTRUCTION.format(
+                    address=address,
+                    tool="sandbox.read",
+                    journal=journal_path)
+        step["tools"] = [
+            copy.deepcopy(entry)
+            for entry in catalogue
+            if entry.get("tool") in (
+                "sandbox.read", "sandbox.write")]
+        if judged_mode == "native":
+            step["call_shape"] = (
+                "In this room your tools are offered "
+                "natively: call the tool itself, with "
+                "its arguments — sandbox.read with "
+                "{\"path\": \"" + address + "\"}; "
+                "sandbox.write with {\"path\": \""
+                + str(journal_path) + "\", "
+                "\"content\": \"<your journal as it "
+                "stands, plus the new bits>\"}.")
+        else:
+            step["call_shape"] = (
+                "In this room your tools are called "
+                "in the text shape: your answer is "
+                "one JSON object whose outcome is "
+                "\"tool_requests\", with a requests "
+                "list naming each call — the tool's "
+                "name and its parameters, as in "
+                "{\"tool\": \"sandbox.read\", "
+                "\"parameters\": {\"path\": \""
+                + address + "\"}}.")
+    elif current["kind"] == "orient":
+        first = next(
+            (node for node in tstate["nodes"]
+             if node["kind"] == "gather"), None)
+        step["instruction"] = \
+            _TREE_ORIENT_INSTRUCTION.format(
+                address=first["address"]
+                if first is not None else "")
+        step["tools"] = []
+    elif current["kind"] == "compose":
+        step["instruction"] = _TREE_COMPOSE_INSTRUCTION
+        step["points"] = list(_TREE_COMPOSE_POINTS)
+        step["deliverable"] = deliverable_text
+        step["figures"] = figures
+        step["tools"] = []
+        step["call_shape"] = (
+            "The brief itself is delivered at the "
+            "next step, as your contribution.")
+    else:
+        destination = tstate["root"]
+        gathers_done = all(
+            tstate["gather_facts"][node["id"]][
+                "read_stands"]
+            and tstate["gather_facts"][node["id"]][
+                "journal_stands"]
+            for node in tstate["nodes"]
+            if node["kind"] == "gather")
+        compose_done = gathers_done and any(
+            node["kind"] == "compose"
+            and tstate["states"][node["id"]] == "done"
+            for node in tstate["nodes"])
+        if compose_done:
+            step["instruction"] = \
+                _TREE_DELIVER_AGAIN_INSTRUCTION.format(
+                    destination=destination)
+        else:
+            step["instruction"] = \
+                _TREE_DELIVER_INSTRUCTION.format(
+                    destination=destination)
+        step["deliverable"] = deliverable_text
+        step["figures"] = figures
+        step["tools"] = []
+        step["call_shape"] = (
+            "Your answer is one JSON object: "
+            "{\"outcome\": \"contribute\", \"text\": "
+            "\"<the brief's text>\"}.")
+    return step
+
+
+def _derive_tree_core(events, state, gen, content,
+                      iteration, payload,
+                      prev_iteration_seq, bounds,
+                      judged_mode=None):
+    """The tree package's committed core for one
+    iteration, reconstructed from the record alone —
+    this checker's independent derivation of the
+    loop's tree presentation (the room rebuild): the
+    opening package at the first wake and one step
+    package per tree step after, the tree's node
+    states and the step gates' corrections derived
+    from the recorded outcomes and gate events, the
+    journal from the standing writes, the current
+    step's fresh content presented once at its step,
+    and the working set standing by its pointer form
+    beside its own reconstructed hash. Returns None
+    where the catalogue cannot be derived (reported
+    by the catalogue verification itself) or the case
+    carries no well-formed tree (reported at the
+    assembly level by the tree's own verification)."""
+    gp = gen["payload"]
+    instance_id = gp.get("instance_id")
+    seat = gp.get("seat")
+    role = ((state.get("seats") or {}).get(seat)
+            or {}).get("role")
+    ceiling = bounds.get("step_ceiling") \
+        if bounds is not None else None
+    head = payload["cursor_to"]
+    tstate = _tree_state(
+        events, instance_id, head, content, iteration)
+    if tstate is None:
+        return None
+    onboarding = (content or {}).get("onboarding")
+    if not (isinstance(onboarding, dict)
+            and isinstance(onboarding.get("headline"), str)
+            and isinstance(onboarding.get("deliverable"), str)
+            and isinstance(onboarding.get("text"), str)):
+        onboarding = None
+    headline = onboarding["headline"] \
+        if onboarding is not None else \
+        "The job in your briefcase"
+    deliverable = onboarding["deliverable"] \
+        if onboarding is not None else None
+    sealed_delivery = gp.get("delivery")
+    honoured_delivery = sealed_delivery if (
+        isinstance(sealed_delivery, dict)
+        and sealed_delivery.get("route")
+        == _DELIVERY_ROUTE_CONTRIBUTION
+        and (content or {}).get("delivery")
+        == sealed_delivery) else None
+    sealed_floor = gp.get("delivery_floor")
+    honoured_floor = sealed_floor if (
+        isinstance(sealed_floor, dict)
+        and set(sealed_floor) == {"min_words"}
+        and isinstance(
+            sealed_floor.get("min_words"), int)
+        and not isinstance(
+            sealed_floor.get("min_words"), bool)
+        and sealed_floor["min_words"] >= 1
+        and (content or {}).get("delivery_floor")
+        == sealed_floor
+        and honoured_delivery is not None) else None
+    if deliverable is None and \
+            isinstance(honoured_delivery, dict):
+        deliverable = honoured_delivery.get("destination")
+    deliverable_text = deliverable \
+        if isinstance(deliverable, str) else \
+        "the deliverable named in your case"
+    version = payload.get("registry_version")
+    per_grant = gp.get("catalogue_contract") in \
+        (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
+    catalogue, _ground = _derive_catalogue(
+        gp.get("grants"), version, per_grant=per_grant)
+    if catalogue is None:
+        return None
+    current = tstate["current"]
+    package = {}
+    package["seat"] = seat
+    package["role"] = role
+    package["instance_id"] = instance_id
+    package["case_id"] = gp.get("case_id")
+    package["case_version"] = gp.get("case_version")
+    if iteration == 1:
+        package["presentation"] = {
+            "contract": _PRESENTATION_CONTRACT_V3,
+            "package": "opening",
+            "direction": _TREE_DIRECTION_OPENING}
+        cover_statement = _TREE_COVER_FIRST.format(
+            seat=seat, role=role, headline=headline,
+            deliverable=deliverable_text)
+    else:
+        if current is None:
+            current_label = "complete"
+        elif current["kind"] == "gather":
+            current_label = \
+                f"gather {current['address']}"
+        else:
+            current_label = current["kind"]
+        package["presentation"] = {
+            "contract": _PRESENTATION_CONTRACT_V3,
+            "package": "step",
+            "step": current["id"]
+            if current is not None else None,
+            "direction": _TREE_DIRECTION_STEP}
+        cover_statement = (
+            f"{headline} — the deliverable: "
+            f"{deliverable_text}. Step {iteration} of "
+            f"{ceiling}; task in progress. Current "
+            f"step: {current_label}.")
+    package["cover"] = {
+        "headline": headline,
+        "deliverable": deliverable_text,
+        "statement": cover_statement}
+    content = content or {}
+    if iteration == 1:
+        package["snapshot"] = _staged_snapshot(content)
+        role_memory = content.get("role_memory")
+        package["memory"] = {
+            "introduction": _STAGED_MEMORY_INTRO,
+            "entries": copy.deepcopy(role_memory)
+            if isinstance(role_memory, list) else []}
+        essentials = {
+            "part": content.get("part"),
+            "evidence_boundary": copy.deepcopy(
+                content.get("evidence_boundary")),
+            "delivery": copy.deepcopy(content["delivery"])
+            if isinstance(content.get("delivery"), dict)
+            else None,
+            "freshness": (
+                "suspended — no freshness refusal "
+                "applies to this job; your answers "
+                "are judged on the work"
+                if gp.get("freshness_guard")
+                == _FRESHNESS_GUARD_SUSPENDED
+                else "in force — your answers are "
+                     "judged against the record as it "
+                     "stood when you were woken")}
+        opening = content.get("opening")
+        if isinstance(opening, dict) and opening:
+            essentials["opening"] = copy.deepcopy(opening)
+        package["case_essentials"] = essentials
+    package["process_tree"] = {
+        "root": tstate["root"],
+        "nodes": [
+            dict(
+                {"id": node["id"],
+                 "kind": node["kind"]},
+                **({"address": node["address"]}
+                   if node["kind"] == "gather"
+                   else {}),
+                state=tstate["states"][node["id"]])
+            for node in tstate["nodes"]]}
+    if current is not None:
+        package["current_step"] = _tree_step_component(
+            tstate, catalogue, deliverable_text,
+            honoured_floor, judged_mode)
+    if iteration == 1:
+        files = {"introduction": _TREE_FILES_INTRO,
+                 "briefcase": []}
+        glossary = content.get("glossary")
+        if isinstance(glossary, list):
+            for entry in glossary:
+                if isinstance(entry, dict) and \
+                        isinstance(entry.get("address"), str):
+                    brief = {
+                        "address": entry["address"],
+                        "description":
+                            entry.get("description")}
+                    way = _staged_access_way(
+                        catalogue, entry["address"])
+                    if way is not None:
+                        brief["access"] = way
+                    files["briefcase"].append(brief)
+        if tstate["journal_path"] is not None:
+            files["journal"] = {
+                "path": tstate["journal_path"],
+                "label": _TREE_JOURNAL_LABEL}
+        package["files"] = files
+    # The call machinery at every wake, as the loop
+    # builds it: the full catalogue stands in the
+    # package's tools so any call resolves by name;
+    # the presentation names only the current step's
+    # own tools.
+    package["tools"] = catalogue
+    if tstate["journal_path"] is not None:
+        package["journal"] = {
+            "path": tstate["journal_path"],
+            "label": _TREE_JOURNAL_LABEL,
+            "content": tstate["journal_content"]}
+    if prev_iteration_seq is not None:
+        correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                correction = {
+                    "what_arrived": ev["payload"].get(
+                        "raw_excerpt"),
+                    "response_length": ev["payload"].get(
+                        "raw_length"),
+                    "what_failed": ev["payload"].get(
+                        "parse_error"),
+                    "instruction": _STAGED_GATE_INSTRUCTION}
+        if correction is not None:
+            package["delivery_gate_correction"] = \
+                correction
+        stage_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_STAGE_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                sp = ev["payload"]
+                stage_correction = {
+                    "what_arrived":
+                        _tree_stage_gate_what_arrived(
+                            sp.get("stage")),
+                    "stage": sp.get("stage"),
+                    "contribution_seq":
+                        sp.get("contribution_seq"),
+                    "text_sha256": sp.get("text_sha256"),
+                    "instruction":
+                        _TREE_STAGE_GATE_INSTRUCTION}
+        if stage_correction is not None:
+            package["delivery_stage_gate_correction"] = \
+                stage_correction
+        evidence_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_EVIDENCE_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                ep = ev["payload"]
+                missing = ep.get("missing")
+                evidence_correction = {
+                    "what_arrived":
+                        _STAGED_EVIDENCE_GATE_WHAT_ARRIVED,
+                    "contribution_seq":
+                        ep.get("contribution_seq"),
+                    "text_sha256": ep.get("text_sha256"),
+                    "missing": missing,
+                    "instruction":
+                        _evidence_gate_instruction(
+                            catalogue, missing)
+                        if isinstance(missing, list)
+                        else None}
+        if evidence_correction is not None:
+            package["delivery_evidence_gate_correction"] \
+                = evidence_correction
+        length_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_LENGTH_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                lp = ev["payload"]
+                count = lp.get("word_count")
+                floor = lp.get("min_words")
+                length_correction = {
+                    "what_arrived":
+                        _length_gate_what_arrived(count)
+                        if isinstance(count, int)
+                        and not isinstance(count, bool)
+                        else None,
+                    "contribution_seq":
+                        lp.get("contribution_seq"),
+                    "text_sha256": lp.get("text_sha256"),
+                    "word_count": count,
+                    "min_words": floor,
+                    "instruction":
+                        _STAGED_LENGTH_GATE_INSTRUCTION
+                        .format(word_count=count,
+                                min_words=floor)
+                        if isinstance(count, int)
+                        and not isinstance(count, bool)
+                        and isinstance(floor, int)
+                        and not isinstance(floor, bool)
+                        else None}
+        if length_correction is not None:
+            package["delivery_length_gate_correction"] = \
+                length_correction
+        shape_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "TOOL_SHAPE_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                tool_name = ev["payload"].get("tool_name")
+                first_address = None
+                glossary = (content or {}).get("glossary")
+                if isinstance(glossary, list):
+                    for entry in glossary:
+                        if isinstance(entry, dict) and \
+                                isinstance(
+                                    entry.get("address"),
+                                    str):
+                            first_address = \
+                                entry["address"]
+                            break
+                shape_correction = \
+                    _tool_shape_gate_correction(
+                        tool_name, first_address) \
+                    if isinstance(tool_name, str) \
+                    and tool_name \
+                    and first_address is not None \
+                    else None
+        if shape_correction is not None:
+            package["tool_shape_gate_correction"] = \
+                shape_correction
+        step_correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "STEP_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                sp = ev["payload"]
+                missing = sp.get("missing")
+                ahead = None
+                if isinstance(missing, list):
+                    # The ahead work the correction
+                    # names is re-derived from the tree
+                    # state at this wake, whichever of
+                    # the step's needs the gate recorded
+                    # — the same derivation the loop
+                    # made when it built the correction.
+                    owed = _tree_step_gate_owed(tstate)
+                    ahead = owed[3] if owed is not None \
+                        else None
+                step_correction = _step_gate_correction(
+                    sp.get("step"), sp.get("address"),
+                    missing if isinstance(missing, list)
+                    else [], ahead,
+                    tstate["journal_path"]) \
+                    if isinstance(missing, list) else None
+        if step_correction is not None:
+            package["step_gate_correction"] = \
+                step_correction
+    if iteration > 1 and current is not None and \
+            current["kind"] == "gather":
+        facts = tstate["gather_facts"][current["id"]]
+        if facts["read_stands"]:
+            earlier = [
+                (ev["payload"].get("iteration"),
+                 ev["payload"].get("cursor_to"))
+                for ev in events
+                if ev["type"] == "LOOP_ITERATION"
+                and ev["payload"].get("assembly_id")
+                == gp.get("assembly_id")
+                and isinstance(
+                    ev["payload"].get("iteration"), int)
+                and ev["payload"].get("iteration")
+                < iteration
+                and isinstance(
+                    ev["payload"].get("cursor_to"), int)]
+            presented = _tree_presented_addresses(
+                events, instance_id, content, earlier)
+            if current["address"] not in presented:
+                parts = [
+                    {"served": copy.deepcopy(
+                        entry["served"]),
+                     "content": entry["content"]}
+                    for entry in tstate["entries"]
+                    if entry.get("path")
+                    == current["address"]
+                    and entry.get("tool") in (
+                        "sandbox.read",
+                        "sandbox.read_range")
+                    and entry.get("content_carried")
+                    and "content" in entry]
+                if parts:
+                    package["current_content"] = {
+                        "address": current["address"],
+                        "parts": parts}
+    package["standing_dispatches"] = \
+        _staged_standing_dispatches(
+            events, instance_id, payload["cursor_to"])
+    package["step_position"] = {
+        "statement": f"step {iteration} of {ceiling}",
+        "iteration": iteration,
+        "step_ceiling": ceiling}
+    package["task_status"] = "in progress"
+    package["bounds"] = {
+        "iteration": iteration,
+        "steps_used": iteration - 1,
+        "step_ceiling": ceiling,
+        "deadline_seconds": bounds.get("deadline_seconds")
+        if bounds is not None else None}
+    package["position"] = payload["cursor_to"]
+    package["tool_result_refs"] = _staged_tool_result_refs(
+        events, instance_id, seat, gp.get("case_id"),
+        payload.get("activated_seq"),
+        payload["cursor_from"], payload["cursor_to"])
+    expected_ws = _derive_working_set(
+        events, instance_id, payload["cursor_to"])
+    package["working_set_hash"] = _working_set_hash(
+        expected_ws)
+    package["working_set"] = \
+        _derive_working_set_pointers(
+            expected_ws, events,
+            gp.get("assembly_id"), catalogue)
+    return package
+
+
 def _staged_journal_path(content):
     """The case's designated journal path under the same
     rule the loop's journal component applies — this
@@ -4006,6 +5041,7 @@ def _loop_result(events, state, run_dir=None):
     delivery_evidence_gates = {}
     delivery_length_gates = {}
     tool_shape_gates = {}
+    step_gates = {}
     for ev in events:
         t = ev["type"]
         p = ev["payload"]
@@ -4130,6 +5166,15 @@ def _loop_result(events, state, run_dir=None):
                 continue
             tool_shape_gates.setdefault(
                 aid, []).append(ev)
+        elif t == "STEP_GATE":
+            aid = p.get("assembly_id")
+            if ev["actor"] != _LOOP_ACTOR:
+                problem("step_gate_wrong_actor",
+                        assembly_id=aid, at_seq=seq,
+                        actor=ev["actor"])
+            if binding_problems("step_gate", ev, aid):
+                continue
+            step_gates.setdefault(aid, []).append(ev)
         elif t == "TRANSLATION_RECORDED":
             # Native adapter piece (N32/N33): the
             # translation record — the loop machinery's
@@ -4208,17 +5253,62 @@ def _loop_result(events, state, run_dir=None):
         if presentation is not None and \
                 presentation not in (
                     _PRESENTATION_CONTRACT,
-                    _PRESENTATION_CONTRACT_V2):
+                    _PRESENTATION_CONTRACT_V2,
+                    _PRESENTATION_CONTRACT_V3):
             problem("presentation_contract_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     presentation_contract=presentation)
         elif presentation in (
                 _PRESENTATION_CONTRACT,
-                _PRESENTATION_CONTRACT_V2) and \
+                _PRESENTATION_CONTRACT_V2,
+                _PRESENTATION_CONTRACT_V3) and \
                 ws_contract != _WORKING_SET_CONTRACT:
             problem("presentation_without_working_set",
                     assembly_id=aid, at_seq=activated[aid],
                     working_set_contract=ws_contract)
+        if presentation == _PRESENTATION_CONTRACT_V3:
+            # The process-tree successor (the room
+            # rebuild): the contract's whole shape is
+            # the tree sealed in the case — the pinned
+            # case must carry it well-formed, its
+            # gather steps naming the case's declared
+            # delivery evidence in declaration order
+            # and its root the case's delivery
+            # destination. A tree standing in any other
+            # shape is a broken seal, reported once
+            # here; the presentation itself is verified
+            # per iteration in the tree core's
+            # reconstruction below.
+            tree = _tree_nodes(pinned_case_content(aid))
+            if tree is None:
+                problem("process_tree_missing",
+                        assembly_id=aid,
+                        at_seq=activated[aid])
+            else:
+                case_content = pinned_case_content(aid)
+                evidence = case_content.get(
+                    "delivery_evidence")
+                declared = evidence.get("addresses") \
+                    if isinstance(evidence, dict) \
+                    else None
+                gathered = [node["address"]
+                            for node in tree["nodes"]
+                            if node["kind"] == "gather"]
+                delivery = case_content.get("delivery")
+                destination = delivery.get(
+                    "destination") \
+                    if isinstance(delivery, dict) \
+                    else None
+                if gathered != declared or \
+                        (destination is not None
+                         and tree["root"] != destination):
+                    problem("process_tree_mismatch",
+                            assembly_id=aid,
+                            at_seq=activated[aid],
+                            gathered=gathered,
+                            declared=declared,
+                            root=tree["root"],
+                            destination=destination)
         # The worked example's seal (round nine's
         # correction pair, INDEX 548): the generator
         # seals the office's demonstration call beside
@@ -4242,7 +5332,8 @@ def _loop_result(events, state, run_dir=None):
         if example is not None:
             if presentation not in (
                     _PRESENTATION_CONTRACT,
-                    _PRESENTATION_CONTRACT_V2):
+                    _PRESENTATION_CONTRACT_V2,
+                    _PRESENTATION_CONTRACT_V3):
                 problem("worked_example_without_"
                         "presentation",
                         assembly_id=aid,
@@ -4265,8 +5356,9 @@ def _loop_result(events, state, run_dir=None):
                                     str):
                             addresses.append(
                                 entry["address"])
-                if presentation == \
-                        _PRESENTATION_CONTRACT_V2:
+                if presentation in (
+                        _PRESENTATION_CONTRACT_V2,
+                        _PRESENTATION_CONTRACT_V3):
                     path_ok = example.get("path") \
                         in addresses
                 else:
@@ -4589,7 +5681,8 @@ def _loop_result(events, state, run_dir=None):
             pres_declared = gen is not None and \
                 gen["payload"].get("presentation_contract") \
                 in (_PRESENTATION_CONTRACT,
-                    _PRESENTATION_CONTRACT_V2)
+                    _PRESENTATION_CONTRACT_V2,
+                    _PRESENTATION_CONTRACT_V3)
             recorded_ph = p.get("presentation_hash")
             if pres_declared and recorded_ph is None:
                 problem("presentation_commitment_missing",
@@ -4603,10 +5696,19 @@ def _loop_result(events, state, run_dir=None):
                                        bool):
                 prev_seq = evs[n - 2]["event_seq"] \
                     if n >= 2 else None
-                expected_core = _derive_staged_core(
-                    events, state, gen,
-                    pinned_case_content(aid), n, p,
-                    prev_seq, bounds)
+                if gen["payload"].get(
+                        "presentation_contract") == \
+                        _PRESENTATION_CONTRACT_V3:
+                    expected_core = _derive_tree_core(
+                        events, state, gen,
+                        pinned_case_content(aid), n, p,
+                        prev_seq, bounds,
+                        judged_mode=judged_modes.get(aid))
+                else:
+                    expected_core = _derive_staged_core(
+                        events, state, gen,
+                        pinned_case_content(aid), n, p,
+                        prev_seq, bounds)
                 if expected_core is None or \
                         sha256_hex(canonical(
                             expected_core)) != recorded_ph:
@@ -4800,9 +5902,16 @@ def _loop_result(events, state, run_dir=None):
         declared = gen is not None and \
             gen["payload"].get("presentation_contract") \
             in (_PRESENTATION_CONTRACT,
-                _PRESENTATION_CONTRACT_V2)
+                _PRESENTATION_CONTRACT_V2,
+                _PRESENTATION_CONTRACT_V3)
+        tree_form = gen is not None and \
+            gen["payload"].get("presentation_contract") \
+            == _PRESENTATION_CONTRACT_V3
         iteration_numbers = {
             ev["event_seq"]: ev["payload"].get("iteration")
+            for ev in iterations.get(aid, [])}
+        iteration_heads = {
+            ev["event_seq"]: ev["payload"].get("cursor_to")
             for ev in iterations.get(aid, [])}
         for ev in evs:
             p = ev["payload"]
@@ -4818,7 +5927,30 @@ def _loop_result(events, state, run_dir=None):
                         "mismatch",
                         assembly_id=aid, at_seq=seq)
                 continue
-            if p.get("stage") != _staged_stage(number) \
+            if tree_form:
+                # The tree's progression replaces the
+                # stage gate's function under this
+                # contract (the room rebuild): the gate's
+                # stage is the tree's current node at the
+                # bound iteration's package head, derived
+                # from the record — and it is never a
+                # step the door stands open at.
+                tstate = _tree_state(
+                    events,
+                    (gen["payload"].get("instance_id")),
+                    iteration_heads.get(
+                        p.get("iteration_seq")),
+                    pinned_case_content(aid), number)
+                node = tstate["current"] \
+                    if tstate is not None else None
+                if node is None or \
+                        p.get("stage") != node["id"] or \
+                        node["kind"] in (
+                            "compose", "deliver"):
+                    problem("delivery_stage_gate_stage_"
+                            "mismatch",
+                            assembly_id=aid, at_seq=seq)
+            elif p.get("stage") != _staged_stage(number) \
                     or p.get("stage") not in (
                         "memory", "case", "files"):
                 problem("delivery_stage_gate_stage_"
@@ -5055,6 +6187,66 @@ def _loop_result(events, state, run_dir=None):
                 problem("tool_shape_gate_payload_"
                         "malformed",
                         assembly_id=aid, at_seq=seq)
+
+    # The step gate's events (the room rebuild, the
+    # process-tree contract), verified against the
+    # record itself: a gate binds a standing iteration
+    # of a tree-declared assembly and stands before the
+    # following iteration (it is recorded while that
+    # iteration's package is built), and its facts —
+    # the step, its source, and what the step still
+    # needs — are exactly what the step-gate derivation
+    # finds owed at the following iteration's package
+    # head, re-derived from the recorded dispatches and
+    # outcomes alone. The correction the gate owes the
+    # following package is verified in the tree core's
+    # reconstruction above.
+    for aid, evs in step_gates.items():
+        gen = generated.get(aid)
+        declared = gen is not None and \
+            gen["payload"].get("presentation_contract") \
+            == _PRESENTATION_CONTRACT_V3
+        by_number = {
+            ev["payload"].get("iteration"): ev
+            for ev in iterations.get(aid, [])}
+        number_by_seq = {
+            ev["event_seq"]: ev["payload"].get("iteration")
+            for ev in iterations.get(aid, [])}
+        for ev in evs:
+            p = ev["payload"]
+            seq = ev["event_seq"]
+            if not declared:
+                problem("step_gate_without_tree_"
+                        "declaration",
+                        assembly_id=aid, at_seq=seq)
+            number = number_by_seq.get(
+                p.get("iteration_seq"))
+            if number is None:
+                problem("step_gate_iteration_mismatch",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            following = by_number.get(number + 1)
+            if following is None:
+                continue
+            if seq >= following["event_seq"]:
+                problem("step_gate_position_mismatch",
+                        assembly_id=aid, at_seq=seq)
+                continue
+            tstate = _tree_state(
+                events, gen["payload"].get("instance_id"),
+                following["payload"].get("cursor_to"),
+                pinned_case_content(aid), number + 1)
+            owed = _tree_step_gate_owed(tstate) \
+                if tstate is not None else None
+            if owed is None or \
+                    p.get("step") != owed[0] or \
+                    p.get("address") != owed[1] or \
+                    p.get("missing") != owed[2]:
+                problem("step_gate_facts_mismatch",
+                        assembly_id=aid, at_seq=seq,
+                        recorded_step=p.get("step"),
+                        recorded_missing=p.get("missing"),
+                        derived=owed)
 
     # Dispatch standing by instance, for the stall checks:
     # each dispatch's first outcome position, and whether an

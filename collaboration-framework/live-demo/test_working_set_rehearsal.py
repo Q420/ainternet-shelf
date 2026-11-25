@@ -358,6 +358,61 @@ def _staged_packages(work):
     return packages
 
 
+def _tree_native_packages(work):
+    """The native-lane scenario's wake packages, by
+    loop iteration: its captures travel the bounded
+    mode (the Groq transport's seam), where index 0 is
+    the identify call, indices 1-5 are the probe's
+    trials, and loop iteration k stands at index 5+k.
+    The extraction is _staged_packages' own, over that
+    mode: the package JSON as the prompt presented it,
+    plus the tool catalogue section the adapter renders
+    separately, merged back in, with rendered chars."""
+    captures = [json.loads(line) for line in
+                (work / "captures.jsonl")
+                .read_text().splitlines() if line.strip()]
+    bounded = {c["index"]: c for c in captures
+               if c["mode"] == "chat-raw-bounded"}
+    packages = {}
+    decoder = json.JSONDecoder()
+    for idx, cap in sorted(bounded.items()):
+        if idx < 6:
+            continue
+        body = json.loads(base64.b64decode(
+            cap["request_b64"]))
+        for message in body.get("messages") or []:
+            content = message.get("content")
+            if not isinstance(content, str) or \
+                    "Your wake package:" not in content:
+                continue
+            anchor = content.index("Your wake package:")
+            start = content.index("{", anchor)
+            try:
+                package, end = decoder.raw_decode(
+                    content[start:])
+            except ValueError:
+                continue
+            if not isinstance(package, dict) or \
+                    "presentation" not in package:
+                continue
+            chars = end
+            rest = content[start + end:]
+            if "Your tool catalogue" in rest:
+                tstart = rest.index("[", rest.index(
+                    "Your tool catalogue"))
+                try:
+                    tools, tend = decoder.raw_decode(
+                        rest[tstart:])
+                except ValueError:
+                    tools = None
+                if isinstance(tools, list):
+                    package["tools"] = tools
+                    chars += tend
+            packages[idx - 5] = (package, chars)
+            break
+    return packages
+
+
 def _presentation_hash_of(package):
     """The staged package's commitment, recomputed from
     the captured package itself: its tool results
@@ -3285,6 +3340,467 @@ def main():
         _check_checker("toolshape-refused", rrep)
         print(f"calibration section: "
               f"{CHECKS[0] - calibration_before} checks")
+
+        # ============= process tree (the room rebuild)
+        # The process-tree contract's witnesses (Ben's
+        # "Make it so", 2026-11-25): one opening package
+        # and no acknowledge wakes; the tree walked one
+        # step at a time, each step's content presented
+        # exactly once at its step; the step gate
+        # correcting work that runs ahead; the batch
+        # shape held to one step of presentation; and
+        # the native lane on the corrected Groq
+        # transport. The per-package bound stated for
+        # these packages — the package JSON as the
+        # prompt presented it, plus the catalogue
+        # section the adapter renders from it, the
+        # staged sections' own measure — is 64,000
+        # rendered chars: the largest honest package,
+        # the index-tail gather step of tree-honest
+        # (its 40,953-byte content plus the tree, the
+        # journal, the step and the catalogue
+        # furniture), measures 61,955.
+        tree_before = CHECKS[0]
+        TREE_BOUND = 64000
+        G1 = "gather:sources/stock-take.md"
+        G2 = "gather:sources/a3-pass.md"
+        G3 = "gather:sources/index-tail.md"
+
+        # ---- tree-honest: the honest path ----
+        trep = reports["tree_honest"]
+        twork = work / "tree-honest"
+        tevs = _events(twork)
+        tpkg = _staged_packages(twork)
+        check("tree-honest: the run completes in "
+              "seven iterations — opening, three "
+              "gather steps at two wakes each (the "
+              "step, then its content), compose — and "
+              "the brief stands filed",
+              trep["outcome"] == "yield"
+              and trep["iterations"] == 7
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in tevs),
+              f"{trep['outcome']} / {trep['iterations']}")
+        check("tree-honest: the sealed record "
+              "declares the process-tree presentation "
+              "contract, and no worked example stands "
+              "in the seal (the tree's first gather "
+              "step is the demonstration's replacement)",
+              trep["sealed_presentation_contract"]
+              == "process-tree-v1"
+              and trep["sealed_worked_example"] is None,
+              f"{trep['sealed_presentation_contract']}")
+        check("tree-honest: seven packages stand in "
+              "the captures — the first the opening, "
+              "the rest step packages, every one under "
+              "the process-tree contract",
+              sorted(tpkg) == [1, 2, 3, 4, 5, 6, 7]
+              and tpkg[1][0]["presentation"]["package"]
+              == "opening"
+              and all(
+                  tpkg[k][0]["presentation"]["package"]
+                  == "step"
+                  and tpkg[k][0]["presentation"]
+                  ["contract"] == "process-tree-v1"
+                  for k in range(2, 8)),
+              f"{sorted(tpkg)}")
+        opening = tpkg[1][0]
+        check("tree-honest: the opening package "
+              "carries the whole of it once — his "
+              "memory, the case essentials, the files "
+              "map, the sealed tree, the tool "
+              "catalogue, the journal with its "
+              "contract — and his first response is "
+              "work: the first request the record "
+              "stands is the first gather step's read, "
+              "no acknowledge outcome anywhere",
+              all(k in opening for k in (
+                  "memory", "case_essentials", "files",
+                  "process_tree", "tools", "journal",
+                  "current_step"))
+              and opening["current_step"]["node"]
+              == "orient"
+              and len(opening["tools"]) == 10
+              and [p.get("tool") for p in
+                   (_payload(e) for e in tevs
+                    if e["type"] == "TOOL_REQUESTED")
+                   ][:1] == ["sandbox.read"]
+              and not any(
+                  e["type"] == "TOOL_REQUESTED"
+                  and _payload(e).get("tool")
+                  not in ("sandbox.read", "sandbox.write")
+                  for e in tevs),
+              f"{sorted(opening)}")
+        currents = [tpkg[k][0]["current_step"]["node"]
+                    for k in range(1, 8)]
+        check("tree-honest: the walk's current steps "
+              "in order — orient, then each gather "
+              "step twice (the step's wake, then its "
+              "content's wake), then compose",
+              currents == ["orient", G1, G2, G2, G3, G3,
+                           "compose"],
+              f"{currents}")
+        states2 = {n["id"]: n["state"] for n in
+                   tpkg[2][0]["process_tree"]["nodes"]}
+        states7 = {n["id"]: n["state"] for n in
+                   tpkg[7][0]["process_tree"]["nodes"]}
+        check("tree-honest: the tree's node states "
+              "derive from the record — at the first "
+              "gather step orient stands done and the "
+              "rest pending; at compose every gather "
+              "stands done and deliver pending",
+              states2.get("orient") == "done"
+              and states2.get(G1) == "current"
+              and states2.get(G2) == "pending"
+              and states7.get(G1) == "done"
+              and states7.get(G2) == "done"
+              and states7.get(G3) == "done"
+              and states7.get("compose") == "current"
+              and states7.get("deliver") == "pending",
+              f"{states2} / {states7}")
+        bodies = {}
+        for name in ("stock-take", "a3-pass",
+                     "index-tail"):
+            bodies[name] = (twork / "run" / "sandbox"
+                            / "sources"
+                            / f"{name}.md") \
+                .read_bytes().decode("utf-8")
+        homes = {"stock-take": 2, "a3-pass": 4,
+                 "index-tail": 6}
+        for name, home in homes.items():
+            standing = [k for k in range(1, 8)
+                        if bodies[name] in list(
+                            _all_strings(tpkg[k][0]))]
+            check(f"tree-honest: {name}'s whole body "
+                  f"stands in exactly one package — "
+                  f"its own step's content package "
+                  f"(package {home}) — and as pointers "
+                  f"everywhere else",
+                  standing == [home],
+                  f"standing in {standing}")
+        check("tree-honest: the journal rides every "
+              "package verbatim, growing by exactly "
+              "the step's bits — empty at the first "
+              "gather step, the first note at the "
+              "second, two at the third, all three at "
+              "compose",
+              tpkg[2][0]["journal"]["content"] == ""
+              and tpkg[3][0]["journal"]["content"]
+              == rehearsal.TREE_NOTE_1
+              and tpkg[5][0]["journal"]["content"]
+              == rehearsal.TREE_NOTE_1
+              + rehearsal.TREE_NOTE_2
+              and tpkg[7][0]["journal"]["content"]
+              == rehearsal.TREE_NOTE_1
+              + rehearsal.TREE_NOTE_2
+              + rehearsal.TREE_NOTE_3)
+        compose_step = tpkg[7][0]["current_step"]
+        check("tree-honest: the compose package "
+              "carries the figures and the four "
+              "points and the compile-from-your-"
+              "journal instruction, and no source "
+              "content rides it (the content-once "
+              "checks above stand over it too)",
+              "600" in compose_step.get("figures", "")
+              and compose_step.get("points") == [
+                  "what this framework is",
+                  "what has actually been proven",
+                  "what has not been proven",
+                  "what remains to be built"]
+              and "journal entries" in compose_step
+              .get("instruction", ""),
+              f"{compose_step.get('figures')}")
+        filed = (twork / "run" / "sandbox" / "scratch"
+                 / "brief.md").read_text()
+        check("tree-honest: the filed brief is the "
+              "contributed text, at the tree's root",
+              filed == rehearsal._tree_deliverable_text()
+              and any(
+                  e["type"] == "DELIVERABLE_FILED"
+                  and _payload(e).get("destination")
+                  == "scratch/brief.md" for e in tevs))
+        check("tree-honest: no step gate stands in "
+              "the honest record — the correction "
+              "answers work ahead of the current "
+              "step, and the honest walk has none",
+              not any(e["type"] == "STEP_GATE"
+                      for e in tevs))
+        sizes = {k: size for k, (_p, size)
+                 in tpkg.items()}
+        check("tree-honest: every package stands "
+              "under the stated bound of 64,000 "
+              "rendered chars, and the largest is "
+              "the index-tail step's content package",
+              all(s <= TREE_BOUND for s in sizes.values())
+              and max(sizes, key=sizes.get) == 6,
+              f"{sizes}")
+        print(f"tree-honest package sizes (rendered "
+              f"chars): {sizes}")
+        _check_checker("tree-honest", trep)
+
+        # ---- tree-journal-gate: the step gate ----
+        grep_ = reports["tree_journal_gate"]
+        gwork = work / "tree-journal-gate"
+        gevs = _events(gwork)
+        gpkg = _staged_packages(gwork)
+        gates = [_payload(e) for e in gevs
+                 if e["type"] == "STEP_GATE"]
+        iter_seqs = {_payload(e).get("iteration"):
+                     e["event_seq"] for e in gevs
+                     if e["type"] == "LOOP_ITERATION"}
+        check("tree-journal-gate: the run completes "
+              "in seven iterations with the brief "
+              "filed, and exactly one step gate "
+              "stands — bound to the second "
+              "iteration, naming the first gather "
+              "step and the journal bits it still "
+              "needs",
+              grep_["outcome"] == "yield"
+              and grep_["iterations"] == 7
+              and len(gates) == 1
+              and gates[0].get("step") == G1
+              and gates[0].get("missing") == ["journal"]
+              and gates[0].get("iteration_seq")
+              == iter_seqs.get(2),
+              f"{gates}")
+        corr = gpkg[3][0].get("step_gate_correction")
+        check("tree-journal-gate: the package after "
+              "the ahead read carries the gate's "
+              "correction in the INDEX 475 shape — "
+              "what arrived (the second source's "
+              "read), the step it stays on, the "
+              "journal bits still needed — and the "
+              "step stays current with no content "
+              "re-presented",
+              corr is not None
+              and corr.get("step") == G1
+              and corr.get("missing") == ["journal"]
+              and "sources/a3-pass.md" in corr.get(
+                  "what_arrived", "")
+              and "journal" in corr.get(
+                  "instruction", "")
+              and gpkg[3][0]["current_step"]["node"]
+              == G1
+              and "current_content" not in gpkg[3][0],
+              f"{corr}")
+        check("tree-journal-gate: the journal write "
+              "advances the walk — the next package "
+              "stands at the second gather step, and "
+              "the ahead read's content is presented "
+              "there, at its own step, exactly once "
+              "in the whole run",
+              gpkg[4][0]["current_step"]["node"] == G2
+              and gpkg[4][0].get("current_content", {})
+              .get("address") == "sources/a3-pass.md"
+              and [k for k in range(1, 8)
+                   if bodies["a3-pass"] in list(
+                       _all_strings(gpkg[k][0]))] == [4])
+        _check_checker("tree-journal-gate", grep_)
+
+        # ---- tree-batch: three reads, one response --
+        brep = reports["tree_batch"]
+        bwork = work / "tree-batch"
+        bevs = _events(bwork)
+        bpkg = _staged_packages(bwork)
+        check("tree-batch: the run completes in "
+              "five iterations with the brief filed "
+              "— the batch, three per-step journal "
+              "writes, the contribution",
+              brep["outcome"] == "yield"
+              and brep["iterations"] == 5
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in bevs),
+              f"{brep['outcome']} / {brep['iterations']}")
+        first_dispatches = [
+            _payload(e) for e in bevs
+            if e["type"] == "TOOL_DISPATCHED"]
+        check("tree-batch: all three reads of the "
+              "one batch response stand dispatched "
+              "in the record — his work executed as "
+              "it arrived, none of it refused for "
+              "arriving ahead",
+              [d.get("tool") for d in first_dispatches]
+              [:3] == ["sandbox.read"] * 3
+              and [(_payload(e).get("parameters") or {})
+                   .get("path") for e in bevs
+                   if e["type"] == "TOOL_REQUESTED"][:3]
+              == ["sources/stock-take.md",
+                  "sources/a3-pass.md",
+                  "sources/index-tail.md"],
+              f"{[d.get('tool') for d in first_dispatches]}")
+        bgates = [_payload(e) for e in bevs
+                  if e["type"] == "STEP_GATE"]
+        check("tree-batch: the step gate corrects "
+              "the ahead work at the first two "
+              "gather steps — the record still shows "
+              "a later read standing at each — each "
+              "naming the journal bits the current "
+              "step still needs",
+              len(bgates) == 2
+              and all(g.get("missing") == ["journal"]
+                      for g in bgates)
+              and [g.get("step") for g in bgates]
+              == [G1, G2],
+              f"{bgates}")
+        check("tree-batch: the first step package "
+              "presents only the first file's "
+              "content; the second and third files "
+              "stand in it as working-set pointers — "
+              "entries with no content — their "
+              "contents presented at their own "
+              "steps, exactly once each",
+              bpkg[2][0].get("current_content", {})
+              .get("address") == "sources/stock-take.md"
+              and all(
+                  "content" not in entry
+                  for entry in bpkg[2][0]
+                  ["working_set"]["entries"]
+                  if entry.get("path") in (
+                      "sources/a3-pass.md",
+                      "sources/index-tail.md"))
+              and [k for k in range(1, 6)
+                   if bodies["a3-pass"] in list(
+                       _all_strings(bpkg[k][0]))] == [3]
+              and [k for k in range(1, 6)
+                   if bodies["index-tail"] in list(
+                       _all_strings(bpkg[k][0]))] == [4],
+              f"{bpkg[2][0].get('current_content', {}).get('address')}")
+        check("tree-batch: the per-step journal "
+              "writes advance the presentation "
+              "through the contents already in the "
+              "room — gather two at package three, "
+              "gather three at four, compose at "
+              "five — and every package stands "
+              "under the stated bound",
+              [bpkg[k][0]["current_step"]["node"]
+               for k in range(1, 6)]
+              == ["orient", G1, G2, G3, "compose"]
+              and all(size <= TREE_BOUND
+                      for _p, size in bpkg.values()),
+              f"{[bpkg[k][0]['current_step']['node'] for k in range(1, 6)]}")
+        _check_checker("tree-batch", brep)
+
+        # ---- tree-native: the BD-1 lane ----
+        nrep = reports["tree_native"]
+        nwork = work / "tree-native"
+        nevs = _events(nwork)
+        npkg = _tree_native_packages(nwork)
+        check("tree-native: the run completes in "
+              "eight iterations with the brief "
+              "filed — the honest walk plus the "
+              "refused call's wake",
+              nrep["outcome"] == "yield"
+              and nrep["iterations"] == 8
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in nevs),
+              f"{nrep['outcome']} / {nrep['iterations']}")
+        check("tree-native: the walk's current "
+              "steps in order — the second gather "
+              "step stands current across the "
+              "refused call's wake, its content "
+              "presented once, at its step",
+              [npkg[k][0]["current_step"]["node"]
+               for k in range(1, 9)]
+              == ["orient", G1, G2, G2, G2, G3, G3,
+                  "compose"]
+              and [k for k in range(1, 9)
+                   if bodies["a3-pass"] in list(
+                       _all_strings(npkg[k][0]))] == [4],
+              f"{[npkg[k][0]['current_step']['node'] for k in range(1, 9)]}")
+        nreq = {}
+        for e in nevs:
+            if e["type"] == "TOOL_REQUESTED":
+                nreq[_payload(e).get("request_id")] = \
+                    _payload(e)
+        ndisp = {}
+        for e in nevs:
+            if e["type"] == "TOOL_DISPATCHED":
+                ndisp[_payload(e).get("request_id")] = \
+                    _payload(e)
+        nout = {}
+        for e in nevs:
+            if e["type"] == "TOOL_OUTCOME":
+                nout[_payload(e).get("dispatch_id")] = \
+                    _payload(e)
+        granted = [r for r in nreq.values()
+                   if r.get("tool") == "sandbox.read"
+                   and (r.get("parameters") or {})
+                   .get("path") == "sources/stock-take.md"]
+        check("tree-native: the granted native "
+              "call — a read under his sealed "
+              "grants — dispatched and answered with "
+              "its result",
+              len(granted) == 1
+              and granted[0].get("request_id") in ndisp
+              and nout.get(ndisp[granted[0].get(
+                  "request_id")].get("dispatch_id"),
+                  {}).get("outcome") == "result",
+              f"{granted}")
+        ungranted = [r for r in nreq.values()
+                     if r.get("tool") == "sandbox.write"
+                     and (r.get("parameters") or {})
+                     .get("path") == "sources/stock-take.md"]
+        rejections = [_payload(e) for e in nevs
+                      if e["type"] == "REJECTION"]
+        check("tree-native: the ungranted native "
+              "call — a write to a stocked source, "
+              "outside the write grant's scratch "
+              "scope — is refused at the doorway: "
+              "no dispatch stands for its request, "
+              "and the refusal stands recorded in "
+              "the family's shape, a REJECTION "
+              "naming the attempted dispatch and "
+              "the grant ceiling it lies outside; "
+              "the source itself stands unaltered",
+              len(ungranted) == 1
+              and ungranted[0].get("request_id")
+              not in ndisp
+              and any(
+                  r.get("request_id") == ungranted[0]
+                  .get("request_id")
+                  and r.get("attempted_type")
+                  == "TOOL_DISPATCHED"
+                  and "ceiling" in r.get("ground", "")
+                  for r in rejections)
+              and (nwork / "run" / "sandbox" / "sources"
+                   / "stock-take.md").read_bytes()
+              .decode("utf-8") == bodies["stock-take"],
+              f"{rejections}")
+        ncaps = [json.loads(line) for line in
+                 (nwork / "captures.jsonl")
+                 .read_text().splitlines() if line.strip()]
+        loop_bodies = []
+        for c in ncaps:
+            if c["mode"] == "chat-raw-bounded" \
+                    and c["index"] >= 6:
+                loop_bodies.append(json.loads(
+                    base64.b64decode(c["request_b64"])))
+        wire = [b for b in loop_bodies
+                if isinstance(b.get("tools"), list)]
+        check("tree-native: the actual outbound "
+              "requests the captures record — the "
+              "corrected Groq transport's own "
+              "construction, not a staged path — "
+              "carry the sealed tools offered "
+              "natively on every loop call, with "
+              "tool_choice permitting calls and "
+              "disable_tool_validation exactly as "
+              "staged (true)",
+              len(wire) == 8
+              and all(
+                  b.get("tool_choice") == "auto"
+                  and b.get(
+                      "disable_tool_validation") is True
+                  and any(
+                      (t.get("function") or {})
+                      .get("name") == "sandbox.read"
+                      for t in b["tools"])
+                  for b in wire),
+              f"{len(wire)} wired calls of "
+              f"{len(loop_bodies)}")
+        _check_checker("tree-native", nrep)
+        print(f"process-tree section: "
+              f"{CHECKS[0] - tree_before} checks")
 
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):

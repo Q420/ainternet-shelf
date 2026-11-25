@@ -277,19 +277,26 @@ ROUTE = ("groq" if (QUINN or GPTOSS) else
 
 # The mode the occupant's order/direction judges:
 # Nemotron native by the director's order; Quinn text
-# by the director's direction — the Groq route's
-# native path carries the open BD-1 defect (INDEX
-# 411-420) and this run does not route through it.
-# The Cloudflare occupant text by the director's
-# direction (INDEX 563): a new route whose native
-# tool-calling has never been witnessed on the live
-# path, and no finding about its native reach is made.
-# The GPT-OSS occupant text under the examiner's
-# standing judgement for this model on this route
-# (INDEX 300, on probe evidence: four settled
-# text-contract observations, no empirical basis for
-# native on it).
-ADAPTER_MODE = ("text" if (QUINN or GLM or GPTOSS)
+# by the director's direction — her run does not route
+# through the Groq route's native path. The Cloudflare
+# occupant text by the director's direction (INDEX
+# 563): a new route whose native tool-calling has
+# never been witnessed on the live path, and no
+# finding about its native reach is made. The GPT-OSS
+# occupant NATIVE under the director's direction of
+# 2026-11-25 (the room rebuild: "Make it so", 15:02
+# MST, and his addition at 15:03 — "We need to allow
+# him to use his tools"): the BD-1 defect that stood
+# in the way (INDEX 411-420 — the adapter's staged
+# disable_tool_validation never reached the live wire
+# on this route) is corrected in the Groq connector
+# transport, which now carries the sealed tools, a
+# call-permitting tool_choice and the flag exactly as
+# staged on the actual outbound request; the seat is
+# re-judged native on the corrected transport, the
+# examiner's INDEX 300 text judgement standing
+# superseded by the direction for this run.
+ADAPTER_MODE = ("text" if (QUINN or GLM)
                 else "native")
 
 # The route's registered connector helper — the
@@ -598,6 +605,35 @@ DELIVERY_EVIDENCE = {"addresses": [
 # declaration; the door adjudicates against it.
 DELIVERY_FLOOR = {"min_words": 550}
 
+# The process tree (the room rebuild, Ben's "Make it
+# so" 2026-11-25 on the basics design of INDEX
+# 554/572): the office-authored walk of this job,
+# sealed in the case at assembly as its own component
+# — the root (the brief the delivery files, at the
+# delivery declaration's destination) and the steps in
+# order: ORIENT (the one opening package), one GATHER
+# step per declared source in the evidence
+# declaration's own order, COMPOSE (the brief compiled
+# from his journal entries), DELIVER (the contribution
+# is the delivery; the office files it). Under the
+# process-tree presentation contract the loop walks
+# him by it — one step in front of him at a time, each
+# step's content presented at its step and never
+# twice — and the checker re-derives the walk from the
+# record.
+PROCESS_TREE = {
+    "root": "scratch/brief.md",
+    "steps": [
+        {"node": "orient"},
+        {"node": "gather",
+         "address": "sources/stock-take.md"},
+        {"node": "gather",
+         "address": "sources/a3-pass.md"},
+        {"node": "gather",
+         "address": "sources/index-tail.md"},
+        {"node": "compose"},
+        {"node": "deliver"}]}
+
 ROLE_MEMORY = [
     {"observation": "Delivers finished writing as "
                     "plain prose in the reply itself.",
@@ -900,8 +936,10 @@ def _stage_sandbox_sources(sandbox_dir, manifest):
 ORDER_WORDS = (
     "Let's try Quinn... we should be able to just "
     "drop her right in" if QUINN else
-    "Build the GPT-OSS seat on the Groq route and "
-    "run it" if GPTOSS else
+    "Make it so — make sure that we're not getting "
+    "errors because he's trying to use a tool; we "
+    "need to allow him to use his tools" if GPTOSS
+    else
     "Cloudflare it is" if GLM else
     "just run it with nemotron, see how he reacts... "
     "lets start doing. im done guessing")
@@ -921,30 +959,40 @@ ORDER_GROUNDS = (
     "The probe stage ran live and its recommendation "
     "stands in the record as evidence; it does not "
     "decide this run's mode." if QUINN else
-    "Director's direction (Ben, 2026-11-25 — his tap "
-    "on the scope card and his own words: \"Build the "
-    "GPT-OSS seat on the Groq route and run it\"): "
-    "the GPT-OSS occupant dropped into the same role, "
-    "the same case and the same gates. The mode is "
-    "judged text under the examiner's standing "
-    "judgement for this model on this route (INDEX "
-    "300, on probe evidence: four settled "
-    "text-contract observations, no empirical basis "
-    "for native) — the occupant answers in the "
-    "package protocol as plain-text JSON, the loop's "
-    "standing text population. The precedent stands "
-    "at INDEX 234: attempt 6 ran this exact pin on "
-    "this exact route, its provider-reported identity "
-    "verified against the pin; that run's failure was "
-    "the old harness's 134,844-byte push package "
-    "(HTTP 413), a shape the current driver no longer "
-    "produces. The probe stage ran live and its "
-    "recommendation stands in the record as evidence; "
-    "it does not decide this run's mode. The run is "
-    "the empirical test of this model's "
-    "full-working-set wake against this account's "
-    "actual per-model limits, which have never been "
-    "read." if GPTOSS else
+    "Director's direction (Ben, 2026-11-25 — his "
+    "\"Make it so\" at 15:02 MST on the room-rebuild "
+    "design, and his addition at 15:03: \"make sure "
+    "that we're not getting errors because he's "
+    "trying to use a tool\" and \"We need to allow "
+    "him to use his tools\"): the GPT-OSS occupant "
+    "dropped into the same role, the same case and "
+    "the same gates, and re-judged NATIVE on the "
+    "corrected Groq transport — he is to use his own "
+    "tools, natively, the way he reaches for them. "
+    "The bar to that judgement was the open BD-1 "
+    "defect (INDEX 411-420): the adapter staged "
+    "disable_tool_validation for each native call, "
+    "but the live connector transport never carried "
+    "it to the wire, so native calls died at the "
+    "provider. The transport now carries the sealed "
+    "tools offered natively, a tool_choice permitting "
+    "calls, and the flag exactly as staged, on the "
+    "actual outbound request — witnessed at the "
+    "captures seam, not on a staged path. The "
+    "examiner's standing text judgement for this "
+    "model on this route (INDEX 300) is superseded "
+    "by the direction for this run; the probe stage "
+    "ran live and its recommendation stands in the "
+    "record as evidence; it does not decide this "
+    "run's mode. The doorway still adjudicates every "
+    "native call against his sealed grants: an "
+    "ungranted call is refused at the doorway and "
+    "recorded — the office's refusal, not a provider "
+    "error. The presentation is the process-tree "
+    "contract the same direction settled: one "
+    "opening package, then the tree's steps one at a "
+    "time, each step's content presented once at its "
+    "step." if GPTOSS else
     "Director's direction (Ben, 2026-11-25): adopt "
     "the Cloudflare Workers AI route (INDEX 563) — "
     "the GLM occupant dropped into the same role, "
@@ -980,15 +1028,18 @@ ORDER_EXAMINER = ("Ben (director) — direction of "
 ORDER_DATE = ("2026-11-25" if (QUINN or GLM or GPTOSS)
               else "2026-11-24")
 ORDER_EFFECT = (
-    "the director's direction adopts the "
-    "examiner's standing judgement for this "
-    "model on this route (INDEX 300): the "
-    "mode is judged text, whatever the probe "
-    "stage recommends; the probe's "
-    "recommendation stands in the record as "
-    "evidence, not as the decision; the "
-    "model's first live response is the "
-    "delivery evidence" if GPTOSS else
+    "the director's direction re-judges the "
+    "mode native on the corrected Groq "
+    "transport (the BD-1 correction carried "
+    "to the wire), superseding the "
+    "examiner's standing text judgement for "
+    "this model on this route (INDEX 300) "
+    "for this run, whatever the probe stage "
+    "recommends; the probe's recommendation "
+    "stands in the record as evidence, not "
+    "as the decision; the model's first live "
+    "response is the delivery evidence"
+    if GPTOSS else
     "the director's direction replaces the "
     "probe-phase examiner judgement for "
     "this run: the mode is judged "
@@ -1223,7 +1274,8 @@ def _commission_and_issue(store, manifest_hash,
                               delivery_evidence,
                               delivery_floor=delivery_floor,
                               role_memory=role_memory,
-                              opening=opening)
+                              opening=opening,
+                              process_tree=PROCESS_TREE)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -1500,48 +1552,23 @@ def run_demo():
               "hash-verified against the manifest")
 
         # THE WORKED EXAMPLE (round nine, INDEX 548;
-        # the calibration): the office performs the
-        # demonstration call against the staged sandbox,
-        # through the same governed performer a dispatch
-        # runs, BEFORE generation — the call's real
-        # result is what generation seals beside the
-        # presentation contract, and the files stage
-        # shows it at the worker's third wake. Under the
-        # pointer-rule contract the demonstration is a
-        # READ — the pull the worker's job is made of,
-        # the call his debrief showed he copies — of the
-        # glossary's smallest stocked source, so the one
-        # stage that shows a whole file stays within the
-        # population's package bound. Where the call
-        # cannot be made, no example stands and
-        # generation proceeds without one.
+        # the calibration): under the staged contracts
+        # the office performed the demonstration call
+        # against the staged sandbox before generation
+        # and sealed its result beside the presentation
+        # contract. Under the process-tree contract (the
+        # room rebuild) no worked example stands in the
+        # seal: the demonstration's place is taken by
+        # the tree itself — the first gather step spells
+        # out the exact call, in the shape this room
+        # uses, and the file's content is presented at
+        # its step, once; an example beside it would
+        # present a source's content outside its step.
         worked_example = None
-        example_executor = Executor(
-            doorway, str(run_dir / "sandbox"),
-            claim_dir=str(run_dir / "claims"),
-            deadline=150.0)
-        try:
-            example_address = _worked_example_address(
-                run_dir / "sandbox")
-            example_result = \
-                example_executor.worked_example_read(
-                    example_address)
-            worked_example = {
-                "tool": "sandbox.read",
-                "path": example_address,
-                "result": example_result}
-            print("worked example: the office's "
-                  "sandbox.read call on "
-                  f"{example_address} stands "
-                  "performed against the staged sandbox; "
-                  "its result is sealed with the "
-                  "assembly")
-        except Exception as exc:  # noqa: BLE001 — the
-            # call cannot be made: no example stands.
-            print("worked example: the demonstration "
-                  "call could not be made "
-                  f"({type(exc).__name__}: {exc}); no "
-                  "example stands in the seal")
+        print("worked example: none stands in the seal "
+              "under the process-tree contract — the "
+              "tree's first gather step is the "
+              "demonstration's replacement")
 
         # ASSEMBLE — the adapter on the NVIDIA route's
         # real seam: the typed transport through the
@@ -1576,7 +1603,7 @@ def run_demo():
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
                 delivery_floor_declaration=True,
-                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V2,
+                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V3,
                 worked_example=worked_example)
         except ModelPinMismatchError as mismatch:
             # The flagged conflict (paper §3.6 gate 5's
@@ -2145,39 +2172,18 @@ def verify_config():
                    == "nvidia/some-other-model")
 
             # The worked example (round nine, INDEX
-            # 548; the calibration): this path's own
-            # staging stands at (6b), after generation,
-            # so the demonstration call is performed
-            # here on a throwaway staging of the same
-            # verified set, through the governed
-            # performer, and passed to the generation
-            # below — the seal this path verifies
-            # carries the real call's result: a read of
-            # the glossary's smallest stocked source,
-            # the office's choice under the pointer-rule
-            # contract.
-            example_problem = _stage_sandbox_sources(
-                tmp / "sandbox-example", manifest)
+            # 548; the calibration): under the staged
+            # contracts the generation below sealed the
+            # office's demonstration call. Under the
+            # process-tree contract (the room rebuild)
+            # no example is performed or sealed: the
+            # tree's first gather step spells the exact
+            # call, and the file's content is presented
+            # at its step, once — an example beside the
+            # tree would present a source's content
+            # outside its step. The expectation below
+            # verifies the seal carries none.
             verify_example = None
-            if example_problem is None:
-                try:
-                    verify_address = \
-                        _worked_example_address(
-                            tmp / "sandbox-example")
-                    verify_example = {
-                        "tool": "sandbox.read",
-                        "path": verify_address,
-                        "result": Executor(
-                            doorway,
-                            str(tmp / "sandbox-example"),
-                            claim_dir=str(
-                                tmp / "claims-example"),
-                            deadline=150.0
-                        ).worked_example_read(
-                            verify_address)}
-                except Exception:  # noqa: BLE001 — the
-                    # call cannot be made: no example.
-                    verify_example = None
 
             # (6) Generation under a stub identity: the
             # sealed record declares the exec catalogue
@@ -2198,7 +2204,7 @@ def verify_config():
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
                 delivery_floor_declaration=True,
-                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V2,
+                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V3,
                 worked_example=verify_example)
             expect("generation: stub-identity generation "
                    "succeeds",
@@ -2247,53 +2253,30 @@ def verify_config():
                        f"got "
                        f"{sealed.get('working_set_contract')}")
                 expect("generation: the sealed record "
-                       "declares the pointer-rule "
+                       "declares the process-tree "
                        "presentation contract (Ben's "
-                       "direction, INDEX 544 as corrected "
-                       "by INDEX 568 — the worker-first "
-                       "package whose gathered content is "
-                       "presented once and stands as "
-                       "pointers after)",
+                       "\"Make it so\", 2026-11-25, on "
+                       "the room-rebuild design — one "
+                       "opening package, then the sealed "
+                       "tree's steps one at a time, each "
+                       "step's content presented once at "
+                       "its step and standing as pointers "
+                       "after)",
                        sealed.get("presentation_contract")
-                       == tool_policy.PRESENTATION_CONTRACT_V2,
+                       == tool_policy.PRESENTATION_CONTRACT_V3,
                        f"got "
                        f"{sealed.get('presentation_contract')}")
-                expect("generation: the sealed record "
-                       "carries the worked example — the "
-                       "office's sandbox.read call on the "
-                       "glossary's smallest stocked "
-                       "source, its result the governed "
-                       "performer's own over the staged "
-                       "bytes (round nine, INDEX 548; the "
-                       "calibration)",
-                       verify_example is not None
-                       and sealed.get("worked_example")
-                       == verify_example,
+                expect("generation: no worked example "
+                       "stands in the seal under the "
+                       "process-tree contract (the tree's "
+                       "first gather step is the "
+                       "demonstration's replacement — an "
+                       "example would present a source's "
+                       "content outside its step)",
+                       sealed.get("worked_example")
+                       is None,
                        f"got "
                        f"{sealed.get('worked_example')}")
-                expect("generation: the worked example's "
-                       "result is the staged file's real "
-                       "read — its content is the staged "
-                       "bytes themselves, its byte count "
-                       "and hash theirs",
-                       verify_example is not None
-                       and verify_example["result"].get(
-                           "content")
-                       == (tmp / "sandbox-example"
-                           / verify_example["path"])
-                       .read_bytes().decode("utf-8")
-                       and verify_example["result"].get(
-                           "content_bytes")
-                       == len((tmp / "sandbox-example"
-                               / verify_example["path"])
-                              .read_bytes())
-                       and verify_example["result"].get(
-                           "content_sha256")
-                       == _sha256_bytes(
-                           (tmp / "sandbox-example"
-                            / verify_example["path"])
-                           .read_bytes()),
-                       "content against the staged file")
                 expect("generation: the sealed record "
                        "declares the freshness guard "
                        "suspended (Ben's R31 ruling, "
@@ -2324,6 +2307,21 @@ def verify_config():
                        json.dumps(
                            (case_content or {}).get(
                                "journal"))[:300])
+                expect("commission: the issued case "
+                       "carries the process tree as its "
+                       "own component, unchanged (the "
+                       "room rebuild — the office-authored "
+                       "walk sealed in the case at "
+                       "assembly: orient, one gather step "
+                       "per declared source in declaration "
+                       "order, compose, deliver; root the "
+                       "brief at the delivery "
+                       "destination)",
+                       (case_content or {}).get(
+                           "process_tree") == PROCESS_TREE,
+                       json.dumps(
+                           (case_content or {}).get(
+                               "process_tree"))[:300])
                 expect("generation: the sealed record "
                        "carries the delivery declaration, "
                        "bound to the case's own word (the "

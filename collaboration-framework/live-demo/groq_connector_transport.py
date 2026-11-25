@@ -111,6 +111,23 @@ where one is staged) as "tool_choice". Where nothing is
 staged, the body is byte-identical to the historical
 construction above — the text path is untouched.
 
+BD-1's correction (the room rebuild, 2026-11-25). The
+adapter stages a second native field for the one call —
+`adapter._pending_disable_tool_validation`, the state
+its iteration commitment records (INDEX 403) — and the
+built-in `_dispatch` carries it in the request body
+exactly as staged. This transport read the staged tools
+but never the staged flag, so on the live Groq path the
+flag fell off between the adapter and the wire and the
+provider refused the native call shape the flag exists
+to permit (INDEX 411-420: the open BD-1 defect, the
+reason the GPT-OSS seat stood judged text). The body
+now carries "disable_tool_validation" exactly as staged
+wherever a state stands staged, and — where definitions
+stand staged with no choice staged — "tool_choice":
+"auto", so the request the witness reads permits the
+calls it offers.
+
 The probe raw call (same release preparation; capture
 contract corrected at INDEX 293). The probe stage's
 capture sits BELOW the adapter's response interpretation,
@@ -459,6 +476,35 @@ def install_groq_connector_transport(adapter, helper_path=None, model=None):
                                 "_pending_tool_choice", None)
         if staged_choice is not None:
             request_obj["tool_choice"] = staged_choice
+        elif staged_tools:
+            # No choice staged (nothing in the framework
+            # stages one): the request must still permit
+            # the calls it offers — the provider's own
+            # permissive choice, named on the wire rather
+            # than left to a default no witness can see.
+            request_obj["tool_choice"] = "auto"
+        # BD-1's correction (the room rebuild, Ben's
+        # direction 2026-11-25: "We need to allow him to
+        # use his tools"): the adapter stages its
+        # disable_tool_validation state for the one call
+        # exactly as it stages the offered definitions —
+        # the value the iteration's commitment records —
+        # and this transport, which replaces _call on
+        # the live Groq path, must carry it to the wire
+        # exactly as staged, as the adapter's built-in
+        # _dispatch carries it. Before this correction
+        # the flag fell off here: the staged tools
+        # crossed, the staged flag did not, and the
+        # provider refused the native call shape the
+        # flag exists to permit (INDEX 411-420). Nothing
+        # staged — every text-judged call — the body is
+        # the historical construction, byte for byte.
+        staged_flag = getattr(
+            adapter, "_pending_disable_tool_validation",
+            None)
+        if staged_flag is not None:
+            request_obj["disable_tool_validation"] = \
+                staged_flag
         body = json.dumps(request_obj).encode("utf-8")
         timings["body_preparation_s"] = \
             time.monotonic() - prep_started

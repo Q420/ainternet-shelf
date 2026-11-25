@@ -163,6 +163,40 @@ generations seal no presentation declaration, and
 their packages are the ordered packages they have
 always been.
 
+The room rebuild's scenarios (Ben's "Make it so",
+2026-11-25) witness the process-tree presentation
+contract on the length configuration's case, which
+additionally carries the office-authored process tree
+sealed as its own component:
+  tree-honest — the honest path: one opening package
+  (no acknowledge wakes), then the tree walked one
+  step at a time — read a source, write its journal
+  bits, next step — each source's content presented
+  exactly once, at its step; the compose package
+  carrying his journal and no source content; the
+  contribution at DELIVER filing the brief;
+  tree-journal-gate — the step gate: a read whose
+  journal bits never follow does not advance the
+  tree; the next package carries the gate's
+  correction naming the missing bits, true at
+  presentation; the write advances;
+  tree-batch — three reads in one response (the
+  run-3 shape, judged text): all three stand in the
+  record, the presentation stays at the first gather
+  step with only the first file's content, the other
+  two standing as pointers, and per-step journal
+  writes advance the presentation through contents
+  already in the room, each presented once at its
+  step;
+  tree-native — the native lane on the corrected
+  Groq transport (BD-1): scripted native calls under
+  the sealed grants dispatch and are answered; an
+  ungranted native call is refused at the doorway
+  and recorded; the captures record the actual
+  outbound requests — the sealed tools offered
+  natively, a call-permitting tool_choice, and
+  disable_tool_validation exactly as staged.
+
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario: the run record, the stub's
 captures, the decision receipt, the terminal readout,
@@ -206,12 +240,15 @@ from connector_transport import (  # noqa: E402
     install_connector_transport)
 from nvidia_connector_transport import (  # noqa: E402
     install_nvidia_connector_raw_call)
+from groq_connector_transport import (  # noqa: E402
+    install_groq_connector_transport)
 from first_worker_run import (  # noqa: E402
     BOUNDS, RUN_ID, VERIFICATION_LIST, _act,
     _commission_brief, export_store, run_checker)
 from demo_run import (  # noqa: E402
     ASSIGNMENT_COMBINED, GLOSSARY, GRANTS_COMBINED, MODEL,
-    ONBOARDING, ROLE_MEMORY, _stage_sandbox_sources)
+    ONBOARDING, PROCESS_TREE, ROLE_MEMORY,
+    _stage_sandbox_sources)
 
 import stock_demo  # noqa: E402
 
@@ -1598,6 +1635,237 @@ if __name__ == "__main__":
 '''
 
 
+# The room rebuild's scenarios (2026-11-25): the
+# process-tree contract's witnesses. The stand-in's
+# journal bits — one note per source, plain ASCII,
+# each ending in a newline, written back whole each
+# time (the journal convention: the write carries
+# what the journal held, plus the new note).
+TREE_NOTE_1 = (
+    "Stock-take: the framework's proven ground and "
+    "its open ground, mapped by the examiner.\n")
+TREE_NOTE_2 = (
+    "A3 pass: the bounded loop closed; composition "
+    "across a run left open.\n")
+TREE_NOTE_3 = (
+    "Index tail: the decision record for the agent "
+    "layer — assembly, grants, the loop.\n")
+
+
+def _tree_deliverable_text():
+    """The tree scenarios' contributed brief: plain
+    prose over the declared floor (550 words), at the
+    declared figure (about 600)."""
+    sentence = (
+        "The framework's record shows the substrate "
+        "and the agent layer standing proven, the "
+        "live worker's assignment still open, and "
+        "the gates doing the work they name. ")
+    return (sentence * 24).strip()
+
+
+def build_script_tree_honest():
+    """The honest path: read a source, write its
+    journal bits, next step — seven iterations,
+    opening to filed brief."""
+    chat = [
+        _identify_step("tree-honest"),
+        {"respond": _native_call(
+            "fc-t-1", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-t-2", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-t-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-t-4", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1 + TREE_NOTE_2}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-t-5", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-t-6", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1 + TREE_NOTE_2
+             + TREE_NOTE_3}),
+         "action": None},
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_tree_journal_gate():
+    """The step gate's witness: the second read is
+    worked ahead of the first step's journal bits —
+    the gate corrects, the step stays; the journal
+    writes then advance the walk through contents
+    already in the room."""
+    chat = [
+        _identify_step("tree-journal-gate"),
+        {"respond": _native_call(
+            "fc-tg-1", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 2 — worked ahead: the second source read
+        # before the first step's journal bits stand.
+        {"respond": _native_call(
+            "fc-tg-2", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tg-3", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tg-4", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1 + TREE_NOTE_2}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tg-5", "sandbox-read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tg-6", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1 + TREE_NOTE_2
+             + TREE_NOTE_3}),
+         "action": None},
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_tree_batch():
+    """The batch witness (the run-3 shape, judged
+    text): one response carrying all three reads;
+    the presentation stays at the first gather step,
+    and per-step journal writes walk it through the
+    contents already in the room."""
+    chat = [
+        _identify_step("tree-batch"),
+        {"respond": _text_tool_requests("batch-1", [
+            {"tool": "sandbox.read",
+             "parameters": {
+                 "path": "sources/stock-take.md"}},
+            {"tool": "sandbox.read",
+             "parameters": {
+                 "path": "sources/a3-pass.md"}},
+            {"tool": "sandbox.read",
+             "parameters": {
+                 "path": "sources/index-tail.md"}}]),
+         "action": None},
+        {"respond": _text_tool_requests("batch-2", [
+            {"tool": "sandbox.write",
+             "parameters": {
+                 "path": "scratch/journal.md",
+                 "content": TREE_NOTE_1}}]),
+         "action": None},
+        {"respond": _text_tool_requests("batch-3", [
+            {"tool": "sandbox.write",
+             "parameters": {
+                 "path": "scratch/journal.md",
+                 "content": TREE_NOTE_1 + TREE_NOTE_2}}]),
+         "action": None},
+        {"respond": _text_tool_requests("batch-4", [
+            {"tool": "sandbox.write",
+             "parameters": {
+                 "path": "scratch/journal.md",
+                 "content": TREE_NOTE_1 + TREE_NOTE_2
+                 + TREE_NOTE_3}}]),
+         "action": None},
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_tree_native():
+    """The native lane on the corrected Groq
+    transport: every call travels the bounded mode —
+    the identify call first, the probe's five trials
+    (the NVIDIA raw seam's, rehearsal furniture),
+    then the loop's calls under their canonical
+    dotted names, the Groq route carrying no name
+    translation. One call is ungranted — a write to
+    a stocked source, outside the write grant's
+    scratch scope — and the doorway refuses it."""
+    bounded = [
+        _identify_step("tree-native"),
+        *_probe_steps(),
+        {"respond": _native_call(
+            "fc-tn-1", "sandbox.read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tn-2", "sandbox.write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tn-3", "sandbox.read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # The ungranted call: sandbox.write stands
+        # granted under scratch/ alone.
+        {"respond": _native_call(
+            "fc-tn-4", "sandbox.write",
+            {"path": "sources/stock-take.md",
+             "content": "an overwrite the grants do "
+                        "not carry"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tn-5", "sandbox.write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1 + TREE_NOTE_2}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tn-6", "sandbox.read",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-tn-7", "sandbox.write",
+            {"path": "scratch/journal.md",
+             "content": TREE_NOTE_1 + TREE_NOTE_2
+             + TREE_NOTE_3}),
+         "action": None},
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": [], "chat-raw-bounded": bounded}
+
+
 def _run_scenario(work_dir, *, scenario, brief,
                   manifest_hash, seal_entries, stage_fn,
                   script, grounds, adapter_mode="native",
@@ -1605,7 +1873,8 @@ def _run_scenario(work_dir, *, scenario, brief,
                   delivery_declaration=False,
                   delivery_evidence_declaration=False,
                   delivery_floor_declaration=False,
-                  presentation_declaration=False):
+                  presentation_declaration=False,
+                  transport="nvidia"):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
     Returns the report dict (also written to
@@ -1717,7 +1986,9 @@ def _run_scenario(work_dir, *, scenario, brief,
     # that shows a whole file stays within the
     # population's package bound.
     worked_example = None
-    if presentation_declaration:
+    if presentation_declaration and \
+            presentation_declaration != \
+            tool_policy.PRESENTATION_CONTRACT_V3:
         glossary_addresses = []
         for entry in (content or {}).get("glossary") or []:
             if isinstance(entry, dict) and isinstance(
@@ -1764,16 +2035,31 @@ def _run_scenario(work_dir, *, scenario, brief,
                 # cannot be made: no example stands.
                 worked_example = None
 
-    # ASSEMBLE — the adapter on the NVIDIA route's seam,
-    # its transport the stub helper; generation under the
+    # ASSEMBLE — the adapter on the route's seam, its
+    # transport the stub helper; generation under the
     # probe contract and the exec catalogue contract,
     # grants the combined set (the working-set contract's
-    # population).
-    adapter = OpenAICompatibleAdapter(
-        endpoint=ENDPOINT, model=MODEL, timeout=300.0,
-        route=ROUTE)
-    install_connector_transport(
-        adapter, str(stub_path), MODEL)
+    # population). The native-lane scenario (the room
+    # rebuild) installs the Groq connector transport —
+    # the transport the live GPT-OSS seat's driver
+    # installs, with the BD-1 correction in it — over
+    # the same stub helper, which speaks the bounded
+    # envelope that transport parses; the probe's raw
+    # call below stays the NVIDIA seam's in every
+    # scenario (rehearsal furniture, named in the
+    # native-lane scenario's grounds).
+    if transport == "groq":
+        adapter = OpenAICompatibleAdapter(
+            endpoint=ENDPOINT, model=MODEL, timeout=300.0,
+            route="groq")
+        install_groq_connector_transport(
+            adapter, str(stub_path), MODEL)
+    else:
+        adapter = OpenAICompatibleAdapter(
+            endpoint=ENDPOINT, model=MODEL, timeout=300.0,
+            route=ROUTE)
+        install_connector_transport(
+            adapter, str(stub_path), MODEL)
     gen.propose(
         tok["orch-1"], "crew-1", part="part-A",
         role_requirements="a model able to pull source "
@@ -2592,6 +2878,152 @@ def run_rehearsal(work_dir):
         delivery_evidence_declaration=True,
         delivery_floor_declaration=True,
         presentation_declaration="staged-onboarding-v2")
+    # The room rebuild's scenarios (2026-11-25): the
+    # length configuration's case additionally carrying
+    # the office-authored process tree as its own
+    # component, under the process-tree presentation
+    # contract. The v1/v2 scenarios above stand as
+    # their control: their seals, packages and counts
+    # are exactly what they were.
+    tree_brief = _commission_brief(
+        ASSIGNMENT_COMBINED, manifest_hash,
+        glossary=GLOSSARY,
+        journal="scratch/journal.md",
+        onboarding=ONBOARDING,
+        delivery={"destination": "scratch/brief.md",
+                  "route": "contribution-v1"},
+        role_memory=ROLE_MEMORY,
+        opening={
+            "worker_statements": [
+                "The job is to read the three "
+                "sources and write the brief; the "
+                "deliverable is the file "
+                "scratch/brief.md."],
+            "office_answers": [
+                "Confirmed: the sources stand in "
+                "sources/, named in the glossary; "
+                "the brief is plain prose, at most "
+                "~600 words."],
+            "settled": [
+                "No work product is produced in "
+                "the opening; the work happens in "
+                "the room."],
+            "unresolved": []},
+        delivery_evidence=DELIVERY_EVIDENCE,
+        delivery_floor=DELIVERY_FLOOR,
+        process_tree=PROCESS_TREE)
+    tree_grounds = (
+        "Process-tree rehearsal (the room rebuild, "
+        "Ben's \"Make it so\" 2026-11-25): the "
+        "scripted stand-in's probe trials settled 5/5 "
+        "native, and the combined configuration's "
+        "judgement is native. The generation seals "
+        "the process-tree presentation contract and "
+        "the case's delivery, delivery-evidence and "
+        "delivery-length declarations; the case "
+        "carries the office-authored process tree. "
+        "Rehearsal furniture by a scripted stand-in "
+        "examiner.")
+    tree_honest = _run_scenario(
+        work_dir / "tree-honest",
+        scenario="tree-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_tree_honest(),
+        grounds=tree_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="process-tree-v1")
+    tree_journal_gate = _run_scenario(
+        work_dir / "tree-journal-gate",
+        scenario="tree-journal-gate",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_tree_journal_gate(),
+        grounds=tree_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="process-tree-v1")
+    tree_batch = _run_scenario(
+        work_dir / "tree-batch",
+        scenario="tree-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_tree_batch(),
+        grounds=(
+            "Process-tree rehearsal (the room "
+            "rebuild): the scripted stand-in's probe "
+            "trials settled 5/5 native — the "
+            "recommendation stands as evidence — and "
+            "the stand-in examiner judges TEXT for "
+            "this scenario, the batch shape being the "
+            "text contract's own (three requests in "
+            "one response, as demo-gptoss3's third "
+            "iteration reached for natively). The "
+            "generation seals the process-tree "
+            "presentation contract and the case's "
+            "delivery, delivery-evidence and "
+            "delivery-length declarations; the case "
+            "carries the office-authored process "
+            "tree. Rehearsal furniture by a scripted "
+            "stand-in examiner."),
+        adapter_mode="text",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="process-tree-v1")
+    tree_native = _run_scenario(
+        work_dir / "tree-native",
+        scenario="tree-native",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_tree_native(),
+        grounds=(
+            "Native-lane rehearsal (the room "
+            "rebuild's BD-1 correction, Ben's "
+            "direction 2026-11-25: \"We need to allow "
+            "him to use his tools\"): the scripted "
+            "stand-in's probe trials settled 5/5 "
+            "native, and the configuration is judged "
+            "NATIVE on the corrected Groq transport — "
+            "the transport this scenario installs, "
+            "which carries the sealed tools offered "
+            "natively, a call-permitting tool_choice "
+            "and the staged disable_tool_validation "
+            "to the wire. The probe stage's raw call "
+            "rides the NVIDIA seam's raw call, as in "
+            "every scenario here — rehearsal "
+            "furniture; the loop's own calls, the "
+            "ones the lane witnesses, travel the "
+            "Groq transport. The generation seals "
+            "the process-tree presentation contract "
+            "and the case's delivery, "
+            "delivery-evidence and delivery-length "
+            "declarations. Rehearsal furniture by a "
+            "scripted stand-in examiner."),
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="process-tree-v1",
+        transport="groq")
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
@@ -2610,4 +3042,8 @@ def run_rehearsal(work_dir):
             "length_order_stage": length_order_stage,
             "pointer": pointer,
             "toolshape": toolshape,
-            "toolshape_refused": toolshape_refused}
+            "toolshape_refused": toolshape_refused,
+            "tree_honest": tree_honest,
+            "tree_journal_gate": tree_journal_gate,
+            "tree_batch": tree_batch,
+            "tree_native": tree_native}

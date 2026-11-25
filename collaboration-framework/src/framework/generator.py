@@ -150,8 +150,9 @@ def _worked_example_problem(example, glossary,
         return ("the worked example is not a call and "
                 "its result (a mapping naming exactly "
                 "tool, path and result)")
-    if presentation_declaration == \
-            _tool_policy.PRESENTATION_CONTRACT_V2:
+    if presentation_declaration in (
+            _tool_policy.PRESENTATION_CONTRACT_V2,
+            _tool_policy.PRESENTATION_CONTRACT_V3):
         return _worked_example_problem_read(
             example, glossary)
     if example.get("tool") != "sandbox.list":
@@ -200,6 +201,103 @@ def _worked_example_problem(example, glossary,
                 "internally consistent (its hash and "
                 "byte count are its content's, its path "
                 "the call's)")
+    return None
+
+
+def _process_tree_problem(content):
+    """The process tree's preflight (the room rebuild):
+    the problem the pinned case's process_tree
+    component stands under for a generation declaring
+    the process-tree presentation contract, or None
+    where it may seal. The tree seals only in its
+    sealed form — a mapping naming exactly a root and
+    its steps; the steps in order: orient, one gather
+    step per declared source, compose, deliver — and
+    its gather addresses must be the case's declared
+    delivery evidence, in declaration order: the tree
+    walks the declared sources, no others and none
+    missing. The loop derives the tree from the case
+    and the checker re-derives it, so a seal naming
+    anything else would claim a walk no record
+    derives."""
+    tree = (content or {}).get("process_tree")
+    if not isinstance(tree, dict) or \
+            set(tree) != {"root", "steps"}:
+        return ("the process-tree presentation "
+                "declaration was asked to be sealed but "
+                "the pinned case carries no process "
+                "tree as its own component (a mapping "
+                "naming exactly its root and its "
+                "steps); the tree is sealed in the "
+                "case at assembly, or the contract "
+                "does not stand")
+    root = tree.get("root")
+    steps = tree.get("steps")
+    if not isinstance(root, str) or not root or \
+            not isinstance(steps, list) or not steps:
+        return ("the pinned case's process tree is "
+                "not well-formed (a root naming the "
+                "brief's destination, and a non-empty "
+                "list of steps)")
+    kinds = []
+    addresses = []
+    for step in steps:
+        if not isinstance(step, dict):
+            return ("the pinned case's process tree "
+                    "carries a step that is not a "
+                    "mapping")
+        kind = step.get("node")
+        if kind in ("orient", "compose", "deliver"):
+            if set(step) != {"node"}:
+                return ("the pinned case's process "
+                        "tree carries a step standing "
+                        "in another shape than the "
+                        "sealed form")
+            kinds.append(kind)
+        elif kind == "gather":
+            if set(step) != {"node", "address"} or \
+                    not isinstance(
+                        step.get("address"), str) or \
+                    not step.get("address"):
+                return ("the pinned case's process "
+                        "tree carries a gather step "
+                        "standing in another shape than "
+                        "the sealed form (its node and "
+                        "its source's address)")
+            kinds.append(kind)
+            addresses.append(step["address"])
+        else:
+            return ("the pinned case's process tree "
+                    "carries a step of a kind the tree "
+                    "does not name")
+    if kinds[0] != "orient" or \
+            kinds[-2:] != ["compose", "deliver"] or \
+            any(kind != "gather"
+                for kind in kinds[1:-2]) or \
+            "gather" not in kinds:
+        return ("the pinned case's process tree does "
+                "not walk the sealed order (orient, "
+                "one gather step per declared source, "
+                "compose, deliver)")
+    evidence = (content or {}).get("delivery_evidence")
+    declared = evidence.get("addresses") \
+        if isinstance(evidence, dict) else None
+    if not isinstance(declared, list) or \
+            addresses != declared:
+        return ("the pinned case's process tree "
+                "gathers addresses other than the "
+                "case's declared delivery evidence, or "
+                "in another order; the tree walks the "
+                "declared sources in declaration order")
+    delivery = (content or {}).get("delivery")
+    destination = delivery.get("destination") \
+        if isinstance(delivery, dict) else None
+    if destination is not None and root != destination:
+        return ("the pinned case's process tree "
+                "names a root other than the case's "
+                "declared delivery destination; the "
+                "tree's root is the brief the delivery "
+                "files")
     return None
 
 
@@ -607,7 +705,8 @@ class Generator:
         if isinstance(presentation_declaration, str) \
                 and presentation_declaration not in (
                     _tool_policy.PRESENTATION_CONTRACT,
-                    _tool_policy.PRESENTATION_CONTRACT_V2):
+                    _tool_policy.PRESENTATION_CONTRACT_V2,
+                    _tool_policy.PRESENTATION_CONTRACT_V3):
             # The pointer-rule successor (INDEX 568): the
             # declaration names one of the two contracts
             # the framework knows — v1, or v2 under which
@@ -626,6 +725,30 @@ class Generator:
                         "rule successor; a generation seals "
                         "one of the two or neither"],
                     "seat": seat_id}
+        if presentation_declaration == \
+                _tool_policy.PRESENTATION_CONTRACT_V3:
+            # The process-tree successor (the room
+            # rebuild): the contract's whole shape is
+            # the tree sealed in the case — the pinned
+            # case must carry the office-authored
+            # process tree as its own component, in the
+            # sealed form (a root and the steps in
+            # order: orient, one gather step per
+            # declared source, compose, deliver), and
+            # its gather steps must name the case's
+            # declared delivery evidence in declaration
+            # order — the tree walks the declared
+            # sources, no others and none missing.
+            # Anything else would seal a presentation
+            # whose tree the record cannot derive.
+            # Fail preflight whole, as the other
+            # declarations do.
+            tree_problem = _process_tree_problem(
+                (eff.get("content") or {}))
+            if tree_problem is not None:
+                return {"ok": False,
+                        "problems": [tree_problem],
+                        "seat": seat_id}
         if presentation_declaration and not combined:
             # The staged-onboarding contract's population
             # is the combined configuration alone (INDEX

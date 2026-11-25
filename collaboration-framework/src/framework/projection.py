@@ -140,6 +140,16 @@ _CASE_CONTENT = _fields({
     # adjudicated as a delivery.
     "delivery_floor": _opt(_obj({
         "min_words": _INT})),
+    # The room rebuild's case component (2026-11-25):
+    # the office-authored process tree sealed in the
+    # case — its root and its steps in order, each step
+    # naming its node and, for a gather step, its
+    # address.
+    "process_tree": _opt(_obj({
+        "root": _STR,
+        "steps": _list(_fields({
+            "node": _STR, "address": _STR},
+            req=("node",)))})),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({

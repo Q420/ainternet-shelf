@@ -1323,6 +1323,567 @@ def _delivery_evidence_missing(events, dispatches,
     return [address for address in addresses
             if not _evidence_address_stands(
                 working_set["entries"], requested, address)]
+
+
+# ------------------------------------------------------------
+# The process-tree contract (the room rebuild, Ben's
+# "Make it so" 2026-11-25 15:02 MST; presentation
+# contract process-tree-v1). One opening package — no
+# staged acknowledge wakes — then one package per step
+# of the office-authored tree sealed in the case:
+# ORIENT → one GATHER step per declared source, in
+# declaration order → COMPOSE → DELIVER, root the brief
+# filed at the delivery destination. Every value in a
+# tree package derives from the record alone — the
+# pinned case's components, the sealed declarations,
+# the recorded outcomes — so the checker re-derives the
+# package whole, exactly as it re-derives the staged
+# contracts'. The wording below is the presentation's
+# own; the checker's copies stand in checker.py.
+TREE_COVER_FIRST = (
+    "You are {seat}, the {role} in this office, "
+    "assembled for one job. The shape of the work here "
+    "is simple: you are woken with a package, you act, "
+    "and the record keeps everything. This package is "
+    "your whole opening — your memory, your case, your "
+    "files, your tools and your journal, all of it once "
+    "— and the process tree below walks the job step by "
+    "step from here: one step in front of you at a "
+    "time, each step's content presented at its step "
+    "and never twice. Nothing needs acknowledging; "
+    "your first answer is work. The job: {headline}. "
+    "The deliverable: {deliverable}.")
+TREE_DIRECTION_OPENING = (
+    "Your opening package: everything in it is "
+    "presented once, here — your memory, the process "
+    "tree that walks this job, your case's essentials, "
+    "your files with their ways in, your tool "
+    "catalogue, and your journal with its contract. "
+    "Begin work in your first answer.")
+TREE_DIRECTION_STEP = (
+    "A step package: the tree as it stands, your "
+    "current step spelled out, your journal as you "
+    "left it, and at most this step's fresh content — "
+    "presented once, at its step. Everything else "
+    "stands as pointers.")
+TREE_FILES_INTRO = (
+    "Your briefcase holds the job's files — the files "
+    "your task needs. What stands below are pointers, "
+    "not contents: each file's address, what it is, "
+    "and its way in — the exact call that pulls it, "
+    "naming a tool you hold. The tree walks them one "
+    "at a time: when a file's gather step is current, "
+    "read it whole, and its content is presented to "
+    "you at that step, once. What you pull is yours "
+    "from your room at any time — the tree governs "
+    "what stands in front of you, not what you may "
+    "reach for.")
+# The journal's contract under the tree contract: the
+# calibration's contract text, with the carriage truth
+# of this contract — under the tree the journal rides
+# in every package verbatim, exactly as he left it,
+# because the journal is the method: the brief is
+# compiled from its entries at COMPOSE.
+TREE_JOURNAL_LABEL = (
+    "your journal — your notebook: notes, decisions, "
+    "where you left off. Yours to write and rewrite; "
+    "orientation, not record and not memory. Keep it "
+    "as you work: after each file you read, log its "
+    "name and the key points you took from it, in "
+    "one or two plain lines. The office reads your "
+    "journal at every wake to resume you, and the "
+    "director may audit it; nothing parses it — it "
+    "is read as you wrote it. It rides in every "
+    "package, exactly as you left it, below.")
+TREE_COMPOSE_POINTS = [
+    "what this framework is",
+    "what has actually been proven",
+    "what has not been proven",
+    "what remains to be built"]
+TREE_COMPOSE_INSTRUCTION = (
+    "Compile the brief from your journal entries — "
+    "the bits you logged at each gather step are the "
+    "brief's substance, in your own words. Your "
+    "journal stands above, verbatim. Cover the four "
+    "points: what this framework is; what has "
+    "actually been proven; what has not been proven; "
+    "what remains to be built. Stay accurate to what "
+    "you gathered; invent nothing; where the sources "
+    "disagree with each other, say so. Pull a source "
+    "again only if a gap shows in your entries — its "
+    "pointer stands in your working set. When the "
+    "brief is ready, move to DELIVER: your "
+    "contribution is the delivery.")
+TREE_DELIVER_INSTRUCTION = (
+    "Deliver now: answer with outcome \"contribute\" "
+    "and the brief's text as its text. The "
+    "contribution is the delivery — the office files "
+    "it at {destination}. The standing gates "
+    "adjudicate it as they stand: the evidence (every "
+    "gather step's source read and standing in the "
+    "record) and the length floor the figures name. "
+    "Nothing else is asked of you at this step.")
+TREE_DELIVER_AGAIN_INSTRUCTION = (
+    "A contribution stands in the record, set aside "
+    "unfiled by a gate — its correction stands in "
+    "this package. Deliver again: answer with outcome "
+    "\"contribute\" and the brief's text as its text. "
+    "The contribution is the delivery — the office "
+    "files it at {destination}.")
+TREE_ORIENT_INSTRUCTION = (
+    "Take this opening in — it is the whole of it, "
+    "and nothing in it will be presented again. Your "
+    "first step is the tree's first gather step: "
+    "read {address} whole, then log its journal "
+    "bits. You may begin that work in your first "
+    "answer; no acknowledgement is asked or needed.")
+TREE_GATHER_INSTRUCTION = (
+    "Read {address} whole: {tool} on {address} pulls "
+    "the whole file. Read it, don't list it — a "
+    "listing gives you its shape, not its words. "
+    "Then log the journal bits for this file: a "
+    "sandbox.write to {journal} carrying your "
+    "journal as it stands plus one or two plain "
+    "lines naming this file and the key points you "
+    "took from it. When the read stands carried and "
+    "the journal bits stand after it, this step is "
+    "done and the tree moves on.")
+TREE_GATHER_READ_STANDS_INSTRUCTION = (
+    "{address} stands read — its content is in front "
+    "of you at this step, once. What this step still "
+    "needs is the journal move: a sandbox.write to "
+    "{journal} carrying your journal as it stands "
+    "plus one or two plain lines naming this file "
+    "and the key points you took from it. When the "
+    "journal bits stand after the read, this step is "
+    "done and the tree moves on.")
+# The step gate's texts (the room rebuild): where the
+# current GATHER step stands incomplete at a wake and
+# the record shows it partly done or work standing
+# ahead of it, the wake's package carries this
+# correction, in the INDEX 475 shape the family's
+# gates use — what arrived, what the step still
+# needs, and the instruction. Both texts are pure
+# functions of the gate event's own payload, so the
+# checker re-derives them byte-exact from the record;
+# its copies stand in checker.py.
+def _step_gate_what_arrived(missing, address,
+                            ahead_address):
+    if "read" in missing:
+        return (f"work ahead of the tree — "
+                f"{ahead_address} stands gathered — "
+                f"while this step's file, {address}, "
+                f"has not been read")
+    if ahead_address is not None:
+        return (f"your read of {address} — the whole "
+                f"file stands gathered in the record — "
+                f"and work ahead of the tree: "
+                f"{ahead_address} stands gathered too, "
+                f"before this step completed")
+    return (f"your read of {address} — the whole file "
+            f"stands gathered in the record")
+
+
+STEP_GATE_INSTRUCTION = (
+    "Nothing was refused, and nothing is lost: every "
+    "call you made stands executed in the record. "
+    "Presentation walks the tree one step at a time, "
+    "and this step is still current — it completes "
+    "when {needs}. Then the tree moves on and the "
+    "next step's content stands in front of you. "
+    "Work already gathered for later steps stands in "
+    "the record and will be presented at its step, "
+    "once; you do not need to pull it again.")
+
+
+def _step_gate_needs(missing, address, journal_path):
+    parts = []
+    if "read" in missing:
+        parts.append(
+            f"the read of {address} stands carried "
+            f"(read the file whole — a listing gives "
+            f"its shape, not its words)")
+    if "journal" in missing:
+        parts.append(
+            f"the journal bits for {address} stand "
+            f"in {journal_path} after that read (one "
+            f"or two plain lines naming the file and "
+            f"the key points you took from it)")
+    return " and ".join(parts)
+
+
+def _step_gate_correction(step, address, missing,
+                          ahead_address, journal_path):
+    """The correction a step gate leaves for the
+    wake's package, derived from the gate event's
+    facts: what arrived, the step it names, what the
+    step still needs, and the instruction."""
+    return {
+        "what_arrived": _step_gate_what_arrived(
+            missing, address, ahead_address),
+        "step": step,
+        "address": address,
+        "missing": list(missing),
+        "instruction": STEP_GATE_INSTRUCTION.format(
+            needs=_step_gate_needs(
+                missing, address, journal_path))}
+
+
+# The stage gate's texts under the tree contract: the
+# contribution door opens at DELIVER, and a
+# contribution offered while the tree stands at an
+# earlier step is set aside unfiled and answered with
+# this correction — the stage gate's function, in the
+# tree's own words. Pure functions of the gate
+# event's payload, as the family's are.
+def _tree_stage_gate_what_arrived(stage):
+    if stage.startswith("gather:"):
+        return (f"a contribution, offered while the "
+                f"tree stood at the gather step for "
+                f"{stage[len('gather:'):]}, before "
+                f"the tree reached the delivery step")
+    return (f"a contribution, offered while the tree "
+            f"stood at the {stage} step, before the "
+            f"tree reached the delivery step")
+
+
+TREE_STAGE_GATE_INSTRUCTION = (
+    "Nothing was filed. The contribution door opens "
+    "when the tree reaches DELIVER: walk the steps — "
+    "read each file the tree names whole, log its "
+    "journal bits, and the tree moves on; at COMPOSE "
+    "you compile the brief from your journal "
+    "entries, and at DELIVER your contribution is "
+    "the delivery and the office files it. The text "
+    "you sent stands in the record, set aside "
+    "unfiled; if it is the brief you mean to "
+    "deliver, send it again when the tree reaches "
+    "DELIVER.")
+
+
+def _tree_nodes(content):
+    """The sealed process tree's node list, from the
+    pinned case's own process_tree component (the room
+    rebuild): the office-authored tree the case
+    carries — a root (the brief's destination) and the
+    steps in order: orient, one gather step per
+    declared source, compose, deliver. Returns
+    {"root": root, "nodes": [{"id", "kind",
+    "address"?}, ...]} where the component stands
+    well-formed in exactly the sealed shape, and None
+    anywhere else — a case carrying no tree, or a
+    misshapen one, stands under no tree, and an
+    assembly sealed under the tree contract without
+    one cannot be generated (the generator's
+    preflight) or presented (the loop fails closed)."""
+    tree = (content or {}).get("process_tree")
+    if not isinstance(tree, dict):
+        return None
+    if set(tree) != {"root", "steps"}:
+        return None
+    root = tree.get("root")
+    steps = tree.get("steps")
+    if not isinstance(root, str) or not root:
+        return None
+    if not isinstance(steps, list) or not steps:
+        return None
+    nodes = []
+    for step in steps:
+        if not isinstance(step, dict):
+            return None
+        kind = step.get("node")
+        if kind in ("orient", "compose", "deliver"):
+            if set(step) != {"node"}:
+                return None
+            nodes.append({"id": kind, "kind": kind})
+        elif kind == "gather":
+            if set(step) != {"node", "address"}:
+                return None
+            address = step.get("address")
+            if not isinstance(address, str) or \
+                    not address:
+                return None
+            nodes.append({"id": f"gather:{address}",
+                          "kind": "gather",
+                          "address": address})
+        else:
+            return None
+    kinds = [node["kind"] for node in nodes]
+    if kinds[0] != "orient" or \
+            kinds[-2:] != ["compose", "deliver"] or \
+            any(kind != "gather"
+                for kind in kinds[1:-2]) or \
+            "gather" not in kinds:
+        return None
+    return {"root": root, "nodes": nodes}
+
+
+def _tree_requested(events, head):
+    """The record's requested parameters at a head,
+    keyed by request identity — the same record fact
+    the evidence computation reads."""
+    requested = {}
+    for ev in events:
+        if ev["event_seq"] > head or \
+                ev["type"] != "TOOL_REQUESTED":
+            continue
+        payload = ev["payload"]
+        parameters = payload.get("parameters")
+        if isinstance(parameters, dict):
+            requested[payload.get("request_id")] = \
+                parameters
+    return requested
+
+
+def _tree_read_stands(entries, requested, address):
+    """Whether one address's whole content stands
+    carried at the head, and the position of the read
+    that stands: the standing evidence computation
+    (_evidence_address_stands) weighed over the
+    working set's entries, with the satisfying read's
+    outcome position returned beside the verdict — a
+    whole read's own position, or, where carried
+    ranges together cover the file, the latest of the
+    covering ranges' positions. (False, None) where
+    the content does not stand."""
+    mine = [entry for entry in entries
+            if entry.get("path") == address]
+    for entry in mine:
+        if entry.get("tool") == "sandbox.read" and \
+                entry.get("content_carried"):
+            return True, entry.get("outcome_event_seq")
+    if not _evidence_address_stands(
+            entries, requested, address):
+        return False, None
+    seqs = [entry.get("outcome_event_seq")
+            for entry in mine
+            if entry.get("tool") == "sandbox.read_range"
+            and entry.get("content_carried")
+            and isinstance(
+                entry.get("outcome_event_seq"), int)
+            and not isinstance(
+                entry.get("outcome_event_seq"), bool)]
+    return True, (max(seqs) if seqs else None)
+
+
+def _tree_journal_writes(events, dispatches, requested,
+                         instance_id, head, journal_path):
+    """The journal's standing writes at a head: every
+    successful sandbox.write outcome of the instance
+    addressed to the journal's path, in outcome order,
+    as (outcome position, content) pairs — the write's
+    content standing in the record's requested
+    parameters, exactly as the executor wrote it (the
+    write performer replaces the file with the
+    parameter's content whole). The journal's content
+    at the head is the last pair's content, or empty
+    where no write stands."""
+    writes = []
+    for ev in events:
+        if ev["event_seq"] > head or \
+                ev["type"] != "TOOL_OUTCOME":
+            continue
+        payload = ev["payload"]
+        if payload.get("outcome") != "result":
+            continue
+        dispatch = dispatches.get(
+            payload.get("dispatch_id"))
+        if dispatch is None or \
+                dispatch.get("instance_id") != \
+                instance_id or \
+                dispatch.get("tool") != "sandbox.write":
+            continue
+        parameters = requested.get(
+            payload.get("request_id")) or {}
+        if parameters.get("path") != journal_path:
+            continue
+        content = parameters.get("content")
+        writes.append((ev["event_seq"],
+                       content if isinstance(
+                           content, str) else ""))
+    return writes
+
+
+def _tree_state(events, dispatches, instance_id, head,
+                content, iteration):
+    """The tree's state at one package head, derived
+    from the record alone: each node's state (done /
+    current / pending), the current node, the gather
+    facts the step gate weighs, the journal's content
+    as it stands, and the working set the derivation
+    weighed. Returns None where the case carries no
+    well-formed tree.
+
+    The derivation, in the tree's order: ORIENT is
+    current at the first wake and done at every later
+    one. A GATHER step is done iff its source's read
+    stands carried (the standing evidence computation)
+    AND a journal write stands after that read — the
+    writes consumed in step order, one write closing
+    at most one step, so a single write after a batch
+    of reads cannot close two steps and skip a step's
+    presentation. COMPOSE is done where a contribution
+    of the instance stands (and the gathers stand
+    done); DELIVER is done where the office's filing
+    stands. The current node is the first node not
+    done, in the tree's order."""
+    tree = _tree_nodes(content)
+    if tree is None:
+        return None
+    nodes = tree["nodes"]
+    working_set = _derive_working_set(
+        events, dispatches, instance_id, head)
+    entries = working_set["entries"]
+    requested = _tree_requested(events, head)
+    journal_path = _staged_journal_path(content)
+    writes = _tree_journal_writes(
+        events, dispatches, requested, instance_id,
+        head, journal_path) \
+        if journal_path is not None else []
+    gather_facts = {}
+    consumed = 0
+    for node in nodes:
+        if node["kind"] != "gather":
+            continue
+        stands, read_seq = _tree_read_stands(
+            entries, requested, node["address"])
+        journal_stands = False
+        if stands and read_seq is not None:
+            for write_seq, _written in writes:
+                if write_seq > max(read_seq, consumed):
+                    journal_stands = True
+                    consumed = write_seq
+                    break
+        gather_facts[node["id"]] = {
+            "read_stands": stands,
+            "read_seq": read_seq,
+            "journal_stands": journal_stands}
+    gathers_done = all(
+        gather_facts[node["id"]]["read_stands"]
+        and gather_facts[node["id"]]["journal_stands"]
+        for node in nodes if node["kind"] == "gather")
+    contribution_stands = any(
+        ev["type"] == "CONTRIBUTION"
+        and ev["event_seq"] <= head
+        and (ev["payload"].get("contribution_id")
+             == instance_id
+             or instance_id in (ev.get("affected")
+                                or []))
+        for ev in events)
+    filed = any(
+        ev["type"] == "DELIVERABLE_FILED"
+        and ev["event_seq"] <= head
+        and ev["payload"].get("instance_id")
+        == instance_id
+        for ev in events)
+    states = {}
+    current = None
+    for node in nodes:
+        kind = node["kind"]
+        if kind == "orient":
+            done = iteration > 1
+        elif kind == "gather":
+            facts = gather_facts[node["id"]]
+            done = facts["read_stands"] and \
+                facts["journal_stands"]
+        elif kind == "compose":
+            done = gathers_done and contribution_stands
+        else:
+            done = filed
+        states[node["id"]] = "done" if done else "pending"
+        if not done and current is None:
+            current = node
+            states[node["id"]] = "current"
+    journal_content = writes[-1][1] if writes else ""
+    return {
+        "root": tree["root"],
+        "nodes": nodes,
+        "states": states,
+        "current": current,
+        "gather_facts": gather_facts,
+        "journal_path": journal_path,
+        "journal_content": journal_content,
+        "working_set": working_set,
+        "entries": entries,
+        "requested": requested}
+
+
+def _tree_step_gate_owed(state):
+    """What the step gate owes at a wake, from the
+    derived tree state: (step id, address, missing,
+    ahead address) where the current node is a GATHER
+    step standing incomplete AND the record shows work
+    standing ahead of it — a later gather step's read
+    stands carried. The correction names what the
+    current step still needs: the journal bits alone
+    where its own read already stands, the read and
+    then the journal bits where it does not. None
+    anywhere else (the brief's own condition: the
+    correction answers work requested ahead of the
+    current step): a step just reached, or a step
+    whose read stands with nothing ahead of it, is
+    instructed by its step's own text in the ordinary
+    walk, not corrected — the honest path carries no
+    gate events."""
+    current = state["current"]
+    if current is None or \
+            current["kind"] != "gather":
+        return None
+    facts = state["gather_facts"][current["id"]]
+    if facts["read_stands"] and facts["journal_stands"]:
+        return None
+    ahead = None
+    seen_current = False
+    for node in state["nodes"]:
+        if node["id"] == current["id"]:
+            seen_current = True
+            continue
+        if not seen_current or \
+                node["kind"] != "gather":
+            continue
+        if state["gather_facts"][node["id"]][
+                "read_stands"]:
+            ahead = node["address"]
+            break
+    if ahead is None:
+        return None
+    missing = ["journal"] if facts["read_stands"] \
+        else ["read", "journal"]
+    return (current["id"], current["address"],
+            missing, ahead)
+
+
+def _tree_presented_addresses(events, dispatches,
+                              instance_id, content,
+                              iteration_numbers):
+    """The gather addresses whose content has already
+    been presented at an earlier wake of this run,
+    derived from the record alone: for each earlier
+    iteration (its number and its package head, from
+    the record's iteration events), the tree state at
+    that head — where the iteration's current node was
+    a gather step whose read stood, that step's
+    content stood in front of the worker at that
+    wake, presented once, at its step. The current
+    wake presents its own step's content only where
+    the address does not stand in this set."""
+    presented = set()
+    for number, head in iteration_numbers:
+        earlier = _tree_state(
+            events, dispatches, instance_id, head,
+            content, number)
+        if earlier is None:
+            continue
+        current = earlier["current"]
+        if current is None or \
+                current["kind"] != "gather":
+            continue
+        facts = earlier["gather_facts"][current["id"]]
+        if facts["read_stands"]:
+            presented.add(current["address"])
+    return presented
+
+
 STAGED_DIRECTIONS = {
     "memory": (
         "Onboarding stage 1 of 4: your memory. Nothing "
@@ -1562,8 +2123,9 @@ def _worked_example_honoured(example, contract=None):
     if not isinstance(example, dict) or \
             set(example) != {"tool", "path", "result"}:
         return None
-    if contract == \
-            _tool_policy.PRESENTATION_CONTRACT_V2:
+    if contract in (
+            _tool_policy.PRESENTATION_CONTRACT_V2,
+            _tool_policy.PRESENTATION_CONTRACT_V3):
         return _worked_example_read_honoured(example)
     if example.get("tool") != "sandbox.list":
         return None
@@ -1991,7 +2553,8 @@ class Loop:
             "presentation_contract")
         _presentation_declared = _presentation_value in (
             _tool_policy.PRESENTATION_CONTRACT,
-            _tool_policy.PRESENTATION_CONTRACT_V2)
+            _tool_policy.PRESENTATION_CONTRACT_V2,
+            _tool_policy.PRESENTATION_CONTRACT_V3)
         # Round nine's correction pair (INDEX 548): the
         # worked example the files stage presents is the
         # one the generator sealed into the assembly's
@@ -2079,6 +2642,7 @@ class Loop:
             "delivery_length_gate_error": None,
             "tool_shape_gate_correction": None,
             "tool_shape_gate_error": None,
+            "step_gate_correction": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -2917,6 +3481,17 @@ class Loop:
         the package was frozen at, which is the cursor
         range's close."""
         doorway = self.doorway
+        # The step gate (the room rebuild): under the
+        # process-tree contract, a gate owed at this
+        # wake is recorded BEFORE the snapshot, so the
+        # package's head stands after it and its facts
+        # are true at presentation; a gate that cannot
+        # be recorded raises here and the run stalls
+        # runtime_failure — fail closed, as the
+        # family's gates do.
+        if ctx.get("presentation_contract") == \
+                _tool_policy.PRESENTATION_CONTRACT_V3:
+            self._record_step_gate_if_owed(ctx)
         events = doorway.store.all_events()
         state = fold(events, doorway.store.get_run_id())
         head = state["head_seq"]
@@ -3388,14 +3963,31 @@ class Loop:
                 # components, with the case dump, the view
                 # and the delta left out entirely — and its
                 # commitment is stashed for the iteration
-                # event to record.
-                package = self._build_staged_package(
-                    ctx, package, ordered, catalogue)
-                ctx["presentation_hash"] = \
-                    _presentation_hash(
-                        package, ctx.get("working_set_hash"),
-                        pointer_form=ctx.get(
-                            "presentation_contract") == _tool_policy.PRESENTATION_CONTRACT_V2)
+                # event to record. Under the process-tree
+                # successor (the room rebuild) the package
+                # is the tree one — the opening package,
+                # then one step package per tree step —
+                # and its commitment takes the pointer
+                # form: the presented working set stands
+                # in the core verbatim as pointers, beside
+                # the record set's hash.
+                if ctx.get("presentation_contract") == \
+                        _tool_policy.PRESENTATION_CONTRACT_V3:
+                    package = self._build_tree_package(
+                        ctx, package, ordered, catalogue)
+                    ctx["presentation_hash"] = \
+                        _presentation_hash(
+                            package,
+                            ctx.get("working_set_hash"),
+                            pointer_form=True)
+                else:
+                    package = self._build_staged_package(
+                        ctx, package, ordered, catalogue)
+                    ctx["presentation_hash"] = \
+                        _presentation_hash(
+                            package, ctx.get("working_set_hash"),
+                            pointer_form=ctx.get(
+                                "presentation_contract") == _tool_policy.PRESENTATION_CONTRACT_V2)
             else:
                 package = ordered
         return package, head
@@ -3699,6 +4291,430 @@ class Loop:
                 ctx["bounds"]["deadline_seconds"]}
         staged["position"] = base["position"]
         return staged
+
+    def _record_step_gate_if_owed(self, ctx):
+        """The step gate's firing (the room rebuild):
+        at the build of a tree package past the first,
+        where the tree's current GATHER step stands
+        incomplete and the record shows it partly done
+        or work standing ahead of it, record the gate
+        and stash its correction for the package. The
+        derivation runs over the record as it stands
+        before this package's snapshot, so the gate's
+        facts are true at presentation. A gate that
+        cannot be recorded raises here — package
+        construction fails and the run stalls
+        runtime_failure, fail closed, as the family's
+        gates do. The worker's work is never refused:
+        the gate governs only the presentation."""
+        ctx["step_gate_correction"] = None
+        if ctx["iterations"] < 1:
+            return
+        doorway = self.doorway
+        events = doorway.store.all_events()
+        state = doorway.state()
+        head = state["head_seq"]
+        tstate = _tree_state(
+            events, state["dispatches"],
+            ctx["instance_id"], head, ctx["content"],
+            ctx["iterations"] + 1)
+        if tstate is None:
+            raise ValueError(
+                "the assembly is sealed under the "
+                "process-tree presentation contract but "
+                "the pinned case carries no well-formed "
+                "process tree; no tree package can be "
+                "built")
+        owed = _tree_step_gate_owed(tstate)
+        if owed is None:
+            return
+        step, address, missing, ahead = owed
+        gate_ev = doorway.record_step_gate(
+            ctx["assembly_id"],
+            ctx.get("iteration_event_seq"), step,
+            address, missing)
+        ctx["recorded"].append(gate_ev)
+        ctx["step_gate_correction"] = \
+            _step_gate_correction(
+                step, address, missing, ahead,
+                tstate["journal_path"])
+
+    def _tree_step_component(self, ctx, tstate,
+                             catalogue, deliverable_text):
+        """The current step, spelled out: what to do,
+        the step's own tools (their catalogue entries,
+        not the whole catalogue — that rode the
+        opening), the shape this room calls them in,
+        and the step's workaround text where the record
+        has earned one."""
+        current = tstate["current"]
+        journal_path = tstate["journal_path"]
+        step = {"node": current["id"],
+                "kind": current["kind"]}
+        floor = ctx.get("delivery_floor")
+        figures = STAGED_TASK_FLOOR_STATEMENT_V2.format(
+            min_words=floor["min_words"]) \
+            if floor is not None else \
+            "The brief runs to about 600 words."
+        if current["kind"] == "gather":
+            address = current["address"]
+            step["address"] = address
+            facts = tstate["gather_facts"][current["id"]]
+            if facts["read_stands"]:
+                step["instruction"] = \
+                    TREE_GATHER_READ_STANDS_INSTRUCTION \
+                    .format(address=address,
+                            journal=journal_path)
+            else:
+                step["instruction"] = \
+                    TREE_GATHER_INSTRUCTION.format(
+                        address=address,
+                        tool="sandbox.read",
+                        journal=journal_path)
+            step["tools"] = [
+                copy.deepcopy(entry)
+                for entry in catalogue
+                if entry.get("tool") in (
+                    "sandbox.read", "sandbox.write")]
+            if ctx.get("adapter_mode") == "native":
+                step["call_shape"] = (
+                    "In this room your tools are offered "
+                    "natively: call the tool itself, with "
+                    "its arguments — sandbox.read with "
+                    "{\"path\": \"" + address + "\"}; "
+                    "sandbox.write with {\"path\": \""
+                    + str(journal_path) + "\", "
+                    "\"content\": \"<your journal as it "
+                    "stands, plus the new bits>\"}.")
+            else:
+                step["call_shape"] = (
+                    "In this room your tools are called "
+                    "in the text shape: your answer is "
+                    "one JSON object whose outcome is "
+                    "\"tool_requests\", with a requests "
+                    "list naming each call — the tool's "
+                    "name and its parameters, as in "
+                    "{\"tool\": \"sandbox.read\", "
+                    "\"parameters\": {\"path\": \""
+                    + address + "\"}}.")
+        elif current["kind"] == "orient":
+            first = next(
+                (node for node in tstate["nodes"]
+                 if node["kind"] == "gather"), None)
+            step["instruction"] = \
+                TREE_ORIENT_INSTRUCTION.format(
+                    address=first["address"]
+                    if first is not None else "")
+            step["tools"] = []
+        elif current["kind"] == "compose":
+            step["instruction"] = \
+                TREE_COMPOSE_INSTRUCTION
+            step["points"] = list(TREE_COMPOSE_POINTS)
+            step["deliverable"] = deliverable_text
+            step["figures"] = figures
+            step["tools"] = []
+            step["call_shape"] = (
+                "The brief itself is delivered at the "
+                "next step, as your contribution.")
+        else:
+            destination = tstate["root"]
+            gathers_done = all(
+                tstate["gather_facts"][node["id"]][
+                    "read_stands"]
+                and tstate["gather_facts"][node["id"]][
+                    "journal_stands"]
+                for node in tstate["nodes"]
+                if node["kind"] == "gather")
+            compose_done = gathers_done and any(
+                node["kind"] == "compose"
+                and tstate["states"][node["id"]] == "done"
+                for node in tstate["nodes"])
+            if compose_done:
+                step["instruction"] = \
+                    TREE_DELIVER_AGAIN_INSTRUCTION.format(
+                        destination=destination)
+            else:
+                step["instruction"] = \
+                    TREE_DELIVER_INSTRUCTION.format(
+                        destination=destination)
+            step["deliverable"] = deliverable_text
+            step["figures"] = figures
+            step["tools"] = []
+            step["call_shape"] = (
+                "Your answer is one JSON object: "
+                "{\"outcome\": \"contribute\", \"text\": "
+                "\"<the brief's text>\"}.")
+        return step
+
+    def _build_tree_package(self, ctx, base, ordered,
+                            catalogue):
+        """One wake package under the process-tree
+        contract (the room rebuild): the opening package
+        at the first wake — his identity and role memory
+        framed as his own knowledge, the sealed tree,
+        the case essentials, the files map with access
+        ways, the tool catalogue once, the journal with
+        its contract — and at every later wake a step
+        package: the tree with its node states, the
+        current step spelled out, his journal verbatim,
+        at most the current step's fresh content
+        presented exactly once at its step, and pointers
+        for everything else. Every value derives from
+        the record, so the checker re-derives the
+        package whole from the same record."""
+        content = ctx["content"] or {}
+        iteration = ctx["iterations"] + 1
+        ceiling = ctx["bounds"]["step_ceiling"]
+        head = base["position"]
+        doorway = self.doorway
+        events = doorway.store.all_events()
+        state = fold(events, doorway.store.get_run_id())
+        tstate = _tree_state(
+            events, state["dispatches"],
+            ctx["instance_id"], head, content, iteration)
+        if tstate is None:
+            raise ValueError(
+                "the assembly is sealed under the "
+                "process-tree presentation contract but "
+                "the pinned case carries no well-formed "
+                "process tree; no tree package can be "
+                "built")
+        onboarding = _staged_onboarding(content)
+        headline = onboarding["headline"] \
+            if onboarding is not None else \
+            "The job in your briefcase"
+        deliverable = onboarding["deliverable"] \
+            if onboarding is not None else None
+        if deliverable is None and \
+                isinstance(ctx.get("delivery"), dict):
+            deliverable = ctx["delivery"].get(
+                "destination")
+        deliverable_text = deliverable \
+            if isinstance(deliverable, str) else \
+            "the deliverable named in your case"
+        current = tstate["current"]
+        package = {}
+        for key in ("seat", "role", "instance_id",
+                    "case_id", "case_version"):
+            package[key] = base[key]
+        if iteration == 1:
+            package["presentation"] = {
+                "contract":
+                    _tool_policy.PRESENTATION_CONTRACT_V3,
+                "package": "opening",
+                "direction": TREE_DIRECTION_OPENING}
+            cover_statement = TREE_COVER_FIRST.format(
+                seat=ctx["seat"], role=ctx["role"],
+                headline=headline,
+                deliverable=deliverable_text)
+        else:
+            if current is None:
+                current_label = "complete"
+            elif current["kind"] == "gather":
+                current_label = \
+                    f"gather {current['address']}"
+            else:
+                current_label = current["kind"]
+            package["presentation"] = {
+                "contract":
+                    _tool_policy.PRESENTATION_CONTRACT_V3,
+                "package": "step",
+                "step": current["id"]
+                if current is not None else None,
+                "direction": TREE_DIRECTION_STEP}
+            cover_statement = (
+                f"{headline} — the deliverable: "
+                f"{deliverable_text}. Step {iteration} "
+                f"of {ceiling}; task in progress. "
+                f"Current step: {current_label}.")
+        package["cover"] = {
+            "headline": headline,
+            "deliverable": deliverable_text,
+            "statement": cover_statement}
+        if iteration == 1:
+            package["snapshot"] = _staged_snapshot(
+                content)
+            role_memory = content.get("role_memory")
+            package["memory"] = {
+                "introduction": STAGED_MEMORY_INTRO,
+                "entries": copy.deepcopy(role_memory)
+                if isinstance(role_memory, list) else []}
+            essentials = {
+                "part": content.get("part"),
+                "evidence_boundary": copy.deepcopy(
+                    content.get("evidence_boundary")),
+                "delivery": copy.deepcopy(
+                    content["delivery"])
+                if isinstance(content.get("delivery"),
+                              dict) else None,
+                "freshness": (
+                    "suspended — no freshness refusal "
+                    "applies to this job; your answers "
+                    "are judged on the work"
+                    if ctx.get("freshness_suspended")
+                    else "in force — your answers are "
+                         "judged against the record as "
+                         "it stood when you were woken")}
+            opening = content.get("opening")
+            if isinstance(opening, dict) and opening:
+                essentials["opening"] = copy.deepcopy(
+                    opening)
+            package["case_essentials"] = essentials
+        package["process_tree"] = {
+            "root": tstate["root"],
+            "nodes": [
+                dict(
+                    {"id": node["id"],
+                     "kind": node["kind"]},
+                    **({"address": node["address"]}
+                       if node["kind"] == "gather"
+                       else {}),
+                    state=tstate["states"][node["id"]])
+                for node in tstate["nodes"]]}
+        if current is not None:
+            package["current_step"] = \
+                self._tree_step_component(
+                    ctx, tstate, catalogue,
+                    deliverable_text)
+        if iteration == 1:
+            files = {"introduction": TREE_FILES_INTRO,
+                     "briefcase": []}
+            glossary = content.get("glossary")
+            if isinstance(glossary, list):
+                for entry in glossary:
+                    if isinstance(entry, dict) and \
+                            isinstance(
+                                entry.get("address"), str):
+                        brief = {
+                            "address": entry["address"],
+                            "description":
+                                entry.get("description")}
+                        way = _staged_access_way(
+                            catalogue, entry["address"])
+                        if way is not None:
+                            brief["access"] = way
+                        files["briefcase"].append(brief)
+            if tstate["journal_path"] is not None:
+                files["journal"] = {
+                    "path": tstate["journal_path"],
+                    "label": TREE_JOURNAL_LABEL}
+            package["files"] = files
+        # The call machinery, as in every package under
+        # every contract: the full catalogue stands in
+        # the package's tools at every wake, so any
+        # call he makes resolves by name and executes
+        # into the room — his work is never refused for
+        # arriving off-step (a call the catalogue could
+        # not name would resolve unknown_tool at
+        # translation: a refusal with no dispatch, the
+        # failure the director named — errors because
+        # he tried to use a tool). The PRESENTATION
+        # names only the current step's own tools (the
+        # current_step component); the catalogue as
+        # presented material rides the opening package
+        # alone.
+        package["tools"] = base["tools"]
+        if tstate["journal_path"] is not None:
+            package["journal"] = {
+                "path": tstate["journal_path"],
+                "label": TREE_JOURNAL_LABEL,
+                "content": tstate["journal_content"]}
+        for key in ("delivery_gate_correction",
+                    "delivery_stage_gate_correction",
+                    "delivery_evidence_gate_correction",
+                    "delivery_length_gate_correction",
+                    "tool_shape_gate_correction"):
+            if ordered.get(key) is not None:
+                package[key] = ordered[key]
+        if ctx.get("step_gate_correction") is not None:
+            package["step_gate_correction"] = \
+                ctx["step_gate_correction"]
+        if iteration > 1 and current is not None and \
+                current["kind"] == "gather":
+            facts = tstate["gather_facts"][current["id"]]
+            if facts["read_stands"]:
+                earlier = [
+                    (ev["payload"].get("iteration"),
+                     ev["payload"].get("cursor_to"))
+                    for ev in events
+                    if ev["type"] == "LOOP_ITERATION"
+                    and ev["payload"].get("assembly_id")
+                    == ctx["assembly_id"]
+                    and isinstance(
+                        ev["payload"].get("iteration"),
+                        int)
+                    and ev["payload"].get("iteration")
+                    < iteration
+                    and isinstance(
+                        ev["payload"].get("cursor_to"),
+                        int)]
+                presented = _tree_presented_addresses(
+                    events, state["dispatches"],
+                    ctx["instance_id"], content, earlier)
+                if current["address"] not in presented:
+                    parts = [
+                        {"served": copy.deepcopy(
+                            entry["served"]),
+                         "content": entry["content"]}
+                        for entry in tstate["entries"]
+                        if entry.get("path")
+                        == current["address"]
+                        and entry.get("tool") in (
+                            "sandbox.read",
+                            "sandbox.read_range")
+                        and entry.get("content_carried")
+                        and "content" in entry]
+                    if parts:
+                        package["current_content"] = {
+                            "address": current["address"],
+                            "parts": parts}
+        # The tool results stand by their provenance
+        # stubs: under the tree contract a retrieval
+        # result's content is presented exactly once,
+        # as the current step's fresh content — never
+        # in the results carriage, whose entries keep
+        # their identities and their failure
+        # instructions, with the stub naming where the
+        # content stands.
+        tool_results = copy.deepcopy(base["tool_results"])
+        dispatch_tools = {
+            did: d.get("tool")
+            for did, d in state["dispatches"].items()}
+        for entry in tool_results:
+            if entry.get("outcome") != "result":
+                continue
+            if dispatch_tools.get(
+                    entry.get("dispatch_id")) not in \
+                    _tool_policy.RETRIEVAL_TOOLS:
+                continue
+            result = entry.get("result")
+            if not isinstance(result, dict) or \
+                    "content" not in result:
+                continue
+            entry["result"] = _carriage_stub(
+                result, "current_step")
+        package["tool_results"] = tool_results
+        if ordered.get("working_set") is not None:
+            package["working_set"] = \
+                _presented_working_set_pointers(
+                    ordered["working_set"],
+                    self.doorway.store.all_events(),
+                    ctx["assembly_id"], catalogue)
+        package["standing_dispatches"] = \
+            base["standing_dispatches"]
+        package["step_position"] = {
+            "statement": f"step {iteration} of {ceiling}",
+            "iteration": iteration,
+            "step_ceiling": ceiling}
+        package["task_status"] = "in progress"
+        package["bounds"] = {
+            "iteration": iteration,
+            "steps_used": ctx["iterations"],
+            "step_ceiling": ceiling,
+            "deadline_seconds":
+                ctx["bounds"]["deadline_seconds"]}
+        package["position"] = base["position"]
+        return package
 
     def _journal_component(self, ctx):
         """The worker's journal, as it stands at this
@@ -4977,9 +5993,34 @@ class Loop:
         if not ctx.get("presentation_declared") or \
                 ctx.get("delivery") is None:
             return False
-        stage = _staged_stage(ctx["iterations"])
-        if stage not in ("memory", "case", "files"):
-            return False
+        tree_form = ctx.get("presentation_contract") == \
+            _tool_policy.PRESENTATION_CONTRACT_V3
+        if tree_form:
+            # The tree's progression replaces the stage
+            # gate's function under this contract (the
+            # room rebuild): the contribution door opens
+            # at DELIVER, and a contribution offered
+            # while the tree stands at an earlier step —
+            # derived from the record at the package head
+            # the worker was woken from — is set aside
+            # unfiled under the same gate event, its
+            # stage the tree's current node.
+            events = self.doorway.store.all_events()
+            state = self.doorway.state()
+            tstate = _tree_state(
+                events, state["dispatches"],
+                ctx["instance_id"], ctx["cursor"],
+                ctx["content"], ctx["iterations"])
+            if tstate is None or \
+                    tstate["current"] is None or \
+                    tstate["current"]["kind"] in (
+                        "compose", "deliver"):
+                return False
+            stage = tstate["current"]["id"]
+        else:
+            stage = _staged_stage(ctx["iterations"])
+            if stage not in ("memory", "case", "files"):
+                return False
         text = proposal["payload"].get("text")
         if not isinstance(text, str):
             return False
@@ -4997,13 +6038,23 @@ class Loop:
                 f"recorded: {type(exc).__name__}: {exc}")
             return True
         ctx["recorded"].append(gate_ev)
-        ctx["delivery_stage_gate_correction"] = {
-            "what_arrived": _stage_gate_what_arrived(
-                stage),
-            "stage": stage,
-            "contribution_seq": ev["event_seq"],
-            "text_sha256": digest,
-            "instruction": STAGED_STAGE_GATE_INSTRUCTION}
+        if tree_form:
+            ctx["delivery_stage_gate_correction"] = {
+                "what_arrived":
+                    _tree_stage_gate_what_arrived(stage),
+                "stage": stage,
+                "contribution_seq": ev["event_seq"],
+                "text_sha256": digest,
+                "instruction":
+                    TREE_STAGE_GATE_INSTRUCTION}
+        else:
+            ctx["delivery_stage_gate_correction"] = {
+                "what_arrived": _stage_gate_what_arrived(
+                    stage),
+                "stage": stage,
+                "contribution_seq": ev["event_seq"],
+                "text_sha256": digest,
+                "instruction": STAGED_STAGE_GATE_INSTRUCTION}
         return True
 
     def _try_delivery_evidence_gate(self, ctx, proposal,

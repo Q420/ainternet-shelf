@@ -24,7 +24,8 @@ CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "account", "authority", "loop_bounds",
                        "glossary", "journal", "onboarding",
                        "delivery", "role_memory", "opening",
-                       "delivery_evidence", "delivery_floor")
+                       "delivery_evidence", "delivery_floor",
+                       "process_tree")
 
 _STATUS_RANK = {"unverified": 0, "declared": 1,
                 "provider-confirmed": 2}
@@ -74,6 +75,12 @@ _KNOWN_TYPES = {
     # provider's tool-use-shape refusal, answered with
     # a correction.
     "TOOL_SHAPE_GATE",
+    # The step gate (the room rebuild, the process-tree
+    # contract): a GATHER step standing incomplete where
+    # the record shows it partly done or work ahead of
+    # it, answered with a correction naming what the
+    # step still needs.
+    "STEP_GATE",
 }
 
 _ASSEMBLY_ACTS = ("ASSEMBLY_GENERATED", "ASSEMBLY_PROBED",
