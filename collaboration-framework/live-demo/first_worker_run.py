@@ -344,7 +344,8 @@ def _commission_brief(assignment, manifest_hash,
                       journal=None, onboarding=None,
                       delivery=None, role_memory=None,
                       opening=None, delivery_evidence=None,
-                      delivery_floor=None):
+                      delivery_floor=None,
+                      process_tree=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
@@ -412,6 +413,20 @@ def _commission_brief(assignment, manifest_hash,
         # delivery.
         brief["delivery_floor"] = {
             "min_words": delivery_floor["min_words"]}
+    if process_tree is not None:
+        # The room rebuild (2026-11-25): the office-
+        # authored process tree, sealed in the case at
+        # assembly — the root (the brief's destination)
+        # and the steps in order: orient, one gather
+        # step per declared source in declaration
+        # order, compose, deliver. The office carries
+        # it into the issued case unchanged; the loop
+        # derives the tree's walk from it and the
+        # checker re-derives it.
+        brief["process_tree"] = {
+            "root": process_tree["root"],
+            "steps": [dict(step)
+                      for step in process_tree["steps"]]}
     if role_memory is not None:
         brief["role_memory"] = [dict(item)
                                 for item in role_memory]
