@@ -38,3 +38,9 @@ In one sentence (Ben's): A dedicated, automated librarian continuously converts 
 Ben's refinement, in his words: "long term memory can be compacted into blocks at a certain date range and the block can come up with a summary of what's in that block so if the agent needs to find a specific memory it's still accessible and findable based on a keyword."
 
 Remmy's notes on it: the summary becomes a finding layer, not a replacement layer — the block retains the underlying material, so a summary never has to be trusted as fact; the specific memory stays retrievable verbatim behind it. This is the pattern Ben already runs by hand in this framework: the INDEX is block summaries; the filed letters are the blocks; grep is the keyword search. Open design point: block boundaries — pure date ranges vs per-engagement (per run / per assignment) blocks; and summaries written FOR retrieval (key terms and entities named), not just prose recaps.
+
+## Addendum 2 — Ben, 2026-11-24 ~20:37 MST: hot and cold memory
+
+Ben's tiering, in his words: "it has access immediate access to the immediate past but things from a while ago are still available but not forced."
+
+Remmy's notes: two layers. Hot — the immediate past (the current run's working set, the role's recent activity) is carried automatically, in front of the worker at every wake. Cold — older blocks sit in the briefcase as summaries, pullable by keyword when the work calls for them, never force-fed into every package. This is Ben's pull-not-push direction (INDEX 236) applied to memory itself, and it keeps the freedom-first room honest: availability is total, imposition is minimal. The open rule the design still owes: what demotes hot to cold (a time window? a count of engagements? the close of an assignment?) and what promotes cold back (a keyword pull for the task at hand) — this is the core of Ben's undecided "memory-refresh rules."
