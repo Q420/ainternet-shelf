@@ -280,7 +280,18 @@ class Generator:
         retrieval declaration governs its regime. The two
         configuration declarations are alternatives: a
         generation names at most one, and the exec declaration
-        is the one recorded where both were somehow asked."""
+        is the one recorded where both were somehow asked.
+
+        The combined configuration (INDEX 476) is an exec
+        generation whose grants ALSO carry the retrieval
+        family (and the scratch write): the record still
+        declares the one exec contract — no second
+        declaration exists to name — and the retrieval
+        regime applies to those grants under it, because
+        registry v4 contains the v3 regime whole. The
+        `retrieval` flag remains the declaration for a
+        retrieval-only assembly; it is not set for the
+        combined one."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(

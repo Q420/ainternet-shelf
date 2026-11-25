@@ -14,10 +14,24 @@ resource envelope — and inside those walls nothing is restricted beyond
 the envelope. Guidance belongs to the case; control belongs at the
 boundary.
 
+UTILISE-ONLY STOCK (Ben's ruling, 2026-11-24: "access doesnt mean
+overwrite. it means utlilize"). Where a room is stocked with
+briefcase sources — stock under work/sources/ — that subtree is
+bound read-only over itself in every execution: the worker reads
+the stock freely and cannot create, modify or delete under it,
+while the rest of his tree (his scratch above all) stays writable
+exactly as before. The mount is declared in the room's recipe
+(kind "sources-ro-bind") at creation, and the host witness
+verifies it from the kernel record — its presence, its source
+identity and its read-only options — like every other mount.
+
 Construction (see RIG-NOTES.md for the host findings behind each choice):
   unshare -n  bwrap --unshare-pid --unshare-ipc --unshare-uts
     --ro-bind /usr /lib /lib64 /bin /sbin   (executable stock, read-only)
     --bind <tree> /room  --proc /proc  --dev /dev
+    [--ro-bind <tree>/work/sources /room/work/sources]   (only where
+        the room is stocked with briefcase sources — utilise-only
+        stock, below)
     --clearenv --setenv PATH ... --setenv ROOM_ID ...
     --chdir /room/work
     prlimit <per-process rlimits>  setpriv --reuid <room uid> ... <command>
@@ -638,6 +652,20 @@ class Room:
         return self.base / f"{self.name}.ledger-failure.json"
 
     # -- construction ------------------------------------------------------
+    def sources_ro_bind(self):
+        """(host source, in-room destination) for the utilise-only
+        bind of the stocked sources subtree, or None: the bind is
+        built exactly where the room's declared recipe carries it
+        (kind "sources-ro-bind", recorded at creation from the
+        stock) and the subtree stands on disk."""
+        declared = any(
+            isinstance(e, dict) and e.get("kind") == "sources-ro-bind"
+            for e in self.mount_recipe.get("mounts", []))
+        src = self.tree / "work" / "sources"
+        if declared and src.is_dir():
+            return str(src), f"{ROOM_MOUNT}/work/sources"
+        return None
+
     def bwrap_cmd(self, argv, wrap_limits=True, reaper=None):
         """Full host command line for one execution inside this room.
 
@@ -657,8 +685,16 @@ class Room:
                     stock, stock]
         for src, dst, mode in self.extra_binds:
             cmd += ["--ro-bind" if mode == "ro" else "--bind", src, dst]
-        cmd += ["--bind", str(self.tree), ROOM_MOUNT,
-                "--proc", "/proc", "--dev", "/dev",
+        cmd += ["--bind", str(self.tree), ROOM_MOUNT]
+        sources_ro = self.sources_ro_bind()
+        if sources_ro is not None:
+            # Utilise-only stock: the stocked sources subtree is
+            # bound read-only over itself, on top of the tree bind.
+            # Create/modify/delete under it fails with EROFS at the
+            # kernel; reads are unaffected; the rest of the tree
+            # keeps the main bind's read-write access.
+            cmd += ["--ro-bind", sources_ro[0], sources_ro[1]]
+        cmd += ["--proc", "/proc", "--dev", "/dev",
                 "--clearenv"]
         for key, val in self.env_manifest.items():
             cmd += ["--setenv", key, val]
@@ -1717,6 +1753,15 @@ def create_room(base, name, stock=None, env_extra=None, limits=None,
         mount_recipe["mounts"].append(
             {"mount_point": dst, "kind": "extra-bind", "root": src,
              "access": mode})
+    if any(rel == "sources" or rel.startswith("sources/")
+           for rel in (stock or {})):
+        # Utilise-only stock (Ben's ruling, 2026-11-24): a room
+        # stocked with briefcase sources declares the read-only
+        # bind of the sources subtree, and bwrap_cmd builds it in
+        # every execution.
+        mount_recipe["mounts"].append(
+            {"mount_point": f"{ROOM_MOUNT}/work/sources",
+             "kind": "sources-ro-bind", "access": "ro"})
 
     room = Room(base, name, tree, env_manifest, limits, envelope,
                 cgroup_path, stock_manifest, room_uid, room_gid, storage,

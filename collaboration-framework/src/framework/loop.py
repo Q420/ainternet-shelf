@@ -1326,10 +1326,15 @@ class Loop:
         # no call.
         generated = doorway._generated_payload(
             ctx["assembly_id"])
-        # The retrieval piece: an assembly declaring the
-        # retrieval contract is catalogued under v3 — the
-        # version its dispatches record — and its retrieval
-        # results are carried once (below). Any other
+        # The retrieval piece: an assembly standing under
+        # the retrieval regime is catalogued per grant and
+        # its retrieval results are carried once (below).
+        # The regime's assemblies are the retrieval
+        # contract's (catalogued under v3 — the version its
+        # dispatches record) and, for their retrieval tools,
+        # the exec contract's (the combined configuration,
+        # INDEX 476 — catalogued under v4, the version the
+        # ternary below prefers for them). Any other
         # assembly derives under the current version and
         # presents its outcomes exactly as it always has.
         governed = doorway._retrieval_governed(generated)

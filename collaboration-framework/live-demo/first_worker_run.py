@@ -339,13 +339,18 @@ GRANTS_RETRIEVAL = (
                     "sandbox.read_range", "sandbox.read")])
 
 
-def _commission_brief(assignment, manifest_hash):
+def _commission_brief(assignment, manifest_hash,
+                      glossary=None):
     """The crew brief the commission carries, in either
     mode: the assignment (the mode's own text), the
     verification list, the evidence boundary naming the
     manifest hash and the three source paths, and the
-    scoped bounds."""
-    return {
+    scoped bounds. Where a glossary is given (the combined
+    configuration, 2026-11-24), the brief carries it as
+    its own field: the map of what the worker may pull —
+    Ben's briefcase design (2026-11-16) — which the office
+    carries into the issued case unchanged."""
+    brief = {
         "part": "part-A",
         "assignment": assignment,
         "verification_list": list(VERIFICATION_LIST),
@@ -355,6 +360,10 @@ def _commission_brief(assignment, manifest_hash):
             "sources/a3-pass.md, sources/index-tail.md",
         "loop_bounds": dict(BOUNDS),
     }
+    if glossary is not None:
+        brief["glossary"] = [dict(entry)
+                              for entry in glossary]
+    return brief
 
 
 def _write_grant_problem(grants):

@@ -1383,21 +1383,31 @@ def _dispatch_result(events, state):
         return ev["payload"].get("grants"), sealed
 
     # The retrieval piece (RETRIEVAL-SCOPE Rev 5): an
-    # assembly whose sealed record declares the retrieval
-    # contract is governed by it, and its retrieval
-    # dispatches are verified against the regime the doorway
-    # enforced — the v3 version stamp, the admitting grant
-    # under the two authority paths, boundary membership for
-    # source paths, retained-content provenance on every
-    # result, and the aggregate admission over each package
-    # window. An assembly declaring anything else asks none
-    # of this: the historical exemption, read from the
+    # assembly standing under the retrieval regime has its
+    # retrieval dispatches verified against the regime the
+    # doorway enforced — the admitting grant under the two
+    # authority paths, boundary membership for source
+    # paths, retained-content provenance on every result,
+    # and the aggregate admission over each package
+    # window. Two declarations stand under the regime: the
+    # retrieval contract (its dispatches stamped v3) and
+    # the exec contract (the combined configuration, INDEX
+    # 476 — its dispatches stamped v4, the version the
+    # declared contract carries; the version correspondence
+    # below reads the declaration itself, not this
+    # predicate). An assembly declaring anything else asks
+    # none of this: the historical exemption, read from the
     # assembly's own declaration.
     def retrieval_governed(instance_id):
         ev = generated_by_instance.get(instance_id)
         return ev is not None and \
-            ev["payload"].get("catalogue_contract") == \
-            _RETRIEVAL_CONTRACT
+            ev["payload"].get("catalogue_contract") in \
+            (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
+
+    def declared_contract(instance_id):
+        ev = generated_by_instance.get(instance_id)
+        return ev["payload"].get("catalogue_contract") \
+            if ev is not None else None
 
     def exec_governed(instance_id):
         ev = generated_by_instance.get(instance_id)
@@ -1548,11 +1558,18 @@ def _dispatch_result(events, state):
                             "registry_version"),
                         checker_registry_version=REGISTRY_VERSION)
             # The retrieval piece: the version follows the
-            # assembly's declared contract — a governed
+            # assembly's declared contract — a retrieval
             # assembly's dispatches are governed by v3, and
             # v3 recorded for an assembly that declares no
             # retrieval contract is a stamp nothing issued.
-            if retrieval_governed(iid) and \
+            # The test reads the declaration itself: an
+            # exec-declaring assembly stands under the
+            # retrieval regime for its retrieval tools (the
+            # combined configuration, INDEX 476) but its
+            # dispatches are stamped v4, under the exec
+            # correspondence below — never v3.
+            if declared_contract(iid) == \
+                    _RETRIEVAL_CONTRACT and \
                     p.get("registry_version") != \
                     RETRIEVAL_REGISTRY_VERSION:
                 problem("dispatch_registry_version_mismatch",
@@ -1560,7 +1577,8 @@ def _dispatch_result(events, state):
                         registry_version=p.get(
                             "registry_version"),
                         expected=RETRIEVAL_REGISTRY_VERSION)
-            elif not retrieval_governed(iid) and \
+            elif declared_contract(iid) != \
+                    _RETRIEVAL_CONTRACT and \
                     p.get("registry_version") == \
                     RETRIEVAL_REGISTRY_VERSION:
                 problem("dispatch_registry_version_mismatch",
@@ -1979,10 +1997,13 @@ _RETRIEVAL_CONTRACT = "retrieval-v3"
 
 # The room-exec contract's declaration value (demonstration
 # preparation paper §2/§3.2; gate 4): an assembly declaring
-# it is governed by the exec regime — v4 dispatches of the
-# one execution tool, verified under v4 exactly as a
-# retrieval assembly's are under v3. The governed catalogue
-# contracts are the three values together.
+# it is governed by the exec regime — v4 dispatches,
+# verified under v4 exactly as a retrieval assembly's are
+# under v3 — and, where its grants carry the retrieval
+# family (the combined configuration, INDEX 476), by the
+# retrieval regime for those tools as well, under the same
+# v4 stamp. The governed catalogue contracts are the three
+# values together.
 _EXEC_CONTRACT = EXEC_CATALOGUE_CONTRACT
 
 _GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
@@ -2452,15 +2473,22 @@ def _loop_result(events, state, run_dir=None):
                     gen = generated.get(aid)
                     grants = (gen["payload"].get("grants")
                               if gen is not None else None)
-                    # The retrieval contract's assemblies
+                    # The retrieval regime's assemblies
                     # are catalogued per grant (INDEX 257):
                     # the reconstruction follows the sealed
                     # declaration, as the loop's derivation
                     # follows the doorway's governed test.
+                    # The regime's declarations are the
+                    # retrieval contract's and — for the
+                    # combined configuration (INDEX 476) —
+                    # the exec contract's; a single-grant
+                    # exec assembly derives identically
+                    # under either reading, so its standing
+                    # records are untouched.
                     per_grant = gen is not None and \
                         gen["payload"].get(
-                            "catalogue_contract") == \
-                        _RETRIEVAL_CONTRACT
+                            "catalogue_contract") in \
+                        (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
                     expected, ground = _derive_catalogue(
                         grants, version, per_grant=per_grant)
                     if expected is None:
@@ -3181,8 +3209,8 @@ def _loop_result(events, state, run_dir=None):
         grants = gen["payload"].get("grants") \
             if gen is not None else None
         per_grant = gen is not None and \
-            gen["payload"].get("catalogue_contract") == \
-            _RETRIEVAL_CONTRACT
+            gen["payload"].get("catalogue_contract") in \
+            (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
         iters = iterations.get(aid, [])
         iter_by_seq = {ev["event_seq"]: ev for ev in iters}
         disp_by_iter = {}

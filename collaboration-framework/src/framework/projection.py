@@ -97,6 +97,12 @@ _CASE_CONTENT = _fields({
     # whole or fractional; the schema has no narrower node).
     "loop_bounds": _opt(_fields({
         "step_ceiling": _INT, "deadline_seconds": _ANY})),
+    # The glossary a case may carry (2026-11-24): the map
+    # of what the worker may pull from the shelf — each
+    # entry an address and its one-line description
+    # (Ben's briefcase design, 2026-11-16).
+    "glossary": _opt(_list(_obj({
+        "address": _STR, "description": _STR}))),
 }, req=("case_id", "version"))
 
 _CASE_VERSION = _obj({

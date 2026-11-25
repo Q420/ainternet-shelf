@@ -294,6 +294,34 @@ def assess_mounts(wit, recipe, room_tree):
                 violations.append(
                     f"{point}: declared read-only but the kernel "
                     f"records options {m['options']}")
+        elif kind == "sources-ro-bind":
+            # Utilise-only stock: the bind of the tree's
+            # work/sources subtree over /room/work/sources. Its
+            # source identity is (device, root) of that subtree
+            # within the host mount backing the tree, and the
+            # kernel must record it read-only.
+            backing = mount_containing(host, room_tree)
+            if backing is None:
+                violations.append(
+                    f"{point}: no host mount backs the declared "
+                    "tree, so the bind's source cannot be verified")
+            else:
+                src_host = os.path.join(str(room_tree),
+                                        "work", "sources")
+                expected_root = expected_bind_root(backing, src_host)
+                if (m["major_minor"], m["root"]) != (
+                        backing["major_minor"], expected_root):
+                    violations.append(
+                        f"{point}: bind source identity "
+                        f"({m['major_minor']}, root={m['root']}) "
+                        f"differs from the stocked sources' "
+                        f"identity ({backing['major_minor']}, "
+                        f"root={expected_root})")
+            if "ro" not in m["options"]:
+                violations.append(
+                    f"{point}: declared read-only (utilise-only "
+                    f"stock) but the kernel records options "
+                    f"{m['options']}")
         elif kind == "room-bind":
             backing = mount_containing(host, room_tree)
             if backing is None:

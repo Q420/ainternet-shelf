@@ -101,6 +101,18 @@ class Office:
         if brief.get("loop_bounds") is not None:
             content["loop_bounds"] = copy.deepcopy(
                 brief["loop_bounds"])
+        # The glossary (Ben's briefcase design, 2026-11-16;
+        # carried 2026-11-24): where the recorded brief names
+        # the case's glossary — the map of what the worker may
+        # pull from the shelf, each item's address and what it
+        # is — the draft carries it, by the same route as the
+        # bounds, so it stands in the issued case as its own
+        # component and reaches the worker's package inside
+        # the case. A brief without a glossary produces a
+        # case without the field, exactly as before.
+        if brief.get("glossary") is not None:
+            content["glossary"] = copy.deepcopy(
+                brief["glossary"])
         return content
 
     # ---------------------------------------------------- preflight
@@ -120,20 +132,39 @@ class Office:
             problems.append(
                 f"cases are issued to crew seats; {seat_id} is "
                 f"{(seats[seat_id] or {}).get('role')}")
-        # loop_bounds is the one optional content field (Piece
-        # A3): a case may lawfully carry none — no loop runs on
-        # it — so it is not an R14 grounding requirement. When
-        # present it must be well-formed; malformed bounds fail
-        # preflight whole, never silently stripped.
+        # loop_bounds and glossary are the optional content
+        # fields (Piece A3; the combined configuration): a
+        # case may lawfully carry neither — no loop runs on a
+        # boundless case, and a glossary-less case simply
+        # carries no map — so neither is an R14 grounding
+        # requirement. When present each must be well-formed;
+        # malformed optional content fails preflight whole,
+        # never silently stripped.
         for field in ("case_id", "version", "seat") + tuple(
                 f for f in CASE_CONTENT_FIELDS
-                if f != "loop_bounds"):
+                if f not in ("loop_bounds", "glossary")):
             if content.get(field) is None:
                 problems.append(f"R14 field {field} is ungrounded")
         if content.get("loop_bounds") is not None:
             problem = loop_bounds_problem(content["loop_bounds"])
             if problem is not None:
                 problems.append(problem)
+        if content.get("glossary") is not None:
+            glossary = content["glossary"]
+            if not isinstance(glossary, list) or not glossary \
+                    or any(
+                        not isinstance(entry, dict)
+                        or not isinstance(
+                            entry.get("address"), str)
+                        or not entry.get("address")
+                        or not isinstance(
+                            entry.get("description"), str)
+                        or not entry.get("description")
+                        for entry in glossary):
+                problems.append(
+                    "the glossary must be a non-empty list of "
+                    "entries, each carrying a non-empty address "
+                    "and a non-empty description")
         tree = content.get("tree")
         part = content.get("part")
         if isinstance(tree, dict) and part is not None:
@@ -208,14 +239,14 @@ class Office:
                  "version": current_version + 1,
                  "seat": current.get("seat")}
         for field in CASE_CONTENT_FIELDS:
-            # loop_bounds rides forward only where it stands
-            # or is being set: a correction of a case that
-            # never carried bounds does not acquire a null
-            # field it never had (Piece A3, correction
-            # round 1).
-            if field == "loop_bounds" and \
-                    "loop_bounds" not in current and \
-                    "loop_bounds" not in changes:
+            # The optional fields (loop_bounds, glossary)
+            # ride forward only where they stand or are
+            # being set: a correction of a case that never
+            # carried one does not acquire a null field it
+            # never had (Piece A3, correction round 1).
+            if field in ("loop_bounds", "glossary") and \
+                    field not in current and \
+                    field not in changes:
                 continue
             draft[field] = copy.deepcopy(current.get(field))
         for field, value in changes.items():

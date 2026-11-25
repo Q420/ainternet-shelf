@@ -88,6 +88,34 @@ authoritative clock); the adapter's per-call span is
 the paper §3.3 300 s; the room's envelope is the
 stocking's declared one (paper §1.4).
 
+The combined configuration (INDEX 476; Ben's
+direction, 2026-11-24 ~18:48 MST: "we haven't actually
+enabled him to pull the information that he needs.
+That's our next step. Then we can have a full run."):
+this driver now assembles the COMBINED grant surface —
+container.exec, the retrieval four (sandbox.list,
+sandbox.search, sandbox.read_range, sandbox.read)
+under sources/ and under scratch/, and sandbox.write
+under scratch/ — so the worker has two doors to the
+same briefcase: his own execution tool in the room,
+and the doorway's pull. The stocked sources are
+staged into the executor's sandbox as well as the
+room, hash-verified against the stocking manifest, so
+a pull serves the released source set itself. The
+case carries the glossary as its own component (Ben's
+briefcase design, 2026-11-16): the pullable items by
+their shelf addresses with a line each, and scratch/
+as his writing space — his pull requests are made
+from knowledge inside his case, not from prose alone.
+The brief may land by either write path; collection
+checks both resting places — the room's scratch and
+the framework sandbox's scratch — and report.json
+records which path he used, with both hashes when
+both stand; the two are never merged. GRANTS_EXEC
+below stands as the first two runs' configuration
+(INDEX 472/474), kept for the record; the run seals
+GRANTS_COMBINED.
+
 Outputs land in live-demo/demo-nemotron1/ (the run
 refuses a standing non-empty directory): run/ (the
 record: run.db, run-export.json, responses/, claims/),
@@ -211,6 +239,9 @@ EXEC_TRACE = (
 
 # The paper §3.2 grant set: the execution tool ONLY. No
 # retrieval tools are offered in this configuration.
+# The first two runs' configuration (INDEX 472/474),
+# kept for the record — the run now seals the combined
+# set below.
 GRANTS_EXEC = [
     {"tool": "container.exec",
      "scope_ceiling": {},
@@ -218,6 +249,139 @@ GRANTS_EXEC = [
      "bound": {"count": 12},
      "authority_trace": EXEC_TRACE},
 ]
+
+# The combined configuration (INDEX 476): the same
+# assignment, both doors open. The exec grant as above;
+# the retrieval four under sources/ (he can pull the
+# briefcase's contents through the doorway — the same
+# three standing sources the registry holds); the same
+# four under scratch/; and sandbox.write under
+# scratch/ — a second write path for the brief that
+# does not depend on his exec dialect. No write grant
+# touches sources/: the briefcase's stocked contents
+# are utilise-only (Ben's refinement, 2026-11-24:
+# "access doesnt mean overwrite. it means utlilize").
+COMBINED_TRACE = (
+    "DEMONSTRATION-PREPARATION-2026-11-24.md §3.2 (the "
+    "room-only configuration named there as not a "
+    "permanent prohibition on mixed configurations); "
+    "Ben's direction 2026-11-24 (INDEX 476): enable the "
+    "pull, then a full run; Ben's briefcase design "
+    "2026-11-16: pulls made by the worker from the "
+    "shelf, the glossary carried in his case")
+
+ASSIGNMENT_COMBINED = (
+    "Read the source documents for this assignment. "
+    "Your briefcase carries a glossary: the three "
+    "sources by their addresses, with what each one "
+    "is. The same addresses work both ways in — in "
+    "your office with your execution tool (your "
+    "working directory is /room/work), and by pulling "
+    "with the sandbox tools. The stocked sources are "
+    "yours to utilise: read them; do not alter them. "
+    "Write the brief to scratch/brief.md — in your "
+    "office with your execution tool, or with "
+    "sandbox.write: a plain-words brief, at most ~600 "
+    "words, that a newcomer could read to learn what "
+    "this framework is, what has actually been "
+    "proven, what has not been proven, and what "
+    "remains to be built. Stay accurate to the "
+    "sources; invent nothing; where the sources "
+    "disagree with each other, say so.")
+
+# The case's glossary (Ben's briefcase design,
+# 2026-11-16): the pullable items for this case — the
+# three sources by their shelf addresses (the paths
+# both doors answer to) with a one-line description
+# each — plus his scratch as his writing space. The
+# office carries it into the issued case as its own
+# component; it stands in his wake package inside the
+# case, not merely named in the assignment prose.
+GLOSSARY = [
+    {"address": "sources/stock-take.md",
+     "description": "Vane's stock-take of the whole "
+                    "framework (2026-11-23): what has "
+                    "actually been proven, what has "
+                    "not, and her four worries — the "
+                    "sharpest single map of where "
+                    "things stand."},
+    {"address": "sources/a3-pass.md",
+     "description": "Vane's Piece A3 pass letter "
+                    "(2026-11-23): the bounded loop's "
+                    "examination verdict — what it "
+                    "closed and what it left open."},
+    {"address": "sources/index-tail.md",
+     "description": "The framework INDEX, entries "
+                    "165-187: the decision record for "
+                    "the agent-layer pieces and the "
+                    "stock-take. Long — pull it in "
+                    "ranges, not whole."},
+    {"address": "scratch/",
+     "description": "Your writing space: drafts and "
+                    "the deliverable live here — write "
+                    "the brief to scratch/brief.md. "
+                    "The stocked sources are "
+                    "utilise-only: read them, never "
+                    "alter them."},
+]
+
+
+def _combined_retrieval_grant(tool, prefix, count):
+    return {"tool": tool,
+            "scope_ceiling": {"path_prefix": prefix},
+            "side_effect_class": "read",
+            "bound": {"count": count},
+            "authority_trace": COMBINED_TRACE}
+
+
+GRANTS_COMBINED = (
+    [{"tool": "container.exec",
+      "scope_ceiling": {},
+      "side_effect_class": "execute",
+      "bound": {"count": 12},
+      "authority_trace": COMBINED_TRACE}]
+    + [_combined_retrieval_grant(tool, "sources", 12)
+       for tool in ("sandbox.list", "sandbox.search",
+                    "sandbox.read_range", "sandbox.read")]
+    + [_combined_retrieval_grant(tool, "scratch", 12)
+       for tool in ("sandbox.list", "sandbox.search",
+                    "sandbox.read_range", "sandbox.read")]
+    + [{"tool": "sandbox.write",
+        "scope_ceiling": {"path_prefix": "scratch"},
+        "side_effect_class": "write",
+        "bound": {"count": 4},
+        "authority_trace": COMBINED_TRACE}])
+
+
+def _stage_sandbox_sources(sandbox_dir, manifest):
+    """Stage the executor sandbox's pullable sources:
+    the released source set copied from the verified
+    staging directory into <sandbox_dir>/sources/, each
+    staged file hash-verified against its stocking
+    manifest entry, and <sandbox_dir>/scratch/ created
+    as the doorway write path's home. The pull door
+    serves exactly the files the room was stocked with
+    — the same bytes at the same addresses the glossary
+    names. Returns a problem string, or None."""
+    sandbox_dir = Path(sandbox_dir)
+    for entry in manifest["sources"]:
+        staged = stock_demo.DEFAULT_SOURCES_DIR / \
+            entry["path"]
+        if not staged.exists():
+            return (f"the verified source file "
+                    f"{entry['path']} is missing from "
+                    f"{stock_demo.DEFAULT_SOURCES_DIR}")
+        dest = sandbox_dir / entry["path"]
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(staged, dest)
+        if _sha256_bytes(dest.read_bytes()) != \
+                entry["sha256"]:
+            return (f"the staged {entry['path']} does "
+                    f"not hash to its manifest entry "
+                    f"{entry['sha256']}")
+    (sandbox_dir / "scratch").mkdir(
+        parents=True, exist_ok=True)
+    return None
 
 # The director's order, verbatim as given, and the
 # judgement the order makes.
@@ -336,16 +500,20 @@ def _write_capture_helper(path):
     return path
 
 
-def _commission_and_issue(store, manifest_hash):
+def _commission_and_issue(store, manifest_hash,
+                          assignment=ASSIGNMENT_COMBINED,
+                          glossary=GLOSSARY):
     """Commission, material sealing, office issue and
     the pre-activation verification, exactly as the gate
     4 rehearsal and the harness carry them: the issued
     case must identify the manifest by hash in its
-    evidence boundary and carry the scoped bounds.
+    evidence boundary, carry the scoped bounds, and —
+    where a glossary is commissioned — carry the brief's
+    glossary unchanged as its own component.
     Returns (doorway, office, gen, tok, issued). Raises
     RuntimeError on any failure."""
-    brief = _commission_brief(ASSIGNMENT_EXEC,
-                              manifest_hash)
+    brief = _commission_brief(assignment, manifest_hash,
+                              glossary=glossary)
     store.append("RUN_COMMISSIONED", "dir-1", [], {
         "run_id": RUN_ID,
         "tree": {"part-A": []},
@@ -399,6 +567,11 @@ def _commission_and_issue(store, manifest_hash):
         raise RuntimeError(
             "the issued case's loop_bounds are not the "
             "scoped bounds")
+    if glossary is not None and \
+            (content or {}).get("glossary") != glossary:
+        raise RuntimeError(
+            "the issued case does not carry the "
+            "commissioned glossary as its own component")
     return doorway, office, gen, tok, issued
 
 
@@ -560,17 +733,38 @@ def run_demo():
             _commission_and_issue(store, manifest_hash)
         print("pre-activation verification: manifest hash "
               "in the issued case's evidence boundary; "
-              "bounds as scoped")
+              "bounds as scoped; the case carries the "
+              "glossary")
+
+        # STAGE THE PULL DOOR — the executor sandbox's
+        # sources, hash-verified against the stocking
+        # manifest, at the glossary's addresses; the
+        # sandbox's scratch/ stands as the doorway write
+        # path's home.
+        staging_problem = _stage_sandbox_sources(
+            run_dir / "sandbox", manifest)
+        if staging_problem is not None:
+            print(f"ABORT: sandbox staging failed: "
+                  f"{staging_problem}", file=sys.stderr)
+            return abort_report({
+                "abort_stage": "sandbox staging",
+                "abort_reason": staging_problem})
+        print("sandbox staging: the released sources "
+              "staged at the glossary's addresses, each "
+              "hash-verified against the manifest")
 
         # ASSEMBLE — the adapter on the NVIDIA route's
         # real seam: the typed transport through the
         # capture pass-through to the registered
         # connector helper. Generation under the probe
         # contract and the exec catalogue contract,
-        # grants the execution tool only. The identify
-        # callable is pin-wrapped: a provider-reported
-        # identity that is not the pin aborts here,
-        # before activation, as a flagged conflict.
+        # grants the combined surface (INDEX 476): the
+        # execution tool, the retrieval four under
+        # sources/ and under scratch/, and sandbox.write
+        # under scratch/. The identify callable is
+        # pin-wrapped: a provider-reported identity that
+        # is not the pin aborts here, before activation,
+        # as a flagged conflict.
         adapter = OpenAICompatibleAdapter(
             endpoint=ENDPOINT, model=MODEL,
             timeout=ADAPTER_TIMEOUT, route=ROUTE)
@@ -587,7 +781,7 @@ def run_demo():
         try:
             generated = gen.generate(
                 tok["orch-1"], "crew-1", identify_callable,
-                skills=[], grants=GRANTS_EXEC,
+                skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
                 exec_room=True)
         except ModelPinMismatchError as mismatch:
@@ -708,18 +902,48 @@ def run_demo():
         # wall (hop 9) and the room's final state, taken
         # before teardown; then the checker (hop 10),
         # the export, and the terminal readout over the
-        # export.
-        brief_path = room.tree / "scratch" / "brief.md"
-        brief_bytes = brief_path.read_bytes() \
-            if brief_path.exists() else None
-        brief_sha256 = _sha256_bytes(brief_bytes) \
-            if brief_bytes is not None else None
-        brief_words = None
-        if brief_bytes is not None:
-            brief_words = len(brief_bytes.decode(
+        # export. The combined configuration gives the
+        # brief TWO resting places — the room's scratch
+        # (written via container.exec) and the framework
+        # sandbox's scratch (written via sandbox.write)
+        # — and both are checked: the room's is primary
+        # when both stand, the other is collected beside
+        # it under its own name with its own hash, and
+        # the report records which path he used. The two
+        # are never merged.
+        room_brief_path = room.tree / "scratch" / "brief.md"
+        room_brief = room_brief_path.read_bytes() \
+            if room_brief_path.exists() else None
+        fw_brief_path = run_dir / "sandbox" / "scratch" \
+            / "brief.md"
+        fw_brief = fw_brief_path.read_bytes() \
+            if fw_brief_path.exists() else None
+
+        def _brief_facts(data):
+            if data is None:
+                return None, None
+            return _sha256_bytes(data), len(data.decode(
                 "utf-8", "replace").split())
+
+        room_sha256, room_words = _brief_facts(room_brief)
+        fw_sha256, fw_words = _brief_facts(fw_brief)
+        if room_brief is not None:
+            brief_path_used = "room"
+            brief_bytes = room_brief
+        elif fw_brief is not None:
+            brief_path_used = "framework_scratch"
+            brief_bytes = fw_brief
+        else:
+            brief_path_used = None
+            brief_bytes = None
+        brief_sha256, brief_words = _brief_facts(
+            brief_bytes)
+        if brief_bytes is not None:
             (demo_dir / "brief.md").write_bytes(
                 brief_bytes)
+        if room_brief is not None and fw_brief is not None:
+            (demo_dir / "brief-framework.md").write_bytes(
+                fw_brief)
         room_state = json.loads(room.state_path.read_text())
         (demo_dir / "room-state.json").write_text(
             json.dumps(room_state, indent=1),
@@ -837,11 +1061,33 @@ def run_demo():
             "dispatches": dispatches,
             "brief": {
                 "exists": brief_bytes is not None,
+                "path_used": brief_path_used,
                 "sha256_at_wall": brief_sha256,
                 "word_count": brief_words,
                 "collected_path": str(
                     demo_dir / "brief.md")
                 if brief_bytes is not None else None,
+                "room": {
+                    "exists": room_brief is not None,
+                    "sha256_at_wall": room_sha256,
+                    "word_count": room_words,
+                },
+                "framework_scratch": {
+                    "exists": fw_brief is not None,
+                    "sha256_at_wall": fw_sha256,
+                    "word_count": fw_words,
+                    "collected_path": str(
+                        demo_dir / "brief-framework.md")
+                    if room_brief is not None
+                    and fw_brief is not None else None,
+                },
+                "note": "the brief may land by either "
+                        "write path — the room's scratch "
+                        "(via container.exec) or the "
+                        "framework sandbox's scratch (via "
+                        "sandbox.write); the room's is "
+                        "primary when both stand, and the "
+                        "two are never merged",
             },
             "captures": {
                 "path": str(captures_path),
@@ -864,8 +1110,9 @@ def run_demo():
               f"ok={result.get('ok')}), iterations: "
               f"{result.get('iterations')}, dispatches: "
               f"{len(dispatches)}, brief: "
-              f"{'written, ' + str(brief_words) + ' words, '
-                 'sha256 ' + str(brief_sha256)
+              f"{'written via ' + str(brief_path_used) + ', '
+                 + str(brief_words) + ' words, sha256 '
+                 + str(brief_sha256)
                  if brief_bytes is not None
                  else 'not written'}")
         print(f"report: {demo_dir / 'report.json'}")
@@ -1070,7 +1317,7 @@ def verify_config():
             # (6) Generation under a stub identity: the
             # sealed record declares the exec catalogue
             # contract and the probe contract, and holds
-            # exactly the one execution grant.
+            # exactly the combined grant set (INDEX 476).
             gen.propose(
                 tok["orch-1"], "crew-1", part="part-A",
                 role_requirements="verify-config stub")
@@ -1080,7 +1327,7 @@ def verify_config():
                      "verify-config stub identity "
                      "(offline; no provider contact)",
                  "provider_model_id": MODEL},
-                skills=[], grants=GRANTS_EXEC,
+                skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
                 exec_room=True)
             expect("generation: stub-identity generation "
@@ -1105,17 +1352,32 @@ def verify_config():
                        f"got "
                        f"{sealed.get('catalogue_contract')}")
                 expect("generation: sealed grants are "
-                       "exactly the one container.exec "
-                       "grant",
-                       [g.get("tool") for g in
-                        sealed.get("grants") or []]
-                       == ["container.exec"],
+                       "exactly the combined set",
+                       sealed.get("grants")
+                       == GRANTS_COMBINED,
                        json.dumps(sealed.get("grants"))
-                       [:200])
+                       [:300])
                 expect("generation: the assembly is "
                        "exec-governed",
                        doorway._exec_governed(sealed)
                        is True)
+                expect("generation: the assembly is "
+                       "retrieval-governed for its "
+                       "retrieval tools (the combined "
+                       "configuration)",
+                       doorway._retrieval_governed(sealed)
+                       is True)
+                case_content, _case_version = \
+                    established_case_content(
+                        doorway.state(), issued["case_id"])
+                expect("commission: the issued case "
+                       "carries the glossary as its own "
+                       "component, unchanged",
+                       (case_content or {}).get("glossary")
+                       == GLOSSARY,
+                       json.dumps(
+                           (case_content or {}).get(
+                               "glossary"))[:300])
 
                 # (7) The judgement payload the order
                 # will bind: computed, not recorded —
@@ -1224,6 +1486,73 @@ def verify_config():
                    and wire_fn.get("parameters")
                    == params,
                    json.dumps(wire_definitions)[:300])
+
+            # (6b) Sandbox staging: the pull door's
+            # sources stage from the verified set and
+            # hash to the paper §1.1 table; the scratch
+            # home stands.
+            staging_problem = _stage_sandbox_sources(
+                tmp / "sandbox", manifest)
+            staged_ok = staging_problem is None and all(
+                _sha256_bytes(
+                    (tmp / "sandbox" / rel).read_bytes())
+                == want
+                for rel, want in
+                PAPER_SOURCE_HASHES.items())
+            expect("staging: sandbox sources staged and "
+                   "hash-verified against the manifest; "
+                   "scratch home stands",
+                   staging_problem is None and staged_ok
+                   and (tmp / "sandbox" / "scratch")
+                   .is_dir(),
+                   str(staging_problem))
+
+            # (8c) The combined catalogue on the NVIDIA
+            # route (INDEX 476): the catalogue derived
+            # per grant from the combined grants, carried
+            # through the route's translator, transmits
+            # exactly the dashed name set — each offered
+            # tool once — with the underscore in
+            # read_range preserved (sandbox-read_range,
+            # never sandbox-read-range, which the
+            # translator does not recognise at all).
+            from framework.loop import _derive_catalogue
+            combined_catalogue = _derive_catalogue(
+                GRANTS_COMBINED,
+                tool_policy.EXEC_REGISTRY_VERSION,
+                per_grant=True)
+            combined_translator = nemotron_names \
+                .translator_for_package(
+                    ROUTE, {"tools": combined_catalogue})
+            combined_definitions = \
+                OpenAICompatibleAdapter \
+                ._native_tool_definitions(
+                    {"tools": combined_catalogue},
+                    translator=combined_translator)
+            combined_names = [
+                d.get("function", {}).get("name")
+                for d in combined_definitions]
+            expect("adapter: the combined catalogue's "
+                   "transmitted names on the NVIDIA "
+                   "route are exactly the dashed set",
+                   sorted(combined_names) == sorted([
+                       "container-exec", "sandbox-list",
+                       "sandbox-search", "sandbox-read_range",
+                       "sandbox-read", "sandbox-write"])
+                   and len(combined_names)
+                   == len(set(combined_names)),
+                   json.dumps(combined_names)[:300])
+            expect("translator: sandbox.read_range "
+                   "travels as sandbox-read_range "
+                   "(underscore preserved) and "
+                   "sandbox-read-range is not a wire "
+                   "name",
+                   combined_translator is not None
+                   and combined_translator.to_wire(
+                       "sandbox.read_range")
+                   == "sandbox-read_range"
+                   and combined_translator.to_canonical(
+                       "sandbox-read-range") is None)
 
             # (9) Nothing activated, nothing probed:
             # verify mode records no live step.

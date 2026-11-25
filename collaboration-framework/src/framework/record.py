@@ -109,9 +109,19 @@ EVENT_TYPES = {
 # to carry them; a field the route strips is not a usable case
 # requirement. Unlike the R14 fields it is OPTIONAL: a case may
 # carry no bounds, and then no loop runs on it.
+# The glossary joins the fields as a ninth stored key
+# (2026-11-24, the combined configuration): Ben's briefcase
+# design (2026-11-16) — the case carries the map of what the
+# worker may pull from the shelf: each pullable item's address
+# and what it is, and his scratch as his writing space, so his
+# pull requests are made from knowledge inside his case (an
+# agent cannot request what it cannot conceive of). OPTIONAL
+# like loop_bounds, by the same reasoning: a field the route
+# strips is not a usable case component.
 CASE_CONTENT_FIELDS = ("assignment", "tree", "part",
                        "evidence_boundary", "verification_list",
-                       "account", "authority", "loop_bounds")
+                       "account", "authority", "loop_bounds",
+                       "glossary")
 
 # Piece A1 (R37–R40): the assembly record — the immutable object
 # an ASSEMBLY_GENERATED establishes, the examiner judges, and

@@ -46,8 +46,10 @@ CONFUSED — the room must contain the mess and record it:
   g-conf-sleep        a runaway sleep past the per-execution wall
   g-conf-hugeargv     an enormous single command line (legal-large
                       and over the kernel's per-string limit)
-  g-conf-selfdelete   the worker deletes its own stock (on a
-                      separately stocked room): contained to its
+  g-conf-selfdelete   the worker tries to delete its own stock
+                      (on a separately stocked room): the stocked
+                      sources stand (utilise-only — access is not
+                      overwrite), the attempt is contained to its
                       own tree, the record intact
 
 Plus: the stocking gate itself (the demo room is stocked and
@@ -726,8 +728,9 @@ def main():
             stock_demo.stock_demo_room(base, "confused")
             conf = track(room_mod.load_room(base, "confused"))
         except stock_demo.StockingError as exc:
-            check("g-conf-selfdelete: worker deletes its own stock; "
-                  "contained to its tree", False,
+            check("g-conf-selfdelete: worker's delete attempt is "
+                  "contained to its tree and the stocked sources "
+                  "stand (utilise-only), record intact", False,
                   f"stocking failed: {exc}")
             conf = None
         if conf is not None:
@@ -736,15 +739,27 @@ def main():
                 "rm -rf /room/work/sources /room/work/* "
                 "/room/scratch/*; echo deleted", timeout=30)
             gone = not (conf.tree / "work" / "sources").exists()
-            readback = run_sh(conf, "cat sources/stock-take.md",
+            readback = run_sh(conf, "sha256sum sources/stock-take.md",
                               timeout=30)
             state_alive = conf.state_path.exists()
             host_alive = host_sentinel.exists()
-            check("g-conf-selfdelete: worker deletes its own stock; "
-                  "contained to its tree, record intact",
-                  res["rc"] == 0 and gone and readback["rc"] != 0
+            # Utilise-only stock (Ben's ruling, 2026-11-24): the
+            # stocked sources are bound read-only in the room, so
+            # the delete attempt fails against them (rm reports
+            # the failure; the sources stand and read back whole)
+            # while the worker's own space stays his to wreck —
+            # and everything remains contained to his tree, the
+            # record intact, the host untouched.
+            check("g-conf-selfdelete: worker's delete attempt is "
+                  "contained to its tree and the stocked sources "
+                  "stand (utilise-only), record intact",
+                  not gone
+                  and "Read-only file system" in res["stderr"]
+                  and readback["rc"] == 0
+                  and "ecb919025d4e5176" in readback["stdout"]
                   and state_alive and host_alive,
-                  f"deleted_rc={res['rc']} sources_gone={gone} "
+                  f"rm_stderr={res['stderr'][:80]!r} "
+                  f"sources_gone={gone} "
                   f"readback_rc={readback['rc']} state={state_alive} "
                   f"host_sentinel={host_alive}")
 

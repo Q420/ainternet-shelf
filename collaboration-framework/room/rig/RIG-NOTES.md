@@ -44,6 +44,9 @@ unshare -n  bwrap --unshare-pid --unshare-ipc --unshare-uts
     --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64
     --ro-bind /bin /bin --ro-bind /sbin /sbin
     --bind <tree> /room --proc /proc --dev /dev
+    [--ro-bind <tree>/work/sources /room/work/sources]   (utilise-only
+        stock, where the room is stocked with briefcase sources —
+        see "Utilise-only stock" at the end of these notes)
     --clearenv --setenv PATH=/usr/bin:/bin --setenv ROOM_ID=<name> [...]
     --chdir /room/work
   prlimit --as=<per-process> --cpu=<per-process> --nproc=<per-uid> --fsize=<per-file>
@@ -610,3 +613,61 @@ in-room additions).
   other tracks' territory (A, C, D, E, G) and is untouched here,
   by design. Track G — attacking these mechanisms — remains a
   separate track that follows B.
+
+## Utilise-only stock — the sources bind (2026-11-24, after correction round 3)
+
+Ben's ruling (2026-11-24 18:56 MST): "access doesnt mean
+overwrite. it means utlilize" — the briefcase's stock is
+utilise-only for the worker. The doorway side already conformed
+(no write grant touches `sources/`); the room did not: the tree
+was bound read-write whole (`--bind <tree> /room`) and creation
+chowned every stocked file to the room uid, so a worker's exec
+could overwrite `work/sources/*` and the change persisted (the
+combined rehearsal's witness demonstrated it: sources/
+stock-take.md sha256 ecb91902… → b2d545a8…).
+
+**The mechanism.** Where a room is stocked with briefcase
+sources (any stock path under `sources/`), creation declares
+one more mount in the room's recipe — mount point
+`/room/work/sources`, kind `sources-ro-bind`, access `ro` —
+and `Room.bwrap_cmd` builds it in every execution: after the
+main tree bind, the sources subtree is bound read-only over
+itself (`--ro-bind <tree>/work/sources /room/work/sources`).
+The host witness verifies the mount from the kernel record
+like every other: presence, source identity (device + root of
+the tree's `work/sources` within the mount backing the tree),
+and `ro` in its options.
+
+**The property, stated precisely.** Inside every execution of
+such a room, the stocked sources subtree is read-only at the
+room wall: create, modify and delete under `/room/work/sources/`
+fail at the kernel (`EROFS` — "Read-only file system"); the
+sources directory itself is a mount point and can neither be
+removed nor renamed from inside (`EBUSY`); a remount to
+read-write would need CAP_SYS_ADMIN, which the construction's
+zeroed capability bounding set withholds. Reads are unaffected.
+Everything outside the subtree — `/room/scratch` above all,
+and any other stock the room carries — keeps exactly the
+access it had: the worker's own space stays writable. The
+stocking smoke set is unchanged and passes (it reads the
+sources and writes its probe in scratch). The combined
+rehearsal's utilise-only witness now passes: the scripted
+overwrite attempt is dispatched, executes, fails against the
+read-only mount (its stderr names it), and the source's
+SHA-256 stands unchanged. Track G's `g-conf-selfdelete` case
+was updated to the property it now meets: the delete attempt
+fails against the stock and is contained, the sources read
+back whole, the record intact — the count of checks is
+unchanged.
+
+**What this does not cover.** The protection attaches to the
+`sources/` subtree — the briefcase's stock as the framework
+stocks it. Stock placed anywhere else under `work/` (no
+current stocking does this; the demonstration stocks only
+`sources/`) remains writable by the worker, as does everything
+in `scratch/` by design. The bind is per-execution namespace
+construction, re-applied at every call; it does not change the
+tree on the host, where the office's own acts remain the
+office's. A worker can still fill his storage ceiling or wreck
+his own scratch — his space, his mess; the stock is what he
+may no longer touch.

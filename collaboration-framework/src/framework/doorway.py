@@ -1023,18 +1023,39 @@ class Doorway:
 
     @staticmethod
     def _retrieval_governed(generated):
-        """Whether a sealed generated record declares the
-        retrieval contract (RETRIEVAL-SCOPE Rev 5): the
-        compatibility discriminator for the whole retrieval
-        regime — v3 dispatch, the two authority paths, the
-        aggregate admission — exactly as the A3-CAT catalogue
-        contract discriminates its own. An assembly whose
-        record declares anything else (or nothing) is not
-        governed: its dispatches keep the behaviour they have
-        always had."""
+        """Whether a sealed generated record stands under
+        the retrieval regime (RETRIEVAL-SCOPE Rev 5): the
+        compatibility discriminator for the regime — the two
+        authority paths, the aggregate admission, the
+        per-grant catalogue, single carriage, governed
+        performance — exactly as the A3-CAT catalogue
+        contract discriminates its own.
+
+        Two declarations stand under it. A record declaring
+        the retrieval contract (retrieval-v3) is the
+        retrieval piece's own assembly. A record declaring
+        the exec contract (exec-v4) ALSO stands under it
+        for its retrieval tools (the combined configuration,
+        INDEX 476): the v4 registry view is the frozen v3
+        view whole — taken from it, so the two cannot drift
+        — plus the one execution tool, so the regime v4
+        carries for the retrieval family is v3's regime
+        itself, and an exec assembly's retrieval grants are
+        enforced under it exactly as a retrieval assembly's
+        are. The assembly's dispatch version remains its
+        declared contract's own (v4 under the exec
+        declaration — the version selection prefers it), so
+        the widening changes no version stamp. An
+        exec-declaring assembly WITHOUT retrieval grants is
+        unaffected in outcome: the regime engages only for
+        retrieval tools, and no grant admits those either
+        way. An assembly whose record declares anything
+        else (or nothing) is not governed: its dispatches
+        keep the behaviour they have always had."""
         return isinstance(generated, dict) and \
-            generated.get("catalogue_contract") == \
-            _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT
+            generated.get("catalogue_contract") in (
+                _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT,
+                _tool_policy.EXEC_CATALOGUE_CONTRACT)
 
     def _dispatch_check(self, state, assembly_id, entry,
                         instance_id, tool, parameters):
@@ -1058,7 +1079,10 @@ class Doorway:
         if governed and tool in _tool_policy.RETRIEVAL_TOOLS:
             return self._retrieval_dispatch_check(
                 state, entry, instance_id, grants, tool,
-                parameters)
+                parameters,
+                version=_tool_policy.EXEC_REGISTRY_VERSION
+                if self._exec_governed(generated) else
+                _tool_policy.RETRIEVAL_REGISTRY_VERSION)
         grant = next((g for g in grants
                       if isinstance(g, dict)
                       and g.get("tool") == tool), None)
@@ -1101,7 +1125,9 @@ class Doorway:
 
     def _retrieval_dispatch_check(self, state, entry,
                                   instance_id, grants, tool,
-                                  parameters):
+                                  parameters,
+                                  version=_tool_policy
+                                  .RETRIEVAL_REGISTRY_VERSION):
         """Why a retrieval dispatch may not be recorded under
         a retrieval-governed assembly, or None (retrieval
         scope, boundary enforcement): the request is admitted
@@ -1123,7 +1149,16 @@ class Doorway:
         is the authority path's own scope; its authority
         trace must stand, and its bound counts the tool's
         dispatches for the instance, as every grant's bound
-        does."""
+        does.
+
+        The ceilings are checked under `version` — the
+        registry version the assembly is dispatched under:
+        v3 for a retrieval-declaring assembly, v4 for the
+        combined (exec-declaring) one (INDEX 476). The two
+        views' retrieval entries are the same frozen
+        objects, so the check is the one check under either
+        name; the version is the assembly's own so the
+        record and the checker read the same policy."""
         path = parameters.get("path")
         if path is None and tool != "sandbox.search":
             return (f"{tool} requires a path parameter "
@@ -1155,7 +1190,7 @@ class Doorway:
         for grant in tool_grants:
             ok, ground = _tool_policy.check_ceiling(
                 tool, grant.get("scope_ceiling"), parameters,
-                version=_tool_policy.RETRIEVAL_REGISTRY_VERSION)
+                version=version)
             if not ok:
                 if first_ground is None:
                     first_ground = ground
