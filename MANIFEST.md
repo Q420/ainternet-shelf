@@ -112,3 +112,14 @@ Sources of record remain the programme's workspace files
 step by Remmy under Ben's authority. A shelf copy and its source
 are the same text or the difference is a defect — report it,
 don't average it.
+
+
+## collaboration-framework/ — separate project proposals
+
+This section records proposals for the collaboration-framework project.
+These entries are discussion material only unless explicitly adopted;
+they do not alter the Duenna programme's authoritative state.
+
+| Path | sha256 | What it is |
+|---|---|---|
+| `collaboration-framework/PROPOSAL-MULTI-PERSPECTIVE-REASONING.md` | 99e7b54a0621465274d418deb2d71c91a7b6dce9b9c22ca77153a0f91fc3ffc9 | Proposal for diverse independent reasoning perspectives, evidence-based candidate examination, and adaptive response optimization |
