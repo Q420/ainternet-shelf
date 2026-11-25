@@ -1,0 +1,199 @@
+{
+ "kind": "first-worker demonstration run report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "model_pin": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+ "route": "nvidia (live, via the registered connector helper through the capture seam)",
+ "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "assembly_id": "assembly-crew-1-1",
+ "instance_id": "inst-crew-1-1",
+ "identity_evidence": {
+  "declaration": "I am Nemotron, a large language model created by NVIDIA. I can understand and generate natural\u2011language text, answer questions, assist with reasoning, coding, summarization, translation, creative writing, and many other tasks within the context length I support. My limits include that I may sometimes provide inaccurate or biased information, I cannot browse the web or access real\u2011time data, I have no personal experiences or consciousness, I cannot retrieve private information unless it is supplied to me, and I must follow safety guidelines, which means I may refuse or safe\u2011complete requests that are disallowed.",
+  "provider_model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+  "identity_status": "declared",
+  "pin_verified": true,
+  "note": "the pin was enforced inside generation, before activation (make_pinned_identify); the provider-reported id as recorded at onboarding stands here \u2014 it is the route's report, not independent proof of the model the provider actually served"
+ },
+ "probe": {
+  "settled_count": 5,
+  "recommended_mode": "text",
+  "counts": {
+   "behaviour": {
+    "text_contract": 3,
+    "native_catalogue": 2,
+    "environment_tool_attempt": 0,
+    "mixed": 0,
+    "refusal": 0,
+    "malformed": 0,
+    "no_observable_behaviour": 0
+   },
+   "delivery": {
+    "provider_accepted": 5,
+    "provider_refused": 0,
+    "provider_failed": 0,
+    "indeterminate": 0
+   }
+  },
+  "evidence_hash": "5fa0a912135affbfbfbc3f75ac6ea411137026807e9b975b0923eb7a79e6d893",
+  "note": "the probe's recommendation is evidence in the record; this run's mode was judged by the director's order, not by it"
+ },
+ "order_record": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron3/order-record.json",
+  "sha256": "df782b5a33449d4b4f9ddb9cb20508eb55799fd4bf903913091c750cef6e037d",
+  "adapter_mode": "native",
+  "decision_examiner": "Ben (director) \u2014 order of 2026-11-24"
+ },
+ "pacing": {
+  "min_interval_seconds": 20.0,
+  "note": "a fixed operating choice of this driver between successive outbound iteration calls; NVIDIA pacing is unestablished and no provider figure is claimed"
+ },
+ "loop_result": {
+  "ok": false,
+  "outcome": "stalled",
+  "outcome_summary": "stalled",
+  "ground": "step_ceiling",
+  "iterations": 12
+ },
+ "stall": {
+  "ground": "step_ceiling",
+  "event_seq": 114
+ },
+ "dispatches": [
+  {
+   "dispatch_id": "dispatch-1",
+   "tool": "sandbox.list",
+   "request_id": "loop-inst-crew-1-1-1-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-2",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-2-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-3",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-3-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-4",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-4-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-5",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-5-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-6",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-6-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-7",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-7-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-8",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-8-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-9",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-9-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-10",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-10-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-11",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-11-1",
+   "outcome": "result"
+  },
+  {
+   "dispatch_id": "dispatch-12",
+   "tool": "sandbox.read",
+   "request_id": "loop-inst-crew-1-1-12-1",
+   "outcome": "result"
+  }
+ ],
+ "brief": {
+  "exists": false,
+  "path_used": null,
+  "sha256_at_wall": null,
+  "word_count": null,
+  "collected_path": null,
+  "room": {
+   "exists": false,
+   "sha256_at_wall": null,
+   "word_count": null
+  },
+  "framework_scratch": {
+   "exists": false,
+   "sha256_at_wall": null,
+   "word_count": null,
+   "collected_path": null
+  },
+  "note": "the brief may land by either write path \u2014 the room's scratch (via container.exec) or the framework sandbox's scratch (via sandbox.write); the room's is primary when both stand, and the two are never merged"
+ },
+ "captures": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron3/captures.jsonl",
+  "transmitted_requests": 18
+ },
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ },
+ "event_count": 114,
+ "terminal_readout": {
+  "rendered": true,
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/demo-nemotron3/terminal-readout.md",
+  "stderr": null
+ }
+}
