@@ -1,0 +1,163 @@
+{
+ "room": "demo",
+ "stocked": true,
+ "at": 1795566263.9345963,
+ "tree": "/home/hatch/workspace/collaboration-framework/live-demo/gate4-rehearsal/rooms/demo-tree",
+ "room_uid": 45000,
+ "source_manifest": {
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/first-worker/manifest.json",
+  "manifest_sha256": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+  "identity": "the first-worker assignment's released source set (probed1 identity)",
+  "sources": [
+   {
+    "path": "sources/a3-pass.md",
+    "sha256": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff",
+    "provenance": "collaboration-framework/VANE-PIECE-A3-PASS-2026-11-23.md (Vane's Piece A3 pass letter; INDEX 186)",
+    "in_room_path": "/room/work/sources/a3-pass.md",
+    "host_tree_sha256_after_stocking": "d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff"
+   },
+   {
+    "path": "sources/index-tail.md",
+    "sha256": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed",
+    "provenance": "collaboration-framework/INDEX.md, entries 165\u2013187 (the A2/A3 arc), extracted verbatim",
+    "in_room_path": "/room/work/sources/index-tail.md",
+    "host_tree_sha256_after_stocking": "eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed"
+   },
+   {
+    "path": "sources/stock-take.md",
+    "sha256": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7",
+    "provenance": "collaboration-framework/VANE-STOCK-TAKE-2026-11-23.md (Vane's stock-take; INDEX 187)",
+    "in_room_path": "/room/work/sources/stock-take.md",
+    "host_tree_sha256_after_stocking": "ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7"
+   }
+  ]
+ },
+ "runtime_stock": {
+  "recipe": {
+   "mounts": [
+    {
+     "mount_point": "/",
+     "kind": "root"
+    },
+    {
+     "mount_point": "/usr",
+     "kind": "stock-bind",
+     "access": "ro"
+    },
+    {
+     "mount_point": "/lib",
+     "kind": "stock-bind",
+     "access": "ro"
+    },
+    {
+     "mount_point": "/lib64",
+     "kind": "stock-bind",
+     "access": "ro"
+    },
+    {
+     "mount_point": "/bin",
+     "kind": "stock-bind",
+     "access": "ro"
+    },
+    {
+     "mount_point": "/sbin",
+     "kind": "stock-bind",
+     "access": "ro"
+    },
+    {
+     "mount_point": "/room",
+     "kind": "room-bind"
+    },
+    {
+     "mount_point": "/proc",
+     "kind": "proc"
+    },
+    {
+     "mount_point": "/dev",
+     "kind": "dev"
+    }
+   ],
+   "dev_nodes_prefix": "/dev/",
+   "propagation": "private"
+  },
+  "stock_binds_ro": [
+   "/usr",
+   "/lib",
+   "/lib64",
+   "/bin",
+   "/sbin"
+  ],
+  "rig_stock_items": [
+   "rig/preflight.py",
+   "rig/reaper.py"
+  ],
+  "environment": {
+   "PATH": "/usr/bin:/bin",
+   "ROOM_ID": "demo"
+  }
+ },
+ "deliverable": {
+  "in_room_path": "/room/scratch/brief.md",
+  "host_path": "/home/hatch/workspace/collaboration-framework/live-demo/gate4-rehearsal/rooms/demo-tree/scratch/brief.md",
+  "smoke_probe_removed": true,
+  "present_at_stocking_end": false
+ },
+ "envelope_declared": {
+  "limits": {
+   "storage_bytes": 536870912,
+   "aggregate_mem_bytes": 536870912,
+   "aggregate_mem_catastrophic_multiple": 2.0,
+   "sustain_seconds": 1.0,
+   "aggregate_pids_max": 128,
+   "aggregate_pids_catastrophic_multiple": 2.0,
+   "aggregate_cpu_seconds": 600.0,
+   "warden_poll_s": 0.05,
+   "output_bytes": 1048576
+  },
+  "per_execution_wall_s": 120,
+  "cpu_contract": "the CPU limit is a cumulative accounting budget, not a hard execution ceiling \u2014 in-flight enforcement acts on what the census observes; work that completes between observations can exceed the budget; the excess is charged exactly and further calls are refused"
+ },
+ "smoke": [
+  {
+   "check": "shell runs and sees the sources at their relative paths",
+   "ok": true,
+   "detail": "rc=0 stdout='shell-ok\\nsource-visible\\n'"
+  },
+  {
+   "check": "python3 runs the smoke program",
+   "ok": true,
+   "detail": "rc=0"
+  },
+  {
+   "check": "working directory is /room/work",
+   "ok": true,
+   "detail": "cwd=/room/work"
+  },
+  {
+   "check": "source readable in-room, hash matches: sources/a3-pass.md",
+   "ok": true,
+   "detail": "in-room sha256=d60e5b0fd97baab6bffe4b8c6aee5bdc700ce6035ab26f7a6d49107659f25bff"
+  },
+  {
+   "check": "source readable in-room, hash matches: sources/index-tail.md",
+   "ok": true,
+   "detail": "in-room sha256=eb16b56bb16c53dfb7b5420b2a2c446e8cbc40cf4787e460b8de9773145d05ed"
+  },
+  {
+   "check": "source readable in-room, hash matches: sources/stock-take.md",
+   "ok": true,
+   "detail": "in-room sha256=ecb919025d4e5176a7128009ad17c4d12c9ff4f1dd41748b148262308b8cc2e7"
+  },
+  {
+   "check": "scratch write and read back",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "check": "deliverable path writable (scratch/brief.md)",
+   "ok": true,
+   "detail": "True"
+  }
+ ],
+ "room_state_executions_at_stocking": 2
+}

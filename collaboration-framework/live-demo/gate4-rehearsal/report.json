@@ -1,0 +1,80 @@
+{
+ "kind": "gate 4 doorway-connection offline rehearsal report (derived matter, not record)",
+ "run_id": "run-first-worker-1",
+ "model": "openai/gpt-oss-120b",
+ "route": "nvidia (stub at the connector seam; no provider contacted)",
+ "manifest_hash": "bd6f3cae7cb5fa1624a78a501566721099a55abe3d35852784b4ae3a287d904f",
+ "assembly_id": "assembly-crew-1-1",
+ "probe": {
+  "settled_count": 5,
+  "recommended_mode": "native",
+  "counts": {
+   "behaviour": {
+    "text_contract": 0,
+    "native_catalogue": 5,
+    "environment_tool_attempt": 0,
+    "mixed": 0,
+    "refusal": 0,
+    "malformed": 0,
+    "no_observable_behaviour": 0
+   },
+   "delivery": {
+    "provider_accepted": 5,
+    "provider_refused": 0,
+    "provider_failed": 0,
+    "indeterminate": 0
+   }
+  },
+  "evidence_hash": "c779015bade8f6c5cfa7a093a2d207d5997448471327c929baf27e1bbb1d92e7"
+ },
+ "decision_receipt_hash": "6e78cf23cbb56fc2a23349590d4dec966919bf2cde8ade07bce92860c9b1f16e",
+ "loop_result": {
+  "ok": true,
+  "outcome": "yield",
+  "ground": null,
+  "iterations": 8
+ },
+ "brief_sha256": "0041ab583ff46def6cdf518207e5e9a4d40fe06b3b3e218e9ddc6f9e94655e14",
+ "brief_expected_sha256": "0041ab583ff46def6cdf518207e5e9a4d40fe06b3b3e218e9ddc6f9e94655e14",
+ "checker": {
+  "run_binding": {
+   "result": "ok"
+  },
+  "chain_hash": {
+   "result": "ok"
+  },
+  "chain_sequence": {
+   "result": "ok"
+  },
+  "replay": {
+   "result": "ok"
+  },
+  "projection_schema": {
+   "result": "ok"
+  },
+  "snapshot_schema": {
+   "result": "ok"
+  },
+  "replay_equality": {
+   "result": "ok"
+  },
+  "seal_correspondence": {
+   "result": "ok"
+  },
+  "assembly_correspondence": {
+   "result": "ok"
+  },
+  "dispatch_correspondence": {
+   "result": "ok"
+  },
+  "loop_correspondence": {
+   "result": "ok"
+  }
+ },
+ "event_count": 70,
+ "terminal_readout": {
+  "rendered": true,
+  "path": "/home/hatch/workspace/collaboration-framework/live-demo/gate4-rehearsal/terminal-readout.md",
+  "stderr": null
+ }
+}

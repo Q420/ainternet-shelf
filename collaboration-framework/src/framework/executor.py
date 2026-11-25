@@ -161,7 +161,8 @@ def _authority_or_raise(tool, path):
 class Executor:
     def __init__(self, doorway, sandbox_dir, claim_dir=None,
                  deadline=5.0, executor_id="executor-1",
-                 clock=time.monotonic):
+                 clock=time.monotonic, room=None,
+                 exec_timeout=None):
         self.doorway = doorway
         self.store = doorway.store
         self.sandbox_dir = sandbox_dir
@@ -169,6 +170,18 @@ class Executor:
             sandbox_dir, ".claims")
         self.deadline = deadline
         self.executor_id = executor_id
+        # The room binding (room-exec configuration, gate 4):
+        # the stocked demonstration room this executor's
+        # `container.exec` dispatches execute in — held by
+        # the harness process for the room's whole lifetime,
+        # in the same process that stocked it — and the
+        # per-execution wall-clock span handed to its run.
+        # An executor without a room establishes an exec
+        # dispatch as a failure outcome, the established
+        # shape for a tool it cannot perform; it never
+        # reaches anywhere else for one.
+        self.room = room
+        self.exec_timeout = exec_timeout
         # The executing thread's retrieval context (the
         # retrieval piece): set by the worker thread in
         # execute() from the dispatch's own record, read by
@@ -349,6 +362,72 @@ class Executor:
                 f"instead")
         return _retrieval_result(path, data.decode("utf-8"),
                                  authority)
+
+    def _perform_exec(self, parameters):
+        """container.exec (room-exec configuration, gate 4):
+        the granted call is handed to the stocked room's own
+        run, and the room's outcome is returned in the room
+        result contract the demonstration preparation paper
+        §2.3 settles, field for field — the exit status (null
+        where the execution never produced one: a refusal, a
+        timeout, an envelope termination), the bounded output
+        with its full byte counts and truncation flags, the
+        termination naming what ended the execution (a
+        precondition refusal names the precondition), the
+        CPU charged, and the duration. The command's contents
+        were the doorway's shape check and nothing more; what
+        the command does inside the room is the room's
+        governance. A room refusal is a result in this
+        contract, never an exception: the worker is told its
+        execution did not run, and why, in the same shape as
+        every other outcome."""
+        if self.room is None:
+            raise RuntimeError(
+                "container.exec: this executor holds no "
+                "room; the dispatch cannot be performed")
+        started = time.monotonic()
+        raw = self.room.run(
+            list(parameters["cmd"]),
+            timeout=self.exec_timeout
+            if self.exec_timeout is not None else 120)
+        duration = round(time.monotonic() - started, 3)
+        if raw.get("refused"):
+            termination = "precondition-failed: %s" % (
+                raw.get("failed_precondition"),)
+            exit_status = None
+        elif raw.get("timed_out"):
+            termination = "timeout"
+            exit_status = None
+        elif raw.get("envelope_termination"):
+            term = raw["envelope_termination"]
+            termination = "envelope-termination: %s (%s)" % (
+                term.get("resource"), term.get("rule"))
+            exit_status = None
+        else:
+            termination = "completed"
+            exit_status = raw.get("rc")
+        accounting = raw.get("cpu_accounting")
+        if isinstance(accounting, dict) and \
+                accounting.get("charged_seconds") is not None:
+            charged = accounting["charged_seconds"]
+        elif raw.get("aggregate_cpu_seconds") is not None:
+            charged = raw["aggregate_cpu_seconds"]
+        else:
+            charged = 0.0
+        return {
+            "exit_status": exit_status,
+            "stdout": raw.get("stdout", ""),
+            "stdout_bytes_total": raw.get("stdout_bytes", 0),
+            "stdout_truncated": bool(
+                raw.get("stdout_truncated", False)),
+            "stderr": raw.get("stderr", ""),
+            "stderr_bytes_total": raw.get("stderr_bytes", 0),
+            "stderr_truncated": bool(
+                raw.get("stderr_truncated", False)),
+            "termination": termination,
+            "cpu_seconds_charged": charged,
+            "duration_seconds": duration,
+        }
 
     def _perform_list(self, parameters):
         """sandbox.list: discovery without contents — the
@@ -653,6 +732,8 @@ class Executor:
                               "content": content}
         if tool == "sandbox.list":
             return "result", self._perform_list(parameters)
+        if tool == "container.exec":
+            return "result", self._perform_exec(parameters)
         if tool == "sandbox.read_range":
             return "result", self._perform_read_range(
                 parameters)

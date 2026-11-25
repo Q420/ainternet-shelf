@@ -238,7 +238,7 @@ class Generator:
 
     def generate(self, token, seat_id, identify, skills=(),
                  grants=None, model_requested=None,
-                 retrieval=False, probe=False):
+                 retrieval=False, probe=False, exec_room=False):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -269,7 +269,18 @@ class Generator:
         record is never rewritten by the probe, which binds to
         it by hash instead. The default declares nothing, and
         an assembly without the declaration is exempt,
-        identifiably."""
+        identifiably.
+
+        `exec_room` (room-exec configuration, gate 4): where
+        the assembly is generated for the room demonstration —
+        its one grant the worker's own execution tool — its
+        sealed record declares the exec catalogue contract,
+        the declaration that governs the assembly's dispatch
+        and catalogue versions (registry v4), exactly as the
+        retrieval declaration governs its regime. The two
+        configuration declarations are alternatives: a
+        generation names at most one, and the exec declaration
+        is the one recorded where both were somehow asked."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -308,6 +319,8 @@ class Generator:
                         "version": s["version"]} for s in skills],
             "grants": copy.deepcopy(grants),
             "catalogue_contract":
+                _tool_policy.EXEC_CATALOGUE_CONTRACT
+                if exec_room else
                 _tool_policy.RETRIEVAL_CATALOGUE_CONTRACT
                 if retrieval else CATALOGUE_CONTRACT,
         }

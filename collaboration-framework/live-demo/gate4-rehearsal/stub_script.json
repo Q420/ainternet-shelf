@@ -1,0 +1,350 @@
+{
+ "chat": [
+  {
+   "respond": {
+    "id": "stub-identify",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": "I am openai/gpt-oss-120b, a model served on the NVIDIA route. (Scripted stand-in declaration for the gate 4 offline rehearsal; no provider was contacted.)"
+      },
+      "finish_reason": "stop"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-1",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-1",
+         "type": "function",
+         "function": {
+          "name": "container.exec",
+          "arguments": "{\"cmd\": [\"/bin/cat\", \"sources/stock-take.md\"]}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-2",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-2",
+         "type": "function",
+         "function": {
+          "name": "container.exec",
+          "arguments": "{\"cmd\": [\"/bin/bash\", \"-c\", \"printf '%s' 'draft: stock-take read in-room; brief in progress\\n' > /room/scratch/draft.txt && cat /room/scratch/draft.txt\"]}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-3",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-3",
+         "type": "function",
+         "function": {
+          "name": "container.exec",
+          "arguments": "{\"cmd\": [\"/usr/bin/python3\", \"-c\", \"import base64, pathlib; pathlib.Path('/room/scratch/brief.md').write_bytes(base64.b64decode('IyBCcmllZiDigJQgdGhlIGNvbGxhYm9yYXRpdmUgYWdlbnQgZnJhbWV3b3JrCgpUaGUgZnJhbWV3b3JrIGFzc2VtYmxlcyBvbmUgZ2VuZXJhdGVkIGFnZW50IGZvciBvbmUgYm91bmRlZCB0YXNrOiBhIG1vZGVsLCBhbiBpZGVudGl0eSBkZWNsYXJlZCBhdCBhc3NlbWJseSwgdGhlIHNraWxscyB0aGUgdGFzayBuZWVkcywgZXhhY3RseSB0aGUgdG9vbCBncmFudHMgdGhlIGNhc2UgYWxsb3dzLCBhbmQgdGhlIGNhc2UgaXRzZWxmLiBUaGUgd29yayBpcyBjYXJyaWVkIGluIGEgZHVyYWJsZSByZWNvcmQ7IGEgZG9vcndheSBjaGVja3MgZXZlcnkgZnJhbWV3b3JrIHRvb2wgY2FsbCBhZ2FpbnN0IHRoZSBzZWFsZWQgZ3JhbnRzIGJlZm9yZSBhbnl0aGluZyBpcyBkaXNwYXRjaGVkLCBhbmQgYW4gaW5kZXBlbmRlbnQgY2hlY2tlciByZWNvbnN0cnVjdHMgZWFjaCBydW4gZnJvbSBpdHMgcmVjb3JkIGFmdGVyd2FyZHMuCgpXaGF0IGhhcyBiZWVuIHByb3ZlbjogdGhlIHJlY29yZCwgZG9vcndheSwgYXNzZW1ibHkgYW5kIGJvdW5kZWQgbG9vcCBzdGFuZCBidWlsdCBhbmQgZXhhbWluZWQ7IGEgd29ya2VyIGhhcyByZWFkIGl0cyBzb3VyY2VzIHRocm91Z2ggdGhlIGRvb3J3YXkgdW5kZXIgdGhlIHJlY29yZC4gV2hhdCBoYXMgbm90IGJlZW4gcHJvdmVuOiBhIHdvcmtlciBjb21wb3NpbmcgYW4gYXNzaWdubWVudCBlbmQgdG8gZW5kLCBhbmQgYWdlbnRzIGNvbGxhYm9yYXRpbmcgdGhyb3VnaCBzaGFyZWQgd29yayDigJQgdGhlIGRlbW9uc3RyYXRpb24gdGhpcyBicmllZiB3YXMgd3JpdHRlbiBpbnNpZGUgaXMgdGhlIGZpcnN0IHJvb20gcnVuLCBhbmQgaXRzIG93biByZXN1bHQgaXMgbm90IGNsYWltZWQgaGVyZS4K'))\"]}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-4",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-4",
+         "type": "function",
+         "function": {
+          "name": "sandbox.read",
+          "arguments": "{\"path\": \"sources/stock-take.md\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-5",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-5",
+         "type": "function",
+         "function": {
+          "name": "container.exec",
+          "arguments": "{\"cmd\": \"/bin/cat sources/stock-take.md\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-6",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-6",
+         "type": "function",
+         "function": {
+          "name": "container.exec",
+          "arguments": "{\"cmd\": [\"/bin/cat\", \"sources/a3-pass.md\"]}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": "tamper_reaper"
+  },
+  {
+   "respond": {
+    "id": "stub-fc-g4-7",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-g4-7",
+         "type": "function",
+         "function": {
+          "name": "container.exec",
+          "arguments": "{\"cmd\": [\"/usr/bin/sha256sum\", \"sources/index-tail.md\"]}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": "restore_reaper"
+  },
+  {
+   "respond": {
+    "id": "stub-yield",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": "{\"outcome\": \"yield\", \"summary\": \"Read the stock-take in-room, drafted in scratch, and wrote scratch/brief.md; the ungranted and malformed calls were refused and one execution met the room's rig-integrity refusal before the clean final read.\"}"
+      },
+      "finish_reason": "stop"
+     }
+    ]
+   },
+   "action": null
+  }
+ ],
+ "chat-raw-bounded": [
+  {
+   "respond": {
+    "id": "stub-fc-probe",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-probe",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\": \"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-probe",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-probe",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\": \"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-probe",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-probe",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\": \"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-probe",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-probe",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\": \"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  },
+  {
+   "respond": {
+    "id": "stub-fc-probe",
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+     {
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "tool_calls": [
+        {
+         "id": "fc-probe",
+         "type": "function",
+         "function": {
+          "name": "probe.lookup",
+          "arguments": "{\"object\": \"brass lantern\"}"
+         }
+        }
+       ]
+      },
+      "finish_reason": "tool_calls"
+     }
+    ]
+   },
+   "action": null
+  }
+ ]
+}

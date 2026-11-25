@@ -961,6 +961,8 @@ class Doorway:
         # refused on its grant ground, never on the aggregate.
         governed = self._retrieval_governed(
             self._generated_payload(assembly_id))
+        exec_governed = self._exec_governed(
+            self._generated_payload(assembly_id))
         if governed and tool in _tool_policy.RETRIEVAL_TOOLS:
             ground = self._retrieval_aggregate_problem(
                 state, entry, instance_id)
@@ -993,6 +995,8 @@ class Doorway:
              # follows the assembly's declared contract, as
              # the catalogue's does.
              "registry_version":
+                 _tool_policy.EXEC_REGISTRY_VERSION
+                 if exec_governed else
                  _tool_policy.RETRIEVAL_REGISTRY_VERSION
                  if governed else
                  _tool_policy.REGISTRY_VERSION})
@@ -1002,6 +1006,20 @@ class Doorway:
                 "request_id": request_id,
                 "dispatch_id": dispatch_id, "outcome": None,
                 "reconciled_outcome": None}
+
+    @staticmethod
+    def _exec_governed(generated):
+        """Whether a sealed generated record declares the
+        exec catalogue contract (room-exec configuration,
+        gate 4): the compatibility discriminator for the
+        exec regime — v4 dispatch and catalogue — exactly as
+        the retrieval declaration discriminates its own. An
+        assembly whose record declares anything else (or
+        nothing) is not governed: its dispatches keep the
+        behaviour they have always had."""
+        return isinstance(generated, dict) and \
+            generated.get("catalogue_contract") == \
+            _tool_policy.EXEC_CATALOGUE_CONTRACT
 
     @staticmethod
     def _retrieval_governed(generated):
@@ -1058,7 +1076,9 @@ class Doorway:
                     f"and packed (R44)")
         ok, ground = _tool_policy.check_ceiling(
             tool, grant.get("scope_ceiling"), parameters,
-            version=_tool_policy.RETRIEVAL_REGISTRY_VERSION
+            version=_tool_policy.EXEC_REGISTRY_VERSION
+            if self._exec_governed(generated) else
+            _tool_policy.RETRIEVAL_REGISTRY_VERSION
             if governed else None)
         if not ok:
             return f"{ground} (R44)"

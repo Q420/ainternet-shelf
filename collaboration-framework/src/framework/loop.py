@@ -1333,7 +1333,9 @@ class Loop:
         # assembly derives under the current version and
         # presents its outcomes exactly as it always has.
         governed = doorway._retrieval_governed(generated)
-        version = _tool_policy.RETRIEVAL_REGISTRY_VERSION \
+        version = _tool_policy.EXEC_REGISTRY_VERSION \
+            if doorway._exec_governed(generated) else \
+            _tool_policy.RETRIEVAL_REGISTRY_VERSION \
             if governed else _tool_policy.REGISTRY_VERSION
         # A governed assembly's catalogue is per grant (the
         # attempt-7 release correction, INDEX 257): its two

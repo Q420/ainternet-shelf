@@ -88,7 +88,16 @@ The timings are evidence only; they govern nothing.
 Request fidelity. The body sent to the helper mirrors the
 adapter's own `_dispatch` byte-for-byte in content:
 {"model": <model>, "messages": <messages>,
-"temperature": 0.2} — every field the adapter sends. The
+"temperature": 0.2} — every field the adapter sends. In
+the adapter's native mode its dispatch also carries the
+staged tool definitions and tool choice for the call (the
+fields `_call_typed` stages on the adapter for its one
+call): this transport carries those too, read from the
+adapter at call time exactly as the Groq-route transport
+reads them, so the transmitted body is the whole request
+the adapter constructed, never a subset of it (the BD-1
+lesson: a field committed in the adapter but dropped at
+this seam is a field that never reaches the wire). The
 one thing that cannot travel through the helper is the
 Authorization header: the helper attaches the registered
 credential itself, which is the entire point of the route.
@@ -343,9 +352,21 @@ def install_connector_transport(adapter, helper_path, model):
         }
         connector_call.last_call_timings = timings
         prep_started = time.monotonic()
-        body = json.dumps(
-            {"model": model, "messages": messages,
-             "temperature": 0.2}).encode("utf-8")
+        request_object = {"model": model, "messages": messages,
+                          "temperature": 0.2}
+        # The adapter's staged native fields for this call
+        # (native mode only; text mode stages neither): the
+        # transmitted body carries them, or the offered
+        # tools exist everywhere except on the wire.
+        staged_tools = getattr(adapter, "_pending_tools",
+                               None)
+        if staged_tools:
+            request_object["tools"] = staged_tools
+        staged_choice = getattr(adapter,
+                                "_pending_tool_choice", None)
+        if staged_choice is not None:
+            request_object["tool_choice"] = staged_choice
+        body = json.dumps(request_object).encode("utf-8")
         timings["body_preparation_s"] = \
             time.monotonic() - prep_started
         # The bound is the time REMAINING to the adapter's
@@ -523,11 +544,25 @@ def install_connector_transport(adapter, helper_path, model):
                 message = parsed["choices"][0]["message"]
                 content = message["content"]
             except (KeyError, IndexError, TypeError):
-                raise AdapterFailure(
-                    "malformed_response",
-                    detail="no message content in provider "
-                           "response",
-                    evidence=seam)
+                # A native response may lawfully carry no
+                # content key beside its tool calls (the
+                # adapter reads the calls from _last_message
+                # below); that shape is a response, not a
+                # malformation. Anything else missing its
+                # content is malformed, as before.
+                try:
+                    message = parsed["choices"][0]["message"]
+                except (KeyError, IndexError, TypeError):
+                    message = None
+                if isinstance(message, dict) and \
+                        message.get("tool_calls"):
+                    content = None
+                else:
+                    raise AdapterFailure(
+                        "malformed_response",
+                        detail="no message content in "
+                               "provider response",
+                        evidence=seam)
             if isinstance(message, dict):
                 adapter._last_message = message
             seam["content"] = content

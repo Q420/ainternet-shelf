@@ -131,6 +131,25 @@ RETRIEVAL_TOOLS = frozenset({
 SOURCE_SCOPE_PREFIX = "sources"
 SCRATCH_SCOPE_PREFIX = "scratch"
 
+# The room-exec configuration's contract data (demonstration
+# preparation paper §2/§3.2; gate 4): the registry version an
+# assembly declaring the exec catalogue contract is dispatched
+# and catalogued under; the contract value its sealed generated
+# record declares; and the tool the contract governs — the
+# worker's own execution tool, offered under the name and the
+# shape its preserved generations used (Track A, INDEX 433):
+# `container.exec`, arguments an object whose `cmd` is an array
+# of strings, no other fields required. The doorway's check for
+# this tool is the grant and the shape alone (the paper §2.2):
+# its ceiling keys are therefore empty — a grant's scope ceiling
+# for it is the empty object, and any ceiling key fails closed —
+# and its parameter contract is the cmd array's form, which
+# check_ceiling enforces below. What a command may do is
+# governed by the room's walls, never by this policy.
+EXEC_REGISTRY_VERSION = "tool-registry-v4"
+EXEC_CATALOGUE_CONTRACT = "exec-v4"
+EXEC_TOOLS = frozenset({"container.exec"})
+
 
 def retrieval_authority(path):
     """The authority path a sandbox path falls under, or
@@ -432,6 +451,39 @@ _TOOLS_V3 = _freeze({
     },
 })
 
+# The v4 view (room-exec configuration, gate 4): v3's entries
+# whole and unchanged — taken from the frozen v3 view itself, so
+# the two views cannot drift — plus the one new tool. An
+# assembly declaring the exec catalogue contract is catalogued
+# and dispatched under v4, exactly as a retrieval assembly is
+# under v3; every other assembly keeps the version it has
+# always had.
+_TOOLS_V4 = _freeze({
+    **_TOOLS_V3,
+    "container.exec": {
+        "ceiling_keys": set(),
+        "param_keys": {"cmd"},
+        "description":
+            "Execute one command inside your office — the "
+            "sealed room stocked for this task — and return "
+            "its result: the exit status, the captured "
+            "output (bounded, with the full byte counts and "
+            "any truncation flagged), what ended it, the "
+            "CPU charged and the duration. Commands run "
+            "with the working directory at /room/work: the "
+            "sources stand under sources/, your own space "
+            "is /room/scratch, and the deliverable is "
+            "written there. Nothing outside the room is "
+            "reachable from inside it.",
+        "parameters": [
+            {"name": "cmd", "required": True,
+             "meaning": "the command to execute, as an "
+                        "array of strings: the program "
+                        "followed by its arguments"},
+        ],
+    },
+})
+
 # One registry view per version, v1 preserved immutable for
 # historical verification (Piece A3-CAT settlement (a)/(c)) —
 # the version map itself is frozen with its views, so a
@@ -440,6 +492,7 @@ _REGISTRIES = MappingProxyType({
     "tool-registry-v1": _TOOLS_V1,
     "tool-registry-v2": _TOOLS_V2,
     "tool-registry-v3": _TOOLS_V3,
+    "tool-registry-v4": _TOOLS_V4,
 })
 
 # The current view: what an unversioned call applies. This
@@ -726,4 +779,19 @@ def check_ceiling(tool, ceiling, parameters, version=None):
                     not isinstance(offset, int) or offset < 0:
                 return False, ("sandbox.search's offset is "
                                "not a non-negative integer")
+    elif tool == "container.exec":
+        # The shape check, and the only one (demonstration
+        # preparation paper §2.2): cmd present, an array of
+        # strings. The command's contents are not policed
+        # here or anywhere at the doorway — what it may do
+        # is the room's governance, not the doorway's.
+        cmd = parameters.get("cmd")
+        if not isinstance(cmd, list) or not cmd:
+            return False, ("container.exec requires its cmd "
+                           "parameter to be a non-empty array "
+                           "of strings")
+        if any(not isinstance(part, str) for part in cmd):
+            return False, ("container.exec's cmd array holds "
+                           "a non-string element; every "
+                           "element of cmd must be a string")
     return True, ""

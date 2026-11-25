@@ -78,7 +78,9 @@ from fabric.canonical import canonical, event_hash, sha256_hex
 
 from checker.replay import replay_events
 from checker.schema import SCHEMA
-from checker.tool_policy import (REGISTRY_VERSION,
+from checker.tool_policy import (EXEC_CATALOGUE_CONTRACT,
+                                 EXEC_REGISTRY_VERSION,
+                                 REGISTRY_VERSION,
                                  RETRIEVAL_AGGREGATE_CEILING,
                                  RETRIEVAL_REGISTRY_VERSION,
                                  RETRIEVAL_RESULT_CEILING,
@@ -1351,6 +1353,12 @@ def _dispatch_result(events, state):
             ev["payload"].get("catalogue_contract") == \
             _RETRIEVAL_CONTRACT
 
+    def exec_governed(instance_id):
+        ev = generated_by_instance.get(instance_id)
+        return ev is not None and \
+            ev["payload"].get("catalogue_contract") == \
+            _EXEC_CONTRACT
+
     def pinned_boundary(instance_id):
         """The evidence boundary of the exact case version
         the instance's assembly record pins, from the
@@ -1515,6 +1523,29 @@ def _dispatch_result(events, state):
                             "registry_version"),
                         detail="v3 recorded for an assembly "
                                "that declares no retrieval "
+                               "contract")
+            # The exec regime (gate 4): the same
+            # correspondence for v4 — a governed assembly's
+            # dispatches are governed by v4, and v4 recorded
+            # for an assembly that declares no exec contract
+            # is a stamp nothing issued.
+            if exec_governed(iid) and \
+                    p.get("registry_version") != \
+                    EXEC_REGISTRY_VERSION:
+                problem("dispatch_registry_version_mismatch",
+                        dispatch_id=did, at_seq=seq,
+                        registry_version=p.get(
+                            "registry_version"),
+                        expected=EXEC_REGISTRY_VERSION)
+            elif not exec_governed(iid) and \
+                    p.get("registry_version") == \
+                    EXEC_REGISTRY_VERSION:
+                problem("dispatch_registry_version_mismatch",
+                        dispatch_id=did, at_seq=seq,
+                        registry_version=p.get(
+                            "registry_version"),
+                        detail="v4 recorded for an assembly "
+                               "that declares no exec "
                                "contract")
             if any(d["instance_id"] == iid
                    and d["request_id"] == rid
@@ -1900,8 +1931,17 @@ _CATALOGUE_CONTRACT = "a3-cat"
 # understand.
 _RETRIEVAL_CONTRACT = "retrieval-v3"
 
+# The room-exec contract's declaration value (demonstration
+# preparation paper §2/§3.2; gate 4): an assembly declaring
+# it is governed by the exec regime — v4 dispatches of the
+# one execution tool, verified under v4 exactly as a
+# retrieval assembly's are under v3. The governed catalogue
+# contracts are the three values together.
+_EXEC_CONTRACT = EXEC_CATALOGUE_CONTRACT
+
 _GOVERNED_CATALOGUE_CONTRACTS = (_CATALOGUE_CONTRACT,
-                                 _RETRIEVAL_CONTRACT)
+                                 _RETRIEVAL_CONTRACT,
+                                 _EXEC_CONTRACT)
 
 # Response-evidence piece (WORKER-RESPONSE-EVIDENCE-SCOPE
 # Rev 8): the disposition contract's tables — this
