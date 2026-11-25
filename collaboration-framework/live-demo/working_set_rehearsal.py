@@ -145,6 +145,24 @@ short cover at later wakes, the deliverable statement
 opening the assignment, the journal's purpose label,
 and the tool list grouped by the job's phases.
 
+Scenario G (staged) is the staged-onboarding witness
+(INDEX 544, Ben's direction, 2026-11-25): the
+generation seals the presentation contract beside the
+working-set contract, and the scripted stand-in walks
+the onboarding across his first wakes — his memory
+introduced as his own (stage 1), his case's essentials
+(stage 2), his files as pointers, listing the
+briefcase himself at that stage (stage 3), his task
+with the phase-grouped menu (stage 4) — then works
+from dashboard wakes and completes the assignment
+through the contribution door. No package in the run
+carries the case dump, the view or the delta, and no
+content item stands twice in any package. The control
+is the rest of this rehearsal: the other scenarios'
+generations seal no presentation declaration, and
+their packages are the ordered packages they have
+always been.
+
 Outputs land in the rehearsal work directory, one
 subdirectory per scenario: the run record, the stub's
 captures, the decision receipt, the terminal readout,
@@ -192,7 +210,7 @@ from first_worker_run import (  # noqa: E402
     _commission_brief, export_store, run_checker)
 from demo_run import (  # noqa: E402
     ASSIGNMENT_COMBINED, GLOSSARY, GRANTS_COMBINED, MODEL,
-    ONBOARDING, _stage_sandbox_sources)
+    ONBOARDING, ROLE_MEMORY, _stage_sandbox_sources)
 
 import stock_demo  # noqa: E402
 
@@ -523,6 +541,81 @@ def build_script_contribution(label):
             "chat-raw-bounded": _probe_steps()}
 
 
+# Scenario G's contributed brief: the scripted worker's
+# deliverable text, filed by the office through the
+# contribution door. Plain words, deliberately short —
+# the scenario witnesses the onboarding walk and the
+# door, not composition.
+STAGED_BRIEF_TEXT = (
+    "The collaborative agent framework, briefly: a "
+    "director, an orchestrator and an examiner design "
+    "work as a process tree, and generated workers — "
+    "assembled per task with their briefcase, their "
+    "grants and their office — do the work in the open, "
+    "on a record everything can be checked against. "
+    "(Scripted stand-in's contribution for the staged-"
+    "onboarding rehearsal; the office files it at "
+    "scratch/brief.md.)")
+
+
+def build_script_staged():
+    """Scenario G's script: the staged onboarding walk.
+    The stand-in takes each stage as it comes —
+    acknowledges his memory and his case (no tools are
+    offered at those wakes, and none are called), lists
+    a file from the pointers at the files stage (the
+    real pull the stage exists for), reads one source
+    whole at the task stage, a second at the first
+    dashboard wake, and completes the assignment
+    through the contribution door."""
+    chat = [
+        _identify_step("staged"),
+        # 1 — the memory stage: acknowledge, nothing
+        # else is asked.
+        {"respond": _text_response(
+            "staged-ack-1",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 2 — the case stage: acknowledge again.
+        {"respond": _text_response(
+            "staged-ack-2",
+            json.dumps({"outcome": "acknowledge"})),
+         "action": None},
+        # 3 — the files stage: list a file from the
+        # pointers himself — the stage's real pull
+        # (sandbox.list takes a file's path and returns
+        # its structure: size, lines, headings).
+        {"respond": _native_call(
+            "fc-st-1", "sandbox-list",
+            {"path": "sources/index-tail.md"}),
+         "action": None},
+        # 4 — the task stage: read the first source
+        # whole.
+        {"respond": _native_call(
+            "fc-st-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        # 5 — the first dashboard wake: read the second
+        # source whole.
+        {"respond": _native_call(
+            "fc-st-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        # 6 — the second dashboard wake: the
+        # contribution, filed by the office at the
+        # declared destination — the door completes the
+        # assignment.
+        {"respond": _text_response(
+            "staged-contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": STAGED_BRIEF_TEXT})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def build_script_budget():
     def rr(call_id, path, start, end):
         return {"respond": _native_call(
@@ -626,7 +719,8 @@ def _run_scenario(work_dir, *, scenario, brief,
                   manifest_hash, seal_entries, stage_fn,
                   script, grounds, adapter_mode="native",
                   freshness_suspended=False,
-                  delivery_declaration=False):
+                  delivery_declaration=False,
+                  presentation_declaration=False):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
     Returns the report dict (also written to
@@ -741,7 +835,8 @@ def _run_scenario(work_dir, *, scenario, brief,
         skills=[], grants=GRANTS_COMBINED,
         model_requested=MODEL, probe=True, exec_room=True,
         freshness_suspended=freshness_suspended,
-        delivery_declaration=delivery_declaration)
+        delivery_declaration=delivery_declaration,
+        presentation_declaration=presentation_declaration)
     if not generated.get("ok"):
         raise RuntimeError(
             f"generation failed: "
@@ -837,6 +932,8 @@ def _run_scenario(work_dir, *, scenario, brief,
             (sealed or {}).get("freshness_guard"),
         "sealed_delivery":
             (sealed or {}).get("delivery"),
+        "sealed_presentation_contract":
+            (sealed or {}).get("presentation_contract"),
         "sealed_catalogue_contract":
             (sealed or {}).get("catalogue_contract"),
         "manifest_hash": manifest_hash,
@@ -857,11 +954,11 @@ def _run_scenario(work_dir, *, scenario, brief,
 
 
 def run_rehearsal(work_dir):
-    """Run all seven scenarios under `work_dir` (created
+    """Run all eight scenarios under `work_dir` (created
     fresh). Returns {"continuity": report, "budget":
     report, "freedom": report, "batch": report,
     "journal": report, "freshness": report,
-    "freshness_control": report}."""
+    "freshness_control": report, "staged": report}."""
     work_dir = Path(work_dir).resolve()
     if work_dir.exists() and any(work_dir.iterdir()):
         raise RuntimeError(
@@ -1082,7 +1179,67 @@ def run_rehearsal(work_dir):
                 "under R31. Rehearsal furniture by a "
                 "scripted stand-in examiner.",
         adapter_mode="text")
+    # Scenario G — staged onboarding (INDEX 544,
+    # Ben's direction, 2026-11-25): the same combined
+    # configuration, the generation additionally sealing
+    # the presentation contract, the case carrying the
+    # role memory, the opening record, the journal
+    # designation and the delivery declaration. The
+    # scripted stand-in walks the stages: acknowledge
+    # (memory), acknowledge (case), list the briefcase
+    # himself (files — the stage's real pull), read a
+    # source whole (task), read another (dashboard), and
+    # complete through the contribution door. The
+    # control stands beside it in the same run: every
+    # other scenario's generation seals no presentation
+    # declaration, and their packages present exactly as
+    # they always have.
+    staged = _run_scenario(
+        work_dir / "staged",
+        scenario="staged",
+        brief=_commission_brief(
+            ASSIGNMENT_COMBINED, manifest_hash,
+            glossary=GLOSSARY,
+            journal="scratch/journal.md",
+            onboarding=ONBOARDING,
+            delivery={"destination": "scratch/brief.md",
+                      "route": "contribution-v1"},
+            role_memory=ROLE_MEMORY,
+            opening={
+                "worker_statements": [
+                    "The job is to read the three "
+                    "sources and write the brief; the "
+                    "deliverable is the file "
+                    "scratch/brief.md."],
+                "office_answers": [
+                    "Confirmed: the sources stand in "
+                    "sources/, named in the glossary; "
+                    "the brief is plain prose, at most "
+                    "~600 words."],
+                "settled": [
+                    "No work product is produced in "
+                    "the opening; the work happens in "
+                    "the room."],
+                "unresolved": []}),
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_staged(),
+        grounds="Staged-onboarding rehearsal (INDEX "
+                "544): the scripted stand-in's probe "
+                "trials settled 5/5 native, and the "
+                "combined configuration's judgement is "
+                "native. The generation seals the "
+                "staged-onboarding presentation "
+                "contract under the director's "
+                "direction. Rehearsal furniture by a "
+                "scripted stand-in examiner.",
+        freshness_suspended=True,
+        delivery_declaration=True,
+        presentation_declaration=True)
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
-            "freshness_control": freshness_control}
+            "freshness_control": freshness_control,
+            "staged": staged}

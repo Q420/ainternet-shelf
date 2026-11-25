@@ -131,11 +131,34 @@ refuses the same answer in the same position under
 R31; the checker stands eleven checks, all ok, over
 both records.
 
+The staged scenario witnesses staged onboarding
+(INDEX 544, Ben's direction, 2026-11-25) in its own
+section, counted separately in the output: the
+generation seals the presentation contract; the
+scripted stand-in walks memory, case, files and task
+across his first four wakes and works from dashboard
+wakes after; the witnesses assert the stage order and
+each stage's size budget (the first wake under 8,000
+rendered chars against the 29,341 the verbatim
+package measured on the round-seven wire), stage 1's
+framing of the memory as his own, the absence of the
+case dump, the view and the delta from every package,
+no stage component standing at any other stage, the
+files stage's own pull in the record, every
+iteration's presentation commitment equal to the
+hash of the very package the captures show was
+presented, the checker clean over the record, and
+the assignment completed through the contribution
+door. The control stands in the same rehearsal run:
+the continuity scenario's generation seals no
+presentation declaration.
+
 Run: python3 live-demo/test_working_set_rehearsal.py
 Exits 0 when every check passes.
 """
 
 import base64
+import copy
 import hashlib
 import json
 import os
@@ -161,7 +184,9 @@ from framework.loop import Loop  # noqa: E402
 from framework.record import FrameworkStore  # noqa: E402
 import working_set_rehearsal as rehearsal  # noqa: E402
 import stock_demo  # noqa: E402
-from demo_run import ONBOARDING  # noqa: E402
+from demo_run import (  # noqa: E402
+    ASSIGNMENT_COMBINED, GLOSSARY, ONBOARDING,
+    ROLE_MEMORY)
 
 FAILURES = []
 CHECKS = [0]
@@ -255,6 +280,79 @@ def _ws_hash_of(package):
     return sha256_hex(canonical({
         "budget_bytes": ws.get("budget_bytes"),
         "entries": ws.get("entries")}))
+
+
+def _staged_packages(work):
+    """The staged wake packages a scenario's captures
+    carried, by chat index, with their rendered sizes:
+    the package JSON as the prompt presented it — the
+    body, plus the tool catalogue section the adapter
+    renders separately, merged back into the package it
+    was pulled from. Returns {index: (package, chars)}
+    where chars counts the body JSON and the catalogue
+    JSON as rendered (the contract's framing lines are
+    not the package's)."""
+    captures = [json.loads(line) for line in
+                (work / "captures.jsonl")
+                .read_text().splitlines() if line.strip()]
+    chat = {c["index"]: c for c in captures
+            if c["mode"] == "chat"}
+    packages = {}
+    decoder = json.JSONDecoder()
+    for idx, cap in sorted(chat.items()):
+        body = json.loads(base64.b64decode(
+            cap["request_b64"]))
+        for message in body.get("messages") or []:
+            content = message.get("content")
+            if not isinstance(content, str) or \
+                    "Your wake package:" not in content:
+                continue
+            anchor = content.index("Your wake package:")
+            start = content.index("{", anchor)
+            try:
+                package, end = decoder.raw_decode(
+                    content[start:])
+            except ValueError:
+                continue
+            if not isinstance(package, dict) or \
+                    "presentation" not in package:
+                continue
+            chars = end
+            rest = content[start + end:]
+            if "Your tool catalogue" in rest:
+                tstart = rest.index("[", rest.index(
+                    "Your tool catalogue"))
+                try:
+                    tools, tend = decoder.raw_decode(
+                        rest[tstart:])
+                except ValueError:
+                    tools = None
+                if isinstance(tools, list):
+                    package["tools"] = tools
+                    chars += tend
+            packages[idx] = (package, chars)
+            break
+    return packages
+
+
+def _presentation_hash_of(package):
+    """The staged package's commitment, recomputed from
+    the captured package itself: its tool results
+    standing by their identities, its working set by
+    its own commitment hash, everything else verbatim —
+    the loop's core derivation, applied to the very
+    package the captures show was presented."""
+    core = copy.deepcopy(package)
+    results = core.pop("tool_results", [])
+    core["tool_result_refs"] = [
+        {"dispatch_id": e.get("dispatch_id"),
+         "request_id": e.get("request_id"),
+         "outcome": e.get("outcome"),
+         "event_seq": e.get("event_seq")}
+        for e in results]
+    core.pop("working_set", None)
+    core["working_set_hash"] = _ws_hash_of(package)
+    return sha256_hex(canonical(core))
 
 
 def _check_commitments(scenario, work, packages,
@@ -1261,6 +1359,252 @@ def main():
         _check_commitments("freshness control", fcwork6,
                            _packages(fcwork6), 2)
         _check_checker("freshness control", rep)
+
+        # ============ staged onboarding ==============
+        # INDEX 544 (Ben's direction, 2026-11-25): the
+        # generation sealed the presentation contract,
+        # and the scripted stand-in walked the stages.
+        # The witnesses: the stages in order, each within
+        # its size budget; stage 1's framing (the memory
+        # introduced as his own, standing alone); no case
+        # dump, view or delta anywhere; no content item
+        # standing twice; the files stage's own pull in
+        # the record; the task stage's menu; the
+        # dashboard's shape; every iteration's
+        # presentation commitment equal to the hash of
+        # the very package the captures show was
+        # presented; the checker clean over the record;
+        # and the assignment completed through the door.
+        staged_before = CHECKS[0]
+        rep = reports["staged"]
+        swork = work / "staged"
+        check("staged: the run ends in six iterations "
+              "— the four onboarding stages, then two "
+              "dashboard wakes — with the yield the "
+              "door's completion carries (the filing "
+              "itself is witnessed from the record "
+              "below)",
+              rep["outcome"] == "yield"
+              and rep["iterations"] == 6,
+              f"{rep['outcome']} / {rep['iterations']}")
+        check("staged: the sealed record declares the "
+              "presentation contract beside the "
+              "working-set contract",
+              rep["sealed_presentation_contract"]
+              == "staged-onboarding-v1"
+              and rep["sealed_working_set_contract"]
+              == tool_policy.WORKING_SET_CONTRACT,
+              f"{rep['sealed_presentation_contract']} / "
+              f"{rep['sealed_working_set_contract']}")
+        check("staged: the control stands in the same "
+              "rehearsal — the continuity generation "
+              "seals NO presentation declaration, and "
+              "its packages are the ordered packages "
+              "they have always been",
+              reports["continuity"][
+                  "sealed_presentation_contract"] is None
+              and "case" in (
+                  _packages(cwork).get(1) or {}),
+              "continuity sealed presentation: "
+              + str(reports["continuity"][
+                  "sealed_presentation_contract"]))
+        spackages = _staged_packages(swork)
+        check("staged: seven chat captures (identify + "
+              "six iterations), each carrying a staged "
+              "package",
+              sorted(spackages) == [1, 2, 3, 4, 5, 6],
+              f"{sorted(spackages)}")
+        pkgs = {k: v[0] for k, v in spackages.items()}
+        sizes = {k: v[1] for k, v in spackages.items()}
+        print(f"staged package sizes (rendered "
+              f"chars): {sizes}")
+        stages = [(pkgs[k].get("presentation") or {})
+                  .get("stage")
+                  for k in (1, 2, 3, 4, 5, 6)]
+        check("staged: the stages walk in order — "
+              "memory, case, files, task, then dashboard "
+              "wakes",
+              stages == ["memory", "case", "files",
+                         "task", "dashboard", "dashboard"],
+              f"{stages}")
+        check("staged: no package carries the case "
+              "dump, the view or the delta",
+              all("case" not in p and "view" not in p
+                  and "delta" not in p
+                  for p in pkgs.values()))
+        dumps = {k: json.dumps(p, sort_keys=True)
+                 for k, p in pkgs.items()}
+        check("staged: the verbatim onboarding guide "
+              "stands in no package — the staged cover "
+              "replaces it",
+              all("HOW YOUR BRIEFCASE IS LAID OUT"
+                  not in d for d in dumps.values()))
+        check("staged: each stage's component stands "
+              "at its own stage and no other — the "
+              "memory only at stage 1, the essentials "
+              "only at stage 2, the files only at "
+              "stage 3, the task only at stage 4, the "
+              "pointers only at dashboard wakes",
+              all(("memory" in pkgs[k]) == (k == 1)
+                  and ("case_essentials" in pkgs[k])
+                  == (k == 2)
+                  and ("files" in pkgs[k]) == (k == 3)
+                  and ("task" in pkgs[k]) == (k == 4)
+                  and ("pointers" in pkgs[k]) == (k >= 5)
+                  for k in pkgs))
+        check("staged: the first wake is a fraction of "
+              "the old first wake — under 8,000 rendered "
+              "chars against the 29,341 the verbatim "
+              "package measured on the round-seven wire",
+              sizes.get(1, 10 ** 9) < 8000,
+              f"{sizes}")
+        check("staged: every onboarding stage package "
+              "stands within its budget (memory < 8,000; "
+              "case < 9,000; files < 15,000; task "
+              "< 22,000 rendered chars — the files and "
+              "task budgets carry the tool catalogue's "
+              "~11,000 rendered chars, the same offer "
+              "the old shape made at every wake)",
+              sizes.get(1, 10 ** 9) < 8000
+              and sizes.get(2, 10 ** 9) < 9000
+              and sizes.get(3, 10 ** 9) < 15000
+              and sizes.get(4, 10 ** 9) < 22000,
+              f"{sizes}")
+        check("staged: dashboard wakes carry no "
+              "onboarding bulk — outside the working set "
+              "they hold, the whole package is under "
+              "14,000 rendered chars of furniture, "
+              "catalogue and pointers",
+              all(sizes[k] - len(json.dumps(
+                  pkgs[k].get("working_set") or {}))
+                  < 14000 for k in (5, 6)),
+              f"{sizes}")
+        check("staged: stage 1 frames the memory as "
+              "his own — the introduction stands at the "
+              "head of the memory component, and the "
+              "entries are the case's role memory "
+              "exactly",
+              pkgs[1]["memory"]["introduction"]
+              .startswith("This is your memory")
+              and pkgs[1]["memory"]["entries"]
+              == ROLE_MEMORY,
+              f"{list(pkgs[1].get('memory') or {})}")
+        check("staged: no tools are offered at the "
+              "memory or case stages — the offer opens "
+              "at the files stage",
+              "tools" not in pkgs[1]
+              and "tools" not in pkgs[2]
+              and "tools" in pkgs[3])
+        check("staged: stage 2 carries the case "
+              "essentials — the sealed delivery "
+              "declaration verbatim, the freshness "
+              "position under the ruling, and the "
+              "opening record",
+              pkgs[2]["case_essentials"]["delivery"]
+              == {"destination": "scratch/brief.md",
+                  "route": "contribution-v1"}
+              and "suspended" in pkgs[2][
+                  "case_essentials"]["freshness"]
+              and pkgs[2]["case_essentials"]["opening"]
+              ["settled"] == [
+                  "No work product is produced in "
+                  "the opening; the work happens in "
+                  "the room."],
+              "essentials keys: "
+              + str(list(pkgs[2].get(
+                  "case_essentials") or {})))
+        check("staged: stage 3's briefcase is the "
+              "glossary's pointers — addresses and "
+              "descriptions, no contents — and the "
+              "journal stands as a pointer carrying "
+              "its purpose",
+              [e["address"] for e in
+               pkgs[3]["files"]["briefcase"]]
+              == [e["address"] for e in GLOSSARY]
+              and pkgs[3]["files"]["journal"]["path"]
+              == "scratch/journal.md"
+              and "orientation, not record and not "
+                  "memory" in pkgs[3]["files"][
+                      "journal"]["label"])
+        evs = _events(swork)
+        dispatched_tools = [
+            _payload(e).get("tool") for e in evs
+            if e["type"] == "TOOL_DISPATCHED"]
+        check("staged: the files stage's pull is real "
+              "— the record's dispatches are the list "
+              "at the files stage, then the two reads",
+              dispatched_tools == ["sandbox.list",
+                                   "sandbox.read",
+                                   "sandbox.read"],
+              f"{dispatched_tools}")
+        check("staged: stage 4 carries the assignment "
+              "text and the phase-grouped menu — "
+              "Gather, Compose, Deliver",
+              pkgs[4]["task"]["assignment"]
+              == ASSIGNMENT_COMBINED
+              and [g["phase"] for g in
+                   pkgs[4]["tool_list"]]
+              == ["Gather", "Compose", "Deliver"])
+        check("staged: dashboard wakes carry the five "
+              "pointers back into the briefcase",
+              all([p["item"] for p in pkgs[k]["pointers"]]
+                  == ["your memory", "your case",
+                      "your files", "your journal",
+                      "your task"]
+                  for k in (5, 6)))
+        recorded_ph = {}
+        for e in evs:
+            if e["type"] == "LOOP_ITERATION":
+                p = _payload(e)
+                recorded_ph[p.get("iteration")] = \
+                    p.get("presentation_hash")
+        check("staged: every LOOP_ITERATION carries "
+              "the presentation commitment",
+              len(recorded_ph) == 6
+              and all(isinstance(h, str) and len(h) == 64
+                      for h in recorded_ph.values()),
+              f"{recorded_ph}")
+        for k in (1, 2, 3, 4, 5, 6):
+            check(f"staged: iteration {k}'s commitment "
+                  f"is the hash of the staged package "
+                  f"its captured wake presented",
+                  recorded_ph.get(k)
+                  == _presentation_hash_of(pkgs[k]),
+                  f"recorded={recorded_ph.get(k)} "
+                  f"package="
+                  f"{_presentation_hash_of(pkgs[k])}")
+        filings = [_payload(e) for e in evs
+                   if e["type"] == "DELIVERABLE_FILED"]
+        check("staged: the assignment completes "
+              "through the door — one filing, authored "
+              "by the worker, filed by the office, at "
+              "the declared destination, its hash the "
+              "contribution's",
+              len(filings) == 1
+              and filings[0].get("destination")
+              == "scratch/brief.md"
+              and filings[0].get("authored_by")
+              == "crew-1"
+              and filings[0].get("filed_by") == "office"
+              and filings[0].get("content_sha256")
+              == hashlib.sha256(
+                  rehearsal.STAGED_BRIEF_TEXT
+                  .encode("utf-8")).hexdigest(),
+              f"{filings}")
+        filed_path = (swork / "run" / "sandbox"
+                      / "scratch" / "brief.md")
+        check("staged: the filed brief stands in the "
+              "sandbox at the declared destination, "
+              "verbatim",
+              filed_path.exists()
+              and filed_path.read_text(
+                  encoding="utf-8")
+              == rehearsal.STAGED_BRIEF_TEXT,
+              f"{filed_path}")
+        _check_commitments("staged", swork, pkgs, 6)
+        _check_checker("staged", rep)
+        print(f"staged-onboarding section: "
+              f"{CHECKS[0] - staged_before} checks")
 
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):

@@ -2204,6 +2204,652 @@ def _working_set_hash(working_set):
         "budget_bytes": working_set["budget_bytes"],
         "entries": working_set["entries"]}))
 
+
+# Staged onboarding (INDEX 544): the presentation
+# contract's name, as the generated record declares it
+# and this checker reads it (the framework copy stands in
+# tool_policy). An assembly declaring it owes a
+# presentation commitment hash on every iteration,
+# verified below by this checker's independent
+# reconstruction of the staged package from the record.
+# An assembly carrying no declaration predates or stands
+# outside the contract; its iterations are exempt
+# identifiably. A declaration naming any other value is a
+# contract this checker does not understand.
+_PRESENTATION_CONTRACT = "staged-onboarding-v1"
+_PRESENTATION_STAGES = ("memory", "case", "files", "task",
+                        "dashboard")
+# The staged presentation's wording — this checker's own
+# copies, as its other contracts' copies stand here; the
+# framework's stand in loop.py.
+_STAGED_COVER_FIRST = (
+    "You are {seat}, the {role} in this office, "
+    "assembled for one job. The shape of the work here "
+    "is simple: you are woken with a package, you act, "
+    "and the record keeps everything. Your onboarding "
+    "comes in stages — first your memory, then your "
+    "case, then your files, then your task — so nothing "
+    "is dumped on you all at once. The job: {headline}. "
+    "The deliverable: {deliverable}.")
+_STAGED_MEMORY_INTRO = (
+    "This is your memory — what this role knows from "
+    "before you were woken: how the work has gone, what "
+    "the office has told you, and the routes to what you "
+    "need. It is presented to you as your own knowledge "
+    "because in this role it is yours to work from; the "
+    "office keeps its own honest account of where each "
+    "item came from, behind the scenes. If the list "
+    "below is empty, this role carries no standing "
+    "memory yet.")
+_STAGED_FILES_INTRO = (
+    "Your briefcase holds the job's files. What stands "
+    "below are pointers — each file's address and what "
+    "it is — not contents: the contents are yours to "
+    "pull when the work needs them, through the doorway "
+    "tools (sandbox.list shows a file's size, line "
+    "count and headings; sandbox.read pulls a whole "
+    "file) or the shell in your room. That is how the "
+    "briefcase works: what you pull is carried forward "
+    "in front of you at later wakes, so you never need "
+    "to pull the same thing twice. Your tools are "
+    "offered from this wake on — if you want, list a "
+    "file from the map now and see its shape standing.")
+_STAGED_JOURNAL_POINTER = (
+    "your journal — your notebook: notes, decisions, "
+    "where you left off. Yours to write and rewrite; "
+    "orientation, not record and not memory. Its "
+    "contents are not carried in your packages — pull "
+    "it when you want it.")
+_STAGED_DIRECTIONS = {
+    "memory": (
+        "Onboarding stage 1 of 4: your memory. Nothing "
+        "is asked of you at this wake but to take it "
+        "in — no work is produced during onboarding. "
+        "Answer {\"outcome\": \"acknowledge\"} and your "
+        "next wake brings your case."),
+    "case": (
+        "Onboarding stage 2 of 4: your case — the frame "
+        "of the job you were assembled for. Take it in; "
+        "no work is produced during onboarding. Answer "
+        "{\"outcome\": \"acknowledge\"} and your next "
+        "wake brings your files."),
+    "files": (
+        "Onboarding stage 3 of 4: your files. These are "
+        "pointers to pull from, not the files "
+        "themselves. Your task arrives at the next "
+        "wake."),
+    "task": (
+        "Onboarding stage 4 of 4: your task. This is "
+        "the work. Your tool menu below is grouped by "
+        "the job's phases — Gather, Compose, Deliver. "
+        "Begin."),
+    "dashboard": (
+        "Your onboarding is complete. This is your "
+        "dashboard wake: where you stand, your newest "
+        "results, everything you have gathered so far, "
+        "and pointers back into your briefcase."),
+}
+_STAGED_GATE_INSTRUCTION = (
+    "Your previous response could not be read: it "
+    "arrived as a contribution, but its envelope was "
+    "not valid JSON, so nothing in it was accepted. "
+    "Resend the contribution plainly, as one JSON "
+    "object and nothing else: {\"outcome\": "
+    "\"contribute\", \"text\": \"<your contribution>\"}.")
+
+
+def _staged_stage(iteration):
+    """The onboarding stage a wake presents, as a pure
+    function of its 1-based iteration number — this
+    checker's copy of the loop's derivation."""
+    if 1 <= iteration <= 4:
+        return _PRESENTATION_STAGES[iteration - 1]
+    return _PRESENTATION_STAGES[4]
+
+
+def _staged_tool_purpose(tool, description):
+    """This checker's copy of the loop's one-line tool
+    purpose derivation."""
+    first = (description or "").split(". ")[0].strip()
+    if first and not first.endswith("."):
+        first += "."
+    if tool == "container.exec":
+        first = (first + " A shell command there is a "
+                 "first-class way to work: cat <path> "
+                 "reads a whole file at once, and "
+                 "commands can copy, combine and write "
+                 "files in your scratch.").strip()
+    return first
+
+
+def _staged_tool_list(catalogue):
+    """This checker's copy of the loop's flat tool-list
+    derivation: one entry per catalogue entry."""
+    out = []
+    for entry in catalogue or []:
+        ceiling = entry.get("scope_ceiling")
+        out.append({
+            "tool": entry.get("tool"),
+            "scope": ceiling.get("path_prefix")
+            if isinstance(ceiling, dict) else None,
+            "purpose": _staged_tool_purpose(
+                entry.get("tool"),
+                entry.get("description")),
+        })
+    return out
+
+
+def _staged_menu_example(phase, tool, scope):
+    """This checker's copy of the loop's tool-menu
+    example derivation."""
+    if tool == "container.exec":
+        if phase == "Gather":
+            return ("e.g. the command [\"cat\", "
+                    "\"<path>\"] reads that whole file "
+                    "at once.")
+        return ("e.g. commands in your room can copy "
+                "and combine files, and write drafts "
+                "in your scratch.")
+    if tool == "sandbox.write":
+        return ("e.g. sandbox.write with a path under "
+                "your scratch and the text to store "
+                "writes that file.")
+    where = f"{scope}/" if scope else ""
+    if tool == "sandbox.list":
+        return (f"e.g. sandbox.list on {where} lists "
+                f"what stands there — each file's size "
+                f"and line count.")
+    if tool == "sandbox.search":
+        return (f"e.g. sandbox.search in {where} for a "
+                f"phrase returns the passages that "
+                f"carry it, with their file and line "
+                f"numbers.")
+    if tool == "sandbox.read_range":
+        return (f"e.g. sandbox.read_range on a file in "
+                f"{where}, lines 1 to 4, pulls just "
+                f"those lines.")
+    if tool == "sandbox.read":
+        return (f"e.g. sandbox.read on a file in "
+                f"{where} pulls the whole file at "
+                f"once.")
+    return None
+
+
+def _staged_tool_menu(catalogue, deliverable=None):
+    """This checker's copy of the loop's phase-grouped
+    tool-menu derivation (Gather, Compose, Deliver)."""
+    flat = _staged_tool_list(catalogue)
+    by_pair = {}
+    for entry in flat:
+        by_pair.setdefault(
+            (entry["tool"], entry["scope"]), entry)
+
+    def pick(tool, scope, phase, purpose_suffix=None):
+        base = by_pair.get((tool, scope))
+        if base is None:
+            return None
+        entry = {"tool": tool, "scope": scope,
+                 "purpose": base["purpose"]}
+        if purpose_suffix:
+            entry["purpose"] = (
+                entry["purpose"] + " " + purpose_suffix)
+        example = _staged_menu_example(phase, tool, scope)
+        if example:
+            entry["example"] = example
+        return entry
+
+    gather = []
+    compose = []
+    deliver = []
+    for entry in flat:
+        tool, scope = entry["tool"], entry["scope"]
+        if tool in RETRIEVAL_TOOLS or \
+                tool == "container.exec":
+            picked = pick(tool, scope, "Gather")
+            if picked is not None:
+                gather.append(picked)
+        if tool in ("container.exec", "sandbox.write"):
+            picked = pick(tool, scope, "Compose")
+            if picked is not None:
+                compose.append(picked)
+        if tool == "sandbox.write":
+            suffix = None
+            if deliverable:
+                suffix = ("This is the deliverable "
+                          f"door: the deliverable is "
+                          f"{deliverable}.")
+            picked = pick(tool, scope, "Deliver",
+                          purpose_suffix=suffix)
+            if picked is not None:
+                deliver.append(picked)
+    groups = []
+    if gather:
+        groups.append({"phase": "Gather",
+                       "tools": gather})
+    if compose:
+        groups.append({"phase": "Compose",
+                       "tools": compose})
+    if deliver:
+        groups.append({
+            "phase": "Deliver",
+            "tools": deliver,
+            "note": "When the deliverable stands "
+                    "written, answer with the yield "
+                    "outcome — the file standing is "
+                    "the completed assignment."})
+    return groups
+
+
+def _staged_relevant(ev, instance_id, seat, case_id,
+                     activated_seq):
+    """Whether an event belongs in the activation's
+    delta — this checker's copy of the loop's relevance
+    rule."""
+    p = ev["payload"]
+    if p.get("instance_id") == instance_id:
+        return True
+    if ev["type"] == "REJECTION" and \
+            p.get("seat") == seat and \
+            ev["event_seq"] > activated_seq:
+        return True
+    if ev["actor"] == seat and \
+            ev["event_seq"] > activated_seq:
+        return True
+    if ev["type"].startswith("CASE_") and \
+            p.get("case_id") == case_id:
+        return True
+    return False
+
+
+def _staged_tool_result_refs(events, instance_id, seat,
+                             case_id, activated_seq,
+                             cursor_from, cursor_to):
+    """The staged package's tool results as the record
+    commits them: their identities alone (dispatch,
+    request, outcome, event), in the order the package
+    presented them — reconstructed here exactly as the
+    loop's carriage constructs them: the delta's outcome
+    events in record order; where any translation record
+    stands in the snapshot, the bound entries first in
+    provider call order (translation record, then
+    ordinal), the translation refusals and the doorway's
+    refusals of bound calls among them, and any unbound
+    entry after, in record order."""
+    delta = [ev for ev in events
+             if cursor_from < ev["event_seq"] <= cursor_to
+             and _staged_relevant(ev, instance_id, seat,
+                                  case_id, activated_seq)]
+    entries = []
+    for ev in delta:
+        if ev["type"] != "TOOL_OUTCOME":
+            continue
+        p = ev["payload"]
+        entries.append({
+            "dispatch_id": p.get("dispatch_id"),
+            "request_id": p.get("request_id"),
+            "outcome": p.get("outcome"),
+            "event_seq": ev["event_seq"]})
+    call_binding = {}
+    any_translation = False
+    for ev in events:
+        if ev["event_seq"] > cursor_to:
+            break
+        if ev["type"] != "TRANSLATION_RECORDED":
+            continue
+        any_translation = True
+        for centry in ev["payload"].get("calls") or []:
+            if centry.get("loop_request_id"):
+                call_binding[centry["loop_request_id"]] = {
+                    "provider_ordinal":
+                        centry.get("provider_ordinal"),
+                    "translation_seq": ev["event_seq"]}
+    if any_translation:
+        bound = {}
+        for entry in entries:
+            binding = call_binding.get(entry["request_id"])
+            if binding is not None:
+                bound[id(entry)] = binding
+        for ev in delta:
+            if ev["type"] == "TRANSLATION_RECORDED":
+                for centry in \
+                        ev["payload"].get("calls") or []:
+                    if not centry.get("refusal_class"):
+                        continue
+                    entries.append({
+                        "dispatch_id": None,
+                        "request_id": None,
+                        "outcome": "refused",
+                        "event_seq": ev["event_seq"],
+                        "_translation_seq": ev["event_seq"],
+                        "_provider_ordinal":
+                            centry.get("provider_ordinal")})
+            elif ev["type"] == "REJECTION" and \
+                    ev["payload"].get("attempted_type") \
+                    == "TOOL_DISPATCHED":
+                binding = call_binding.get(
+                    ev["payload"].get("request_id"))
+                if binding is not None:
+                    entries.append({
+                        "dispatch_id": None,
+                        "request_id": ev["payload"].get(
+                            "request_id"),
+                        "outcome": "refused",
+                        "event_seq": ev["event_seq"],
+                        "_translation_seq":
+                            binding["translation_seq"],
+                        "_provider_ordinal":
+                            binding["provider_ordinal"]})
+        for entry in entries:
+            binding = bound.get(id(entry))
+            if binding is not None:
+                entry["_translation_seq"] = \
+                    binding["translation_seq"]
+                entry["_provider_ordinal"] = \
+                    binding["provider_ordinal"]
+        entries.sort(key=lambda entry: (
+            (0, entry["_translation_seq"],
+             entry["_provider_ordinal"])
+            if "_translation_seq" in entry else
+            (1, 0, entry.get("event_seq") or 0)))
+        for entry in entries:
+            entry.pop("_translation_seq", None)
+            entry.pop("_provider_ordinal", None)
+    return entries
+
+
+def _staged_standing_dispatches(events, instance_id,
+                                head):
+    """The activation's standing dispatches as they stood
+    at `head`, folded from the record's dispatch events
+    under the fold's own rules (first outcome stands; a
+    standing uncertain is settled by a later attributable
+    result or failure; an uncertain dispatch reconciles
+    once) and projected to the five fields the package
+    presents, in dispatch order."""
+    dispatches = {}
+    for ev in events:
+        if ev["event_seq"] > head:
+            break
+        t = ev["type"]
+        p = ev["payload"]
+        if t == "TOOL_DISPATCHED":
+            dispatches[p.get("dispatch_id")] = {
+                "instance_id": p.get("instance_id"),
+                "request_id": p.get("request_id"),
+                "tool": p.get("tool"),
+                "outcome": None,
+                "reconciled_seq": None,
+                "reconciled_outcome": None}
+        elif t == "TOOL_OUTCOME":
+            entry = dispatches.get(p.get("dispatch_id")
+                                   or "")
+            if entry is not None:
+                outcome = p.get("outcome")
+                if entry["outcome"] is None:
+                    entry["outcome"] = outcome
+                elif entry["outcome"] == "uncertain" and \
+                        entry["reconciled_seq"] is None and \
+                        outcome in ("result", "failure"):
+                    entry["outcome"] = outcome
+        elif t == "TOOL_RECONCILED":
+            entry = dispatches.get(p.get("dispatch_id")
+                                   or "")
+            if entry is not None and \
+                    entry["outcome"] == "uncertain" and \
+                    entry["reconciled_seq"] is None:
+                entry["reconciled_seq"] = ev["event_seq"]
+                entry["reconciled_outcome"] = \
+                    p.get("outcome")
+    return [{
+        "dispatch_id": did,
+        "request_id": d.get("request_id"),
+        "tool": d.get("tool"),
+        "outcome": d.get("outcome"),
+        "reconciled_outcome": d.get("reconciled_outcome"),
+    } for did, d in sorted(dispatches.items())
+        if d.get("instance_id") == instance_id]
+
+
+def _derive_staged_core(events, state, gen, content,
+                        iteration, payload,
+                        prev_iteration_seq, bounds):
+    """The staged package's committed core for one
+    iteration, reconstructed from the record alone — this
+    checker's independent derivation of the loop's staged
+    presentation: the stage from the iteration number,
+    the cover and the stage's component from the pinned
+    case's contents and the sealed declarations, the tool
+    catalogue and menu from the sealed grants under the
+    recorded registry version, the standing dispatches
+    and the tool results' identities from the recorded
+    events at or before the iteration's cursor close, the
+    gate correction from the gate event bound to the
+    previous iteration, and the working set standing by
+    its own reconstructed hash. Returns None where the
+    catalogue cannot be derived (reported by the
+    catalogue verification itself)."""
+    gp = gen["payload"]
+    instance_id = gp.get("instance_id")
+    seat = gp.get("seat")
+    role = ((state.get("seats") or {}).get(seat)
+            or {}).get("role")
+    ceiling = bounds.get("step_ceiling") \
+        if bounds is not None else None
+    stage = _staged_stage(iteration)
+    onboarding = (content or {}).get("onboarding")
+    if not (isinstance(onboarding, dict)
+            and isinstance(onboarding.get("headline"), str)
+            and isinstance(onboarding.get("deliverable"), str)
+            and isinstance(onboarding.get("text"), str)):
+        onboarding = None
+    headline = onboarding["headline"] \
+        if onboarding is not None else \
+        "The job in your briefcase"
+    deliverable = onboarding["deliverable"] \
+        if onboarding is not None else None
+    sealed_delivery = gp.get("delivery")
+    honoured_delivery = sealed_delivery if (
+        isinstance(sealed_delivery, dict)
+        and sealed_delivery.get("route")
+        == _DELIVERY_ROUTE_CONTRIBUTION
+        and (content or {}).get("delivery")
+        == sealed_delivery) else None
+    if deliverable is None and \
+            isinstance(honoured_delivery, dict):
+        deliverable = honoured_delivery.get("destination")
+    deliverable_text = deliverable \
+        if isinstance(deliverable, str) else \
+        "the deliverable named in your case"
+    if iteration == 1:
+        cover_statement = _STAGED_COVER_FIRST.format(
+            seat=seat, role=role, headline=headline,
+            deliverable=deliverable_text)
+    elif stage == "dashboard":
+        cover_statement = (
+            f"{headline} — the deliverable: "
+            f"{deliverable_text}. Step {iteration} of "
+            f"{ceiling}; task in progress.")
+    else:
+        cover_statement = (
+            f"{headline} — the deliverable: "
+            f"{deliverable_text}. Step {iteration} of "
+            f"{ceiling}; task in progress. Onboarding "
+            f"stage {iteration} of 4: {stage}.")
+    staged = {}
+    staged["seat"] = seat
+    staged["role"] = role
+    staged["instance_id"] = instance_id
+    staged["case_id"] = gp.get("case_id")
+    staged["case_version"] = gp.get("case_version")
+    staged["presentation"] = {
+        "contract": _PRESENTATION_CONTRACT,
+        "stage": stage,
+        "direction": _STAGED_DIRECTIONS[stage]}
+    staged["cover"] = {
+        "headline": headline,
+        "deliverable": deliverable_text,
+        "statement": cover_statement}
+    content = content or {}
+    if stage == "memory":
+        role_memory = content.get("role_memory")
+        staged["memory"] = {
+            "introduction": _STAGED_MEMORY_INTRO,
+            "entries": copy.deepcopy(role_memory)
+            if isinstance(role_memory, list) else []}
+    elif stage == "case":
+        essentials = {
+            "part": content.get("part"),
+            "evidence_boundary": copy.deepcopy(
+                content.get("evidence_boundary")),
+            "delivery": copy.deepcopy(content["delivery"])
+            if isinstance(content.get("delivery"), dict)
+            else None,
+            "freshness": (
+                "suspended — no freshness refusal "
+                "applies to this job; your answers "
+                "are judged on the work"
+                if gp.get("freshness_guard")
+                == _FRESHNESS_GUARD_SUSPENDED
+                else "in force — your answers are "
+                     "judged against the record as it "
+                     "stood when you were woken")}
+        opening = content.get("opening")
+        if isinstance(opening, dict) and opening:
+            essentials["opening"] = copy.deepcopy(opening)
+        staged["case_essentials"] = essentials
+    elif stage == "files":
+        files = {"introduction": _STAGED_FILES_INTRO,
+                 "briefcase": []}
+        glossary = content.get("glossary")
+        if isinstance(glossary, list):
+            for entry in glossary:
+                if isinstance(entry, dict) and \
+                        isinstance(entry.get("address"), str):
+                    files["briefcase"].append({
+                        "address": entry["address"],
+                        "description":
+                            entry.get("description")})
+        journal_path = _staged_journal_path(content)
+        if journal_path is not None:
+            files["journal"] = {
+                "path": journal_path,
+                "label": _STAGED_JOURNAL_POINTER}
+        staged["files"] = files
+    elif stage == "task":
+        task = {"assignment": content.get("assignment"),
+                "deliverable": deliverable_text}
+        verification = content.get("verification_list")
+        if isinstance(verification, list):
+            task["verification_list"] = copy.deepcopy(
+                verification)
+        staged["task"] = task
+    else:
+        addresses = []
+        glossary = content.get("glossary")
+        if isinstance(glossary, list):
+            for entry in glossary:
+                if isinstance(entry, dict) and \
+                        isinstance(entry.get("address"), str):
+                    addresses.append(entry["address"])
+        journal_path = _staged_journal_path(content)
+        staged["pointers"] = [
+            {"item": "your memory",
+             "pointer": "presented at your first wake "
+                        "(onboarding stage 1); it "
+                        "stands in your case in this "
+                        "office"},
+            {"item": "your case",
+             "pointer": "presented at your second "
+                        "wake (onboarding stage 2): "
+                        "the frame, the evidence "
+                        "boundary and the delivery "
+                        "declaration"},
+            {"item": "your files",
+             "pointer": "the briefcase map from your "
+                        "third wake (onboarding "
+                        "stage 3): "
+                        + ("; ".join(addresses)
+                           if addresses else
+                           "no files stand in the "
+                           "briefcase's map")},
+            {"item": "your journal",
+             "pointer": journal_path
+             if journal_path is not None else
+             "no journal is designated for this job"},
+            {"item": "your task",
+             "pointer": "presented at your fourth "
+                        "wake (onboarding stage 4), "
+                        "with your tool menu grouped "
+                        "by the job's phases"}]
+    staged["step_position"] = {
+        "statement": f"step {iteration} of {ceiling}",
+        "iteration": iteration,
+        "step_ceiling": ceiling}
+    staged["task_status"] = "in progress"
+    if prev_iteration_seq is not None:
+        correction = None
+        for ev in events:
+            if ev["event_seq"] > payload["cursor_to"]:
+                break
+            if ev["type"] == "DELIVERY_GATE" and \
+                    ev["payload"].get("assembly_id") \
+                    == gp.get("assembly_id") and \
+                    ev["payload"].get("iteration_seq") \
+                    == prev_iteration_seq:
+                correction = {
+                    "what_arrived": ev["payload"].get(
+                        "raw_excerpt"),
+                    "response_length": ev["payload"].get(
+                        "raw_length"),
+                    "what_failed": ev["payload"].get(
+                        "parse_error"),
+                    "instruction": _STAGED_GATE_INSTRUCTION}
+        if correction is not None:
+            staged["delivery_gate_correction"] = correction
+    version = payload.get("registry_version")
+    per_grant = gp.get("catalogue_contract") in \
+        (_RETRIEVAL_CONTRACT, _EXEC_CONTRACT)
+    catalogue, _ground = _derive_catalogue(
+        gp.get("grants"), version, per_grant=per_grant)
+    if catalogue is None:
+        return None
+    if stage == "task":
+        staged["tool_list"] = _staged_tool_menu(
+            catalogue, deliverable=deliverable)
+    if stage in ("files", "task", "dashboard"):
+        staged["tools"] = catalogue
+    staged["standing_dispatches"] = \
+        _staged_standing_dispatches(
+            events, instance_id, payload["cursor_to"])
+    staged["bounds"] = {
+        "iteration": iteration,
+        "steps_used": iteration - 1,
+        "step_ceiling": ceiling,
+        "deadline_seconds": bounds.get("deadline_seconds")
+        if bounds is not None else None}
+    staged["position"] = payload["cursor_to"]
+    staged["tool_result_refs"] = _staged_tool_result_refs(
+        events, instance_id, seat, gp.get("case_id"),
+        payload.get("activated_seq"),
+        payload["cursor_from"], payload["cursor_to"])
+    expected_ws = _derive_working_set(
+        events, instance_id, payload["cursor_to"])
+    staged["working_set_hash"] = _working_set_hash(
+        expected_ws)
+    return staged
+
+
+def _staged_journal_path(content):
+    """The case's designated journal path under the same
+    rule the loop's journal component applies — this
+    checker's copy."""
+    designated = (content or {}).get("journal")
+    if not isinstance(designated, str) or \
+            not designated.startswith("scratch/") or \
+            ".." in designated.split("/"):
+        return None
+    return designated
+
 # Response-evidence piece (WORKER-RESPONSE-EVIDENCE-SCOPE
 # Rev 8): the disposition contract's tables — this
 # checker's own copies, reconstructed independently of
@@ -2628,6 +3274,29 @@ def _loop_result(events, state, run_dir=None):
             problem("freshness_guard_unknown",
                     assembly_id=aid, at_seq=activated[aid],
                     freshness_guard=freshness)
+        # The presentation contract's third case, in the
+        # same shape (staged onboarding, INDEX 544): a
+        # declaration present but not the contract this
+        # checker knows is divergent in itself, reported
+        # once at the assembly level. The contract's
+        # population is the working-set population: a
+        # presentation declaration standing without the
+        # working-set declaration beside it is a broken
+        # seal — the generator seals the two together or
+        # not at all.
+        presentation = gen["payload"].get(
+            "presentation_contract") if gen is not None \
+            else None
+        if presentation is not None and \
+                presentation != _PRESENTATION_CONTRACT:
+            problem("presentation_contract_unknown",
+                    assembly_id=aid, at_seq=activated[aid],
+                    presentation_contract=presentation)
+        elif presentation == _PRESENTATION_CONTRACT and \
+                ws_contract != _WORKING_SET_CONTRACT:
+            problem("presentation_without_working_set",
+                    assembly_id=aid, at_seq=activated[aid],
+                    working_set_contract=ws_contract)
         # The delivery declaration (door scope,
         # 2026-11-24): the generator seals the pinned
         # case's declaration into the assembly's record;
@@ -2825,6 +3494,46 @@ def _loop_result(events, state, run_dir=None):
                 if _working_set_hash(expected_ws) \
                         != recorded_ws:
                     problem("working_set_hash_mismatch",
+                            assembly_id=aid, at_seq=seq)
+            # Staged onboarding (INDEX 544): the
+            # presentation commitment, in the working-set
+            # commitment's shape. The assembly's sealed
+            # declaration governs: a declared assembly owes
+            # the hash on every iteration, and its absence
+            # is divergent in itself; where a hash stands
+            # it is verified against the staged package
+            # this checker independently reconstructs from
+            # the record — stage order and contents, the
+            # dashboard's shape, the absence of the case
+            # dump — so a skipped stage or a smuggled dump
+            # diverges. An assembly declaring an unknown
+            # presentation contract is not governed here;
+            # it stands reported once at the assembly level
+            # above.
+            pres_declared = gen is not None and \
+                gen["payload"].get("presentation_contract") \
+                == _PRESENTATION_CONTRACT
+            recorded_ph = p.get("presentation_hash")
+            if pres_declared and recorded_ph is None:
+                problem("presentation_commitment_missing",
+                        assembly_id=aid, at_seq=seq)
+            elif pres_declared and recorded_ph is not None \
+                    and isinstance(p.get("cursor_to"), int) \
+                    and not isinstance(p.get("cursor_to"),
+                                       bool) \
+                    and isinstance(p.get("cursor_from"), int) \
+                    and not isinstance(p.get("cursor_from"),
+                                       bool):
+                prev_seq = evs[n - 2]["event_seq"] \
+                    if n >= 2 else None
+                expected_core = _derive_staged_core(
+                    events, state, gen,
+                    pinned_case_content(aid), n, p,
+                    prev_seq, bounds)
+                if expected_core is None or \
+                        sha256_hex(canonical(
+                            expected_core)) != recorded_ph:
+                    problem("presentation_hash_mismatch",
                             assembly_id=aid, at_seq=seq)
         stall = stalls.get(aid)
         if stall is not None:

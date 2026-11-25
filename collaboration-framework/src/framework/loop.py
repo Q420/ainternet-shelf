@@ -679,6 +679,181 @@ def _carriage_stub(result, presented_in):
     return stub
 
 
+# Staged onboarding (INDEX 544, Ben's direction,
+# 2026-11-25): under the sealed presentation contract the
+# wake package stops carrying the whole briefcase at once.
+# The finding it answers (INDEX 542/543): the package
+# carried the sealed case verbatim AND the labelled
+# components built on top of it — the same content twice,
+# ~49 KB on the wire before the worker could look out the
+# window — and what was carried unlabelled stood as
+# scenery. So the onboarding walks in stages across the
+# first wakes, each stage introduced in plain words:
+# (1) a short cover and his memory, alone, framed as his
+# own knowledge; (2) his case's essentials — the frame,
+# the evidence boundary, the delivery declaration, the
+# freshness position, and the opening record where one
+# stands; (3) his files as pointers — the briefcase's map
+# and his journal's designation, never contents — with
+# his tools offered from this wake on, so the files stage
+# is a real pull: he can list the briefcase himself and
+# see it standing; (4) his task — the assignment text and
+# the phase-grouped tool menu — where the work begins.
+# After onboarding, a dashboard wake: the cover line, his
+# position, the newest results, the working set, any gate
+# correction, and pointers back into the briefcase he can
+# pull from as he works. The verbatim case dump, the view
+# and the delta leave his packages entirely in this
+# population, and no content item stands twice in any
+# package. The stage a wake presents is a pure function
+# of its iteration number; every value in a staged package
+# derives from the record (the pinned case, the sealed
+# declarations, the recorded outcomes), so the iteration
+# record's presentation hash commits the exact structure
+# and the checker re-derives it whole. The wording below
+# is the presentation's own; the checker's copies stand in
+# checker.py, as its other copies do.
+STAGED_COVER_FIRST = (
+    "You are {seat}, the {role} in this office, "
+    "assembled for one job. The shape of the work here "
+    "is simple: you are woken with a package, you act, "
+    "and the record keeps everything. Your onboarding "
+    "comes in stages — first your memory, then your "
+    "case, then your files, then your task — so nothing "
+    "is dumped on you all at once. The job: {headline}. "
+    "The deliverable: {deliverable}.")
+STAGED_MEMORY_INTRO = (
+    "This is your memory — what this role knows from "
+    "before you were woken: how the work has gone, what "
+    "the office has told you, and the routes to what you "
+    "need. It is presented to you as your own knowledge "
+    "because in this role it is yours to work from; the "
+    "office keeps its own honest account of where each "
+    "item came from, behind the scenes. If the list "
+    "below is empty, this role carries no standing "
+    "memory yet.")
+STAGED_FILES_INTRO = (
+    "Your briefcase holds the job's files. What stands "
+    "below are pointers — each file's address and what "
+    "it is — not contents: the contents are yours to "
+    "pull when the work needs them, through the doorway "
+    "tools (sandbox.list shows a file's size, line "
+    "count and headings; sandbox.read pulls a whole "
+    "file) or the shell in your room. That is how the "
+    "briefcase works: what you pull is carried forward "
+    "in front of you at later wakes, so you never need "
+    "to pull the same thing twice. Your tools are "
+    "offered from this wake on — if you want, list a "
+    "file from the map now and see its shape standing.")
+STAGED_JOURNAL_POINTER = (
+    "your journal — your notebook: notes, decisions, "
+    "where you left off. Yours to write and rewrite; "
+    "orientation, not record and not memory. Its "
+    "contents are not carried in your packages — pull "
+    "it when you want it.")
+STAGED_DIRECTIONS = {
+    "memory": (
+        "Onboarding stage 1 of 4: your memory. Nothing "
+        "is asked of you at this wake but to take it "
+        "in — no work is produced during onboarding. "
+        "Answer {\"outcome\": \"acknowledge\"} and your "
+        "next wake brings your case."),
+    "case": (
+        "Onboarding stage 2 of 4: your case — the frame "
+        "of the job you were assembled for. Take it in; "
+        "no work is produced during onboarding. Answer "
+        "{\"outcome\": \"acknowledge\"} and your next "
+        "wake brings your files."),
+    "files": (
+        "Onboarding stage 3 of 4: your files. These are "
+        "pointers to pull from, not the files "
+        "themselves. Your task arrives at the next "
+        "wake."),
+    "task": (
+        "Onboarding stage 4 of 4: your task. This is "
+        "the work. Your tool menu below is grouped by "
+        "the job's phases — Gather, Compose, Deliver. "
+        "Begin."),
+    "dashboard": (
+        "Your onboarding is complete. This is your "
+        "dashboard wake: where you stand, your newest "
+        "results, everything you have gathered so far, "
+        "and pointers back into your briefcase."),
+}
+
+
+def _staged_stage(iteration):
+    """The onboarding stage a wake presents, as a pure
+    function of its 1-based iteration number: the first
+    four wakes walk memory, case, files, task; every
+    later wake is a dashboard."""
+    stages = _tool_policy.PRESENTATION_STAGES
+    if 1 <= iteration <= 4:
+        return stages[iteration - 1]
+    return stages[4]
+
+
+def _staged_onboarding(content):
+    """The case's onboarding component under the same
+    well-formedness rule the ordered package applies:
+    the component, or None where the case carries none
+    (or carries it malformed)."""
+    onboarding = (content or {}).get("onboarding")
+    if not (isinstance(onboarding, dict)
+            and isinstance(onboarding.get("headline"), str)
+            and isinstance(onboarding.get("deliverable"), str)
+            and isinstance(onboarding.get("text"), str)):
+        return None
+    return onboarding
+
+
+def _staged_journal_path(content):
+    """The case's designated journal path under the same
+    rule the journal component applies: the path, or None
+    where no journal is designated."""
+    designated = (content or {}).get("journal")
+    if not isinstance(designated, str) or \
+            not designated.startswith("scratch/") or \
+            ".." in designated.split("/"):
+        return None
+    return designated
+
+
+def _presentation_core(package, working_set_hash):
+    """The staged package's committed core: the package
+    itself, with its two bulk references standing by
+    their own commitments — the tool results by their
+    recorded identities (dispatch, request, outcome,
+    event), in presented order, and the working set by
+    the hash its own commitment already records. Every
+    other value stands verbatim, so a skipped stage, a
+    reordered stage, a dashboard carrying the case dump,
+    or any content standing twice diverges from the
+    record's re-derivation."""
+    core = copy.deepcopy(package)
+    results = core.pop("tool_results", [])
+    core["tool_result_refs"] = [
+        {"dispatch_id": entry.get("dispatch_id"),
+         "request_id": entry.get("request_id"),
+         "outcome": entry.get("outcome"),
+         "event_seq": entry.get("event_seq")}
+        for entry in results]
+    core.pop("working_set", None)
+    core["working_set_hash"] = working_set_hash
+    return core
+
+
+def _presentation_hash(package, working_set_hash):
+    """The staged presentation's commitment: SHA-256 over
+    the canonical form of the package's core — the
+    commitment LOOP_ITERATION records for an assembly
+    under the presentation contract, which the checker
+    verifies by independent reconstruction from the
+    record."""
+    return sha256_hex(canonical(
+        _presentation_core(package, working_set_hash)))
+
+
 def _translation_error_text(entry, offered_names):
     """The N16 error result for a translation refusal
     (native adapter piece): the examined templates of the
@@ -971,6 +1146,13 @@ class Loop:
             "working_set_declared":
                 _generated.get("working_set_contract")
                 == _tool_policy.WORKING_SET_CONTRACT,
+            "presentation_declared":
+                _generated.get("presentation_contract")
+                == _tool_policy.PRESENTATION_CONTRACT,
+            "presentation_hash": None,
+            "freshness_suspended":
+                _generated.get("freshness_guard")
+                == _tool_policy.FRESHNESS_GUARD_SUSPENDED,
             "deliverable_filed": None,
             "delivery_gate_correction": None,
             "instance_id": instance_id,
@@ -1086,7 +1268,9 @@ class Loop:
                     is not None,
                     disable_tool_validation=native_flag,
                     working_set_hash=ctx.get(
-                        "working_set_hash"))
+                        "working_set_hash"),
+                    presentation_hash=ctx.get(
+                        "presentation_hash"))
             except DoorwayRefusal as refusal:
                 if refusal.ground == \
                         LOOP_ITERATION_DEADLINE_GROUND:
@@ -2191,8 +2375,209 @@ class Loop:
                         "standing_dispatches", "bounds",
                         "position"):
                 ordered[key] = package[key]
-            package = ordered
+            if ctx.get("presentation_declared"):
+                # Staged onboarding (INDEX 544): where the
+                # assembly's sealed record declares the
+                # presentation contract, the package the
+                # worker is woken with is the staged one —
+                # built from this same derivation's
+                # components, with the case dump, the view
+                # and the delta left out entirely — and its
+                # commitment is stashed for the iteration
+                # event to record.
+                package = self._build_staged_package(
+                    ctx, package, ordered, catalogue)
+                ctx["presentation_hash"] = \
+                    _presentation_hash(
+                        package, ctx.get("working_set_hash"))
+            else:
+                package = ordered
         return package, head
+
+    def _build_staged_package(self, ctx, base, ordered,
+                              catalogue):
+        """One staged wake package (staged onboarding,
+        INDEX 544): assembled from the same derivation the
+        ordered package used — the base package's recorded
+        furniture and the ordered package's governed
+        components — rearranged into the stage this wake
+        walks. Every value derives from the record: the
+        pinned case's components, the sealed declarations,
+        the recorded outcomes — so the checker re-derives
+        the package whole from the same record and any
+        divergence (a skipped or reordered stage, the case
+        dump smuggled back, a dashboard out of shape)
+        breaks the iteration's presentation commitment.
+        The bounds stand without the seconds-remaining
+        figure for the same reason: that figure is the
+        wall clock's, not the record's, and a committed
+        package must be the record's alone."""
+        content = ctx["content"] or {}
+        iteration = ctx["iterations"] + 1
+        ceiling = ctx["bounds"]["step_ceiling"]
+        stage = _staged_stage(iteration)
+        onboarding = _staged_onboarding(content)
+        headline = onboarding["headline"] \
+            if onboarding is not None else \
+            "The job in your briefcase"
+        deliverable = onboarding["deliverable"] \
+            if onboarding is not None else None
+        if deliverable is None and \
+                isinstance(ctx.get("delivery"), dict):
+            deliverable = ctx["delivery"].get("destination")
+        deliverable_text = deliverable \
+            if isinstance(deliverable, str) else \
+            "the deliverable named in your case"
+        if iteration == 1:
+            cover_statement = STAGED_COVER_FIRST.format(
+                seat=ctx["seat"], role=ctx["role"],
+                headline=headline,
+                deliverable=deliverable_text)
+        elif stage == "dashboard":
+            cover_statement = (
+                f"{headline} — the deliverable: "
+                f"{deliverable_text}. Step {iteration} of "
+                f"{ceiling}; task in progress.")
+        else:
+            cover_statement = (
+                f"{headline} — the deliverable: "
+                f"{deliverable_text}. Step {iteration} of "
+                f"{ceiling}; task in progress. Onboarding "
+                f"stage {iteration} of 4: {stage}.")
+        staged = {}
+        for key in ("seat", "role", "instance_id",
+                    "case_id", "case_version"):
+            staged[key] = base[key]
+        staged["presentation"] = {
+            "contract":
+                _tool_policy.PRESENTATION_CONTRACT,
+            "stage": stage,
+            "direction": STAGED_DIRECTIONS[stage]}
+        staged["cover"] = {
+            "headline": headline,
+            "deliverable": deliverable_text,
+            "statement": cover_statement}
+        if stage == "memory":
+            role_memory = content.get("role_memory")
+            staged["memory"] = {
+                "introduction": STAGED_MEMORY_INTRO,
+                "entries": copy.deepcopy(role_memory)
+                if isinstance(role_memory, list) else []}
+        elif stage == "case":
+            essentials = {
+                "part": content.get("part"),
+                "evidence_boundary": copy.deepcopy(
+                    content.get("evidence_boundary")),
+                "delivery": copy.deepcopy(
+                    content["delivery"])
+                if isinstance(content.get("delivery"),
+                              dict) else None,
+                "freshness": (
+                    "suspended — no freshness refusal "
+                    "applies to this job; your answers "
+                    "are judged on the work"
+                    if ctx.get("freshness_suspended")
+                    else "in force — your answers are "
+                         "judged against the record as it "
+                         "stood when you were woken")}
+            opening = content.get("opening")
+            if isinstance(opening, dict) and opening:
+                essentials["opening"] = copy.deepcopy(
+                    opening)
+            staged["case_essentials"] = essentials
+        elif stage == "files":
+            files = {"introduction": STAGED_FILES_INTRO,
+                     "briefcase": []}
+            glossary = content.get("glossary")
+            if isinstance(glossary, list):
+                for entry in glossary:
+                    if isinstance(entry, dict) and \
+                            isinstance(
+                                entry.get("address"), str):
+                        files["briefcase"].append({
+                            "address": entry["address"],
+                            "description":
+                                entry.get("description")})
+            journal_path = _staged_journal_path(content)
+            if journal_path is not None:
+                files["journal"] = {
+                    "path": journal_path,
+                    "label": STAGED_JOURNAL_POINTER}
+            staged["files"] = files
+        elif stage == "task":
+            task = {"assignment": content.get("assignment"),
+                    "deliverable": deliverable_text}
+            verification = content.get("verification_list")
+            if isinstance(verification, list):
+                task["verification_list"] = copy.deepcopy(
+                    verification)
+            staged["task"] = task
+        else:
+            addresses = []
+            glossary = content.get("glossary")
+            if isinstance(glossary, list):
+                for entry in glossary:
+                    if isinstance(entry, dict) and \
+                            isinstance(
+                                entry.get("address"), str):
+                        addresses.append(entry["address"])
+            journal_path = _staged_journal_path(content)
+            staged["pointers"] = [
+                {"item": "your memory",
+                 "pointer": "presented at your first wake "
+                            "(onboarding stage 1); it "
+                            "stands in your case in this "
+                            "office"},
+                {"item": "your case",
+                 "pointer": "presented at your second "
+                            "wake (onboarding stage 2): "
+                            "the frame, the evidence "
+                            "boundary and the delivery "
+                            "declaration"},
+                {"item": "your files",
+                 "pointer": "the briefcase map from your "
+                            "third wake (onboarding "
+                            "stage 3): "
+                            + ("; ".join(addresses)
+                               if addresses else
+                               "no files stand in the "
+                               "briefcase's map")},
+                {"item": "your journal",
+                 "pointer": journal_path
+                 if journal_path is not None else
+                 "no journal is designated for this job"},
+                {"item": "your task",
+                 "pointer": "presented at your fourth "
+                            "wake (onboarding stage 4), "
+                            "with your tool menu grouped "
+                            "by the job's phases"}]
+        staged["step_position"] = {
+            "statement": f"step {iteration} of {ceiling}",
+            "iteration": iteration,
+            "step_ceiling": ceiling}
+        staged["task_status"] = "in progress"
+        if ordered.get("delivery_gate_correction") \
+                is not None:
+            staged["delivery_gate_correction"] = \
+                ordered["delivery_gate_correction"]
+        staged["tool_results"] = base["tool_results"]
+        if ordered.get("working_set") is not None:
+            staged["working_set"] = ordered["working_set"]
+        if stage == "task":
+            staged["tool_list"] = _derive_tool_menu(
+                catalogue, deliverable=deliverable)
+        if stage in ("files", "task", "dashboard"):
+            staged["tools"] = base["tools"]
+        staged["standing_dispatches"] = \
+            base["standing_dispatches"]
+        staged["bounds"] = {
+            "iteration": iteration,
+            "steps_used": ctx["iterations"],
+            "step_ceiling": ceiling,
+            "deadline_seconds":
+                ctx["bounds"]["deadline_seconds"]}
+        staged["position"] = base["position"]
+        return staged
 
     def _journal_component(self, ctx):
         """The worker's journal, as it stands at this

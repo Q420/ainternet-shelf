@@ -295,12 +295,13 @@ ASSIGNMENT_COMBINED = (
     "you reach the sources and your scratch (your "
     "working directory in your office is /room/work). "
     "The stocked sources are yours to utilise: read "
-    "them; do not alter them. Your package also "
-    "carries your journal, scratch/journal.md — your "
-    "personal notebook: capture ideas, decisions, "
-    "reflections, and progress for this wake; it "
-    "comes back to you at each wake exactly as you "
-    "left it.\n\n"
+    "them; do not alter them. Your briefcase also "
+    "designates your journal, scratch/journal.md — "
+    "your personal notebook: capture ideas, "
+    "decisions, reflections, and progress as you "
+    "work. Its contents are not carried in your "
+    "packages — pull it when you want it, and write "
+    "to it with your tools.\n\n"
     "Write a plain-words brief, at most ~600 words, "
     "that a newcomer could read to learn what this "
     "framework is, what has actually been proven, "
@@ -1110,7 +1111,8 @@ def run_demo():
                 skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
                 exec_room=True, freshness_suspended=True,
-                delivery_declaration=True)
+                delivery_declaration=True,
+                presentation_declaration=True)
         except ModelPinMismatchError as mismatch:
             # The flagged conflict (paper §3.6 gate 5's
             # rule, carried to this run's pin): the route
@@ -1694,7 +1696,8 @@ def verify_config():
                 skills=[], grants=GRANTS_COMBINED,
                 model_requested=MODEL, probe=True,
                 exec_room=True, freshness_suspended=True,
-                delivery_declaration=True)
+                delivery_declaration=True,
+                presentation_declaration=True)
             expect("generation: stub-identity generation "
                    "succeeds",
                    generated.get("ok") is True,
@@ -1741,6 +1744,15 @@ def verify_config():
                        == tool_policy.WORKING_SET_CONTRACT,
                        f"got "
                        f"{sealed.get('working_set_contract')}")
+                expect("generation: the sealed record "
+                       "declares the staged-onboarding "
+                       "presentation contract (Ben's "
+                       "direction, INDEX 544 — the "
+                       "worker-first package)",
+                       sealed.get("presentation_contract")
+                       == tool_policy.PRESENTATION_CONTRACT,
+                       f"got "
+                       f"{sealed.get('presentation_contract')}")
                 expect("generation: the sealed record "
                        "declares the freshness guard "
                        "suspended (Ben's R31 ruling, "

@@ -171,6 +171,41 @@ FRESHNESS_GUARD_SUSPENDED = "r31-suspended-v1"
 # and the office files it. The checker reads the same
 # value from its own copy in checker.py.
 DELIVERY_ROUTE_CONTRIBUTION = "contribution-v1"
+# The staged-onboarding presentation contract (INDEX 544,
+# Ben's direction, 2026-11-25): a sealed generated record
+# declaring this value under "presentation_contract"
+# stands under the direction that its worker is onboarded
+# in stages instead of being handed the whole briefcase
+# at once — the finding behind it (INDEX 543) is that the
+# wake package carried the sealed case verbatim AND the
+# labelled components built on top of it, so the worker
+# read the office's furniture twice (~49 KB on the wire)
+# before he could look out the window. Under the contract
+# the loop's packages walk the onboarding across the
+# first wakes — his memory, introduced as his own; his
+# case's essentials; his files, as pointers he pulls
+# from; his task, with the phase-grouped tool menu — and
+# after onboarding a dashboard wake carries the cover, the
+# newest results, the working set, any gate correction
+# and pointers back into the briefcase. The verbatim case
+# dump, the view and the delta leave his packages
+# entirely; no content item stands twice in any package.
+# The declaration seals only alongside the working-set
+# contract (the combined configuration is its whole
+# population, as the working set's is), rides outside the
+# record's canonical hash fields like the other contracts,
+# and is committed per iteration by a presentation hash
+# on the iteration record, which the checker re-derives
+# from the record exactly. A generation made without the
+# declaration presents exactly as before. The checker
+# reads the same value from its own copy in checker.py.
+PRESENTATION_CONTRACT = "staged-onboarding-v1"
+# The onboarding's stages, in the order the wakes walk
+# them: the iteration number (1-based) selects the stage —
+# iterations 1..4 walk memory, case, files, task; every
+# later wake is a dashboard.
+PRESENTATION_STAGES = ("memory", "case", "files", "task",
+                       "dashboard")
 SEARCH_PAGE_LINE_CAP = 40
 RETRIEVAL_TOOLS = frozenset({
     "sandbox.list", "sandbox.read_range", "sandbox.search",

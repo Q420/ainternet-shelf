@@ -254,7 +254,8 @@ class Generator:
                  grants=None, model_requested=None,
                  retrieval=False, probe=False, exec_room=False,
                  freshness_suspended=False,
-                 delivery_declaration=False):
+                 delivery_declaration=False,
+                 presentation_declaration=False):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -319,7 +320,27 @@ class Generator:
         the record's canonical hash fields, like the
         catalogue contract's. The default declares
         nothing: the guard stands for every other
-        generation exactly as it always has."""
+        generation exactly as it always has.
+
+        `presentation_declaration` (staged onboarding,
+        INDEX 544): where a generation is made for the
+        combined configuration under Ben's direction, its
+        sealed record declares the staged-onboarding
+        presentation contract — the loop then onboards
+        the worker in stages across his first wakes
+        instead of presenting the whole case verbatim at
+        every wake, and each iteration record carries
+        the presentation hash the checker re-derives.
+        The contract's whole population is the
+        working-set population: the declaration seals
+        only where the working-set contract seals (an
+        exec-room generation carrying retrieval grants),
+        and a generation asked to seal it anywhere else
+        fails preflight whole — the loop would not
+        honour it there, so the record must not claim
+        it. The default declares nothing: every other
+        generation's packages present exactly as they
+        always have."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -359,6 +380,29 @@ class Generator:
                             "well-formed delivery "
                             "declaration"],
                         "seat": seat_id}
+        combined = exec_room and any(
+            isinstance(g, dict)
+            and g.get("tool")
+            in _tool_policy.RETRIEVAL_TOOLS
+            for g in grants or [])
+        if presentation_declaration and not combined:
+            # The staged-onboarding contract's population
+            # is the combined configuration alone (INDEX
+            # 544): outside it the loop presents as it
+            # always has, so a record claiming the staged
+            # presentation there would claim a presentation
+            # no wake will ever make. Fail preflight whole,
+            # as the delivery declaration's preflight does.
+            return {"ok": False,
+                    "problems": [
+                        "the staged-onboarding presentation "
+                        "declaration was asked to be sealed "
+                        "but this generation is not the "
+                        "combined configuration (an exec-room "
+                        "generation carrying retrieval "
+                        "grants), the only population the "
+                        "contract stands for"],
+                    "seat": seat_id}
         n = self._next_number(state)
         instance_id = f"inst-{seat_id}-{n}"
         assembly_id = f"assembly-{seat_id}-{n}"
@@ -395,11 +439,7 @@ class Generator:
         }
         if probe:
             record["probe_contract"] = _probe.PROBE_CONTRACT
-        if exec_room and any(
-                isinstance(g, dict)
-                and g.get("tool")
-                in _tool_policy.RETRIEVAL_TOOLS
-                for g in grants or []):
+        if combined:
             # The combined configuration declares the
             # working-set contract (see the constant above):
             # the execution room plus retrieval grants is
@@ -407,6 +447,13 @@ class Generator:
             # gathered material forward.
             record["working_set_contract"] = \
                 _tool_policy.WORKING_SET_CONTRACT
+        if presentation_declaration:
+            # Staged onboarding (INDEX 544), sealed beside
+            # the working-set contract whose population it
+            # shares — preflight above has already refused
+            # the declaration anywhere else.
+            record["presentation_contract"] = \
+                _tool_policy.PRESENTATION_CONTRACT
         if delivery_declaration:
             record["delivery"] = copy.deepcopy(delivery)
         if freshness_suspended:

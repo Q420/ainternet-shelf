@@ -2302,7 +2302,8 @@ class Doorway:
                               registry_version=None,
                               evidence_governed=False,
                               disable_tool_validation=None,
-                              working_set_hash=None):
+                              working_set_hash=None,
+                              presentation_hash=None):
         """The loop's iteration report (Piece A3, R49): one
         event per model call, recorded before the call it
         accounts, under the loop identity. The route derives
@@ -2478,6 +2479,20 @@ class Doorway:
                 # silently; the checker reconstructs both.
                 payload["working_set_hash"] = \
                     working_set_hash
+            if presentation_hash is not None:
+                # Staged onboarding (INDEX 544): the
+                # presented package's commitment under the
+                # sealed presentation contract, recorded in
+                # the iteration beside the working-set hash —
+                # the loop hashes the exact staged structure
+                # the package presents (its bulk references —
+                # the tool results and the working set —
+                # standing in the core by their own recorded
+                # commitments), so the commitment and the
+                # presentation cannot drift apart silently;
+                # the checker reconstructs both.
+                payload["presentation_hash"] = \
+                    presentation_hash
             ev = self.store.append(
                 "LOOP_ITERATION", LOOP_ACTOR, [instance_id],
                 payload)
