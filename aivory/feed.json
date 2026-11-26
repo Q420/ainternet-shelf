@@ -1,7 +1,7 @@
 {
   "kind": "aivory-state-feed",
   "schema_version": 1,
-  "generated_at": "2026-11-26T03:35:56.572Z",
+  "generated_at": "2026-11-26T03:40:19.052Z",
   "provenance": "Projected by aivory/producer from the per-run report.json records under collaboration-framework/live-demo (derived matter, not the record itself).",
   "job": {
     "title": "Write the standing brief: what the framework is, what has been proven, what is open, the honest next step",
@@ -236,19 +236,19 @@
   "artifacts": [
     {
       "name": "demo-round6 brief",
-      "path": "aivory/artifacts/demo-round6-brief.md",
+      "path": "aivory/artifacts/demo-round6-brief-666fe9e51860.md",
       "bytes": 2753,
       "source_ref": "collaboration-framework/live-demo/demo-round6/brief.md"
     },
     {
       "name": "demo-round7 brief",
-      "path": "aivory/artifacts/demo-round7-brief.md",
+      "path": "aivory/artifacts/demo-round7-brief-c6cbc5b307c5.md",
       "bytes": 619,
       "source_ref": "collaboration-framework/live-demo/demo-round7/brief.md"
     },
     {
       "name": "demo-round9 brief",
-      "path": "aivory/artifacts/demo-round9-brief.md",
+      "path": "aivory/artifacts/demo-round9-brief-9bf1de750283.md",
       "bytes": 823,
       "source_ref": "collaboration-framework/live-demo/demo-round9/brief.md"
     }

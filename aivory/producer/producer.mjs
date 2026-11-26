@@ -9,10 +9,13 @@
 // the pair consistent) before any classification; a filing record
 // without a well-formed sha256 digest stops generation; a digest
 // mismatch stops generation. Generation and validation write nothing.
-// Publication is staged: every file is written under a temporary name
-// first, then renamed into place, the feed renamed last — so a failure
-// before publication leaves the previously published feed and artifacts
-// exactly as they stood.
+// Publication is staged and generation-safe: artifact files are
+// immutable and content-versioned (their names carry the filing
+// digest), so a new generation never replaces a file any published
+// feed references. Every file is written under a temporary name and
+// renamed into place, the feed renamed last as the single switch —
+// any failure before that switch leaves the previous feed and every
+// artifact it references byte-identical.
 // A directory with no report.json at all is not a report-bearing run and
 // is skipped — absence is distinguished from corruption.
 //
@@ -94,7 +97,7 @@ for (const run of entries) {
     }
     if (!briefBuf) fail(`${run}: filing record present but brief.md is missing`);
     if (sha256(briefBuf) !== digest) fail(`${run}: brief.md sha256 does not match its filing record`);
-    const name = `${run}-brief.md`;
+    const name = `${run}-brief-${digest.slice(0, 12)}.md`;
     stagedArtifacts.push({ name: `${run} brief`, path: `aivory/artifacts/${name}`, bytes: briefBuf.length,
       source_ref: `collaboration-framework/live-demo/${run}/brief.md`, buf: briefBuf, file: name });
   }
@@ -120,10 +123,10 @@ const feed = { kind: "aivory-state-feed", schema_version: 1, generated_at: new D
 const verdict = validateFeed(feed);
 if (!verdict.ok) fail("generated feed does not validate — " + verdict.reason);
 
-// Publication is staged: all files are written under temporary names
-// first, then renamed into place, artifacts before the feed that
-// references them and the feed last — a failure before or during the
-// writes leaves the previously published generation untouched.
+// Publication: versioned artifact files are written under temporary
+// names and renamed into place first (new paths — nothing a published
+// feed references is ever replaced), then the feed is renamed last as
+// the single atomic switch to the new generation.
 await mkdir(artifactsDir, { recursive: true });
 for (const a of stagedArtifacts) await writeFile(path.join(artifactsDir, a.file + ".tmp"), a.buf);
 await writeFile(outFile + ".tmp", JSON.stringify(feed, null, 2) + "\n", "utf8");

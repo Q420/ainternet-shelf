@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const PRODUCER = path.join(path.dirname(fileURLToPath(import.meta.url)), "producer.mjs");
 const sha256 = text => createHash("sha256").update(text).digest("hex");
 const BRIEF = "one two three four five six seven";
+const BRIEF7 = "alpha beta gamma delta";
 
 async function fixtureRecords() {
   const root = await mkdtemp(path.join(os.tmpdir(), "aivory-producer-test-"));
@@ -34,6 +35,13 @@ async function fixtureRecords() {
   await write("demo-round6/run/sandbox/sources/stock-take.md", "AAAA");
   await write("demo-round6/run/sandbox/sources/a3-pass.md", "BB");
   await write("demo-round6/run/sandbox/sources/index-tail.md", "CCC");
+  // demo-round7: a second completed run with its own filed brief (no transcript).
+  await write("demo-round7/report.json", JSON.stringify({
+    loop_result: { ok: true, outcome: "yield", iterations: 3 },
+    event_count: 20, dispatches: [{}],
+    brief_filed: { sha256: sha256(BRIEF7), authored_by: "worker", filed_by: "office" }
+  }));
+  await write("demo-round7/brief.md", BRIEF7);
   // demo-aaa: a stalled run.
   await write("demo-aaa/report.json", JSON.stringify({
     loop_result: { ok: false, outcome: "stalled", iterations: 1 },
@@ -75,7 +83,7 @@ test("generates a truthful v1 feed from fixture records", async () => {
   assert.equal(feed.schema_version, 1);
   // Expected values derived independently from the fixture source reports.
   const expected = { runs: 0, events: 0, dispatches: 0, iterations: 0 };
-  for (const run of ["demo-round6", "demo-aaa", "demo-bbb"]) {
+  for (const run of ["demo-round6", "demo-round7", "demo-aaa", "demo-bbb"]) {
     const report = JSON.parse(await readFile(path.join(records, run, "report.json"), "utf8"));
     expected.runs++; expected.events += report.event_count;
     expected.dispatches += report.dispatches.length;
@@ -96,8 +104,13 @@ test("generates a truthful v1 feed from fixture records", async () => {
   assert.ok(byRun["demo-round6"].transcript_ref);
   assert.equal(feed.offices.length, 0);
   assert.equal(feed.decisions, null); // unavailable, never an empty queue
-  assert.equal(feed.artifacts.length, 1);
-  const art = await stat(path.join(artifactsDir, "demo-round6-brief.md"));
+  assert.equal(feed.artifacts.length, 2);
+  // Artifact filenames are immutable and content-versioned by filing digest.
+  const art6 = feed.artifacts.find(a => a.path.includes("demo-round6"));
+  const art7 = feed.artifacts.find(a => a.path.includes("demo-round7"));
+  assert.ok(art6.path.endsWith(`demo-round6-brief-${sha256(BRIEF).slice(0, 12)}.md`), art6.path);
+  assert.ok(art7.path.endsWith(`demo-round7-brief-${sha256(BRIEF7).slice(0, 12)}.md`), art7.path);
+  const art = await stat(path.join(artifactsDir, path.basename(art6.path)));
   assert.equal(art.size, Buffer.byteLength(BRIEF));
   assert.deepEqual(feed.job.sources.map(s => s.bytes), [4, 2, 3]);
   await rm(root, { recursive: true, force: true });
@@ -195,5 +208,61 @@ test("a blocked artifacts path fails publication and leaves the feed untouched",
   const res = runProducer(records, out, blocked);
   assert.notEqual(res.status, 0);
   assert.equal(await readFile(out, "utf8"), "PREVIOUSLY PUBLISHED");
+  await rm(root, { recursive: true, force: true });
+});
+
+async function publishGeneration(root, records) {
+  const out = path.join(root, "feed.json");
+  const artifactsDir = path.join(root, "artifacts");
+  const res = runProducer(records, out, artifactsDir);
+  assert.equal(res.status, 0, res.stderr);
+  const feed = JSON.parse(await readFile(out, "utf8"));
+  const standing = { out, artifactsDir, feedBytes: await readFile(out, "utf8"), artifacts: {} };
+  for (const a of feed.artifacts) {
+    standing.artifacts[a.path] = await readFile(path.join(artifactsDir, path.basename(a.path)), "utf8");
+  }
+  return standing;
+}
+
+async function assertStandingIntact(standing) {
+  assert.equal(await readFile(standing.out, "utf8"), standing.feedBytes);
+  for (const [p, bytes] of Object.entries(standing.artifacts)) {
+    assert.equal(await readFile(path.join(standing.artifactsDir, path.basename(p)), "utf8"), bytes);
+  }
+}
+
+test("failure during a later artifact rename leaves the standing generation byte-identical", async () => {
+  const { root, records } = await fixtureRecords();
+  const standing = await publishGeneration(root, records);
+  // A new generation: demo-round7's brief changes (with a matching digest).
+  const BRIEF7B = "alpha beta gamma delta epsilon";
+  await writeFile(path.join(records, "demo-round7", "brief.md"), BRIEF7B);
+  await mutateReport(records, "demo-round7", r => { r.brief_filed.sha256 = sha256(BRIEF7B); });
+  // Block the new artifact's rename: a directory sits at its versioned path.
+  const blockedName = `demo-round7-brief-${sha256(BRIEF7B).slice(0, 12)}.md`;
+  await mkdir(path.join(standing.artifactsDir, blockedName), { recursive: true });
+  const res = runProducer(records, standing.out, standing.artifactsDir);
+  assert.notEqual(res.status, 0);
+  await assertStandingIntact(standing);
+  await rm(root, { recursive: true, force: true });
+});
+
+test("failure during the feed rename publishes nothing and touches no standing artifact", async () => {
+  const { root, records } = await fixtureRecords();
+  const standing = await publishGeneration(root, records);
+  // A new generation is pending (a brief changed), but the feed path is
+  // replaced by a directory holding a sentinel, so the final rename fails.
+  const BRIEF7B = "alpha beta gamma delta epsilon";
+  await writeFile(path.join(records, "demo-round7", "brief.md"), BRIEF7B);
+  await mutateReport(records, "demo-round7", r => { r.brief_filed.sha256 = sha256(BRIEF7B); });
+  await rm(standing.out);
+  await mkdir(standing.out);
+  await writeFile(path.join(standing.out, "sentinel"), "standing");
+  const res = runProducer(records, standing.out, standing.artifactsDir);
+  assert.notEqual(res.status, 0);
+  assert.equal(await readFile(path.join(standing.out, "sentinel"), "utf8"), "standing");
+  for (const [p, bytes] of Object.entries(standing.artifacts)) {
+    assert.equal(await readFile(path.join(standing.artifactsDir, path.basename(p)), "utf8"), bytes);
+  }
   await rm(root, { recursive: true, force: true });
 });
