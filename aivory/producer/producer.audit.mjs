@@ -41,11 +41,16 @@ check("every transcript_ref verified present", trOk);
 //    Set of 2026-11-25, as verified at Gate 3; demo-gptoss6 (Ben's
 //    ordered office-cycle-v2 proof run, 2026-11-25) added 1 run,
 //    111 events, 10 dispatches, 14 iterations, no filing.
+//    demo-gptoss7 (office-cycle-v3, stalled at the first call on
+//    Groq's wire metering) added 1 run, 21 events, 0 dispatches,
+//    1 iteration, no filing; demo-gptoss10 (office-cycle-v7,
+//    stalled at iteration 2 on Groq's daily token limit) added
+//    1 run, 29 events, 1 dispatch, 2 iterations, no filing.
 const t = feed.historical_runs.reduce((a, r) => ({ runs: a.runs + 1, events: a.events + r.events, dispatches: a.dispatches + r.dispatches,
   iterations: a.iterations + r.iterations, filed: a.filed + (r.brief_filed ? 1 : 0),
   completed: a.completed + (r.outcome === "completed" ? 1 : 0), stalled: a.stalled + (r.outcome === "stalled" ? 1 : 0),
   declined: a.declined + (r.outcome === "declined" ? 1 : 0) }), { runs: 0, events: 0, dispatches: 0, iterations: 0, filed: 0, completed: 0, stalled: 0, declined: 0 });
-const exp = { runs: 18, completed: 5, stalled: 12, declined: 1, events: 986, dispatches: 72, iterations: 94, filed: 3 };
+const exp = { runs: 20, completed: 5, stalled: 14, declined: 1, events: 1036, dispatches: 73, iterations: 97, filed: 3 };
 check("totals reconcile with the verified figures", Object.keys(exp).every(k => t[k] === exp[k]), JSON.stringify(t));
 
 console.log(fails ? fails + " FAILURES" : "ALL 5 TESTS PASS");

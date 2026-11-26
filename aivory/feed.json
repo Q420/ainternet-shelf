@@ -1,7 +1,7 @@
 {
   "kind": "aivory-state-feed",
   "schema_version": 1,
-  "generated_at": "2026-11-26T04:12:57.496Z",
+  "generated_at": "2026-11-26T05:55:08.668Z",
   "provenance": "Projected by aivory/producer from the per-run report.json records under collaboration-framework/live-demo (derived matter, not the record itself).",
   "job": {
     "title": "Write the standing brief: what the framework is, what has been proven, what is open, the honest next step",
@@ -46,6 +46,18 @@
       "brief_filed": false,
       "brief_words": null,
       "report_ref": "collaboration-framework/live-demo/demo-gptoss1/report.json",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "run": "demo-gptoss10",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 2,
+      "events": 29,
+      "dispatches": 1,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gptoss10/report.json",
       "model": "openai/gpt-oss-120b"
     },
     {
@@ -106,6 +118,18 @@
       "brief_filed": false,
       "brief_words": null,
       "report_ref": "collaboration-framework/live-demo/demo-gptoss6/report.json",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "run": "demo-gptoss7",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 21,
+      "dispatches": 0,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gptoss7/report.json",
       "model": "openai/gpt-oss-120b"
     },
     {
