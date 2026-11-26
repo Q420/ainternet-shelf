@@ -7,6 +7,7 @@ export function validateFeed(data) {
   if (version !== 0 && version !== 1) return fail("unsupported schema version");
 
   if (version === 1) {
+    if (!data.job || typeof data.job !== "object" || Array.isArray(data.job)) return fail("job object is required");
     if (typeof data.generated_at !== "string" || Number.isNaN(Date.parse(data.generated_at))) return fail("missing or invalid generated_at");
     if (!Array.isArray(data.offices)) return fail("offices collection is required");
     if (!Array.isArray(data.historical_runs)) return fail("historical_runs collection is required");
@@ -27,6 +28,9 @@ export function validateFeed(data) {
     for (const office of data.offices) {
       if (!office || typeof office.id !== "string" || typeof office.role !== "string" || typeof office.status !== "string") return fail("current office identity/status is malformed");
       if (office.occupant !== undefined && office.occupant !== null && typeof office.occupant !== "string") return fail("office occupant is malformed");
+      if (office.journal !== undefined && !Array.isArray(office.journal)) return fail("office journal is malformed");
+      if (office.transcript !== undefined && !Array.isArray(office.transcript)) return fail("office transcript is malformed");
+      if (office.record !== undefined && (!office.record || typeof office.record !== "object" || Array.isArray(office.record))) return fail("office record is malformed");
       for (const ref of ["journal_ref", "record_ref", "transcript_ref", "briefcase_folder"]) {
         if (office[ref] !== undefined && typeof office[ref] !== "string") return fail("office source reference is malformed: " + ref);
       }
