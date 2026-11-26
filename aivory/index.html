@@ -66,7 +66,7 @@
 (() => {
  const FEED_URL = "https://raw.githubusercontent.com/Q420/ainternet-shelf/main/aivory/feed.json";
  const REFRESH_MS = 15 * 60 * 1000;
- const STORE_KEY = "aivory.dashboard.v1";
+ // Server-side state is authoritative; browser storage is not used.
  const $ = (id) => document.getElementById(id);
  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const fmt = (n) => Number(n).toLocaleString("en-CA");
