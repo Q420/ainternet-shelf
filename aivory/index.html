@@ -142,11 +142,9 @@
    '<section class="panel"><div class="panelhead"><div class="paneltitle">Queued requests</div><div class="panelhint">THIS BROWSER</div></div><div class="panelbody">'+(local.jobs.length?local.jobs.map(j=>'<div class="recordrow"><div class="recordname">QUEUED · '+esc(j.time)+'</div><div class="recorddetail">'+esc(j.text)+'</div></div>').join(""):'<div class="emptyfact">No job requests have been saved in this browser.</div>')+'</div></section>'+
    '<div class="smallnote">Dispatch wiring is the next layer. Saving a request here does not create or start a framework agent.</div></div></div>';
   }else if(key==="collaboration"){
-   const records=allRuns().filter(r=>r.completed===true&&r.outcome==="completed").map(r=>({kind:"record",author:"FRAMEWORK RECORD · "+r.run,time:"FEED",text:"Run completed. "+fmt(r.iterations)+" iterations · "+fmt(r.events)+" events · "+fmt(r.dispatches)+" dispatches."}));
-   const saved=messages(key);
-   const merged=[...records,...saved].sort((a,b)=>(a.time==="FEED"?0:1)-(b.time==="FEED"?0:1));
-   $("stage").innerHTML=stageHead("Collaboration Room","The shared conversation. Record entries appear only when backed by a completed run in the live feed.","SHARED ROOM")+
-   '<section class="panel chatpanel"><div class="panelhead"><div class="paneltitle">Crew conversation</div><div class="panelhint">HUMAN POSTS + VERIFIED COMPLETIONS</div></div><div class="chatlog" id="chatlog">'+(merged.length?merged.map(chatMessage).join(""):'<div class="emptychat">No human posts or completed-run entries are present.</div>')+'</div><form class="composer" data-composer="collaboration"><textarea name="message" rows="2" placeholder="Contribute to the shared work…" required></textarea><button class="send" type="submit">SEND</button></form></section>';
+   const merged=messages(key);
+   $("stage").innerHTML=stageHead("Collaboration Room","Shared crew conversation. Worker transport is not connected in Build A.","SHARED ROOM")+
+   '<section class="panel chatpanel"><div class="panelhead"><div class="paneltitle">Crew conversation</div><div class="panelhint">PERSISTED HUMAN POSTS</div></div><div class="chatlog" id="chatlog">'+(merged.length?merged.map(chatMessage).join(""):'<div class="emptychat">No human posts are present.</div>')+'</div><form class="composer" data-composer="collaboration"><textarea name="message" rows="2" placeholder="Contribute to the shared work…" required></textarea><button class="send" type="submit">SEND</button></form></section>';
   }else{
    const id=key.slice(7),r=runFor(id);
    if(!r){$("stage").innerHTML=stageHead("Office","This office is not present in the current feed.","OFFICE");return}
@@ -160,17 +158,16 @@
   }
  }
  function renderBriefcase(){
-  const sources=feed?.job?.sources||[],runs=allRuns();
-  $("stage").innerHTML=stageHead("Shared Briefcase","One shared working ground, with a folder for each office. Access activity is shown only when the feed publishes it.","SHARED CONTEXT")+
+  const sources=feed?.job?.sources||[],offices=allOffices();
+  $("stage").innerHTML=stageHead("Shared Briefcase","One shared working ground. Office folders appear only when an authoritative current-office inventory is published.","SHARED CONTEXT")+
   '<section class="panel"><div class="panelhead"><div class="paneltitle">Shared sources</div><div class="panelhint">'+sources.length+' ITEMS · TRUE FEED BYTE SIZES</div></div><div class="filelist">'+(sources.length?sources.map(s=>'<div class="fileitem"><div class="fileicon">MD</div><div><div class="filename">'+esc(s.path)+'</div><div class="filepath">Shared source</div></div><div class="filesize">'+fmt(s.bytes)+' B</div></div>').join(""):'<div class="emptyfact">No shared sources are published in the live feed.</div>')+'</div></section>'+
-  '<div style="height:14px"></div><section class="panel"><div class="panelhead"><div class="paneltitle">Office folders</div><div class="panelhint">'+runs.length+' OFFICES IN FEED</div></div><div class="panelbody"><div class="foldergrid">'+runs.map(r=>'<button class="folder" data-open-office="'+esc(r.run)+'"><div class="foldername">▱ &nbsp;'+esc(r.run)+'</div><div class="foldermeta">'+esc(modelLabel(r))+'<br>'+esc(statusLabel(r))+' · '+fmt(r.events)+' events</div></button>').join("")+'</div></div></section>'+
+  '<div style="height:14px"></div><section class="panel"><div class="panelhead"><div class="paneltitle">Office folders</div><div class="panelhint">'+offices.length+' CURRENT OFFICES</div></div><div class="panelbody">'+(offices.length?'<div class="foldergrid">'+offices.map(o=>'<button class="folder" data-open-office="'+esc(o.id)+'"><div class="foldername">▱ &nbsp;'+esc(o.role)+'</div><div class="foldermeta">'+esc(o.occupant||"Occupant not published")+'<br>'+esc(o.status||"Status not published")+'</div></button>').join("")+'</div>':'<div class="emptyfact">No current offices are published. Historical runs are listed separately under Resources.</div>')+'</div></section>'+
   '<div style="height:12px"></div><div class="smallnote">No item-level access events are published in this feed snapshot. Source sizes above are the exact byte counts supplied by the feed.</div>';
  }
  function renderOutput(){
-  const filed=allRuns().filter(r=>r.brief_filed===true);
-  $("stage").innerHTML=stageHead("Output","Files and deliverables recorded by the framework. No artifact is represented unless the feed records it.","DELIVERABLES")+
-  '<section class="panel"><div class="panelhead"><div class="paneltitle">Filed briefs</div><div class="panelhint">'+filed.length+' RECORDED</div></div><div class="filelist">'+(filed.length?filed.map(r=>'<div class="fileitem"><div class="fileicon">BR</div><div><div class="filename">Brief filed · '+esc(r.run)+'</div><div class="filepath">'+esc(modelLabel(r))+'</div></div><div class="filesize">'+(r.brief_words==null?"Word count unavailable":fmt(r.brief_words)+" words")+'</div></div>').join(""):'<div class="emptyfact">No filed briefs are recorded in the live feed.</div>')+'</div></section>'+
-  '<div style="height:12px"></div><div class="smallnote">The feed records filing and word counts, but does not publish artifact paths or file bytes. No download links are inferred.</div>';
+  const artifacts=Array.isArray(feed?.artifacts)?feed.artifacts:[];
+  $("stage").innerHTML=stageHead("Output","Only actual artifact paths and metadata published by the framework appear here.","DELIVERABLES")+
+  '<section class="panel"><div class="panelhead"><div class="paneltitle">Produced artifacts</div><div class="panelhint">SOURCE-REFERENCED FILES</div></div><div class="filelist">'+(artifacts.length?artifacts.map(a=>'<div class="fileitem"><div class="fileicon">FILE</div><div><div class="filename">'+esc(a.name||a.path)+'</div><div class="filepath">'+esc(a.path)+'</div></div><div class="filesize">'+(Number.isFinite(a.bytes)?fmt(a.bytes)+" B":"Size not published")+'</div></div>').join(""):'<div class="emptyfact">No artifact paths are published in the live feed. A filed-brief flag is not a file reference.</div>')+'</div></section>';
  }
  function renderResources(){
   const runs=allRuns();
