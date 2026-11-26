@@ -43,3 +43,13 @@ test("rejects malformed artifact metadata", () => {
   const broken = { ...v1, artifacts: [{ path: "out.md", bytes: -1 }] };
   assert.equal(validateFeed(broken).ok, false);
 });
+
+test("accepts a source-native role/content transcript", () => {
+  const withTranscript = { ...v1, offices: [{ ...v1.offices[0], transcript: [{ role: "gary", content: "A recorded message" }] }] };
+  assert.equal(validateFeed(withTranscript).ok, true);
+});
+
+test("rejects malformed transcript messages", () => {
+  const broken = { ...v1, offices: [{ ...v1.offices[0], transcript: [{ role: "gary" }] }] };
+  assert.equal(validateFeed(broken).ok, false);
+});
