@@ -126,7 +126,7 @@
   updateStrip();allNav();render();
  }
  function stageHead(title,sub,tag){return '<div class="stagehead"><div><h1 class="stage-title">'+esc(title)+'</h1><div class="stage-sub">'+esc(sub)+'</div></div>'+(tag?'<div class="section-tag">'+esc(tag)+'</div>':"")+'</div>'}
- function feedFailure(){return '<div class="feed-alert">FEED UNREACHABLE · Showing nothing rather than stale figures. Refresh to retry. No metrics, run records, or source inventory are displayed while the live state feed is unavailable.</div>'}
+ function feedFailure(){return '<div class="feed-alert">FEED UNAVAILABLE · The feed could not be read or validated. Showing nothing rather than stale figures. Refresh to retry. No metrics, run records, or source inventory are displayed.</div>'}
  function chatMessage(m){return '<article class="message '+(m.kind==="user"?"mine":m.kind==="system"?"system":m.kind==="record"?"record":"")+'"><div class="msgmeta">'+esc(m.author||"")+(m.time?" · "+esc(m.time):"")+'</div><div class="msgbody">'+esc(m.text)+'</div></article>'}
  function chatPanel(key,placeholder,disabled){
   const items=messages(key);
