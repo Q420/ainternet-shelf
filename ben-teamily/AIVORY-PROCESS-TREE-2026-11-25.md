@@ -282,8 +282,11 @@ historical runs.
 - N0 plan examination: **COMPLETE**.
 - S1 specification: **ACCEPTED — Gate 1 passed by Ben's ruling,
   PB-ID `pb-mwwy58at-3-6fle`**.
-- S2 process tree: **SUBMITTED FOR GATE 2**.
-- S3 Build A: **CLOSED** pending Gate 2 acceptance.
+- S2 process tree: **ACCEPTED — Gate 2 passed by Ben's ruling,
+  PB-ID `pb-mwwye871-4-flza`**.
+- S3 Build A: **OPEN**. Dashboard truth corrections and feed contract
+  work are underway; authoritative feed producer and receiving-end tests
+  remain unresolved.
 - S4 Build B: **CLOSED** pending S3 acceptance, the Orchestrator ruling,
   canonical office-cycle-v2 source, and cold-proof evidence.
 - S5 Build C: **CLOSED** pending S4 acceptance and Collaboration Room
