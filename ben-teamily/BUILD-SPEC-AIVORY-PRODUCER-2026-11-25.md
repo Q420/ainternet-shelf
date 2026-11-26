@@ -83,3 +83,25 @@ Framework dispatch (S4), live conversation transport (S5), dashboard
 redesign, any change to the accepted spec or contract. A contract change
 the producer seems to need is a proposed change — compared to the scope
 and put to Ben and the examiner before it is made.
+
+## Amendment — the N1 audit and Ben's ruling (2026-11-25 20:15 MST)
+
+The source audit found 29 report-bearing directories, not 17. **Ben
+ruled: the feed's record set is the 17 `demo-*` runs only** — the
+first-worker attempts and rehearsals are records from a different
+building; AIvory is a brand new start. The producer reads `demo-*`
+directories holding report.json, and no others.
+
+Field rules established by the audit:
+- `brief_filed` is true exactly when the report carries a `brief_filed`
+  record. A brief.md on disk without that record is **not** filed
+  (demo-round10 is the standing instance: completed, brief on disk, not
+  filed, no artefact entry).
+- `brief_words` is measured from the run's brief.md when the file is
+  present, null when it is not — the file is the record of the text.
+- The job's source byte sizes are measured from the stocked source
+  copies (manifest bd6f3cae…) in a demo run's sandbox
+  (`demo-round6/run/sandbox/sources/`).
+- Filed briefs for artefact publication are read from the run
+  directory's brief.md, whose sha256 must match the `brief_filed`
+  record's sha256 — a mismatch fails publication closed.
