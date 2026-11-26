@@ -146,15 +146,15 @@
    $("stage").innerHTML=stageHead("Collaboration Room","Shared crew conversation. Worker transport is not connected in Build A.","SHARED ROOM")+
    '<section class="panel chatpanel"><div class="panelhead"><div class="paneltitle">Crew conversation</div><div class="panelhint">PERSISTED HUMAN POSTS</div></div><div class="chatlog" id="chatlog">'+(merged.length?merged.map(chatMessage).join(""):'<div class="emptychat">No human posts are present.</div>')+'</div><form class="composer" data-composer="collaboration"><textarea name="message" rows="2" placeholder="Contribute to the shared work…" required></textarea><button class="send" type="submit">SEND</button></form></section>';
   }else{
-   const id=key.slice(7),r=runFor(id);
-   if(!r){$("stage").innerHTML=stageHead("Office","This office is not present in the current feed.","OFFICE");return}
-   const msgs=messages(key);
-   $("stage").innerHTML=stageHead("Office · "+id,"Occupant model: "+modelLabel(r)+". The office is the durable work identity; the model is the feed-reported occupant.","OFFICE")+
+   const id=key.slice(7),office=officeFor(id);
+   if(!office){$("stage").innerHTML=stageHead("Office","This office is not present in the authoritative current-office inventory.","OFFICE");return}
+   $("stage").innerHTML=stageHead(office.role||"Office","Occupant: "+(office.occupant||"not published")+" · Status: "+(office.status||"not published"),"OFFICE")+
    '<div class="columns">'+chatPanel(key,"Write to this office…",false)+'<div class="stack">'+
-   '<section class="panel"><div class="panelhead"><div class="paneltitle">Journal</div><div class="panelhint">OFFICE RECORD</div></div><div class="panelbody"><div class="emptyfact">No journal entries or dated briefs for this office are published in the live state feed.</div></div></section>'+
-   '<section class="panel"><div class="panelhead"><div class="paneltitle">Record</div><div class="panelhint">'+esc(r.run)+'</div></div><div class="panelbody">'+
-   '<div class="recordrow"><div class="recordname">'+esc(statusLabel(r).toUpperCase())+'</div><div class="recorddetail">Model: <b>'+esc(modelLabel(r))+'</b><br>Iterations: <b>'+fmt(r.iterations)+'</b><br>Events: <b>'+fmt(r.events)+'</b><br>Dispatches: <b>'+fmt(r.dispatches)+'</b><br>Brief filed: <b>'+String(Boolean(r.brief_filed))+'</b><br>Brief words: <b>'+(r.brief_words==null?"Not recorded":fmt(r.brief_words))+'</b></div></div></div></section>'+
-   '<div class="smallnote">A chat transcript is not included in the published feed for this office. No agent dialogue is fabricated.</div></div></div>';
+   '<section class="panel"><div class="panelhead"><div class="paneltitle">Journal</div><div class="panelhint">SOURCE ENTRIES</div></div><div class="panelbody">'+(Array.isArray(office.journal)&&office.journal.length?office.journal.map(j=>'<div class="recordrow"><div class="recordname">'+esc(j.title||j.date||"Journal entry")+'</div><div class="recorddetail">'+esc(j.text||j.summary||"")+'</div></div>').join(""):'<div class="emptyfact">No journal entries are published for this office.</div>')+'</div></section>'+
+   '<section class="panel"><div class="panelhead"><div class="paneltitle">Record</div><div class="panelhint">AUTHORITATIVE RECORD</div></div><div class="panelbody">'+(office.record?'<div class="recorddetail">'+esc(JSON.stringify(office.record))+'</div>':'<div class="emptyfact">No record details are published for this office.</div>')+'</div></section>'+
+   '<div class="smallnote">'+(Array.isArray(office.transcript)&&office.transcript.length?"A source transcript is available.":"No transcript is published for this office.")+'</div></div></div>';
+   const log=$("chatlog");if(log&&Array.isArray(office.transcript)&&office.transcript.length){log.innerHTML=office.transcript.map(m=>chatMessage(m)).join("")+log.innerHTML;}
+
   }
  }
  function renderBriefcase(){
