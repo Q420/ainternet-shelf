@@ -131,10 +131,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": [
-                "author",
-                "text"
-              ],
+              "required": [],
               "properties": {
                 "kind": {
                   "type": "string"
@@ -147,8 +144,28 @@
                 },
                 "text": {
                   "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
                 }
-              }
+              },
+              "anyOf": [
+                {
+                  "required": [
+                    "author",
+                    "text"
+                  ]
+                },
+                {
+                  "required": [
+                    "role",
+                    "content"
+                  ]
+                }
+              ]
             }
           },
           "record": {
