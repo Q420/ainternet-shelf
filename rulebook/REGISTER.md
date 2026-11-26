@@ -159,3 +159,18 @@ Classification rule adopted for the draft: the ledger is EVIDENCE, never live la
 - The original AGENTS.md stands preserved in `~/workspace/rulebook/snapshot-2026-11-26/AGENTS.md` with its checksum in the snapshot manifest. Undo = restore that file and verify the checksum.
 - `~/MEMORY.md` untouched, per the staged plan; its facts-layer pass is a separate, later examination.
 - Note: the shell could not write `~/AGENTS.md` (root-owned, 660); the switch was written through the file tools and verified by hash at the receiving end.
+
+## MEMORY pass — classification (2026-11-26)
+
+- Snapshot before the pass: `~/workspace/rulebook/snapshot-memory-pass-2026-11-26/` (MEMORY.md sha256 `84bcfb43…`, AGENTS.md as switched).
+- Category scheme A–H approved by Ben (00:46 MST). All 141 entries classified in `~/workspace/rulebook/MEMORY-PASS-PLAN.md` with full-span character counts: A 15/3,974 · B 23/7,922 · C 45/20,677 · C* 7/2,937 · D 26/18,403 · E 12/5,937 · F 10/7,796 · G 3/1,338 · H 0.
+- Projected MEMORY.md after the pass: ~13,234 chars staying (A+B+G) + pointers, down from 69,859.
+- Findings: H (spent) is empty — the weight is duplication and misplacement, not rot. C* names seven standing rules Rulebook v1 did not capture (bridge-building caution, seat orchestration, no going-in announcement, allow-watcher evidence, proper-briefs pipeline, browser-first fallback, AIvory source-check) — Ben decides their home; they must not silently drop.
+
+## MEMORY pass — BUILD EXECUTED (2026-11-26 00:54 MST, Ben: "The classification stands — build the new MEMORY from it")
+
+- New `~/MEMORY.md` installed via the file tools (shell write is root-blocked, same as AGENTS.md) and verified byte-identical to the assembled build: sha256 `ae0c1ae064fe86abc8872b436ca04784bc762aa27eba92cdb42f3880797fdd9e`, 17,978 B — down from 69,859 B. All 48 kept entries (A 15, B 23, G 3, C* 7) verified present VERBATIM by span-match before install; two stray section headings carried inside entry spans were stripped and the build regenerated before install.
+- Moved verbatim: D (26 entries) → `~/workspace/collaboration-framework/MEMORY-DOCTRINE-EXTRACT-2026-11-26.md` (INDEX entry owed with the 601+ filing); E (12) → `~/workspace/rulebook/memory-pass/PULSE-HQ-EXTRACT-2026-11-26.md`; F (10) → `~/workspace/rulebook/memory-pass/PROJECT-STATE-EXTRACT-2026-11-26.md`. C (45 law duplicates) removed from the wake file only; verbatim originals stand in the pre-pass snapshot.
+- C* (7 standing rules Rulebook v1 missed) KEPT in the new MEMORY under "Standing rules awaiting a home (C*)" — in force, awaiting Ben's ruling on their home.
+- Wake-up core load: 105,163 chars originally → 45,985 B now (AGENTS 19,756 + MEMORY 17,978 + SOUL/IDENTITY/USER/PROACTIVE 8,251).
+- Undo: restore `~/workspace/rulebook/snapshot-memory-pass-2026-11-26/MEMORY.md` (sha256 `84bcfb43…`).
