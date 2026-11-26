@@ -103,8 +103,9 @@
   if(!feed){$("jobTitle").textContent="Feed unreachable";$("sourceChips").innerHTML="";$("stripMetrics").innerHTML="";$("feedTime").textContent="";return}
   $("jobTitle").textContent=feed.job?.title || "No current assignment published";
   $("sourceChips").innerHTML=(feed.job?.sources||[]).map(s=>'<span class="chip">'+esc(s.path)+'<span class="bytes">'+fmt(s.bytes)+' B</span></span>').join("");
-  $("stripMetrics").innerHTML=metric("RUNS",allRuns().length)+metric("EVENTS",total("events"))+metric("DISPATCHES",total("dispatches"));
-  $("feedTime").textContent=updatedAt ? "UPDATED "+updatedAt.toLocaleTimeString() : "";
+  $("stripMetrics").innerHTML=metric("HISTORICAL RUNS",allRuns().length)+metric("EVENTS",total("events"))+metric("DISPATCHES",total("dispatches"));
+  $("feedTime").textContent=feed.generated_at ? "FEED "+esc(feed.generated_at) : "FEED TIME NOT PUBLISHED";
+  $("decisionState").textContent=Array.isArray(feed.decisions) ? (feed.decisions.length ? feed.decisions.length+" decisions pending" : "No decisions waiting") : "Decision state not published by feed";
  }
  async function loadFeed(){
   $("refresh").textContent="↻ Loading";$("refresh").disabled=true;
@@ -112,9 +113,15 @@
    const response=await fetch("/api/feed",{cache:"no-store"});
    if(!response.ok)throw new Error("HTTP "+response.status);
    const data=await response.json();
-   if(data.kind!=="aivory-state-feed"||!Array.isArray(data.runs))throw new Error("Unexpected feed shape");
-   feed=data;feedError=false;updatedAt=new Date();
-  }catch(err){feed=null;feedError=true;updatedAt=null}
+   if(data.kind!=="aivory-state-feed"||(!Array.isArray(data.historical_runs)&&!Array.isArray(data.runs)))throw new Error("Unexpected feed shape");
+   const runs=Array.isArray(data.historical_runs)?data.historical_runs:data.runs;
+   if(!runs.every(r=>r&&typeof r.run==="string"&&typeof r.outcome==="string"&&Number.isFinite(r.iterations)&&Number.isFinite(r.events)&&Number.isFinite(r.dispatches)))throw new Error("Malformed historical run record");
+   if(data.offices!==undefined&&(!Array.isArray(data.offices)||!data.offices.every(o=>o&&typeof o.id==="string"&&typeof o.role==="string"&&typeof o.status==="string")))throw new Error("Malformed office inventory");
+   if(data.generated_at!==undefined&&(typeof data.generated_at!=="string"||Number.isNaN(Date.parse(data.generated_at))))throw new Error("Malformed feed timestamp");
+   if(data.schema_version!==undefined&&data.schema_version!==1)throw new Error("Unsupported feed schema version");
+   if(data.job?.sources!==undefined&&(!Array.isArray(data.job.sources)||!data.job.sources.every(s=>s&&typeof s.path==="string"&&Number.isFinite(s.bytes))))throw new Error("Malformed source inventory");
+   feed=data;feedError=false;
+  }catch(err){feed=null;feedError=true}
   $("refresh").textContent="↻ Refresh";$("refresh").disabled=false;
   updateStrip();allNav();render();
  }
