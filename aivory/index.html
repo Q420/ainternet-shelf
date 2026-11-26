@@ -85,18 +85,20 @@
  function statusLabel(r){return r.outcome || (r.completed ? "completed" : "unknown")}
  function modelLabel(r){return r.model || "Model not published"}
  function allNav(){
-  const runs=allRuns();
-  $("chatnav").innerHTML =
-   navButton("orchestrator","◉","Orchestrator","COORDINATION","")+
-   navButton("collaboration","⌘","Collaboration Room","SHARED","")+
-   (runs.map(r=>navButton(officeKey(r.run),"▣",r.run,modelShort(r.model),statusClass(statusLabel(r)))).join(""));
+  const offices=allOffices();
+  $("chatnav").innerHTML=navButton("orchestrator","◉","Orchestrator","COORDINATION","")+navButton("collaboration","⌘","Collaboration Room","SHARED","")+
+   offices.map(o=>navButton(officeKey(o.id),"▣",o.role||"Office",o.status||"STATUS N/A",statusClass(o.status))).join("");
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",active===b.dataset.view));
   document.querySelectorAll("[data-chat]").forEach(b=>b.classList.toggle("active",active===b.dataset.chat));
-  const opts=[["orchestrator","Orchestrator"],["collaboration","Collaboration Room"],...runs.map(r=>[officeKey(r.run),"Office · "+r.run]),["briefcase","Shared Briefcase"],["output","Output"],["resources","Resources"]];
+  const opts=[["orchestrator","Orchestrator"],["collaboration","Collaboration Room"],...offices.map(o=>[officeKey(o.id),(o.role||"Office")+" · "+(o.occupant||"occupant unavailable")]),["briefcase","Shared Briefcase"],["output","Output"],["resources","Resources"]];
   $("mobileSelect").innerHTML=opts.map(([v,t])=>'<option value="'+esc(v)+'" '+(v===active?"selected":"")+'>'+esc(t)+'</option>').join("");
  }
  function navButton(key,glyph,name,meta,status){return '<button class="navitem" data-chat="'+esc(key)+'"><span class="navglyph">'+glyph+'</span><span class="navname">'+esc(name)+'</span><span class="navmeta '+esc(status)+'">'+esc(meta)+'</span></button>'}
- function modelShort(model){if(!model)return "MODEL N/A";return model.split("/").pop().slice(0,19)}
+ function statusClass(v){return ["completed","stalled","declined"].includes(v)?v:""}
+ function total(key){return allRuns().reduce((s,r)=>s+(Number(r[key])||0),0)}
+ function metric(label,value){return '<div class="metric"><strong>'+fmt(value)+'</strong><span>'+label+'</span></div>'}
+ function statusLabel(r){return r.outcome || "unknown"}
+ function modelLabel(r){return r.model || "Model not published"}
  function updateStrip(){
   if(!feed){$("jobTitle").textContent="Feed unreachable";$("sourceChips").innerHTML="";$("stripMetrics").innerHTML="";$("feedTime").textContent="";return}
   $("jobTitle").textContent=feed.job?.title || "No current assignment published";
