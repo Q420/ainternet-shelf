@@ -173,6 +173,7 @@ for _p in (str(SRC), str(HERE), str(RIG)):
 from fabric.canonical import canonical  # noqa: E402
 
 from framework import nemotron_names, tool_policy  # noqa: E402
+from framework import road as road_mod  # noqa: E402
 from framework.adapter import (  # noqa: E402
     AdapterFailure, OpenAICompatibleAdapter)
 from framework.doorway import (  # noqa: E402
@@ -184,7 +185,7 @@ from framework.office import Office  # noqa: E402
 from framework.onboarding import (  # noqa: E402
     instance_onboarding_record)
 from framework.record import (  # noqa: E402
-    CONSTITUTION_HASH, FrameworkStore)
+    CONSTITUTION_HASH, FrameworkStore, assembly_record_hash)
 
 from connector_transport import (  # noqa: E402
     install_connector_transport)
@@ -256,6 +257,71 @@ QUINN = OCCUPANT == "quinn"
 GLM = OCCUPANT == "glm"
 GPTOSS = OCCUPANT == "gptoss"
 
+
+def _road_declaration():
+    """The office's road seal for a run (the §6
+    amendment, accepted 2026-11-26): the declaration
+    the generation seals, or None where the run
+    travels under the per-call budget as before.
+    The road is built for two seats: the GPT-OSS
+    occupant on Groq, whose limits stand measured
+    (8,000 tokens per minute, 200,000 per rolling
+    day, a 131,072-token window), and — at the
+    director's call of 2026-11-26, after the Groq
+    day pool stopped the GPT-OSS proof at its sixth
+    call — the Nemotron occupant on the NVIDIA
+    route, whose limits stand UNMEASURED: its seal
+    carries the same allocation, its window is the
+    office's working figure, and its bucket figures
+    (set where the road attaches) are placeholders
+    that do not bind, named as such in the basis —
+    reservations, counting and accounting stand;
+    pacing against a measured wall waits for the
+    route's own measurement. The allocation is the
+    office's seal for one run of the standing job —
+    an opening and a handful of cycle calls at the
+    sizes the road now counts, with headroom. The
+    remaining occupants' roads are their own
+    scopes, unbuilt."""
+    if GPTOSS:
+        return {
+            "contract": tool_policy.ROAD_CONTRACT_V1,
+            "allocation_tokens": 60000,
+            "window_tokens": 131072,
+            "basis": "the office's seal for one proof "
+                     "run of the standing job (three "
+                     "sources, one brief): the job's "
+                     "measured shape under the road's "
+                     "counting, with headroom, inside "
+                     "the route's 200,000-token rolling "
+                     "day pool"}
+    if QUINN or GLM:
+        return None
+    return {
+        "contract": tool_policy.ROAD_CONTRACT_V1,
+        "allocation_tokens": 120000,
+        "window_tokens": 131072,
+        "basis": "the office's seal for one proof "
+                 "run of the standing job on the "
+                 "NVIDIA route, re-sealed at the "
+                 "director's order of 2026-11-26 "
+                 "after demo-nemotron7 measured the "
+                 "job's shape on this seat: ten "
+                 "calls consumed 64,117 tokens "
+                 "(~6,400 a call, the reasoning "
+                 "completions counted, as the "
+                 "amendment's accounting rules) and "
+                 "the walk needs roughly fourteen — "
+                 "120,000 is that measured shape "
+                 "with headroom. The route's limits "
+                 "stand unmeasured, so the window "
+                 "is the office's working figure "
+                 "and the bucket's limits are "
+                 "placeholders that do not bind — "
+                 "what stands governed is the "
+                 "counting, the reservations, the "
+                 "spill and the sealed run budget"}
+
 # The run's pin: the director's named model on the
 # occupant's route (Ben's order, 2026-11-24, for
 # Nemotron; Ben's direction, 2026-11-25, for Quinn
@@ -314,6 +380,36 @@ ROUTE_REPORT_LABEL = (
     "helper through the capture seam)" if GLM else
     "nvidia (live, via the registered connector "
     "helper through the capture seam)")
+
+# The office-declared identity (office-cycle-v8;
+# the director's ruling of 2026-11-25 23:08 MST —
+# "Get rid of that too"): under the file-grain
+# contract the worker's launch carries NO identity
+# call — the run's first call is the opening
+# package. His identity stands in the record from
+# the office's sealed assembly instead: the
+# occupant configuration the office chose (the pin
+# above, on its route), declared by the office at
+# generation as this mapping — the generator
+# accepts an identify mapping in place of a
+# callable, and the onboarding records this
+# declaration as the instance's identity. No
+# provider self-report is claimed anywhere in a
+# v8 record: the declaration is the office's word
+# for the configuration it assembled, and the
+# credential fingerprint binds it as it binds any
+# declared identity.
+OFFICE_IDENTITY_DECLARATION = {
+    "declaration": (
+        f"Office-declared occupant: {MODEL} on the "
+        f"{ROUTE} route, assembled by the office "
+        f"under office-cycle-v8 (the director's "
+        f"ruling of 2026-11-25 23:08 MST — no "
+        f"identity call stands in this launch; this "
+        f"declaration is the office's, from the "
+        f"sealed configuration, not a provider "
+        f"self-report)."),
+    "provider_model_id": MODEL}
 
 DEMO_DIR = HERE / os.environ.get(
     "DEMO_RUN_DIR",
@@ -796,6 +892,84 @@ def _combined_retrieval_grant(tool, prefix, count):
             "authority_trace": COMBINED_TRACE}
 
 
+def _presentation_declaration():
+    """The live configuration's presentation seal:
+    for the Nemotron seat, office-cycle-v9 — the
+    file-grain successor carrying the sealed process
+    tree in every package (the build scope of
+    2026-11-26, INDEX 602-607); the other seats stay
+    on office-cycle-v8 until their own proof stands
+    (the plan's entry rule: v9 seals for the
+    Nemotron configuration only)."""
+    if not (GPTOSS or QUINN or GLM):
+        return tool_policy.PRESENTATION_CONTRACT_V12
+    return tool_policy.PRESENTATION_CONTRACT_V11
+
+
+def _tree_declaration():
+    """The process tree sealed beside the v9
+    presentation contract for the Nemotron seat —
+    the redrawn tree of the settled method (Ben's
+    correction, INDEX 606; Vane's acceptance with
+    the next-action clarification, INDEX 607):
+    gather + journal per file, summarize compiles
+    the journal, deliver files it. The other seats
+    seal no tree."""
+    if GPTOSS or QUINN or GLM:
+        return None
+    held = ("A read refused because its grant "
+            "stands exhausted means you already "
+            "hold the source — write its journal "
+            "bit from what you hold.")
+    return {
+        "contract": tool_policy.TREE_CONTRACT_V1,
+        "title": "The Brief — the framework, proven "
+                 "and unproven, in plain words",
+        "nodes": [
+            {"id": "onboarding",
+             "label": "1. Know the job",
+             "kind": "onboarding",
+             "depends_on": [],
+             "workaround": ""},
+            {"id": "gather-stock-take",
+             "label": "2.1 Gather + journal — "
+                      "sources/stock-take.md",
+             "kind": "gather",
+             "source": "sources/stock-take.md",
+             "depends_on": ["onboarding"],
+             "workaround": held},
+            {"id": "gather-a3-pass",
+             "label": "2.2 Gather + journal — "
+                      "sources/a3-pass.md",
+             "kind": "gather",
+             "source": "sources/a3-pass.md",
+             "depends_on": ["onboarding"],
+             "workaround": held},
+            {"id": "gather-index-tail",
+             "label": "2.3 Gather + journal — "
+                      "sources/index-tail.md",
+             "kind": "gather",
+             "source": "sources/index-tail.md",
+             "depends_on": ["onboarding"],
+             "workaround": ""},
+            {"id": "summarize",
+             "label": "3. Summarize — read your "
+                      "journal whole and compile "
+                      "it into the brief",
+             "kind": "summarize",
+             "depends_on": ["gather-stock-take",
+                            "gather-a3-pass",
+                            "gather-index-tail"],
+             "workaround": ""},
+            {"id": "deliver",
+             "label": "4. Deliver — contribute the "
+                      "brief; the office files it "
+                      "at scratch/brief.md",
+             "kind": "deliver",
+             "depends_on": ["summarize"],
+             "workaround": ""}]}
+
+
 GRANTS_COMBINED = (
     [{"tool": "container.exec",
       "scope_ceiling": {},
@@ -811,7 +985,7 @@ GRANTS_COMBINED = (
     + [{"tool": "sandbox.write",
         "scope_ceiling": {"path_prefix": "scratch"},
         "side_effect_class": "write",
-        "bound": {"count": 4},
+        "bound": {"count": 12},
         "authority_trace": COMBINED_TRACE}])
 
 
@@ -896,9 +1070,13 @@ BOUNDS_DERIVATION = (
     "authoritative clock; a single call may still "
     "lawfully take its 300 s adapter span within it. "
     "Grant counts stand as commissioned (exec 12, "
-    "retrieval 12 per tool and prefix, write 4): they do "
-    "not bind the honest or the ranged path, so the "
-    "re-derivation leaves them.")
+    "retrieval 12 per tool and prefix, write 12): the "
+    "write count stood at 4 — sized for the tree walk's "
+    "three journal writes — until the office cycle's "
+    "six blocks required six journal appends plus draft "
+    "slack; the director raised it to 12 on 2026-11-25 "
+    "(INDEX 585), the count every other tool already "
+    "carried.")
 
 
 def _stage_sandbox_sources(sandbox_dir, manifest):
@@ -930,6 +1108,185 @@ def _stage_sandbox_sources(sandbox_dir, manifest):
     (sandbox_dir / "scratch").mkdir(
         parents=True, exist_ok=True)
     return None
+
+
+def _block_map_for_sandbox(sandbox_dir):
+    """The office's block map for the cycle contract
+    (the plan, PLAN-OFFICE-CYCLE-2026-11-25): the
+    declared delivery-evidence files as staged in the
+    sandbox, portioned by the office at the ruled
+    ceiling from their staged bytes — the map the
+    generation seals beside the office-cycle
+    presentation contract, in declaration order."""
+    contents = {}
+    for address in DELIVERY_EVIDENCE["addresses"]:
+        contents[address] = (
+            Path(sandbox_dir) / address).read_bytes()
+    return tool_policy.compute_block_map(
+        list(DELIVERY_EVIDENCE["addresses"]), contents)
+
+
+def _call_ledger(captures_path, events, loop, run_dir):
+    """The road's accounting (the plan §6,
+    Qualification B): every call that shared the
+    model's minute, in the order the captures stand —
+    the identity call, the probe's trials, the loop's
+    calls — each with its wire bytes and their
+    estimate under the one estimator, and the loop's
+    calls with the loop's own package estimates beside
+    them (the budget's figures) and their record
+    timestamps. Provider usage figures, where a
+    response artifact carries them, stand beside the
+    loop entry they answer. Returns (entries, summary)
+    — the summary naming the minimum observed gap
+    between recorded call timestamps (the probe's
+    completion to the first iteration; iteration to
+    iteration) and the largest single-call estimate."""
+    import datetime
+    lines = [json.loads(line) for line in
+             Path(captures_path).read_text(
+                 encoding="utf-8").splitlines()
+             if line.strip()]
+    iterations = [ev for ev in events
+                  if ev["type"] == "LOOP_ITERATION"]
+    estimates = list(
+        getattr(loop, "call_estimates", []) or [])
+    usage = {}
+    responses = Path(run_dir) / "responses"
+    if responses.is_dir():
+        for path in sorted(responses.glob(
+                "iteration-*.json")):
+            try:
+                artifact = json.loads(
+                    path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            number = path.stem.rsplit("-", 1)[-1]
+            found = artifact.get("usage") \
+                if isinstance(artifact, dict) else None
+            if isinstance(found, dict):
+                usage[number] = found
+    entries = []
+    loop_seen = 0
+    for order, cap in enumerate(lines):
+        body = base64.b64decode(cap["request_b64"])
+        if b"Your wake package:" in body:
+            kind = "loop"
+        elif order == 0:
+            kind = "identity"
+        elif cap.get("mode") == "chat-raw-bounded":
+            kind = "probe"
+        else:
+            kind = "other"
+        entry = {
+            "order": order,
+            "mode": cap.get("mode"),
+            "index": cap.get("index"),
+            "kind": kind,
+            "wire_bytes": cap.get("request_bytes"),
+            "wire_estimated_tokens":
+                tool_policy.estimate_tokens(
+                    cap.get("request_bytes") or 0)}
+        if kind == "loop":
+            if loop_seen < len(estimates):
+                entry["package_serialized_bytes"] = \
+                    estimates[loop_seen][
+                        "serialized_bytes"]
+                entry["package_estimated_tokens"] = \
+                    estimates[loop_seen][
+                        "estimated_tokens"]
+            if loop_seen < len(iterations):
+                entry["recorded_ts"] = iterations[
+                    loop_seen].get("ts")
+                found = usage.get(str(iterations[
+                    loop_seen]["payload"].get(
+                        "iteration")))
+                if found is not None:
+                    entry["provider_usage"] = found
+            loop_seen += 1
+        entries.append(entry)
+
+    def _epoch(ts):
+        if not isinstance(ts, str):
+            return None
+        try:
+            parsed = datetime.datetime.strptime(
+                ts, "%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            return None
+        return parsed.replace(
+            tzinfo=datetime.timezone.utc).timestamp()
+
+    points = []
+    for ev in events:
+        if ev["type"] == "ASSEMBLY_PROBED":
+            points.append(_epoch(ev.get("ts")))
+    for ev in iterations:
+        points.append(_epoch(ev.get("ts")))
+    points = [point for point in points
+              if point is not None]
+    gaps = [later - earlier for earlier, later
+            in zip(points, points[1:])]
+    summary = {
+        "calls": len(entries),
+        "minimum_gap_seconds": min(gaps) if gaps
+        else None,
+        "largest_single_call_estimate": max(
+            (entry.get("package_estimated_tokens") or 0
+             for entry in entries), default=None),
+        "largest_wire_estimate": max(
+            (entry.get("wire_estimated_tokens") or 0
+             for entry in entries), default=None)}
+    return entries, summary
+
+
+def _cycle_summary(events, doorway, assembly_id,
+                   case_id):
+    """The run's summary under the cycle contract
+    (the plan §7), derived from the record at its
+    head: the cycles completed, the cycles failed
+    (incomplete where the run ended in a stall), the
+    cycles unresolved (incomplete where it did not),
+    and the declared evidence's standing, file by
+    file, under the block-coverage rule."""
+    from framework.loop import (
+        _cycle_state, _delivery_evidence_missing)
+    state = doorway.state()
+    content, _version = established_case_content(
+        state, case_id)
+    generated = doorway._generated_payload(assembly_id)
+    if generated is None:
+        return None
+    instance_id = generated.get("instance_id")
+    cstate = _cycle_state(
+        events, state["dispatches"], instance_id,
+        state["head_seq"], content, generated, 0)
+    if cstate is None:
+        return None
+    stalled = any(
+        ev["type"] == "LOOP_STALLED"
+        and ev["payload"].get("assembly_id")
+        == assembly_id for ev in events)
+    completed = [block["block_id"]
+                 for block in cstate["blocks"]
+                 if block["state"] == "done"]
+    incomplete = [block["block_id"]
+                  for block in cstate["blocks"]
+                  if block["state"] != "done"]
+    missing = _delivery_evidence_missing(
+        events, state["dispatches"], instance_id,
+        state["head_seq"],
+        list(DELIVERY_EVIDENCE["addresses"]),
+        block_map=cstate["block_map"])
+    return {
+        "completed": completed,
+        "failed": incomplete if stalled else [],
+        "unresolved": [] if stalled else incomplete,
+        "evidence": {
+            address: ("missing" if address in missing
+                      else "stands")
+            for address in
+            DELIVERY_EVIDENCE["addresses"]}}
 
 # The director's order, verbatim as given, and the
 # judgement the order makes.
@@ -1027,6 +1384,58 @@ ORDER_EXAMINER = ("Ben (director) — direction of "
                   "Ben (director) — order of 2026-11-24")
 ORDER_DATE = ("2026-11-25" if (QUINN or GLM or GPTOSS)
               else "2026-11-24")
+
+# The office-declared mode grounds (office-cycle-v8;
+# the director's rulings of 2026-11-25, 23:07 and
+# 23:08 MST): under v8 no probe stands in the launch,
+# so the probe-era grounds above — which speak of a
+# probe stage running live — are not this launch's
+# grounds and stand in no v8 record. The mode is a
+# known, recorded fact about the occupant the office
+# assembled; the office declares it from the sealed
+# configuration, with the evidence named:
+OFFICE_MODE_GROUNDS = (
+    "Office-declared mode: text. Grounds: the "
+    "standing judgement for this occupant — judged "
+    "text under the director's direction of "
+    "2026-11-25 (the Groq route's native path carried "
+    "the open BD-1 defect at her judging, INDEX "
+    "411-420; she answers in the package protocol as "
+    "plain-text JSON, the loop's standing text "
+    "population). No probe stands in this launch "
+    "(the director's ruling of 2026-11-25 23:07 MST); "
+    "the mode is declared by the office from the "
+    "sealed configuration, not re-measured."
+    if QUINN else
+    "Office-declared mode: native. Grounds: the "
+    "standing judgement for this occupant — re-judged "
+    "NATIVE on the corrected Groq transport under the "
+    "director's direction of 2026-11-25 (INDEX 576), "
+    "and witnessed live at demo-gptoss5 (INDEX 586), "
+    "where Groq accepted and dispatched six native "
+    "calls in a single response. No probe stands in "
+    "this launch (the director's ruling of 2026-11-25 "
+    "23:07 MST); the mode is declared by the office "
+    "from the sealed configuration, not re-measured."
+    if GPTOSS else
+    "Office-declared mode: text. Grounds: the "
+    "standing judgement for this occupant — judged "
+    "text for the Cloudflare Workers AI route (INDEX "
+    "563-564); this route's native tool-calling has "
+    "never been witnessed on the live path. No probe "
+    "stands in this launch (the director's ruling of "
+    "2026-11-25 23:07 MST); the mode is declared by "
+    "the office from the sealed configuration, not "
+    "re-measured."
+    if GLM else
+    "Office-declared mode: native. Grounds: the "
+    "standing judgement for this occupant — judged "
+    "native under the director's order of 2026-11-24; "
+    "the native adapter path for the execution tool "
+    "is the built and closed path. No probe stands in "
+    "this launch (the director's ruling of 2026-11-25 "
+    "23:07 MST); the mode is declared by the office "
+    "from the sealed configuration, not re-measured.")
 ORDER_EFFECT = (
     "the director's direction re-judges the "
     "mode native on the corrected Groq "
@@ -1411,7 +1820,7 @@ def _order_record(assembly_id, instance_id,
         "fingerprint": (probed_payload or {}).get(
             "fingerprint"),
         "adapter_mode": ADAPTER_MODE,
-        "mode_grounds": ORDER_GROUNDS,
+        "mode_grounds": OFFICE_MODE_GROUNDS,
         "order": {
             "by": "Ben (director)",
             "date": ORDER_DATE,
@@ -1556,87 +1965,113 @@ def run_demo():
         # the office performed the demonstration call
         # against the staged sandbox before generation
         # and sealed its result beside the presentation
-        # contract. Under the process-tree contract (the
-        # room rebuild) no worked example stands in the
-        # seal: the demonstration's place is taken by
-        # the tree itself — the first gather step spells
-        # out the exact call, in the shape this room
-        # uses, and the file's content is presented at
-        # its step, once; an example beside it would
-        # present a source's content outside its step.
+        # contract. Under the office-cycle contract (the
+        # plan of 2026-11-25) no worked example stands in
+        # the seal either: the cycle poster in the
+        # opening package — the job's shape in words and
+        # the block map with an access way per block —
+        # is the demonstration's replacement.
         worked_example = None
         print("worked example: none stands in the seal "
-              "under the process-tree contract — the "
-              "tree's first gather step is the "
-              "demonstration's replacement")
+              "under the office-cycle contract — the "
+              "cycle poster is the demonstration's "
+              "replacement")
 
-        # ASSEMBLE — the adapter on the NVIDIA route's
-        # real seam: the typed transport through the
-        # capture pass-through to the registered
-        # connector helper. Generation under the probe
-        # contract and the exec catalogue contract,
-        # grants the combined surface (INDEX 476): the
-        # execution tool, the retrieval four under
-        # sources/ and under scratch/, and sandbox.write
-        # under scratch/. The identify callable is
-        # pin-wrapped: a provider-reported identity that
-        # is not the pin aborts here, before activation,
-        # as a flagged conflict.
+        # THE BLOCK MAP (the plan §3): the office
+        # portions the staged evidence files into travel
+        # blocks at the ruled ceiling, from the staged
+        # bytes, and seals the map beside the cycle
+        # contract at generation.
+        block_map = _block_map_for_sandbox(
+            run_dir / "sandbox")
+        print(f"block map: {len(block_map)} blocks "
+              f"portioned from the staged evidence at "
+              f"the {tool_policy.BLOCK_CEILING_BYTES}-"
+              f"byte ceiling")
+
+        # ASSEMBLE — the adapter on the occupant
+        # route's real seam: the typed transport
+        # through the capture pass-through to the
+        # registered connector helper. Generation
+        # under the exec catalogue contract — and,
+        # under office-cycle-v8, under NO probe
+        # contract and with NO identity call: the
+        # director's rulings of 2026-11-25 23:07 and
+        # 23:08 MST removed both from this launch.
+        # The identify argument is the office's own
+        # declaration mapping (OFFICE_IDENTITY_
+        # DECLARATION): the generator accepts a
+        # mapping in place of a callable, the
+        # onboarding records the office's declaration
+        # as the instance's identity, and no provider
+        # call of any kind stands before the opening.
+        # Grants the combined surface (INDEX 476):
+        # the execution tool, the retrieval four under
+        # sources/ and under scratch/, and
+        # sandbox.write under scratch/.
         adapter = OpenAICompatibleAdapter(
             endpoint=ENDPOINT, model=MODEL,
             timeout=ADAPTER_TIMEOUT, route=ROUTE)
         _install_typed_transport(adapter, wrapper_path)
+        # The road (the §6 amendment): where the run's
+        # generation seals the road, the adapter's
+        # calls are counted and paced under the
+        # route's shared bucket — the Groq route's
+        # measured limits — and the loop's model is
+        # the adapter itself: the 65-second pacer
+        # stands retired on a road run (the examiner:
+        # interim only, never a second limiter), the
+        # bucket doing the pacing minute-aware.
+        road_ctx = None
+        if _road_declaration() is not None:
+            if GPTOSS:
+                # The Groq route's measured limits.
+                road_tpm, road_tpd = 8000, 200000
+                road_limits = "paced against the " \
+                    "route's shared bucket (8,000/min, " \
+                    "200,000/day)"
+            else:
+                # The NVIDIA route's limits stand
+                # unmeasured: the bucket's figures are
+                # the office's placeholders — they do
+                # not bind; reservations, counting and
+                # accounting stand.
+                road_tpm, road_tpd = 1000000, 100000000
+                road_limits = "the route's limits " \
+                    "unmeasured — the bucket's figures " \
+                    "are placeholders that do not bind"
+            road_ctx = road_mod.road_context_for(
+                f"{ROUTE}:{MODEL}", MODEL,
+                road_tpm, road_tpd,
+                output_allowance=tool_policy
+                .ROAD_OUTPUT_ALLOWANCE_TOKENS)
+            adapter.attach_road(road_ctx)
+            print("road: paced-v1 attached — calls "
+                  "counted under "
+                  f"{road_ctx['counter'].method}, "
+                  f"{road_limits}, "
+                  "the fixed-interval pacer retired "
+                  "for this run")
         gen.propose(
             tok["orch-1"], "crew-1", part="part-A",
             role_requirements="a model able to read three "
                               "source documents in its room "
                               "and write a short, accurate, "
                               "plain-words brief")
-        identify_callable = make_pinned_identify(
-            adapter, MODEL)
-        try:
-            generated = gen.generate(
-                tok["orch-1"], "crew-1", identify_callable,
-                skills=[], grants=GRANTS_COMBINED,
-                model_requested=MODEL, probe=True,
-                exec_room=True, freshness_suspended=True,
-                delivery_declaration=True,
-                delivery_evidence_declaration=True,
-                delivery_floor_declaration=True,
-                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V3,
-                worked_example=worked_example)
-        except ModelPinMismatchError as mismatch:
-            # The flagged conflict (paper §3.6 gate 5's
-            # rule, carried to this run's pin): the route
-            # reports a model that is not the pin. No
-            # substitution, no activation, no worker call.
-            print(f"ABORT: FLAGGED CONFLICT — provider-"
-                  f"reported model id "
-                  f"{mismatch.provider_model_id!r} does "
-                  f"not match the pinned model "
-                  f"{mismatch.pinned_model!r}; the run "
-                  f"stops before activation",
-                  file=sys.stderr)
-            return abort_report({
-                "abort_stage": "pre-activation identity "
-                               "pin",
-                "flagged_conflict": True,
-                "abort_reason": str(mismatch),
-                "provider_model_id":
-                    mismatch.provider_model_id,
-                "pinned_model": mismatch.pinned_model})
-        except AdapterFailure as failure:
-            print(f"ABORT: the identity call failed "
-                  f"({failure.kind}: {failure.detail}); "
-                  f"the run's calls travel the registered "
-                  f"connector credential route — check "
-                  f"the connector helper and its "
-                  f"credential", file=sys.stderr)
-            return abort_report({
-                "abort_stage": "identity call",
-                "flagged_conflict": False,
-                "abort_reason": f"{failure.kind}: "
-                                f"{failure.detail}"})
+        generated = gen.generate(
+            tok["orch-1"], "crew-1",
+            OFFICE_IDENTITY_DECLARATION,
+            skills=[], grants=GRANTS_COMBINED,
+            model_requested=MODEL, probe=False,
+            exec_room=True, freshness_suspended=True,
+            delivery_declaration=True,
+            delivery_evidence_declaration=True,
+            delivery_floor_declaration=True,
+            presentation_declaration=_presentation_declaration(),
+            worked_example=worked_example,
+            block_map=block_map,
+            road_declaration=_road_declaration(),
+            tree_declaration=_tree_declaration())
         if not generated.get("ok"):
             print(f"ABORT: generation failed: "
                   f"{generated.get('problems')}",
@@ -1649,39 +2084,66 @@ def run_demo():
         assembly_id = generated["assembly_id"]
         instance_id = generated["instance_id"]
         print(f"assembly: {assembly_id} (instance "
-              f"{instance_id}); identity pin verified "
-              f"against the provider-reported model id")
+              f"{instance_id}); identity office-declared "
+              f"from the sealed configuration "
+              f"({MODEL} on the {ROUTE} route) — no "
+              f"identity call stands in this launch "
+              f"(office-cycle-v8)")
 
-        # PROBE — five live trials through the real
-        # NVIDIA raw-call seam over the capture
-        # pass-through. The stage's evidence stands in
-        # the record; its recommendation does not judge
-        # this run (the order does).
-        raw_call = _install_raw_call(adapter, wrapper_path)
-        probe_result = gen.probe(
-            tok["orch-1"], assembly_id, raw_call,
-            route=ROUTE, model=MODEL)
-        print(f"probe: settled "
-              f"{probe_result['settled_count']}/5, "
-              f"recommended "
-              f"{probe_result['recommended_mode']!r} "
-              f"(evidence for the record; the mode is "
-              f"judged by the director's order)")
+        # NO PROBE STAGE (office-cycle-v8; the
+        # director's ruling of 2026-11-25 23:07 MST):
+        # the pre-loop probe phase sends ZERO probe
+        # cases under this contract — the assembly was
+        # generated with probe=False, so no probe
+        # contract stands sealed, and the lifecycle
+        # keeps its standing exemption for an assembly
+        # carrying none: verification and judgement
+        # proceed on the historical path, exactly as
+        # they did for every assembly before the probe
+        # regime existed. The probe machinery itself
+        # stands untouched for the contracts that
+        # still seal it.
+        probe_result = None
         gen.verify(tok["orch-1"], assembly_id)
 
         # JUDGE (hop 1) — the director's order record,
         # retained before the judgement is recorded; the
-        # judgement binds its canonical hash.
+        # judgement binds its canonical hash. Under v8
+        # no ASSEMBLY_PROBED stands to source the
+        # generated record's hash: it is computed from
+        # the sealed generated payload directly, the
+        # same value the probe event carried for the
+        # contracts that seal one.
         probed_payload = None
-        for ev in store.all_events():
-            if ev["type"] == "ASSEMBLY_PROBED" and \
-                    ev["payload"].get(
-                        "assembly_id") == assembly_id:
-                probed_payload = ev["payload"]
+        generated_record_hash = assembly_record_hash(
+            doorway._generated_payload(assembly_id))
         order = _order_record(
             assembly_id, instance_id,
-            probed_payload["generated_record_hash"],
+            generated_record_hash,
             probed_payload, probe_result)
+        order["launch"] = {
+            "contract": "office-cycle-v8",
+            "probe_stage": (
+                "none — no probe stage ran under "
+                "office-cycle-v8 (the director's "
+                "ruling of 2026-11-25 23:07 MST); the "
+                "probe fields above stand null, and "
+                "the order texts' sentences about a "
+                "probe stage are this occupant's "
+                "standing order texts, retained "
+                "unedited — they do not describe this "
+                "launch"),
+            "identity": (
+                "office-declared — no identity call "
+                "stands in this launch (the director's "
+                "ruling of 2026-11-25 23:08 MST); "
+                "the instance's identity stands in "
+                "the record from the office's sealed "
+                "assembly"),
+            "first_call": (
+                "the opening package — no pre-loop "
+                "call precedes it, and no launch wait "
+                "stands before it")}
         order_path = demo_dir / "order-record.json"
         with open(order_path, "w",
                   encoding="utf-8") as fh:
@@ -1690,16 +2152,22 @@ def run_demo():
         order_hash = _sha256_bytes(canonical(order))
         judgement = gen.judgement(
             assembly_id, adapter_mode=ADAPTER_MODE,
-            mode_grounds=ORDER_GROUNDS,
+            mode_grounds=OFFICE_MODE_GROUNDS,
             decision_receipt_hash=order_hash,
             decision_examiner=ORDER_EXAMINER)
         _act(doorway, tok["exam-1"], "ASSEMBLY_JUDGED",
              judgement)
         packed = gen.pack(tok["orch-1"], assembly_id)
         gen.authorise(tok["orch-1"], assembly_id)
-        print(f"judgement: {ADAPTER_MODE}, by the "
-              f"director's order (order record sha256: "
-              f"{order_hash})")
+        print(f"judgement: recorded by the director's "
+              f"order (order record sha256: "
+              f"{order_hash}); under office-cycle-v8 "
+              f"the judgement act binds the generated "
+              f"record and the office-declared mode "
+              f"({ADAPTER_MODE}) — declared from the "
+              f"sealed configuration's standing "
+              f"judgement, sealed by the pack, and the "
+              f"mode the loop travels in")
 
         # RUN — the executor holds the room; the loop
         # drives the real adapter/doorway/rig path under
@@ -1714,9 +2182,29 @@ def run_demo():
         gen.activate(tok["orch-1"], assembly_id)
         paced = IterationPacer(
             adapter, min_interval=PACING_INTERVAL_SECONDS)
-        result = Loop(doorway, packed["instance_token"],
-                      paced, executor=executor,
-                      evidence_store=str(run_dir)).run()
+        # Under the road the loop's model is the
+        # adapter itself — the bucket paces; the
+        # pacer's fixed interval does not stand as a
+        # second limiter over it.
+        loop_model = adapter if road_ctx is not None \
+            else paced
+        # THE LAUNCH (office-cycle-v8): the launch
+        # rule of the plan §6 (Qualification B) has
+        # nothing to space under this contract — no
+        # pre-loop call exists: no identity call, no
+        # probe. The opening package is simply the
+        # run's first call, and no wait stands before
+        # it. The loop's own pacing governs every call
+        # after it, as before.
+        launch_wait = 0.0
+        print("launch: no pre-loop calls stand under "
+              "office-cycle-v8 — the opening package "
+              "is the run's first call, with no launch "
+              "wait before it")
+        loop = Loop(doorway, packed["instance_token"],
+                    loop_model, executor=executor,
+                    evidence_store=str(run_dir))
+        result = loop.run()
 
         # COLLECT — the deliverable and its hash at the
         # wall (hop 9) and the room's final state, taken
@@ -1818,6 +2306,31 @@ def run_demo():
             captures_path.read_text(
                 encoding="utf-8").splitlines()
             if line.strip())
+        # The road's accounting (the plan §6): the
+        # call ledger over every call that shared the
+        # model's minute, written beside the report,
+        # and the cycle summary (§7) derived from the
+        # record.
+        ledger_entries, ledger_summary = _call_ledger(
+            captures_path, events, loop, run_dir)
+        ledger_path = demo_dir / "call-ledger.json"
+        with open(ledger_path, "w",
+                  encoding="utf-8") as fh:
+            json.dump({
+                "kind": "call ledger (derived matter, "
+                        "not record): every call sharing "
+                        "the model's minute — under "
+                        "office-cycle-v8 the loop's calls "
+                        "alone: no identity call and no "
+                        "probe call precede the opening "
+                        "— with wire bytes and estimates "
+                        "under the one estimator",
+                "entries": ledger_entries,
+                "summary": ledger_summary}, fh, indent=1)
+            fh.write("\n")
+        cycle_summary = _cycle_summary(
+            events, doorway, assembly_id,
+            issued["case_id"])
         report = {
             "kind": "first-worker demonstration run "
                     "report (derived matter, not record)",
@@ -1837,27 +2350,40 @@ def run_demo():
                 "pin_verified":
                     identity.get("provider_model_id")
                     == MODEL,
-                "note": "the pin was enforced inside "
-                        "generation, before activation "
-                        "(make_pinned_identify); the "
-                        "provider-reported id as recorded "
-                        "at onboarding stands here — it "
-                        "is the route's report, not "
-                        "independent proof of the model "
-                        "the provider actually served",
+                "note": "office-declared identity "
+                        "(office-cycle-v8; the "
+                        "director's ruling of 2026-11-25 "
+                        "23:08 MST): no identity call "
+                        "stands in this launch — the "
+                        "declaration and the model id "
+                        "above are the office's own, "
+                        "from the sealed occupant "
+                        "configuration it assembled, "
+                        "recorded at onboarding as the "
+                        "instance's identity. No "
+                        "provider self-report stands in "
+                        "this record, and none is "
+                        "claimed: 'pin_verified' here "
+                        "states only that the declared "
+                        "id is the run's pin, by "
+                        "construction",
             },
             "probe": {
-                "settled_count":
-                    probe_result["settled_count"],
-                "recommended_mode":
-                    probe_result["recommended_mode"],
-                "counts": probe_result["counts"],
-                "evidence_hash":
-                    probe_result["evidence_hash"],
-                "note": "the probe's recommendation is "
-                        "evidence in the record; this "
-                        "run's mode was judged by the "
-                        "director's order, not by it",
+                "settled_count": None,
+                "recommended_mode": None,
+                "counts": None,
+                "evidence_hash": None,
+                "note": "no probe stage ran under "
+                        "office-cycle-v8 (the "
+                        "director's ruling of 2026-11-25 "
+                        "23:07 MST): the assembly was "
+                        "generated with no probe "
+                        "contract sealed, and the "
+                        "lifecycle's standing exemption "
+                        "for such an assembly carried "
+                        "verification and judgement. "
+                        "This run's mode was judged by "
+                        "the director's order",
             },
             "order_record": {
                 "path": str(order_path),
@@ -1870,6 +2396,56 @@ def run_demo():
                     PACING_INTERVAL_SECONDS,
                 "note": PACING_NOTE,
             },
+            "road": {
+                "sealed": _road_declaration(),
+                "totals": adapter.road_totals(),
+                "transport_events":
+                    road_ctx["events"]
+                    if road_ctx is not None else [],
+                "presentation_events":
+                    list(loop.road_events),
+                "note": "the §6 amendment's accounting "
+                        "for this run: the sealed "
+                        "declaration the generation "
+                        "carries; the route's standing "
+                        "totals (consumed tokens are "
+                        "the provider's reconciled "
+                        "figures); every governed call "
+                        "with its predicted and actual "
+                        "figures standing separate — "
+                        "measured facts and estimates "
+                        "never blended; and the "
+                        "presentation pass's spill and "
+                        "shedding acts. Where no road "
+                        "was sealed, the run travelled "
+                        "under the per-call budget and "
+                        "the pacer, as before",
+            },
+            "call_ledger": {
+                "path": str(ledger_path),
+                "calls": ledger_summary["calls"],
+                "minimum_gap_seconds":
+                    ledger_summary[
+                        "minimum_gap_seconds"],
+                "largest_single_call_estimate":
+                    ledger_summary[
+                        "largest_single_call_estimate"],
+                "largest_wire_estimate":
+                    ledger_summary[
+                        "largest_wire_estimate"],
+                "launch_wait_seconds": launch_wait,
+                "note": "every call sharing the model's "
+                        "minute stands in the ledger — "
+                        "under office-cycle-v8 the loop's "
+                        "calls alone (no identity call, "
+                        "no probe calls precede the "
+                        "opening) — with its wire bytes "
+                        "and the loop's package estimates "
+                        "beside them; the minimum gap is "
+                        "over the record's own timestamps "
+                        "(each iteration's call)",
+            },
+            "summary": cycle_summary,
             "bounds": {
                 "step_ceiling":
                     DEMO_BOUNDS["step_ceiling"],
@@ -1980,9 +2556,13 @@ def verify_config():
             problems.append(label)
 
     print("verify-config: offline configuration check "
-          "(no provider contact; the probe stage, the "
-          "recorded judgement and activation are live "
-          "steps and are NOT run here)")
+          "(no provider contact; the recorded judgement "
+          "and activation are live steps and are NOT "
+          "run here — and under office-cycle-v8 no "
+          "probe stage exists in the launch to run: "
+          "the expectations below witness the launch "
+          "with neither a probe contract nor an "
+          "identity call)")
     tmp = Path(tempfile.mkdtemp(prefix="demo-run-verify-"))
     saved_env = {key: os.environ.get(key) for key in
                  ("DEMO_RUN_CAPTURES",
@@ -2144,13 +2724,19 @@ def verify_config():
             raw_call = _install_raw_call(
                 adapter, wrapper_path)
             expect("transport: real Groq raw call "
-                   "installed for the probe stage"
+                   "installed (the raw-call seam stands; "
+                   "under office-cycle-v8 no probe stage "
+                   "calls it)"
                    if (QUINN or GPTOSS) else
                    "transport: real Cloudflare raw call "
-                   "installed for the probe stage"
+                   "installed (the raw-call seam stands; "
+                   "under office-cycle-v8 no probe stage "
+                   "calls it)"
                    if GLM else
                    "transport: real NVIDIA raw call "
-                   "installed for the probe stage",
+                   "installed (the raw-call seam stands; "
+                   "under office-cycle-v8 no probe stage "
+                   "calls it)",
                    callable(raw_call))
 
             # (5) The pin machinery: exact match passes;
@@ -2175,39 +2761,55 @@ def verify_config():
             # 548; the calibration): under the staged
             # contracts the generation below sealed the
             # office's demonstration call. Under the
-            # process-tree contract (the room rebuild)
-            # no example is performed or sealed: the
-            # tree's first gather step spells the exact
-            # call, and the file's content is presented
-            # at its step, once — an example beside the
-            # tree would present a source's content
-            # outside its step. The expectation below
-            # verifies the seal carries none.
+            # office-cycle contract (the plan of
+            # 2026-11-25) no example is performed or
+            # sealed: the cycle poster in the opening
+            # package is the demonstration's replacement.
+            # The expectation below verifies the seal
+            # carries none.
             verify_example = None
 
-            # (6) Generation under a stub identity: the
+            # The block map (the plan §3): the sandbox
+            # sources stage here (the same staging the
+            # (6b) expectation below verifies) and the
+            # office portions them at the ruled ceiling;
+            # the map seals beside the cycle contract at
+            # the generation below.
+            _stage_sandbox_sources(tmp / "sandbox",
+                                   manifest)
+            verify_block_map = _block_map_for_sandbox(
+                tmp / "sandbox")
+
+            # (6) Generation under the office's own
+            # identity declaration — the same constant
+            # the live driver passes (office-cycle-v8:
+            # no identity call, no probe contract): the
             # sealed record declares the exec catalogue
-            # contract and the probe contract, and holds
+            # contract and NO probe contract, and holds
             # exactly the combined grant set (INDEX 476).
             gen.propose(
                 tok["orch-1"], "crew-1", part="part-A",
                 role_requirements="verify-config stub")
             generated = gen.generate(
                 tok["orch-1"], "crew-1",
-                {"declaration":
-                     "verify-config stub identity "
-                     "(offline; no provider contact)",
-                 "provider_model_id": MODEL},
+                OFFICE_IDENTITY_DECLARATION,
                 skills=[], grants=GRANTS_COMBINED,
-                model_requested=MODEL, probe=True,
+                model_requested=MODEL, probe=False,
                 exec_room=True, freshness_suspended=True,
                 delivery_declaration=True,
                 delivery_evidence_declaration=True,
                 delivery_floor_declaration=True,
-                presentation_declaration=tool_policy.PRESENTATION_CONTRACT_V3,
-                worked_example=verify_example)
-            expect("generation: stub-identity generation "
-                   "succeeds",
+                presentation_declaration=_presentation_declaration(),
+                worked_example=verify_example,
+                block_map=verify_block_map,
+                road_declaration=_road_declaration(),
+                tree_declaration=_tree_declaration())
+            expect("generation: office-declared-identity "
+                   "generation succeeds (no identity "
+                   "call stands behind it — the "
+                   "declaration is the office's own "
+                   "mapping, the constant the live "
+                   "driver passes)",
                    generated.get("ok") is True,
                    json.dumps(generated)[:300])
             if generated.get("ok"):
@@ -2253,30 +2855,161 @@ def verify_config():
                        f"got "
                        f"{sealed.get('working_set_contract')}")
                 expect("generation: the sealed record "
-                       "declares the process-tree "
-                       "presentation contract (Ben's "
-                       "\"Make it so\", 2026-11-25, on "
-                       "the room-rebuild design — one "
-                       "opening package, then the sealed "
-                       "tree's steps one at a time, each "
-                       "step's content presented once at "
-                       "its step and standing as pointers "
-                       "after)",
+                       "declares the office-cycle "
+                       "presentation contract in its "
+                       "imperative-first form (the plan "
+                       "of 2026-11-25, approved INDEX 582 "
+                       "and examined INDEX 584; the "
+                       "split-on-return successor per "
+                       "the director's strip ruling of "
+                       "2026-11-25, its draft-page "
+                       "successor per the director's "
+                       "ruling of 2026-11-25 21:16 MST "
+                       "after demo-gptoss6, its "
+                       "cleaned-opening successor per "
+                       "the director's orders of "
+                       "2026-11-25 21:33/21:36 MST after "
+                       "demo-gptoss7, its carryover "
+                       "successor per the director's "
+                       "orders of 2026-11-25 22:09 MST "
+                       "after demo-gptoss8, and its "
+                       "zero-carryover successor per "
+                       "the director's rulings of "
+                       "2026-11-25 22:29/22:30 MST after "
+                       "the carryover build measured "
+                       "its budget collision, and its "
+                       "imperative-first successor per "
+                       "the director's order of "
+                       "2026-11-25 22:41 MST, given as "
+                       "demo-gptoss9's packages were "
+                       "seen to describe state and "
+                       "leave the deciding to the "
+                       "worker — the "
+                       "opening the director's own "
+                       "plain-text structure behind a "
+                       "compressed outcome frame, then "
+                       "one package per cycle over the "
+                       "briefcase's blocks, a package "
+                       "presenting at most the current "
+                       "cycle's block content and every "
+                       "other gathered block standing "
+                       "as a pointer, the statement line "
+                       "formatted from the sealed "
+                       "delivery declaration, the gates' "
+                       "corrections riding again, the "
+                       "blocks component slimmed to "
+                       "each block's place and state, "
+                       "and the journal carried nowhere "
+                       "— it stands in his scratch at "
+                       "its address and he reads it "
+                       "himself, by pull — its texts "
+                       "carrying the draft-page "
+                       "correction: the brief built in "
+                       "the journal gradually, as "
+                       "step-by-step instructions, "
+                       "and every package opening "
+                       "with the one next step "
+                       "stated as an imperative — "
+                       "the Next line — before any "
+                       "state — and its file-grain "
+                       "successor per the director's "
+                       "orders of 2026-11-25 23:03 MST "
+                       "(the walk's unit the file, a "
+                       "multi-part file's slices "
+                       "plumbing inside its step, the "
+                       "gate once per file) and "
+                       "23:07/23:08 MST (no probe "
+                       "stage, no identity call in "
+                       "the launch): the opening "
+                       "renders files, the bookkeeping "
+                       "lists files, and the Next line "
+                       "derives from the file state)",
                        sealed.get("presentation_contract")
-                       == tool_policy.PRESENTATION_CONTRACT_V3,
+                       == _presentation_declaration()
+                       and sealed.get("tree")
+                       == _tree_declaration(),
                        f"got "
                        f"{sealed.get('presentation_contract')}")
-                expect("generation: no worked example "
-                       "stands in the seal under the "
-                       "process-tree contract (the tree's "
-                       "first gather step is the "
-                       "demonstration's replacement — an "
-                       "example would present a source's "
-                       "content outside its step)",
-                       sealed.get("worked_example")
+                expect("generation: the sealed record "
+                       "carries the office's block map — "
+                       "the map derived from the staged "
+                       "bytes at the ruled ceiling, "
+                       "portioning the declared evidence "
+                       "whole and in declaration order "
+                       "(the plan §3; it replaces the "
+                       "worked-example expectation — no "
+                       "example seals under the cycle "
+                       "contract, the cycle poster is "
+                       "its replacement)",
+                       sealed.get("block_map")
+                       == verify_block_map
+                       and sealed.get("worked_example")
                        is None,
                        f"got "
-                       f"{sealed.get('worked_example')}")
+                       f"{sealed.get('block_map')}")
+                expect("generation: the sealed record "
+                       "carries the office's file map — "
+                       "the block map's files in order, "
+                       "each file grouping its blocks "
+                       "whole (office-cycle-v8: the "
+                       "walk's unit sealed beside its "
+                       "plumbing)",
+                       sealed.get("file_map")
+                       == tool_policy.compute_file_map(
+                           verify_block_map),
+                       f"got "
+                       f"{sealed.get('file_map')}")
+                expect("launch: the sealed record "
+                       "carries NO probe contract "
+                       "(office-cycle-v8; the director's "
+                       "ruling of 2026-11-25 23:07 MST — "
+                       "the driver's pre-loop phase "
+                       "sends zero probe cases, and the "
+                       "assembly is generated under no "
+                       "probe regime)",
+                       "probe_contract" not in sealed,
+                       f"got "
+                       f"{sealed.get('probe_contract')}")
+                _onboarding = \
+                    instance_onboarding_record(
+                        doorway, generated["instance_id"]) \
+                    or {}
+                expect("launch: the instance's identity "
+                       "stands office-declared — the "
+                       "onboarding records the office's "
+                       "own declaration and the pin as "
+                       "its model id, the constant the "
+                       "live driver passes (office-"
+                       "cycle-v8; the director's ruling "
+                       "of 2026-11-25 23:08 MST — no "
+                       "identity call stands behind "
+                       "this record)",
+                       _onboarding.get("declaration")
+                       == OFFICE_IDENTITY_DECLARATION[
+                           "declaration"]
+                       and _onboarding.get(
+                           "provider_model_id") == MODEL,
+                       json.dumps(_onboarding)[:300])
+                gen.verify(tok["orch-1"], assembly_id)
+                _event_types = [
+                    ev["type"] for ev in
+                    store.all_events()
+                    if ev["payload"].get("assembly_id")
+                    == assembly_id]
+                expect("launch: verification stands "
+                       "with NO probed act in the "
+                       "record — ASSEMBLY_VERIFIED "
+                       "recorded, no ASSEMBLY_PROBED "
+                       "anywhere (the lifecycle's "
+                       "standing exemption for an "
+                       "assembly under no probe "
+                       "contract, exercised: a v8 run's "
+                       "first call is its opening, and "
+                       "nothing precedes it)",
+                       "ASSEMBLY_VERIFIED" in _event_types
+                       and "ASSEMBLY_PROBED"
+                       not in _event_types,
+                       f"got {_event_types}")
                 expect("generation: the sealed record "
                        "declares the freshness guard "
                        "suspended (Ben's R31 ruling, "
@@ -2307,21 +3040,26 @@ def verify_config():
                        json.dumps(
                            (case_content or {}).get(
                                "journal"))[:300])
-                expect("commission: the issued case "
-                       "carries the process tree as its "
-                       "own component, unchanged (the "
-                       "room rebuild — the office-authored "
-                       "walk sealed in the case at "
-                       "assembly: orient, one gather step "
-                       "per declared source in declaration "
-                       "order, compose, deliver; root the "
-                       "brief at the delivery "
-                       "destination)",
-                       (case_content or {}).get(
-                           "process_tree") == PROCESS_TREE,
+                expect("generation: the sealed record "
+                       "carries the journal baseline — "
+                       "the case's designated journal "
+                       "address and the hash of the empty "
+                       "string, the trusted initial state "
+                       "every accepted journal transition "
+                       "extends (the plan §4, "
+                       "Qualification A; it replaces the "
+                       "process-tree-in-the-case "
+                       "expectation — the case still "
+                       "carries the tree, unexamined "
+                       "here, the commission unchanged)",
+                       sealed.get("journal_baseline")
+                       == {"address": JOURNAL_PATH,
+                           "initial_sha256":
+                               hashlib.sha256(
+                                   b"").hexdigest()},
                        json.dumps(
-                           (case_content or {}).get(
-                               "process_tree"))[:300])
+                           sealed.get(
+                               "journal_baseline"))[:300])
                 expect("generation: the sealed record "
                        "carries the delivery declaration, "
                        "bound to the case's own word (the "
@@ -2384,8 +3122,12 @@ def verify_config():
 
                 # (7) The judgement payload the order
                 # will bind: computed, not recorded —
-                # recording stands behind the live probe
-                # in the lifecycle's normative order.
+                # under office-cycle-v8 the order binds
+                # the generated record's hash directly
+                # (no probed act stands in the launch
+                # to carry it), and the verification
+                # exercised above is this check's own
+                # witness, not a live step.
                 order = _order_record(
                     assembly_id,
                     generated["instance_id"], None, None,
@@ -2399,22 +3141,41 @@ def verify_config():
                            for c in order_hash))
                 payload = gen.judgement(
                     assembly_id, adapter_mode=ADAPTER_MODE,
-                    mode_grounds=ORDER_GROUNDS,
+                    mode_grounds=OFFICE_MODE_GROUNDS,
                     decision_receipt_hash=order_hash,
                     decision_examiner=ORDER_EXAMINER)
-                expect("judgement: payload carries the "
-                       f"{ADAPTER_MODE} mode, the order's "
-                       "grounds and the order-record hash",
-                       payload.get("adapter_mode")
+                expect("judgement: payload binds the "
+                       "generated record — its assembly, "
+                       "its instance and the record's "
+                       "canonical hash — and the office-"
+                       "declared mode (office-cycle-v8: "
+                       "no probe governs this assembly, "
+                       "so the mode the judgement binds "
+                       "is the office's declaration from "
+                       "the sealed configuration's "
+                       "standing judgement — adapter_mode "
+                       "as configured, the declared "
+                       "grounds, the office-declared "
+                       "source marker, and the order "
+                       "receipt binding; no probe fields "
+                       "stand in it)",
+                       payload.get("assembly_id")
+                       == assembly_id
+                       and payload.get("instance_id")
+                       == generated["instance_id"]
+                       and payload.get("record_hash")
+                       == assembly_record_hash(sealed)
+                       and payload.get("adapter_mode")
                        == ADAPTER_MODE
                        and payload.get("mode_grounds")
-                       == ORDER_GROUNDS
+                       == OFFICE_MODE_GROUNDS
+                       and (payload.get("mode_source")
+                            or "").startswith(
+                                "office-declared")
                        and payload.get(
                            "decision_receipt_hash")
                        == order_hash
-                       and payload.get(
-                           "decision_examiner")
-                       == ORDER_EXAMINER,
+                       and "probe_seq" not in payload,
                        json.dumps(payload)[:300])
 
             # (8) The v4 ceiling: a well-formed cmd

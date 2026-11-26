@@ -503,7 +503,9 @@ class Generator:
                  delivery_evidence_declaration=False,
                  delivery_floor_declaration=False,
                  presentation_declaration=False,
-                 worked_example=None):
+                 worked_example=None, block_map=None,
+                 road_declaration=None,
+                 tree_declaration=None):
         """Assemble one instance for a seat slot (R37/R38).
 
         `identify` is a callable returning the adapter's
@@ -569,6 +571,18 @@ class Generator:
         catalogue contract's. The default declares
         nothing: the guard stands for every other
         generation exactly as it always has.
+
+        `road_declaration` (the §6 amendment, accepted
+        2026-11-26): the office's supplied declaration —
+        its contract, the run's sealed token allocation,
+        the model's window, and the allocation's stated
+        basis — under which the assembly travels the
+        paced road instead of the per-call budget. It
+        seals beside the other declarations, outside
+        the record's canonical hash fields; a malformed
+        declaration fails preflight whole. The default
+        declares nothing: every other generation
+        travels exactly as it always has.
 
         `presentation_declaration` (staged onboarding,
         INDEX 544): True seals the staged-onboarding
@@ -657,7 +671,41 @@ class Generator:
         default seals nothing: where the first glossary
         file cannot be listed, the office omits the
         example rather than present one that was never
-        made, and the files stage presents none."""
+        made, and the files stage presents none.
+
+        `block_map` (the office-cycle contract, the
+        plan of 2026-11-25): the office's portioning of
+        the case's declared delivery-evidence files into
+        travel blocks, computed by the office from the
+        stocked files' bytes at the ruled ceiling
+        (tool_policy.compute_block_map) and sealed
+        beside the presentation contract under its own
+        key, outside the record's canonical hash fields
+        like the other declarations. The map seals only
+        under the office-cycle contract, and that
+        contract seals only with the combined
+        configuration whole — the delivery declaration,
+        the delivery-evidence declaration, the
+        delivery-floor declaration and the working-set
+        carriage all sealed in the same generation — and
+        only against a case carrying a designated
+        journal: beside the map the record seals the
+        journal's baseline, its designated address and
+        the SHA-256 of the empty string, the trusted
+        initial state every accepted journal transition
+        extends (Qualification A). The split-on-return
+        successor (office-cycle-v2) seals under exactly
+        this rule — the same map, the same baseline,
+        the same combined configuration; only the
+        presentation the loop and the checker derive
+        from the sealed name differs. A generation asked
+        to seal the cycle contract without the map, with
+        a map that does not portion the declared
+        evidence whole and in order at the ceiling, or
+        under any other contract, fails preflight whole.
+        The default seals nothing: every other
+        generation's record carries no map and no
+        baseline, exactly as it always has."""
         state = self.doorway.state()
         identity = identify() if callable(identify) else identify
         problems = self._generation_problems(
@@ -706,9 +754,18 @@ class Generator:
                 and presentation_declaration not in (
                     _tool_policy.PRESENTATION_CONTRACT,
                     _tool_policy.PRESENTATION_CONTRACT_V2,
-                    _tool_policy.PRESENTATION_CONTRACT_V3):
+                    _tool_policy.PRESENTATION_CONTRACT_V3,
+                    _tool_policy.PRESENTATION_CONTRACT_V4,
+                    _tool_policy.PRESENTATION_CONTRACT_V5,
+                    _tool_policy.PRESENTATION_CONTRACT_V6,
+                    _tool_policy.PRESENTATION_CONTRACT_V7,
+                    _tool_policy.PRESENTATION_CONTRACT_V8,
+                    _tool_policy.PRESENTATION_CONTRACT_V9,
+                    _tool_policy.PRESENTATION_CONTRACT_V10,
+                    _tool_policy.PRESENTATION_CONTRACT_V11,
+                    _tool_policy.PRESENTATION_CONTRACT_V12):
             # The pointer-rule successor (INDEX 568): the
-            # declaration names one of the two contracts
+            # declaration names one of the contracts
             # the framework knows — v1, or v2 under which
             # a gathered entry's content is presented
             # once and stands as a pointer after. Any
@@ -720,10 +777,14 @@ class Generator:
                     "problems": [
                         "the presentation declaration names "
                         f"{presentation_declaration!r}, "
-                        "which is neither the staged-"
-                        "onboarding contract nor its pointer-"
-                        "rule successor; a generation seals "
-                        "one of the two or neither"],
+                        "which is none of the contracts the "
+                        "framework knows (the staged-"
+                        "onboarding contract, its pointer-"
+                        "rule successor, the process-tree "
+                        "contract, the office-cycle "
+                        "contract, its split-on-return "
+                        "successor); a generation seals one "
+                        "of them or none"],
                     "seat": seat_id}
         if presentation_declaration == \
                 _tool_policy.PRESENTATION_CONTRACT_V3:
@@ -749,6 +810,94 @@ class Generator:
                 return {"ok": False,
                         "problems": [tree_problem],
                         "seat": seat_id}
+        cycle_journal_path = None
+        if presentation_declaration in (
+                _tool_policy.PRESENTATION_CONTRACT_V4,
+                _tool_policy.PRESENTATION_CONTRACT_V5,
+                _tool_policy.PRESENTATION_CONTRACT_V6,
+                _tool_policy.PRESENTATION_CONTRACT_V7,
+                _tool_policy.PRESENTATION_CONTRACT_V8,
+                _tool_policy.PRESENTATION_CONTRACT_V9,
+                _tool_policy.PRESENTATION_CONTRACT_V10,
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                    _tool_policy.PRESENTATION_CONTRACT_V12):
+            # The office-cycle successor (the plan of
+            # 2026-11-25): the contract seals only under
+            # the combined configuration WHOLE — the
+            # delivery declaration, the delivery-evidence
+            # declaration, the delivery-floor declaration
+            # and the working-set carriage all in this
+            # generation — with the office's block map
+            # portioning the case's declared evidence
+            # whole and in order at the ruled ceiling,
+            # against a case carrying a designated
+            # journal (its baseline seals beside the
+            # map). No worked example seals under it: the
+            # cycle poster is the demonstration's
+            # replacement. Anything else would seal a
+            # cycle no record derives. Fail preflight
+            # whole, as the other declarations do.
+            if not (delivery_declaration
+                    and delivery_evidence_declaration
+                    and delivery_floor_declaration):
+                return {"ok": False,
+                        "problems": [
+                            "the office-cycle presentation "
+                            "declaration was asked to be "
+                            "sealed but this generation does "
+                            "not seal the combined "
+                            "configuration whole (the "
+                            "delivery declaration, the "
+                            "delivery-evidence declaration "
+                            "and the delivery-floor "
+                            "declaration together); the "
+                            "cycle contract stands only "
+                            "under that configuration"],
+                        "seat": seat_id}
+            if worked_example is not None:
+                return {"ok": False,
+                        "problems": [
+                            "the office-cycle presentation "
+                            "declaration was asked to be "
+                            "sealed with a worked example; "
+                            "the cycle contract presents no "
+                            "demonstration — the cycle "
+                            "poster in the opening package "
+                            "is its replacement"],
+                        "seat": seat_id}
+            content = eff.get("content") or {}
+            journal_path = content.get("journal")
+            if not isinstance(journal_path, str) or \
+                    not journal_path.startswith(
+                        "scratch/") or \
+                    ".." in journal_path.split("/"):
+                return {"ok": False,
+                        "problems": [
+                            "the office-cycle presentation "
+                            "declaration was asked to be "
+                            "sealed but the pinned case "
+                            "carries no designated journal "
+                            "(the journal component naming "
+                            "a path under scratch/); the "
+                            "cycle's journal baseline seals "
+                            "against that address, or the "
+                            "contract does not stand"],
+                        "seat": seat_id}
+            cycle_journal_path = journal_path
+            evidence = content.get("delivery_evidence")
+            declared = evidence.get("addresses") \
+                if isinstance(evidence, dict) else None
+            map_problem = _tool_policy.block_map_problem(
+                block_map, declared)
+            if map_problem is not None:
+                return {"ok": False,
+                        "problems": [
+                            "the office-cycle presentation "
+                            "declaration was asked to be "
+                            "sealed but the supplied block "
+                            "map does not stand: "
+                            + map_problem],
+                        "seat": seat_id}
         if presentation_declaration and not combined:
             # The staged-onboarding contract's population
             # is the combined configuration alone (INDEX
@@ -759,13 +908,13 @@ class Generator:
             # as the delivery declaration's preflight does.
             return {"ok": False,
                     "problems": [
-                        "the staged-onboarding presentation "
-                        "declaration was asked to be sealed "
-                        "but this generation is not the "
-                        "combined configuration (an exec-room "
+                        "the presentation declaration was "
+                        "asked to be sealed but this "
+                        "generation is not the combined "
+                        "configuration (an exec-room "
                         "generation carrying retrieval "
                         "grants), the only population the "
-                        "contract stands for"],
+                        "presentation contracts stand for"],
                     "seat": seat_id}
         if worked_example is not None:
             # Round nine's correction pair (INDEX 548),
@@ -902,6 +1051,31 @@ class Generator:
                             "number of words)"],
                         "seat": seat_id}
             delivery_floor = floor
+        road = None
+        if road_declaration is not None:
+            # The road (the §6 amendment, accepted
+            # 2026-11-26): the office's declaration
+            # that this assembly travels under the
+            # paced regime — counted requests, a
+            # shared route bucket, spill, shedding,
+            # and a run allocation the office seals
+            # here, at generation, which the worker
+            # cannot enlarge. The declaration is the
+            # office's own supplied shape (it stands
+            # in no case content: the allocation is
+            # the office's act, not the case's), and
+            # a malformed one fails preflight whole,
+            # as the other declarations do.
+            problem = _tool_policy.road_problem(
+                road_declaration)
+            if problem is not None:
+                return {"ok": False,
+                        "problems": [
+                            "the road declaration was "
+                            "asked to be sealed but "
+                            + problem],
+                        "seat": seat_id}
+            road = copy.deepcopy(road_declaration)
         n = self._next_number(state)
         instance_id = f"inst-{seat_id}-{n}"
         assembly_id = f"assembly-{seat_id}-{n}"
@@ -968,6 +1142,54 @@ class Generator:
             # any other result.
             record["worked_example"] = copy.deepcopy(
                 worked_example)
+        if presentation_declaration in (
+                _tool_policy.PRESENTATION_CONTRACT_V4,
+                _tool_policy.PRESENTATION_CONTRACT_V5,
+                _tool_policy.PRESENTATION_CONTRACT_V6,
+                _tool_policy.PRESENTATION_CONTRACT_V7,
+                _tool_policy.PRESENTATION_CONTRACT_V8,
+                _tool_policy.PRESENTATION_CONTRACT_V9,
+                _tool_policy.PRESENTATION_CONTRACT_V10,
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                    _tool_policy.PRESENTATION_CONTRACT_V12):
+            # The office-cycle contract (the plan of
+            # 2026-11-25) and its split-on-return
+            # successor, sealed beside the presentation
+            # contract, outside the record's canonical
+            # hash fields like the other declarations:
+            # the office's block map, portioning the
+            # declared evidence at the ruled ceiling, and
+            # the journal's baseline — its designated
+            # address and the hash of the empty string,
+            # the trusted initial state every accepted
+            # journal transition extends (Qualification
+            # A). Preflight above has already refused
+            # the contract anywhere else, without the
+            # combined configuration whole, or with a
+            # map that does not stand.
+            record["block_map"] = copy.deepcopy(block_map)
+            if presentation_declaration in (
+                    _tool_policy.PRESENTATION_CONTRACT_V11,
+                    _tool_policy.PRESENTATION_CONTRACT_V12):
+                # The file-grain successor (office-
+                # cycle-v8): beside the block map, the
+                # file grouping the walk's unit is
+                # derived from — the map's blocks
+                # grouped under their files, in
+                # declaration order, computed by the
+                # one derivation in tool_policy so the
+                # seal and the loop cannot drift apart
+                # on it. The block map seals as it
+                # always has; the grouping is v8's
+                # addition, and no earlier contract's
+                # record carries it.
+                record["file_map"] = \
+                    _tool_policy.compute_file_map(
+                        block_map)
+            record["journal_baseline"] = {
+                "address": cycle_journal_path,
+                "initial_sha256": hashlib.sha256(
+                    b"").hexdigest()}
         if delivery_declaration:
             record["delivery"] = copy.deepcopy(delivery)
         if delivery_evidence_declaration:
@@ -996,6 +1218,32 @@ class Generator:
             # nothing.
             record["freshness_guard"] = \
                 _tool_policy.FRESHNESS_GUARD_SUSPENDED
+        if road is not None:
+            # The road declaration, sealed beside the
+            # contracts like the others, outside the
+            # record's canonical hash fields: the
+            # loop reads it from the generated record
+            # and the run travels under it whole.
+            record["road"] = copy.deepcopy(road)
+        if tree_declaration is not None:
+            # The process tree (office-cycle-v9, the
+            # build scope of 2026-11-26): the office's
+            # supplied declaration — the job's tree as
+            # data, its nodes, dependencies and
+            # workarounds — sealed beside the other
+            # declarations, exactly as the road seals.
+            # A malformed one fails preflight whole.
+            problem = _tool_policy.tree_problem(
+                tree_declaration)
+            if problem is not None:
+                return {"ok": False,
+                        "problems": [
+                            "the tree declaration was "
+                            "asked to be sealed but "
+                            + problem],
+                        "seat": seat_id}
+            record["tree"] = copy.deepcopy(
+                tree_declaration)
         ev = self.doorway.act(token, "ASSEMBLY_GENERATED", record,
                               view_seq=self.store.head_seq())
         return {"ok": True, "assembly_id": assembly_id,
@@ -1133,6 +1381,32 @@ class Generator:
                 decision_receipt_hash
             payload["decision_examiner"] = decision_examiner
             payload["decision_recording"] = DECISION_RECORDING
+        elif generated.get("presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12):
+            # office-cycle-v8 (the director's rulings of
+            # 2026-11-25, 23:07 and 23:08 MST): no probe
+            # stands in a v8 launch, so no probe-governed
+            # act can carry the mode into the record. The
+            # office declares it instead: the caller
+            # supplies the mode the sealed occupant
+            # configuration stands judged at, with its
+            # grounds, and the judgement binds the
+            # declaration exactly as the probe regime
+            # binds the examiner's decision — with its
+            # source named in the payload, so no record
+            # mistakes a declaration for a measurement.
+            payload["adapter_mode"] = adapter_mode
+            payload["mode_grounds"] = mode_grounds
+            payload["mode_source"] = (
+                "office-declared — the sealed occupant "
+                "configuration's standing judgement, "
+                "declared by the office at generation; "
+                "no probe stands in this launch")
+            payload["decision_receipt_hash"] = \
+                decision_receipt_hash
+            payload["decision_examiner"] = decision_examiner
+            payload["decision_recording"] = DECISION_RECORDING
         return payload
 
     # --------------------------------------------------------- pack
@@ -1173,6 +1447,27 @@ class Generator:
                 (probed or {}).get("evidence_hash")
             payload["adapter_mode"] = (judged or {}).get(
                 "payload", {}).get("adapter_mode")
+        elif (self.doorway._generated_payload(
+                assembly_id) or {}).get(
+                "presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12):
+            # office-cycle-v8: the pack seals the office-
+            # declared mode exactly as judged, copied from
+            # the standing act — the sealed package the
+            # loop reads is the package the judgement
+            # bound (the probe regime's §4 shape, carried
+            # by the declaration instead of the probe).
+            judged = self.doorway._event_at(
+                (entry or {}).get("judged_seq"))
+            judged_payload = (judged or {}).get(
+                "payload", {})
+            payload["adapter_mode"] = judged_payload.get(
+                "adapter_mode")
+            payload["mode_grounds"] = judged_payload.get(
+                "mode_grounds")
+            payload["mode_source"] = judged_payload.get(
+                "mode_source")
         ev = self.doorway.act(token, "ASSEMBLY_PACKED", payload,
                               view_seq=state["head_seq"])
         instance_token = self.doorway.issue_instance_token(

@@ -254,6 +254,890 @@ PRESENTATION_CONTRACT_V2 = "staged-onboarding-v2"
 # sealed one's presentation whole. The checker reads
 # the same value from its own copy in checker.py.
 PRESENTATION_CONTRACT_V3 = "process-tree-v1"
+# The office-cycle successor contract (the plan,
+# PLAN-OFFICE-CYCLE-2026-11-25, approved by the
+# director INDEX 582 and by the examiner INDEX 584):
+# assembly is not work — one opening package under a
+# per-call token budget, his identity and role memory,
+# the task, the cycle poster, the briefcase stocked
+# as BLOCKS portioned by the office at generation
+# (the sealed block map), the journal's address and
+# contract, and his position — then one package per
+# cycle of the job's repeating shape: pull one block,
+# read it, append his bits to the journal, gate, next
+# block. A block's content is presented once, at its
+# cycle, and stands as a pointer after. The journal is
+# a file in his room — read + append, never carried:
+# it stands in no package, and its integrity is the
+# exact-prefix rule over the office's journal of
+# record (a trusted empty baseline sealed at
+# generation, every accepted transition recorded) —
+# the prefix rule proves continuity between accepted
+# states; it is NOT a cryptographic authenticity
+# system (the examiner's Qualification A). The tool
+# catalogue rides no package: the wire offers the
+# current cycle's tools plus the journal tools, and
+# name resolution runs against the sealed catalogue
+# in the record — a granted call resolves whether or
+# not it was offered; an ungranted call is refused at
+# the doorway exactly as before (Qualification, §5:
+# presentation never widens the grant boundary).
+# Every call under this contract stands under the
+# per-call token budget below, estimated over the
+# package's canonical serialization by the one
+# estimator the loop, the driver, the checker and the
+# rehearsal share; the road's accounting covers every
+# call sharing the model's minute — probe, identity,
+# loop, retries (Qualification B). v1's, v2's and
+# v3's meanings under their names do not change; an
+# assembly seals one contract, and the loop and the
+# checker derive the sealed one's presentation whole.
+# The checker reads the same values from its own
+# copies in checker.py.
+PRESENTATION_CONTRACT_V4 = "office-cycle-v1"
+# The split-on-return successor contract (the
+# amendment AMENDMENT-RETURN-PRESENTATION-2026-11-25
+# as stripped by the director's ruling of 2026-11-25
+# ~18:00 MST: strip layers, let the agent complete
+# the task — of the amendment's four parts only the
+# presentation rule is built; the checker-
+# correspondence and status-vocabulary parts are
+# deferred by that ruling and are NOT in this
+# contract). Under v2 the presentation follows cycle
+# position, never arrival grouping: a package
+# presents at most ONE block's content — the current
+# cycle's block, at its cycle — and every other
+# gathered block stands as a pointer, however
+# recently it was pulled; the wake's results
+# carriage carries only what the wake presents (a
+# block read's result rides only where its block is
+# the current cycle's; a re-pull of the current
+# block is answered in the carriage, any other
+# block's re-pull refreshes its pointer alone). The
+# cycle gate's event and arithmetic stand exactly
+# as built under v1, but its correction no longer
+# rides a package: the metered presentation, the
+# current cycle's instruction and the opening's
+# standing lines carry its whole content, and a
+# correction component on the batch wake was itself
+# part of what pushed that wake over the per-call
+# budget. The opening states the room's rules once,
+# as standing knowledge: the per-call budget, that
+# results return one block per wake however many
+# are pulled at once, and that pulling ahead neither
+# costs nor gains anything in presentation —
+# awareness by default; enforcement stays the
+# office's, exactly as under v1. Everything else —
+# assembly, the block map, the cycle gate's
+# completion arithmetic, the journal (read + append,
+# never carried), the evidence and length gates,
+# filing, the offer/resolution split, road
+# accounting and the budget guard — is v1's,
+# unchanged. v1's meaning under its name does not
+# change; an assembly seals one contract, and the
+# loop and the checker derive the sealed one's
+# presentation whole. The checker reads the same
+# value from its own copy in checker.py.
+PRESENTATION_CONTRACT_V5 = "office-cycle-v2"
+# The draft-page successor contract (the director's
+# ruling of 2026-11-25 21:16 MST, ordered after
+# demo-gptoss6 — the first live run under v2, whose
+# presentation held whole while the work failed: the
+# worker completed the first block, then fixated on
+# one source, copied its full text verbatim into his
+# journal, and yielded with the remaining blocks
+# unresolved and no brief filed). The ruling, in the
+# director's words: the journal acts as a draft
+# page, not a research manuscript — the end work is
+# created gradually, block by block, and the
+# instruction is given as specific step-by-step
+# instructions. Under v3 every mechanism is v2's,
+# unchanged — split-on-return, the per-call budget
+# and road accounting, the cycle gate's arithmetic,
+# the journal's read + append mechanics, the
+# evidence and length gates, filing — and the ONLY
+# difference is the worker-facing texts that define
+# what a journal entry is: the journal contract and
+# the cycle poster's, the pull and read-stands
+# instructions', the summarize instruction's and
+# direction's, and the opening cover's journal
+# wordings carry the draft-page correction, the
+# cycle's work stated as numbered steps — read the
+# block; write the draft of the part of the brief
+# the block feeds, in his own words, never a copy of
+# the block's text; the cycle completes when that
+# draft stands — and SUMMARIZE as assembling the
+# brief from the draft that stands in the journal.
+# The opening carries v2's room knowledge unchanged.
+# The checker-correspondence deferral stands: the
+# checker is NOT extended to this contract, and a
+# v3 record diverges under it as
+# presentation_contract_unknown, exactly as a v2
+# record does. v1's and v2's meanings under their
+# names do not change; an assembly seals one
+# contract, and the loop derives the sealed one's
+# presentation whole.
+PRESENTATION_CONTRACT_V6 = "office-cycle-v3"
+# The cleaned-opening successor contract (the
+# director's orders of 2026-11-25 21:33 and 21:36
+# MST: "Use it and run it" — of his own cleaned
+# structure of the opening package — and his
+# option-A ruling setting the deliverable line to
+# the door the machinery honours, the contribute
+# outcome the office files). Ordered after
+# demo-gptoss7, the first live run under v3: Groq
+# refused the opening call itself (metered at
+# 8,463 tokens against the route's 8,000-token
+# minute) and the run stalled at iteration 1 with
+# zero dispatches; read against the wire capture,
+# the v3 opening — 4,840 tokens in its messages —
+# also contradicted itself in three places: the
+# seal declared delivery route contribution-v1
+# while the case's task text said in capitals to
+# write the file with a tool and that a contribute
+# outcome does NOT complete the assignment; the
+# v3 journal contract said draft page while the
+# same task text still instructed logging a file's
+# name and key points in one or two plain lines;
+# and the task text and one memory entry promised
+# a shell and a phased tool menu while the
+# package's catalogue listed three sandbox tools.
+# The director cleaned the opening himself — the
+# same facts in 636 tokens — and this contract
+# makes his structure the opening: under v4 the
+# opening package's user content is a compressed
+# outcome frame followed by his plain-text
+# structure rendered from the sealed case (role
+# and identity, the task with the deliverable line
+# set to the contribute door, the sources from the
+# sealed block map, the working method, the three
+# tools in one line each, the standing memory in
+# his compressed lines with the shell line removed
+# and the contribute line corrected to name the
+# right door, and his position) — NOT the JSON
+# component assembly, and no catalogue JSON. Every
+# later package under v4 is v3's, unchanged: the
+# cycle and summarize packages, the split-on-return
+# carriage, the draft-page journal texts, the room
+# knowledge, the per-call budget and road
+# accounting, the cycle gate's arithmetic, the
+# evidence and length gates, filing. The
+# checker-correspondence deferral stands: the
+# checker is NOT extended to this contract, and a
+# v4 record diverges under it as
+# presentation_contract_unknown, exactly as v2 and
+# v3 records do. v1's, v2's and v3's meanings
+# under their names do not change; an assembly
+# seals one contract, and the loop derives the
+# sealed one's presentation whole.
+PRESENTATION_CONTRACT_V7 = "office-cycle-v4"
+# The carryover successor contract (the director's
+# orders of 2026-11-25 22:09 MST: "Let's fix those
+# two points and run it again" and "Make sure the
+# carryover is still what we're making him do,
+# unlike this last run" — the job in his words:
+# read file one, write the summary in the journal;
+# read file two, write the summary in the journal;
+# read file three, write the summary in the
+# journal; then combine those summaries into his
+# 600-word report). Ordered after demo-gptoss8,
+# the first live run under v4, which the director
+# cancelled at iteration 15: its record showed
+# exactly ONE journal append ever landing (the
+# cycle advanced once, on it), a second cycle that
+# never advanced again across nine iterations of
+# repeated reads, prose answers and refused early
+# contributions, and journal writes the journal
+# gate examined without any append standing. Two
+# presentation facts from its captures ground this
+# contract: every cycle package's statement line
+# still carried the stale case prose — "the
+# deliverable: the file scratch/brief.md, written
+# with a tool" — contradicting the v4 opening's
+# contribute door in every package after the
+# opening; and the cycle gate's correction did not
+# ride the split-on-return packages (the stripped
+# v2 build's decision), so a worker whose append
+# had not counted could not see what the walk was
+# waiting for. What each package centred was the
+# machinery's state, not his draft. Under v5 the
+# opening is v4's, byte-for-byte (the director's
+# cleaned structure; its contract line names the
+# sealed contract, as it did from v3 to v4), and
+# three presentation rules change. (1) The cycle
+# and summarize packages' statement line is
+# formatted from the sealed delivery declaration —
+# the brief delivered as the contribute outcome at
+# the end of the walk, the office filing it at the
+# declared destination — and the stale prose
+# stands in no v5 package, the summarize
+# instruction's destination included. (2) The
+# gates' corrections ride again: the journal
+# gate's, the cycle gate's and the delivery stage
+# gate's, each derived fresh at presentation from
+# the gate event and the current state — what was
+# refused, why in one line, and the exact next
+# action that passes. (3) The carryover is his
+# draft: every cycle and summarize package carries
+# the journal's current content — the accepted
+# chain's standing text — as its centre, labelled
+# his draft so far, and the cycle instruction
+# states the one next step in the job's plain
+# words, derived from the current cycle state.
+# Split-on-return stands (block content only in
+# the package where its read lands); the budget
+# gate and road accounting stand; the gates'
+# adjudication does not change — only what rides
+# back. The checker-correspondence deferral
+# stands: the checker is NOT extended to this
+# contract, and a v5 record diverges under it as
+# presentation_contract_unknown, exactly as v2,
+# v3 and v4 records do. v1's through v4's meanings
+# under their names do not change; an assembly
+# seals one contract, and the loop derives the
+# sealed one's presentation whole.
+PRESENTATION_CONTRACT_V8 = "office-cycle-v5"
+# The zero-carryover successor contract (the
+# director's rulings of 2026-11-25 22:29 and
+# 22:30 MST, after the v5 build measured its own
+# collision). The v5 rehearsal pinned the
+# carryover's cost exactly: the honest walk
+# stalled at iteration 5 (4,155 estimated tokens),
+# the batch walk at iteration 2 (4,243 — the wake
+# gptoss5 died on), the rewrite walk at iteration
+# 6 (4,155) — the budget gate refused, nothing
+# filed. The director's ruling reversed v5's
+# third item in his own words: "There should be
+# zero carryover. Everything he needs should be
+# appended as a draft into the fucking journal.
+# There's no carryover. The only carryover should
+# be the intro brief explaining that he needs to
+# carry on with the next part of the job." The
+# journal is append-never-carry, his standing
+# design: it stands in his scratch at its address
+# and he reads it himself, by pull. And by his
+# tap on the scope card the same minutes — "Slim
+# the block bookkeeping and run gptoss9" — the
+# slimming the v5 report priced stands beside the
+# reversal, because the batch wake's overage was
+# the riding correction itself on a near-ceiling
+# base: removing the journal alone does not clear
+# that joint. Under v6 the opening is v5's whole
+# (the director's cleaned structure, its contract
+# line naming this seal), and two presentation
+# rules change against v5. (1) Zero carryover: no
+# package — cycle or summarize — carries the
+# journal's content; the journal_draft component
+# does not attach. The cycle direction states the
+# truth again in the job's plain words: his
+# journal is not carried, it stands in his
+# scratch at its address, and he reads it when he
+# needs it — a read of the journal is a pull like
+# any other. The summarize package's intro tells
+# him to read his journal and combine its
+# summaries into the brief. What each package
+# carries is only the intro: where the walk
+# stands, the gate's answer to his last move
+# where one stands, and the next part of the job
+# — plus split-on-return's block content where a
+# read lands, and his last calls' results under
+# their own IDs. (2) The slimmed blocks: the
+# cycle packages' blocks component carries
+# block_id and state only — no per-wake sha256 or
+# dispatch fingerprints; they stand in the
+# opening's source table and in the record, and
+# nothing else loses them. V5's items 1–2 stand
+# unchanged: the statement line formatted from
+# the sealed delivery declaration (the stale
+# prose in no v6 package), and all three gates'
+# corrections riding, derived fresh at
+# presentation. The gates' adjudication does not
+# change — only what rides back, and what no
+# longer rides at all. The checker-correspondence
+# deferral stands: the checker is NOT extended to
+# this contract, and a v6 record diverges under
+# it as presentation_contract_unknown, exactly as
+# v2 through v5 records do. v1's through v5's
+# meanings under their names do not change; an
+# assembly seals one contract, and the loop
+# derives the sealed one's presentation whole.
+PRESENTATION_CONTRACT_V9 = "office-cycle-v6"
+# The imperative-first successor contract (the
+# director's order of 2026-11-25 22:41 MST —
+# "Do it" — of the proposal put to him after he
+# watched demo-gptoss9's opening packages live
+# and asked whether the package "isn't really
+# guiding him on the next step, is it?"). The gap
+# stands verified on that run's live wire: the
+# v6 cycle instruction describes state — the
+# cycle, the block, its read standing, its
+# content presented once — and the worker is
+# informed, then decides; the v6 opening likewise
+# presents the job and the method, its first
+# concrete step implied by the sources table,
+# never commanded. Under v7 every package the
+# worker receives OPENS with the Next line,
+# derived at presentation time from the current
+# cycle state — never canned text that can go
+# stale against the state it opens: before the
+# block's read, the read step and the append it
+# feeds; where the read stands, the append alone,
+# in its counted form; after a gate refusal, the
+# step that passes, with the gate's correction
+# standing below it, unmerged — the correction
+# explains, the Next line commands; on the
+# summarize package, the combine step — read the
+# journal, combine its summaries, deliver by the
+# contribute outcome; on the opening, the first
+# block's Next line, standing after the outcome
+# frame and before the director's structure,
+# which is otherwise byte-identical to its
+# v4-through-v6 rendering. Everything else stands
+# as v6: zero carryover, the slimmed blocks, the
+# statement line formatted from the sealed
+# delivery declaration, the gates' corrections
+# riding, split-on-return, the budget gate and
+# the road accounting. The gates' adjudication
+# does not change — only the order of the
+# telling: the imperative first, the state as its
+# support. The checker-correspondence deferral
+# stands: the checker is NOT extended to this
+# contract, and a v7 record diverges under it as
+# presentation_contract_unknown, exactly as v2
+# through v6 records do. v1's through v6's
+# meanings under their names do not change; an
+# assembly seals one contract, and the loop
+# derives the sealed one's presentation whole.
+PRESENTATION_CONTRACT_V10 = "office-cycle-v7"
+# The file-grain successor contract (the
+# director's orders of 2026-11-25 23:03 MST —
+# "Let's fix that and run it right now" — on the
+# blocks diagnosis he confirmed on the record,
+# and his tap of 23:04 MST as amended by his
+# rulings of 23:07 and 23:08 MST). The diagnosis:
+# the office portions the job at stocking for a
+# TRANSPORT reason — the block ceiling below,
+# against the provider's per-minute limit — and
+# that shipping crate was promoted into the
+# worker's task list: six blocks, six gated
+# cycles, six wakes, a journal append demanded
+# per fragment, the brief's sections cutting
+# across the blocks while the blocks cut across
+# the document. The director's own statement of
+# the job (2026-11-25 22:08 MST) is three pieces
+# of work: read file one, write the summary in
+# the journal, read file two, write the summary,
+# read file three, write the summary, then
+# combine. Under this contract the FILE is the
+# walk's unit: the cycle state tracks files, the
+# cycle gate fires once per file (when its read
+# stands and its journal append stands), the
+# opening renders files and counts them, the
+# Next line derives from file state, and the
+# packages' bookkeeping lists files. The sealed
+# block map stands exactly as sealed — its
+# entries remain the evidence and carriage units
+# (the evidence rule is unchanged: an address
+# stands iff carried reads cover it, so the
+# four-portioned file stands when all four of
+# its ranges stand read) — grouped under their
+# file by the file map the generator seals
+# beside it. A file portioned into several
+# blocks is delivered inside its step as
+# plumbing: between its slices there is no
+# gate, no cycle advance and no journal append;
+# a slice read is an ordinary tool result inside
+# the step, and split-on-return presents at most
+# the most recent slice's content within the
+# step. The launch changes with it, by the same
+# evening's rulings: the pre-loop probe phase
+# sends ZERO probe cases (23:07 MST — "Fuck the
+# probes... He's already passed this probe every
+# time he's tried": the five identical cases
+# were the only worked examples the worker ever
+# got of what a wake wants, and all five wanted
+# a tool call immediately — a channel test
+# repeated into training), and the identity call
+# is removed too (23:08 MST — "Get rid of that
+# too"): a run's first call is the opening
+# package, and the worker's identity stands in
+# the record from the office's sealed assembly —
+# the occupant configuration the office chose,
+# declared by the office at generation — not
+# from a waking self-declaration. The ≥65-second
+# launch rule has no pre-loop calls to space and
+# lapses: the opening is simply the first call.
+# Earlier contracts keep their standing launch
+# phases whole. Everything else stands as v7:
+# zero carryover, the statement line from the
+# sealed declaration, the gates' corrections
+# riding derived fresh, every package opening
+# with the Next line, the budget gate and the
+# road accounting. The checker-correspondence
+# deferral stands: the checker is NOT extended
+# to this contract, and a v8 record diverges
+# under it as presentation_contract_unknown,
+# exactly as v2 through v7 records do. v1's
+# through v7's meanings under their names do
+# not change; an assembly seals one contract,
+# and the loop derives the sealed one's
+# presentation whole.
+PRESENTATION_CONTRACT_V11 = "office-cycle-v8"
+# The process-tree successor (office-cycle-v9): the
+# same derivation as v8 whole — the file grain, the
+# imperative Next line, zero carryover — forked by
+# one addition: every package carries the sealed
+# process tree with its nodes' states derived from
+# the record at the package's build (the build scope
+# of 2026-11-26, INDEX 602, as cut by the director
+# INDEX 604 and planned at INDEX 605 with its
+# amendments). The tree declaration's own contract:
+TREE_CONTRACT_V1 = "process-tree-checklist-v1"
+PRESENTATION_CONTRACT_V12 = "office-cycle-v9"
+# The block ceiling (the plan §3, the ruled figure):
+# no travel block carries more than this many bytes
+# of content, portioned by lines at stocking — a
+# single line longer than the ceiling is its own
+# block (the line is the portioning unit; it does not
+# occur in the standing sources).
+BLOCK_CEILING_BYTES = 12000
+# The per-call token budget (the plan §6, the ruled
+# figure): no single request under the cycle contract
+# may exceed this many estimated tokens — half the
+# proven 8,000-token minute on the proof route, so a
+# single call always stands legal on its own and two
+# colliding cannot cross the limit. The budget binds
+# the estimate of the whole REQUEST as the adapter
+# constructs it — contract framing, system message,
+# the rendered package, and in native mode the
+# offered tool definitions all inside the estimate
+# (the loop estimates over the adapter's rendered
+# request where the adapter can render it; the §6
+# accounting correction, 2026-11-26). The package's
+# committed core — its canonical serialization, the
+# one form the loop, the driver, the checker and the
+# rehearsal all reproduce byte-identically from the
+# record — remains the record's package figure, and
+# the driver's call ledger records the captures' true
+# wire bytes beside both estimates so every figure
+# stands in the run's report.
+PER_CALL_TOKEN_BUDGET = 4000
+
+# The road (the §6 amendment, accepted by the
+# director 2026-11-26 01:43 MST with the examiner's
+# refinements; BUILD-SCOPE-SECTION6-ROAD-2026-11-26):
+# the successor regime to the per-call budget above.
+# The budget figure stands for the contracts sealed
+# under it — their records keep their meaning — and
+# is retired from any assembly whose sealed record
+# declares the road: under the road, requests are
+# COUNTED with a matched tokenizer over the rendered
+# conversation, PACED against the route's shared
+# token bucket (a call waits; it is never refused
+# for its size), tool results over the spill
+# threshold ride as references, presented material
+# sheds at the sealed fractions of the model's
+# window, and the run's spend is bounded by the
+# allocation the office seals at generation — the
+# worker cannot enlarge it. The road declaration
+# seals beside the other declarations, outside the
+# record's canonical hash fields, in exactly this
+# shape: {"contract": ROAD_CONTRACT_V1,
+# "allocation_tokens": a positive int,
+# "window_tokens": a positive int, "basis": the
+# office's stated basis for the allocation}.
+ROAD_CONTRACT_V1 = "paced-v1"
+# A tool result (or a presented block's content)
+# over this many counted tokens does not ride
+# whole in a package under the road; the package
+# carries its reference and a preview instead (the
+# examiner's figures, 2026-11-26).
+ROAD_SPILL_THRESHOLD_TOKENS = 4096
+ROAD_SPILL_PREVIEW_TOKENS = 512
+# The shedding ladder's rungs, as fractions of the
+# sealed window: shedding begins at the first,
+# and no request is admitted at or past the
+# second (the examiner's figures, 2026-11-26).
+ROAD_SHED_START_FRACTION = 0.70
+ROAD_SHED_HARD_FRACTION = 0.80
+# The bounded output allowance reserved with every
+# call's counted input (the examiner's requirement:
+# output is reserved separately, before dispatch,
+# and reconciled against the provider's figure).
+ROAD_OUTPUT_ALLOWANCE_TOKENS = 2048
+
+
+def road_problem(road):
+    """The sealed road declaration's shape, or a
+    problem naming why it does not stand: a dict
+    naming exactly its contract, its allocation,
+    its window and its basis — the contract the
+    road's one version, the allocation and window
+    positive integers, the basis the office's
+    stated words. Anything else seals no road."""
+    if not isinstance(road, dict) or \
+            set(road) != {"contract", "allocation_tokens",
+                          "window_tokens", "basis"}:
+        return ("a road declaration names exactly its "
+                "contract, its allocation, its window "
+                "and its basis")
+    if road.get("contract") != ROAD_CONTRACT_V1:
+        return "the road declaration's contract is not " \
+            "the road's sealed version"
+    for key in ("allocation_tokens", "window_tokens"):
+        value = road.get(key)
+        if not isinstance(value, int) or \
+                isinstance(value, bool) or value <= 0:
+            return (f"the road declaration's {key} is "
+                    "not a positive integer")
+    if not isinstance(road.get("basis"), str) or \
+            not road.get("basis"):
+        return "the road declaration's basis is not " \
+            "the office's stated words"
+    return None
+
+
+def tree_problem(tree):
+    """The sealed tree declaration's shape, or a
+    problem naming why it does not stand: a dict
+    naming exactly its contract, its title and its
+    nodes — the contract the tree's one version, the
+    title the job's name in the office's words, the
+    nodes the walk's steps in order. A node names
+    exactly its id, its label, its kind, the nodes
+    it depends on and its workaround text; a gather
+    node names its source as well, and no other kind
+    does. Kinds are the walk's own: onboarding,
+    gather, summarize, deliver. Ids stand unique;
+    every dependency names a node that stands.
+    Anything else seals no tree."""
+    if not isinstance(tree, dict) or \
+            set(tree) != {"contract", "title", "nodes"}:
+        return ("a tree declaration names exactly its "
+                "contract, its title and its nodes")
+    if tree.get("contract") != TREE_CONTRACT_V1:
+        return "the tree declaration's contract is not " \
+            "the tree's sealed version"
+    if not isinstance(tree.get("title"), str) or \
+            not tree.get("title"):
+        return "the tree declaration's title is not " \
+            "the job's stated name"
+    nodes = tree.get("nodes")
+    if not isinstance(nodes, list) or not nodes:
+        return "the tree declaration's nodes do not stand"
+    kinds = ("onboarding", "gather", "summarize",
+             "deliver")
+    seen = set()
+    for node in nodes:
+        if not isinstance(node, dict):
+            return "a tree node does not stand"
+        keys = {"id", "label", "kind", "depends_on",
+                "workaround"}
+        if node.get("kind") == "gather":
+            keys.add("source")
+        if set(node) != keys:
+            return ("a tree node names exactly its id, "
+                    "its label, its kind, its dependencies "
+                    "and its workaround — a gather node "
+                    "its source as well, no other kind")
+        if not isinstance(node.get("id"), str) or \
+                not node.get("id") or \
+                node.get("id") in seen:
+            return "a tree node's id does not stand " \
+                "unique"
+        seen.add(node.get("id"))
+        if not isinstance(node.get("label"), str) or \
+                not node.get("label"):
+            return "a tree node's label does not stand"
+        if node.get("kind") not in kinds:
+            return "a tree node's kind is not one of " \
+                "the walk's kinds"
+        if node.get("kind") == "gather" and \
+                (not isinstance(node.get("source"), str)
+                 or not node.get("source")):
+            return "a gather node names no source"
+        depends = node.get("depends_on")
+        if not isinstance(depends, list) or \
+                any(not isinstance(dep, str)
+                    for dep in depends):
+            return "a tree node's dependencies do " \
+                "not stand"
+        if not isinstance(node.get("workaround"), str):
+            return "a tree node's workaround does " \
+                "not stand"
+    for node in nodes:
+        for dep in node.get("depends_on"):
+            if dep not in seen:
+                return ("a tree node depends on a node "
+                        "that does not stand")
+    return None
+
+
+def estimate_tokens(serialized_bytes):
+    """The one token estimator (the plan §6): the
+    estimated tokens of a serialized request of
+    `serialized_bytes` bytes — ceil(bytes / 4), the
+    observed ratio on this route being ≈ 4.06
+    bytes/token (INDEX 577), so the division errs, if
+    at all, toward caution. An estimator, stated as
+    one: the provider's own usage figures, where a
+    response carries them, are recorded alongside and
+    govern retrospectively."""
+    return -(-int(serialized_bytes) // 4)
+
+
+def split_lines(data):
+    """The lines of a byte string, as the retrieval
+    contract counts them (the executor's own rule): a
+    line is the bytes up to and including its newline;
+    the final line may lack one. Returns the lines'
+    raw bytes, in order."""
+    lines = []
+    start = 0
+    while start < len(data):
+        nl = data.find(b"\n", start)
+        if nl == -1:
+            lines.append(data[start:])
+            break
+        lines.append(data[start:nl + 1])
+        start = nl + 1
+    return lines
+
+
+def compute_block_map(addresses, contents,
+                      ceiling=BLOCK_CEILING_BYTES):
+    """The office's portioning of the declared
+    evidence files into travel blocks (the plan §3):
+    deterministic — the same bytes and ceiling yield
+    the same map. `addresses` in declaration order;
+    `contents` maps each address to its bytes. Each
+    file is portioned BY LINES (split_lines' rule):
+    lines accumulate into a block while its content
+    stays within the ceiling; a single line longer
+    than the ceiling is its own block (the line is
+    the portioning unit and is never split). A file
+    portioned into exactly one block names no line
+    range (line_start/line_end None — the whole
+    file); a file in several blocks names each
+    block's inclusive 1-based range, the ranges
+    contiguous and together covering [1..T]. An empty
+    file is one whole-file block of zero bytes. Block
+    ids run B1.. in declaration order across files."""
+    blocks = []
+    number = 0
+    for address in addresses:
+        data = contents[address]
+        lines = split_lines(data)
+        ranges = []
+        current = []
+        current_bytes = 0
+        for line in lines:
+            if current and \
+                    current_bytes + len(line) > ceiling:
+                ranges.append(current)
+                current = []
+                current_bytes = 0
+            current.append(line)
+            current_bytes += len(line)
+        if current or not ranges:
+            ranges.append(current)
+        whole = len(ranges) == 1
+        position = 1
+        for group in ranges:
+            number += 1
+            content = b"".join(group)
+            line_count = len(group)
+            blocks.append({
+                "block_id": f"B{number}",
+                "address": address,
+                "line_start": None if whole
+                else position,
+                "line_end": None if whole
+                else position + line_count - 1,
+                "content_bytes": len(content),
+                "content_sha256": sha256_hex(content)})
+            position += line_count
+    return blocks
+
+
+def block_map_problem(block_map, addresses,
+                      ceiling=BLOCK_CEILING_BYTES):
+    """The sealed block map's internal consistency, or
+    None where it stands well-formed against the
+    declared evidence addresses: the map is a list of
+    blocks in declaration order (ids B1.. in order),
+    each naming exactly its id, its file, its line
+    range (both null for a whole-file block, both
+    standing otherwise), its content's byte count and
+    SHA-256; per file, the blocks stand in range
+    order, contiguous from line 1 with no gap and no
+    overlap, a whole-file block standing alone; and
+    no block's content exceeds the ceiling unless the
+    block is a single line (the portioning unit is
+    never split — its size is the line's own). The
+    map's truth against the files' actual bytes is
+    the checker's derivation from the stocked files;
+    this rule governs the seal's shape, which is what
+    generation can know."""
+    if not isinstance(block_map, list) or not block_map:
+        return ("the block map is not a non-empty list "
+                "of blocks")
+    if not isinstance(addresses, list) or not addresses:
+        return ("the declared evidence names no "
+                "addresses for the block map to portion")
+    expected_keys = {"block_id", "address", "line_start",
+                     "line_end", "content_bytes",
+                     "content_sha256"}
+    by_file = {}
+    for index, block in enumerate(block_map):
+        if not isinstance(block, dict) or \
+                set(block) != expected_keys:
+            return ("a block in the map does not name "
+                    "exactly its id, its file, its line "
+                    "range, its content's byte count and "
+                    "its SHA-256")
+        if block.get("block_id") != f"B{index + 1}":
+            return ("the block map's ids do not run "
+                    "B1.. in declaration order")
+        address = block.get("address")
+        if address not in addresses:
+            return ("a block names a file the declared "
+                    "evidence does not")
+        start = block.get("line_start")
+        end = block.get("line_end")
+        size = block.get("content_bytes")
+        digest = block.get("content_sha256")
+        if not isinstance(size, int) or \
+                isinstance(size, bool) or size < 0:
+            return ("a block's content byte count does "
+                    "not stand")
+        if not isinstance(digest, str) or \
+                len(digest) != 64:
+            return ("a block's content SHA-256 does "
+                    "not stand")
+        if (start is None) != (end is None):
+            return ("a block's line range stands "
+                    "half-named (both bounds, or "
+                    "neither for a whole file)")
+        if start is not None and (
+                not isinstance(start, int)
+                or isinstance(start, bool)
+                or not isinstance(end, int)
+                or isinstance(end, bool)
+                or start < 1 or end < start):
+            return ("a block's line range does not "
+                    "stand (an inclusive range from "
+                    "line 1 up)")
+        by_file.setdefault(address, []).append(block)
+    if [b["address"] for b in block_map] != \
+            [a for a in addresses
+             for _ in by_file.get(a, [])]:
+        return ("the block map's files do not stand "
+                "in declaration order")
+    for address in addresses:
+        mine = by_file.get(address)
+        if not mine:
+            return ("the block map portions no block "
+                    "of a declared evidence file")
+        if len(mine) == 1:
+            only = mine[0]
+            if only.get("line_start") is not None:
+                return ("a file portioned into one "
+                        "block names a line range; a "
+                        "whole-file block names none")
+            continue
+        position = 1
+        for block in mine:
+            if block.get("line_start") != position:
+                return ("a file's blocks do not stand "
+                        "contiguous from line 1 (a gap "
+                        "or an overlap stands in the "
+                        "map)")
+            if block["content_bytes"] > ceiling and \
+                    block["line_start"] != block["line_end"]:
+                return ("a block's content exceeds "
+                        "the ceiling and is not a "
+                        "single line")
+            position = block["line_end"] + 1
+    # A whole-file block over the ceiling stands or
+    # falls on the bytes (a single long line portions
+    # to exactly this shape; so does a mis-portioned
+    # multi-line file) — the checker's re-derivation
+    # from the stocked files is the byte-truth check;
+    # the seal's shape alone cannot tell them apart.
+    return None
+
+
+def compute_file_map(block_map):
+    """The file grouping of a sealed block map (the
+    file-grain successor contract, office-cycle-v8):
+    the map's blocks grouped under their files, in
+    declaration order — file ids F1.. in the order
+    the files first stand in the map, each group
+    naming its file's address and its blocks' ids in
+    map order. Deterministic: the same block map
+    yields the same grouping. The grouping is the
+    walk's unit under v8; the blocks remain the
+    evidence and carriage units inside their file."""
+    files = []
+    for block in block_map or []:
+        if files and files[-1]["address"] == \
+                block["address"]:
+            files[-1]["block_ids"].append(
+                block["block_id"])
+        else:
+            files.append({
+                "file_id": f"F{len(files) + 1}",
+                "address": block["address"],
+                "block_ids": [block["block_id"]]})
+    return files
+
+
+def file_map_problem(file_map, block_map):
+    """The sealed file grouping's consistency against
+    the sealed block map it groups, or None where it
+    stands: a list of groups F1.. in order, each
+    naming exactly its id, its file and its blocks'
+    ids; the groups partition the block map whole —
+    every block in exactly one group, the groups in
+    the map's own order, each block under the group
+    of its own file. A grouping that does not stand
+    against the map seals no file-grain walk."""
+    if not isinstance(block_map, list) or not block_map:
+        return ("the block map the grouping answers "
+                "does not stand")
+    if not isinstance(file_map, list) or not file_map:
+        return ("the file grouping is not a non-empty "
+                "list of files")
+    by_id = {block["block_id"]: block
+             for block in block_map}
+    seen = []
+    for index, group in enumerate(file_map):
+        if not isinstance(group, dict) or \
+                set(group) != {"file_id", "address",
+                               "block_ids"}:
+            return ("a file group does not name "
+                    "exactly its id, its file and its "
+                    "blocks' ids")
+        if group.get("file_id") != f"F{index + 1}":
+            return ("the file grouping's ids do not "
+                    "run F1.. in declaration order")
+        ids = group.get("block_ids")
+        if not isinstance(ids, list) or not ids:
+            return ("a file group names no blocks")
+        for block_id in ids:
+            block = by_id.get(block_id)
+            if block is None:
+                return ("a file group names a block "
+                        "the block map does not")
+            if block["address"] != group["address"]:
+                return ("a file group names a block "
+                        "of another file")
+            seen.append(block_id)
+    if seen != [block["block_id"] for block in block_map]:
+        return ("the file grouping does not partition "
+                "the block map whole, in its order")
+    return None
 # The onboarding's stages, in the order the wakes walk
 # them: the iteration number (1-based) selects the stage —
 # iterations 1..4 walk memory, case, files, task; every

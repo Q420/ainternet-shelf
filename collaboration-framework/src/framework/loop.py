@@ -171,6 +171,7 @@ from pathlib import Path
 from fabric.canonical import canonical, sha256_hex
 
 from . import evidence as _evidence
+from . import road as _road
 from . import schema_validator as _schema_validator
 from . import tool_policy as _tool_policy
 from .adapter import AdapterFailure
@@ -1298,7 +1299,7 @@ def _evidence_address_stands(entries, requested, address):
 
 def _delivery_evidence_missing(events, dispatches,
                                instance_id, head,
-                               addresses):
+                               addresses, block_map=None):
     """The declared delivery evidence that does not
     stand at `head`, in the declaration's own order:
     the working set is derived at the head from the
@@ -1308,7 +1309,16 @@ def _delivery_evidence_missing(events, dispatches,
     TOOL_REQUESTED events, keyed by request identity —
     the computation is reconstructible from the recorded
     dispatches and outcomes alone, and the checker
-    derives the same list from its own copies."""
+    derives the same list from its own copies.
+
+    Under the office-cycle contract (a sealed block
+    map given), an address also stands where every
+    sealed block of that address stands carried under
+    the block rule: the cycle walk gathers a file
+    block by block, in exact ranges, and that coverage
+    is the file's evidence — the standing computation
+    alone cannot see it, because an exact range read
+    never establishes the file's total line count."""
     working_set = _derive_working_set(
         events, dispatches, instance_id, head)
     requested = {}
@@ -1320,9 +1330,43 @@ def _delivery_evidence_missing(events, dispatches,
         parameters = payload.get("parameters")
         if isinstance(parameters, dict):
             requested[payload.get("request_id")] = parameters
+    entries = working_set["entries"]
+
+    def stands(address):
+        if _evidence_address_stands(
+                entries, requested, address):
+            return True
+        if block_map is not None:
+            mine = [block for block in block_map
+                    if block.get("address") == address]
+            if mine and all(
+                    _block_read_facts(entries, block)[0]
+                    for block in mine):
+                return True
+        return False
+
     return [address for address in addresses
-            if not _evidence_address_stands(
-                working_set["entries"], requested, address)]
+            if not stands(address)]
+
+
+def _missing_blocks(events, dispatches, instance_id,
+                    head, block_map, addresses):
+    """The sealed blocks of the named addresses whose
+    read does not stand carried at `head`, in map
+    order, as {block_id, address} pairs — the cycle
+    contract's delivery corrections name incomplete
+    cycles explicitly, as blocks mapped to their
+    files (the plan §7)."""
+    if block_map is None:
+        return []
+    working_set = _derive_working_set(
+        events, dispatches, instance_id, head)
+    entries = working_set["entries"]
+    return [{"block_id": block["block_id"],
+             "address": block["address"]}
+            for block in block_map
+            if block.get("address") in addresses
+            and not _block_read_facts(entries, block)[0]]
 
 
 # ------------------------------------------------------------
@@ -1559,6 +1603,53 @@ TREE_STAGE_GATE_INSTRUCTION = (
     "unfiled; if it is the brief you mean to "
     "deliver, send it again when the tree reaches "
     "DELIVER.")
+
+
+def _cycle_stage_gate_what_arrived(stage):
+    return (f"a contribution, offered while the walk "
+            f"stood at {stage}, before every cycle "
+            f"stood complete")
+
+
+def _cycle_stage_gate_what_arrived_v8(stage):
+    return (f"a contribution, offered while the walk "
+            f"stood at {stage}, before every file "
+            f"stood complete")
+
+
+# The file-grain successor's stage-gate instruction
+# (office-cycle-v8): the standing instruction in
+# the job's own units — the door opens when every
+# FILE stands complete, and the files still
+# incomplete stand named below, as files.
+CYCLE_STAGE_GATE_INSTRUCTION_V8 = (
+    "Nothing was filed. The contribution door opens "
+    "when every file stands complete and the walk "
+    "reaches SUMMARIZE: walk the files — read each "
+    "file, append your summary of it to your "
+    "journal — and at SUMMARIZE you read your "
+    "journal whole, assemble the brief from it, and "
+    "your contribution is the delivery and the "
+    "office files it. The files still incomplete "
+    "stand named below. The text you sent stands in "
+    "the record, set aside unfiled; if it is the "
+    "brief you mean to deliver, send it again at "
+    "SUMMARIZE.")
+
+
+CYCLE_STAGE_GATE_INSTRUCTION = (
+    "Nothing was filed. The contribution door opens "
+    "when every cycle stands complete and the walk "
+    "reaches SUMMARIZE: walk the cycles — pull each "
+    "block at its cycle, read it, append its bits to "
+    "your journal — and at SUMMARIZE you read your "
+    "journal whole, compile the brief from it, and "
+    "your contribution is the delivery and the office "
+    "files it. The blocks still incomplete stand "
+    "named below, as blocks mapped to their files. "
+    "The text you sent stands in the record, set "
+    "aside unfiled; if it is the brief you mean to "
+    "deliver, send it again at SUMMARIZE.")
 
 
 def _tree_nodes(content):
@@ -1882,6 +1973,2021 @@ def _tree_presented_addresses(events, dispatches,
         if facts["read_stands"]:
             presented.add(current["address"])
     return presented
+
+
+# The office-cycle contract (the plan,
+# PLAN-OFFICE-CYCLE-2026-11-25, approved by the
+# director INDEX 582 and by the examiner INDEX 584;
+# presentation contract office-cycle-v1). One opening
+# package — his identity and role memory as his own
+# knowledge, the task, the cycle poster (the job's
+# shape in words and the sealed block map with an
+# access way per block), the journal's designated
+# address and its contract, and his position — then
+# one package per cycle of the job's repeating shape:
+# pull one block, read it, append his bits to the
+# journal, gate, next block; and when every cycle
+# stands complete, a SUMMARIZE package: read the
+# journal whole and compile the brief from it. A
+# block's content is presented once, at its cycle, and
+# stands as a pointer after. The journal stands in NO
+# package — no component, no excerpt; it is a file in
+# his room, read + append, never carried — and the
+# office's journal of record is the accepted chain of
+# exact-prefix transitions over the sealed empty
+# baseline. The tool catalogue rides no package as
+# presented matter: the package's tools are the OFFER
+# SET (the current cycle's tools plus the journal
+# tools), while name resolution runs against the
+# sealed grant-derived catalogue in the record — a
+# granted call resolves whether or not it was offered;
+# an ungranted call is refused at the doorway exactly
+# as before. Every value in a cycle package derives
+# from the record alone, so the checker re-derives the
+# package whole, exactly as it re-derives the other
+# contracts'. The wording below is the presentation's
+# own; the checker's copies stand in checker.py.
+CYCLE_COVER_FIRST = (
+    "You are {seat}, the {role} in this office, "
+    "assembled for one job. The shape of the work here "
+    "is simple: you are woken with a package, you act, "
+    "and the record keeps everything. This package is "
+    "your whole opening — your memory, your task, the "
+    "map of the job's cycles, your journal's address "
+    "and its contract, and your position — all of it "
+    "once, and nothing in it needs acknowledging: your "
+    "first answer is work. The job walks in cycles, "
+    "one block of the briefcase at a time: pull the "
+    "block, read it, append the bits you took from it "
+    "to your journal, and the next cycle begins. The "
+    "job: {headline}. The deliverable: {deliverable}.")
+CYCLE_DIRECTION_OPENING = (
+    "Your opening package: everything in it is "
+    "presented once, here — your memory, the task, "
+    "the cycle poster with the briefcase's blocks and "
+    "each block's way in, your journal's contract, and "
+    "your position at cycle 1. Begin work in your "
+    "first answer.")
+CYCLE_DIRECTION_CYCLE = (
+    "A cycle package: where the walk stands, this "
+    "cycle's block and its way in, and — the first "
+    "time its read stands — its content, presented "
+    "once. Every other block stands as a pointer. "
+    "Your journal is not carried; it stands in your "
+    "room, at its address, to read and append.")
+CYCLE_DIRECTION_SUMMARIZE = (
+    "The summarize package: every cycle stands "
+    "complete. Read your journal whole and compile "
+    "the brief from it — the journal is the brief's "
+    "substance. No source content rides this package; "
+    "the sources stand as pointers, and the journal "
+    "stands in your room at its address.")
+CYCLE_POSTER_INTRO = (
+    "The job walks in cycles, one block at a time. "
+    "The office has portioned your briefcase's files "
+    "into blocks — the blocks below, in order — and "
+    "each cycle is one block: pull it by its way in, "
+    "read it, and append the bits you took from it to "
+    "your journal (its name and the key points, in one "
+    "or two plain lines). A cycle completes when its "
+    "block's read stands in the record and your "
+    "journal append stands after it. A block's "
+    "content is presented to you once, at its cycle; "
+    "after that it stands as a pointer — its address, "
+    "its range, its hash — and you can pull it again "
+    "at any time. When every cycle stands complete, "
+    "the walk ends in SUMMARIZE: you read your "
+    "journal whole and compile the brief from it.")
+CYCLE_JOURNAL_CONTRACT = (
+    "your journal — your notebook, at the address "
+    "below. It is a file in your room, and it is "
+    "never carried in your packages: what you write "
+    "there is yours, read back by you whenever you "
+    "pull it. The rule of the journal is: entries "
+    "stand; add, never rewrite. Each entry is an "
+    "append — write the journal as it stands, plus "
+    "your new bits at the end, in one sandbox.write "
+    "to its address. A write that replaces what "
+    "stands is not counted, and the walk does not "
+    "advance on it. Keep it as you work: after each "
+    "block you read, log its name and the key points "
+    "you took from it, in one or two plain lines — "
+    "at the end of the walk you compile the brief "
+    "from these entries, so the bits are the brief's "
+    "substance. Nothing parses it; it is read as you "
+    "wrote it.")
+CYCLE_PULL_INSTRUCTION = (
+    "Cycle {cycle} of {total}: block {block_id} — "
+    "{address}{range_text}. Pull it by the access "
+    "call below, read it, then append the bits you "
+    "took from it to your journal at {journal}: the "
+    "journal as it stands, plus your new bits, in "
+    "one sandbox.write. Its content is presented at "
+    "the next wake, once; this cycle completes when "
+    "its read stands and your append stands after "
+    "it.")
+CYCLE_READ_STANDS_INSTRUCTION = (
+    "Cycle {cycle} of {total}: block {block_id} — "
+    "{address}{range_text}. Its read stands, and its "
+    "content stands presented above, once. Append "
+    "the bits you took from it to your journal at "
+    "{journal}: the journal as it stands, plus your "
+    "new bits, in one sandbox.write — that append "
+    "completes this cycle.")
+CYCLE_WORKAROUND = (
+    "If a range read fails or returns less than the "
+    "block, read the whole file with sandbox.read "
+    "instead — the block still counts, presented at "
+    "its cycle. If a call fails, its result in your "
+    "next package says why, in plain terms, with "
+    "the working shape beside it.")
+CYCLE_SUMMARIZE_INSTRUCTION = (
+    "Every cycle stands complete — the walk is at "
+    "SUMMARIZE. Read your journal whole, with "
+    "sandbox.read at {journal}, and compile the "
+    "brief from its entries: the bits you logged at "
+    "each cycle are the brief's substance, in your "
+    "own words. Cover the four points below. Stay "
+    "accurate to what you gathered; invent nothing; "
+    "where the sources disagree with each other, say "
+    "so. When the brief is ready, deliver it: answer "
+    "with outcome \"contribute\" and the brief's text "
+    "as its text — the contribution is the delivery, "
+    "and the office files it at {deliverable}.")
+CYCLE_TASK_INTRO = (
+    "Your task, whole, in this one place: the "
+    "assignment, the deliverable, the four points "
+    "the brief must cover, and the figures it runs "
+    "to. It is presented once, here; your cycle "
+    "packages carry your position against it, not "
+    "the task again.")
+# The split-on-return successor's room knowledge
+# (office-cycle-v2): the room's rules, stated once
+# in the opening as standing knowledge — the
+# per-call budget in plain figures, the one-block-
+# per-wake return, and the consequence for pulling
+# ahead. Awareness by default; the office enforces
+# the budget regardless, and no package repeats
+# these lines or asks him to count. The figure in
+# the text is the sealed budget's own (4,000
+# estimated tokens, the plan §6 figure the tool
+# policy seals); it is stated, not formatted from
+# the constant, so the two copies — this one and
+# the checker's — stand or fall together as one
+# wording, exactly as the contract's other texts.
+CYCLE_ROOM_KNOWLEDGE = (
+    "The room's rules, once: every package the "
+    "office sends you is kept under a budget of "
+    "4,000 estimated tokens, and the office enforces "
+    "that itself — it is never yours to count. Your "
+    "results return one block per wake: however many "
+    "blocks you pull in one answer, the next wake "
+    "presents the current cycle's block, and every "
+    "other block you have gathered stands as a "
+    "pointer until its own cycle comes. Pulling "
+    "ahead costs you nothing and gains you nothing "
+    "in presentation — the walk moves at the "
+    "cycle's pace, and nothing you have gathered is "
+    "ever lost: it stands in the record, and its "
+    "content is presented when its cycle comes.")
+# The draft-page successor's texts (office-cycle-
+# v3; the director's ruling of 2026-11-25 21:16
+# MST, ordered after demo-gptoss6's fixation
+# failure): the seven journal-defining wordings of
+# the cycle presentation, exchanged whole. Every
+# mechanism stands as under v1 and v2 — the same
+# derivation selects these texts when the sealed
+# contract is office-cycle-v3 and the standing
+# texts otherwise, so a v1 or v2 package derives
+# byte-identically to before. What changes is only
+# what a journal entry IS: not the block's name and
+# key points logged as research, but the draft of
+# the part of the brief the block feeds, written in
+# his own words as numbered steps in the journal
+# contract — the brief created gradually in the
+# journal, and SUMMARIZE the assembling of the
+# draft that stands there.
+CYCLE_COVER_FIRST_V3 = (
+    "You are {seat}, the {role} in this office, "
+    "assembled for one job. The shape of the work here "
+    "is simple: you are woken with a package, you act, "
+    "and the record keeps everything. This package is "
+    "your whole opening — your memory, your task, the "
+    "map of the job's cycles, your journal's address "
+    "and its contract, and your position — all of it "
+    "once, and nothing in it needs acknowledging: your "
+    "first answer is work. The job walks in cycles, "
+    "one block of the briefcase at a time: pull the "
+    "block, read it, append your draft for it "
+    "to your journal, and the next cycle begins. The "
+    "job: {headline}. The deliverable: {deliverable}.")
+CYCLE_DIRECTION_SUMMARIZE_V3 = (
+    "The summarize package: every cycle stands "
+    "complete. Read your journal whole and assemble "
+    "the brief from the draft that stands in it — "
+    "the journal holds the brief itself, in draft. "
+    "No source content rides this package; "
+    "the sources stand as pointers, and the journal "
+    "stands in your room at its address.")
+CYCLE_POSTER_INTRO_V3 = (
+    "The job walks in cycles, one block at a time. "
+    "The office has portioned your briefcase's files "
+    "into blocks — the blocks below, in order — and "
+    "each cycle is one block: pull it by its way in, "
+    "read it, and append the bits you took from it to "
+    "your journal (the draft of the part of the brief "
+    "this block feeds, in your own words — the journal "
+    "is your draft page, and the brief grows there). "
+    "A cycle completes when its "
+    "block's read stands in the record and your "
+    "journal append stands after it. A block's "
+    "content is presented to you once, at its cycle; "
+    "after that it stands as a pointer — its address, "
+    "its range, its hash — and you can pull it again "
+    "at any time. When every cycle stands complete, "
+    "the walk ends in SUMMARIZE: you read your "
+    "journal whole and assemble the brief from the "
+    "draft that stands in it.")
+CYCLE_JOURNAL_CONTRACT_V3 = (
+    "your journal — your draft page, at the address "
+    "below. It is a file in your room, and it is never "
+    "carried in your packages: what you write there is "
+    "yours, read back by you whenever you pull it. The "
+    "brief is built in this journal, gradually, as you "
+    "work — the journal is not a copy of your research. "
+    "Work each block in these steps: (1) read the "
+    "block; (2) in your journal, write the draft of "
+    "the part of the brief this block feeds — full "
+    "sentences, in your own words, the very words the "
+    "brief will use; never copy the block's own text "
+    "into the journal, because a copy is not a draft; "
+    "(3) when that draft stands in the journal, the "
+    "cycle is complete and the next block comes. The "
+    "rule of the journal is: entries stand; add, never "
+    "rewrite. Each entry is an append — write the "
+    "journal as it stands, plus your new draft at the "
+    "end, in one sandbox.write to its address. A write "
+    "that replaces what stands is not counted, and the "
+    "walk does not advance on it. At the end of the "
+    "walk you assemble the brief from the draft that "
+    "stands in the journal — the brief is already "
+    "written there, in draft; finishing it is joining "
+    "and smoothing, not starting over. Nothing parses "
+    "it; it is read as you wrote it.")
+CYCLE_PULL_INSTRUCTION_V3 = (
+    "Cycle {cycle} of {total}: block {block_id} — "
+    "{address}{range_text}. Pull it by the access "
+    "call below, read it, then append your draft for "
+    "this block to your journal at {journal}: the "
+    "journal as it stands, plus your draft — the part "
+    "of the brief this block feeds, in your own words, "
+    "in one sandbox.write. Its content is presented at "
+    "the next wake, once; this cycle completes when "
+    "its read stands and your append stands after "
+    "it.")
+CYCLE_READ_STANDS_INSTRUCTION_V3 = (
+    "Cycle {cycle} of {total}: block {block_id} — "
+    "{address}{range_text}. Its read stands, and its "
+    "content stands presented above, once. Append "
+    "your draft for this block to your journal at "
+    "{journal}: the journal as it stands, "
+    "plus your draft — the part of the brief this "
+    "block feeds, in your own words, in one "
+    "sandbox.write — that append "
+    "completes this cycle.")
+CYCLE_SUMMARIZE_INSTRUCTION_V3 = (
+    "Every cycle stands complete — the walk is at "
+    "SUMMARIZE. Read your journal whole, with "
+    "sandbox.read at {journal}, and assemble the "
+    "brief from the draft that stands in its "
+    "entries: the draft you wrote at each cycle is "
+    "the brief itself, in draft — join the parts, "
+    "smooth the joins, in your own words. Cover "
+    "the four points below. Stay "
+    "accurate to what you gathered; invent nothing; "
+    "where the sources disagree with each other, say "
+    "so. When the brief is ready, deliver it: answer "
+    "with outcome \"contribute\" and the brief's text "
+    "as its text — the contribution is the delivery, "
+    "and the office files it at {deliverable}.")
+# The cleaned-opening successor's standing texts
+# (office-cycle-v4; the director's orders of
+# 2026-11-25 21:33 and 21:36 MST): the director's
+# own cleaned structure of the opening package,
+# rendered from the sealed case — his sections in
+# his order, his compressed lines for the standing
+# assignment's fixed wording, with the brief's
+# resolutions applied: the deliverable line set to
+# the contribute door the machinery honours (his
+# option-A ruling), the memory's contribute line
+# corrected to name that door, the memory's shell
+# line removed (the package offers no shell), and
+# the working method's leftover key-points line
+# removed (the draft line supersedes it). The
+# tools' one-liners are his, word for word.
+CYCLE_OPENING_TOOLS_V4 = (
+    "- `sandbox.read` — full text file "
+    "(sources only)",
+    "- `sandbox.read_range` — line range or "
+    "heading section (sources only)",
+    "- `sandbox.write` — write/replace file "
+    "(scratch only)")
+CYCLE_OPENING_MEMORY_V4 = (
+    "Prefers plain prose delivery.",
+    "Reaches for the contribute outcome as his "
+    "delivery route — for this job that is the "
+    "correct door: the office files it at the "
+    "deliverable's destination.",
+    "Wants sources, style preferences, and "
+    "word-count target stated clearly up front.",
+    "Target ~600 words (±10); previous attempt "
+    "was only ~405 words.",
+    "Journal purpose must be stated explicitly "
+    "or it is ignored.",
+    "If something is missing from the briefcase, "
+    "explicitly ask or pull via the stated route "
+    "— do not improvise silently.")
+
+
+def _cycle_opening_text_v4(*, seat, role,
+                           instance_id, case_id,
+                           case_version, destination,
+                           points, min_words, blocks,
+                           catalogue, journal_path,
+                           total,
+                           contract=_tool_policy
+                           .PRESENTATION_CONTRACT_V7):
+    """The v4 opening's plain-text structure (the
+    director's cleaned opening, rendered from the
+    sealed case): his sections in his order — role
+    and identity; the task, its deliverable line
+    set to the contribute door and its content
+    requirements from the case's points and
+    figures; the sources, one line per block from
+    the sealed block map; the working method; the
+    three tools; the standing memory in his
+    compressed lines; and his position. No JSON
+    component assembly stands in the opening under
+    this contract, and no catalogue JSON. The
+    contract line names the sealed contract — a
+    rendered fact of the seal, as the destination
+    and the figures are — so the carryover
+    successor (office-cycle-v5), whose opening is
+    this text whole, names its own seal there and
+    nothing else in the text moves."""
+    lines = [f"Opening package — {seat}", "",
+             "Role & identity",
+             f"- Seat: {seat} (role: {role})",
+             f"- Instance: {instance_id}",
+             f"- Case: {case_id} "
+             f"(version {case_version})",
+             f"- Contract: {contract}",
+             "- Package type: opening", "",
+             "Task",
+             "Deliverable: the brief is delivered "
+             "as the \"contribute\" outcome at the "
+             "end of the walk; the office files it "
+             f"at {destination}; only a filed brief "
+             "completes the assignment."]
+    figures = "about 600 words"
+    if min_words is not None:
+        figures += (
+            f" (minimum {min_words}; the door will "
+            f"not file a brief under {min_words} "
+            "words)")
+    lines.append(
+        "Content requirements: a plain-language "
+        f"brief of {figures}. A newcomer should be "
+        "able to understand:")
+    lines.append("; ".join(
+        f"({i}) {point}" for i, point in
+        enumerate(points, 1)) + ".")
+    addresses = []
+    for block in blocks:
+        if block["address"] not in addresses:
+            addresses.append(block["address"])
+    count_words = {1: "one", 2: "two", 3: "three",
+                   4: "four"}
+    count = count_words.get(
+        len(addresses), str(len(addresses)))
+    lines.append(
+        "Stay strictly accurate to the "
+        f"{count} source documents. Note any "
+        "disagreements between them. Invent "
+        "nothing.")
+    lines += ["", "Sources (must all be read)"]
+    for block in blocks:
+        way = _cycle_access(block, catalogue)
+        tool = way["tool"] if way is not None \
+            else "no access way stands"
+        span = "full file" \
+            if block["line_start"] is None else \
+            f"lines {block['line_start']}-" \
+            f"{block['line_end']}"
+        lines.append(
+            f"- {block['block_id']}: "
+            f"{block['address']} — {tool} — {span}")
+    lines.append(
+        "Evidence boundary hashes are given for "
+        "verification.")
+    lines += ["", "Working method (cycles)",
+              f"- {total} cycles, one block each.",
+              "- For each block: read it, then "
+              "append a draft section to your "
+              "journal — your own words, full "
+              "sentences: the draft of the part of "
+              "the brief this block feeds.",
+              f"- Journal: {journal_path}. Append "
+              "only — never rewrite what stands. "
+              "Each append is the journal as it "
+              "stands, plus your new draft at the "
+              "end, in one sandbox.write.",
+              "- When all cycles are done, "
+              "assemble the final brief from the "
+              "journal draft and deliver it as the "
+              "\"contribute\" outcome — the office "
+              f"files it at {destination}. Then "
+              "yield.", "",
+              "Tools available (only these)"]
+    lines += CYCLE_OPENING_TOOLS_V4
+    lines += ["", "Standing memory (role knowledge)"]
+    lines += [f"- {line}"
+              for line in CYCLE_OPENING_MEMORY_V4]
+    lines += ["", "Position",
+              f"Cycle 1 of {total}. Nothing settled "
+              "yet. First answer is work (no "
+              "acknowledgement needed)."]
+    return "\n".join(lines)
+
+
+def _cycle_opening_text_v8(*, seat, role,
+                           instance_id, case_id,
+                           case_version, destination,
+                           points, min_words, files,
+                           catalogue, journal_path,
+                           total,
+                           contract=_tool_policy
+                           .PRESENTATION_CONTRACT_V11):
+    """The v8 opening's plain-text structure: the
+    director's cleaned opening (v4's text) rendered
+    at the file grain — his sections in his order,
+    and wherever the v4 rendering stated blocks or
+    six cycles, this rendering states the file
+    facts instead (the brief §2.1): the sources,
+    one line per FILE, a file that arrives in parts
+    noted as arriving in parts with its ranges; the
+    working method as the file rhythm — read the
+    file, append your summary of it, next file —
+    and the position counting files. The parts are
+    named only inside their file's line, as the
+    plumbing they are; no section of the opening
+    lists them as work."""
+    lines = [f"Opening package — {seat}", "",
+             "Role & identity",
+             f"- Seat: {seat} (role: {role})",
+             f"- Instance: {instance_id}",
+             f"- Case: {case_id} "
+             f"(version {case_version})",
+             f"- Contract: {contract}",
+             "- Package type: opening", "",
+             "Task",
+             "Deliverable: the brief is delivered "
+             "as the \"contribute\" outcome at the "
+             "end of the walk; the office files it "
+             f"at {destination}; only a filed brief "
+             "completes the assignment."]
+    figures = "about 600 words"
+    if min_words is not None:
+        figures += (
+            f" (minimum {min_words}; the door will "
+            f"not file a brief under {min_words} "
+            "words)")
+    lines.append(
+        "Content requirements: a plain-language "
+        f"brief of {figures}. A newcomer should be "
+        "able to understand:")
+    lines.append("; ".join(
+        f"({i}) {point}" for i, point in
+        enumerate(points, 1)) + ".")
+    count_words = {1: "one", 2: "two", 3: "three",
+                   4: "four"}
+    count = count_words.get(
+        total, str(total))
+    lines.append(
+        "Stay strictly accurate to the "
+        f"{count} source documents. Note any "
+        "disagreements between them. Invent "
+        "nothing.")
+    lines += ["", "Sources (must all be read)"]
+    for entry in files:
+        blocks = entry["blocks"]
+        if len(blocks) == 1:
+            block = blocks[0]
+            way = _cycle_access(block, catalogue)
+            tool = way["tool"] if way is not None \
+                else "no access way stands"
+            lines.append(
+                f"- {entry['file_id']}: "
+                f"{entry['address']} — {tool} — "
+                f"full file")
+        else:
+            ranges = ", ".join(
+                f"lines {block['line_start']}-"
+                f"{block['line_end']}"
+                for block in blocks)
+            lines.append(
+                f"- {entry['file_id']}: "
+                f"{entry['address']} — arrives in "
+                f"parts ({ranges}), read part by "
+                f"part inside this file's step")
+    lines.append(
+        "Evidence boundary hashes are given for "
+        "verification.")
+    lines += ["", "Working method (files)",
+              f"- {total} files, one at a time.",
+              "- For each file: read it, then "
+              "append a draft section to your "
+              "journal — your own words, full "
+              "sentences: the draft of the part of "
+              "the brief this file feeds. A file "
+              "that arrives in parts is read part "
+              "by part inside its step; the summary "
+              "is appended once, when the file "
+              "stands whole.",
+              f"- Journal: {journal_path}. Append "
+              "only — never rewrite what stands. "
+              "Each append is the journal as it "
+              "stands, plus your new draft at the "
+              "end, in one sandbox.write.",
+              "- When all files are done, "
+              "assemble the final brief from the "
+              "journal draft and deliver it as the "
+              "\"contribute\" outcome — the office "
+              f"files it at {destination}. Then "
+              "yield.", "",
+              "Tools available (only these)"]
+    lines += CYCLE_OPENING_TOOLS_V4
+    lines += ["", "Standing memory (role knowledge)"]
+    lines += [f"- {line}"
+              for line in CYCLE_OPENING_MEMORY_V4]
+    lines += ["", "Position",
+              f"File 1 of {total}. Nothing settled "
+              "yet. First answer is work (no "
+              "acknowledgement needed)."]
+    return "\n".join(lines)
+
+
+# The carryover successor's texts (office-cycle-
+# v5; the director's orders of 2026-11-25 22:09
+# MST, after demo-gptoss8): the cycle package's
+# direction can no longer say the journal is not
+# carried — under this contract it rides at the
+# package's centre as his draft so far — and the
+# summarize direction says the same. The label
+# the draft component carries, and the one next
+# step the cycle instruction states, are the
+# contract's other two wordings; everything else
+# in the cycle presentation is v4's whole.
+CYCLE_DIRECTION_CYCLE_V5 = (
+    "A cycle package: where the walk stands, this "
+    "cycle's block and its way in, and — the first "
+    "time its read stands — its content, presented "
+    "once. Every other block stands as a pointer. "
+    "Your journal rides in this package as your "
+    "draft so far — the brief you are building, "
+    "carried at its centre, so each next step is "
+    "taken from your own words.")
+CYCLE_DIRECTION_SUMMARIZE_V5 = (
+    "The summarize package: every cycle stands "
+    "complete. Your journal rides in this package "
+    "as your draft so far — assemble the brief "
+    "from the draft that stands in it. No source "
+    "content rides this package; the sources stand "
+    "as pointers.")
+CYCLE_JOURNAL_DRAFT_LABEL_V5 = (
+    "Your draft so far — your journal as it "
+    "stands, the brief you are building. It rides "
+    "at the centre of every package under this "
+    "contract; your next append extends this "
+    "text.")
+# The zero-carryover successor's direction
+# (office-cycle-v6; the director's ruling of
+# 2026-11-25 22:29 MST, reversing the carryover
+# above): the standing truth stated again in the
+# job's plain words — the journal is not carried;
+# it stands in his scratch at its own address, and
+# he reads it when he needs it, a pull like any
+# other. The address is the case's own, formatted
+# in at the package's build, as the next step
+# below formats it.
+CYCLE_DIRECTION_CYCLE_V6 = (
+    "A cycle package: where the walk stands, this "
+    "cycle's block and its way in, and — the first "
+    "time its read stands — its content, presented "
+    "once. Every other block stands as a pointer. "
+    "Your journal is not carried; it stands in "
+    "your scratch at {journal}, and you read it "
+    "when you need it — a sandbox.read of the "
+    "journal is a pull like any other.")
+
+
+def _cycle_next_step_v5(block, journal_path):
+    """The one next step a v5 cycle package states,
+    in the job's plain words (the director's own
+    statement of the job, 2026-11-25 22:08 MST:
+    read the file, write the summary in the
+    journal, repeat, then combine), derived from
+    the current cycle's state at presentation:
+    where the block's read does not yet stand, the
+    step is the read and the append it feeds;
+    where the read stands, the step is the append
+    alone, and it completes the cycle. The append
+    is named in its counted form — the journal as
+    it stands, plus the new part at the end, in
+    one sandbox.write — the same form the journal
+    gate's correction names."""
+    address = block["address"]
+    if block["read_stands"]:
+        return (
+            f"Next: append your summary of "
+            f"{address} to your journal at "
+            f"{journal_path} — the journal as it "
+            f"stands, plus your summary at the "
+            f"end, in one sandbox.write. That "
+            f"append completes this cycle.")
+    if block["line_start"] is not None:
+        span = (f" lines {block['line_start']}–"
+                f"{block['line_end']}")
+    else:
+        span = " — the whole file"
+    return (
+        f"Next: read {address}{span}, then append "
+        f"your summary of it to your journal at "
+        f"{journal_path} — the journal as it "
+        f"stands, plus your summary at the end, "
+        f"in one sandbox.write.")
+
+
+def _cycle_next_line_v7(block, journal_path, *,
+                        refused=False):
+    """The Next line an office-cycle-v7 package
+    opens with (the director's order of
+    2026-11-25 22:41 MST, after he watched
+    demo-gptoss9's packages describe state and
+    leave the deciding to the worker): the
+    imperative first, one line, before any state —
+    derived at presentation time from the current
+    cycle state, never canned text that can go
+    stale against the state it opens. Where the
+    block's read does not yet stand, the step is
+    the read and the append it feeds; where the
+    read stands — or a gate refusal stands against
+    the last move, whose passing step is the
+    append in its counted form — the step is the
+    append alone. On the summarize package (no
+    current block) the step is the combine: read
+    the journal, combine its summaries into the
+    brief, deliver by the contribute outcome. The
+    gate's correction, where one stands, follows
+    the line unmerged: the correction explains,
+    the Next line commands."""
+    if block is None:
+        return (
+            f"Next: read your journal at "
+            f"{journal_path}, combine its "
+            f"summaries into the brief (about "
+            f"600 words), and deliver the brief "
+            f"as your contribute outcome.")
+    address = block["address"]
+    if refused or block["read_stands"]:
+        return (
+            f"Next: append your summary of "
+            f"{address} to your journal — the "
+            f"standing journal plus your new "
+            f"part at the end, in one write.")
+    if block["line_start"] is not None:
+        span = (f"lines {block['line_start']}–"
+                f"{block['line_end']}")
+    else:
+        span = "in full"
+    return (
+        f"Next: read {address} {span}. Then "
+        f"append your summary of it to your "
+        f"journal.")
+
+
+# The file-grain successor's direction
+# (office-cycle-v8; the director's orders of
+# 2026-11-25 23:03 MST): the cycle direction in
+# the job's own units — this file, its way in,
+# its content presented once as it stands read
+# (a file that arrives in parts presents each
+# part once, as it lands; every other part and
+# every other file stands as a pointer) — and
+# the zero-carryover truth, as v6 states it.
+# The address is the case's own, formatted in
+# at the package's build, as the next step
+# below formats it.
+CYCLE_DIRECTION_CYCLE_V8 = (
+    "A cycle package: where the walk stands, this "
+    "file and its way in, and — the first time "
+    "its read stands — its content, presented "
+    "once. A file that arrives in parts presents "
+    "each part once, as it lands; every other "
+    "part and every other file stands as a "
+    "pointer. Your journal is not carried; it "
+    "stands in your scratch at {journal}, and "
+    "you read it when you need it — a sandbox."
+    "read of the journal is a pull like any "
+    "other.")
+
+
+def _cycle_next_line_v8(file, journal_path, *,
+                        refused=False):
+    """The Next line an office-cycle-v8 package
+    opens with: v7's rule (the imperative first,
+    derived at presentation from the state it
+    opens) at the file grain — the walk's unit is
+    the file, so the line derives from the FILE's
+    state. Where the file's read stands whole —
+    or a gate refusal stands against the last
+    move, whose passing step is the append — the
+    step is the append alone, in v7's own wording.
+    Where the file is one whole-file block not
+    yet read, the step is v7's read form. Where
+    the file arrives in parts and a part is still
+    owed, the step is the next part alone — no
+    append is promised after a part, because no
+    append is asked between a file's parts: the
+    append comes when the file stands whole. On
+    the summarize package (no current file) the
+    step is v7's combine line, unchanged."""
+    if file is None:
+        return _cycle_next_line_v7(
+            None, journal_path)
+    address = file["address"]
+    if refused or file["read_stands"]:
+        return (
+            f"Next: append your summary of "
+            f"{address} to your journal — the "
+            f"standing journal plus your new "
+            f"part at the end, in one write.")
+    blocks = file["blocks"]
+    if len(blocks) == 1:
+        return _cycle_next_line_v7(
+            blocks[0], journal_path)
+    nxt = next(block for block in blocks
+               if not block["read_stands"])
+    return (
+        f"Next: read {address} lines "
+        f"{nxt['line_start']}–{nxt['line_end']} "
+        f"— the next part of the file.")
+
+
+def _cycle_next_step_v8(file, journal_path):
+    """The one next step a v8 cycle package's
+    current-file component states, in the fuller
+    form (v5's next-step shape at the file grain):
+    where the file's read stands, the append
+    alone, completing the file; where a part is
+    still owed, the next part — and the append
+    the whole file feeds, named as the step's
+    end, not as a step between parts."""
+    address = file["address"]
+    if file["read_stands"]:
+        return (
+            f"Next: append your summary of "
+            f"{address} to your journal at "
+            f"{journal_path} — the journal as it "
+            f"stands, plus your summary at the "
+            f"end, in one sandbox.write. That "
+            f"append completes this file.")
+    blocks = file["blocks"]
+    if len(blocks) == 1:
+        return (
+            f"Next: read {address} — the whole "
+            f"file, then append your summary of "
+            f"it to your journal at "
+            f"{journal_path} — the journal as it "
+            f"stands, plus your summary at the "
+            f"end, in one sandbox.write.")
+    nxt = next(block for block in blocks
+               if not block["read_stands"])
+    return (
+        f"Next: read {address} lines "
+        f"{nxt['line_start']}–{nxt['line_end']} "
+        f"— the next part of the file. The "
+        f"file's parts are plumbing inside this "
+        f"step: no summary is appended between "
+        f"parts; when every part stands read, "
+        f"append your summary of the whole file "
+        f"to your journal at {journal_path} — "
+        f"the journal as it stands, plus your "
+        f"summary at the end, in one "
+        f"sandbox.write.")
+
+
+def _cycle_gate_correction_v8(gate, journal_path,
+                              files):
+    """The correction a cycle gate leaves for the
+    wake's package under the file grain, derived
+    from the gate event's facts in the job's own
+    units (the standing correction's shape, the
+    files named as files): a later file's read
+    stands while the walk stands on an earlier
+    file, and the walk stays on the earlier file
+    until its read stands and its journal append
+    stands. The gate payload names the current
+    file's number as its cycle and anchors both
+    files by their first blocks; the file ids are
+    read from the derived file state."""
+    def _file_id(address, block_id):
+        for entry in files or []:
+            if entry["address"] == address or \
+                    block_id in entry["block_ids"]:
+                return entry["file_id"]
+        return None
+
+    cycle = gate.get("cycle")
+    address = gate.get("address")
+    ahead_address = gate.get("ahead_address")
+    mine_id = _file_id(address, gate.get("block_id"))
+    ahead_id = _file_id(
+        ahead_address, gate.get("ahead_block_id"))
+    mine = (f"file {mine_id} ({address})"
+            if mine_id else f"the file {address}")
+    ahead = (f"file {ahead_id} ({ahead_address})"
+             if ahead_id else
+             f"the file {ahead_address}")
+    return {
+        "cycle": cycle,
+        "file_id": mine_id,
+        "address": address,
+        "ahead_file_id": ahead_id,
+        "ahead_address": ahead_address,
+        "what_arrived": (
+            f"The read of {ahead} stands in the "
+            f"record — your work arrived and it "
+            f"stands: nothing is refused, nothing "
+            f"is lost, and {ahead} will be "
+            f"presented at its own step."),
+        "instruction": (
+            f"The walk is still on {mine}: it "
+            f"completes when its read stands and "
+            f"your journal holds your summary of "
+            f"it. Append your summary at "
+            f"{journal_path} — the journal as it "
+            f"stands, plus the new part at the "
+            f"end, in one sandbox.write — and "
+            f"the walk moves on."),
+        "example": (
+            f"For example: sandbox.write with "
+            f"{{\"path\": \"{journal_path}\", "
+            f"\"content\": \"<your journal as it "
+            f"stands, plus your summary of "
+            f"{address}>\"}}.")}
+
+
+def _cycle_gate_correction(gate, journal_path):
+    """The correction a cycle gate leaves for the
+    wake's package, derived from the gate event's
+    facts (Ben's gate ruling, INDEX 475 — what
+    arrived, what is needed, an example; nothing
+    refused, nothing lost): a later block's read
+    stands while an earlier cycle stands incomplete,
+    and the walk stays on the earlier cycle until its
+    journal append stands."""
+    cycle = gate.get("cycle")
+    block_id = gate.get("block_id")
+    address = gate.get("address")
+    ahead_id = gate.get("ahead_block_id")
+    ahead_address = gate.get("ahead_address")
+    return {
+        "cycle": cycle,
+        "block_id": block_id,
+        "address": address,
+        "ahead_block_id": ahead_id,
+        "ahead_address": ahead_address,
+        "what_arrived": (
+            f"The read of block {ahead_id} "
+            f"({ahead_address}) stands in the record — "
+            f"your work arrived and it stands: nothing "
+            f"is refused, nothing is lost, and block "
+            f"{ahead_id} will be presented at its own "
+            f"cycle."),
+        "instruction": (
+            f"The walk is still on cycle {cycle}: "
+            f"block {block_id} ({address}) completes "
+            f"when your journal holds the bits you "
+            f"took from it. Append them at "
+            f"{journal_path} — the journal as it "
+            f"stands, plus the new bits, in one "
+            f"sandbox.write — and the walk moves on."),
+        "example": (
+            f"For example: sandbox.write with "
+            f"{{\"path\": \"{journal_path}\", "
+            f"\"content\": \"<your journal as it "
+            f"stands, plus the bits from block "
+            f"{block_id}>\"}}.")}
+
+
+def _journal_gate_correction(gate, journal_path):
+    """The correction a journal gate leaves for the
+    wake's package, derived from the gate event's
+    facts (the same ruling's shape): a write to the
+    journal rewrote instead of adding, so it is not
+    counted as a transition and the accepted journal
+    did not move — the correction names the rule and
+    the way back."""
+    return {
+        "what_arrived": (
+            f"A write to your journal at "
+            f"{journal_path} stands in the record "
+            f"whose content did not begin with your "
+            f"journal as it stands — it rewrote "
+            f"instead of adding. The write executed, "
+            f"and it stands as your work; it is not "
+            f"counted as a journal entry, and the "
+            f"journal of record did not move."),
+        "instruction": (
+            f"The rule of the journal is: entries "
+            f"stand; add, never rewrite. Read your "
+            f"journal back with sandbox.read at "
+            f"{journal_path}, and write it again "
+            f"whole — what stands, plus your new bits "
+            f"appended at the end — in one "
+            f"sandbox.write. That append is counted, "
+            f"and the walk advances on it."),
+        "example": (
+            f"For example: sandbox.read with "
+            f"{{\"path\": \"{journal_path}\"}}, then "
+            f"sandbox.write with {{\"path\": "
+            f"\"{journal_path}\", \"content\": \"<the "
+            f"journal as it stands, plus your new "
+            f"bits>\"}}.")}
+
+
+def _cycle_blocks(content, generated):
+    """The sealed block map the cycle contract
+    honours: the generated record's block map, where
+    it stands well-formed against the case's declared
+    delivery evidence (the seal's own preflight rule),
+    else None — no cycle state derives from a map that
+    does not stand."""
+    if not isinstance(generated, dict):
+        return None
+    evidence = (content or {}).get("delivery_evidence")
+    declared = evidence.get("addresses") \
+        if isinstance(evidence, dict) else None
+    block_map = generated.get("block_map")
+    if _tool_policy.block_map_problem(
+            block_map, declared) is not None:
+        return None
+    return block_map
+
+
+def _block_read_facts(entries, block):
+    """Whether one block's read stands carried, and
+    the dispatch completing it (the cycle gate's rule,
+    the plan §5): for a range block, a carried
+    read_range serving exactly its sealed range, or a
+    carried whole read of its file; for a whole-file
+    block, a carried whole read, or carried pure-line
+    ranges together covering the file's lines [1..T]
+    (T standing in a carried listing of the file, as
+    the standing evidence computation reads it).
+    Returns (stands, completing outcome seq, the
+    establishing entry) — the entry whose provenance
+    the block's pointer carries: the completing
+    dispatch's own entry."""
+    address = block["address"]
+    mine = [entry for entry in entries
+            if entry.get("path") == address
+            and entry.get("tool") in (
+                "sandbox.read", "sandbox.read_range")
+            and entry.get("content_carried")
+            and "content" in entry]
+    if block.get("line_start") is not None:
+        for entry in mine:
+            if entry.get("tool") == "sandbox.read" and \
+                    (entry.get("served") or {}).get(
+                        "kind") == "whole":
+                return True, \
+                    entry.get("outcome_event_seq"), entry
+        for entry in mine:
+            served = entry.get("served") or {}
+            if entry.get("tool") == "sandbox.read_range" \
+                    and served.get("kind") == "range" \
+                    and served.get("byte_start") is None \
+                    and served.get("start_line") == \
+                    block["line_start"] \
+                    and served.get("end_line") == \
+                    block["line_end"]:
+                return True, \
+                    entry.get("outcome_event_seq"), entry
+        return False, None, None
+    for entry in mine:
+        if entry.get("tool") == "sandbox.read" and \
+                (entry.get("served") or {}).get(
+                    "kind") == "whole":
+            return True, entry.get("outcome_event_seq"), \
+                entry
+    total = None
+    for entry in entries:
+        if entry.get("path") == address and \
+                entry.get("tool") == "sandbox.list":
+            served = entry.get("served") or {}
+            if isinstance(served.get("line_count"), int) \
+                    and not isinstance(
+                        served.get("line_count"), bool):
+                total = served["line_count"]
+    if total is None:
+        return False, None, None
+    covered_to = 0
+    for entry in mine:
+        served = entry.get("served") or {}
+        if entry.get("tool") != "sandbox.read_range" \
+                or served.get("kind") != "range" \
+                or served.get("byte_start") is not None:
+            continue
+        start = served.get("start_line")
+        end = served.get("end_line")
+        if not isinstance(start, int) or \
+                not isinstance(end, int):
+            continue
+        if start <= covered_to + 1:
+            covered_to = max(covered_to, end)
+            if covered_to >= total:
+                return True, \
+                    entry.get("outcome_event_seq"), entry
+    return False, None, None
+
+
+def _block_content(entries, block):
+    """A block's content, assembled from the working
+    set's carried entries — the content its cycle
+    presents, exactly the bytes its read carried: for
+    a range block, its exact range entry's content, or
+    its whole-read entry's content sliced to the
+    block's lines; for a whole-file block, its whole
+    read's content, or its covering ranges' contents
+    joined in line order. None where the block's read
+    does not stand."""
+    address = block["address"]
+    mine = [entry for entry in entries
+            if entry.get("path") == address
+            and entry.get("tool") in (
+                "sandbox.read", "sandbox.read_range")
+            and entry.get("content_carried")
+            and "content" in entry]
+    if block.get("line_start") is not None:
+        for entry in mine:
+            served = entry.get("served") or {}
+            if entry.get("tool") == "sandbox.read_range" \
+                    and served.get("kind") == "range" \
+                    and served.get("byte_start") is None \
+                    and served.get("start_line") == \
+                    block["line_start"] \
+                    and served.get("end_line") == \
+                    block["line_end"]:
+                return entry["content"]
+        for entry in mine:
+            if entry.get("tool") == "sandbox.read" and \
+                    (entry.get("served") or {}).get(
+                        "kind") == "whole":
+                lines = _tool_policy.split_lines(
+                    entry["content"].encode("utf-8"))
+                part = b"".join(lines[
+                    block["line_start"] - 1:
+                    block["line_end"]])
+                return part.decode("utf-8")
+        return None
+    for entry in mine:
+        if entry.get("tool") == "sandbox.read" and \
+                (entry.get("served") or {}).get(
+                    "kind") == "whole":
+            return entry["content"]
+    stands, _seq, _entry = _block_read_facts(
+        entries, block)
+    if not stands:
+        return None
+    parts = []
+    for entry in mine:
+        served = entry.get("served") or {}
+        if entry.get("tool") == "sandbox.read_range" \
+                and served.get("kind") == "range" \
+                and served.get("byte_start") is None \
+                and isinstance(
+                    served.get("start_line"), int):
+            parts.append((served["start_line"],
+                          entry["content"]))
+    parts.sort(key=lambda part: part[0])
+    return "".join(content for _start, content in parts)
+
+
+def _journal_chain(writes):
+    """The office's journal of record over the
+    journal's standing writes ((outcome seq, content)
+    pairs in outcome order, _tree_journal_writes'
+    collection): the accepted chain of transitions
+    from the sealed baseline — the empty string. A
+    write is an accepted transition where its content
+    holds the accepted content as an exact prefix and
+    is longer; it is a refusal where its content does
+    not hold the accepted content as a prefix (it
+    rewrote, or replaced); a write repeating the
+    accepted content exactly is neither — nothing
+    added, nothing rewritten away. The accepted
+    content after the chain is the journal of record;
+    the room's file may hold something else (a refused
+    write executed there), and every derivation reads
+    the accepted chain, stated honestly: the prefix
+    rule proves continuity between accepted states —
+    it is not a cryptographic authenticity system."""
+    accepted = ""
+    transitions = []
+    refusals = []
+    for write_seq, content in writes:
+        if content == accepted:
+            continue
+        if content.startswith(accepted):
+            transitions.append({
+                "write_seq": write_seq,
+                "before_sha256": sha256_hex(
+                    accepted.encode("utf-8")),
+                "after_sha256": sha256_hex(
+                    content.encode("utf-8")),
+                "added_bytes": len(
+                    content.encode("utf-8")) - len(
+                    accepted.encode("utf-8")),
+                "content_after": content})
+            accepted = content
+        else:
+            refusals.append({
+                "write_seq": write_seq,
+                "accepted_sha256": sha256_hex(
+                    accepted.encode("utf-8")),
+                "attempted_sha256": sha256_hex(
+                    content.encode("utf-8"))})
+    return {"accepted": accepted,
+            "transitions": transitions,
+            "refusals": refusals}
+
+
+def _cycle_state(events, dispatches, instance_id, head,
+                 content, generated, iteration):
+    """The cycle walk's state at one package head,
+    derived from the record alone: each block's state
+    (done / current / pending), the current cycle, the
+    journal chain over the accepted baseline, and the
+    working set the derivation weighed. Returns None
+    where the sealed block map does not stand or the
+    case designates no journal.
+
+    The derivation, in the map's order: a block's
+    cycle is done iff its read stands carried (the
+    block rule) AND an accepted journal transition
+    stands after the dispatch completing the read —
+    transitions consumed in cycle order, one
+    transition closing at most one cycle, so a single
+    append after a batch of reads cannot close two
+    cycles. A transition is attributed to the earliest
+    cycle it closes; a transition closing none (it
+    stands before its cycle's read, or after every
+    cycle stands done) is attributed to the cycle
+    current at its writing, or to none where the walk
+    already stood complete. The current cycle is the
+    first cycle not done; where none stands, the walk
+    is at SUMMARIZE."""
+    block_map = _cycle_blocks(content, generated)
+    journal_path = _staged_journal_path(content)
+    if block_map is None or journal_path is None:
+        return None
+    working_set = _derive_working_set(
+        events, dispatches, instance_id, head)
+    entries = working_set["entries"]
+    requested = _tree_requested(events, head)
+    writes = _tree_journal_writes(
+        events, dispatches, requested, instance_id,
+        head, journal_path)
+    chain = _journal_chain(writes)
+    facts = {}
+    for index, block in enumerate(block_map):
+        stands, read_seq, entry = _block_read_facts(
+            entries, block)
+        facts[block["block_id"]] = {
+            "read_stands": stands,
+            "read_seq": read_seq,
+            "entry": entry,
+            "cycle": index + 1}
+    closed = {}
+    attribution = {}
+    for transition in chain["transitions"]:
+        target = None
+        for block in block_map:
+            if block["block_id"] in closed:
+                continue
+            block_facts = facts[block["block_id"]]
+            if block_facts["read_stands"] and \
+                    block_facts["read_seq"] is not None \
+                    and block_facts["read_seq"] < \
+                    transition["write_seq"]:
+                target = block
+                break
+        if target is not None:
+            closed[target["block_id"]] = transition
+            attribution[transition["write_seq"]] = \
+                facts[target["block_id"]]["cycle"]
+        else:
+            following = next(
+                (block for block in block_map
+                 if block["block_id"] not in closed),
+                None)
+            attribution[transition["write_seq"]] = \
+                facts[following["block_id"]]["cycle"] \
+                if following is not None else None
+    blocks = []
+    current = None
+    for index, block in enumerate(block_map):
+        done = block["block_id"] in closed
+        if done:
+            state_name = "done"
+        elif current is None:
+            state_name = "current"
+            current = index + 1
+        else:
+            state_name = "pending"
+        blocks.append(dict(
+            block, state=state_name,
+            read_stands=facts[
+                block["block_id"]]["read_stands"],
+            read_seq=facts[block["block_id"]]["read_seq"],
+            entry=facts[block["block_id"]]["entry"],
+            cycle=index + 1))
+    return {
+        "block_map": block_map,
+        "blocks": blocks,
+        "current": current,
+        "journal_path": journal_path,
+        "writes": writes,
+        "chain": chain,
+        "attribution": attribution,
+        "working_set": working_set,
+        "entries": entries,
+        "requested": requested}
+
+
+def _cycle_files(content, generated):
+    """The sealed file grouping the file-grain
+    contract honours: the generated record's file
+    map, where it stands well-formed against the
+    sealed block map (the seal's own rule, in
+    tool_policy), else None — no file-grain state
+    derives from a grouping that does not stand."""
+    if not isinstance(generated, dict):
+        return None
+    block_map = _cycle_blocks(content, generated)
+    if block_map is None:
+        return None
+    file_map = generated.get("file_map")
+    if _tool_policy.file_map_problem(
+            file_map, block_map) is not None:
+        return None
+    return file_map
+
+
+def _cycle_state_v8(events, dispatches, instance_id,
+                    head, content, generated,
+                    iteration):
+    """The cycle walk's state at one package head
+    under the file grain (office-cycle-v8), derived
+    from the record alone: the same working set,
+    journal chain and per-block read facts the
+    standing derivation weighs — the blocks remain
+    the evidence and carriage units — grouped
+    under their files, the walk's unit. A file's
+    read stands iff every one of its blocks' reads
+    stands carried (the block rule, per block);
+    its read completes at the last completing
+    dispatch among its blocks. A file is done iff
+    its read stands AND an accepted journal
+    transition stands after its read completed —
+    transitions consumed in file order, one
+    transition closing at most one file, so a
+    single append after a batch of reads cannot
+    close two files, and no append between a
+    file's parts can close the file before its
+    read stands whole. A transition closing no
+    file is attributed to the file current at its
+    writing, or to none where the walk already
+    stood complete. The current file is the first
+    file not done; where none stands, the walk is
+    at SUMMARIZE. Returns None where the sealed
+    block map or file grouping does not stand or
+    the case designates no journal."""
+    block_map = _cycle_blocks(content, generated)
+    file_map = _cycle_files(content, generated)
+    journal_path = _staged_journal_path(content)
+    if block_map is None or file_map is None or \
+            journal_path is None:
+        return None
+    working_set = _derive_working_set(
+        events, dispatches, instance_id, head)
+    entries = working_set["entries"]
+    requested = _tree_requested(events, head)
+    writes = _tree_journal_writes(
+        events, dispatches, requested, instance_id,
+        head, journal_path)
+    chain = _journal_chain(writes)
+    facts = {}
+    for index, block in enumerate(block_map):
+        stands, read_seq, entry = _block_read_facts(
+            entries, block)
+        facts[block["block_id"]] = {
+            "read_stands": stands,
+            "read_seq": read_seq,
+            "entry": entry,
+            "cycle": index + 1}
+    blocks = []
+    for index, block in enumerate(block_map):
+        blocks.append(dict(
+            block,
+            read_stands=facts[
+                block["block_id"]]["read_stands"],
+            read_seq=facts[block["block_id"]][
+                "read_seq"],
+            entry=facts[block["block_id"]]["entry"],
+            cycle=index + 1))
+    blocks_by_id = {block["block_id"]: block
+                    for block in blocks}
+    files = []
+    for number, group in enumerate(file_map, 1):
+        mine = [blocks_by_id[block_id]
+                for block_id in group["block_ids"]]
+        read_stands = all(
+            block["read_stands"] for block in mine)
+        completion_seq = max(
+            (block["read_seq"] for block in mine),
+            default=None) if read_stands else None
+        files.append({
+            "file_id": group["file_id"],
+            "address": group["address"],
+            "block_ids": list(group["block_ids"]),
+            "blocks": mine,
+            "read_stands": read_stands,
+            "completion_seq": completion_seq,
+            "number": number})
+    closed = {}
+    attribution = {}
+    for transition in chain["transitions"]:
+        target = None
+        for entry in files:
+            if entry["number"] in closed:
+                continue
+            if entry["read_stands"] and \
+                    entry["completion_seq"] is not None \
+                    and entry["completion_seq"] < \
+                    transition["write_seq"]:
+                target = entry
+                break
+        if target is not None:
+            closed[target["number"]] = transition
+            attribution[transition["write_seq"]] = \
+                target["number"]
+        else:
+            following = next(
+                (entry for entry in files
+                 if entry["number"] not in closed),
+                None)
+            attribution[transition["write_seq"]] = \
+                following["number"] \
+                if following is not None else None
+    current = None
+    for entry in files:
+        entry["done"] = entry["number"] in closed
+        if entry["done"]:
+            entry["state"] = "done"
+        elif current is None:
+            entry["state"] = "current"
+            current = entry["number"]
+        else:
+            entry["state"] = "pending"
+        if entry["state"] == "current" and \
+                not entry["read_stands"] and \
+                len(entry["blocks"]) > 1:
+            # A multi-part file mid-step names its
+            # standing parts inside its state line —
+            # state, not a task list: the parts are
+            # plumbing, and the count is where the
+            # file stands, nothing more.
+            parts_read = sum(
+                1 for block in entry["blocks"]
+                if block["read_stands"])
+            entry["state"] = (
+                f"current ({parts_read} of "
+                f"{len(entry['blocks'])} parts read)")
+        # Each part stands in its file's state: the
+        # flat block list carries the standing state
+        # word of its file, so every consumer of the
+        # block list reads a state under this
+        # contract too.
+        for block in entry["blocks"]:
+            block["state"] = entry["state"]
+    return {
+        "block_map": block_map,
+        "blocks": blocks,
+        "file_map": file_map,
+        "files": files,
+        "current": current,
+        "journal_path": journal_path,
+        "writes": writes,
+        "chain": chain,
+        "attribution": attribution,
+        "working_set": working_set,
+        "entries": entries,
+        "requested": requested}
+
+
+def _tree_computation(tree, cstate, iteration,
+                      deliverable_filed):
+    """The sealed tree's node states at one package
+    head (office-cycle-v9, the build scope of
+    2026-11-26 as amended): derived from the SAME
+    derivation the cycle packages stand on — the
+    file-grain cycle state over the record — never a
+    second reading of the record. One computation;
+    the package's tree block and the speaking
+    refusal both render from it, so the two can
+    never disagree (the plan's anti-interlacing
+    rule). A node stands done only on its recorded
+    act: a gather node on its read standing whole
+    AND its journal transition standing (the settled
+    method, INDEX 575 — read everything but
+    journaled nothing is NOT finished gathering);
+    summarize and deliver on the brief standing
+    filed. A pending node whose dependency stands
+    unfilled is blocked, and its fact names the
+    unfilled dependency."""
+    files = {entry["address"]: entry
+             for entry in cstate["files"]}
+    states = {}
+    nodes = []
+    for node in tree["nodes"]:
+        kind = node["kind"]
+        facts = []
+        state_name = "pending"
+        if kind == "onboarding":
+            state_name = "done" if iteration > 1 \
+                else "current"
+        elif kind == "gather":
+            entry = files.get(node["source"])
+            if entry is None:
+                facts.append(
+                    "this source stands outside the "
+                    "sealed file map; the office "
+                    "cannot derive its state")
+            else:
+                if entry["done"]:
+                    state_name = "done"
+                elif str(entry["state"]).startswith(
+                        "current"):
+                    state_name = "current"
+                if entry["read_stands"]:
+                    facts.append(
+                        f"you hold this source whole "
+                        f"({len(entry['blocks'])} "
+                        f"part(s))")
+                    if entry["done"]:
+                        facts.append(
+                            "its journal bit stands "
+                            "written")
+                    else:
+                        facts.append(
+                            "reads of it are closed; "
+                            "your next act is to write "
+                            "its journal bit from what "
+                            "you hold")
+                else:
+                    read_parts = sum(
+                        1 for block in entry["blocks"]
+                        if block["read_stands"])
+                    if read_parts:
+                        facts.append(
+                            f"{read_parts} of "
+                            f"{len(entry['blocks'])} "
+                            f"parts read so far")
+        elif kind in ("summarize", "deliver"):
+            if deliverable_filed:
+                state_name = "done"
+            elif node["depends_on"] and all(
+                    states.get(dep) == "done"
+                    for dep in node["depends_on"]):
+                state_name = "current"
+        states[node["id"]] = state_name
+        nodes.append({"id": node["id"],
+                      "label": node["label"],
+                      "kind": kind,
+                      "state": state_name,
+                      "facts": facts,
+                      "workaround":
+                          node.get("workaround") or ""})
+    labels = {node["id"]: node["label"]
+              for node in tree["nodes"]}
+    for node, computed in zip(tree["nodes"], nodes):
+        if computed["state"] != "pending":
+            continue
+        # Blocked names a dependency that itself
+        # stands unstarted or blocked; a dependency
+        # standing current is the work in hand, and
+        # this node is simply next.
+        unfilled = [dep for dep in node["depends_on"]
+                    if states.get(dep) in
+                    ("pending", "blocked")]
+        if unfilled:
+            computed["state"] = "blocked"
+            states[node["id"]] = "blocked"
+            computed["facts"].append(
+                "waiting on: " + "; ".join(
+                    labels[dep] for dep in unfilled))
+    return {"title": tree["title"], "nodes": nodes}
+
+
+def _tree_text(computation):
+    """The tree as the worker reads it: one line per
+    node with its state, its facts beneath it, and a
+    node's workaround where the node stands current
+    or blocked and carries one (INDEX 572: the
+    workaround rides on the node it answers)."""
+    marks = {"done": "[done]", "current": "[current]",
+             "pending": "[pending]",
+             "blocked": "[blocked]"}
+    lines = [f"Process tree — {computation['title']}"]
+    for node in computation["nodes"]:
+        lines.append(
+            f"{marks[node['state']]} {node['label']}")
+        for fact in node["facts"]:
+            lines.append(f"    {fact}")
+        if node["workaround"] and \
+                node["state"] in ("current", "blocked"):
+            lines.append(
+                f"    Workaround: {node['workaround']}")
+    return "\n".join(lines)
+
+
+def _tree_speaking_refusals(tool_results, computation):
+    """The speaking refusal (office-cycle-v9): where
+    a doorway refusal in this package's results names
+    an exhausted bound for a read tool, the refusal
+    gains the correction the tree computation
+    derives — the sources the worker already holds
+    whole, and, where a held source's journal bit
+    stands unwritten, the next act (Amendment 2:
+    the correction names the next action, not only
+    the state). The doorway's ground itself is
+    untouched; this is presentation, from the one
+    shared computation."""
+    held = [node for node in computation["nodes"]
+            if node["kind"] == "gather" and any(
+                fact.startswith("you hold this source")
+                for fact in node["facts"])]
+    if not held:
+        return
+    unjournaled = [node for node in held if any(
+        "next act is to write its journal bit" in fact
+        for fact in node["facts"])]
+    for entry in tool_results:
+        if entry.get("outcome") != "refused" or \
+                entry.get("refusal_class") != \
+                "doorway_refused":
+            continue
+        error = entry.get("error") or ""
+        if "bound for tool" not in error or \
+                "exhausted" not in error or not any(
+                    tool in error for tool in
+                    ("sandbox.read", "sandbox.read_range")):
+            continue
+        names = "; ".join(node["label"] for node in held)
+        correction = (
+            f" You already hold, whole: {names}. "
+            f"Another read is unnecessary.")
+        if unjournaled:
+            correction += (
+                " Your next act is to write the "
+                "journal bit for the held source that "
+                "lacks one, from what you hold.")
+        entry["error"] = error + correction
+
+
+def _cycle_gate_owed_v8(cstate):
+    """What the cycle gate owes at a wake under the
+    file grain, from the derived file state:
+    (file number, current file, ahead file) where
+    the current file stands incomplete AND a later
+    FILE's read stands carried in whole or in part
+    — work ran ahead of the file it belongs to.
+    None anywhere else: reads of the current file's
+    own parts, however many land at once, owe no
+    gate — the parts are plumbing inside the file's
+    step, and the honest path owes none either."""
+    if cstate is None or cstate["current"] is None:
+        return None
+    current = cstate["current"]
+    for entry in cstate["files"]:
+        if entry["number"] > current and \
+                any(block["read_stands"]
+                    for block in entry["blocks"]):
+            mine = cstate["files"][current - 1]
+            return current, mine, entry
+    return None
+
+
+def _cycle_gate_owed(cstate):
+    """What the cycle gate owes at a wake, from the
+    derived cycle state: (cycle, block, ahead block)
+    where the current cycle stands incomplete AND a
+    later block's read stands carried — work ran ahead
+    of the cycle it belongs to. None anywhere else:
+    the honest path, which pulls each block at its own
+    cycle, owes no gate."""
+    if cstate is None or cstate["current"] is None:
+        return None
+    current = cstate["current"]
+    for block in cstate["blocks"]:
+        if block["cycle"] > current and \
+                block["read_stands"]:
+            mine = cstate["blocks"][current - 1]
+            return current, mine, block
+    return None
+
+
+def _cycle_presented_block_ids(events, dispatches,
+                               instance_id, content,
+                               generated,
+                               iteration_heads):
+    """The block ids whose content has already been
+    presented at an earlier wake of this run, derived
+    from the record alone: for each earlier iteration
+    (its number and its package head, from the
+    record's iteration events), the cycle state at
+    that head — where the iteration's current block's
+    read stood, that block's content stood in front of
+    the worker at that wake, presented once, at its
+    cycle. (A block re-pulled in the response just
+    before a wake is presented again in that wake's
+    own results carriage, as that response's newest
+    result — a presentation of the pull, not of the
+    cycle, and no bar to the cycle's own presentation
+    where the block is a later one: a later block's
+    content is never presented before its cycle.)"""
+    presented = set()
+    for number, head in iteration_heads:
+        earlier = _cycle_state(
+            events, dispatches, instance_id, head,
+            content, generated, number)
+        if earlier is None or \
+                earlier["current"] is None:
+            continue
+        block = earlier["blocks"][earlier["current"] - 1]
+        if block["read_stands"]:
+            presented.add(block["block_id"])
+    return presented
+
+
+def _v8_current_part(cstate, presented):
+    """The part whose content a v8 cycle package
+    presents: of the current file's blocks, those
+    whose read stands, whose content stands
+    carriable and which no earlier package has
+    presented — the one whose read completed last
+    (the most recent part to land). None where no
+    part qualifies: the file unread, or every
+    standing part already presented once."""
+    if cstate is None or cstate["current"] is None:
+        return None
+    current_file = cstate["files"][
+        cstate["current"] - 1]
+    candidates = [
+        block for block in current_file["blocks"]
+        if block["read_stands"]
+        and block["block_id"] not in presented
+        and _block_content(
+            cstate["entries"], block) is not None]
+    if not candidates:
+        return None
+    return max(candidates,
+               key=lambda block: block["read_seq"]
+               if block["read_seq"] is not None
+               else -1)
+
+
+def _v8_presented_parts(events, dispatches,
+                        instance_id, content,
+                        generated, iteration_heads):
+    """The block ids whose content has already been
+    presented at an earlier wake of this run under
+    the file grain, derived from the record alone:
+    the earlier heads walked in order, the file
+    state re-derived at each, and the part the
+    selection rule would have presented there
+    marked presented — so a part's content stands
+    in front of the worker exactly once, at the
+    first wake after its read stands within its
+    file's step, and never again."""
+    presented = set()
+    for number, head in iteration_heads:
+        earlier = _cycle_state_v8(
+            events, dispatches, instance_id, head,
+            content, generated, number)
+        if earlier is None or \
+                earlier["current"] is None:
+            continue
+        part = _v8_current_part(earlier, presented)
+        if part is not None:
+            presented.add(part["block_id"])
+    return presented
+
+
+def _cycle_split_carriage_v8(tool_results, dispatches,
+                             cstate, current,
+                             block_content_part):
+    """The split-on-return carriage at the file
+    grain (office-cycle-v8): the standing rule
+    with the file as its unit. A read result of
+    the CURRENT FILE rides: stubbed to the
+    block_content component where its part is the
+    part presented there, and dropped to its
+    pointer where it is any other part of the
+    file — an earlier part stands as its pointer
+    in the file's state, its content presented
+    when it landed and not again. A read result
+    of any other file does not ride: its file
+    stands as its pointer in the files component,
+    and its content is presented within its own
+    step. Pulling several parts of the current
+    file in one answer is presented exactly this
+    way — in sequence inside the step, the most
+    recent part's content at the package's centre
+    — and is neither punished nor rewarded. The
+    journal's reads stand as they arrived, and
+    listings, searches, writes, failures and
+    refusals stand as they arrived."""
+    dispatch_tools = {
+        did: d.get("tool")
+        for did, d in dispatches.items()}
+    current_file = cstate["files"][current - 1] \
+        if current is not None else None
+    carried = []
+    for entry in copy.deepcopy(tool_results):
+        if entry.get("outcome") != "result":
+            carried.append(entry)
+            continue
+        tool = dispatch_tools.get(
+            entry.get("dispatch_id"))
+        if tool not in ("sandbox.read",
+                        "sandbox.read_range"):
+            carried.append(entry)
+            continue
+        result = entry.get("result")
+        if not isinstance(result, dict):
+            carried.append(entry)
+            continue
+        path = result.get("path")
+        if path == cstate["journal_path"]:
+            carried.append(entry)
+            continue
+        if current_file is None or \
+                path != current_file["address"]:
+            continue
+        if block_content_part is not None:
+            served = _working_set_served(tool, result)
+            part = block_content_part
+            if served.get("kind") == "whole" and \
+                    part["line_start"] is None:
+                entry["result"] = _carriage_stub(
+                    result, "block_content")
+                carried.append(entry)
+                continue
+            if served.get("kind") == "range" and \
+                    served.get("start_line") == \
+                    part["line_start"] and \
+                    served.get("end_line") == \
+                    part["line_end"]:
+                entry["result"] = _carriage_stub(
+                    result, "block_content")
+                carried.append(entry)
+                continue
+            continue
+        if "content" not in result:
+            # No part stands presented in this
+            # package: a re-pull of a part of the
+            # current file whose content already
+            # stood presented is answered with its
+            # content, restored from the working
+            # set's carried entry for the same
+            # content — the standing split rule's
+            # re-pull answer, at the file grain.
+            restored = None
+            for candidate in cstate["entries"]:
+                if candidate.get("path") == path and \
+                        candidate.get(
+                            "content_sha256") == \
+                        result.get("content_sha256") \
+                        and "content" in candidate:
+                    restored = candidate["content"]
+                    break
+            if restored is not None:
+                presented_result = {
+                    key: value
+                    for key, value in result.items()
+                    if key not in (
+                        "single_carriage",
+                        "presented_in")}
+                presented_result["content"] = restored
+                entry["result"] = presented_result
+        carried.append(entry)
+    return carried
+
+
+def _cycle_split_carriage(tool_results, dispatches,
+                          cstate, current,
+                          block_content_stands):
+    """The split-on-return carriage (office-cycle-
+    v2): the newest response's results, carried only
+    where the wake presents them. A block read's
+    result — a read or range read of a briefcase
+    block's file — rides only where its block is the
+    current cycle's: stubbed to the block_content
+    component where the content stands there (the
+    block freshly read), or answered with its
+    content where the pull is a re-pull of the
+    current block after its cycle presentation (the
+    content restored from the working set's carried
+    entry for the same content, where that entry
+    stands; the recorded result's own provenance
+    stands either way). Every other block's read
+    result does not ride — its block stands as its
+    pointer in the blocks component, and its content
+    is presented when its cycle comes; the pull is
+    neither punished nor rewarded. The journal's
+    reads stand as they arrived (his pull of his own
+    notebook is answered), and listings, searches,
+    writes, failures and refusals are not block
+    contents: they stand as they arrived. A pure
+    function of cycle position: the same response
+    answered at a different position carries
+    differently, and no arrival grouping survives
+    into the carriage."""
+    dispatch_tools = {
+        did: d.get("tool")
+        for did, d in dispatches.items()}
+    blocks_by_address = {}
+    for block in cstate["blocks"]:
+        blocks_by_address.setdefault(
+            block["address"], []).append(block)
+    carried = []
+    for entry in copy.deepcopy(tool_results):
+        if entry.get("outcome") != "result":
+            carried.append(entry)
+            continue
+        tool = dispatch_tools.get(
+            entry.get("dispatch_id"))
+        if tool not in ("sandbox.read",
+                        "sandbox.read_range"):
+            carried.append(entry)
+            continue
+        result = entry.get("result")
+        if not isinstance(result, dict):
+            carried.append(entry)
+            continue
+        path = result.get("path")
+        if path == cstate["journal_path"]:
+            carried.append(entry)
+            continue
+        served = _working_set_served(tool, result)
+        cycles = set()
+        for block in blocks_by_address.get(path, []):
+            if served.get("kind") == "whole":
+                cycles.add(block["cycle"])
+            elif served.get("kind") == "range" and \
+                    isinstance(
+                        served.get("start_line"), int) \
+                    and isinstance(
+                        served.get("end_line"), int):
+                first = block["line_start"] \
+                    if block["line_start"] is not None \
+                    else 1
+                last = block["line_end"] \
+                    if block["line_end"] is not None \
+                    else served["end_line"]
+                if served["start_line"] <= last and \
+                        first <= served["end_line"]:
+                    cycles.add(block["cycle"])
+        if not cycles:
+            carried.append(entry)
+            continue
+        if current is None or current not in cycles:
+            continue
+        if block_content_stands:
+            if "content" in result or \
+                    result.get("presented_in") == \
+                    "working_set":
+                entry["result"] = _carriage_stub(
+                    result, "block_content")
+            carried.append(entry)
+            continue
+        if "content" not in result:
+            restored = None
+            for candidate in cstate["entries"]:
+                if candidate.get("path") == path and \
+                        candidate.get(
+                            "content_sha256") == \
+                        result.get("content_sha256") \
+                        and "content" in candidate:
+                    restored = candidate["content"]
+                    break
+            if restored is not None:
+                presented = {
+                    key: value
+                    for key, value in result.items()
+                    if key not in (
+                        "single_carriage",
+                        "presented_in")}
+                presented["content"] = restored
+                entry["result"] = presented
+        carried.append(entry)
+    return carried
+
+
+def _cycle_access(block, catalogue):
+    """A block's way in: the exact call that pulls it,
+    read from the catalogue the record derives, so the
+    way names a tool the worker actually holds over
+    that block's file — sandbox.read_range with the
+    block's sealed range where read_range is granted
+    over the file (a range block's own call), else
+    sandbox.read of the whole file where read is
+    granted (a whole-file block's call, and a range
+    block's fallback — the block still counts read
+    whole). None where no granted call pulls the
+    block: the poster and the cycle then carry no way
+    rather than a call the worker cannot make."""
+    address = block["address"]
+
+    def granted(tool):
+        for entry in catalogue or []:
+            if not isinstance(entry, dict) or \
+                    entry.get("tool") != tool:
+                continue
+            ceiling = entry.get("scope_ceiling")
+            prefix = ceiling.get("path_prefix") \
+                if isinstance(ceiling, dict) else None
+            if isinstance(prefix, str) and (
+                    address == prefix
+                    or address.startswith(prefix + "/")):
+                return True
+        return False
+
+    if block.get("line_start") is not None and \
+            granted("sandbox.read_range"):
+        return {"tool": "sandbox.read_range",
+                "parameters": {
+                    "path": address,
+                    "start_line": block["line_start"],
+                    "end_line": block["line_end"]}}
+    if granted("sandbox.read"):
+        return {"tool": "sandbox.read",
+                "parameters": {"path": address}}
+    return None
+
+
+def _cycle_offer_set(catalogue, cstate, summarize):
+    """The wire's offer set (the plan §5): the tools
+    the current package offers — the current cycle's
+    tools (the block pulls: sandbox.read and
+    sandbox.read_range) plus the journal tools
+    (sandbox.write, the append; sandbox.read, the
+    read-back) — as catalogue entries, one per tool
+    name, in catalogue order. At SUMMARIZE the offer
+    is the journal tools alone (read + write). The
+    offer governs the wire only: name resolution runs
+    against the full sealed catalogue in the record,
+    so a granted call resolves whether or not it was
+    offered, and an ungranted call is refused at the
+    doorway exactly as before — the offer never widens
+    or narrows the grant boundary."""
+    if summarize:
+        wanted = ("sandbox.read", "sandbox.write")
+    else:
+        wanted = ("sandbox.read", "sandbox.read_range",
+                  "sandbox.write")
+    offered = []
+    seen = set()
+    for entry in catalogue or []:
+        name = entry.get("tool")
+        if name in wanted and name not in seen:
+            seen.add(name)
+            offered.append(copy.deepcopy(entry))
+    return offered
 
 
 STAGED_DIRECTIONS = {
@@ -2252,6 +4358,37 @@ def _presentation_hash(package, working_set_hash,
                            pointer_form)))
 
 
+def _cycle_core(package, working_set_hash):
+    """The office-cycle package's committed core: the
+    staged core with the tools section standing by its
+    offer alone. The catalogue rides no package (the
+    plan §5: it is office stock — a poster on the wall,
+    not package content), so the core binds the offered
+    tools by NAME (offered_tools, in offered order);
+    their definitions are the sealed catalogue's own,
+    re-derived from the record by both sides, and the
+    adapter's wire framing of them is not package
+    content. The per-call estimate (the plan §6) runs
+    over this same core — the one serialization the
+    loop, the checker, the driver and the rehearsal
+    all reproduce byte-identically from the record:
+    his position plus one block."""
+    core = _presentation_core(package, working_set_hash,
+                              pointer_form=False)
+    offered = core.pop("tools", [])
+    core["offered_tools"] = [
+        entry.get("tool") for entry in offered]
+    return core
+
+
+def _cycle_presentation_hash(package, working_set_hash):
+    """The cycle presentation's commitment: SHA-256
+    over the canonical form of the package's cycle
+    core."""
+    return sha256_hex(canonical(
+        _cycle_core(package, working_set_hash)))
+
+
 def _translation_error_text(entry, offered_names):
     """The N16 error result for a translation refusal
     (native adapter piece): the examined templates of the
@@ -2412,6 +4549,23 @@ class Loop:
         # callable — no seam channel — is the genuinely
         # legacy path and runs ungoverned as before.
         self.evidence_store = evidence_store
+        # The road's accounting (the office-cycle
+        # contract): every package the loop builds, with
+        # its canonical serialized size and its estimated
+        # tokens under the one estimator — read by the
+        # driver into the run's call ledger, beside the
+        # captures' true wire bytes. An attribute of the
+        # run, not of the record: the record's own
+        # accounting is the iteration events and, where
+        # the budget refuses a package, the refusal.
+        self.call_estimates = []
+        # The road's presentation events (the §6
+        # amendment): every spill and shedding act the
+        # road's presentation pass performs on a
+        # package, read by the driver into the run's
+        # report beside the adapter's transport events.
+        # An attribute of the run, like the estimates.
+        self.road_events = []
 
     # ------------------------------------------------------ run
     def run(self):
@@ -2447,6 +4601,14 @@ class Loop:
         ctx = self._open_context()
         if isinstance(ctx, dict) and "not_run" in ctx:
             return ctx["not_run"]
+        if ctx.get("tree") is not None:
+            problem = self._stock_journal(ctx)
+            if problem is not None:
+                return {"not_run": {
+                    "ok": False, "outcome": "not_run",
+                    "instance_id": ctx["instance_id"],
+                    "assembly_id": ctx["assembly_id"],
+                    "reason": problem}}
         try:
             return self._run(ctx)
         finally:
@@ -2454,6 +4616,42 @@ class Loop:
             # dropped at return; nothing here outlives the
             # call (evidenced disposal is Piece A5's).
             ctx.clear()
+
+    def _stock_journal(self, ctx):
+        """The v9 stocking rule (the build scope of
+        2026-11-26, INDEX 602): where a tree stands
+        sealed, the case's designated journal stands
+        stocked before the first wake — created empty
+        where none stands, an existing journal
+        preserved untouched, never overwritten. The
+        run of 2026-11-26 (demo-nemotron8) walked a
+        worker in circles because the room directed a
+        journal read against a file that did not
+        exist; the office stocks its own furniture.
+        Returns a problem naming why the run cannot
+        begin, or None."""
+        sandbox_dir = getattr(
+            self.executor, "sandbox_dir", None)
+        journal_path = _staged_journal_path(
+            ctx.get("content") or {})
+        if not sandbox_dir or not journal_path:
+            return ("the tree stands sealed but the "
+                    "journal cannot be stocked: the "
+                    "executor names no sandbox or the "
+                    "case designates no journal; no "
+                    "loop (office-cycle-v9 stocking)")
+        target = Path(sandbox_dir) / journal_path
+        try:
+            target.parent.mkdir(
+                parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text("", encoding="utf-8")
+        except OSError as exc:
+            return (f"the tree stands sealed but the "
+                    f"journal could not be stocked at "
+                    f"{journal_path}: {exc}; no loop "
+                    f"(office-cycle-v9 stocking)")
+        return None
 
     def _open_context(self):
         """Resolve the run's standing facts from the record —
@@ -2517,11 +4715,40 @@ class Loop:
         # assemblies: a historical assembly's callable is
         # invoked exactly as it has always been.
         adapter_mode = None
-        if doorway._probe_governed(
-                doorway._generated_payload(assembly_id)):
+        _generated_for_mode = doorway._generated_payload(
+            assembly_id)
+        if doorway._probe_governed(_generated_for_mode):
             packed = doorway._event_at(entry.get("packed_seq"))
             adapter_mode = (packed or {}).get(
                 "payload", {}).get("adapter_mode")
+        elif (_generated_for_mode or {}).get(
+                "presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12):
+            # office-cycle-v8: the mode reaches the loop
+            # from the sealed packed package exactly as
+            # under the probe regime — the package the
+            # judgement bound — except the mode standing
+            # there is the office's declaration (the
+            # director's rulings of 2026-11-25, 23:07 and
+            # 23:08 MST: no probe stands in a v8 launch),
+            # not the probe regime's decision. A v8 pack
+            # carrying no declared mode admits no loop:
+            # fail closed, never a silent default.
+            packed = doorway._event_at(entry.get("packed_seq"))
+            adapter_mode = (packed or {}).get(
+                "payload", {}).get("adapter_mode")
+            if adapter_mode is None:
+                return {"not_run": {
+                    "ok": False, "outcome": "not_run",
+                    "instance_id": instance_id,
+                    "assembly_id": assembly_id,
+                    "reason": "the assembly is sealed under "
+                              "office-cycle-v8 and its pack "
+                              "carries no office-declared "
+                              "adapter mode; a v8 run travels "
+                              "in its declared mode or not "
+                              "at all"}}
         # The door scope (2026-11-24): the delivery
         # declaration the loop honours is the one the
         # generator sealed into the assembly's record,
@@ -2554,7 +4781,16 @@ class Loop:
         _presentation_declared = _presentation_value in (
             _tool_policy.PRESENTATION_CONTRACT,
             _tool_policy.PRESENTATION_CONTRACT_V2,
-            _tool_policy.PRESENTATION_CONTRACT_V3)
+            _tool_policy.PRESENTATION_CONTRACT_V3,
+            _tool_policy.PRESENTATION_CONTRACT_V4,
+            _tool_policy.PRESENTATION_CONTRACT_V5,
+            _tool_policy.PRESENTATION_CONTRACT_V6,
+            _tool_policy.PRESENTATION_CONTRACT_V7,
+            _tool_policy.PRESENTATION_CONTRACT_V8,
+            _tool_policy.PRESENTATION_CONTRACT_V9,
+            _tool_policy.PRESENTATION_CONTRACT_V10,
+            _tool_policy.PRESENTATION_CONTRACT_V11,
+            _tool_policy.PRESENTATION_CONTRACT_V12)
         # Round nine's correction pair (INDEX 548): the
         # worked example the files stage presents is the
         # one the generator sealed into the assembly's
@@ -2613,6 +4849,30 @@ class Loop:
                 == _delivery_floor
                 and _delivery is not None):
             _delivery_floor = None
+        # The road (the §6 amendment, accepted
+        # 2026-11-26): the loop's road standing is
+        # read the same way as the other declarations
+        # — the generator's seal, standing well-formed
+        # under the one shape check. A seal that does
+        # not stand governs nothing: the run travels
+        # under the per-call budget exactly as before.
+        _road = _generated.get("road")
+        if not (isinstance(_road, dict)
+                and _tool_policy.road_problem(_road)
+                is None):
+            _road = None
+        # The process tree (office-cycle-v9): read
+        # the same way — the generator's seal, standing
+        # well-formed under the one shape check, and
+        # governing only under its own contract. A
+        # seal that does not stand governs nothing.
+        _tree = _generated.get("tree")
+        if not (isinstance(_tree, dict)
+                and _tool_policy.tree_problem(_tree)
+                is None
+                and _presentation_value
+                == _tool_policy.PRESENTATION_CONTRACT_V12):
+            _tree = None
         return {
             "delivery": copy.deepcopy(_delivery),
             "working_set_declared":
@@ -2638,11 +4898,16 @@ class Loop:
             "delivery_evidence_gate_error": None,
             "delivery_floor": copy.deepcopy(
                 _delivery_floor),
+            "road": copy.deepcopy(_road),
+            "tree": copy.deepcopy(_tree),
+            "road_blocked": None,
             "delivery_length_gate_correction": None,
             "delivery_length_gate_error": None,
             "tool_shape_gate_correction": None,
             "tool_shape_gate_error": None,
             "step_gate_correction": None,
+            "cycle_gate_correction": None,
+            "journal_gate_correction": None,
             "instance_id": instance_id,
             "assembly_id": assembly_id,
             "adapter_mode": adapter_mode,
@@ -2710,6 +4975,153 @@ class Loop:
                     else None)
             package_s = time.monotonic() - package_started
             iteration = ctx["iterations"] + 1
+            if ctx.get("road_blocked") is not None:
+                # The road's hard admission boundary
+                # (the §6 amendment): the package, shed
+                # to the ladder's last rung, still
+                # stands at or past the sealed hard
+                # fraction of the window. It is not
+                # sent and no iteration stands for it —
+                # the road's successor to the budget
+                # refusal, at the window's edge rather
+                # than at a per-call size.
+                return self._stall(
+                    ctx, "runtime_failure",
+                    detail=ctx["road_blocked"])
+            if ctx.get("road") is not None:
+                # The sealed run budget (the §6
+                # amendment): the office's allocation,
+                # sealed at generation, bounds the run's
+                # total spend. The adapter's reconciled
+                # consumption is read through the model
+                # handle; where it stands at or past the
+                # allocation, no further package is
+                # built and no call is made.
+                totals_fn = getattr(
+                    self.model, "road_totals", None)
+                totals = totals_fn() \
+                    if callable(totals_fn) else None
+                if totals is not None and \
+                        totals["consumed_tokens"] >= \
+                        ctx["road"]["allocation_tokens"]:
+                    return self._stall(
+                        ctx, "runtime_failure",
+                        detail=f"the run's sealed road "
+                               f"allocation is exhausted: "
+                               f"{totals['consumed_tokens']} "
+                               f"of "
+                               f"{ctx['road']['allocation_tokens']} "
+                               f"tokens consumed (the "
+                               f"office's seal at "
+                               f"generation; the worker "
+                               f"cannot enlarge it)")
+
+            # The per-call budget (the office-cycle
+            # contract, the plan §6): the budget binds
+            # the whole REQUEST — no single request may
+            # exceed the sealed figure — so the estimate
+            # the budget binds is the estimate of the
+            # request as the adapter will construct it:
+            # the contract framing, the system message,
+            # the rendered package, and in native mode
+            # the offered tool definitions, all inside
+            # the one estimator. Where the model can
+            # render its request without sending it
+            # (render_request_bytes), the loop estimates
+            # over those bytes; a model that cannot
+            # render stands under the package-core
+            # estimate below, as before. The package's
+            # own estimated tokens — over its committed
+            # core (its canonical serialization, the one
+            # form the loop, the checker, the driver and
+            # the rehearsal all reproduce byte-identically
+            # from the record; the tool results stand in
+            # the core by their identities, their
+            # contents standing in the record already) —
+            # are accounted beside the wire figure on
+            # the loop for the driver's call ledger.
+            # Where the budget estimate exceeds the
+            # sealed budget the call is NOT sent: the
+            # refusal is recorded and the run stalls
+            # runtime_failure, fail closed and named,
+            # and no iteration stands for the refused
+            # package.
+            budget_estimated = 0
+            budget_bytes = 0
+            if ctx.get("presentation_contract") in (
+                    _tool_policy.PRESENTATION_CONTRACT_V4,
+                    _tool_policy.PRESENTATION_CONTRACT_V5,
+                    _tool_policy.PRESENTATION_CONTRACT_V6,
+                    _tool_policy.PRESENTATION_CONTRACT_V7,
+                    _tool_policy.PRESENTATION_CONTRACT_V8,
+                    _tool_policy.PRESENTATION_CONTRACT_V9,
+                    _tool_policy.PRESENTATION_CONTRACT_V10,
+                    _tool_policy.PRESENTATION_CONTRACT_V11,
+                    _tool_policy.PRESENTATION_CONTRACT_V12):
+                core = _cycle_core(
+                    package, ctx.get("working_set_hash"))
+                serialized = canonical(core)
+                estimated = _tool_policy.estimate_tokens(
+                    len(serialized))
+                wire_estimated = None
+                wire_bytes = None
+                render = getattr(
+                    self.model, "render_request_bytes", None)
+                if callable(render):
+                    try:
+                        rendered = render(
+                            package,
+                            mode=ctx.get("adapter_mode"))
+                        wire_bytes = len(rendered)
+                        wire_estimated = \
+                            _tool_policy.estimate_tokens(
+                                wire_bytes)
+                    except Exception:  # noqa: BLE001 — a
+                        # model that cannot render its
+                        # request stands under the core
+                        # estimate, as before
+                        wire_estimated = None
+                        wire_bytes = None
+                budget_estimated = wire_estimated \
+                    if wire_estimated is not None else estimated
+                budget_bytes = wire_bytes \
+                    if wire_bytes is not None \
+                    else len(serialized)
+                self.call_estimates.append({
+                    "iteration": iteration,
+                    "serialized_bytes": len(serialized),
+                    "estimated_tokens": estimated,
+                    "wire_estimated_tokens": wire_estimated,
+                    "budget_estimated_tokens":
+                        budget_estimated})
+            if ctx.get("presentation_contract") in (
+                    _tool_policy.PRESENTATION_CONTRACT_V4,
+                    _tool_policy.PRESENTATION_CONTRACT_V5,
+                    _tool_policy.PRESENTATION_CONTRACT_V6,
+                    _tool_policy.PRESENTATION_CONTRACT_V7,
+                    _tool_policy.PRESENTATION_CONTRACT_V8,
+                    _tool_policy.PRESENTATION_CONTRACT_V9,
+                    _tool_policy.PRESENTATION_CONTRACT_V10,
+                    _tool_policy.PRESENTATION_CONTRACT_V11,
+                    _tool_policy.PRESENTATION_CONTRACT_V12) \
+                    and ctx.get("road") is None \
+                    and budget_estimated > \
+                    _tool_policy.PER_CALL_TOKEN_BUDGET:
+                refusal = doorway.record_budget_refusal(
+                    ctx["assembly_id"], iteration,
+                    budget_estimated, budget_bytes,
+                    _tool_policy.PER_CALL_TOKEN_BUDGET)
+                ctx["recorded"].append(refusal)
+                return self._stall(
+                    ctx, "runtime_failure",
+                    detail=f"the package for iteration "
+                           f"{iteration} was refused "
+                           f"before the call: its "
+                           f"estimated tokens "
+                           f"({budget_estimated}) "
+                           f"exceed the per-call budget "
+                           f"({_tool_policy.PER_CALL_TOKEN_BUDGET}); "
+                           f"no request was sent")
 
             # (iii) Record the iteration, with the package's
             # exact cursor range, before the call. The
@@ -3467,6 +5879,221 @@ class Loop:
         return base
 
     # -------------------------------------------------- package
+    def _apply_road_presentation(self, ctx, package):
+        """The road's presentation pass (the §6
+        amendment, accepted 2026-11-26; the build
+        scope's Pieces 3 and 4): applied to a built
+        cycle package under a sealed road, before its
+        commitment is taken. Two acts, in order:
+
+        SPILL — a presented block's content, or a tool
+        result's content, over the spill threshold
+        (4,096 counted tokens) does not ride whole:
+        the package carries its reference instead —
+        the content's identity, its counted size, its
+        fingerprint, and a preview at or under 512
+        counted tokens. The full content stands where
+        it always stood (the block's file, the
+        record's event); the preview is presentation
+        only, and the worker pulls the whole through
+        his standing read tools in bounded slices.
+
+        SHEDDING — the package's counted size (the
+        rendered request, measured with the route's
+        own instrument) is held against the sealed
+        window: at the start fraction (70%) the
+        ladder runs — first the spill above, then
+        every remaining carried result content is
+        stubbed to its reference, then the journal
+        draft is stubbed to its pointer — and at the
+        hard fraction (80%) the package is not
+        admitted at all: ctx's road_blocked names it
+        and the run stalls before any iteration
+        stands. Shedding clears presentation only;
+        nothing is deleted, and everything shed
+        stands retrievable where it stood.
+
+        Every act is appended to the loop's road
+        events for the run's report. A package under
+        the thresholds is returned untouched."""
+        road_decl = ctx["road"]
+        window = road_decl["window_tokens"]
+        counter_fn = getattr(self.model, "road_counter",
+                             None)
+        counter = counter_fn() \
+            if callable(counter_fn) else None
+        if counter is None:
+            counter = _road.counter_for()
+        threshold = \
+            _tool_policy.ROAD_SPILL_THRESHOLD_TOKENS
+        preview_max = \
+            _tool_policy.ROAD_SPILL_PREVIEW_TOKENS
+
+        def spill_stub(content, identity):
+            counted = counter.count_text(content)
+            return {
+                **identity,
+                "spilled": True,
+                "counted_tokens": counted,
+                "sha256": hashlib.sha256(
+                    content.encode("utf-8")).hexdigest(),
+                "preview": _road.bounded_preview(
+                    content, preview_max, counter),
+                "preview_tokens": counter.count_text(
+                    _road.bounded_preview(
+                        content, preview_max, counter)),
+                "note": "the whole content stands "
+                        "where it stood and is pulled "
+                        "in bounded slices; this "
+                        "preview is presentation only"}
+
+        # --- spill: the presented block's content
+        block_content = package.get("block_content")
+        if isinstance(block_content, dict) and \
+                isinstance(
+                    block_content.get("content"), str):
+            counted = counter.count_text(
+                block_content["content"])
+            if counted > threshold:
+                stub = spill_stub(
+                    block_content["content"], {
+                        "block_id":
+                            block_content.get("block_id"),
+                        "address":
+                            block_content.get("address")})
+                package["block_content"] = stub
+                self.road_events.append({
+                    "kind": "spill",
+                    "surface": "block_content",
+                    "block_id": stub["block_id"],
+                    "address": stub["address"],
+                    "counted_tokens": counted,
+                    "method": counter.method})
+        # --- spill: carried tool results' contents
+        for entry in package.get("tool_results") or []:
+            result = entry.get("result") \
+                if isinstance(entry, dict) else None
+            if isinstance(result, dict) and \
+                    isinstance(
+                        result.get("content"), str):
+                counted = counter.count_text(
+                    result["content"])
+                if counted > threshold:
+                    entry["result"] = spill_stub(
+                        result["content"], {
+                            "dispatch_id":
+                                entry.get("dispatch_id")})
+                    self.road_events.append({
+                        "kind": "spill",
+                        "surface": "tool_result",
+                        "dispatch_id":
+                            entry.get("dispatch_id"),
+                        "counted_tokens": counted,
+                        "method": counter.method})
+        # --- shedding: measure the rendered request
+        # The measure is the rendered request's own
+        # size under the route instrument: the adapter
+        # renders without sending (its settled
+        # render), and the counter counts that render
+        # as the request's text — an approximation of
+        # the wire count, named as the shedding
+        # measure wherever it stands.
+        def rendered_tokens():
+            render = getattr(
+                self.model, "render_request_bytes", None)
+            if not callable(render):
+                return None
+            try:
+                raw = render(
+                    package, mode=ctx.get("adapter_mode"))
+            except Exception:  # noqa: BLE001
+                return None
+            return counter.count_text(
+                raw.decode("utf-8", "replace"))
+
+        size = rendered_tokens()
+        if size is not None and \
+                size >= _tool_policy.ROAD_SHED_START_FRACTION \
+                * window:
+            # Rung 2: every remaining carried result
+            # content is stubbed to its reference.
+            for entry in package.get("tool_results") \
+                    or []:
+                result = entry.get("result") \
+                    if isinstance(entry, dict) else None
+                if isinstance(result, dict) and \
+                        isinstance(
+                            result.get("content"), str):
+                    entry["result"] = {
+                        "dispatch_id":
+                            entry.get("dispatch_id"),
+                        "shed": True,
+                        "counted_tokens":
+                            counter.count_text(
+                                result["content"]),
+                        "sha256": hashlib.sha256(
+                            result["content"].encode(
+                                "utf-8")).hexdigest(),
+                        "note": "shed from presentation "
+                                "under the road's ladder; "
+                                "the result stands in "
+                                "the record"}
+                    self.road_events.append({
+                        "kind": "shed",
+                        "rung": "clear_results",
+                        "dispatch_id":
+                            entry.get("dispatch_id"),
+                        "method": counter.method})
+            size = rendered_tokens()
+        if size is not None and \
+                size >= _tool_policy.ROAD_SHED_START_FRACTION \
+                * window:
+            # Rung 3: the journal draft is stubbed to
+            # its pointer (the journal itself stands
+            # in the room, read by pull).
+            draft = package.get("journal_draft")
+            if isinstance(draft, dict) and \
+                    isinstance(
+                        draft.get("content"), str):
+                package["journal_draft"] = {
+                    "shed": True,
+                    "counted_tokens": counter.count_text(
+                        draft["content"]),
+                    "sha256": hashlib.sha256(
+                        draft["content"].encode(
+                            "utf-8")).hexdigest(),
+                    "note": "shed from presentation "
+                            "under the road's ladder; "
+                            "the journal stands in the "
+                            "room and is read by pull"}
+                self.road_events.append({
+                    "kind": "shed",
+                    "rung": "journal_pointer",
+                    "method": counter.method})
+                size = rendered_tokens()
+        if size is not None and \
+                size >= _tool_policy.ROAD_SHED_HARD_FRACTION \
+                * window:
+            ctx["road_blocked"] = (
+                f"the package was not admitted under "
+                f"the road's hard boundary: shed to "
+                f"the ladder's last rung it still "
+                f"stands at {size} counted tokens, at "
+                f"or past 80% of the sealed window "
+                f"({window}); no request was sent")
+            self.road_events.append({
+                "kind": "admission_blocked",
+                "counted_tokens": size,
+                "window_tokens": window,
+                "method": counter.method})
+        elif size is not None:
+            self.road_events.append({
+                "kind": "measured",
+                "counted_tokens": size,
+                "window_tokens": window,
+                "method": counter.method})
+        return package
+
     def _build_package(self, ctx):
         """Construct and freeze one iteration's package from a
         snapshot of the record, in the driver's package shape:
@@ -3492,6 +6119,25 @@ class Loop:
         if ctx.get("presentation_contract") == \
                 _tool_policy.PRESENTATION_CONTRACT_V3:
             self._record_step_gate_if_owed(ctx)
+        # The cycle contract's gate records (the plan
+        # §5): under the office-cycle contract, the
+        # journal transitions and refusals the record
+        # shows but has not yet recorded, and a cycle
+        # gate owed at this wake, are recorded BEFORE
+        # the snapshot, the same way — the package's
+        # head stands after them and their facts are
+        # true at presentation.
+        if ctx.get("presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V4,
+                _tool_policy.PRESENTATION_CONTRACT_V5,
+                _tool_policy.PRESENTATION_CONTRACT_V6,
+                _tool_policy.PRESENTATION_CONTRACT_V7,
+                _tool_policy.PRESENTATION_CONTRACT_V8,
+                _tool_policy.PRESENTATION_CONTRACT_V9,
+                _tool_policy.PRESENTATION_CONTRACT_V10,
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12):
+            self._record_cycle_events_if_owed(ctx)
         events = doorway.store.all_events()
         state = fold(events, doorway.store.get_run_id())
         head = state["head_seq"]
@@ -3971,7 +6617,35 @@ class Loop:
                 # form: the presented working set stands
                 # in the core verbatim as pointers, beside
                 # the record set's hash.
-                if ctx.get("presentation_contract") == \
+                if ctx.get("presentation_contract") in (
+                        _tool_policy.PRESENTATION_CONTRACT_V4,
+                        _tool_policy.PRESENTATION_CONTRACT_V5,
+                        _tool_policy.PRESENTATION_CONTRACT_V6,
+                        _tool_policy.PRESENTATION_CONTRACT_V7,
+                        _tool_policy.PRESENTATION_CONTRACT_V8,
+                        _tool_policy.PRESENTATION_CONTRACT_V9,
+                        _tool_policy.PRESENTATION_CONTRACT_V10,
+                        _tool_policy.PRESENTATION_CONTRACT_V11,
+                        _tool_policy.PRESENTATION_CONTRACT_V12):
+                    package = self._build_cycle_package(
+                        ctx, package, ordered, catalogue)
+                    if ctx.get("road") is not None:
+                        # The road's presentation pass
+                        # (the §6 amendment): spill and
+                        # shedding applied to the built
+                        # package BEFORE its commitment
+                        # is taken, so the hash the
+                        # iteration event records is the
+                        # hash of the package the worker
+                        # actually receives.
+                        package = \
+                            self._apply_road_presentation(
+                                ctx, package)
+                    ctx["presentation_hash"] = \
+                        _cycle_presentation_hash(
+                            package,
+                            ctx.get("working_set_hash"))
+                elif ctx.get("presentation_contract") == \
                         _tool_policy.PRESENTATION_CONTRACT_V3:
                     package = self._build_tree_package(
                         ctx, package, ordered, catalogue)
@@ -4338,6 +7012,1315 @@ class Loop:
             _step_gate_correction(
                 step, address, missing, ahead,
                 tstate["journal_path"])
+
+    def _record_cycle_events_if_owed(self, ctx):
+        """The cycle contract's gate records (the plan
+        §5): at the build of a cycle package past the
+        first, the journal's transitions and refusals
+        standing in the record but not yet recorded as
+        events are recorded, and a cycle gate owed at
+        this wake is recorded — all BEFORE the package's
+        snapshot, so the events stand inside the
+        package's head and their facts are true at
+        presentation, exactly as the step gate's are.
+        The corrections the events earn are stashed for
+        the package: the cycle gate's where one was
+        recorded at this build (or stands recorded
+        against the previous iteration and not yet
+        answered), and the journal gate's likewise. A
+        record that cannot be made raises here — package
+        construction fails and the run stalls
+        runtime_failure, fail closed, as the family's
+        gates do. The worker's work is never refused:
+        the gates govern only the presentation."""
+        ctx["cycle_gate_correction"] = None
+        ctx["journal_gate_correction"] = None
+        if ctx["iterations"] < 1:
+            return
+        doorway = self.doorway
+        events = doorway.store.all_events()
+        state = doorway.state()
+        head = state["head_seq"]
+        generated = doorway._generated_payload(
+            ctx["assembly_id"])
+        # The file-grain successor (office-cycle-v8):
+        # the same records at the file grain — the
+        # journal transitions and refusals recorded
+        # exactly as here (the chain is the chain;
+        # its attribution runs in file numbers), and
+        # the cycle gate owed only where a later
+        # FILE's work ran ahead, never between a
+        # file's own parts.
+        file_grain = ctx.get(
+            "presentation_contract") in (
+            _tool_policy.PRESENTATION_CONTRACT_V11,
+            _tool_policy.PRESENTATION_CONTRACT_V12)
+        if file_grain:
+            cstate = _cycle_state_v8(
+                events, state["dispatches"],
+                ctx["instance_id"], head, ctx["content"],
+                generated, ctx["iterations"] + 1)
+        else:
+            cstate = _cycle_state(
+                events, state["dispatches"],
+                ctx["instance_id"], head, ctx["content"],
+                generated, ctx["iterations"] + 1)
+        if cstate is None:
+            raise ValueError(
+                "the assembly is sealed under the "
+                "office-cycle presentation contract but "
+                "the sealed block map does not stand "
+                "against the pinned case, or the case "
+                "designates no journal; no cycle package "
+                "can be built")
+        previous_seq = ctx.get("iteration_event_seq")
+        recorded_appends = set()
+        recorded_gates = set()
+        for ev in events:
+            if ev["type"] == "JOURNAL_APPEND":
+                recorded_appends.add(
+                    ev["payload"].get("write_seq"))
+            elif ev["type"] == "JOURNAL_GATE":
+                recorded_gates.add(
+                    ev["payload"].get("write_seq"))
+        for transition in cstate["chain"]["transitions"]:
+            if transition["write_seq"] in recorded_appends:
+                continue
+            ev = doorway.record_journal_append(
+                ctx["assembly_id"], previous_seq,
+                cstate["attribution"].get(
+                    transition["write_seq"]),
+                transition["write_seq"],
+                transition["before_sha256"],
+                transition["after_sha256"],
+                transition["added_bytes"])
+            ctx["recorded"].append(ev)
+            recorded_appends.add(transition["write_seq"])
+        for refusal in cstate["chain"]["refusals"]:
+            if refusal["write_seq"] in recorded_gates:
+                continue
+            ev = doorway.record_journal_gate(
+                ctx["assembly_id"], previous_seq,
+                refusal["write_seq"],
+                refusal["accepted_sha256"],
+                refusal["attempted_sha256"])
+            ctx["recorded"].append(ev)
+            recorded_gates.add(refusal["write_seq"])
+        # The corrections this wake answers: the latest
+        # cycle gate and journal gate standing against
+        # the previous iteration — recorded at this
+        # build or an earlier one, answered once, in
+        # the first package built after them.
+        events = doorway.store.all_events()
+        for ev in events:
+            payload = ev["payload"]
+            if payload.get("assembly_id") != \
+                    ctx["assembly_id"]:
+                continue
+            if ev["type"] == "CYCLE_GATE" and \
+                    payload.get("iteration_seq") == \
+                    previous_seq:
+                ctx["cycle_gate_correction"] = \
+                    _cycle_gate_correction_v8(
+                        payload, cstate["journal_path"],
+                        cstate["files"]) \
+                    if file_grain else \
+                    _cycle_gate_correction(
+                        payload, cstate["journal_path"])
+            elif ev["type"] == "JOURNAL_GATE" and \
+                    payload.get("iteration_seq") == \
+                    previous_seq:
+                ctx["journal_gate_correction"] = \
+                    _journal_gate_correction(
+                        payload, cstate["journal_path"])
+        if file_grain:
+            owed = _cycle_gate_owed_v8(cstate)
+            if owed is None:
+                return
+            cycle, mine, ahead = owed
+            already = any(
+                ev["type"] == "CYCLE_GATE"
+                and ev["payload"].get("iteration_seq")
+                == previous_seq
+                for ev in events)
+            if already:
+                return
+            # The gate event at the file grain: its
+            # cycle is the current file's number, and
+            # both files are anchored by their first
+            # blocks — the current file's own first
+            # block, and the ahead file's first block
+            # whose read stands.
+            ahead_block = next(
+                block for block in ahead["blocks"]
+                if block["read_stands"])
+            gate_ev = doorway.record_cycle_gate(
+                ctx["assembly_id"], previous_seq, cycle,
+                mine["blocks"][0]["block_id"],
+                mine["address"],
+                ahead_block["block_id"],
+                ahead["address"])
+            ctx["recorded"].append(gate_ev)
+            ctx["cycle_gate_correction"] = \
+                _cycle_gate_correction_v8(
+                    gate_ev["payload"],
+                    cstate["journal_path"],
+                    cstate["files"])
+            return
+        owed = _cycle_gate_owed(cstate)
+        if owed is None:
+            return
+        cycle, mine, ahead = owed
+        already = any(
+            ev["type"] == "CYCLE_GATE"
+            and ev["payload"].get("iteration_seq")
+            == previous_seq
+            for ev in events)
+        if already:
+            return
+        gate_ev = doorway.record_cycle_gate(
+            ctx["assembly_id"], previous_seq, cycle,
+            mine["block_id"], mine["address"],
+            ahead["block_id"], ahead["address"])
+        ctx["recorded"].append(gate_ev)
+        ctx["cycle_gate_correction"] = \
+            _cycle_gate_correction(
+                gate_ev["payload"], cstate["journal_path"])
+
+    def _build_cycle_package(self, ctx, base, ordered,
+                             catalogue):
+        """One wake package under the office-cycle
+        contract (the plan of 2026-11-25): the opening
+        package at the first wake — his identity and
+        role memory as his own knowledge, the task
+        whole, the cycle poster with the sealed block
+        map and an access way per block, the journal's
+        address and contract, and his position — and at
+        every later wake a cycle package: his position,
+        the blocks with their states (a gathered block
+        as a pointer, carrying its dispatch provenance),
+        the current cycle spelled out with its block's
+        way in, and the current block's content
+        presented exactly once, at its cycle, the first
+        wake its read stands. When every cycle stands
+        complete the package is the SUMMARIZE package.
+        The journal stands in no package — no component,
+        no excerpt; a journal read's own result is
+        presented once, in the results carriage of the
+        wake after the pull, like any newest result, and
+        stubbed after. The package's tools are the offer
+        set (the cycle's tools plus the journal tools);
+        the catalogue as presented matter rides no
+        package. Every value derives from the record,
+        so the checker re-derives the package whole."""
+        content = ctx["content"] or {}
+        iteration = ctx["iterations"] + 1
+        ceiling = ctx["bounds"]["step_ceiling"]
+        head = base["position"]
+        doorway = self.doorway
+        events = doorway.store.all_events()
+        state = fold(events, doorway.store.get_run_id())
+        generated = doorway._generated_payload(
+            ctx["assembly_id"])
+        # The split-on-return successor (office-cycle-
+        # v2): the same derivation, forked where its
+        # presentation rule differs — the opening
+        # carries the room's rules once, the results
+        # carriage carries only what the wake presents,
+        # and the cycle gate's correction does not ride
+        # (see the carriage and the correction attach
+        # below). Everything else in this builder is
+        # the two contracts' shared derivation.
+        # The cleaned-opening successor (office-cycle-
+        # v4): the same derivation again — its cycle
+        # and summarize packages are v3's whole (the
+        # split carriage and the draft-page texts) —
+        # forked at the opening alone, where the JSON
+        # component assembly is replaced by the
+        # director's plain-text structure.
+        # The carryover successor (office-cycle-v5):
+        # the same derivation again — its opening is
+        # v4's whole (the director's structure, its
+        # contract line naming this seal) — forked in
+        # the cycle and summarize packages: the
+        # statement line formatted from the sealed
+        # delivery declaration, the gates' corrections
+        # riding again, the journal's standing content
+        # carried as his draft so far, and the cycle
+        # instruction stating the one next step.
+        # The zero-carryover successor (office-cycle-
+        # v6): the same derivation again — its opening
+        # is v5's whole — forked in the cycle and
+        # summarize packages against v5: the journal
+        # draft component does not attach (the
+        # director's reversal — zero carryover; the
+        # journal stands in his scratch and he reads
+        # it himself), the cycle direction states
+        # that truth again with the journal's own
+        # address, and the blocks component is
+        # slimmed to each block's place and state.
+        # V5's statement line and its riding
+        # corrections stand unchanged, the next step
+        # included: they are the intro the director's
+        # ruling keeps.
+        # The imperative-first successor (office-
+        # cycle-v7): the same derivation again — its
+        # opening is v6's whole — forked in every
+        # package against v6 by one rule of order:
+        # the package opens with the Next line, the
+        # one next step stated as an imperative,
+        # derived at presentation from the cycle
+        # state it opens (the director's order of
+        # 2026-11-25 22:41 MST, after demo-gptoss9's
+        # packages described state and left the
+        # deciding to the worker). On the opening
+        # the line stands after the outcome frame,
+        # before the director's structure; on cycle
+        # and summarize packages it is the package's
+        # first component, the gates' corrections
+        # standing below it unmerged. Everything
+        # else is v6's whole: zero carryover, the
+        # slimmed blocks, the statement line from
+        # the seal, the riding corrections.
+        # The file-grain successor (office-cycle-
+        # v8): the same derivation again — its
+        # opening is v7's whole in form (the frame,
+        # the Next line, the director's structure)
+        # rendered at the file grain, and its cycle
+        # and summarize packages are v7's whole in
+        # discipline (the Next line first, zero
+        # carryover, the statement line from the
+        # seal, the corrections riding) with the
+        # FILE as the walk's unit: the cycle state
+        # is the file state, the bookkeeping lists
+        # files, and a multi-part file's slices are
+        # plumbing inside its step — presented in
+        # sequence as they land, gated never.
+        file_grain = ctx.get(
+            "presentation_contract") in (
+            _tool_policy.PRESENTATION_CONTRACT_V11,
+            _tool_policy.PRESENTATION_CONTRACT_V12)
+        imperative_first = ctx.get(
+            "presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V10,
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12)
+        carryover = ctx.get(
+            "presentation_contract") == \
+            _tool_policy.PRESENTATION_CONTRACT_V8
+        zero_carryover = ctx.get(
+            "presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V9,
+                _tool_policy.PRESENTATION_CONTRACT_V10,
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12)
+        cleaned_opening = ctx.get(
+            "presentation_contract") == \
+            _tool_policy.PRESENTATION_CONTRACT_V7 \
+            or carryover or zero_carryover
+        draft_page = ctx.get(
+            "presentation_contract") == \
+            _tool_policy.PRESENTATION_CONTRACT_V6 \
+            or cleaned_opening
+        split_return = draft_page or ctx.get(
+            "presentation_contract") == \
+            _tool_policy.PRESENTATION_CONTRACT_V5
+        contract_value = \
+            _tool_policy.PRESENTATION_CONTRACT_V12 \
+            if ctx.get("presentation_contract") == \
+            _tool_policy.PRESENTATION_CONTRACT_V12 else \
+            _tool_policy.PRESENTATION_CONTRACT_V11 \
+            if file_grain else \
+            _tool_policy.PRESENTATION_CONTRACT_V10 \
+            if imperative_first else \
+            _tool_policy.PRESENTATION_CONTRACT_V9 \
+            if zero_carryover else \
+            _tool_policy.PRESENTATION_CONTRACT_V8 \
+            if carryover else \
+            _tool_policy.PRESENTATION_CONTRACT_V7 \
+            if cleaned_opening else \
+            _tool_policy.PRESENTATION_CONTRACT_V6 \
+            if draft_page else \
+            _tool_policy.PRESENTATION_CONTRACT_V5 \
+            if split_return else \
+            _tool_policy.PRESENTATION_CONTRACT_V4
+        # The draft-page successor's texts
+        # (office-cycle-v3): the same derivation,
+        # with the seven journal-defining wordings
+        # exchanged for the draft-page variants.
+        # Under v1 and v2 the standing texts are
+        # selected, exactly as before.
+        cover_first = CYCLE_COVER_FIRST_V3 \
+            if draft_page else CYCLE_COVER_FIRST
+        direction_summarize = \
+            CYCLE_DIRECTION_SUMMARIZE_V3 \
+            if draft_page else \
+            CYCLE_DIRECTION_SUMMARIZE
+        poster_intro = CYCLE_POSTER_INTRO_V3 \
+            if draft_page else CYCLE_POSTER_INTRO
+        journal_contract = \
+            CYCLE_JOURNAL_CONTRACT_V3 \
+            if draft_page else CYCLE_JOURNAL_CONTRACT
+        pull_instruction = \
+            CYCLE_PULL_INSTRUCTION_V3 \
+            if draft_page else CYCLE_PULL_INSTRUCTION
+        read_stands_instruction = \
+            CYCLE_READ_STANDS_INSTRUCTION_V3 \
+            if draft_page else \
+            CYCLE_READ_STANDS_INSTRUCTION
+        summarize_instruction = \
+            CYCLE_SUMMARIZE_INSTRUCTION_V3 \
+            if draft_page else \
+            CYCLE_SUMMARIZE_INSTRUCTION
+        # The carryover successor's directions
+        # (office-cycle-v5): the cycle direction can
+        # no longer say the journal is not carried —
+        # under this contract it rides as his draft —
+        # and the summarize direction names the
+        # carried draft; selected here, beside the
+        # other text selections, and standing texts
+        # otherwise.
+        direction_cycle = CYCLE_DIRECTION_CYCLE_V5 \
+            if carryover else CYCLE_DIRECTION_CYCLE
+        if carryover:
+            direction_summarize = \
+                CYCLE_DIRECTION_SUMMARIZE_V5
+        if file_grain:
+            cstate = _cycle_state_v8(
+                events, state["dispatches"],
+                ctx["instance_id"], head, content,
+                generated, iteration)
+        else:
+            cstate = _cycle_state(
+                events, state["dispatches"],
+                ctx["instance_id"], head, content,
+                generated, iteration)
+        if cstate is None:
+            raise ValueError(
+                "the assembly is sealed under the "
+                "office-cycle presentation contract but "
+                "the sealed block map does not stand "
+                "against the pinned case, or the case "
+                "designates no journal; no cycle package "
+                "can be built")
+        # The process tree (office-cycle-v9): the one
+        # computation, derived here from the cycle
+        # state this package already stands on; the
+        # opening carries its text, every later
+        # package carries it as a component, and the
+        # results carriage's speaking refusal renders
+        # from it below.
+        tree_computation = None
+        if ctx.get("presentation_contract") == \
+                _tool_policy.PRESENTATION_CONTRACT_V12 \
+                and ctx.get("tree") is not None:
+            tree_computation = _tree_computation(
+                ctx["tree"], cstate, iteration,
+                ctx.get("deliverable_filed") is not None)
+            # The speaking refusal enriches the
+            # base carriage HERE, before either
+            # return path derives its own carriage
+            # from it — one computation, one place,
+            # both paths carry it.
+            _tree_speaking_refusals(
+                base["tool_results"], tree_computation)
+        if file_grain:
+            # The file-grain successor's cycle
+            # direction (office-cycle-v8): the
+            # standing truth in the job's own units,
+            # with the journal's own address
+            # formatted in. The summarize direction
+            # keeps the standing selection, as under
+            # v6 and v7.
+            direction_cycle = \
+                CYCLE_DIRECTION_CYCLE_V8.format(
+                    journal=cstate["journal_path"])
+        elif zero_carryover:
+            # The zero-carryover successor's cycle
+            # direction (office-cycle-v6): the
+            # standing truth stated again with the
+            # journal's own address — not carried,
+            # standing in his scratch, read by pull —
+            # formatted here, where the cycle state
+            # (and with it the journal's address)
+            # stands derived. The summarize direction
+            # keeps the standing selection: it already
+            # sends him to read his journal whole in
+            # his room.
+            direction_cycle = \
+                CYCLE_DIRECTION_CYCLE_V6.format(
+                    journal=cstate["journal_path"])
+        onboarding = _staged_onboarding(content)
+        headline = onboarding["headline"] \
+            if onboarding is not None else \
+            "The job in your briefcase"
+        deliverable = onboarding["deliverable"] \
+            if onboarding is not None else None
+        if deliverable is None and \
+                isinstance(ctx.get("delivery"), dict):
+            deliverable = ctx["delivery"].get(
+                "destination")
+        deliverable_text = deliverable \
+            if isinstance(deliverable, str) else \
+            "the deliverable named in your case"
+        # The sealed delivery declaration's own
+        # destination (the carryover successor's
+        # statement ground, office-cycle-v5): the
+        # loop's delivery declaration — the generated
+        # record's, verified equal to the case's own
+        # and contribution-routed at the context's
+        # derivation — read for its destination,
+        # never the onboarding prose, whose
+        # deliverable sentence is the case's authored
+        # text and not the seal. Where no declaration
+        # stands, the standing fallback serves, as
+        # everywhere in this builder.
+        delivery_destination = None
+        if isinstance(ctx.get("delivery"), dict):
+            delivery_destination = ctx["delivery"].get(
+                "destination")
+        if not isinstance(delivery_destination, str):
+            delivery_destination = deliverable_text
+        total = len(cstate["files"]) if file_grain \
+            else len(cstate["blocks"])
+        current = cstate["current"]
+        summarize = current is None
+        package = {}
+        for key in ("seat", "role", "instance_id",
+                    "case_id", "case_version"):
+            package[key] = base[key]
+        if iteration == 1 and cleaned_opening:
+            # The cleaned opening (office-cycle-v4):
+            # no JSON component assembly stands in
+            # this package — the director's plain-
+            # text structure, rendered from the
+            # sealed case, is the opening's whole
+            # content beyond the identity keys, and
+            # the adapter renders it behind the
+            # compressed outcome frame. The shared
+            # tail below still stands: the offer set
+            # is the package's tools, the split
+            # carriage carries the (empty) first
+            # results, and the position is the base
+            # package's own.
+            destination = None
+            if isinstance(ctx.get("delivery"), dict):
+                destination = ctx["delivery"].get(
+                    "destination")
+            if not isinstance(destination, str):
+                destination = deliverable_text
+            floor = ctx.get("delivery_floor")
+            package["presentation"] = {
+                "contract": contract_value,
+                "package": "opening"}
+            if file_grain:
+                # The file-grain successor's opening
+                # (office-cycle-v8): the first FILE's
+                # Next line stands between the frame
+                # and the director's structure, as
+                # under v7 — and the structure itself
+                # is the director's, rendered at the
+                # file grain: the sources one line
+                # per file, the method as the file
+                # rhythm, the position counting
+                # files. The parts stand only inside
+                # their file's line, as plumbing.
+                package["opening_text"] = \
+                    _cycle_next_line_v8(
+                        cstate["files"][0],
+                        cstate["journal_path"]) + \
+                    "\n\n" + _cycle_opening_text_v8(
+                        seat=package["seat"],
+                        role=package["role"],
+                        instance_id=package[
+                            "instance_id"],
+                        case_id=package["case_id"],
+                        case_version=package[
+                            "case_version"],
+                        destination=destination,
+                        points=list(
+                            TREE_COMPOSE_POINTS),
+                        min_words=floor["min_words"]
+                        if isinstance(floor, dict)
+                        else None,
+                        files=cstate["files"],
+                        catalogue=catalogue,
+                        journal_path=cstate[
+                            "journal_path"],
+                        total=total,
+                        contract=contract_value)
+                if tree_computation is not None:
+                    # The tree in the opening package:
+                    # its text stands after the
+                    # director's structure — the map,
+                    # in hand from the first wake.
+                    package["opening_text"] += \
+                        "\n\n" + _tree_text(
+                            tree_computation)
+            elif imperative_first:
+                # The imperative-first successor's
+                # opening (office-cycle-v7): the
+                # first block's Next line stands
+                # between the outcome frame and the
+                # director's structure — the adapter
+                # renders the frame, then this text —
+                # so the first words of the job he
+                # reads are the step he is to take.
+                # The structure itself is rendered
+                # whole below, byte-identical to its
+                # v4-through-v6 form but for the
+                # contract line naming this seal.
+                package["opening_text"] = \
+                    _cycle_next_line_v7(
+                        cstate["blocks"][0],
+                        cstate["journal_path"]) + \
+                    "\n\n" + _cycle_opening_text_v4(
+                        seat=package["seat"],
+                        role=package["role"],
+                        instance_id=package[
+                            "instance_id"],
+                        case_id=package["case_id"],
+                        case_version=package[
+                            "case_version"],
+                        destination=destination,
+                        points=list(
+                            TREE_COMPOSE_POINTS),
+                        min_words=floor["min_words"]
+                        if isinstance(floor, dict)
+                        else None,
+                        blocks=cstate["blocks"],
+                        catalogue=catalogue,
+                        journal_path=cstate[
+                            "journal_path"],
+                        total=total,
+                        contract=contract_value)
+            else:
+                package["opening_text"] = \
+                    _cycle_opening_text_v4(
+                    seat=package["seat"],
+                    role=package["role"],
+                    instance_id=package["instance_id"],
+                    case_id=package["case_id"],
+                    case_version=package["case_version"],
+                    destination=destination,
+                    points=list(TREE_COMPOSE_POINTS),
+                    min_words=floor["min_words"]
+                    if isinstance(floor, dict)
+                    else None,
+                    blocks=cstate["blocks"],
+                    catalogue=catalogue,
+                    journal_path=cstate["journal_path"],
+                    total=total,
+                    contract=contract_value)
+        elif iteration == 1:
+            package["presentation"] = {
+                "contract": contract_value,
+                "package": "opening",
+                "direction": CYCLE_DIRECTION_OPENING}
+            package["cover"] = {
+                "headline": headline,
+                "deliverable": deliverable_text,
+                "statement": cover_first.format(
+                    seat=ctx["seat"], role=ctx["role"],
+                    headline=headline,
+                    deliverable=deliverable_text)}
+            package["snapshot"] = _staged_snapshot(
+                content)
+            role_memory = content.get("role_memory")
+            package["memory"] = {
+                "introduction": STAGED_MEMORY_INTRO,
+                "entries": copy.deepcopy(role_memory)
+                if isinstance(role_memory, list) else []}
+            essentials = {
+                "part": content.get("part"),
+                "evidence_boundary": copy.deepcopy(
+                    content.get("evidence_boundary")),
+                "delivery": copy.deepcopy(
+                    content["delivery"])
+                if isinstance(content.get("delivery"),
+                              dict) else None,
+                "freshness": (
+                    "suspended — no freshness refusal "
+                    "applies to this job; your answers "
+                    "are judged on the work"
+                    if ctx.get("freshness_suspended")
+                    else "in force — your answers are "
+                         "judged against the record as "
+                         "it stood when you were woken")}
+            opening = content.get("opening")
+            if isinstance(opening, dict) and opening:
+                essentials["opening"] = copy.deepcopy(
+                    opening)
+            package["case_essentials"] = essentials
+            floor = ctx.get("delivery_floor")
+            figures = STAGED_TASK_FLOOR_STATEMENT_V2 \
+                .format(min_words=floor["min_words"]) \
+                if floor is not None else \
+                "The brief runs to about 600 words."
+            package["task"] = {
+                "introduction": CYCLE_TASK_INTRO,
+                "assignment": content.get("assignment"),
+                "deliverable": deliverable_text,
+                "points": list(TREE_COMPOSE_POINTS),
+                "figures": figures}
+            poster_blocks = []
+            for block in cstate["blocks"]:
+                entry = {
+                    "block_id": block["block_id"],
+                    "address": block["address"],
+                    "line_start": block["line_start"],
+                    "line_end": block["line_end"],
+                    "content_bytes":
+                        block["content_bytes"],
+                    "content_sha256":
+                        block["content_sha256"],
+                    "state": block["state"]}
+                way = _cycle_access(block, catalogue)
+                if way is not None:
+                    entry["access"] = way
+                poster_blocks.append(entry)
+            package["poster"] = {
+                "introduction": poster_intro,
+                "cycles": total,
+                "blocks": poster_blocks}
+            if split_return:
+                # The room's rules, stated once, in
+                # the opening alone (office-cycle-v2):
+                # the budget in plain figures, the
+                # one-block-per-wake return, and the
+                # consequence for pulling ahead. No
+                # later package repeats them.
+                package["poster"]["room_knowledge"] = \
+                    CYCLE_ROOM_KNOWLEDGE
+            package["journal"] = {
+                "path": cstate["journal_path"],
+                "contract": journal_contract}
+        else:
+            package["presentation"] = {
+                "contract": contract_value,
+                "package": "summarize" if summarize
+                else "cycle",
+                "direction": direction_summarize
+                if summarize else direction_cycle}
+            if file_grain:
+                # The file-grain successor's
+                # presentation (office-cycle-v8):
+                # the position names the file, never
+                # a cycle.
+                package["presentation"]["file"] = \
+                    current
+            else:
+                package["presentation"]["cycle"] = \
+                    current
+            if carryover or zero_carryover:
+                # The statement line from the facts
+                # (office-cycle-v5): the deliverable
+                # named from the sealed delivery
+                # declaration — the brief delivered as
+                # the contribute outcome at the end of
+                # the walk, the office filing it at
+                # the declared destination, the v4
+                # opening's own story — never the
+                # onboarding prose, whose sentence
+                # ("written with a tool") contradicted
+                # that door in every cycle package of
+                # the gptoss8 run. The zero-carryover
+                # successor (office-cycle-v6) keeps
+                # the line whole, by its brief: v5's
+                # items 1–2 stand unchanged under it.
+                statement_deliverable = (
+                    f"the brief, delivered as your "
+                    f"contribute outcome at the end "
+                    f"of the walk; the office files "
+                    f"it at {delivery_destination}")
+            else:
+                statement_deliverable = deliverable_text
+            if summarize:
+                statement = (
+                    f"{headline} — the deliverable: "
+                    f"{statement_deliverable}. Step "
+                    f"{iteration} of {ceiling}; task in "
+                    f"progress. "
+                    + ("Every file stands complete: "
+                       "summarize." if file_grain else
+                       "Every cycle stands complete: "
+                       "summarize."))
+            else:
+                statement = (
+                    f"{headline} — the deliverable: "
+                    f"{statement_deliverable}. Step "
+                    f"{iteration} of {ceiling}; task in "
+                    f"progress. "
+                    + (f"File {current} of {total}."
+                       if file_grain else
+                       f"Cycle {current} of {total}."))
+            package["cover"] = {"statement": statement}
+        if iteration > 1:
+            blocks_component = []
+            for block in cstate["blocks"]:
+                if zero_carryover:
+                    # The slimmed blocks (office-cycle-
+                    # v6; the director's tap of
+                    # 2026-11-25 22:30 MST): the package
+                    # carries the block's place and its
+                    # state alone. The per-wake
+                    # bookkeeping — the address, the
+                    # range, the gathered block's
+                    # fingerprint and size, its dispatch
+                    # provenance — stands in the
+                    # opening's source table and in the
+                    # record, and nothing else loses it;
+                    # the budget is spent on the intro
+                    # and the work, not on re-carrying
+                    # the map at every wake. (The
+                    # slimming is what makes room, at
+                    # the near-ceiling joints, for the
+                    # corrections that ride again.)
+                    blocks_component.append({
+                        "block_id": block["block_id"],
+                        "state": block["state"]})
+                    continue
+                entry = {
+                    "block_id": block["block_id"],
+                    "address": block["address"],
+                    "line_start": block["line_start"],
+                    "line_end": block["line_end"],
+                    "state": block["state"]}
+                if block["read_stands"]:
+                    # A gathered block stands as its
+                    # pointer (the plan §3): fingerprint,
+                    # size and the dispatch provenance of
+                    # the pull that gathered it. A block
+                    # not yet pulled stands by its place
+                    # alone — its fingerprint and size
+                    # stand in the opening's poster, and
+                    # the per-call budget (the plan §6)
+                    # is spent on the current block's
+                    # content, not on re-carrying the
+                    # map at every wake.
+                    entry["content_bytes"] = \
+                        block["content_bytes"]
+                    entry["content_sha256"] = \
+                        block["content_sha256"]
+                    if block["entry"] is not None:
+                        source = block["entry"]
+                        entry["dispatch_id"] = \
+                            source.get("dispatch_id")
+                        entry["request_id"] = \
+                            source.get("request_id")
+                        entry["outcome_event_seq"] = \
+                            source.get(
+                                "outcome_event_seq")
+                blocks_component.append(entry)
+            package["blocks"] = blocks_component
+            if carryover:
+                # The carryover (office-cycle-v5): the
+                # journal's current content — the
+                # accepted chain's standing text,
+                # derived from the record at this
+                # package's head — rides as the
+                # package's centre, labelled his draft
+                # so far, in cycle and summarize
+                # packages alike: every step after the
+                # opening is taken from his own words,
+                # and the draft he is building is what
+                # the package centres, not the
+                # machinery's state.
+                package["journal_draft"] = {
+                    "path": cstate["journal_path"],
+                    "label":
+                        CYCLE_JOURNAL_DRAFT_LABEL_V5,
+                    "content": cstate["chain"]
+                        ["accepted"]}
+            # Under the zero-carryover successor
+            # (office-cycle-v6) the component above
+            # does not attach at all — no package,
+            # cycle or summarize, carries the
+            # journal's content; the journal stands in
+            # his scratch and he reads it himself.
+            if summarize:
+                package["current_cycle"] = {
+                    "stage": "summarize",
+                    # Under the carryover successor the
+                    # instruction's destination is the
+                    # sealed declaration's own (brief
+                    # item 1: the stale prose stands in
+                    # no v5 package, this one included);
+                    # the standing contracts format it
+                    # exactly as before. The zero-
+                    # carryover successor (office-cycle-
+                    # v6) formats it the same way — its
+                    # intro sends him to read his journal
+                    # and combine, and names the sealed
+                    # destination.
+                    "instruction":
+                        summarize_instruction
+                        .format(
+                            journal=cstate["journal_path"],
+                            deliverable=(
+                                delivery_destination
+                                if (carryover or
+                                    zero_carryover) else
+                                deliverable_text)),
+                    "points": list(TREE_COMPOSE_POINTS),
+                    "figures":
+                        STAGED_TASK_FLOOR_STATEMENT_V2
+                        .format(min_words=ctx[
+                            "delivery_floor"]["min_words"])
+                        if ctx.get("delivery_floor")
+                        is not None else
+                        "The brief runs to about 600 "
+                        "words."}
+            else:
+                block = cstate["blocks"][current - 1]
+                range_text = (
+                    f", lines {block['line_start']} to "
+                    f"{block['line_end']}"
+                    if block["line_start"] is not None
+                    else " — the whole file")
+                component = {
+                    "cycle": current,
+                    "of": total,
+                    "block_id": block["block_id"],
+                    "address": block["address"],
+                    "line_start": block["line_start"],
+                    "line_end": block["line_end"]}
+                if block["read_stands"]:
+                    component["instruction"] = \
+                        read_stands_instruction \
+                        .format(
+                            cycle=current, total=total,
+                            block_id=block["block_id"],
+                            address=block["address"],
+                            range_text=range_text,
+                            journal=cstate["journal_path"])
+                else:
+                    component["instruction"] = \
+                        pull_instruction.format(
+                            cycle=current, total=total,
+                            block_id=block["block_id"],
+                            address=block["address"],
+                            range_text=range_text,
+                            journal=cstate["journal_path"])
+                if carryover or zero_carryover:
+                    # The one next step (office-cycle-
+                    # v5): the instruction states it in
+                    # the job's plain words, derived
+                    # from this cycle's state at
+                    # presentation — the read and the
+                    # append it feeds, or the append
+                    # alone where the read stands — in
+                    # place of the standing instruction's
+                    # cycle narration. The zero-
+                    # carryover successor (office-cycle-
+                    # v6) keeps it whole: it is the
+                    # intro's next part of the job, the
+                    # one carry the director's ruling
+                    # names.
+                    component["instruction"] = \
+                        _cycle_next_step_v5(
+                            block, cstate["journal_path"])
+                way = _cycle_access(block, catalogue)
+                if way is not None:
+                    component["access"] = way
+                component["workaround"] = CYCLE_WORKAROUND
+                if ctx.get("adapter_mode") == "native":
+                    component["call_shape"] = (
+                        "In this room your tools are "
+                        "offered natively: call the tool "
+                        "itself, with its arguments.")
+                else:
+                    component["call_shape"] = (
+                        "In this room your tools are "
+                        "called in the text shape: your "
+                        "answer is one JSON object whose "
+                        "outcome is \"tool_requests\", "
+                        "with a requests list naming each "
+                        "call — the tool's name and its "
+                        "parameters.")
+                package["current_cycle"] = component
+                # The current block's content, presented
+                # exactly once: at the first wake its
+                # read stands and its cycle is current,
+                # where it has not already been
+                # presented at an earlier wake.
+                if block["read_stands"]:
+                    earlier = [
+                        (ev["payload"].get("iteration"),
+                         ev["payload"].get("cursor_to"))
+                        for ev in events
+                        if ev["type"] == "LOOP_ITERATION"
+                        and ev["payload"].get(
+                            "assembly_id")
+                        == ctx["assembly_id"]
+                        and isinstance(ev["payload"].get(
+                            "iteration"), int)
+                        and ev["payload"].get("iteration")
+                        < iteration
+                        and isinstance(ev["payload"].get(
+                            "cursor_to"), int)]
+                    presented = \
+                        _cycle_presented_block_ids(
+                            events, state["dispatches"],
+                            ctx["instance_id"], content,
+                            generated, earlier)
+                    if block["block_id"] not in presented:
+                        block_content = _block_content(
+                            cstate["entries"], block)
+                        if block_content is not None:
+                            package["block_content"] = {
+                                "block_id":
+                                    block["block_id"],
+                                "address":
+                                    block["address"],
+                                "content": block_content}
+        if file_grain and iteration > 1:
+            # The file-grain successor's components
+            # (office-cycle-v8): the standing
+            # construction above ran at the block
+            # grain; its components are exchanged
+            # here for the file-grain ones. The
+            # bookkeeping lists FILES — each file's
+            # place and state alone, in the slimmed
+            # form — the current component names the
+            # file and its next step, and the
+            # block_content presents the current
+            # file's most recently landed part whose
+            # content has not stood presented at an
+            # earlier wake: a file's parts present in
+            # sequence inside its step, each exactly
+            # once, and no part of any other file
+            # presents here at all.
+            package.pop("blocks", None)
+            package.pop("current_cycle", None)
+            package.pop("block_content", None)
+            package["files"] = [
+                {"file_id": entry["file_id"],
+                 "state": entry["state"]}
+                for entry in cstate["files"]]
+            if summarize:
+                package["current_file"] = {
+                    "stage": "summarize",
+                    "instruction":
+                        summarize_instruction
+                        .format(
+                            journal=cstate[
+                                "journal_path"],
+                            deliverable=(
+                                delivery_destination)),
+                    "points": list(
+                        TREE_COMPOSE_POINTS),
+                    "figures":
+                        STAGED_TASK_FLOOR_STATEMENT_V2
+                        .format(min_words=ctx[
+                            "delivery_floor"]
+                            ["min_words"])
+                        if ctx.get("delivery_floor")
+                        is not None else
+                        "The brief runs to about 600 "
+                        "words."}
+            else:
+                current_file = cstate["files"][
+                    current - 1]
+                component = {
+                    "file": current,
+                    "of": total,
+                    "file_id": current_file["file_id"],
+                    "address": current_file["address"],
+                    "instruction":
+                        _cycle_next_step_v8(
+                            current_file,
+                            cstate["journal_path"])}
+                if len(current_file["blocks"]) == 1:
+                    way = _cycle_access(
+                        current_file["blocks"][0],
+                        catalogue)
+                    if way is not None:
+                        component["access"] = way
+                component["workaround"] = \
+                    CYCLE_WORKAROUND
+                if ctx.get("adapter_mode") == "native":
+                    component["call_shape"] = (
+                        "In this room your tools are "
+                        "offered natively: call the tool "
+                        "itself, with its arguments.")
+                else:
+                    component["call_shape"] = (
+                        "In this room your tools are "
+                        "called in the text shape: your "
+                        "answer is one JSON object whose "
+                        "outcome is \"tool_requests\", "
+                        "with a requests list naming each "
+                        "call — the tool's name and its "
+                        "parameters.")
+                package["current_file"] = component
+                earlier = [
+                    (ev["payload"].get("iteration"),
+                     ev["payload"].get("cursor_to"))
+                    for ev in events
+                    if ev["type"] == "LOOP_ITERATION"
+                    and ev["payload"].get(
+                        "assembly_id")
+                    == ctx["assembly_id"]
+                    and isinstance(ev["payload"].get(
+                        "iteration"), int)
+                    and ev["payload"].get("iteration")
+                    < iteration
+                    and isinstance(ev["payload"].get(
+                        "cursor_to"), int)]
+                presented = _v8_presented_parts(
+                    events, state["dispatches"],
+                    ctx["instance_id"], content,
+                    generated, earlier)
+                part = _v8_current_part(
+                    cstate, presented)
+                if part is not None:
+                    block_content = _block_content(
+                        cstate["entries"], part)
+                    if block_content is not None:
+                        package["block_content"] = {
+                            "block_id":
+                                part["block_id"],
+                            "address":
+                                part["address"],
+                            "content": block_content}
+        for key in ("delivery_gate_correction",
+                    "delivery_stage_gate_correction",
+                    "delivery_evidence_gate_correction",
+                    "delivery_length_gate_correction",
+                    "tool_shape_gate_correction"):
+            if ordered.get(key) is not None:
+                package[key] = ordered[key]
+        if ctx.get("cycle_gate_correction") is not None \
+                and (not split_return or carryover
+                     or zero_carryover):
+            # Under the split-on-return successor the
+            # gate's event stands in the record exactly
+            # as under v1, but its correction does not
+            # ride the package: the metered presentation
+            # itself — the current cycle's instruction,
+            # the ahead blocks standing as pointers —
+            # and the opening's standing lines carry
+            # the correction's whole content, and the
+            # correction component on a batch wake was
+            # itself part of what pushed that wake over
+            # the per-call budget the run died on.
+            # Under the carryover successor
+            # (office-cycle-v5) the correction rides
+            # again, by the director's order: derived
+            # fresh at this build from the gate event
+            # standing against the previous iteration —
+            # what arrived, the cycle the walk stands
+            # on, and the append that advances it — so
+            # a worker whose work ran ahead can see
+            # what the walk is waiting for. The journal
+            # gate's correction below rides under every
+            # contract, this one included, in the same
+            # derived-fresh shape.
+            package["cycle_gate_correction"] = \
+                ctx["cycle_gate_correction"]
+        if ctx.get("journal_gate_correction") is not None:
+            package["journal_gate_correction"] = \
+                ctx["journal_gate_correction"]
+        package["tools"] = _cycle_offer_set(
+            catalogue, cstate, summarize)
+        if split_return:
+            # The split-on-return carriage (office-
+            # cycle-v2): the wake carries only what it
+            # presents. A block read's result rides
+            # only where its block is the current
+            # cycle's — stubbed to the block_content
+            # component where the content stands
+            # there, or answered with its content
+            # where the pull is a re-pull of the
+            # current block after its presentation.
+            # Every other block's read result does not
+            # ride: its block stands as its pointer in
+            # the blocks component, and its content is
+            # presented when its cycle comes. The
+            # journal read stands as it arrived, as
+            # under v1; listings, searches, writes and
+            # failures are not block contents and stand
+            # as they arrived.
+            if file_grain:
+                # The file-grain successor's carriage
+                # (office-cycle-v8): the split rule at
+                # the file grain — the current file's
+                # reads ride (the presented part
+                # stubbed to the block_content
+                # component, the file's other parts
+                # dropped to their pointers in the
+                # files component), and no other
+                # file's read rides at all.
+                v8_part = None
+                if "block_content" in package and \
+                        current is not None:
+                    for block in cstate["files"][
+                            current - 1]["blocks"]:
+                        if block["block_id"] == \
+                                package["block_content"][
+                                    "block_id"]:
+                            v8_part = block
+                            break
+                package["tool_results"] = \
+                    _cycle_split_carriage_v8(
+                        base["tool_results"],
+                        state["dispatches"], cstate,
+                        current, v8_part)
+            else:
+                package["tool_results"] = \
+                    _cycle_split_carriage(
+                        base["tool_results"],
+                        state["dispatches"], cstate,
+                        current,
+                        "block_content" in package)
+            package["position"] = base["position"]
+            if imperative_first and iteration > 1:
+                # The imperative-first successor
+                # (office-cycle-v7): the package is
+                # rebuilt with the Next line as its
+                # first component — the adapter
+                # renders the package in its own
+                # order, so the first words of the
+                # package proper are the step he is
+                # to take, and every component below
+                # it, the gates' corrections
+                # included, stands as its support,
+                # unmerged. The line is derived
+                # here, at the package's completion,
+                # from the cycle state it opens: the
+                # current block and whether its read
+                # stands, or the combine where every
+                # cycle stands complete; a standing
+                # cycle or journal gate correction
+                # makes the append the step that
+                # passes, as the helper derives it.
+                if file_grain:
+                    # The file-grain successor's Next
+                    # line (office-cycle-v8): derived
+                    # from the FILE state — the read
+                    # of the file or its next part, the
+                    # append where the file's read
+                    # stands or a gate's correction
+                    # stands answered, the combine
+                    # where every file stands
+                    # complete.
+                    next_line = _cycle_next_line_v8(
+                        None if summarize else
+                        cstate["files"][current - 1],
+                        cstate["journal_path"],
+                        refused=(
+                            ctx.get(
+                                "cycle_gate_correction")
+                            is not None
+                            or ctx.get(
+                                "journal_gate_correction")
+                            is not None))
+                else:
+                    next_line = _cycle_next_line_v7(
+                        None if summarize else
+                        cstate["blocks"][current - 1],
+                        cstate["journal_path"],
+                        refused=(
+                            ctx.get(
+                                "cycle_gate_correction")
+                            is not None
+                            or ctx.get(
+                                "journal_gate_correction")
+                            is not None))
+                package = {
+                    "next_step": next_line,
+                    **package}
+            if tree_computation is not None:
+                package["process_tree"] = {
+                    "text": _tree_text(tree_computation),
+                    "nodes": tree_computation["nodes"]}
+            return package
+        # The tool results: the carriage carries the
+        # newest response's results (the base package's
+        # own derivation), and a block read's content
+        # stands in it under the presentation rule
+        # alone — presented where the pull is a re-pull
+        # of an earlier block (answered once, here) or
+        # a journal read (his pull of his own notebook,
+        # answered once, here; the journal itself is
+        # never a component), and stubbed where the
+        # content stands in this package's block_content
+        # (the current block, freshly read) or belongs
+        # to a later block (stubbed until its cycle).
+        # Listings and searches are not block contents:
+        # they stand as they arrived. Failures keep
+        # their standing shapes.
+        tool_results = copy.deepcopy(base["tool_results"])
+        dispatch_tools = {
+            did: d.get("tool")
+            for did, d in state["dispatches"].items()}
+        entries_by_dispatch = {
+            entry.get("dispatch_id"): entry
+            for entry in cstate["entries"]}
+        blocks_by_address = {}
+        for block in cstate["blocks"]:
+            blocks_by_address.setdefault(
+                block["address"], []).append(block)
+        for entry in tool_results:
+            if entry.get("outcome") != "result":
+                continue
+            tool = dispatch_tools.get(
+                entry.get("dispatch_id"))
+            if tool not in ("sandbox.read",
+                            "sandbox.read_range"):
+                continue
+            result = entry.get("result")
+            if not isinstance(result, dict) or \
+                    "content" not in result:
+                continue
+            gathered = entries_by_dispatch.get(
+                entry.get("dispatch_id"))
+            path = gathered.get("path") \
+                if gathered is not None else None
+            if path == cstate["journal_path"]:
+                continue
+            served = (gathered.get("served") or {}) \
+                if gathered is not None else {}
+            cycles = set()
+            for block in blocks_by_address.get(
+                    path, []):
+                if served.get("kind") == "whole":
+                    cycles.add(block["cycle"])
+                elif served.get("kind") == "range" and \
+                        isinstance(
+                            served.get("start_line"), int) \
+                        and isinstance(
+                            served.get("end_line"), int):
+                    first = block["line_start"] \
+                        if block["line_start"] is not None \
+                        else 1
+                    last = block["line_end"] \
+                        if block["line_end"] is not None \
+                        else served["end_line"]
+                    if served["start_line"] <= last and \
+                            first <= served["end_line"]:
+                        cycles.add(block["cycle"])
+            if not cycles or current is None:
+                continue
+            if current in cycles and \
+                    "block_content" in package:
+                entry["result"] = _carriage_stub(
+                    result, "block_content")
+            elif max(cycles) > current:
+                entry["result"] = _carriage_stub(
+                    result, "its_cycle")
+        if tree_computation is not None:
+            # The tree component (the speaking
+            # refusal was rendered into the base
+            # carriage at the computation, above —
+            # both return paths derive from it).
+            package["process_tree"] = {
+                "text": _tree_text(tree_computation),
+                "nodes": tree_computation["nodes"]}
+        package["tool_results"] = tool_results
+        package["position"] = base["position"]
+        return package
 
     def _tree_step_component(self, ctx, tstate,
                              catalogue, deliverable_text):
@@ -5995,7 +9978,73 @@ class Loop:
             return False
         tree_form = ctx.get("presentation_contract") == \
             _tool_policy.PRESENTATION_CONTRACT_V3
-        if tree_form:
+        cycle_form = ctx.get("presentation_contract") in (
+            _tool_policy.PRESENTATION_CONTRACT_V4,
+            _tool_policy.PRESENTATION_CONTRACT_V5,
+            _tool_policy.PRESENTATION_CONTRACT_V6,
+            _tool_policy.PRESENTATION_CONTRACT_V7,
+            _tool_policy.PRESENTATION_CONTRACT_V8,
+            _tool_policy.PRESENTATION_CONTRACT_V9,
+            _tool_policy.PRESENTATION_CONTRACT_V10,
+            _tool_policy.PRESENTATION_CONTRACT_V11,
+            _tool_policy.PRESENTATION_CONTRACT_V12)
+        if cycle_form:
+            # The cycle walk's progression replaces the
+            # stage gate's function under this contract
+            # (the plan §7): the contribution door opens
+            # at SUMMARIZE, and a contribution offered
+            # while a cycle stands incomplete — derived
+            # from the record at the package head the
+            # worker was woken from — is set aside
+            # unfiled under the same gate event, its
+            # stage the current cycle in cycle words,
+            # and its correction names the incomplete
+            # blocks explicitly, as blocks mapped to
+            # their files.
+            events = self.doorway.store.all_events()
+            state = self.doorway.state()
+            generated = self.doorway._generated_payload(
+                ctx["assembly_id"])
+            # The file-grain successor (office-cycle-
+            # v8): the same gate at the file grain —
+            # its stage the current file, its
+            # correction naming the incomplete FILES.
+            file_grain = ctx.get(
+                "presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12)
+            if file_grain:
+                cstate = _cycle_state_v8(
+                    events, state["dispatches"],
+                    ctx["instance_id"], ctx["cursor"],
+                    ctx["content"], generated,
+                    ctx["iterations"])
+            else:
+                cstate = _cycle_state(
+                    events, state["dispatches"],
+                    ctx["instance_id"], ctx["cursor"],
+                    ctx["content"], generated,
+                    ctx["iterations"])
+            if cstate is None or \
+                    cstate["current"] is None:
+                return False
+            if file_grain:
+                stage = (f"file {cstate['current']} of "
+                         f"{len(cstate['files'])}")
+                cycle_missing = [
+                    {"file_id": entry["file_id"],
+                     "address": entry["address"]}
+                    for entry in cstate["files"]
+                    if entry["state"] != "done"]
+            else:
+                stage = (f"cycle {cstate['current']} of "
+                         f"{len(cstate['blocks'])}")
+                cycle_missing = [
+                    {"block_id": block["block_id"],
+                     "address": block["address"]}
+                    for block in cstate["blocks"]
+                    if block["state"] != "done"]
+        elif tree_form:
             # The tree's progression replaces the stage
             # gate's function under this contract (the
             # room rebuild): the contribution door opens
@@ -6038,7 +10087,30 @@ class Loop:
                 f"recorded: {type(exc).__name__}: {exc}")
             return True
         ctx["recorded"].append(gate_ev)
-        if tree_form:
+        if cycle_form:
+            if file_grain:
+                ctx["delivery_stage_gate_correction"] = {
+                    "what_arrived":
+                        _cycle_stage_gate_what_arrived_v8(
+                            stage),
+                    "stage": stage,
+                    "contribution_seq": ev["event_seq"],
+                    "text_sha256": digest,
+                    "missing_files": cycle_missing,
+                    "instruction":
+                        CYCLE_STAGE_GATE_INSTRUCTION_V8}
+            else:
+                ctx["delivery_stage_gate_correction"] = {
+                    "what_arrived":
+                        _cycle_stage_gate_what_arrived(
+                            stage),
+                    "stage": stage,
+                    "contribution_seq": ev["event_seq"],
+                    "text_sha256": digest,
+                    "missing_blocks": cycle_missing,
+                    "instruction":
+                        CYCLE_STAGE_GATE_INSTRUCTION}
+        elif tree_form:
             ctx["delivery_stage_gate_correction"] = {
                 "what_arrived":
                     _tree_stage_gate_what_arrived(stage),
@@ -6089,9 +10161,30 @@ class Loop:
             return False
         events = self.doorway.store.all_events()
         dispatches = self.doorway.state()["dispatches"]
+        # Under the office-cycle contract the evidence
+        # computation weighs the sealed block map
+        # beside the standing rule: a file gathered
+        # block by block, every block carried, stands
+        # as evidence (the plan §7).
+        block_map = None
+        if ctx.get("presentation_contract") in (
+                _tool_policy.PRESENTATION_CONTRACT_V4,
+                _tool_policy.PRESENTATION_CONTRACT_V5,
+                _tool_policy.PRESENTATION_CONTRACT_V6,
+                _tool_policy.PRESENTATION_CONTRACT_V7,
+                _tool_policy.PRESENTATION_CONTRACT_V8,
+                _tool_policy.PRESENTATION_CONTRACT_V9,
+                _tool_policy.PRESENTATION_CONTRACT_V10,
+                _tool_policy.PRESENTATION_CONTRACT_V11,
+                _tool_policy.PRESENTATION_CONTRACT_V12):
+            generated = self.doorway._generated_payload(
+                ctx["assembly_id"])
+            block_map = _cycle_blocks(
+                ctx["content"], generated)
         missing = _delivery_evidence_missing(
             events, dispatches, ctx["instance_id"],
-            ev["event_seq"], declaration["addresses"])
+            ev["event_seq"], declaration["addresses"],
+            block_map=block_map)
         if not missing:
             return False
         digest = hashlib.sha256(
@@ -6112,6 +10205,15 @@ class Loop:
             _evidence_gate_correction(
                 ctx.get("catalogue") or [],
                 ev["event_seq"], digest, missing)
+        if block_map is not None:
+            # The cycle contract's correction names the
+            # incomplete cycles explicitly: the missing
+            # files' blocks whose reads do not stand,
+            # listed as blocks mapped to their files.
+            ctx["delivery_evidence_gate_correction"][
+                "missing_blocks"] = _missing_blocks(
+                    events, dispatches, ctx["instance_id"],
+                    ev["event_seq"], block_map, missing)
         return True
 
     def _try_delivery_length_gate(self, ctx, proposal,

@@ -1866,6 +1866,1076 @@ def build_script_tree_native():
     return {"chat": [], "chat-raw-bounded": bounded}
 
 
+CYCLE_NOTE_1 = (
+    "Stock-take (block B1, the whole file): the "
+    "framework's proven ground and its open ground, "
+    "mapped by the examiner.\n")
+CYCLE_NOTE_2 = (
+    "A3 pass (block B2, the whole file): the bounded "
+    "loop closed; composition across a run left "
+    "open.\n")
+CYCLE_NOTE_3 = (
+    "Index tail, first part (block B3, lines 1-6): "
+    "the decision record for the agent layer "
+    "opens.\n")
+CYCLE_NOTE_4 = (
+    "Index tail, second part (block B4, lines "
+    "7-13): assembly and grants, ruled and "
+    "recorded.\n")
+CYCLE_NOTE_5 = (
+    "Index tail, third part (block B5, lines "
+    "14-20): the loop and its bounds, examined.\n")
+CYCLE_NOTE_6 = (
+    "Index tail, last part (block B6, lines "
+    "21-24): the record closes on the open "
+    "questions.\n")
+CYCLE_REWRITE = (
+    "Fresh start — the earlier notes were wrong, "
+    "so the journal begins again here.\n")
+
+# The draft-page successor's journal entries
+# (office-cycle-v3): where the cycle scenarios'
+# notes log a block's name and key points, these
+# are draft — full sentences of the brief itself,
+# in the worker's own words, one passage per block,
+# the end work created gradually as the contract
+# the successor seals describes.
+CYCLE_DRAFT_1 = (
+    "The framework is a collaborative agent "
+    "framework: for each bounded job the office "
+    "generates a specific agent — its model, its "
+    "identity, the skills and tool grants its case "
+    "allows — and sets it to work in its own room "
+    "over a stocked briefcase. What stands proven "
+    "is that single generated worker doing real "
+    "work there, end to end.\n")
+CYCLE_DRAFT_2 = (
+    "The bounded loop is proven ground: the A3 "
+    "piece passed with its strict bounds contract "
+    "and its provenance rules accepted, so a "
+    "worker's run is held inside its sealed limits "
+    "and every act in it is attributable. What the "
+    "proof does not reach is composition — work "
+    "carried across agents — which no run has yet "
+    "demonstrated.\n")
+CYCLE_DRAFT_3 = (
+    "The decision record opens the agent layer on "
+    "a ruling: seats are agents, not models — the "
+    "office assembles the agent for the task at "
+    "hand, and the journey belongs to the work, "
+    "not to the worker who happens to carry it.\n")
+CYCLE_DRAFT_4 = (
+    "Assembly and grants stand ruled and "
+    "recorded: identity is weighed at assembly and "
+    "stated in certification, and each generated "
+    "agent holds exactly the tool grants its case "
+    "allows — no more, and nothing by inheritance.\n")
+CYCLE_DRAFT_5 = (
+    "The loop and its bounds stand examined: the "
+    "working set carries what the worker has "
+    "gathered from one wake to the next, and the "
+    "presentation has been rebuilt around the "
+    "office cycle, so the work travels in blocks "
+    "sized to the road it rides.\n")
+CYCLE_DRAFT_6 = (
+    "The honest next step is the proof this job "
+    "belongs to: the office cycle run end to end "
+    "on a live run — and beyond it, the "
+    "collaboration itself, several workers "
+    "changing shared work, which remains the "
+    "unproven ground the framework exists for.\n")
+
+
+def _cycle_requests(call_id, requests):
+    return {"respond": _text_tool_requests(
+        call_id, requests), "action": None}
+
+
+def _cycle_write(content):
+    return {"tool": "sandbox.write",
+            "parameters": {
+                "path": "scratch/journal.md",
+                "content": content}}
+
+
+def _cycle_read(address):
+    return {"tool": "sandbox.read",
+            "parameters": {"path": address}}
+
+
+def _cycle_range(address, start, end):
+    return {"tool": "sandbox.read_range",
+            "parameters": {"path": address,
+                           "start_line": start,
+                           "end_line": end}}
+
+
+def _cycle_notes(upto):
+    notes = (CYCLE_NOTE_1, CYCLE_NOTE_2, CYCLE_NOTE_3,
+             CYCLE_NOTE_4, CYCLE_NOTE_5, CYCLE_NOTE_6)
+    return "".join(notes[:upto])
+
+
+def _cycle_draft(upto):
+    drafts = (CYCLE_DRAFT_1, CYCLE_DRAFT_2,
+              CYCLE_DRAFT_3, CYCLE_DRAFT_4,
+              CYCLE_DRAFT_5, CYCLE_DRAFT_6)
+    return "".join(drafts[:upto])
+
+
+def build_script_cycle_honest():
+    """The office-cycle honest path (the plan of
+    2026-11-25), judged text so one response can
+    carry the cycle's append and the next block's
+    pull together: pull a block, and at the wake its
+    content stands presented, append its bits and
+    pull the next — nine iterations, opening to
+    filed brief, no gate of any kind."""
+    chat = [
+        _identify_step("cycle-honest"),
+        _cycle_requests("cy-h-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy-h-2", [
+            _cycle_write(_cycle_notes(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy-h-3", [
+            _cycle_write(_cycle_notes(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy-h-4", [
+            _cycle_write(_cycle_notes(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy-h-5", [
+            _cycle_write(_cycle_notes(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy-h-6", [
+            _cycle_write(_cycle_notes(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy-h-7", [
+            _cycle_write(_cycle_notes(6))]),
+        _cycle_requests("cy-h-8", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle_run_ahead():
+    """The cycle gate's witness: answering the
+    second cycle's wake, the stand-in appends the
+    first cycle's bits and pulls the second and
+    third blocks together — the third block's read
+    stands while the second cycle stands incomplete,
+    and the gate corrects at the next wake; the
+    appends then walk the cycles in order and the
+    run still files. (The run-ahead is staged at the
+    small second block on purpose: a correction
+    package carrying one of the near-ceiling blocks
+    would stand at the per-call budget's edge — the
+    budget's own witness is the budget scenario.)"""
+    chat = [
+        _identify_step("cycle-run-ahead"),
+        _cycle_requests("cy-r-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy-r-2", [
+            _cycle_write(_cycle_notes(1)),
+            _cycle_read("sources/a3-pass.md"),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy-r-3", [
+            _cycle_write(_cycle_notes(2))]),
+        _cycle_requests("cy-r-4", [
+            _cycle_write(_cycle_notes(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy-r-5", [
+            _cycle_write(_cycle_notes(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy-r-6", [
+            _cycle_write(_cycle_notes(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy-r-7", [
+            _cycle_write(_cycle_notes(6))]),
+        _cycle_requests("cy-r-8", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle_journal_rewrite():
+    """The journal gate's witness: after the first
+    accepted append, a write rewrites the journal
+    instead of adding to it — the gate records it,
+    the transition is not counted and no cycle
+    advances on it; the following proper append,
+    extending the accepted journal, is accepted and
+    the walk goes on to file."""
+    chat = [
+        _identify_step("cycle-journal-rewrite"),
+        _cycle_requests("cy-j-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy-j-2", [
+            _cycle_write(_cycle_notes(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy-j-3", [
+            _cycle_write(CYCLE_REWRITE)]),
+        _cycle_requests("cy-j-4", [
+            _cycle_write(_cycle_notes(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy-j-5", [
+            _cycle_write(_cycle_notes(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy-j-6", [
+            _cycle_write(_cycle_notes(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy-j-7", [
+            _cycle_write(_cycle_notes(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy-j-8", [
+            _cycle_write(_cycle_notes(6))]),
+        _cycle_requests("cy-j-9", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle_offoffer():
+    """The offer/resolution split's witness: the
+    first response calls sandbox.search — granted,
+    but not in any cycle package's offer set — and
+    sandbox.write against a stocked source, which no
+    grant carries. The search resolves against the
+    sealed catalogue and dispatches; the write is
+    refused at the doorway. The walk then runs the
+    honest rhythm to a filed brief. (The search is
+    scoped to one file so its result stays small:
+    an unscoped search's passages would stand in the
+    working set ahead of the last block's content
+    and evict it from the carriage — a different
+    witness than this scenario's.)"""
+    chat = [
+        _identify_step("cycle-offoffer"),
+        _cycle_requests("cy-o-1", [
+            {"tool": "sandbox.search",
+             "parameters": {"query": "loop",
+                            "path": "sources/a3-pass.md"}},
+            {"tool": "sandbox.write",
+             "parameters": {
+                 "path": "sources/stock-take.md",
+                 "content": "an overwrite the grants "
+                            "do not carry"}}]),
+        _cycle_requests("cy-o-2", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy-o-3", [
+            _cycle_write(_cycle_notes(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy-o-4", [
+            _cycle_write(_cycle_notes(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy-o-5", [
+            _cycle_write(_cycle_notes(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy-o-6", [
+            _cycle_write(_cycle_notes(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy-o-7", [
+            _cycle_write(_cycle_notes(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy-o-8", [
+            _cycle_write(_cycle_notes(6))]),
+        _cycle_requests("cy-o-9", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+# The budget scenario's synthetic source: a single
+# line of 20,000 bytes — one line, so the office's
+# portioning makes it a single block (the line is
+# the portioning unit and is never split), and its
+# cycle package, carrying the block's content,
+# exceeds the per-call token budget on its face.
+GIANT_LINE = ("G" * 20000 + "\n").encode("utf-8")
+
+ASSIGNMENT_CYCLE_BUDGET = (
+    "Read the one source document named in the "
+    "glossary and write the brief. (Office-cycle "
+    "rehearsal, budget scenario: a scripted stand-in "
+    "pulls the source; the package its content would "
+    "ride is over the per-call budget, and the run "
+    "stalls on the refusal.)")
+
+GLOSSARY_CYCLE_BUDGET = [
+    {"address": "sources/giant.md",
+     "description": "Synthetic source: one line of "
+                    "20,000 bytes. Pull it whole."},
+    {"address": "scratch/",
+     "description": "Your writing space."},
+]
+
+
+def build_script_cycle_budget():
+    """The road's spill witness (the §6 amendment,
+    rebased 2026-11-26 — this scenario witnessed the
+    per-call refusal until the amendment retired
+    it): one pull of the giant source. The next
+    package — the block's content presented at its
+    cycle — counts over the spill threshold, so the
+    road presents the block's reference and a
+    bounded preview instead of its whole content;
+    no refusal stands, the call is sent, and the
+    walk proceeds on the content standing in the
+    working set: append, summarize, file."""
+    chat = [
+        _identify_step("cycle-budget"),
+        _cycle_requests("cy-b-1", [
+            _cycle_read("sources/giant.md")]),
+        _cycle_requests("cy-b-2", [
+            _cycle_write(_cycle_notes(1))]),
+        _cycle_requests("cy-b-3", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle2_honest():
+    """The split-on-return contract's honest path:
+    the v1 honest path's own script, step for step —
+    the control the new contract is measured against
+    (the same pulls in the same order; only the
+    sealed contract, the opening's room lines and
+    the carriage rule differ)."""
+    script = build_script_cycle_honest()
+    script["chat"][0] = _identify_step("cycle2-honest")
+    return script
+
+
+def build_script_cycle2_batch():
+    """The split-on-return contract's batch witness
+    (the amendment's scenario, INDEX 589 §5): the
+    first response pulls all six blocks at once —
+    the shape demo-gptoss5 died on, where the batch
+    wake carried a second block's content over the
+    per-call budget. Under the split rule the batch
+    wake presents the first block alone, every other
+    pull stands as its pointer, no correction rides
+    the wake, and the walk then appends one cycle at
+    a time to a filed brief, every package within
+    budget."""
+    chat = [
+        _identify_step("cycle2-batch"),
+        _cycle_requests("cy2-t-1", [
+            _cycle_read("sources/stock-take.md"),
+            _cycle_read("sources/a3-pass.md"),
+            _cycle_range("sources/index-tail.md",
+                         1, 6),
+            _cycle_range("sources/index-tail.md",
+                         7, 13),
+            _cycle_range("sources/index-tail.md",
+                         14, 20),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy2-t-2", [
+            _cycle_write(_cycle_notes(1))]),
+        _cycle_requests("cy2-t-3", [
+            _cycle_write(_cycle_notes(2))]),
+        _cycle_requests("cy2-t-4", [
+            _cycle_write(_cycle_notes(3))]),
+        _cycle_requests("cy2-t-5", [
+            _cycle_write(_cycle_notes(4))]),
+        _cycle_requests("cy2-t-6", [
+            _cycle_write(_cycle_notes(5))]),
+        _cycle_requests("cy2-t-7", [
+            _cycle_write(_cycle_notes(6))]),
+        _cycle_requests("cy2-t-8", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle2_repull():
+    """The split-on-return contract's re-pull
+    witness: at the second cycle's wake the stand-in
+    re-pulls the current block without appending —
+    the next wake, the cycle unadvanced, answers the
+    re-pull in its carriage with the block's content
+    (no second block_content presentation). Later,
+    answering the fourth cycle's wake, he re-pulls
+    the FIRST block: that pull refreshes its pointer
+    alone and its result does not ride the next
+    wake. The walk otherwise runs the honest rhythm
+    to a filed brief."""
+    chat = [
+        _identify_step("cycle2-repull"),
+        _cycle_requests("cy2-p-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy2-p-2", [
+            _cycle_write(_cycle_notes(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy2-p-3", [
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy2-p-4", [
+            _cycle_write(_cycle_notes(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy2-p-5", [
+            _cycle_write(_cycle_notes(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13),
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy2-p-6", [
+            _cycle_write(_cycle_notes(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy2-p-7", [
+            _cycle_write(_cycle_notes(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy2-p-8", [
+            _cycle_write(_cycle_notes(6))]),
+        _cycle_requests("cy2-p-9", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle3_honest():
+    """The draft-page contract's honest path: the
+    honest walk's own rhythm, pull for pull, with
+    the journal appends carrying draft instead of
+    notes — each cycle's write is the journal as it
+    stands plus the draft of the part of the brief
+    the block feeds, and the walk files in nine
+    iterations, as under v1 and v2."""
+    chat = [
+        _identify_step("cycle3-honest"),
+        _cycle_requests("cy3-h-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy3-h-2", [
+            _cycle_write(_cycle_draft(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy3-h-3", [
+            _cycle_write(_cycle_draft(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy3-h-4", [
+            _cycle_write(_cycle_draft(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy3-h-5", [
+            _cycle_write(_cycle_draft(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy3-h-6", [
+            _cycle_write(_cycle_draft(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy3-h-7", [
+            _cycle_write(_cycle_draft(6))]),
+        _cycle_requests("cy3-h-8", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle3_batch():
+    """The draft-page contract's batch witness:
+    the v2 batch walk under the successor seal —
+    the first response pulls all six blocks at
+    once, the walk then appends one cycle at a
+    time, each append carrying its block's draft,
+    to a filed brief, every package within
+    budget."""
+    chat = [
+        _identify_step("cycle3-batch"),
+        _cycle_requests("cy3-t-1", [
+            _cycle_read("sources/stock-take.md"),
+            _cycle_read("sources/a3-pass.md"),
+            _cycle_range("sources/index-tail.md",
+                         1, 6),
+            _cycle_range("sources/index-tail.md",
+                         7, 13),
+            _cycle_range("sources/index-tail.md",
+                         14, 20),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy3-t-2", [
+            _cycle_write(_cycle_draft(1))]),
+        _cycle_requests("cy3-t-3", [
+            _cycle_write(_cycle_draft(2))]),
+        _cycle_requests("cy3-t-4", [
+            _cycle_write(_cycle_draft(3))]),
+        _cycle_requests("cy3-t-5", [
+            _cycle_write(_cycle_draft(4))]),
+        _cycle_requests("cy3-t-6", [
+            _cycle_write(_cycle_draft(5))]),
+        _cycle_requests("cy3-t-7", [
+            _cycle_write(_cycle_draft(6))]),
+        _cycle_requests("cy3-t-8", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle4_honest():
+    """The cleaned-opening contract's honest path:
+    the draft-page walk's own script, step for
+    step — the same pulls and draft appends in the
+    same order; only the sealed contract and the
+    opening's form differ (the director's plain-
+    text structure behind the compressed frame, in
+    place of the JSON component assembly)."""
+    script = build_script_cycle3_honest()
+    script["chat"][0] = _identify_step("cycle4-honest")
+    return script
+
+
+def build_script_cycle4_batch():
+    """The cleaned-opening contract's batch
+    witness: the draft-page batch walk under the
+    successor seal — the first response pulls all
+    six blocks at once, the walk then appends one
+    cycle at a time, each append carrying its
+    block's draft, to a filed brief, every package
+    within budget."""
+    script = build_script_cycle3_batch()
+    script["chat"][0] = _identify_step("cycle4-batch")
+    return script
+
+
+def build_script_cycle5_honest():
+    """The carryover contract's honest path: the
+    cleaned-opening walk's own script, step for
+    step — the same pulls and draft appends in the
+    same order; only the sealed contract and the
+    cycle packages' centre differ (his draft
+    carried at the centre, the gates' corrections
+    riding again, the statement line from the
+    seal, the one next step stated)."""
+    script = build_script_cycle4_honest()
+    script["chat"][0] = _identify_step("cycle5-honest")
+    return script
+
+
+def build_script_cycle5_batch():
+    """The carryover contract's batch witness: the
+    cleaned-opening batch walk under the successor
+    seal — the first response pulls all six blocks
+    at once, the walk then appends one cycle at a
+    time, each append carrying its block's draft,
+    to a filed brief, every package within
+    budget."""
+    script = build_script_cycle4_batch()
+    script["chat"][0] = _identify_step("cycle5-batch")
+    return script
+
+
+def build_script_cycle5_rewrite():
+    """The carryover contract's journal-gate
+    witness: after the first accepted append, a
+    write rewrites the journal instead of adding
+    to it — the gate records it, the transition is
+    not counted and no cycle advances on it, and
+    the next package carries the gate's correction
+    naming the refusal and the append form (the
+    v1 rewrite walk's shape, the drafts standing
+    as the journal's content); the following
+    proper append, extending the accepted journal,
+    is accepted and the walk goes on to file."""
+    chat = [
+        _identify_step("cycle5-rewrite"),
+        _cycle_requests("cy5-j-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy5-j-2", [
+            _cycle_write(_cycle_draft(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy5-j-3", [
+            _cycle_write(CYCLE_REWRITE)]),
+        _cycle_requests("cy5-j-4", [
+            _cycle_write(_cycle_draft(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy5-j-5", [
+            _cycle_write(_cycle_draft(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy5-j-6", [
+            _cycle_write(_cycle_draft(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy5-j-7", [
+            _cycle_write(_cycle_draft(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy5-j-8", [
+            _cycle_write(_cycle_draft(6))]),
+        _cycle_requests("cy5-j-9", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle6_honest():
+    """The zero-carryover contract's honest path:
+    the carryover walk's own script, step for
+    step — the same pulls and draft appends in
+    the same order; only the sealed contract and
+    the cycle packages' carriage differ (no
+    journal rides; the blocks stand slimmed; the
+    corrections ride; the statement line from the
+    seal; the one next step stated)."""
+    script = build_script_cycle5_honest()
+    script["chat"][0] = _identify_step("cycle6-honest")
+    return script
+
+
+def build_script_cycle6_batch():
+    """The zero-carryover contract's batch
+    witness: the carryover batch walk under the
+    successor seal — the first response pulls all
+    six blocks at once, the walk then appends one
+    cycle at a time, each append carrying its
+    block's draft, to a filed brief, every package
+    within budget."""
+    script = build_script_cycle5_batch()
+    script["chat"][0] = _identify_step("cycle6-batch")
+    return script
+
+
+def build_script_cycle6_rewrite():
+    """The zero-carryover contract's journal-gate
+    witness: the carryover rewrite walk under the
+    successor seal — after the first accepted
+    append, a write rewrites the journal instead
+    of adding to it; the gate records it, the
+    transition is not counted, and the next
+    package carries the gate's correction naming
+    the refusal and the append form; the following
+    proper append is accepted and the walk goes
+    on to file."""
+    script = build_script_cycle5_rewrite()
+    script["chat"][0] = _identify_step("cycle6-rewrite")
+    return script
+
+
+def build_script_cycle7_honest():
+    """The imperative-first contract's honest
+    path: the zero-carryover walk's own script,
+    step for step — the same pulls and draft
+    appends in the same order; only the sealed
+    contract and the packages' order of telling
+    differ (every package opens with the Next
+    line, the one next step stated as an
+    imperative, before any state)."""
+    script = build_script_cycle6_honest()
+    script["chat"][0] = _identify_step("cycle7-honest")
+    return script
+
+
+def build_script_cycle7_batch():
+    """The imperative-first contract's batch
+    witness: the zero-carryover batch walk under
+    the successor seal — the first response pulls
+    all six blocks at once, the walk then appends
+    one cycle at a time, each append carrying its
+    block's draft, to a filed brief, every package
+    within budget, every package opening with its
+    Next line."""
+    script = build_script_cycle6_batch()
+    script["chat"][0] = _identify_step("cycle7-batch")
+    return script
+
+
+def build_script_cycle7_rewrite():
+    """The imperative-first contract's journal-
+    gate witness: the zero-carryover rewrite walk
+    under the successor seal — after the first
+    accepted append, a write rewrites the journal
+    instead of adding to it; the gate records it,
+    the transition is not counted, and the next
+    package opens with the Next line naming the
+    append that passes, the gate's correction
+    standing below it unmerged; the following
+    proper append is accepted and the walk goes
+    on to file."""
+    script = build_script_cycle6_rewrite()
+    script["chat"][0] = _identify_step("cycle7-rewrite")
+    return script
+
+
+def build_script_cycle7_readstep():
+    """The imperative-first contract's read-step
+    witness: the first answer is a contribution
+    offered before any read stands — the delivery
+    stage gate refuses it, and the package that
+    follows is a cycle package whose block stands
+    unread, so its Next line is the read step
+    itself, the gate's correction standing below
+    it; the walk then takes the honest path, pull
+    for pull and append for append, to a filed
+    brief."""
+    chat = [
+        _identify_step("cycle7-readstep"),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": "The brief, drafted from "
+                        "the case's own statement "
+                        "of the job."})),
+         "action": None},
+        _cycle_requests("cy7-s-2", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy7-s-3", [
+            _cycle_write(_cycle_draft(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy7-s-4", [
+            _cycle_write(_cycle_draft(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy7-s-5", [
+            _cycle_write(_cycle_draft(3)),
+            _cycle_range("sources/index-tail.md",
+                         7, 13)]),
+        _cycle_requests("cy7-s-6", [
+            _cycle_write(_cycle_draft(4)),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy7-s-7", [
+            _cycle_write(_cycle_draft(5)),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy7-s-8", [
+            _cycle_write(_cycle_draft(6))]),
+        _cycle_requests("cy7-s-9", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle8_honest():
+    """The file-grain contract's honest path
+    (office-cycle-v8): the walk at the file rhythm
+    the director restated — read file one, append
+    its summary; read file two, append; read file
+    three, append; then read the journal and
+    combine. The third file arrives in its four
+    parts inside its one step: the second answer
+    on that file pulls two parts together (the
+    within-file batch the brief names), no append
+    stands between the parts, and the file's one
+    append — the four parts' draft chunks
+    together — lands only when the file stands
+    whole. Three appends across the walk."""
+    chat = [
+        _identify_step("cycle8-honest"),
+        _cycle_requests("cy8-h-1", [
+            _cycle_read("sources/stock-take.md")]),
+        _cycle_requests("cy8-h-2", [
+            _cycle_write(_cycle_draft(1)),
+            _cycle_read("sources/a3-pass.md")]),
+        _cycle_requests("cy8-h-3", [
+            _cycle_write(_cycle_draft(2)),
+            _cycle_range("sources/index-tail.md",
+                         1, 6)]),
+        _cycle_requests("cy8-h-4", [
+            _cycle_range("sources/index-tail.md",
+                         7, 13),
+            _cycle_range("sources/index-tail.md",
+                         14, 20)]),
+        _cycle_requests("cy8-h-5", [
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy8-h-6", [
+            _cycle_write(_cycle_draft(6))]),
+        _cycle_requests("cy8-h-7", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+def build_script_cycle8_batch():
+    """The file-grain contract's batch witness:
+    the first response pulls all three files at
+    once — every part of the third file included —
+    and the walk then appends one FILE at a time:
+    the first file's draft, the second's, then
+    the third file's whole draft in one append.
+    The cycle gate fires at the file grain as it
+    does at the block grain — at each wake a
+    later file's read stands ahead of the file
+    the walk stands on (twice in this walk, at
+    files 1 and 2); no gate stands between the
+    third file's parts, and the walk files with
+    three appends standing."""
+    chat = [
+        _identify_step("cycle8-batch"),
+        _cycle_requests("cy8-b-1", [
+            _cycle_read("sources/stock-take.md"),
+            _cycle_read("sources/a3-pass.md"),
+            _cycle_range("sources/index-tail.md",
+                         1, 6),
+            _cycle_range("sources/index-tail.md",
+                         7, 13),
+            _cycle_range("sources/index-tail.md",
+                         14, 20),
+            _cycle_range("sources/index-tail.md",
+                         21, 24)]),
+        _cycle_requests("cy8-b-2", [
+            _cycle_write(_cycle_draft(1))]),
+        _cycle_requests("cy8-b-3", [
+            _cycle_write(_cycle_draft(2))]),
+        _cycle_requests("cy8-b-4", [
+            _cycle_write(_cycle_draft(6))]),
+        _cycle_requests("cy8-b-5", [
+            _cycle_read("scratch/journal.md")]),
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
+TREE_DECLARATION_V9 = {
+    "contract": "process-tree-checklist-v1",
+    "title": "The Brief — the framework, proven and "
+             "unproven, in plain words",
+    "nodes": [
+        {"id": "onboarding",
+         "label": "1. Know the job",
+         "kind": "onboarding",
+         "depends_on": [],
+         "workaround": ""},
+        {"id": "gather-stock-take",
+         "label": "2.1 Gather + journal — "
+                  "sources/stock-take.md",
+         "kind": "gather",
+         "source": "sources/stock-take.md",
+         "depends_on": ["onboarding"],
+         "workaround": "A read refused because its "
+                       "grant stands exhausted means "
+                       "you already hold the source — "
+                       "write its journal bit from "
+                       "what you hold."},
+        {"id": "gather-a3-pass",
+         "label": "2.2 Gather + journal — "
+                  "sources/a3-pass.md",
+         "kind": "gather",
+         "source": "sources/a3-pass.md",
+         "depends_on": ["onboarding"],
+         "workaround": "A read refused because its "
+                       "grant stands exhausted means "
+                       "you already hold the source — "
+                       "write its journal bit from "
+                       "what you hold."},
+        {"id": "gather-index-tail",
+         "label": "2.3 Gather + journal — "
+                  "sources/index-tail.md",
+         "kind": "gather",
+         "source": "sources/index-tail.md",
+         "depends_on": ["onboarding"],
+         "workaround": ""},
+        {"id": "summarize",
+         "label": "3. Summarize — read your journal "
+                  "whole and compile it into the "
+                  "brief",
+         "kind": "summarize",
+         "depends_on": ["gather-stock-take",
+                        "gather-a3-pass",
+                        "gather-index-tail"],
+         "workaround": ""},
+        {"id": "deliver",
+         "label": "4. Deliver — contribute the "
+                  "brief; the office files it at "
+                  "scratch/brief.md",
+         "kind": "deliver",
+         "depends_on": ["summarize"],
+         "workaround": ""}]}
+
+
+def build_script_cycle9_reread():
+    """The process-tree contract's re-read witness
+    (office-cycle-v9; the build scope of 2026-11-26,
+    acceptance stage 1), on the native lane — the
+    live worker's own lane, and the lane whose
+    packages carry doorway refusals in their
+    results: the stand-in reads his journal first —
+    stocked empty by the office, so the read stands
+    where demo-nemotron8's failed — reads the first
+    source and the second, and knocks a fourth
+    time on the read door (the scenario's declared
+    bound is three read dispatches): the doorway
+    refuses, and the package presenting the refusal
+    must carry the tree — the first source held
+    whole, its journal bit unwritten, reads closed
+    — and the refusal itself must speak the
+    correction, next act included (Amendment 2).
+    The walk then journals every file and files,
+    inside the sealed step ceiling."""
+    chat = [
+        _identify_step("cycle9-reread"),
+        {"respond": _native_call(
+            "fc-9-1", "sandbox-read",
+            {"path": "scratch/journal.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-2", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-3", "sandbox-read",
+            {"path": "sources/a3-pass.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-4", "sandbox-read",
+            {"path": "sources/stock-take.md"}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-5", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": _cycle_draft(1)}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-6", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": _cycle_draft(2)}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-7", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 1, "end_line": 6}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-8", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 7, "end_line": 13}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-9", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 14, "end_line": 20}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-10", "sandbox-read_range",
+            {"path": "sources/index-tail.md",
+             "start_line": 21, "end_line": 24}),
+         "action": None},
+        {"respond": _native_call(
+            "fc-9-11", "sandbox-write",
+            {"path": "scratch/journal.md",
+             "content": _cycle_draft(6)}),
+         "action": None},
+        {"respond": _text_response(
+            "contribute",
+            json.dumps({
+                "outcome": "contribute",
+                "text": _tree_deliverable_text()})),
+         "action": None},
+    ]
+    return {"chat": chat,
+            "chat-raw-bounded": _probe_steps()}
+
+
 def _run_scenario(work_dir, *, scenario, brief,
                   manifest_hash, seal_entries, stage_fn,
                   script, grounds, adapter_mode="native",
@@ -1874,7 +2944,8 @@ def _run_scenario(work_dir, *, scenario, brief,
                   delivery_evidence_declaration=False,
                   delivery_floor_declaration=False,
                   presentation_declaration=False,
-                  transport="nvidia"):
+                  transport="nvidia", grants=None,
+                  road=False, tree=None):
     """Run one scenario's rehearsal in `work_dir`
     (created fresh; must not already hold a rehearsal).
     Returns the report dict (also written to
@@ -1968,6 +3039,35 @@ def _run_scenario(work_dir, *, scenario, brief,
         raise RuntimeError(
             f"sandbox staging failed: {staging_problem}")
 
+    # THE BLOCK MAP (the office-cycle contract, the
+    # plan of 2026-11-25): where the scenario declares
+    # the cycle contract, the office portions the
+    # staged evidence files at the ruled ceiling, from
+    # the staged bytes, and the map seals at the
+    # generation below.
+    block_map = None
+    if presentation_declaration in (
+            tool_policy.PRESENTATION_CONTRACT_V4,
+            tool_policy.PRESENTATION_CONTRACT_V5,
+            tool_policy.PRESENTATION_CONTRACT_V6,
+            tool_policy.PRESENTATION_CONTRACT_V7,
+            tool_policy.PRESENTATION_CONTRACT_V8,
+            tool_policy.PRESENTATION_CONTRACT_V9,
+            tool_policy.PRESENTATION_CONTRACT_V10,
+            tool_policy.PRESENTATION_CONTRACT_V11,
+            tool_policy.PRESENTATION_CONTRACT_V12):
+        evidence = (content or {}).get(
+            "delivery_evidence") or {}
+        addresses = list(evidence.get("addresses")
+                         or [])
+        contents = {}
+        for address in addresses:
+            contents[address] = (
+                run_dir / "sandbox" / address
+            ).read_bytes()
+        block_map = tool_policy.compute_block_map(
+            addresses, contents)
+
     # THE WORKED EXAMPLE (round nine's correction pair,
     # INDEX 548): under the presentation declaration the
     # office performs the demonstration call against the
@@ -1987,8 +3087,17 @@ def _run_scenario(work_dir, *, scenario, brief,
     # population's package bound.
     worked_example = None
     if presentation_declaration and \
-            presentation_declaration != \
-            tool_policy.PRESENTATION_CONTRACT_V3:
+            presentation_declaration not in (
+                tool_policy.PRESENTATION_CONTRACT_V3,
+                tool_policy.PRESENTATION_CONTRACT_V4,
+                tool_policy.PRESENTATION_CONTRACT_V5,
+                tool_policy.PRESENTATION_CONTRACT_V6,
+                tool_policy.PRESENTATION_CONTRACT_V7,
+                tool_policy.PRESENTATION_CONTRACT_V8,
+                tool_policy.PRESENTATION_CONTRACT_V9,
+                tool_policy.PRESENTATION_CONTRACT_V10,
+                tool_policy.PRESENTATION_CONTRACT_V11,
+                tool_policy.PRESENTATION_CONTRACT_V12):
         glossary_addresses = []
         for entry in (content or {}).get("glossary") or []:
             if isinstance(entry, dict) and isinstance(
@@ -2060,6 +3169,27 @@ def _run_scenario(work_dir, *, scenario, brief,
             route=ROUTE)
         install_connector_transport(
             adapter, str(stub_path), MODEL)
+    road_ctx = None
+    if road:
+        # The road rebase (the §6 amendment, accepted
+        # 2026-11-26): the scenario's generation seals
+        # the road and the adapter's calls are counted
+        # and paced under a per-scenario bucket whose
+        # limits do not bind — the rehearsal witnesses
+        # the regime (no refusal, road events standing,
+        # consumption accounted), not the limits, which
+        # the road's unit tests bind. The sleeper
+        # records instead of sleeping: a pacing wait in
+        # rehearsal is a fact to assert, not a delay to
+        # sit through.
+        from framework import road as _road_mod
+        road_ctx = _road_mod.road_context_for(
+            f"rehearsal:{scenario}", MODEL,
+            1000000, 100000000,
+            output_allowance=2048)
+        road_ctx["sleeps"] = []
+        adapter.attach_road(
+            road_ctx, sleeper=road_ctx["sleeps"].append)
     gen.propose(
         tok["orch-1"], "crew-1", part="part-A",
         role_requirements="a model able to pull source "
@@ -2068,7 +3198,9 @@ def _run_scenario(work_dir, *, scenario, brief,
                           "front of it")
     generated = gen.generate(
         tok["orch-1"], "crew-1", adapter.identify,
-        skills=[], grants=GRANTS_COMBINED,
+        skills=[],
+        grants=GRANTS_COMBINED if grants is None
+        else grants,
         model_requested=MODEL, probe=True, exec_room=True,
         freshness_suspended=freshness_suspended,
         delivery_declaration=delivery_declaration,
@@ -2077,7 +3209,19 @@ def _run_scenario(work_dir, *, scenario, brief,
         delivery_floor_declaration=
         delivery_floor_declaration,
         presentation_declaration=presentation_declaration,
-        worked_example=worked_example)
+        worked_example=worked_example,
+        block_map=block_map,
+        road_declaration={
+            "contract": "paced-v1",
+            "allocation_tokens": 10000000,
+            "window_tokens": 131072,
+            "basis": "working-set rehearsal: the "
+                     "amended road's witness seal — "
+                     "the allocation and window do "
+                     "not bind the walk; the regime "
+                     "is what stands witnessed"}
+        if road else None,
+        tree_declaration=tree)
     if not generated.get("ok"):
         raise RuntimeError(
             f"generation failed: "
@@ -2147,9 +3291,10 @@ def _run_scenario(work_dir, *, scenario, brief,
         doorway, str(run_dir / "sandbox"),
         claim_dir=str(run_dir / "claims"), deadline=150.0)
     gen.activate(tok["orch-1"], assembly_id)
-    result = Loop(doorway, packed["instance_token"],
-                  adapter, executor=executor,
-                  evidence_store=str(run_dir)).run()
+    loop = Loop(doorway, packed["instance_token"],
+                adapter, executor=executor,
+                evidence_store=str(run_dir))
+    result = loop.run()
 
     # COLLECT — the checker, the export, the readout.
     events = store.all_events()
@@ -2181,6 +3326,22 @@ def _run_scenario(work_dir, *, scenario, brief,
             (sealed or {}).get("presentation_contract"),
         "sealed_worked_example":
             (sealed or {}).get("worked_example"),
+        "sealed_block_map":
+            (sealed or {}).get("block_map"),
+        "sealed_file_map":
+            (sealed or {}).get("file_map"),
+        "sealed_journal_baseline":
+            (sealed or {}).get("journal_baseline"),
+        "call_estimates": loop.call_estimates,
+        "sealed_road": (sealed or {}).get("road"),
+        "sealed_tree": (sealed or {}).get("tree"),
+        "road_transport_events":
+            road_ctx["events"]
+            if road_ctx is not None else [],
+        "road_presentation_events": loop.road_events,
+        "road_consumed_tokens":
+            road_ctx["consumed_tokens"]
+            if road_ctx is not None else None,
         "sealed_catalogue_contract":
             (sealed or {}).get("catalogue_contract"),
         "manifest_hash": manifest_hash,
@@ -3024,6 +4185,840 @@ def run_rehearsal(work_dir):
         delivery_floor_declaration=True,
         presentation_declaration="process-tree-v1",
         transport="groq")
+    # The office-cycle scenarios (the plan of
+    # 2026-11-25, office-cycle-v1): the same case as
+    # the tree scenarios — the commission is
+    # unchanged — under the cycle presentation
+    # contract, judged TEXT so one response can
+    # carry a cycle's append and the next block's
+    # pull together, as the live text lane does.
+    # The cycle scenarios seal the combined grants
+    # with ONE declared variation: the write grant's
+    # dispatch bound stands at 12, where the standing
+    # commission's 4 was sized for the tree walk's
+    # three journal writes. Six cycles require at
+    # least six appends on the text lane, where an
+    # append is a sandbox.write dispatch; under the
+    # commissioned bound the walk is not completable
+    # as configured. The variation is rehearsal
+    # furniture, declared here and in the report —
+    # the commission itself is not this build's to
+    # change. (On the native lane an append rides
+    # container.exec, whose commissioned bound is
+    # already 12.)
+    cycle_grants = []
+    for grant in GRANTS_COMBINED:
+        grant = dict(grant)
+        if grant["tool"] == "sandbox.write":
+            grant["bound"] = {"count": 12}
+        cycle_grants.append(grant)
+    cycle_grounds = (
+        "Office-cycle rehearsal (the plan of "
+        "2026-11-25, Ben's approval and Vane's "
+        "examination on the record): the scripted "
+        "stand-in's probe trials settled 5/5 native "
+        "— the recommendation stands as evidence — "
+        "and the stand-in examiner judges TEXT, "
+        "because the cycle walk's shape is an append "
+        "and the next pull in one response, a shape "
+        "only the text contract carries. The "
+        "generation seals the office-cycle "
+        "presentation contract, the block map and "
+        "the journal baseline, and the case's "
+        "delivery, delivery-evidence and "
+        "delivery-length declarations. One declared "
+        "variation from the standing commission: the "
+        "write grant's dispatch bound stands at 12, "
+        "not the commissioned 4 — six cycles require "
+        "at least six journal appends on the text "
+        "lane, and under 4 the walk is not "
+        "completable as configured. Rehearsal "
+        "furniture by a scripted stand-in examiner.")
+    cycle_honest = _run_scenario(
+        work_dir / "cycle-honest",
+        scenario="cycle-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle_honest(),
+        grounds=cycle_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v1",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle_run_ahead = _run_scenario(
+        work_dir / "cycle-run-ahead",
+        scenario="cycle-run-ahead",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle_run_ahead(),
+        grounds=cycle_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v1",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle_journal_rewrite = _run_scenario(
+        work_dir / "cycle-journal-rewrite",
+        scenario="cycle-journal-rewrite",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle_journal_rewrite(),
+        grounds=cycle_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v1",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle_offoffer = _run_scenario(
+        work_dir / "cycle-offoffer",
+        scenario="cycle-offoffer",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle_offoffer(),
+        grounds=cycle_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v1",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+
+    # The cycle budget scenario: one synthetic
+    # source whose single line portions into a
+    # single block over the per-call budget.
+    entries_g = [
+        {"path": "sources/giant.md",
+         "sha256": _sha256_bytes(GIANT_LINE)},
+    ]
+    manifest_g = {"sources": entries_g}
+    manifest_hash_g = stock_demo.manifest_hash_of(
+        manifest_g)
+
+    def stage_giant(sandbox):
+        sandbox = Path(sandbox)
+        dest = sandbox / "sources" / "giant.md"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(GIANT_LINE)
+        if _sha256_bytes(dest.read_bytes()) != \
+                _sha256_bytes(GIANT_LINE):
+            return "the staged sources/giant.md does " \
+                "not hash to its manifest entry"
+        (sandbox / "scratch").mkdir(parents=True,
+                                    exist_ok=True)
+        return None
+
+    brief_g = {
+        "part": "part-A",
+        "assignment": ASSIGNMENT_CYCLE_BUDGET,
+        "verification_list": list(VERIFICATION_LIST),
+        "evidence_boundary":
+            f"source manifest sha256:{manifest_hash_g}; "
+            "sources: sources/giant.md",
+        "loop_bounds": dict(BOUNDS),
+        "glossary": [dict(entry) for entry in
+                     GLOSSARY_CYCLE_BUDGET],
+        "journal": "scratch/journal.md",
+        "onboarding": dict(ONBOARDING),
+        "delivery": {"destination": "scratch/brief.md",
+                     "route": "contribution-v1"},
+        "delivery_evidence":
+            {"addresses": ["sources/giant.md"]},
+        "delivery_floor": {"min_words": 550},
+    }
+    cycle_budget = _run_scenario(
+        work_dir / "cycle-budget",
+        scenario="cycle-budget",
+        brief=brief_g,
+        manifest_hash=manifest_hash_g,
+        seal_entries=entries_g,
+        stage_fn=stage_giant,
+        script=build_script_cycle_budget(),
+        grounds=(
+            "Office-cycle rehearsal, road scenario "
+            "(the §6 amendment, accepted 2026-11-26; "
+            "this scenario witnessed the per-call "
+            "refusal until the amendment retired "
+            "it): the scripted stand-in's probe "
+            "trials settled 5/5 native — the "
+            "recommendation stands as evidence — and "
+            "the stand-in examiner judges TEXT. The "
+            "synthetic source's one line portions "
+            "into one block; its cycle package "
+            "counts over the road's spill threshold, "
+            "so the block rides as its reference and "
+            "a preview, the call is sent, and the "
+            "walk completes. The generation seals "
+            "the road. Rehearsal furniture by a "
+            "scripted stand-in examiner."),
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v1",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+
+    # The split-on-return scenarios (office-cycle-v2;
+    # the amendment as stripped by the director's
+    # ruling of 2026-11-25 ~18:00 MST — the
+    # presentation rule and the opening's room lines
+    # only; the checker-correspondence and status-
+    # vocabulary parts of the amendment are deferred
+    # by that ruling and stand outside these
+    # scenarios): the same case, the same commission
+    # and the same declared write-bound variation as
+    # the v1 cycle scenarios, under the successor
+    # contract. Three witnesses: the honest path as
+    # the control, the six-block batch, and the
+    # re-pull pair.
+    cycle2_grounds = (
+        "Office-cycle rehearsal under the "
+        "split-on-return successor contract "
+        "(office-cycle-v2; the amendment "
+        "AMENDMENT-RETURN-PRESENTATION-2026-11-25 "
+        "as stripped by the director's ruling of "
+        "2026-11-25): the scripted stand-in's probe "
+        "trials settled 5/5 native — the "
+        "recommendation stands as evidence — and "
+        "the stand-in examiner judges TEXT, as the "
+        "v1 cycle scenarios judge. The generation "
+        "seals the split-on-return presentation "
+        "contract, the same block map and the "
+        "journal baseline, and the case's delivery, "
+        "delivery-evidence and delivery-length "
+        "declarations. The same declared variation "
+        "as the v1 cycle scenarios stands: the write "
+        "grant's dispatch bound at 12. Rehearsal "
+        "furniture by a scripted stand-in examiner.")
+    cycle2_honest = _run_scenario(
+        work_dir / "cycle2-honest",
+        scenario="cycle2-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle2_honest(),
+        grounds=cycle2_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v2",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle2_batch = _run_scenario(
+        work_dir / "cycle2-batch",
+        scenario="cycle2-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle2_batch(),
+        grounds=cycle2_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v2",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle2_repull = _run_scenario(
+        work_dir / "cycle2-repull",
+        scenario="cycle2-repull",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle2_repull(),
+        grounds=cycle2_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v2",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+
+    # The draft-page scenarios (office-cycle-v3;
+    # the director's ruling of 2026-11-25 21:16
+    # MST, after demo-gptoss6): the same case, the
+    # same commission and the same declared
+    # write-bound variation as the v1 and v2 cycle
+    # scenarios, under the successor contract —
+    # every mechanism v2's, with the journal-
+    # defining texts exchanged for the draft-page
+    # wordings and the scripted worker's appends
+    # carrying draft instead of notes. Two
+    # witnesses: the honest path and the six-block
+    # batch.
+    cycle3_grounds = (
+        "Office-cycle rehearsal under the "
+        "draft-page successor contract "
+        "(office-cycle-v3; the director's ruling "
+        "of 2026-11-25 21:16 MST — the journal "
+        "acts as a draft page, not a research "
+        "manuscript; the end work created "
+        "gradually, as specific step-by-step "
+        "instructions — ordered after "
+        "demo-gptoss6's fixation failure under "
+        "v2): the scripted stand-in's probe "
+        "trials settled 5/5 native — the "
+        "recommendation stands as evidence — and "
+        "the stand-in examiner judges TEXT, as "
+        "the v1 and v2 cycle scenarios judge. The "
+        "generation seals the draft-page "
+        "presentation contract, the same block "
+        "map and the journal baseline, and the "
+        "case's delivery, delivery-evidence and "
+        "delivery-length declarations. The same "
+        "declared variation as the v1 cycle "
+        "scenarios stands: the write grant's "
+        "dispatch bound at 12. Rehearsal furniture "
+        "by a scripted stand-in examiner.")
+    cycle3_honest = _run_scenario(
+        work_dir / "cycle3-honest",
+        scenario="cycle3-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle3_honest(),
+        grounds=cycle3_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v3",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle3_batch = _run_scenario(
+        work_dir / "cycle3-batch",
+        scenario="cycle3-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle3_batch(),
+        grounds=cycle3_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v3",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    # The cleaned-opening scenarios (office-cycle-
+    # v4; the director's orders of 2026-11-25
+    # 21:33/21:36 MST, after demo-gptoss7): the
+    # same case, the same commission and the same
+    # declared write-bound variation as the v1, v2
+    # and v3 cycle scenarios, under the successor
+    # contract — every mechanism v3's, with the
+    # opening alone exchanged: the director's
+    # plain-text structure behind the compressed
+    # outcome frame, in place of the JSON component
+    # assembly. Two witnesses: the honest path and
+    # the six-block batch, the draft-page walks'
+    # own scripts step for step.
+    cycle4_grounds = (
+        "Office-cycle rehearsal under the "
+        "cleaned-opening successor contract "
+        "(office-cycle-v4; the director's orders "
+        "of 2026-11-25 21:33/21:36 MST — his own "
+        "cleaned structure of the opening package "
+        "made the opening, the deliverable line "
+        "set to the contribute door by his "
+        "option-A ruling — ordered after "
+        "demo-gptoss7 died at its opening call on "
+        "the route's token ceiling): the scripted "
+        "stand-in's probe trials settled 5/5 "
+        "native — the recommendation stands as "
+        "evidence — and the stand-in examiner "
+        "judges TEXT, as the v1, v2 and v3 cycle "
+        "scenarios judge. The generation seals "
+        "the cleaned-opening presentation "
+        "contract, the same block map and the "
+        "journal baseline, and the case's "
+        "delivery, delivery-evidence and "
+        "delivery-length declarations. The same "
+        "declared variation as the v1 cycle "
+        "scenarios stands: the write grant's "
+        "dispatch bound at 12. Rehearsal furniture "
+        "by a scripted stand-in examiner.")
+    cycle4_honest = _run_scenario(
+        work_dir / "cycle4-honest",
+        scenario="cycle4-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle4_honest(),
+        grounds=cycle4_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v4",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle4_batch = _run_scenario(
+        work_dir / "cycle4-batch",
+        scenario="cycle4-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle4_batch(),
+        grounds=cycle4_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v4",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    # The carryover scenarios (office-cycle-v5; the
+    # director's orders of 2026-11-25 22:09 MST,
+    # after demo-gptoss8): the same case, the same
+    # commission and the same declared write-bound
+    # variation as the v1–v4 cycle scenarios, under
+    # the successor contract — the opening v4's
+    # whole, and the cycle packages forked: the
+    # statement line from the sealed delivery
+    # declaration, the gates' corrections riding
+    # again, the journal carried as his draft so
+    # far, the one next step stated. Three
+    # witnesses: the honest path, the six-block
+    # batch, and the journal rewrite — the refused
+    # append and the correction that answers it.
+    cycle5_grounds = (
+        "Office-cycle rehearsal under the "
+        "carryover successor contract "
+        "(office-cycle-v5; the director's orders "
+        "of 2026-11-25 22:09 MST — fix the two "
+        "points the gptoss8 run exposed and make "
+        "the carryover what the worker is made to "
+        "do: the statement line from the sealed "
+        "delivery declaration in place of the stale "
+        "case prose, the gates' corrections riding "
+        "the packages again, and the journal "
+        "carried at every package's centre as his "
+        "draft so far): the scripted stand-in's "
+        "probe trials settled 5/5 native — the "
+        "recommendation stands as evidence — and "
+        "the stand-in examiner judges TEXT, as the "
+        "v1, v2, v3 and v4 cycle scenarios judge. "
+        "The generation seals the carryover "
+        "presentation contract, the same block map "
+        "and the journal baseline, and the case's "
+        "delivery, delivery-evidence and "
+        "delivery-length declarations. The same "
+        "declared variation as the v1 cycle "
+        "scenarios stands: the write grant's "
+        "dispatch bound at 12. Rehearsal furniture "
+        "by a scripted stand-in examiner.")
+    cycle5_honest = _run_scenario(
+        work_dir / "cycle5-honest",
+        scenario="cycle5-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle5_honest(),
+        grounds=cycle5_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v5",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle5_batch = _run_scenario(
+        work_dir / "cycle5-batch",
+        scenario="cycle5-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle5_batch(),
+        grounds=cycle5_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v5",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle5_rewrite = _run_scenario(
+        work_dir / "cycle5-rewrite",
+        scenario="cycle5-rewrite",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle5_rewrite(),
+        grounds=cycle5_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v5",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+
+    # The zero-carryover scenarios (office-cycle-
+    # v6; the director's rulings of 2026-11-25
+    # 22:29/22:30 MST, after the v5 build measured
+    # its collision): the same case, the same
+    # commission and the same declared write-bound
+    # variation as the v1–v5 cycle scenarios, under
+    # the successor contract — the opening v5's
+    # whole, and the cycle packages forked against
+    # v5: no journal carried anywhere (it stands
+    # in his scratch and he reads it himself), the
+    # blocks component slimmed to block_id and
+    # state, the statement line from the sealed
+    # delivery declaration and the gates'
+    # corrections riding as v5 built them. Three
+    # witnesses, the v5 walks' own scripts: the
+    # honest path, the six-block batch, and the
+    # journal rewrite.
+    cycle6_grounds = (
+        "Office-cycle rehearsal under the "
+        "zero-carryover successor contract "
+        "(office-cycle-v6; the director's rulings "
+        "of 2026-11-25 22:29/22:30 MST — zero "
+        "carryover: everything he needs is "
+        "appended as a draft into the journal, "
+        "which stands in his scratch and is never "
+        "carried; the only carry is the intro "
+        "brief carrying him to the next part of "
+        "the job — and the block bookkeeping "
+        "slimmed by his tap): the scripted "
+        "stand-in's probe trials settled 5/5 "
+        "native — the recommendation stands as "
+        "evidence — and the stand-in examiner "
+        "judges TEXT, as the v1, v2, v3, v4 and "
+        "v5 cycle scenarios judge. The generation "
+        "seals the zero-carryover presentation "
+        "contract, the same block map and the "
+        "journal baseline, and the case's "
+        "delivery, delivery-evidence and "
+        "delivery-length declarations. The same "
+        "declared variation as the v1 cycle "
+        "scenarios stands: the write grant's "
+        "dispatch bound at 12. Rehearsal furniture "
+        "by a scripted stand-in examiner.")
+    cycle6_honest = _run_scenario(
+        work_dir / "cycle6-honest",
+        scenario="cycle6-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle6_honest(),
+        grounds=cycle6_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v6",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle6_batch = _run_scenario(
+        work_dir / "cycle6-batch",
+        scenario="cycle6-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle6_batch(),
+        grounds=cycle6_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v6",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle6_rewrite = _run_scenario(
+        work_dir / "cycle6-rewrite",
+        scenario="cycle6-rewrite",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle6_rewrite(),
+        grounds=cycle6_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v6",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    # The imperative-first scenarios (office-
+    # cycle-v7; the director's order of
+    # 2026-11-25 22:41 MST, after demo-gptoss9's
+    # packages were seen to describe state and
+    # leave the deciding to the worker): the same
+    # case, the same commission and the same
+    # declared write-bound variation as the
+    # v1–v6 cycle scenarios, under the successor
+    # contract — the opening v6's whole, and every
+    # package forked against v6 by the order of
+    # its telling alone: the Next line first, the
+    # one next step stated as an imperative,
+    # derived from the cycle state the package
+    # opens; the state below it as its support.
+    # Four witnesses: the honest path, the
+    # six-block batch, the journal rewrite, and
+    # the read step (a contribution offered before
+    # any read stands, refused at the delivery
+    # stage gate, so a cycle package opens on an
+    # unread block).
+    cycle7_grounds = (
+        "Office-cycle rehearsal under the "
+        "imperative-first successor contract "
+        "(office-cycle-v7; the director's order "
+        "of 2026-11-25 22:41 MST — every package "
+        "opens with the Next line, the one next "
+        "step stated as an imperative before any "
+        "state, derived at presentation from the "
+        "cycle state it opens; the correction "
+        "explains below it, the Next line "
+        "commands): the scripted stand-in's probe "
+        "trials settled 5/5 native — the "
+        "recommendation stands as evidence — and "
+        "the stand-in examiner judges TEXT, as "
+        "the v1, v2, v3, v4, v5 and v6 cycle "
+        "scenarios judge. The generation seals "
+        "the imperative-first presentation "
+        "contract, the same block map and the "
+        "journal baseline, and the case's "
+        "delivery, delivery-evidence and "
+        "delivery-length declarations. The same "
+        "declared variation as the v1 cycle "
+        "scenarios stands: the write grant's "
+        "dispatch bound at 12. Rehearsal furniture "
+        "by a scripted stand-in examiner.")
+    cycle7_honest = _run_scenario(
+        work_dir / "cycle7-honest",
+        scenario="cycle7-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle7_honest(),
+        grounds=cycle7_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v7",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle7_batch = _run_scenario(
+        work_dir / "cycle7-batch",
+        scenario="cycle7-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle7_batch(),
+        grounds=cycle7_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v7",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle7_rewrite = _run_scenario(
+        work_dir / "cycle7-rewrite",
+        scenario="cycle7-rewrite",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle7_rewrite(),
+        grounds=cycle7_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v7",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle7_readstep = _run_scenario(
+        work_dir / "cycle7-readstep",
+        scenario="cycle7-readstep",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle7_readstep(),
+        grounds=cycle7_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v7",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle8_grounds = (
+        "Office-cycle rehearsal under the "
+        "file-grain successor contract "
+        "(office-cycle-v8; the director's orders "
+        "of 2026-11-25 23:03 MST — the walk's unit "
+        "the file, a multi-part file's slices "
+        "plumbing inside its step, the cycle gate "
+        "once per file, the journal's append once "
+        "per file — and 23:04 MST, the probes cut "
+        "down, as amended 23:07/23:08 MST): the "
+        "scripted stand-in's probe trials settled "
+        "5/5 native — the recommendation stands as "
+        "evidence — and the stand-in examiner "
+        "judges TEXT, as the v1–v7 cycle scenarios "
+        "judge. The generation seals the "
+        "file-grain presentation contract, the "
+        "same block map, the file map derived from "
+        "it, and the journal baseline, and the "
+        "case's delivery, delivery-evidence and "
+        "delivery-length declarations. The same "
+        "declared variation as the v1 cycle "
+        "scenarios stands: the write grant's "
+        "dispatch bound at 12. Rehearsal furniture "
+        "by a scripted stand-in examiner — the "
+        "harness's own lifecycle furniture (its "
+        "identify step and probe trials) stands "
+        "as the harness's in every scenario; the "
+        "v8 launch difference (no identity call, "
+        "no probe stage, the opening the first "
+        "call) is the driver's, and is witnessed "
+        "at the driver level in demo_run.py's "
+        "--verify-config, not here.")
+    cycle8_honest = _run_scenario(
+        work_dir / "cycle8-honest",
+        scenario="cycle8-honest",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle8_honest(),
+        grounds=cycle8_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v8",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    cycle8_batch = _run_scenario(
+        work_dir / "cycle8-batch",
+        scenario="cycle8-batch",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle8_batch(),
+        grounds=cycle8_grounds,
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v8",
+        adapter_mode="text", grants=cycle_grants,
+        road=True)
+    # The process-tree scenario (office-cycle-v9;
+    # the build scope of 2026-11-26, acceptance
+    # stage 1): the same case and commission, the
+    # sources-scope read grant's bound declared at
+    # three — the script's journal read and two
+    # whole-file source reads spend the three, and
+    # its fourth knock on the read door is refused
+    # — so the tree, the held-file correction and
+    # the speaking refusal stand witnessed against
+    # the record, and the walk still files.
+    cycle9_grants = []
+    for grant in cycle_grants:
+        grant = dict(grant)
+        if grant["tool"] == "sandbox.read" and \
+                (grant.get("scope_ceiling") or {}).get(
+                    "path_prefix") == "sources":
+            grant["bound"] = {"count": 3}
+        cycle9_grants.append(grant)
+    cycle9_reread = _run_scenario(
+        work_dir / "cycle9-reread",
+        scenario="cycle9-reread",
+        brief=tree_brief,
+        manifest_hash=manifest_hash,
+        seal_entries=manifest["sources"],
+        stage_fn=lambda sandbox: _stage_sandbox_sources(
+            sandbox, manifest),
+        script=build_script_cycle9_reread(),
+        grounds=(
+            "Office-cycle rehearsal, process-tree "
+            "scenario (office-cycle-v9; the build "
+            "scope of 2026-11-26): the scripted "
+            "stand-in's probe trials settled 5/5 "
+            "native — the recommendation stands as "
+            "evidence — and the stand-in examiner "
+            "judges NATIVE, the live worker's own "
+            "lane. The generation seals the "
+            "process tree beside the presentation "
+            "contract, and the sources-scope read "
+            "grant's bound stands at three by the "
+            "scenario's declaration, so the scripted "
+            "re-read knock is refused inside the "
+            "walk. Rehearsal furniture by a scripted "
+            "stand-in examiner."),
+        freshness_suspended=True,
+        delivery_declaration=True,
+        delivery_evidence_declaration=True,
+        delivery_floor_declaration=True,
+        presentation_declaration="office-cycle-v9",
+        adapter_mode="native", grants=cycle9_grants,
+        road=True, tree=TREE_DECLARATION_V9)
     return {"continuity": continuity, "budget": budget,
             "freedom": freedom, "batch": batch,
             "journal": journal, "freshness": freshness,
@@ -3046,4 +5041,30 @@ def run_rehearsal(work_dir):
             "tree_honest": tree_honest,
             "tree_journal_gate": tree_journal_gate,
             "tree_batch": tree_batch,
-            "tree_native": tree_native}
+            "tree_native": tree_native,
+            "cycle_honest": cycle_honest,
+            "cycle_run_ahead": cycle_run_ahead,
+            "cycle_journal_rewrite":
+                cycle_journal_rewrite,
+            "cycle_offoffer": cycle_offoffer,
+            "cycle_budget": cycle_budget,
+            "cycle2_honest": cycle2_honest,
+            "cycle2_batch": cycle2_batch,
+            "cycle2_repull": cycle2_repull,
+            "cycle3_honest": cycle3_honest,
+            "cycle3_batch": cycle3_batch,
+            "cycle4_honest": cycle4_honest,
+            "cycle4_batch": cycle4_batch,
+            "cycle5_honest": cycle5_honest,
+            "cycle5_batch": cycle5_batch,
+            "cycle5_rewrite": cycle5_rewrite,
+            "cycle6_honest": cycle6_honest,
+            "cycle6_batch": cycle6_batch,
+            "cycle6_rewrite": cycle6_rewrite,
+            "cycle7_honest": cycle7_honest,
+            "cycle7_batch": cycle7_batch,
+            "cycle7_rewrite": cycle7_rewrite,
+            "cycle7_readstep": cycle7_readstep,
+            "cycle8_honest": cycle8_honest,
+            "cycle8_batch": cycle8_batch,
+            "cycle9_reread": cycle9_reread}

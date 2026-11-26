@@ -204,6 +204,7 @@ from framework import tool_policy  # noqa: E402
 from framework.doorway import Doorway  # noqa: E402
 from framework.executor import Executor  # noqa: E402
 from framework.loop import Loop  # noqa: E402
+from framework import loop as loop_module  # noqa: E402
 from framework.record import FrameworkStore  # noqa: E402
 import working_set_rehearsal as rehearsal  # noqa: E402
 import stock_demo  # noqa: E402
@@ -3801,6 +3802,2838 @@ def main():
         _check_checker("tree-native", nrep)
         print(f"process-tree section: "
               f"{CHECKS[0] - tree_before} checks")
+
+        # ============= office cycle (the plan of
+        # 2026-11-25) =============
+        # The office-cycle contract's witnesses (the
+        # plan of 2026-11-25, Ben's approval and Vane's
+        # examination on the record): the stocking
+        # portioned into blocks at the ruled ceiling;
+        # one block in front of him at a time, its
+        # content presented once at its cycle; the
+        # journal read + append and never carried, its
+        # appends the cycle gate's second leg; the
+        # catalogue living in the office — the wire
+        # offering each cycle's tools while the record
+        # resolves against the sealed grants; and every
+        # call estimated under the per-call budget
+        # before it is sent.
+        cycle_before = CHECKS[0]
+        JOURNAL = "scratch/journal.md"
+        NOTES = [rehearsal.CYCLE_NOTE_1,
+                 rehearsal.CYCLE_NOTE_2,
+                 rehearsal.CYCLE_NOTE_3,
+                 rehearsal.CYCLE_NOTE_4,
+                 rehearsal.CYCLE_NOTE_5,
+                 rehearsal.CYCLE_NOTE_6]
+
+        def _cycle_packages(scenario):
+            return _staged_packages(work / scenario)
+
+        def _journal_free(package, *, opening):
+            """No journal content anywhere in a package:
+            no journal component beyond the opening's
+            designation (path + contract, no content),
+            and no journal entry text in any component
+            — except inside the one tool-results entry
+            answering his own journal read, which is
+            his pull answered once, not carriage."""
+            for key, value in package.items():
+                if key == "journal":
+                    if not opening:
+                        return False
+                    if set(value) != {"path", "contract"}:
+                        return False
+                    continue
+                if key == "tool_results":
+                    for entry in value:
+                        result = entry.get("result") \
+                            if isinstance(entry, dict) \
+                            else None
+                        if isinstance(result, dict) \
+                                and result.get("path") \
+                                == JOURNAL:
+                            continue
+                        blob = canonical(entry).decode(
+                            "utf-8", "replace")
+                        if any(note[:40] in blob
+                               for note in NOTES):
+                            return False
+                    continue
+                blob = canonical(value).decode(
+                    "utf-8", "replace")
+                if any(note[:40] in blob
+                       for note in NOTES):
+                    return False
+            return True
+
+        def _offer_names(package):
+            return [t.get("tool")
+                    for t in package.get("tools") or []]
+
+        # ---- cycle-honest: the honest path ----
+        crep = reports["cycle_honest"]
+        cwork = work / "cycle-honest"
+        cevs = _events(cwork)
+        cpkg = _cycle_packages("cycle-honest")
+        check("cycle-honest: the run completes in "
+              "nine iterations — opening, one wake per "
+              "block (its content presented, its append "
+              "and the next pull in one answer), "
+              "summarize, the journal read, the filing "
+              "— and the brief stands filed",
+              crep["outcome"] == "yield"
+              and crep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in cevs),
+              f"{crep['outcome']} / {crep['iterations']}")
+        check("cycle-honest: the honest path records "
+              "no gate of any kind — zero cycle gates, "
+              "zero journal gates — and exactly six "
+              "journal appends, one per block",
+              not any(e["type"] == "CYCLE_GATE"
+                      for e in cevs)
+              and not any(e["type"] == "JOURNAL_GATE"
+                          for e in cevs)
+              and sum(1 for e in cevs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6,
+              f"{[e['type'] for e in cevs if 'GATE' in e['type']]}")
+        check("cycle-honest: the sealed record "
+              "declares the office-cycle presentation "
+              "contract, no worked example stands in "
+              "the seal, and the journal baseline seals "
+              "the designated address with the empty "
+              "journal's hash as its trusted initial "
+              "state",
+              crep["sealed_presentation_contract"]
+              == "office-cycle-v1"
+              and crep["sealed_worked_example"] is None
+              and crep["sealed_journal_baseline"] == {
+                  "address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")},
+              f"{crep['sealed_presentation_contract']}")
+        sealed_map = crep["sealed_block_map"]
+        sandbox = cwork / "run" / "sandbox"
+        contents = {}
+        for address in ("sources/stock-take.md",
+                        "sources/a3-pass.md",
+                        "sources/index-tail.md"):
+            contents[address] = (
+                sandbox / address).read_bytes()
+        check("cycle-honest: the sealed block map is "
+              "the office's portioning of the stocked "
+              "files at the ruled ceiling, re-derived "
+              "from the staged bytes whole — and its "
+              "coverage is complete: every block at or "
+              "under 12,000 bytes of content, and the "
+              "ranges of each file's blocks together "
+              "covering the file's lines exactly",
+              sealed_map == tool_policy.compute_block_map(
+                  list(contents), contents)
+              and all(b["content_bytes"] <= 12000
+                      for b in sealed_map)
+              and all(
+                  [ln for b in sealed_map
+                   if b["address"] == address
+                   for ln in range(
+                       b["line_start"] or 1,
+                       (b["line_end"] or len(
+                           tool_policy.split_lines(
+                               contents[address]))) + 1)]
+                  == list(range(1, len(
+                      tool_policy.split_lines(
+                          contents[address])) + 1))
+                  for address in contents),
+              f"{len(sealed_map or [])} blocks")
+        check("cycle-honest: nine packages stand in "
+              "the captures — the first the opening, "
+              "six cycle packages, then summarize "
+              "twice (the journal read's wake and the "
+              "filing's) — every one under the "
+              "office-cycle contract",
+              sorted(cpkg) == list(range(1, 10))
+              and cpkg[1][0]["presentation"]["package"]
+              == "opening"
+              and all(
+                  cpkg[k][0]["presentation"]["package"]
+                  == "cycle"
+                  and cpkg[k][0]["presentation"]
+                  ["contract"] == "office-cycle-v1"
+                  for k in range(2, 8))
+              and all(
+                  cpkg[k][0]["presentation"]["package"]
+                  == "summarize"
+                  for k in (8, 9)),
+              f"{sorted(cpkg)}")
+        opening = cpkg[1][0]
+        check("cycle-honest: the opening package "
+              "carries the job whole and nothing else — "
+              "his memory as his own knowledge, the "
+              "task (assignment, deliverable, the four "
+              "points, the figures), the cycle poster "
+              "(the sketch flow and the block map, an "
+              "access way per block), the journal's "
+              "designated address and contract, his "
+              "position at cycle 1 — and no catalogue "
+              "as presented matter, no journal content, "
+              "no working set, no case dump",
+              all(k in opening for k in (
+                  "memory", "case_essentials", "task",
+                  "poster", "journal"))
+              and opening["journal"]["path"] == JOURNAL
+              and set(opening["journal"])
+              == {"path", "contract"}
+              and all(k in opening["task"] for k in (
+                  "assignment", "deliverable", "points",
+                  "figures"))
+              and len(opening["task"]["points"]) == 4
+              and [b["block_id"] for b in
+                   opening["poster"]["blocks"]]
+              == [b["block_id"] for b in sealed_map]
+              and all("access" in b for b in
+                      opening["poster"]["blocks"])
+              and "working_set" not in opening
+              and "process_tree" not in opening
+              and _offer_names(opening) == [
+                  "sandbox.read", "sandbox.read_range",
+                  "sandbox.write"],
+              f"{sorted(opening)}")
+        check("cycle-honest: his first response is "
+              "work — the first request the record "
+              "stands is the first block's pull, no "
+              "acknowledge outcome anywhere",
+              [p.get("tool") for p in
+               (_payload(e) for e in cevs
+                if e["type"] == "TOOL_REQUESTED")
+               ][:1] == ["sandbox.read"]
+              and not any(
+                  e["type"] == "TOOL_REQUESTED"
+                  and _payload(e).get("tool")
+                  not in ("sandbox.read",
+                          "sandbox.read_range",
+                          "sandbox.write")
+                  for e in cevs),
+              "")
+        presented = {}
+        for k in range(1, 10):
+            bc = cpkg[k][0].get("block_content")
+            if bc is not None:
+                presented.setdefault(
+                    bc["block_id"], []).append(k)
+        sealed_by_id = {b["block_id"]: b
+                        for b in sealed_map}
+
+        def _block_bytes(block):
+            data = contents[block["address"]]
+            if block["line_start"] is None:
+                return data
+            lines = tool_policy.split_lines(data)
+            return b"".join(lines[
+                block["line_start"] - 1:
+                block["line_end"]])
+
+        check("cycle-honest: each block's content is "
+              "presented exactly once, at its own "
+              "cycle's package — blocks B1..B6 at "
+              "packages 2..7 — and the presented "
+              "content is the block's exact bytes from "
+              "the stocked file",
+              presented == {f"B{i}": [i + 1]
+                            for i in range(1, 7)}
+              and all(
+                  cpkg[k][0]["block_content"]["content"]
+                  == _block_bytes(sealed_by_id[
+                      cpkg[k][0]["block_content"]
+                      ["block_id"]]).decode("utf-8")
+                  for k in range(2, 8)),
+              f"{presented}")
+        check("cycle-honest: after its cycle, a block "
+              "stands as a pointer — the packages after "
+              "its presentation carry its entry with "
+              "fingerprint, size and dispatch "
+              "provenance, and its content nowhere",
+              all(
+                  (lambda entry: entry is not None
+                   and entry.get("content_sha256")
+                   == blk["content_sha256"]
+                   and entry.get("dispatch_id")
+                   is not None)(
+                      next((b for b in
+                            cpkg[k][0]["blocks"]
+                            if b["block_id"]
+                            == blk["block_id"]), None))
+                  for blk in sealed_map
+                  for k in (8, 9)),
+              "")
+        check("cycle-honest: the summarize package "
+              "carries no source content and no block "
+              "content — its instruction is to read "
+              "the journal whole and compile the brief "
+              "from it — and its offer set is the "
+              "journal's tools alone (read and write)",
+              cpkg[8][0].get("block_content") is None
+              and cpkg[8][0]["current_cycle"]["stage"]
+              == "summarize"
+              and JOURNAL in cpkg[8][0]
+              ["current_cycle"]["instruction"]
+              and _offer_names(cpkg[8][0]) == [
+                  "sandbox.read", "sandbox.write"],
+              "")
+        check("cycle-honest: no package in the run "
+              "carries journal content or a journal "
+              "component beyond the opening's "
+              "designation, and no package presents "
+              "the catalogue — every offer set is the "
+              "cycle's tools plus the journal tools, "
+              "never the sealed ten",
+              all(_journal_free(cpkg[k][0],
+                                opening=(k == 1))
+                  for k in range(1, 10))
+              and all(len(cpkg[k][0]["tools"]) <= 3
+                      for k in range(1, 10)),
+              "")
+        estimates = crep["call_estimates"]
+        print(f"cycle-honest: opening package "
+              f"estimated at "
+              f"{estimates[0]['serialized_bytes']} "
+              f"bytes / "
+              f"{estimates[0]['estimated_tokens']} "
+              f"tokens; largest cycle package "
+              f"{max(e['serialized_bytes'] for e in estimates)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates)} "
+              f"tokens")
+        check("cycle-honest: every serialized "
+              "request's estimate stands at or under "
+              "the per-call budget of 4,000 tokens — "
+              "the opening included — the figures "
+              "printed above",
+              len(estimates) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates),
+              f"{estimates}")
+        _check_checker("cycle-honest", crep)
+
+        # ---- cycle-run-ahead: the cycle gate ----
+        rrep = reports["cycle_run_ahead"]
+        revs = _events(work / "cycle-run-ahead")
+        rpkg = _cycle_packages("cycle-run-ahead")
+        gates = [e for e in revs
+                 if e["type"] == "CYCLE_GATE"]
+        check("cycle-run-ahead: pulling the third "
+              "block while the second cycle stands "
+              "incomplete records exactly one cycle "
+              "gate — cycle 2, block B2, the read ahead "
+              "of it B3 — and the run still files, in "
+              "nine iterations",
+              len(gates) == 1
+              and _payload(gates[0])["cycle"] == 2
+              and _payload(gates[0])["block_id"] == "B2"
+              and _payload(gates[0])["ahead_block_id"]
+              == "B3"
+              and rrep["outcome"] == "yield"
+              and rrep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in revs),
+              f"{len(gates)} gates")
+        correction = rpkg[3][0].get(
+            "cycle_gate_correction") or {}
+        check("cycle-run-ahead: the correction rides "
+              "the next package in the gate's own "
+              "shape — what arrived (the B3 read, "
+              "nothing refused, nothing lost), what is "
+              "needed (cycle 2's append), an example — "
+              "its facts the gate event's own, its "
+              "exact bytes hash-verified by the "
+              "checker's independent derivation (the "
+              "11/11 below)",
+              correction.get("cycle") == 2
+              and correction.get("block_id") == "B2"
+              and correction.get("ahead_block_id")
+              == "B3"
+              and "nothing is refused" in
+              correction.get("what_arrived", "")
+              and "cycle 2" in
+              correction.get("instruction", "")
+              and "sandbox.write" in
+              correction.get("example", ""),
+              f"{sorted(correction)}")
+        check("cycle-run-ahead: the gate fires once "
+              "only — the packages after the correction "
+              "carry no further cycle correction, and "
+              "no journal gate stands anywhere",
+              all("cycle_gate_correction" not in
+                  rpkg[k][0] for k in range(4, 10))
+              and not any(e["type"] == "JOURNAL_GATE"
+                          for e in revs),
+              "")
+        _check_checker("cycle-run-ahead", rrep)
+
+        # ---- cycle-journal-rewrite: the journal
+        # gate ----
+        jrep = reports["cycle_journal_rewrite"]
+        jevs = _events(work / "cycle-journal-rewrite")
+        jgates = [e for e in jevs
+                  if e["type"] == "JOURNAL_GATE"]
+        jappends = [e for e in jevs
+                    if e["type"] == "JOURNAL_APPEND"]
+        check("cycle-journal-rewrite: the rewrite "
+              "attempt records exactly one journal "
+              "gate, the transition is not counted — "
+              "six appends stand, not seven — and the "
+              "following proper append, extending the "
+              "accepted journal, is accepted and "
+              "closes cycle 2; the run files in ten "
+              "iterations",
+              len(jgates) == 1
+              and len(jappends) == 6
+              and any(
+                  _payload(a)["cycle"] == 2
+                  and a["event_seq"]
+                  > jgates[0]["event_seq"]
+                  for a in jappends)
+              and jrep["outcome"] == "yield"
+              and jrep["iterations"] == 10
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in jevs),
+              f"{len(jgates)} gates / "
+              f"{len(jappends)} appends")
+        jpkg = _cycle_packages("cycle-journal-rewrite")
+        check("cycle-journal-rewrite: the journal "
+              "gate's correction rides the next "
+              "package, naming the accepted journal as "
+              "the ground to extend — and the journal "
+              "on disk at the end is the accepted "
+              "chain whole: the six notes in order, "
+              "the rewrite nowhere in it",
+              "journal_gate_correction" in jpkg[4][0]
+              and (work / "cycle-journal-rewrite"
+                   / "run" / "sandbox" / JOURNAL
+                   ).read_text() == "".join(NOTES),
+              "")
+        _check_checker("cycle-journal-rewrite", jrep)
+
+        # ---- cycle-offoffer: the offer/resolution
+        # split ----
+        orep = reports["cycle_offoffer"]
+        oevs = _events(work / "cycle-offoffer")
+        opkg = _cycle_packages("cycle-offoffer")
+        rejections = [e for e in oevs
+                      if e["type"] == "REJECTION"]
+        check("cycle-offoffer: the granted call "
+              "outside the offer set — sandbox.search, "
+              "offered in no cycle package — resolves "
+              "against the sealed catalogue and "
+              "dispatches; the ungranted call — a "
+              "write against a stocked source — is "
+              "refused at the doorway with its "
+              "rejection recorded, and never "
+              "dispatches",
+              any(e["type"] == "TOOL_DISPATCHED"
+                  and _payload(e).get("tool")
+                  == "sandbox.search" for e in oevs)
+              and len(rejections) == 1
+              and _payload(rejections[0]).get("tool")
+              == "sandbox.write"
+              and not any(
+                  e["type"] == "TOOL_DISPATCHED"
+                  and _payload(e).get("request_id")
+                  == _payload(rejections[0])
+                  .get("request_id") for e in oevs)
+              and all("sandbox.search" not in
+                      _offer_names(opkg[k][0])
+                      for k in opkg),
+              "")
+        check("cycle-offoffer: the walk then runs "
+              "the honest rhythm to a filed brief — "
+              "ten iterations, six appends, no cycle "
+              "or journal gate — the off-offer work "
+              "costing one wake, not the walk",
+              orep["outcome"] == "yield"
+              and orep["iterations"] == 10
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in oevs)
+              and sum(1 for e in oevs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6
+              and not any(e["type"] in (
+                  "CYCLE_GATE", "JOURNAL_GATE")
+                  for e in oevs),
+              f"{orep['outcome']} / {orep['iterations']}")
+        _check_checker("cycle-offoffer", orep)
+
+        # ---- cycle-budget: the road's spill ----
+        # witness (the §6 amendment, rebased
+        # 2026-11-26: this scenario asserted the
+        # per-call refusal until the amendment
+        # retired it; it now asserts the road's
+        # answer to the same giant block)
+        brep = reports["cycle_budget"]
+        bevs = _events(work / "cycle-budget")
+        refusals = [e for e in bevs
+                    if e["type"] == "BUDGET_REFUSAL"]
+        bcaps = [json.loads(line) for line in
+                 (work / "cycle-budget" / "captures.jsonl")
+                 .read_text().splitlines() if line.strip()]
+        loop_calls = 0
+        for c in bcaps:
+            if c["mode"] != "chat":
+                continue
+            body = json.loads(base64.b64decode(
+                c["request_b64"]))
+            text = json.dumps(body)
+            if "Your wake package:" in text:
+                loop_calls += 1
+        spills = [e for e in
+                  brep["road_presentation_events"]
+                  if e.get("kind") == "spill"]
+        check("cycle-budget: under the road the "
+              "giant block's package is ADMITTED — "
+              "no budget refusal stands in the "
+              "record; the block's content rides "
+              "spilled (its reference, fingerprint "
+              "and a bounded preview, counted over "
+              "the 4,096 threshold) in the road's "
+              "presentation events; the walk "
+              "completes in four iterations — "
+              "opening, the spilled block's wake, "
+              "summarize, the filing — the brief "
+              "stands filed, and four loop requests "
+              "stand in the captures",
+              len(refusals) == 0
+              and brep["outcome"] == "yield"
+              and brep["iterations"] == 4
+              and any(
+                  e.get("surface") == "block_content"
+                  and e.get("counted_tokens", 0) > 4096
+                  for e in spills)
+              and loop_calls == 4,
+              f"{loop_calls} loop calls, "
+              f"{len(spills)} spills, outcome "
+              f"{brep['outcome']}")
+        _check_checker("cycle-budget", brep)
+        print(f"office-cycle section: "
+              f"{CHECKS[0] - cycle_before} checks")
+
+        # ============= office cycle v2 — the
+        # split-on-return successor (the amendment
+        # as stripped by the director's ruling of
+        # 2026-11-25) =============
+        # The successor contract's witnesses: the
+        # honest path as the control (the v1 script
+        # step for step under the new seal); the
+        # six-block batch — the shape demo-gptoss5
+        # died on — presenting one block at the batch
+        # wake, carrying no correction, and standing
+        # within budget at every wake; the re-pull
+        # pair (the current block's re-pull answered
+        # in the carriage, an earlier block's re-pull
+        # refreshing its pointer alone); and the
+        # opening's room lines, stated once. The
+        # checker is not run over these records in
+        # this build: the ruling deferred the
+        # checker-correspondence work, and the
+        # checker's population stands at v1 (the
+        # v1 sections above run it as ever).
+        cycle2_before = CHECKS[0]
+        ROOM_PHRASES = ("4,000 estimated tokens",
+                        "one block per wake",
+                        "costs you nothing and gains "
+                        "you nothing")
+
+        def _block_read_entries(package):
+            return [e for e in
+                    package.get("tool_results") or []
+                    if isinstance(
+                        (e.get("result") or {}).get(
+                            "path"), str)
+                    and (e["result"]["path"]
+                         .startswith("sources/"))]
+
+        # ---- cycle2-honest: the control ----
+        hrep = reports["cycle2_honest"]
+        hwork = work / "cycle2-honest"
+        hevs = _events(hwork)
+        hpkg = _cycle_packages("cycle2-honest")
+        check("cycle2-honest: the honest path under "
+              "the split-on-return seal completes in "
+              "nine iterations and the brief stands "
+              "filed — the v1 path's own shape",
+              hrep["outcome"] == "yield"
+              and hrep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in hevs),
+              f"{hrep['outcome']} / {hrep['iterations']}")
+        check("cycle2-honest: the sealed record "
+              "declares the split-on-return contract, "
+              "no worked example stands in the seal, "
+              "the journal baseline is v1's, and the "
+              "sealed block map is the v1 run's own "
+              "map — the same portioning under the "
+              "new name",
+              hrep["sealed_presentation_contract"]
+              == "office-cycle-v2"
+              and hrep["sealed_worked_example"] is None
+              and hrep["sealed_journal_baseline"] == {
+                  "address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and hrep["sealed_block_map"]
+              == crep["sealed_block_map"],
+              f"{hrep['sealed_presentation_contract']}")
+        opening2 = hpkg[1][0]
+        room_lines = (opening2.get("poster") or {}).get(
+            "room_knowledge") or ""
+        check("cycle2-honest: the opening states "
+              "the room's rules once — the per-call "
+              "budget in plain figures, the one-block-"
+              "per-wake return, and that pulling ahead "
+              "costs and gains nothing — and every "
+              "package names the successor contract",
+              all(phrase in room_lines
+                  for phrase in ROOM_PHRASES)
+              and all(
+                  hpkg[k][0]["presentation"]["contract"]
+                  == "office-cycle-v2"
+                  for k in range(1, 10)),
+              f"{room_lines[:80]}")
+        check("cycle2-honest: the room lines stand "
+              "in the opening alone — no later package "
+              "repeats them, and the v1 control's "
+              "opening carries none",
+              all("one block per wake" not in
+                  canonical(hpkg[k][0]).decode(
+                      "utf-8", "replace")
+                  for k in range(2, 10))
+              and "room_knowledge" not in (
+                  cpkg[1][0].get("poster") or {}),
+              "")
+        presented2 = {}
+        for k in range(1, 10):
+            bc = hpkg[k][0].get("block_content")
+            if bc is not None:
+                presented2.setdefault(
+                    bc["block_id"], []).append(k)
+        hsandbox = hwork / "run" / "sandbox"
+        hcontents = {}
+        for address in ("sources/stock-take.md",
+                        "sources/a3-pass.md",
+                        "sources/index-tail.md"):
+            hcontents[address] = (
+                hsandbox / address).read_bytes()
+
+        def _block_bytes2(block):
+            data = hcontents[block["address"]]
+            if block["line_start"] is None:
+                return data
+            lines = tool_policy.split_lines(data)
+            return b"".join(lines[
+                block["line_start"] - 1:
+                block["line_end"]])
+
+        sealed_by_id2 = {b["block_id"]: b
+                         for b in hrep["sealed_block_map"]}
+        check("cycle2-honest: each block's content "
+              "is presented exactly once, at its own "
+              "cycle's package, and the presented "
+              "content is the block's exact bytes — "
+              "the v1 presentation, unchanged",
+              presented2 == {f"B{i}": [i + 1]
+                             for i in range(1, 7)}
+              and all(
+                  hpkg[k][0]["block_content"]["content"]
+                  == _block_bytes2(sealed_by_id2[
+                      hpkg[k][0]["block_content"]
+                      ["block_id"]]).decode("utf-8")
+                  for k in range(2, 8)),
+              f"{presented2}")
+        check("cycle2-honest: on the honest path "
+              "the carriage matches v1's shapes — at "
+              "each cycle package exactly one block-"
+              "read entry rides, stubbed to the "
+              "block_content component",
+              all(
+                  len(_block_read_entries(hpkg[k][0]))
+                  == 1
+                  and _block_read_entries(
+                      hpkg[k][0])[0]["result"].get(
+                          "presented_in")
+                  == "block_content"
+                  for k in range(2, 8)),
+              "")
+        estimates2 = hrep["call_estimates"]
+        print(f"cycle2-honest: opening package "
+              f"estimated at "
+              f"{estimates2[0]['serialized_bytes']} "
+              f"bytes / "
+              f"{estimates2[0]['estimated_tokens']} "
+              f"tokens; largest package "
+              f"{max(e['serialized_bytes'] for e in estimates2)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates2)} "
+              f"tokens")
+        check("cycle2-honest: every serialized "
+              "request's estimate stands at or under "
+              "the per-call budget of 4,000 tokens — "
+              "the opening, carrying the room lines, "
+              "included",
+              len(estimates2) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates2),
+              f"{estimates2}")
+
+        # ---- cycle2-batch: the batch wake ----
+        trep = reports["cycle2_batch"]
+        twork = work / "cycle2-batch"
+        tevs = _events(twork)
+        tpkg = _cycle_packages("cycle2-batch")
+        tgates = [e for e in tevs
+                  if e["type"] == "CYCLE_GATE"]
+        check("cycle2-batch: the batch walk "
+              "completes in nine iterations and files "
+              "— the gate arithmetic stands exactly "
+              "as under v1 (five cycle gates, cycles "
+              "1-5, each recorded as its append came "
+              "due), and no budget refusal stands",
+              trep["outcome"] == "yield"
+              and trep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in tevs)
+              and [_payload(g)["cycle"] for g in tgates]
+              == [1, 2, 3, 4, 5]
+              and not any(
+                  e["type"] == "BUDGET_REFUSAL"
+                  for e in tevs),
+              f"{trep['outcome']} / {trep['iterations']}"
+              f" / {[ _payload(g)['cycle'] for g in tgates]}")
+        check("cycle2-batch: no package in the run "
+              "carries a cycle-gate correction — the "
+              "gates stand in the record, and the "
+              "metered presentation and the opening's "
+              "standing lines carry their content",
+              all("cycle_gate_correction" not in
+                  tpkg[k][0] for k in range(1, 10)),
+              "")
+        batch_wake = tpkg[2][0]
+        bw_entries = _block_read_entries(batch_wake)
+        check("cycle2-batch: the batch wake "
+              "presents exactly one block's content "
+              "(B1, the current cycle's) and its "
+              "carriage carries exactly that block's "
+              "stub — the other five pulls of the "
+              "batch response ride nowhere: not as "
+              "content, not as stubs",
+              (batch_wake.get("block_content")
+               or {}).get("block_id") == "B1"
+              and len(bw_entries) == 1
+              and bw_entries[0]["result"].get("path")
+              == "sources/stock-take.md"
+              and bw_entries[0]["result"].get(
+                  "presented_in") == "block_content",
+              f"{[(e['result'].get('path'), e['result'].get('presented_in')) for e in bw_entries]}")
+        presented_t = {}
+        for k in range(1, 10):
+            bc = tpkg[k][0].get("block_content")
+            if bc is not None:
+                presented_t.setdefault(
+                    bc["block_id"], []).append(k)
+        check("cycle2-batch: across the walk each "
+              "block's content is still presented "
+              "exactly once, at its own cycle — the "
+              "batch pull created no early "
+              "presentation of any block",
+              presented_t == {f"B{i}": [i + 1]
+                              for i in range(1, 7)},
+              f"{presented_t}")
+        estimates_t = trep["call_estimates"]
+        print(f"cycle2-batch: the batch wake "
+              f"estimated at "
+              f"{estimates_t[1]['serialized_bytes']} "
+              f"bytes / "
+              f"{estimates_t[1]['estimated_tokens']} "
+              f"tokens; largest package "
+              f"{max(e['serialized_bytes'] for e in estimates_t)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates_t)} "
+              f"tokens")
+        check("cycle2-batch: every serialized "
+              "request's estimate stands at or under "
+              "the per-call budget of 4,000 tokens — "
+              "the batch wake included, the wake the "
+              "live batch run died on at 4,273 under "
+              "v1's arrival-bundled carriage",
+              len(estimates_t) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates_t),
+              f"{estimates_t}")
+
+        # ---- cycle2-repull: the re-pull pair ----
+        prep2 = reports["cycle2_repull"]
+        pwork = work / "cycle2-repull"
+        pevs = _events(pwork)
+        ppkg = _cycle_packages("cycle2-repull")
+        check("cycle2-repull: the walk completes "
+              "in ten iterations and files, and the "
+              "re-pulls record no gate of any kind",
+              prep2["outcome"] == "yield"
+              and prep2["iterations"] == 10
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in pevs)
+              and not any(
+                  e["type"] in ("CYCLE_GATE",
+                                "JOURNAL_GATE")
+                  for e in pevs),
+              f"{prep2['outcome']} / {prep2['iterations']}")
+        wake4 = ppkg[4][0]
+        w4_entries = _block_read_entries(wake4)
+        a3_text = hcontents[
+            "sources/a3-pass.md"].decode("utf-8")
+        check("cycle2-repull: the wake after the "
+              "current block's re-pull carries no "
+              "block_content (the cycle presentation "
+              "stands spent) and answers the re-pull "
+              "in its carriage — the a3-pass result "
+              "rides with its content, the file's "
+              "exact bytes",
+              wake4.get("block_content") is None
+              and len(w4_entries) == 1
+              and w4_entries[0]["result"].get("path")
+              == "sources/a3-pass.md"
+              and w4_entries[0]["result"].get(
+                  "content") == a3_text,
+              f"{[(e['result'].get('path'), 'content' in e['result']) for e in w4_entries]}")
+        wake6 = ppkg[6][0]
+        w6_entries = _block_read_entries(wake6)
+        check("cycle2-repull: the wake after an "
+              "earlier block's re-pull carries that "
+              "block nowhere — no stock-take entry "
+              "rides; the current block's stub rides "
+              "as ever, its content in block_content",
+              all(e["result"].get("path")
+                  != "sources/stock-take.md"
+                  for e in w6_entries)
+              and len(w6_entries) == 1
+              and w6_entries[0]["result"].get(
+                  "presented_in") == "block_content"
+              and (wake6.get("block_content")
+                   or {}).get("block_id") == "B4",
+              f"{[(e['result'].get('path'), e['result'].get('presented_in')) for e in w6_entries]}")
+        estimates_p = prep2["call_estimates"]
+        print(f"cycle2-repull: largest package "
+              f"{max(e['serialized_bytes'] for e in estimates_p)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates_p)} "
+              f"tokens")
+        check("cycle2-repull: every serialized "
+              "request's estimate stands at or under "
+              "the per-call budget of 4,000 tokens",
+              len(estimates_p) == 10
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates_p),
+              f"{estimates_p}")
+        print(f"office-cycle-v2 section: "
+              f"{CHECKS[0] - cycle2_before} checks")
+
+        # ============= office cycle v3 — the
+        # draft-page successor (the director's
+        # ruling of 2026-11-25 21:16 MST, ordered
+        # after demo-gptoss6) =============
+        # The successor contract's witnesses: the
+        # opening's journal contract carries the
+        # draft-page correction as specific
+        # step-by-step instructions — the three
+        # numbered steps — where the v2 control's
+        # opening carries none of them; the room
+        # knowledge stands in the v3 opening
+        # unchanged; the honest walk completes and
+        # files with the journal standing as draft
+        # whole, no passage a copy of its block;
+        # the batch walk completes and files; and
+        # every measured package stands within the
+        # per-call budget. The checker is not run
+        # over these records: the ruling's
+        # checker-correspondence deferral stands,
+        # and the checker's population stands at
+        # v1, exactly as for the v2 section above.
+        cycle3_before = CHECKS[0]
+        STEP_PHRASES = ("(1) read the block",
+                        "(2) in your journal, write "
+                        "the draft",
+                        "(3) when that draft stands "
+                        "in the journal")
+
+        # ---- cycle3-honest: the draft walk ----
+        h3rep = reports["cycle3_honest"]
+        h3work = work / "cycle3-honest"
+        h3evs = _events(h3work)
+        h3pkg = _cycle_packages("cycle3-honest")
+        check("cycle3-honest: the honest path under "
+              "the draft-page seal completes in nine "
+              "iterations and the brief stands filed "
+              "— the v1 and v2 paths' own shape",
+              h3rep["outcome"] == "yield"
+              and h3rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in h3evs),
+              f"{h3rep['outcome']} / "
+              f"{h3rep['iterations']}")
+        check("cycle3-honest: the sealed record "
+              "declares the draft-page contract, no "
+              "worked example stands in the seal, "
+              "the journal baseline is v1's, and the "
+              "sealed block map is the v1 run's own "
+              "map — the same portioning under the "
+              "new name",
+              h3rep["sealed_presentation_contract"]
+              == "office-cycle-v3"
+              and h3rep["sealed_worked_example"]
+              is None
+              and h3rep["sealed_journal_baseline"]
+              == {"address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and h3rep["sealed_block_map"]
+              == crep["sealed_block_map"],
+              f"{h3rep['sealed_presentation_contract']}")
+        opening3 = h3pkg[1][0]
+        contract3 = (opening3.get("journal")
+                     or {}).get("contract") or ""
+        check("cycle3-honest: the opening's journal "
+              "contract carries the draft-page "
+              "correction as specific step-by-step "
+              "instructions — the three numbered "
+              "steps stand in the opening package — "
+              "and every package names the successor "
+              "contract",
+              all(step in contract3
+                  for step in STEP_PHRASES)
+              and all(
+                  h3pkg[k][0]["presentation"]
+                  ["contract"] == "office-cycle-v3"
+                  for k in range(1, 10)),
+              f"{contract3[:80]}")
+        contract2 = (opening2.get("journal")
+                     or {}).get("contract") or ""
+        check("cycle3-honest: the v2 control "
+              "carries none of the steps — its "
+              "opening's journal contract is the "
+              "research-log wording, and no package "
+              "of its walk carries the step-by-step "
+              "text; the successor's build left the "
+              "v2 presentation untouched",
+              all(step not in contract2
+                  for step in STEP_PHRASES)
+              and all(
+                  step not in canonical(
+                      hpkg[k][0]).decode(
+                          "utf-8", "replace")
+                  for k in range(1, 10)
+                  for step in STEP_PHRASES),
+              "")
+        room3 = (opening3.get("poster") or {}).get(
+            "room_knowledge") or ""
+        check("cycle3-honest: the room's rules "
+              "stand in the v3 opening unchanged — "
+              "the same standing lines, word for "
+              "word, that the v2 opening carries",
+              room3 == room_lines
+              and all(phrase in room3
+                      for phrase in ROOM_PHRASES),
+              f"{room3[:80]}")
+        h3sandbox = h3work / "run" / "sandbox"
+        h3contents = {}
+        for address in ("sources/stock-take.md",
+                        "sources/a3-pass.md",
+                        "sources/index-tail.md"):
+            h3contents[address] = (
+                h3sandbox / address).read_bytes()
+        DRAFTS = [rehearsal.CYCLE_DRAFT_1,
+                  rehearsal.CYCLE_DRAFT_2,
+                  rehearsal.CYCLE_DRAFT_3,
+                  rehearsal.CYCLE_DRAFT_4,
+                  rehearsal.CYCLE_DRAFT_5,
+                  rehearsal.CYCLE_DRAFT_6]
+        appends3 = [_payload(e) for e in h3evs
+                    if e["type"] == "JOURNAL_APPEND"]
+        chain3 = [sha256_hex(b"")]
+        for draft in DRAFTS:
+            chain3.append(sha256_hex(
+                "".join(DRAFTS[:len(chain3)])
+                .encode("utf-8")))
+        check("cycle3-honest: the journal that "
+              "stands at the walk's end is the "
+              "draft whole — six accepted appends, "
+              "each extending the last from the "
+              "empty baseline, the final hash the "
+              "hash of the six passages in order — "
+              "and no passage is a copy of its "
+              "block's text: the end work created "
+              "gradually, as the contract describes",
+              len(appends3) == 6
+              and all(
+                  a["before_sha256"] == chain3[i]
+                  and a["after_sha256"]
+                  == chain3[i + 1]
+                  for i, a in enumerate(appends3))
+              and all(
+                  draft.strip() not in
+                  h3contents[address].decode("utf-8")
+                  for draft, address in zip(
+                      DRAFTS,
+                      ("sources/stock-take.md",
+                       "sources/a3-pass.md",
+                       "sources/index-tail.md",
+                       "sources/index-tail.md",
+                       "sources/index-tail.md",
+                       "sources/index-tail.md"))),
+              f"{len(appends3)} journal appends")
+        estimates3 = h3rep["call_estimates"]
+        print(f"cycle3-honest: opening package "
+              f"estimated at "
+              f"{estimates3[0]['serialized_bytes']} "
+              f"bytes / "
+              f"{estimates3[0]['estimated_tokens']} "
+              f"tokens; largest package "
+              f"{max(e['serialized_bytes'] for e in estimates3)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates3)} "
+              f"tokens")
+        check("cycle3-honest: every serialized "
+              "request's estimate stands at or "
+              "under the per-call budget of 4,000 "
+              "tokens — the opening, carrying the "
+              "step-by-step journal contract, "
+              "included",
+              len(estimates3) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates3),
+              f"{estimates3}")
+
+        # ---- cycle3-batch: the batch wake ----
+        t3rep = reports["cycle3_batch"]
+        t3work = work / "cycle3-batch"
+        t3evs = _events(t3work)
+        t3gates = [e for e in t3evs
+                   if e["type"] == "CYCLE_GATE"]
+        check("cycle3-batch: the batch walk "
+              "completes in nine iterations and "
+              "files — the gate arithmetic stands "
+              "exactly as under v1 and v2 (five "
+              "cycle gates, cycles 1-5), and no "
+              "budget refusal stands",
+              t3rep["outcome"] == "yield"
+              and t3rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in t3evs)
+              and [_payload(g)["cycle"]
+                   for g in t3gates] == [1, 2, 3, 4, 5]
+              and not any(
+                  e["type"] == "BUDGET_REFUSAL"
+                  for e in t3evs),
+              f"{t3rep['outcome']} / "
+              f"{t3rep['iterations']} / "
+              f"{[_payload(g)['cycle'] for g in t3gates]}")
+        estimates_t3 = t3rep["call_estimates"]
+        print(f"cycle3-batch: largest package "
+              f"{max(e['serialized_bytes'] for e in estimates_t3)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates_t3)} "
+              f"tokens")
+        check("cycle3-batch: every serialized "
+              "request's estimate stands at or "
+              "under the per-call budget of 4,000 "
+              "tokens — the batch wake included",
+              len(estimates_t3) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates_t3),
+              f"{estimates_t3}")
+        print(f"office-cycle-v3 section: "
+              f"{CHECKS[0] - cycle3_before} checks")
+
+        # ============= office cycle v4 — the
+        # cleaned-opening successor (the director's
+        # orders of 2026-11-25 21:33/21:36 MST,
+        # after demo-gptoss7) =============
+        # The successor contract's witnesses: the
+        # opening is the director's plain-text
+        # structure behind the compressed outcome
+        # frame — his section headings and the
+        # resolution-1 deliverable line stand in the
+        # rendered prompt, and none of the stale
+        # strings the v3 opening carried stand
+        # anywhere in it (the key-points journal
+        # line, the write-it-with-a-tool deliverable,
+        # the contribute-is-NOT-the-deliverable
+        # sentence, the shell memory line, a
+        # catalogue JSON); the v3 opening stands
+        # unchanged as the control; the honest walk
+        # completes and files through the contribute
+        # door; the batch walk completes and files;
+        # and every measured package stands within
+        # the per-call budget. The checker is not
+        # run over these records: the ruling's
+        # checker-correspondence deferral stands,
+        # exactly as for the v2 and v3 sections
+        # above.
+        cycle4_before = CHECKS[0]
+
+        def _cycle4_opening(scenario):
+            """The v4 opening's rendered prompt, read
+            from the wire the scenario's captures
+            recorded: the first loop capture's user
+            content — the compressed frame followed
+            by the plain-text structure."""
+            captures = [json.loads(line) for line in
+                        (work / scenario
+                         / "captures.jsonl")
+                        .read_text().splitlines()
+                        if line.strip()]
+            chat = {c["index"]: c for c in captures
+                    if c["mode"] == "chat"}
+            body = json.loads(base64.b64decode(
+                chat[1]["request_b64"]))
+            for message in body.get("messages") or []:
+                content = message.get("content")
+                if isinstance(content, str) and \
+                        "Opening package — " in content:
+                    return content
+            return ""
+
+        # ---- cycle4-honest: the cleaned walk ----
+        h4rep = reports["cycle4_honest"]
+        h4work = work / "cycle4-honest"
+        h4evs = _events(h4work)
+        check("cycle4-honest: the honest path under "
+              "the cleaned-opening seal completes in "
+              "nine iterations and the brief stands "
+              "filed through the contribute door — "
+              "the v1, v2 and v3 paths' own shape",
+              h4rep["outcome"] == "yield"
+              and h4rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in h4evs),
+              f"{h4rep['outcome']} / "
+              f"{h4rep['iterations']}")
+        check("cycle4-honest: the sealed record "
+              "declares the cleaned-opening contract, "
+              "no worked example stands in the seal, "
+              "the journal baseline is v1's, and the "
+              "sealed block map is the v1 run's own "
+              "map — the same portioning under the "
+              "new name",
+              h4rep["sealed_presentation_contract"]
+              == "office-cycle-v4"
+              and h4rep["sealed_worked_example"]
+              is None
+              and h4rep["sealed_journal_baseline"]
+              == {"address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and h4rep["sealed_block_map"]
+              == crep["sealed_block_map"],
+              f"{h4rep['sealed_presentation_contract']}")
+        opening4 = _cycle4_opening("cycle4-honest")
+        HEADINGS4 = ("Role & identity", "Task",
+                     "Sources (must all be read)",
+                     "Working method (cycles)",
+                     "Tools available (only these)",
+                     "Standing memory (role knowledge)",
+                     "Position")
+        check("cycle4-honest: the opening's user "
+              "content is the compressed frame "
+              "followed by the director's structure — "
+              "the frame's first line stands at its "
+              "head, the header names the seat, and "
+              "every one of his section headings "
+              "stands in it, in his order",
+              opening4.startswith(
+                  "You are a seat in a recorded "
+                  "collaborative run. Answer with "
+                  "exactly one JSON object")
+              and "Opening package — crew-1"
+              in opening4
+              and all(h in opening4 for h in HEADINGS4)
+              and [opening4.index(h) for h in HEADINGS4]
+              == sorted(opening4.index(h)
+                        for h in HEADINGS4),
+              f"{opening4[:80]}")
+        check("cycle4-honest: the deliverable line "
+              "is the resolution-1 line — the brief "
+              "delivered as the contribute outcome, "
+              "the office files it at "
+              "scratch/brief.md, only a filed brief "
+              "completes the assignment",
+              "Deliverable: the brief is delivered "
+              "as the \"contribute\" outcome"
+              in opening4
+              and "the office files it at "
+              "scratch/brief.md" in opening4
+              and "only a filed brief completes "
+              "the assignment" in opening4,
+              "")
+        STALE4 = ("log its name and the key points",
+                  "Write it with a tool",
+                  "\"contribute\" outcome is NOT "
+                  "the deliverable",
+                  "working shell",
+                  "Your tool catalogue",
+                  "Your wake package:",
+                  "\"case_essentials\"",
+                  "\"snapshot\"")
+        check("cycle4-honest: none of the stale "
+              "strings stand in the opening — not "
+              "the key-points journal line, not the "
+              "write-it-with-a-tool deliverable, not "
+              "the contribute-is-NOT sentence, not "
+              "the shell memory line, and no "
+              "catalogue JSON or component assembly "
+              "anywhere in it",
+              all(s not in opening4 for s in STALE4),
+              "")
+        check("cycle4-honest: the v3 control's "
+              "opening stands unchanged — its "
+              "captured package is the JSON component "
+              "assembly under the draft-page seal, "
+              "carrying no opening_text and no "
+              "plain-text structure; the successor's "
+              "build left the v3 presentation "
+              "untouched",
+              "opening_text" not in opening3
+              and opening3["presentation"]
+              ["contract"] == "office-cycle-v3"
+              and "Opening package — " not in
+              canonical(opening3).decode(
+                  "utf-8", "replace"),
+              "")
+        estimates4 = h4rep["call_estimates"]
+        print(f"cycle4-honest: opening package "
+              f"estimated at "
+              f"{estimates4[0]['serialized_bytes']} "
+              f"bytes / "
+              f"{estimates4[0]['estimated_tokens']} "
+              f"tokens; largest package "
+              f"{max(e['serialized_bytes'] for e in estimates4)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates4)} "
+              f"tokens")
+        check("cycle4-honest: every serialized "
+              "request's estimate stands at or "
+              "under the per-call budget of 4,000 "
+              "tokens — the cleaned opening included",
+              len(estimates4) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates4),
+              f"{estimates4}")
+
+        # ---- cycle4-batch: the batch wake ----
+        t4rep = reports["cycle4_batch"]
+        t4work = work / "cycle4-batch"
+        t4evs = _events(t4work)
+        t4gates = [e for e in t4evs
+                   if e["type"] == "CYCLE_GATE"]
+        check("cycle4-batch: the batch walk "
+              "completes in nine iterations and "
+              "files — the gate arithmetic stands "
+              "exactly as under v1, v2 and v3 (five "
+              "cycle gates, cycles 1-5), and no "
+              "budget refusal stands",
+              t4rep["outcome"] == "yield"
+              and t4rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in t4evs)
+              and [_payload(g)["cycle"]
+                   for g in t4gates] == [1, 2, 3, 4, 5]
+              and not any(
+                  e["type"] == "BUDGET_REFUSAL"
+                  for e in t4evs),
+              f"{t4rep['outcome']} / "
+              f"{t4rep['iterations']} / "
+              f"{[_payload(g)['cycle'] for g in t4gates]}")
+        estimates_t4 = t4rep["call_estimates"]
+        print(f"cycle4-batch: largest package "
+              f"{max(e['serialized_bytes'] for e in estimates_t4)} "
+              f"bytes / "
+              f"{max(e['estimated_tokens'] for e in estimates_t4)} "
+              f"tokens")
+        check("cycle4-batch: every serialized "
+              "request's estimate stands at or "
+              "under the per-call budget of 4,000 "
+              "tokens — the batch wake included",
+              len(estimates_t4) == 9
+              and all(e["estimated_tokens"] <= 4000
+                      for e in estimates_t4),
+              f"{estimates_t4}")
+        print(f"office-cycle-v4 section: "
+              f"{CHECKS[0] - cycle4_before} checks")
+
+        # ============= office cycle v5 — the
+        # carryover successor (the director's
+        # orders of 2026-11-25 22:09 MST, after
+        # demo-gptoss8) =============
+        # The successor contract's presentation
+        # witnesses stand below: the statement line
+        # from the sealed delivery declaration (the
+        # stale "written with a tool" prose in no
+        # v5 package), the journal gate's correction
+        # riding the package after a refused append,
+        # the journal carried as his draft so far
+        # with the one next step stated, and
+        # split-on-return standing. The brief's
+        # remaining two witnesses — the honest and
+        # batch walks completing and filing, and
+        # every measured package within the 4,000
+        # budget — DO NOT STAND, and this section
+        # witnesses that exactly, as its closing
+        # checks: the v4 walks already stood at
+        # 3,880–3,996 estimated tokens on the
+        # near-ceiling blocks (B3/B4/B5 at
+        # 11,612/11,898/11,535 bytes against the
+        # 16,000-byte budget line), and the
+        # carryover's own content — the journal
+        # whole, the corrections riding — carries
+        # the cycle-4 and cycle-5 packages and the
+        # batch wake over the line, where the
+        # budget gate refuses them before the call.
+        # The collision is the forced decision the
+        # build's report carries; these checks pin
+        # its measured shape so the ruling lands on
+        # numbers, not impressions. The checker is
+        # not run over these records: the ruling's
+        # checker-correspondence deferral stands,
+        # exactly as for the v2, v3 and v4 sections
+        # above.
+        cycle5_before = CHECKS[0]
+        DRAFTS5 = [rehearsal.CYCLE_DRAFT_1,
+                   rehearsal.CYCLE_DRAFT_2,
+                   rehearsal.CYCLE_DRAFT_3,
+                   rehearsal.CYCLE_DRAFT_4,
+                   rehearsal.CYCLE_DRAFT_5,
+                   rehearsal.CYCLE_DRAFT_6]
+
+        # ---- cycle5-honest: the seal and the
+        # opening ----
+        h5rep = reports["cycle5_honest"]
+        h5work = work / "cycle5-honest"
+        h5evs = _events(h5work)
+        h5pkg = _cycle_packages("cycle5-honest")
+        check("cycle5-honest: the sealed record "
+              "declares the carryover contract, no "
+              "worked example stands in the seal, "
+              "the journal baseline is v1's, and the "
+              "sealed block map is the v1 run's own "
+              "map — the same portioning under the "
+              "new name",
+              h5rep["sealed_presentation_contract"]
+              == "office-cycle-v5"
+              and h5rep["sealed_worked_example"]
+              is None
+              and h5rep["sealed_journal_baseline"]
+              == {"address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and h5rep["sealed_block_map"]
+              == crep["sealed_block_map"],
+              f"{h5rep['sealed_presentation_contract']}")
+        opening5 = _cycle4_opening("cycle5-honest")
+        check("cycle5-honest: the opening is v4's "
+              "structure whole — the compressed "
+              "frame, his section headings in his "
+              "order, the resolution-1 deliverable "
+              "line — with the contract line naming "
+              "the sealed contract, office-cycle-v5, "
+              "as it named v4 under the v4 seal",
+              opening5.startswith(
+                  "You are a seat in a recorded "
+                  "collaborative run. Answer with "
+                  "exactly one JSON object")
+              and "Opening package — crew-1"
+              in opening5
+              and "- Contract: office-cycle-v5"
+              in opening5
+              and all(h in opening5 for h in HEADINGS4)
+              and [opening5.index(h) for h in HEADINGS4]
+              == sorted(opening5.index(h)
+                        for h in HEADINGS4)
+              and "Deliverable: the brief is "
+              "delivered as the \"contribute\" "
+              "outcome" in opening5,
+              f"{opening5[:80]}")
+
+        # ---- the statement line and the stale
+        # prose (brief item 1) ----
+        r5pkg = _cycle_packages("cycle5-rewrite")
+        openings5 = [_cycle4_opening(s) for s in (
+            "cycle5-honest", "cycle5-batch",
+            "cycle5-rewrite")]
+        wire5 = list(openings5)
+        for pkg_map in (h5pkg, r5pkg):
+            for k in sorted(pkg_map):
+                wire5.append(canonical(
+                    pkg_map[k][0]).decode(
+                        "utf-8", "replace"))
+        statements5 = [
+            (h5pkg[k][0].get("cover") or {})
+            .get("statement") or ""
+            for k in sorted(h5pkg)] + [
+            (r5pkg[k][0].get("cover") or {})
+            .get("statement") or ""
+            for k in sorted(r5pkg)]
+        check("cycle5: the stale prose stands in "
+              "no v5 package that went on the wire — "
+              "not in the three walks' openings, not "
+              "in any cycle package they reached — "
+              "and every reached cycle package's "
+              "statement line names the contribute "
+              "door and the sealed destination, "
+              "formatted from the delivery "
+              "declaration (the §6 amendment's "
+              "rebase, 2026-11-26: the walks run to "
+              "completion under the road, so the "
+              "statement count is the completed "
+              "walks' package count, not the seven "
+              "the budget stall used to leave)",
+              all("written with a tool" not in blob
+                  for blob in wire5)
+              and len(statements5)
+              == len(h5pkg) + len(r5pkg)
+              and len(statements5) > 7
+              and all(
+                  "delivered as your contribute "
+                  "outcome" in s
+                  and "the office files it at "
+                  "scratch/brief.md" in s
+                  for s in statements5),
+              f"{statements5[0][:100] if statements5 else ''}")
+
+        # ---- the carryover and the next step
+        # (brief item 3) ----
+        pkg3_5 = h5pkg[3][0]
+        pkg4_5 = h5pkg[4][0]
+        check("cycle5-honest: the package after the "
+              "first landed append carries the "
+              "journal's current content as its "
+              "centre — the journal_draft component "
+              "holds the first draft exactly, "
+              "labelled his draft so far — the next "
+              "package carries the two drafts "
+              "standing, and the first package's "
+              "cycle instruction states the one next "
+              "step: the append for the block whose "
+              "read stands",
+              (pkg3_5.get("journal_draft") or {})
+              .get("content") == DRAFTS5[0]
+              and "draft so far" in (
+                  (pkg3_5.get("journal_draft") or {})
+                  .get("label") or "")
+              and (pkg4_5.get("journal_draft") or {})
+              .get("content")
+              == "".join(DRAFTS5[:2])
+              and (pkg3_5.get("current_cycle") or {})
+              .get("instruction") == (
+                  "Next: append your summary of "
+                  "sources/a3-pass.md to your "
+                  "journal at scratch/journal.md — "
+                  "the journal as it stands, plus "
+                  "your summary at the end, in one "
+                  "sandbox.write. That append "
+                  "completes this cycle."),
+              "")
+        check("cycle5: the next step for a block "
+              "whose read has not stood is the "
+              "brief's own example made literal — "
+              "read the block's lines, then append "
+              "the summary — derived from the cycle "
+              "state by the same derivation the "
+              "packages carry",
+              loop_module._cycle_next_step_v5(
+                  {"address":
+                   "sources/index-tail.md",
+                   "line_start": 1, "line_end": 6,
+                   "read_stands": False}, JOURNAL)
+              == ("Next: read "
+                  "sources/index-tail.md lines 1–6, "
+                  "then append your summary of it "
+                  "to your journal at "
+                  "scratch/journal.md — the journal "
+                  "as it stands, plus your summary "
+                  "at the end, in one sandbox.write."),
+              "")
+        presented5 = {}
+        for k in sorted(h5pkg):
+            bc = h5pkg[k][0].get("block_content")
+            if bc is not None:
+                presented5.setdefault(
+                    bc["block_id"], []).append(k)
+        a3_text5 = (h5work / "run" / "sandbox"
+                    / "sources/a3-pass.md").read_text()
+        check("cycle5-honest: split-on-return "
+              "stands under the carryover seal — "
+              "each block's content is presented in "
+              "the package where its read lands and "
+              "not in the following package: B1..B6 "
+              "at their own cycles' packages, and "
+              "the a3-pass text stands nowhere in "
+              "the package after its own (the §6 "
+              "amendment's rebase: under the old "
+              "budget the walk stalled at cycle 4 "
+              "and only B1..B3 stood reached; the "
+              "road carries the walk through all "
+              "six)",
+              presented5 == {f"B{i}": [i + 1]
+                             for i in range(1, 7)}
+              and a3_text5 not in canonical(
+                  pkg4_5).decode("utf-8", "replace"),
+              f"{presented5}")
+
+        # ---- cycle5-rewrite: the refused append
+        # and its correction (brief item 2) ----
+        r5rep = reports["cycle5_rewrite"]
+        r5work = work / "cycle5-rewrite"
+        r5evs = _events(r5work)
+        r5gates = [e for e in r5evs
+                   if e["type"] == "JOURNAL_GATE"]
+        corr5 = (r5pkg[4][0].get(
+            "journal_gate_correction") or {})
+        check("cycle5-rewrite: the scripted "
+              "non-append write is refused — exactly "
+              "one journal gate stands in the record "
+              "— and the next package carries the "
+              "gate's correction, derived fresh: "
+              "what was refused (a write that did "
+              "not begin with the journal as it "
+              "stands) and the exact action that "
+              "passes (the standing journal plus "
+              "the new part at the end); the "
+              "package's carried draft is the "
+              "accepted journal still — the rewrite "
+              "did not move it",
+              len(r5gates) == 1
+              and "did not begin with your journal "
+              "as it stands" in corr5.get(
+                  "what_arrived", "")
+              and "what stands, plus your new "
+              "bits appended at the end" in corr5.get(
+                  "instruction", "")
+              and (r5pkg[4][0].get("journal_draft")
+                   or {}).get("content")
+              == DRAFTS5[0],
+              f"{len(r5gates)} journal gates")
+
+        # ---- cycle5-batch: the gate arithmetic
+        # across the completed walk ----
+        t5rep = reports["cycle5_batch"]
+        t5work = work / "cycle5-batch"
+        t5evs = _events(t5work)
+        t5gates = [e for e in t5evs
+                   if e["type"] == "CYCLE_GATE"]
+        check("cycle5-batch: the cycle gate's "
+              "arithmetic stands exactly as under "
+              "v1–v4 — each batch wake's build "
+              "records the gate for the cycle its "
+              "run-ahead left standing, its "
+              "correction computed into that "
+              "package: cycles 1..5 gated in order "
+              "across the walk (the §6 amendment's "
+              "rebase: the old budget refused the "
+              "first batch wake, so only the "
+              "cycle-1 gate ever stood; under the "
+              "road the walk completes and every "
+              "gate stands)",
+              [_payload(g)["cycle"] for g in t5gates]
+              == [1, 2, 3, 4, 5],
+              f"{[_payload(g)['cycle'] for g in t5gates]}")
+
+        # ---- the road's completion (the §6
+        # amendment's rebase, 2026-11-26: this
+        # section witnessed the budget collision —
+        # the three v5 walks stalling on the
+        # per-call budget at their measured joints,
+        # the carryover's cost made visible. The
+        # amendment retired the refusal: the same
+        # walks, at the same joints, are now paced
+        # and counted instead of refused, and run
+        # to their filings. The collision's figures
+        # stand in the record above; what stands
+        # witnessed here is that nothing refuses
+        # anymore and the cost is still measured —
+        # every call's road event, predicted and
+        # reconciled, in each walk's report) ----
+        def _refusals(evs):
+            return [e for e in evs
+                    if e["type"] == "BUDGET_REFUSAL"]
+
+        check("cycle5-honest: under the road the "
+              "walk completes — nine iterations, no "
+              "budget refusal anywhere in the "
+              "record, the brief filed, and ten "
+              "road-governed calls stand in the "
+              "report (the identify and the nine "
+              "loop calls), each with its predicted "
+              "and reconciled figures",
+              h5rep["outcome"] == "yield"
+              and h5rep["iterations"] == 9
+              and not _refusals(h5evs)
+              and any(
+                  e["type"] == "DELIVERABLE_FILED"
+                  for e in h5evs)
+              and len(h5rep["road_transport_events"])
+              == 10,
+              f"{h5rep['outcome']} / "
+              f"{h5rep['iterations']} / "
+              f"{len(h5rep['road_transport_events'])} "
+              f"road events")
+        check("cycle5-batch: under the road the "
+              "batch wake is paced, not refused — "
+              "the walk completes in nine "
+              "iterations, no budget refusal "
+              "stands, the brief is filed, and ten "
+              "road-governed calls stand in the "
+              "report",
+              t5rep["outcome"] == "yield"
+              and t5rep["iterations"] == 9
+              and not _refusals(t5evs)
+              and any(
+                  e["type"] == "DELIVERABLE_FILED"
+                  for e in t5evs)
+              and len(t5rep["road_transport_events"])
+              == 10,
+              f"{t5rep['outcome']} / "
+              f"{t5rep['iterations']} / "
+              f"{len(t5rep['road_transport_events'])} "
+              f"road events")
+        check("cycle5-rewrite: under the road the "
+              "rewrite walk completes at the same "
+              "joint the honest walk passes — ten "
+              "iterations, no budget refusal, the "
+              "brief filed, and eleven "
+              "road-governed calls stand in the "
+              "report",
+              r5rep["outcome"] == "yield"
+              and r5rep["iterations"] == 10
+              and not _refusals(r5evs)
+              and any(
+                  e["type"] == "DELIVERABLE_FILED"
+                  for e in r5evs)
+              and len(r5rep["road_transport_events"])
+              == 11,
+              f"{r5rep['outcome']} / "
+              f"{r5rep['iterations']} / "
+              f"{len(r5rep['road_transport_events'])} "
+              f"road events")
+        for name5, rep5 in (
+                ("cycle5-honest", h5rep),
+                ("cycle5-batch", t5rep),
+                ("cycle5-rewrite", r5rep)):
+            est5 = rep5["call_estimates"]
+            print(f"{name5}: largest package "
+                  f"{max(e['serialized_bytes'] for e in est5)} "
+                  f"bytes / "
+                  f"{max(e['estimated_tokens'] for e in est5)} "
+                  f"tokens (every package the walk "
+                  f"sent, the road's accounting "
+                  f"standing over each)")
+        print(f"office-cycle-v5 section: "
+              f"{CHECKS[0] - cycle5_before} checks")
+
+        # ---- office-cycle-v6: zero carryover and
+        # the slimmed blocks ----
+        # The director's rulings of 2026-11-25
+        # 22:29/22:30 MST, answering the collision
+        # the v5 section above pins: item 3 reversed
+        # (zero carryover — the journal is
+        # append-never-carry; it stands in his
+        # scratch and he reads it himself; the only
+        # carry is the intro brief carrying him to
+        # the next part of the job) and the block
+        # bookkeeping slimmed by his tap, which is
+        # what makes room at the batch joint for the
+        # corrections that ride. The v5 section
+        # stands unaltered above — its collision
+        # witnesses are the record of why this
+        # contract exists. The checker is not run
+        # over these records: the ruling's
+        # checker-correspondence deferral stands,
+        # exactly as for the v2–v5 sections above.
+        cycle6_before = CHECKS[0]
+        DRAFTS6 = [rehearsal.CYCLE_DRAFT_1,
+                   rehearsal.CYCLE_DRAFT_2,
+                   rehearsal.CYCLE_DRAFT_3,
+                   rehearsal.CYCLE_DRAFT_4,
+                   rehearsal.CYCLE_DRAFT_5,
+                   rehearsal.CYCLE_DRAFT_6]
+
+        # ---- cycle6-honest: the seal and the
+        # opening ----
+        h6rep = reports["cycle6_honest"]
+        h6work = work / "cycle6-honest"
+        h6evs = _events(h6work)
+        h6pkg = _cycle_packages("cycle6-honest")
+        check("cycle6-honest: the sealed record "
+              "declares the zero-carryover contract, "
+              "no worked example stands in the seal, "
+              "the journal baseline is v1's, and the "
+              "sealed block map is the v1 run's own "
+              "map — the same portioning under the "
+              "new name",
+              h6rep["sealed_presentation_contract"]
+              == "office-cycle-v6"
+              and h6rep["sealed_worked_example"]
+              is None
+              and h6rep["sealed_journal_baseline"]
+              == {"address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and h6rep["sealed_block_map"]
+              == crep["sealed_block_map"],
+              f"{h6rep['sealed_presentation_contract']}")
+        opening6 = _cycle4_opening("cycle6-honest")
+        check("cycle6-honest: the opening is v5's "
+              "structure whole — the compressed "
+              "frame, his section headings in his "
+              "order, the resolution-1 deliverable "
+              "line — with the contract line naming "
+              "the sealed contract, office-cycle-v6",
+              opening6.startswith(
+                  "You are a seat in a recorded "
+                  "collaborative run. Answer with "
+                  "exactly one JSON object")
+              and "Opening package — crew-1"
+              in opening6
+              and "- Contract: office-cycle-v6"
+              in opening6
+              and all(h in opening6 for h in HEADINGS4)
+              and [opening6.index(h) for h in HEADINGS4]
+              == sorted(opening6.index(h)
+                        for h in HEADINGS4)
+              and "Deliverable: the brief is "
+              "delivered as the \"contribute\" "
+              "outcome" in opening6,
+              f"{opening6[:80]}")
+
+        # ---- zero carryover (brief item 1) ----
+        t6rep = reports["cycle6_batch"]
+        t6work = work / "cycle6-batch"
+        t6evs = _events(t6work)
+        t6pkg = _cycle_packages("cycle6-batch")
+        r6rep = reports["cycle6_rewrite"]
+        r6work = work / "cycle6-rewrite"
+        r6evs = _events(r6work)
+        r6pkg = _cycle_packages("cycle6-rewrite")
+
+        def _no_draft_carried(package):
+            """No journal content carried in a
+            package: no component holds any draft's
+            text — except inside the one tool-results
+            entry answering his own journal read,
+            which is his pull answered once, not
+            carriage."""
+            for key, value in package.items():
+                if key == "tool_results":
+                    for entry in value:
+                        result = entry.get("result") \
+                            if isinstance(entry, dict) \
+                            else None
+                        if isinstance(result, dict) \
+                                and result.get("path") \
+                                == JOURNAL:
+                            continue
+                        blob = canonical(entry).decode(
+                            "utf-8", "replace")
+                        if any(d[:40] in blob
+                               for d in DRAFTS6):
+                            return False
+                    continue
+                blob = canonical(value).decode(
+                    "utf-8", "replace")
+                if any(d[:40] in blob for d in DRAFTS6):
+                    return False
+            return True
+
+        all6 = [h6pkg[k][0] for k in sorted(h6pkg)] \
+            + [t6pkg[k][0] for k in sorted(t6pkg)] \
+            + [r6pkg[k][0] for k in sorted(r6pkg)]
+        check("cycle6: zero carryover — no package "
+              "in any of the three walks carries a "
+              "journal_draft component, and no landed "
+              "append's text is findable in the "
+              "package that follows it or in any "
+              "later package: the journal stands in "
+              "his scratch, and what reaches him is "
+              "the intro alone (his own journal read, "
+              "where he pulls it, is answered once "
+              "under its own ID, as any pull is)",
+              all("journal_draft" not in pkg
+                  for pkg in all6)
+              and all(_no_draft_carried(pkg)
+                      for pkg in all6),
+              "")
+        direction6 = (h6pkg[2][0].get(
+            "presentation") or {}).get("direction")
+        summarize6 = next(
+            h6pkg[k][0] for k in sorted(h6pkg)
+            if (h6pkg[k][0].get("presentation")
+                or {}).get("package") == "summarize")
+        check("cycle6-honest: the cycle direction "
+              "states the truth again in the job's "
+              "plain words — the journal is not "
+              "carried; it stands in his scratch at "
+              "scratch/journal.md; he reads it when "
+              "he needs it, a pull like any other — "
+              "and the summarize package's intro "
+              "sends him to read his journal whole "
+              "and combine, naming the sealed "
+              "destination",
+              direction6
+              == loop_module.CYCLE_DIRECTION_CYCLE_V6
+              .format(journal=JOURNAL)
+              and "Read your journal whole and "
+              "assemble the brief from the draft "
+              "that stands in it" in (
+                  (summarize6.get("presentation")
+                   or {}).get("direction") or "")
+              and "Read your journal whole, with "
+              "sandbox.read at scratch/journal.md"
+              in ((summarize6.get("current_cycle")
+                   or {}).get("instruction") or "")
+              and "the office files it at "
+              "scratch/brief.md" in (
+                  (summarize6.get("current_cycle")
+                   or {}).get("instruction") or ""),
+              f"{direction6}")
+
+        # ---- the slimmed blocks (brief item 2) ----
+        blocks6 = [entry for pkg in all6
+                   for entry in pkg.get("blocks") or []]
+        check("cycle6: the blocks component is "
+              "slimmed to place and state — every "
+              "entry in every v6 cycle package "
+              "carries exactly block_id and state, no "
+              "address, no range, no sha256 or "
+              "dispatch fingerprints — and the map "
+              "still walks: the honest walk's "
+              "summarize package stands all six "
+              "blocks done, in order",
+              len(blocks6) > 0
+              and all(set(entry) == {"block_id",
+                                     "state"}
+                      for entry in blocks6)
+              and summarize6.get("blocks") == [
+                  {"block_id": f"B{i}",
+                   "state": "done"}
+                  for i in range(1, 7)],
+              f"{blocks6[:2]}")
+
+        # ---- items 1–2 of v5 stand (the statement
+        # line; the corrections riding) ----
+        openings6 = [_cycle4_opening(s) for s in (
+            "cycle6-honest", "cycle6-batch",
+            "cycle6-rewrite")]
+        wire6 = list(openings6)
+        for pkg_map in (h6pkg, r6pkg):
+            for k in sorted(pkg_map):
+                wire6.append(canonical(
+                    pkg_map[k][0]).decode(
+                        "utf-8", "replace"))
+        statements6 = [
+            (pkg.get("cover") or {}).get("statement")
+            or "" for pkg in all6
+            if (pkg.get("cover") or {})
+            .get("statement")]
+        check("cycle6: the stale prose stands in "
+              "no v6 package that went on the wire, "
+              "and every cycle package's statement "
+              "line names the contribute door and "
+              "the sealed destination, formatted "
+              "from the delivery declaration — v5's "
+              "item 1 whole under the new seal",
+              all("written with a tool" not in blob
+                  for blob in wire6)
+              and len(statements6) > 0
+              and all(
+                  "delivered as your contribute "
+                  "outcome" in s
+                  and "the office files it at "
+                  "scratch/brief.md" in s
+                  for s in statements6),
+              f"{statements6[0][:100] if statements6 else ''}")
+        r6gates = [e for e in r6evs
+                   if e["type"] == "JOURNAL_GATE"]
+        corr6 = (r6pkg[4][0].get(
+            "journal_gate_correction") or {})
+        check("cycle6-rewrite: the scripted "
+              "non-append write is refused — exactly "
+              "one journal gate stands in the record "
+              "— and the next package carries the "
+              "gate's correction, derived fresh: "
+              "what was refused and the exact action "
+              "that passes (the standing journal "
+              "plus the new part at the end) — v5's "
+              "item 2 whole under the new seal",
+              len(r6gates) == 1
+              and "did not begin with your journal "
+              "as it stands" in corr6.get(
+                  "what_arrived", "")
+              and "what stands, plus your new "
+              "bits appended at the end" in corr6.get(
+                  "instruction", ""),
+              f"{len(r6gates)} journal gates")
+        t6gates = [e for e in t6evs
+                   if e["type"] == "CYCLE_GATE"]
+        check("cycle6-batch: the cycle gate's "
+              "correction rides the batch wake "
+              "itself, on the wire at last — the "
+              "wake the v5 seal refused before the "
+              "call now carries the correction "
+              "naming the cycle the walk stands on "
+              "and the append that advances it (the "
+              "gate arithmetic stands exactly as "
+              "under v1–v5: five gates, cycles 1–5, "
+              "each recorded as its append came due)",
+              [_payload(g)["cycle"] for g in t6gates]
+              == [1, 2, 3, 4, 5]
+              and "cycle_gate_correction"
+              in t6pkg[2][0]
+              and "Append them at "
+              "scratch/journal.md" in (
+                  (t6pkg[2][0].get(
+                      "cycle_gate_correction") or {})
+                  .get("instruction") or ""),
+              f"{[_payload(g)['cycle'] for g in t6gates]}")
+
+        # ---- the walks complete and file, inside
+        # the budget ----
+        check("cycle6-honest: the honest walk "
+              "completes in nine iterations and the "
+              "brief stands filed — six appends, no "
+              "budget refusal: the joint that "
+              "stalled the v5 honest walk at "
+              "iteration 5 now stands inside the "
+              "budget",
+              h6rep["outcome"] == "yield"
+              and h6rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in h6evs)
+              and sum(1 for e in h6evs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in h6evs),
+              f"{h6rep['outcome']} / "
+              f"{h6rep['iterations']}")
+        check("cycle6-batch: the batch walk "
+              "completes in nine iterations and the "
+              "brief stands filed — the batch wake "
+              "sent, where the v5 seal's was refused "
+              "at 4,243 estimated tokens",
+              t6rep["outcome"] == "yield"
+              and t6rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in t6evs)
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in t6evs),
+              f"{t6rep['outcome']} / "
+              f"{t6rep['iterations']}")
+        check("cycle6-rewrite: the rewrite walk "
+              "completes in ten iterations and the "
+              "brief stands filed — six appends "
+              "stand, the rewrite counted as none",
+              r6rep["outcome"] == "yield"
+              and r6rep["iterations"] == 10
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in r6evs)
+              and sum(1 for e in r6evs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in r6evs),
+              f"{r6rep['outcome']} / "
+              f"{r6rep['iterations']}")
+        for name6, rep6 in (
+                ("cycle6-honest", h6rep),
+                ("cycle6-batch", t6rep),
+                ("cycle6-rewrite", r6rep)):
+            est6 = rep6["call_estimates"]
+            print(f"{name6}: largest package "
+                  f"{max(e['serialized_bytes'] for e in est6)} "
+                  f"bytes / "
+                  f"{max(e['estimated_tokens'] for e in est6)} "
+                  f"tokens")
+        check("cycle6: every measured package in "
+              "the three walks stands within the "
+              "per-call budget of 4,000 estimated "
+              "tokens — no package refused, none "
+              "sent over the line",
+              all(e["estimated_tokens"] <= 4000
+                  for rep6 in (h6rep, t6rep, r6rep)
+                  for e in rep6["call_estimates"]),
+              "")
+        print(f"office-cycle-v6 section: "
+              f"{CHECKS[0] - cycle6_before} checks")
+
+        # ---- office-cycle-v7: the package opens
+        # with the step ----
+        # The director's order of 2026-11-25 22:41
+        # MST, after demo-gptoss9's packages were
+        # seen on the live wire to describe state —
+        # the cycle, the block, its read standing —
+        # and leave the deciding to the worker.
+        # Under this seal every package opens with
+        # the Next line: the one next step stated
+        # as an imperative, derived at presentation
+        # from the cycle state the package opens,
+        # the state below it as its support and the
+        # gates' corrections standing below it
+        # unmerged. Everything else is v6's whole:
+        # zero carryover, the slimmed blocks, the
+        # statement line from the seal, the riding
+        # corrections. The checker is not run over
+        # these records: the ruling's
+        # checker-correspondence deferral stands,
+        # exactly as for the v2–v6 sections above.
+        cycle7_before = CHECKS[0]
+        NEXT_READ_STOCK = (
+            "Next: read sources/stock-take.md in "
+            "full. Then append your summary of it "
+            "to your journal.")
+        NEXT_APPEND_STOCK = (
+            "Next: append your summary of "
+            "sources/stock-take.md to your journal "
+            "— the standing journal plus your new "
+            "part at the end, in one write.")
+        NEXT_APPEND_A3 = (
+            "Next: append your summary of "
+            "sources/a3-pass.md to your journal "
+            "— the standing journal plus your new "
+            "part at the end, in one write.")
+        NEXT_COMBINE = (
+            "Next: read your journal at "
+            "scratch/journal.md, combine its "
+            "summaries into the brief (about 600 "
+            "words), and deliver the brief as your "
+            "contribute outcome.")
+
+        # ---- cycle7-honest: the seal and the
+        # opening ----
+        h7rep = reports["cycle7_honest"]
+        h7work = work / "cycle7-honest"
+        h7evs = _events(h7work)
+        h7pkg = _cycle_packages("cycle7-honest")
+        check("cycle7-honest: the sealed record "
+              "declares the imperative-first "
+              "contract, no worked example stands "
+              "in the seal, the journal baseline is "
+              "v1's, and the sealed block map is "
+              "the v1 run's own map — the same "
+              "portioning under the new name",
+              h7rep["sealed_presentation_contract"]
+              == "office-cycle-v7"
+              and h7rep["sealed_worked_example"]
+              is None
+              and h7rep["sealed_journal_baseline"]
+              == {"address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and h7rep["sealed_block_map"]
+              == crep["sealed_block_map"],
+              f"{h7rep['sealed_presentation_contract']}")
+        opening7 = _cycle4_opening("cycle7-honest")
+        opening6_again = _cycle4_opening(
+            "cycle6-honest")
+        check("cycle7-honest: the opening opens "
+              "with the step — the compressed "
+              "frame, then the first block's Next "
+              "line, then the director's structure, "
+              "byte-identical to the v6 opening "
+              "but for the Next line and the "
+              "contract line naming the sealed "
+              "contract, office-cycle-v7",
+              opening7.startswith(
+                  "You are a seat in a recorded "
+                  "collaborative run. Answer with "
+                  "exactly one JSON object")
+              and opening7.index(NEXT_READ_STOCK)
+              < opening7.index(
+                  "Opening package — crew-1")
+              and opening7.replace(
+                  NEXT_READ_STOCK + "\n\n", "", 1)
+              .replace("office-cycle-v7",
+                       "office-cycle-v6")
+              == opening6_again
+              and "- Contract: office-cycle-v7"
+              in opening7
+              and all(h in opening7
+                      for h in HEADINGS4)
+              and [opening7.index(h)
+                   for h in HEADINGS4]
+              == sorted(opening7.index(h)
+                        for h in HEADINGS4),
+              f"{opening7[:80]}")
+
+        # ---- the derivation, in its four forms
+        # ----
+        _nl = loop_module._cycle_next_line_v7
+        check("cycle7: the Next line's derivation "
+              "in its four forms — the read in "
+              "full, the read by range, the append "
+              "where the read stands, and the "
+              "combine at summarize — each derived "
+              "from the state it opens, in the "
+              "brief's own wordings",
+              _nl({"address":
+                   "sources/stock-take.md",
+                   "line_start": None,
+                   "line_end": None,
+                   "read_stands": False},
+                  JOURNAL) == NEXT_READ_STOCK
+              and _nl({"address":
+                       "sources/index-tail.md",
+                       "line_start": 7,
+                       "line_end": 13,
+                       "read_stands": False},
+                      JOURNAL)
+              == ("Next: read "
+                  "sources/index-tail.md lines "
+                  "7–13. Then append your summary "
+                  "of it to your journal.")
+              and _nl({"address":
+                       "sources/stock-take.md",
+                       "line_start": None,
+                       "line_end": None,
+                       "read_stands": True},
+                      JOURNAL) == NEXT_APPEND_STOCK
+              and _nl(None, JOURNAL)
+              == NEXT_COMBINE,
+              "")
+
+        # ---- every package opens with the step
+        # ----
+        t7rep = reports["cycle7_batch"]
+        t7work = work / "cycle7-batch"
+        t7evs = _events(t7work)
+        t7pkg = _cycle_packages("cycle7-batch")
+        r7rep = reports["cycle7_rewrite"]
+        r7work = work / "cycle7-rewrite"
+        r7evs = _events(r7work)
+        r7pkg = _cycle_packages("cycle7-rewrite")
+        s7rep = reports["cycle7_readstep"]
+        s7work = work / "cycle7-readstep"
+        s7evs = _events(s7work)
+        s7pkg = _cycle_packages("cycle7-readstep")
+        all7 = [h7pkg[k][0] for k in sorted(h7pkg)] \
+            + [t7pkg[k][0] for k in sorted(t7pkg)] \
+            + [r7pkg[k][0] for k in sorted(r7pkg)] \
+            + [s7pkg[k][0] for k in sorted(s7pkg)]
+        check("cycle7: every cycle and summarize "
+              "package in all four walks opens "
+              "with the Next line — it is the "
+              "package's first component, ahead of "
+              "the identity keys and every state "
+              "component — and no package carries "
+              "a journal_draft: v6's zero carryover "
+              "stands whole under the new seal",
+              len(all7) > 0
+              and all(next(iter(pkg))
+                      == "next_step"
+                      for pkg in all7)
+              and all(isinstance(
+                  pkg["next_step"], str)
+                  and pkg["next_step"].startswith(
+                      "Next: ")
+                  for pkg in all7)
+              and all("journal_draft" not in pkg
+                      for pkg in all7),
+              "")
+        check("cycle7-honest: the first cycle "
+              "package opens with the append step "
+              "for the block whose read stands — "
+              "the stock-take, read in the "
+              "opening's answer, its summary owed "
+              "to the journal",
+              h7pkg[2][0]["next_step"]
+              == NEXT_APPEND_STOCK,
+              f"{h7pkg[2][0].get('next_step')}")
+        check("cycle7-readstep: a cycle package "
+              "before the block's read opens with "
+              "the read step itself — the stock-"
+              "take in full, then the append it "
+              "feeds — and the delivery stage "
+              "gate's correction for the refused "
+              "early contribution stands in the "
+              "same package below it, unmerged: "
+              "the Next line commands, the "
+              "correction explains",
+              s7pkg[2][0]["next_step"]
+              == NEXT_READ_STOCK
+              and "delivery_stage_gate_correction"
+              in s7pkg[2][0]
+              and list(s7pkg[2][0]).index(
+                  "next_step")
+              < list(s7pkg[2][0]).index(
+                  "delivery_stage_gate_correction"),
+              f"{s7pkg[2][0].get('next_step')}")
+        check("cycle7-rewrite: the package "
+              "following the refused rewrite opens "
+              "with the append step that passes — "
+              "a3-pass's summary, the standing "
+              "journal plus the new part at the "
+              "end — and the journal gate's "
+              "correction stands below it, "
+              "unmerged, naming what arrived",
+              r7pkg[4][0]["next_step"]
+              == NEXT_APPEND_A3
+              and "did not begin with your "
+              "journal as it stands" in (
+                  (r7pkg[4][0].get(
+                      "journal_gate_correction")
+                   or {}).get("what_arrived", ""))
+              and list(r7pkg[4][0]).index(
+                  "next_step")
+              < list(r7pkg[4][0]).index(
+                  "journal_gate_correction"),
+              f"{r7pkg[4][0].get('next_step')}")
+        check("cycle7-batch: the batch wake "
+              "opens with the append step for the "
+              "cycle the walk stands on, the cycle "
+              "gate's correction riding in the same "
+              "package below it — the wake v5's "
+              "seal refused and v6's carried, now "
+              "commanded first",
+              t7pkg[2][0]["next_step"]
+              == NEXT_APPEND_STOCK
+              and "cycle_gate_correction"
+              in t7pkg[2][0],
+              f"{t7pkg[2][0].get('next_step')}")
+        summarize7 = next(
+            h7pkg[k][0] for k in sorted(h7pkg)
+            if (h7pkg[k][0].get("presentation")
+                or {}).get("package") == "summarize")
+        check("cycle7-honest: the summarize "
+              "package opens with the combine "
+              "step — read the journal at its "
+              "address, combine its summaries "
+              "into the brief, deliver by the "
+              "contribute outcome",
+              summarize7["next_step"]
+              == NEXT_COMBINE,
+              f"{summarize7.get('next_step')}")
+
+        # ---- the walks complete and file, inside
+        # the budget ----
+        check("cycle7-honest: the honest walk "
+              "completes in nine iterations and "
+              "the brief stands filed — six "
+              "appends, no budget refusal",
+              h7rep["outcome"] == "yield"
+              and h7rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in h7evs)
+              and sum(1 for e in h7evs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in h7evs),
+              f"{h7rep['outcome']} / "
+              f"{h7rep['iterations']}")
+        check("cycle7-batch: the batch walk "
+              "completes in nine iterations and "
+              "the brief stands filed — no budget "
+              "refusal, the Next line's cost "
+              "standing inside the line at the "
+              "batch joint",
+              t7rep["outcome"] == "yield"
+              and t7rep["iterations"] == 9
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in t7evs)
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in t7evs),
+              f"{t7rep['outcome']} / "
+              f"{t7rep['iterations']}")
+        check("cycle7-rewrite: the rewrite walk "
+              "completes in ten iterations and "
+              "the brief stands filed — six "
+              "appends stand, the rewrite counted "
+              "as none, no budget refusal",
+              r7rep["outcome"] == "yield"
+              and r7rep["iterations"] == 10
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in r7evs)
+              and sum(1 for e in r7evs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in r7evs),
+              f"{r7rep['outcome']} / "
+              f"{r7rep['iterations']}")
+        check("cycle7-readstep: the read-step "
+              "walk completes in ten iterations "
+              "and the brief stands filed — the "
+              "refused early contribution counted "
+              "as no delivery, six appends stand, "
+              "no budget refusal",
+              s7rep["outcome"] == "yield"
+              and s7rep["iterations"] == 10
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in s7evs)
+              and sum(1 for e in s7evs
+                      if e["type"] == "JOURNAL_APPEND")
+              == 6
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in s7evs),
+              f"{s7rep['outcome']} / "
+              f"{s7rep['iterations']}")
+        for name7, rep7 in (
+                ("cycle7-honest", h7rep),
+                ("cycle7-batch", t7rep),
+                ("cycle7-rewrite", r7rep),
+                ("cycle7-readstep", s7rep)):
+            est7 = rep7["call_estimates"]
+            print(f"{name7}: largest package "
+                  f"{max(e['serialized_bytes'] for e in est7)} "
+                  f"bytes / "
+                  f"{max(e['estimated_tokens'] for e in est7)} "
+                  f"tokens")
+        check("cycle7: every measured package "
+              "in the four walks stands within "
+              "the per-call budget of 4,000 "
+              "estimated tokens — no package "
+              "refused, none sent over the line",
+              all(e["estimated_tokens"] <= 4000
+                  for rep7 in (h7rep, t7rep, r7rep,
+                               s7rep)
+                  for e in rep7["call_estimates"]),
+              "")
+        print(f"office-cycle-v7 section: "
+              f"{CHECKS[0] - cycle7_before} checks")
+
+        # ---- office-cycle-v8: the walk's unit is
+        # the file ----
+        # The director's orders of 2026-11-25
+        # 23:03 MST (the blocks diagnosis: the
+        # shipping crate had been made into his
+        # task list — six blocks, six cycles, six
+        # gates, journal drafts demanded per
+        # quarter-document, while the brief's
+        # sections cut across the blocks) and his
+        # restatement of the job at 22:08 (read
+        # file one, write the summary in the
+        # journal, read file two, write the
+        # summary, read file three, write the
+        # summary, combine): under this seal the
+        # walk's unit is the FILE — three files —
+        # and the third file's four standing
+        # line-range slices are plumbing inside
+        # its step: no cycle gate, no cycle
+        # advance and no journal append stands
+        # between them, the cycle gate fires once
+        # per file when the file's read and its
+        # append both stand, and the evidence rule
+        # is unchanged (all four ranges must stand
+        # for the file to stand). Everything else
+        # is v7's whole: the Next line first,
+        # derived from the file state; zero
+        # carryover; the statement line from the
+        # seal; the corrections riding, derived
+        # fresh. The checker is not run over these
+        # records: the ruling's
+        # checker-correspondence deferral stands,
+        # exactly as for the v2–v7 sections above.
+        cycle8_before = CHECKS[0]
+        NEXT_PART_7_13 = (
+            "Next: read sources/index-tail.md "
+            "lines 7–13 — the next part of the "
+            "file.")
+        NEXT_PART_21_24 = (
+            "Next: read sources/index-tail.md "
+            "lines 21–24 — the next part of the "
+            "file.")
+        NEXT_APPEND_TAIL = (
+            "Next: append your summary of "
+            "sources/index-tail.md to your journal "
+            "— the standing journal plus your new "
+            "part at the end, in one write.")
+        HEADINGS8 = ("Role & identity", "Task",
+                     "Sources (must all be read)",
+                     "Working method (files)",
+                     "Tools available (only these)",
+                     "Standing memory (role knowledge)",
+                     "Position")
+
+        # ---- cycle8-honest: the seal and the
+        # opening ----
+        h8rep = reports["cycle8_honest"]
+        h8work = work / "cycle8-honest"
+        h8evs = _events(h8work)
+        h8pkg = _cycle_packages("cycle8-honest")
+        check("cycle8-honest: the sealed record "
+              "declares the file-grain contract, "
+              "no worked example stands in the "
+              "seal, the journal baseline is v1's, "
+              "the sealed block map is the v1 "
+              "run's own map, and the sealed file "
+              "map groups it into the walk's three "
+              "files — the two whole files one "
+              "block each, index-tail its four",
+              h8rep["sealed_presentation_contract"]
+              == "office-cycle-v8"
+              and h8rep["sealed_worked_example"]
+              is None
+              and h8rep["sealed_journal_baseline"]
+              == {"address": JOURNAL,
+                  "initial_sha256": sha256_hex(b"")}
+              and h8rep["sealed_block_map"]
+              == crep["sealed_block_map"]
+              and h8rep["sealed_file_map"]
+              == tool_policy.compute_file_map(
+                  crep["sealed_block_map"])
+              and [len(f["block_ids"])
+                   for f in h8rep["sealed_file_map"]]
+              == [1, 1, 4]
+              and [f["file_id"]
+                   for f in h8rep["sealed_file_map"]]
+              == ["F1", "F2", "F3"],
+              f"{h8rep['sealed_presentation_contract']}")
+        opening8 = _cycle4_opening("cycle8-honest")
+        check("cycle8-honest: the opening opens "
+              "with the step — the compressed "
+              "frame, then the first file's Next "
+              "line, then the director's structure "
+              "rendered at the file grain: the "
+              "contract line names office-cycle-v8, "
+              "the sources stand one line per "
+              "file with the third noted as "
+              "arriving in parts with its ranges, "
+              "the method is the file rhythm, and "
+              "the position counts files — File 1 "
+              "of 3",
+              opening8.startswith(
+                  "You are a seat in a recorded "
+                  "collaborative run. Answer with "
+                  "exactly one JSON object")
+              and opening8.index(NEXT_READ_STOCK)
+              < opening8.index(
+                  "Opening package — crew-1")
+              and "- Contract: office-cycle-v8"
+              in opening8
+              and "File 1 of 3" in opening8
+              and "- F1: sources/stock-take.md"
+              in opening8
+              and "- F3: sources/index-tail.md — "
+              "arrives in parts (lines 1-6, "
+              "lines 7-13, lines 14-20, "
+              "lines 21-24), read part by part "
+              "inside this file's step"
+              in opening8
+              and "Working method (files)"
+              in opening8
+              and all(h in opening8
+                      for h in HEADINGS8)
+              and [opening8.index(h)
+                   for h in HEADINGS8]
+              == sorted(opening8.index(h)
+                        for h in HEADINGS8),
+              f"{opening8[:80]}")
+
+        # ---- the Next line's derivation at the
+        # file grain ----
+        _nl8 = loop_module._cycle_next_line_v8
+        _f1_unread = {
+            "file_id": "F1",
+            "address": "sources/stock-take.md",
+            "read_stands": False,
+            "blocks": [{
+                "address": "sources/stock-take.md",
+                "line_start": None, "line_end": None,
+                "read_stands": False}]}
+        _f3_partial = {
+            "file_id": "F3",
+            "address": "sources/index-tail.md",
+            "read_stands": False,
+            "blocks": [
+                {"address": "sources/index-tail.md",
+                 "line_start": 1, "line_end": 6,
+                 "read_stands": True},
+                {"address": "sources/index-tail.md",
+                 "line_start": 7, "line_end": 13,
+                 "read_stands": False},
+                {"address": "sources/index-tail.md",
+                 "line_start": 14, "line_end": 20,
+                 "read_stands": False},
+                {"address": "sources/index-tail.md",
+                 "line_start": 21, "line_end": 24,
+                 "read_stands": False}]}
+        _f3_read = dict(
+            _f3_partial, read_stands=True,
+            blocks=[dict(b, read_stands=True)
+                    for b in _f3_partial["blocks"]])
+        check("cycle8: the Next line's derivation "
+              "at the file grain, in its forms — "
+              "the whole file's read where the "
+              "file stands unread, the next part's "
+              "read inside a multi-part file, the "
+              "append where the file's read "
+              "stands, and the combine at "
+              "summarize",
+              _nl8(_f1_unread, JOURNAL)
+              == NEXT_READ_STOCK
+              and _nl8(_f3_partial, JOURNAL)
+              == NEXT_PART_7_13
+              and _nl8(_f3_read, JOURNAL)
+              == NEXT_APPEND_TAIL
+              and _nl8(None, JOURNAL)
+              == NEXT_COMBINE,
+              "")
+
+        # ---- every package: the file grain's
+        # shape ----
+        t8rep = reports["cycle8_batch"]
+        t8work = work / "cycle8-batch"
+        t8evs = _events(t8work)
+        t8pkg = _cycle_packages("cycle8-batch")
+        all8 = [h8pkg[k][0] for k in sorted(h8pkg)] \
+            + [t8pkg[k][0] for k in sorted(t8pkg)]
+        check("cycle8: every cycle and summarize "
+              "package in both walks opens with "
+              "the Next line as its first "
+              "component, carries the files "
+              "component and no blocks component, "
+              "names its position by file and "
+              "never by cycle, and carries no "
+              "journal_draft — v7's discipline "
+              "whole at the file grain",
+              len(all8) > 0
+              and all(next(iter(pkg)) == "next_step"
+                      for pkg in all8)
+              and all(isinstance(
+                  pkg["next_step"], str)
+                  and pkg["next_step"].startswith(
+                      "Next: ")
+                  for pkg in all8)
+              and all("files" in pkg
+                      and "blocks" not in pkg
+                      for pkg in all8)
+              and all("file" in (
+                  pkg.get("presentation") or {})
+                  and "cycle" not in (
+                      pkg.get("presentation") or {})
+                  for pkg in all8)
+              and all("journal_draft" not in pkg
+                      for pkg in all8),
+              "")
+
+        # ---- the honest walk at the file
+        # rhythm ----
+        check("cycle8-honest: the first cycle "
+              "package opens with the append step "
+              "for the file whose read stands — "
+              "the stock-take, read in the "
+              "opening's answer, its summary owed "
+              "to the journal",
+              h8pkg[2][0]["next_step"]
+              == NEXT_APPEND_STOCK,
+              f"{h8pkg[2][0].get('next_step')}")
+        check("cycle8-honest: inside the third "
+              "file's step the walk does not "
+              "advance — the package after its "
+              "first part stands on file 3 with "
+              "the part counted in its state, its "
+              "Next line the next part's read, "
+              "and the part's content at the "
+              "package's centre",
+              (h8pkg[4][0].get("presentation")
+               or {}).get("file") == 3
+              and h8pkg[4][0]["files"] == [
+                  {"file_id": "F1", "state": "done"},
+                  {"file_id": "F2", "state": "done"},
+                  {"file_id": "F3",
+                   "state": "current (1 of 4 parts "
+                            "read)"}]
+              and h8pkg[4][0]["next_step"]
+              == NEXT_PART_7_13
+              and (h8pkg[4][0].get("block_content")
+                   or {}).get("block_id") == "B3",
+              f"{h8pkg[4][0].get('next_step')}")
+        check("cycle8-honest: two parts pulled "
+              "in one answer present split inside "
+              "the step — the most recent part's "
+              "content at the centre, the earlier "
+              "part standing as its pointer in "
+              "the file's state, no correction of "
+              "any gate in the package, the walk "
+              "still on file 3, its Next line the "
+              "last part's read",
+              (h8pkg[5][0].get("block_content")
+               or {}).get("block_id") == "B5"
+              and h8pkg[5][0]["files"][2]["state"]
+              == "current (3 of 4 parts read)"
+              and "cycle_gate_correction"
+              not in h8pkg[5][0]
+              and "journal_gate_correction"
+              not in h8pkg[5][0]
+              and (h8pkg[5][0].get("presentation")
+                   or {}).get("file") == 3
+              and h8pkg[5][0]["next_step"]
+              == NEXT_PART_21_24,
+              f"{h8pkg[5][0].get('next_step')}")
+        check("cycle8-honest: the file's step "
+              "completes only when its last part "
+              "stands — the package after it "
+              "opens with the file's append step, "
+              "the last part's content at its "
+              "centre",
+              h8pkg[6][0]["next_step"]
+              == NEXT_APPEND_TAIL
+              and (h8pkg[6][0].get("block_content")
+                   or {}).get("block_id") == "B6",
+              f"{h8pkg[6][0].get('next_step')}")
+        summarize8 = next(
+            h8pkg[k][0] for k in sorted(h8pkg)
+            if (h8pkg[k][0].get("presentation")
+                or {}).get("package") == "summarize")
+        check("cycle8-honest: the summarize "
+              "package opens with the combine "
+              "step, as v7's does — read the "
+              "journal, combine its summaries, "
+              "deliver by the contribute outcome",
+              summarize8["next_step"] == NEXT_COMBINE
+              and (summarize8.get("current_file")
+                   or {}).get("stage") == "summarize",
+              f"{summarize8.get('next_step')}")
+        check("cycle8-honest: the honest walk "
+              "completes in eight iterations and "
+              "the brief stands filed — THREE "
+              "journal appends stand, attributed "
+              "to the three files in order, NO "
+              "cycle gate event stands anywhere "
+              "in the walk (no gate fires between "
+              "a file's parts, and no file ran "
+              "ahead), and no budget refusal",
+              h8rep["outcome"] == "yield"
+              and h8rep["iterations"] == 8
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in h8evs)
+              and [_payload(e).get("cycle")
+                   for e in h8evs
+                   if e["type"] == "JOURNAL_APPEND"]
+              == [1, 2, 3]
+              and not any(e["type"] == "CYCLE_GATE"
+                          for e in h8evs)
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in h8evs),
+              f"{h8rep['outcome']} / "
+              f"{h8rep['iterations']}")
+
+        # ---- the batch walk: one gate, at the
+        # file grain ----
+        check("cycle8-batch: the batch wake "
+              "opens with the append step for the "
+              "file the walk stands on, the cycle "
+              "gate's correction riding below it "
+              "in file words — the file it names "
+              "F1, its instruction still on file "
+              "F1, the arrival it answers the "
+              "read of file F2 — and the wake "
+              "presents the first file's content "
+              "alone: its read stubbed to the "
+              "block_content component, the other "
+              "two files' reads not carried at "
+              "all",
+              t8pkg[2][0]["next_step"]
+              == NEXT_APPEND_STOCK
+              and "cycle_gate_correction"
+              in t8pkg[2][0]
+              and (t8pkg[2][0].get(
+                      "cycle_gate_correction")
+                   or {}).get("file_id") == "F1"
+              and "file F1" in (
+                  (t8pkg[2][0].get(
+                      "cycle_gate_correction")
+                   or {}).get("instruction", ""))
+              and "file F2" in (
+                  (t8pkg[2][0].get(
+                      "cycle_gate_correction")
+                   or {}).get("what_arrived", ""))
+              and (t8pkg[2][0].get("block_content")
+                   or {}).get("block_id") == "B1"
+              and len(t8pkg[2][0].get(
+                  "tool_results") or []) == 1
+              and ((t8pkg[2][0]["tool_results"][0]
+                    .get("result") or {})
+                   .get("presented_in"))
+              == "block_content",
+              f"{t8pkg[2][0].get('next_step')}")
+        check("cycle8-batch: the batch walk "
+              "completes in six iterations and "
+              "the brief stands filed — the gate "
+              "arithmetic stands at the file "
+              "grain exactly as v1's stands at "
+              "the block grain (five gates over "
+              "six blocks there): TWO cycle gate "
+              "events, at files 1 and 2, each "
+              "recorded at the wake its append "
+              "came due with a later file's read "
+              "standing ahead — and none at file "
+              "3, whose parts never owe one — "
+              "three appends attributed to the "
+              "three files, no budget refusal",
+              t8rep["outcome"] == "yield"
+              and t8rep["iterations"] == 6
+              and any(e["type"] == "DELIVERABLE_FILED"
+                      for e in t8evs)
+              and [_payload(e).get("cycle")
+                   for e in t8evs
+                   if e["type"] == "CYCLE_GATE"]
+              == [1, 2]
+              and [_payload(e).get("cycle")
+                   for e in t8evs
+                   if e["type"] == "JOURNAL_APPEND"]
+              == [1, 2, 3]
+              and not any(e["type"] == "BUDGET_REFUSAL"
+                          for e in t8evs),
+              f"{t8rep['outcome']} / "
+              f"{t8rep['iterations']}")
+        for name8, rep8 in (
+                ("cycle8-honest", h8rep),
+                ("cycle8-batch", t8rep)):
+            est8 = rep8["call_estimates"]
+            print(f"{name8}: largest package "
+                  f"{max(e['serialized_bytes'] for e in est8)} "
+                  f"bytes / "
+                  f"{max(e['estimated_tokens'] for e in est8)} "
+                  f"tokens")
+        check("cycle8: every measured package "
+              "in both walks stands within the "
+              "per-call budget of 4,000 estimated "
+              "tokens — no package refused, none "
+              "sent over the line",
+              all(e["estimated_tokens"] <= 4000
+                  for rep8 in (h8rep, t8rep)
+                  for e in rep8["call_estimates"]),
+              "")
+        print(f"office-cycle-v8 section: "
+              f"{CHECKS[0] - cycle8_before} checks")
+
+        # ============ cycle9-reread: the process tree
+        # (office-cycle-v9; the build scope of
+        # 2026-11-26, acceptance stage 1) ============
+        cycle9_before = CHECKS[0]
+        rep9 = reports["cycle9_reread"]
+        pkg9 = _cycle_packages("cycle9-reread")
+        check("cycle9-reread: the sealed record "
+              "declares office-cycle-v9 and carries "
+              "the sealed process tree beside it — "
+              "six nodes, the redrawn tree of the "
+              "settled method",
+              rep9["sealed_presentation_contract"]
+              == "office-cycle-v9"
+              and (rep9["sealed_tree"] or {}).get(
+                  "contract")
+              == "process-tree-checklist-v1"
+              and len((rep9["sealed_tree"] or {}).get(
+                  "nodes") or []) == 6,
+              f"{rep9['sealed_presentation_contract']}")
+        evs9 = _events(work / "cycle9-reread")
+        check("cycle9-reread: the walk files its "
+              "brief — the re-read knock did not "
+              "strand it",
+              any(e["type"] == "DELIVERABLE_FILED"
+                  and _payload(e).get("destination")
+                  == "scratch/brief.md" for e in evs9),
+              f"{rep9['outcome']}")
+        opening9 = _cycle4_opening("cycle9-reread")
+        check("cycle9-reread: the opening package "
+              "carries the process tree — the map in "
+              "hand from the first wake, the "
+              "onboarding node standing current",
+              "Process tree — The Brief" in opening9
+              and "[current] 1. Know the job"
+              in opening9,
+              "")
+        all9 = [pkg9[k][0] for k in sorted(pkg9)]
+        refusal_pkg = None
+        for pkg in all9:
+            for entry in pkg.get(
+                    "tool_results") or []:
+                if isinstance(entry, dict) and \
+                        entry.get(
+                            "refusal_class") == \
+                        "doorway_refused":
+                    refusal_pkg = pkg
+        check("cycle9-reread: a package presents "
+              "the doorway's refusal of the re-read "
+              "knock",
+              refusal_pkg is not None, "")
+        if refusal_pkg is not None:
+            refusal_entry = next(
+                entry for entry in refusal_pkg[
+                    "tool_results"]
+                if isinstance(entry, dict) and
+                entry.get("refusal_class")
+                == "doorway_refused")
+            check("cycle9-reread: the refusal SPEAKS "
+                  "— it names what the worker already "
+                  "holds whole and the next act, the "
+                  "journal bit for the held source "
+                  "(Amendment 2: the correction names "
+                  "the next action, not only the "
+                  "state)",
+                  "You already hold, whole:"
+                  in (refusal_entry.get("error") or "")
+                  and "Your next act is to write "
+                  "the journal bit for the held "
+                  "source that lacks one"
+                  in (refusal_entry.get("error") or ""),
+                  f"{refusal_entry.get('error')}")
+            nodes9 = {
+                node["id"]: node
+                for node in (refusal_pkg.get(
+                    "process_tree") or {}).get(
+                        "nodes") or []}
+            check("cycle9-reread: the tree in the "
+                  "same package agrees with the "
+                  "refusal — one computation: the "
+                  "first gather node stands current, "
+                  "its source held whole with reads "
+                  "closed, summarize blocked on the "
+                  "unfinished gathers",
+                  nodes9.get(
+                      "gather-stock-take", {}).get(
+                          "state") == "current"
+                  and any(
+                      "you hold this source whole"
+                      in fact
+                      for fact in nodes9.get(
+                          "gather-stock-take", {}).get(
+                              "facts") or [])
+                  and nodes9.get(
+                      "summarize", {}).get("state")
+                  == "blocked",
+                  f"{nodes9}")
+        check("cycle9-reread: every cycle package "
+              "carries the process tree component",
+              all("process_tree" in pkg
+                  for pkg in all9
+                  if "tool_results" in pkg),
+              "")
+        first_cycle9 = all9[0] if all9 else {}
+        check("cycle9-reread: the journal read at "
+              "the walk's first step stands answered "
+              "— the office stocked the journal empty "
+              "at generation, where demo-nemotron8's "
+              "unstocked room failed the same read "
+              "three times",
+              any(isinstance(entry, dict)
+                  and isinstance(
+                      entry.get("result"), dict)
+                  and entry["result"].get("path")
+                  == JOURNAL
+                  for entry in first_cycle9.get(
+                      "tool_results") or []),
+              "")
+        check("cycle9-reread: the terminal readout "
+              "rendered (the checker's v9 derivation "
+              "stands deferred by the strip ruling — "
+              "the scenario asserts its tree states "
+              "against the record directly, as the "
+              "plan names)",
+              rep9["terminal_readout"]["rendered"]
+              is True)
+        print(f"office-cycle-v9 section: "
+              f"{CHECKS[0] - cycle9_before} checks")
 
         # ============ journal, adversarial ============
         # The examiner's journal finding (2026-11-24):
