@@ -5,7 +5,7 @@ Parent plan: `ben-teamily/PLAN-AIVORY-2026-11-25.md`
 Accepted specification: `ben-teamily/AIVORY-SPEC-2026-11-25.md`
 S1 ruling: Ben accepted the specification as written via Pulse Bridge
 PB-ID `pb-mwwy58at-3-6fle`.
-Status: **S2 submitted for Gate 2 — no build stage is opened by this document.**
+Status: **S2 accepted — Gate 2 passed; S3 Build A open.**
 
 ## Governing sequence
 
@@ -16,10 +16,10 @@ N0  PLAN EXAMINATION                         COMPLETE
 S1  SPECIFICATION                            ACCEPTED — GATE 1 PASSED
     |
     v
-S2  PROCESS TREE                             SUBMITTED — GATE 2 PENDING
+S2  PROCESS TREE                             ACCEPTED — GATE 2 PASSED
     |
     v
-S3  BUILD A — CLOSE CURRENT DASHBOARD GAPS   CLOSED
+S3  BUILD A — CLOSE CURRENT DASHBOARD GAPS   OPEN
     |
     v
 S4  BUILD B — REAL FRAMEWORK DISPATCH        CLOSED
@@ -99,9 +99,10 @@ spend-bearing, and irreversible decisions.
   assigned to Vane; no stage can begin from a draft alone.
 - **Gate 2:** Ben accepts or corrects this tree and its stage contracts.
   Only an explicit acceptance opens S3.
-- **State:** submitted for Gate 2. S3 remains closed.
+- **State:** **PASSED.** Ben accepted the process tree as written via Pulse Bridge PB-ID `pb-mwwye871-4-flza`. S3 Build A is open.
 
 ### S3 — Build A: close current dashboard gaps
+- **State:** **OPEN** by Ben's Gate 2 ruling, PB-ID `pb-mwwye871-4-flza`.
 - **Purpose:** make the existing B2 interface truthful and office-aware
   before connecting it to live dispatch.
 - **Prerequisites:** Gate 2 passed; accepted S1 spec and this tree are the
