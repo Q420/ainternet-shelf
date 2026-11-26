@@ -1,7 +1,7 @@
 {
   "kind": "aivory-state-feed",
   "schema_version": 1,
-  "generated_at": "2026-11-26T05:55:08.668Z",
+  "generated_at": "2026-11-26T22:29:27.831Z",
   "provenance": "Projected by aivory/producer from the per-run report.json records under collaboration-framework/live-demo (derived matter, not the record itself).",
   "job": {
     "title": "Write the standing brief: what the framework is, what has been proven, what is open, the honest next step",
@@ -24,6 +24,54 @@
   },
   "offices": [],
   "historical_runs": [
+    {
+      "run": "demo-gemini1",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 25,
+      "dispatches": 1,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gemini1/report.json",
+      "model": "gemini-3.5-flash-lite"
+    },
+    {
+      "run": "demo-gemini2",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 25,
+      "dispatches": 1,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gemini2/report.json",
+      "model": "gemini-3.6-flash"
+    },
+    {
+      "run": "demo-gemini3",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 20,
+      "dispatches": 0,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gemini3/report.json",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "run": "demo-gemini4",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 4,
+      "events": 42,
+      "dispatches": 3,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gemini4/report.json",
+      "model": "gemini-3.6-flash"
+    },
     {
       "run": "demo-glm1",
       "outcome": "stalled",
@@ -58,6 +106,30 @@
       "brief_filed": false,
       "brief_words": null,
       "report_ref": "collaboration-framework/live-demo/demo-gptoss10/report.json",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "run": "demo-gptoss11",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 4,
+      "events": 35,
+      "dispatches": 1,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gptoss11/report.json",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "run": "demo-gptoss12",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 6,
+      "events": 53,
+      "dispatches": 4,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-gptoss12/report.json",
       "model": "openai/gpt-oss-120b"
     },
     {
@@ -145,6 +217,102 @@
       "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
     },
     {
+      "run": "demo-nemotron10",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 11,
+      "events": 101,
+      "dispatches": 10,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron10/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron11",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 18,
+      "events": 178,
+      "dispatches": 18,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron11/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron12",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 10,
+      "events": 94,
+      "dispatches": 7,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron12/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron13",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 12,
+      "events": 120,
+      "dispatches": 12,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron13/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron14",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 20,
+      "events": 149,
+      "dispatches": 6,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron14/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron15",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 18,
+      "events": 129,
+      "dispatches": 5,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron15/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron16",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 20,
+      "events": 157,
+      "dispatches": 11,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron16/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron17",
+      "outcome": "completed",
+      "completed": true,
+      "iterations": 27,
+      "events": 196,
+      "dispatches": 12,
+      "brief_filed": true,
+      "brief_words": 572,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron17/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
       "run": "demo-nemotron2",
       "outcome": "declined",
       "completed": false,
@@ -202,6 +370,42 @@
       "brief_filed": false,
       "brief_words": null,
       "report_ref": "collaboration-framework/live-demo/demo-nemotron6/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron7",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 10,
+      "events": 102,
+      "dispatches": 10,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron7/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron8",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 10,
+      "events": 94,
+      "dispatches": 9,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron8/report.json",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    },
+    {
+      "run": "demo-nemotron9",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 20,
+      "events": 182,
+      "dispatches": 17,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-nemotron9/report.json",
       "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
     },
     {
@@ -267,9 +471,51 @@
       "report_ref": "collaboration-framework/live-demo/demo-round9/report.json",
       "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
       "transcript_ref": "collaboration-framework/live-demo/demo-round9/opening-transcript.json"
+    },
+    {
+      "run": "demo-zai1",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 20,
+      "dispatches": 0,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-zai1/report.json",
+      "model": "glm-4.7-flash"
+    },
+    {
+      "run": "demo-zai2",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 20,
+      "dispatches": 0,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-zai2/report.json",
+      "model": "glm-4.7-flash"
+    },
+    {
+      "run": "demo-zai3",
+      "outcome": "stalled",
+      "completed": false,
+      "iterations": 1,
+      "events": 20,
+      "dispatches": 0,
+      "brief_filed": false,
+      "brief_words": null,
+      "report_ref": "collaboration-framework/live-demo/demo-zai3/report.json",
+      "model": "glm-4.7-flash"
     }
   ],
   "artifacts": [
+    {
+      "name": "demo-nemotron17 brief",
+      "path": "aivory/artifacts/demo-nemotron17-brief-f9b89cddcbbac6ac394ab08e3adb95763bcda0f2c03ce4a8881ab7e8dea2fc02.md",
+      "bytes": 4170,
+      "source_ref": "collaboration-framework/live-demo/demo-nemotron17/brief.md"
+    },
     {
       "name": "demo-round6 brief",
       "path": "aivory/artifacts/demo-round6-brief-666fe9e51860af4e0f762de24b9b9f6020b4ba0031c63e6d9e96a686bb9066d5.md",
