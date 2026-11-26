@@ -2,6 +2,8 @@
 
 **Status: PLAN — for Ben's go. No build is authorised by this plan.** Written at Ben's order (2026-11-26 03:03 MST): "Create a plan. Figure out exactly how everything's set up now so you're not interlacing systems. Let's do this properly." Scope governed by BUILD-SCOPE-PROCESS-TREE-CHECKLIST-2026-11-26.md as cut by Ben (02:58) and refined by Vane (INDEX 604): three capabilities only — the tree in every package with record-derived states; the held-file correction spoken at the node and at the refusal; the journal stocked at generation. Everything else is deferred and stays deferred.
 
+**Amendment 1 (2026-11-26 03:11 MST, Ben's correction, Remmy's error owned):** as first written, S1 sealed the INDEX 554 tree drawing. Ben caught it in chat: "I thought we settled on gather, journal until all summaries were there then use those to write the brief." He was right — the settled method is his room-rebuild ruling (INDEX 575: the journal method as the compose mechanism; Vane's resync, INDEX 579: Files → Journal → Repeat → Summarize → Brief), and the 554 drawing predates it: it shows Compose as a separate branch and the journal nowhere. S1 and S2 below now seal and compute **the redrawn tree** (printed in S1), in which gather nodes complete on read + journal bit (INDEX 575's own gate), the four content points live inside the Summarize node as requirements rather than standing as nodes, and Deliver depends on the journal bits and Summarize. A side effect worth naming: Vane's examination question 1 (compose-node state computation) is dissolved for the first build by the redraw — there are no compose sub-nodes to compute; her underlying rule (a node stands done only on a recorded act) governs every node unchanged.
+
 ## Part 1 — How everything is set up now (read first-hand, 2026-11-26)
 
 **Contracts.** `src/framework/tool_policy.py` seals presentation contracts as constants: V11 = `"office-cycle-v8"` is the current live contract (line 685). A `process-tree-v1` name already exists (V3, line 256) — a staged-era contract, not this build; v9 takes the next constant, **V12 = `"office-cycle-v9"`**, and no existing constant is renamed or reused. The road seals separately (`road.py`, `ROAD_CONTRACT_V1 = "paced-v1"` in tool_policy) and does not fork.
@@ -27,8 +29,23 @@
 ## Part 3 — The steps, in order
 
 - **S0 — Witness (no code).** Read and quote: (a) how a REJECTION currently surfaces in the worker's next package — the exact text Gary saw in run 9; (b) where the run's sandbox scratch directory is created. Both answers go into the build record before any code moves. If either answer contradicts Part 1, the plan is corrected first, in the open.
-- **S1 — Seal.** tool_policy gains `PRESENTATION_CONTRACT_V12 = "office-cycle-v9"` and a `tree_problem` validator on the road_problem pattern. The generator seals the tree — the INDEX 554 tree for the standing job, as data: node ids, names, dependencies, and each node's workaround text (INDEX 572) — as a `tree` declaration beside `presentation` and `road`, only where the contract is v9.
-- **S2 — The state computation.** One function, record in → node states out. Gather nodes: done when the source stands held whole (the INDEX 552 standing computation); the node's fact line carries reads charged vs bound. Branch-1 nodes: done as their stages stand acknowledged in the record. Compose nodes (minimum form): done only when a contribution stands recorded — per Vane, no per-node contribution relationships in the first build, so compose shows its contributions count and stands *current* until delivery; the paper's acceptance does not need finer grain, and finer grain is a named deferral. Deliver: done when the brief stands filed. Blocked: a node whose dependency stands unfilled shows blocked with the unfilled dependency named — one fixed wording per condition, written once in the contract's code, facts filled from the record.
+- **S1 — Seal.** tool_policy gains `PRESENTATION_CONTRACT_V12 = "office-cycle-v9"` and a `tree_problem` validator on the road_problem pattern. The generator seals the tree — **the redrawn tree of Amendment 1**, as data: node ids, names, dependencies, and each node's workaround text (INDEX 572) — as a `tree` declaration beside `presentation` and `road`, only where the contract is v9. The sealed tree for the standing job:
+
+```
+THE BRIEF — filed at scratch/brief.md
+├─ 1. KNOW THE JOB  (the onboarding)
+├─ 2. GATHER + JOURNAL — per file: read it, then journal your bit
+│    ├─ 2.1 stock-take.md — read whole → journal bit
+│    ├─ 2.2 a3-pass.md — read whole → journal bit
+│    └─ 2.3 index-tail.md — read in parts → journal bit when whole
+├─ 3. SUMMARIZE — read the journal whole; compile the bits into the brief
+│      (the four points live here as content requirements:
+│       what it is / proven / unproven / next step)
+└─ 4. DELIVER — contribute the brief; the office files it
+       depends on: 2.1–2.3 journaled, and 3
+```
+
+- **S2 — The state computation.** One function, record in → node states out. Gather nodes: done when the source stands held whole (the INDEX 552 standing computation) **and** its journal bit stands appended (INDEX 575's gate: a gather step completes on its read standing AND its journal bits written); the node's fact line carries reads charged vs bound. Branch-1 nodes: done as their stages stand acknowledged in the record. Summarize: *current* once every gather node stands done; done when the brief stands contributed from the journal compile — the recorded act, per Vane's rule. Deliver: done when the brief stands filed. Blocked: a node whose dependency stands unfilled shows blocked with the unfilled dependency named — one fixed wording per condition, written once in the contract's code, facts filled from the record.
 - **S3 — Render.** `_build_cycle_package` renders the tree block for v9 packages only, from S2's computation, before the presentation hash. v1–v8 rendering is byte-untouched.
 - **S4 — The speaking refusal.** Where the loop presents a REJECTION whose ground is a read tool's exhausted bound, the presented outcome carries the correction from S2's computation: the bound and its count, the sources already held whole, and the open next step. The REJECTION event and its ground are unchanged — this is presentation of an existing fact, not new enforcement.
 - **S5 — Stocking.** At the site S0 finds, run setup creates `scratch/journal.md` empty **if absent** — idempotent, never overwriting (Vane's protection). Verified by a generation run twice over the same room.
