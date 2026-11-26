@@ -48,7 +48,7 @@
   <div class="navlabel">Views</div>
   <button class="navitem" data-view="briefcase"><span class="navglyph">▤</span><span class="navname">Shared Briefcase</span></button>
   <button class="navitem" data-view="output"><span class="navglyph">↗</span><span class="navname">Output</span></button>
-  <button class="navitem" data-view="resources"><span class="navglyph">⌁</span><span class="navname">Resources</span></button>
+  <button class="navitem" data-view="resources"><span class="navglyph">⌁</span><span class="navname">Feed</span></button>
  </nav>
  <div class="decision"><div class="decision-title">DECISIONS</div><div class="decision-empty" id="decisionState">Decision state not published by feed</div></div>
 </aside>
@@ -57,7 +57,7 @@
  <section class="workstrip" aria-label="Current work">
   <div><div class="eyebrow">Current assignment</div><div class="jobtitle" id="jobTitle">Reading live state feed…</div></div>
   <div class="sourceblock"><div class="eyebrow">Shared briefcase · sources</div><div class="sourcechips" id="sourceChips"></div></div>
-  <div class="stripright"><div class="metrics" id="stripMetrics"></div><button class="refresh" id="refresh">↻ Refresh</button><div class="feedtime" id="feedTime">—</div></div>
+  <div class="stripright"><button class="refresh" id="refresh">↻ Refresh</button></div>
  </section>
  <section class="stage" id="stage" aria-live="polite"></section>
 </main>
@@ -90,7 +90,7 @@
    offices.map(o=>navButton(officeKey(o.id),"▣",o.role||"Office",o.status||"STATUS N/A",statusClass(o.status))).join("");
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",active===b.dataset.view));
   document.querySelectorAll("[data-chat]").forEach(b=>b.classList.toggle("active",active===b.dataset.chat));
-  const opts=[["orchestrator","Orchestrator"],["collaboration","Collaboration Room"],...offices.map(o=>[officeKey(o.id),(o.role||"Office")+" · "+(o.occupant||"occupant unavailable")]),["briefcase","Shared Briefcase"],["output","Output"],["resources","Resources"]];
+  const opts=[["orchestrator","Orchestrator"],["collaboration","Collaboration Room"],...offices.map(o=>[officeKey(o.id),(o.role||"Office")+" · "+(o.occupant||"occupant unavailable")]),["briefcase","Shared Briefcase"],["output","Output"],["resources","Feed"]];
   $("mobileSelect").innerHTML=opts.map(([v,t])=>'<option value="'+esc(v)+'" '+(v===active?"selected":"")+'>'+esc(t)+'</option>').join("");
  }
  function navButton(key,glyph,name,meta,status){return '<button class="navitem" data-chat="'+esc(key)+'"><span class="navglyph">'+glyph+'</span><span class="navname">'+esc(name)+'</span><span class="navmeta '+esc(status)+'">'+esc(meta)+'</span></button>'}
@@ -100,11 +100,9 @@
  function statusLabel(r){return r.outcome || "unknown"}
  function modelLabel(r){return r.model || "Model not published"}
  function updateStrip(){
-  if(!feed){$("jobTitle").textContent="Feed unreachable";$("sourceChips").innerHTML="";$("stripMetrics").innerHTML="";$("feedTime").textContent="";return}
+  if(!feed){$("jobTitle").textContent="Feed unreachable";$("sourceChips").innerHTML="";return}
   $("jobTitle").textContent=feed.job?.title || "No current assignment published";
   $("sourceChips").innerHTML=(feed.job?.sources||[]).map(s=>'<span class="chip">'+esc(s.path)+'<span class="bytes">'+fmt(s.bytes)+' B</span></span>').join("");
-  $("stripMetrics").innerHTML=metric("HISTORICAL RUNS",allRuns().length)+metric("EVENTS",total("events"))+metric("DISPATCHES",total("dispatches"));
-  $("feedTime").textContent=feed.generated_at ? "FEED "+esc(feed.generated_at) : "LEGACY FEED · TIME NOT PUBLISHED";
   $("decisionState").textContent=Array.isArray(feed.decisions) ? (feed.decisions.length ? feed.decisions.length+" decisions pending" : "No decisions waiting") : "Decision state not published by feed";
  }
  async function loadFeed(){
@@ -161,7 +159,7 @@
   const sources=feed?.job?.sources||[],offices=allOffices();
   $("stage").innerHTML=stageHead("Shared Briefcase","One shared working ground. Office folders appear only when an authoritative current-office inventory is published.","SHARED CONTEXT")+
   '<section class="panel"><div class="panelhead"><div class="paneltitle">Shared sources</div><div class="panelhint">'+sources.length+' ITEMS · TRUE FEED BYTE SIZES</div></div><div class="filelist">'+(sources.length?sources.map(s=>'<div class="fileitem"><div class="fileicon">MD</div><div><div class="filename">'+esc(s.path)+'</div><div class="filepath">Shared source</div></div><div class="filesize">'+fmt(s.bytes)+' B</div></div>').join(""):'<div class="emptyfact">No shared sources are published in the live feed.</div>')+'</div></section>'+
-  '<div style="height:14px"></div><section class="panel"><div class="panelhead"><div class="paneltitle">Office folders</div><div class="panelhint">'+offices.length+' CURRENT OFFICES</div></div><div class="panelbody">'+(offices.length?'<div class="foldergrid">'+offices.map(o=>'<button class="folder" data-open-office="'+esc(o.id)+'"><div class="foldername">▱ &nbsp;'+esc(o.role)+'</div><div class="foldermeta">'+esc(o.occupant||"Occupant not published")+'<br>'+esc(o.status||"Status not published")+'</div></button>').join("")+'</div>':'<div class="emptyfact">No current offices are published. Historical runs are listed separately under Resources.</div>')+'</div></section>'+
+  '<div style="height:14px"></div><section class="panel"><div class="panelhead"><div class="paneltitle">Office folders</div><div class="panelhint">'+offices.length+' CURRENT OFFICES</div></div><div class="panelbody">'+(offices.length?'<div class="foldergrid">'+offices.map(o=>'<button class="folder" data-open-office="'+esc(o.id)+'"><div class="foldername">▱ &nbsp;'+esc(o.role)+'</div><div class="foldermeta">'+esc(o.occupant||"Occupant not published")+'<br>'+esc(o.status||"Status not published")+'</div></button>').join("")+'</div>':'<div class="emptyfact">No current offices are published. Historical runs are listed separately under Feed.</div>')+'</div></section>'+
   '<div style="height:12px"></div><div class="smallnote">No item-level access events are published in this feed snapshot. Source sizes above are the exact byte counts supplied by the feed.</div>';
  }
  function renderOutput(){
@@ -171,7 +169,8 @@
  }
  function renderResources(){
   const runs=allRuns();
-  $("stage").innerHTML=stageHead("Resources","Historical run counters are computed from the current feed at render time; they are not current office usage.","LIVE ACCOUNTING")+
+  $("stage").innerHTML=stageHead("Feed","The office state feed: its counters and the historical run ledger, computed from the feed at render time. They are not current office usage.","STATE FEED")+
+  '<div class="smallnote">'+(feed.generated_at?("Feed generated "+esc(feed.generated_at)):"Feed time not published")+'</div><div style="height:12px"></div>'+
   '<div class="resourcegrid">'+
   '<div class="resource"><strong>'+fmt(total("iterations"))+'</strong><span>ITERATIONS</span></div>'+
   '<div class="resource"><strong>'+fmt(total("events"))+'</strong><span>EVENTS</span></div>'+
