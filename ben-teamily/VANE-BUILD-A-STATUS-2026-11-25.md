@@ -75,9 +75,12 @@ unreferenced history into a current office.
 
 - Shelf commits and exact file read-backs establish the changes listed
   above.
-- The feed contract tests have been authored, but have **not yet been
-  executed in a Node runtime in this examination environment**. Run
-  `npm test` in the receiving environment before Gate 3.
+- Six contract cases passed in a local Node execution of the validator
+  and fixtures: legacy v0 acceptance, complete v1 acceptance, missing
+  generation timestamp rejection, malformed counter rejection, invalid
+  office identity rejection, and negative artifact-size rejection.
+  The shelf checkout's `npm test` command and full server/browser runtime
+  have not yet been run in the receiving environment.
 - No local browser was launched from this seat, so visual/phone acceptance
   is not claimed.
 - Ben's laptop scheduled task and `127.0.0.1:4173` endpoint have not been
