@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Q420/ainternet-shelf/main/aivory/feed.schema.json",
+  "title": "AIvory State Feed v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["kind", "schema_version", "generated_at", "job", "offices", "historical_runs", "artifacts", "decisions"],
+  "properties": {
+    "kind": { "const": "aivory-state-feed" },
+    "schema_version": { "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "job": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "target_words": { "type": "integer", "minimum": 0 },
+        "floor_words": { "type": "integer", "minimum": 0 },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "bytes"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "bytes": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "offices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "role", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "occupant": { "type": ["string", "null"] },
+          "assignment": { "type": "string" },
+          "status": { "type": "string", "minLength": 1 },
+          "run_id": { "type": "string" },
+          "journal_ref": { "type": "string" },
+          "record_ref": { "type": "string" },
+          "transcript_ref": { "type": "string" },
+          "briefcase_folder": { "type": "string" }
+        }
+      }
+    },
+    "historical_runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["run", "outcome", "iterations", "events", "dispatches"],
+        "properties": {
+          "run": { "type": "string", "minLength": 1 },
+          "model": { "type": "string" },
+          "outcome": { "type": "string", "minLength": 1 },
+          "completed": { "type": "boolean" },
+          "iterations": { "type": "integer", "minimum": 0 },
+          "events": { "type": "integer", "minimum": 0 },
+          "dispatches": { "type": "integer", "minimum": 0 },
+          "brief_filed": { "type": "boolean" },
+          "brief_words": { "type": ["integer", "null"], "minimum": 0 },
+          "report_ref": { "type": "string" },
+          "transcript_ref": { "type": "string" }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string", "minLength": 1 },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "source_ref": { "type": "string" }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "minLength": 1 },
+          "source_ref": { "type": "string" }
+        }
+      }
+    }
+  }
+}
