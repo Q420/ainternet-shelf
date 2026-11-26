@@ -171,13 +171,13 @@
  }
  function renderResources(){
   const runs=allRuns();
-  $("stage").innerHTML=stageHead("Resources","Usage figures are computed directly from the current state feed at render time.","LIVE ACCOUNTING")+
+  $("stage").innerHTML=stageHead("Resources","Historical run counters are computed from the current feed at render time; they are not current office usage.","LIVE ACCOUNTING")+
   '<div class="resourcegrid">'+
   '<div class="resource"><strong>'+fmt(total("iterations"))+'</strong><span>ITERATIONS</span></div>'+
   '<div class="resource"><strong>'+fmt(total("events"))+'</strong><span>EVENTS</span></div>'+
   '<div class="resource"><strong>'+fmt(total("dispatches"))+'</strong><span>DISPATCHES</span></div>'+
-  '<div class="resource"><strong>'+fmt(runs.length)+'</strong><span>RECORDED RUNS</span></div></div>'+
-  '<section class="panel"><div class="panelhead"><div class="paneltitle">Run resource ledger</div><div class="panelhint">PER-RUN COUNTS FROM FEED</div></div><div class="panelbody"><div class="runlist">'+runs.map(r=>'<article class="runcard"><div class="runhead"><div class="runid">'+esc(r.run)+'</div><div class="status '+statusClass(statusLabel(r))+'">'+esc(statusLabel(r))+'</div></div><div class="runmodel">'+esc(modelLabel(r))+'</div><div class="runstats"><div><strong>'+fmt(r.iterations)+'</strong><span>ITERATIONS</span></div><div><strong>'+fmt(r.events)+'</strong><span>EVENTS</span></div><div><strong>'+fmt(r.dispatches)+'</strong><span>DISPATCHES</span></div></div></article>').join("")+'</div></div></section>'+
+  '<div class="resource"><strong>'+fmt(runs.length)+'</strong><span>HISTORICAL RUNS</span></div></div>'+
+  '<section class="panel"><div class="panelhead"><div class="paneltitle">Historical run ledger</div><div class="panelhint">PER-RUN COUNTS FROM FEED</div></div><div class="panelbody"><div class="runlist">'+runs.map(r=>'<article class="runcard"><div class="runhead"><div class="runid">'+esc(r.run)+'</div><div class="status '+statusClass(statusLabel(r))+'">'+esc(statusLabel(r))+'</div></div><div class="runmodel">'+esc(modelLabel(r))+'</div><div class="runstats"><div><strong>'+fmt(r.iterations)+'</strong><span>ITERATIONS</span></div><div><strong>'+fmt(r.events)+'</strong><span>EVENTS</span></div><div><strong>'+fmt(r.dispatches)+'</strong><span>DISPATCHES</span></div></div></article>').join("")+'</div></div></section>'+
   '<div style="height:12px"></div><div class="smallnote">Token consumption, time, and per-call payloads are not present in the published feed and are therefore not estimated here.</div>';
  }
  function render(){
