@@ -45,7 +45,7 @@ The canonical producer is `aivory/producer/producer.mjs`. It generates `aivory/f
 
 - It fails closed: a present-but-malformed or structurally incomplete report, a filing record without a well-formed SHA-256 digest, or a digest mismatch stops generation and nothing is published.
 - A brief becomes an artifact only when its filing record's digest matches the brief's bytes. A run's `completed` means its loop completed successfully; a declined run is finished but not completed.
-- Publication procedure: generate to a staging path, validate under the contract, run `producer.audit.mjs` against the standing records, then publish the feed and any new artifacts to the shelf together. Artifact filenames are immutable and content-versioned (`<run>-brief-<filing digest prefix>.md`): a new generation never replaces a file a published feed references, and the feed itself is switched last by rename.
+- Publication procedure: generate to a staging path, validate under the contract, run `producer.audit.mjs` against the standing records, then publish the feed and any new artifacts to the shelf together. Artifact filenames are immutable and content-versioned (`<run>-brief-<full filing digest>.md`): a new generation never replaces a file a published feed references, publication is no-clobber (an existing destination is verified and left untouched), and the feed itself is switched last by rename.
 - `producer.test.mjs` is the producer's fixture test suite (run by `npm test`); `producer.audit.mjs` is the manual standing-record audit, not a test suite.
 
 The server binds to loopback by default. Preserve that boundary. Do not expose this unauthenticated server directly to the public internet.

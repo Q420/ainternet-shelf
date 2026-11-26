@@ -10,12 +10,15 @@
 // without a well-formed sha256 digest stops generation; a digest
 // mismatch stops generation. Generation and validation write nothing.
 // Publication is staged and generation-safe: artifact files are
-// immutable and content-versioned (their names carry the filing
+// immutable and content-versioned (their names carry the full filing
 // digest), so a new generation never replaces a file any published
-// feed references. Every file is written under a temporary name and
-// renamed into place, the feed renamed last as the single switch —
-// any failure before that switch leaves the previous feed and every
-// artifact it references byte-identical.
+// feed references. Publication is no-clobber: an artifact destination
+// that already exists is verified against its digest and left
+// untouched; one occupied by different content fails closed. New
+// artifacts are written under temporary names and renamed into place,
+// and the feed is renamed last as the single switch — any failure
+// before that switch leaves the previous feed and every artifact it
+// references byte-identical.
 // A directory with no report.json at all is not a report-bearing run and
 // is skipped — absence is distinguished from corruption.
 //
@@ -97,9 +100,9 @@ for (const run of entries) {
     }
     if (!briefBuf) fail(`${run}: filing record present but brief.md is missing`);
     if (sha256(briefBuf) !== digest) fail(`${run}: brief.md sha256 does not match its filing record`);
-    const name = `${run}-brief-${digest.slice(0, 12)}.md`;
+    const name = `${run}-brief-${digest}.md`;
     stagedArtifacts.push({ name: `${run} brief`, path: `aivory/artifacts/${name}`, bytes: briefBuf.length,
-      source_ref: `collaboration-framework/live-demo/${run}/brief.md`, buf: briefBuf, file: name });
+      source_ref: `collaboration-framework/live-demo/${run}/brief.md`, buf: briefBuf, file: name, digest });
   }
   runs.push(entry);
 }
@@ -117,20 +120,31 @@ const feed = { kind: "aivory-state-feed", schema_version: 1, generated_at: new D
   provenance: "Projected by aivory/producer from the per-run report.json records under collaboration-framework/live-demo (derived matter, not the record itself).",
   job: { title: JOB.title, target_words: JOB.target_words, floor_words: JOB.floor_words, sources },
   offices: [], historical_runs: runs,
-  artifacts: stagedArtifacts.map(({ buf, file, ...rest }) => rest),
+  artifacts: stagedArtifacts.map(({ buf, file, digest, ...rest }) => rest),
   decisions: null };
 
 const verdict = validateFeed(feed);
 if (!verdict.ok) fail("generated feed does not validate — " + verdict.reason);
 
-// Publication: versioned artifact files are written under temporary
-// names and renamed into place first (new paths — nothing a published
-// feed references is ever replaced), then the feed is renamed last as
-// the single atomic switch to the new generation.
+// Publication: no-clobber for artifacts — a destination that already
+// exists is verified against the filing digest and left untouched; a
+// destination occupied by different content fails closed. New
+// artifacts are written under temporary names and renamed into place.
+// The feed is then renamed last as the single atomic switch.
 await mkdir(artifactsDir, { recursive: true });
-for (const a of stagedArtifacts) await writeFile(path.join(artifactsDir, a.file + ".tmp"), a.buf);
+for (const a of stagedArtifacts) {
+  const dest = path.join(artifactsDir, a.file);
+  let existing = null;
+  try { existing = await readFile(dest); }
+  catch (e) { if (e.code !== "ENOENT") fail(`artifact destination is present but unreadable: ${a.file} (${e.code || e.message})`); }
+  if (existing) {
+    if (sha256(existing) !== a.digest) fail(`artifact destination already occupied by different content: ${a.file}`);
+    continue;
+  }
+  await writeFile(dest + ".tmp", a.buf);
+  await rename(dest + ".tmp", dest);
+}
 await writeFile(outFile + ".tmp", JSON.stringify(feed, null, 2) + "\n", "utf8");
-for (const a of stagedArtifacts) await rename(path.join(artifactsDir, a.file + ".tmp"), path.join(artifactsDir, a.file));
 await rename(outFile + ".tmp", outFile);
 
 const totals = runs.reduce((a, r) => ({ runs: a.runs + 1, events: a.events + r.events, dispatches: a.dispatches + r.dispatches,
