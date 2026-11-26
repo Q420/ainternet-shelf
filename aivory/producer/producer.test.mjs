@@ -23,9 +23,9 @@ async function fixtureRecords() {
     await mkdir(path.dirname(p), { recursive: true });
     await writeFile(p, content);
   };
-  // demo-round6: a completed run with a properly filed brief and a transcript.
+  // demo-round6: a completed run (loop yielded) with a properly filed brief and a transcript.
   await write("demo-round6/report.json", JSON.stringify({
-    loop_result: { ok: true, outcome: "completed", iterations: 2 },
+    loop_result: { ok: true, outcome: "yield", iterations: 2 },
     event_count: 10, dispatches: [{}, {}, {}],
     brief_filed: { sha256: sha256(BRIEF), authored_by: "worker", filed_by: "office" }
   }));
@@ -36,7 +36,7 @@ async function fixtureRecords() {
   await write("demo-round6/run/sandbox/sources/index-tail.md", "CCC");
   // demo-aaa: a stalled run.
   await write("demo-aaa/report.json", JSON.stringify({
-    loop_result: { ok: false, outcome: "stall", iterations: 1 },
+    loop_result: { ok: false, outcome: "stalled", iterations: 1 },
     event_count: 4, dispatches: []
   }));
   // demo-bbb: a declined run.
@@ -158,6 +158,41 @@ test("a failed generation leaves a previously published feed untouched", async (
   const out = path.join(root, "feed.json");
   await writeFile(out, "PREVIOUSLY PUBLISHED");
   const res = runProducer(records, out, path.join(root, "artifacts"));
+  assert.notEqual(res.status, 0);
+  assert.equal(await readFile(out, "utf8"), "PREVIOUSLY PUBLISHED");
+  await rm(root, { recursive: true, force: true });
+});
+
+async function mutateReport(records, run, fn) {
+  const p = path.join(records, run, "report.json");
+  const report = JSON.parse(await readFile(p, "utf8"));
+  fn(report);
+  await writeFile(p, JSON.stringify(report));
+}
+
+test("fails closed when loop_result.outcome is missing", () =>
+  expectFailure(records => mutateReport(records, "demo-aaa", r => { delete r.loop_result.outcome; }),
+    "missing outcome"));
+
+test("fails closed when loop_result.ok is not a boolean", () =>
+  expectFailure(records => mutateReport(records, "demo-aaa", r => { r.loop_result.ok = "false"; }),
+    "non-boolean ok"));
+
+test("fails closed on an unrecognised outcome value", () =>
+  expectFailure(records => mutateReport(records, "demo-aaa", r => { r.loop_result.outcome = "exploded"; }),
+    "unknown outcome"));
+
+test("fails closed on an inconsistent lifecycle pair", () =>
+  expectFailure(records => mutateReport(records, "demo-aaa", r => { r.loop_result.ok = true; }),
+    "ok=true with outcome=stalled"));
+
+test("a blocked artifacts path fails publication and leaves the feed untouched", async () => {
+  const { root, records } = await fixtureRecords();
+  const out = path.join(root, "feed.json");
+  await writeFile(out, "PREVIOUSLY PUBLISHED");
+  const blocked = path.join(root, "artifacts-as-file");
+  await writeFile(blocked, "not a directory");
+  const res = runProducer(records, out, blocked);
   assert.notEqual(res.status, 0);
   assert.equal(await readFile(out, "utf8"), "PREVIOUSLY PUBLISHED");
   await rm(root, { recursive: true, force: true });

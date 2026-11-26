@@ -1,7 +1,7 @@
 {
   "kind": "aivory-state-feed",
   "schema_version": 1,
-  "generated_at": "2026-11-26T03:28:54.187Z",
+  "generated_at": "2026-11-26T03:35:56.572Z",
   "provenance": "Projected by aivory/producer from the per-run report.json records under collaboration-framework/live-demo (derived matter, not the record itself).",
   "job": {
     "title": "Write the standing brief: what the framework is, what has been proven, what is open, the honest next step",

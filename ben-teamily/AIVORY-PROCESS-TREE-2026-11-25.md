@@ -294,3 +294,9 @@ historical runs.
 - S6 Implement: **CLOSED** pending S5 acceptance and Ben's laptop test.
 
 This is a control tree, not permission to bypass its gates.
+
+---
+
+## Builder's addendum (2026-11-25, Gate 3 correction rounds — the examiner's text above stands unaltered)
+
+The statements above that the authoritative feed producer does not yet exist (the Stage 3 prerequisite at line 269 and the status note at line 288) are now out of date. The producer exists at `aivory/producer/producer.mjs`, with its fixture test suite (`producer.test.mjs`) and the standing-record audit (`producer.audit.mjs`); feed v1 is published from it. The receiving-end tests named in the same passage have run (see `ben-teamily/BUILDER-S3-CORRECTED-2026-11-25.md` and the second corrected submission). This addendum records the fact for the examiner's disposition; it does not revise the accepted tree.

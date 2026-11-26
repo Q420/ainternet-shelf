@@ -2,12 +2,17 @@
 // real run records. Spec: ben-teamily/BUILD-SPEC-AIVORY-PRODUCER-2026-11-25.md
 // Usage: node producer.mjs --records <live-demo dir> --out <feed.json> --artifacts-dir <dir>
 //
-// Fails closed (Gate 3 corrections G3-02/G3-03): a report that is present
-// but malformed, unreadable, or structurally incomplete stops generation;
-// a filing record without a well-formed sha256 digest stops generation;
-// a digest mismatch stops generation. Nothing is written on failure:
-// artifacts are staged and copied only after the generated feed validates,
-// and the feed itself is written via a temporary file and rename.
+// Fails closed (Gate 3 corrections G3-02/G3-03; re-examination
+// 2026-11-26): a report that is present but malformed, unreadable, or
+// structurally incomplete stops generation; lifecycle data is validated
+// (loop_result.ok a boolean, loop_result.outcome a recognised value,
+// the pair consistent) before any classification; a filing record
+// without a well-formed sha256 digest stops generation; a digest
+// mismatch stops generation. Generation and validation write nothing.
+// Publication is staged: every file is written under a temporary name
+// first, then renamed into place, the feed renamed last — so a failure
+// before publication leaves the previously published feed and artifacts
+// exactly as they stood.
 // A directory with no report.json at all is not a report-bearing run and
 // is skipped — absence is distinguished from corruption.
 //
@@ -58,13 +63,21 @@ for (const run of entries) {
   if (!report || typeof report !== "object" || Array.isArray(report)) fail(`${run}: report is not an object`);
   const lr = report.loop_result;
   if (!lr || typeof lr !== "object" || Array.isArray(lr)) fail(`${run}: loop_result is missing or malformed`);
+  if (typeof lr.ok !== "boolean") fail(`${run}: loop_result.ok is missing or not a boolean`);
+  if (!["yield", "decline", "stalled"].includes(lr.outcome)) fail(`${run}: loop_result.outcome is missing or not a recognised value (${JSON.stringify(lr.outcome)})`);
   if (!isCount(lr.iterations)) fail(`${run}: loop_result.iterations is missing or not a non-negative integer`);
   if (!isCount(report.event_count)) fail(`${run}: event_count is missing or not a non-negative integer`);
   let dispatches;
   if (Array.isArray(report.dispatches)) dispatches = report.dispatches.length;
   else if (isCount(report.dispatches)) dispatches = report.dispatches;
   else fail(`${run}: dispatches is missing or malformed`);
-  const outcome = lr.ok && lr.outcome !== "decline" ? "completed" : (lr.outcome === "decline" ? "declined" : "stalled");
+  // Classification is defined only for the lifecycle pairs the records
+  // actually carry; any other pair is inconsistent data and fails closed.
+  let outcome;
+  if (lr.ok === true && lr.outcome === "yield") outcome = "completed";
+  else if (lr.ok === true && lr.outcome === "decline") outcome = "declined";
+  else if (lr.ok === false && lr.outcome === "stalled") outcome = "stalled";
+  else fail(`${run}: inconsistent lifecycle pair (ok=${lr.ok}, outcome=${JSON.stringify(lr.outcome)})`);
   const entry = { run, outcome, completed: outcome === "completed",
     iterations: lr.iterations, events: report.event_count, dispatches,
     brief_filed: !!report.brief_filed, brief_words: null,
@@ -107,14 +120,15 @@ const feed = { kind: "aivory-state-feed", schema_version: 1, generated_at: new D
 const verdict = validateFeed(feed);
 if (!verdict.ok) fail("generated feed does not validate — " + verdict.reason);
 
-// Publication happens only after validation: artifacts first, then the
-// feed via a temporary file renamed into place, so a failed generation
-// leaves any previously published feed and artifacts untouched.
+// Publication is staged: all files are written under temporary names
+// first, then renamed into place, artifacts before the feed that
+// references them and the feed last — a failure before or during the
+// writes leaves the previously published generation untouched.
 await mkdir(artifactsDir, { recursive: true });
-for (const a of stagedArtifacts) await writeFile(path.join(artifactsDir, a.file), a.buf);
-const tmpOut = outFile + ".tmp";
-await writeFile(tmpOut, JSON.stringify(feed, null, 2) + "\n", "utf8");
-await rename(tmpOut, outFile);
+for (const a of stagedArtifacts) await writeFile(path.join(artifactsDir, a.file + ".tmp"), a.buf);
+await writeFile(outFile + ".tmp", JSON.stringify(feed, null, 2) + "\n", "utf8");
+for (const a of stagedArtifacts) await rename(path.join(artifactsDir, a.file + ".tmp"), path.join(artifactsDir, a.file));
+await rename(outFile + ".tmp", outFile);
 
 const totals = runs.reduce((a, r) => ({ runs: a.runs + 1, events: a.events + r.events, dispatches: a.dispatches + r.dispatches,
   iterations: a.iterations + r.iterations, filed: a.filed + (r.brief_filed ? 1 : 0),
