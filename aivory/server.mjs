@@ -1,4 +1,5 @@
 import http from "node:http";
+import { randomUUID } from "node:crypto";
 import { readFile, mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -66,7 +67,7 @@ const server = http.createServer(async (req, res) => {
       const text = typeof input.text === "string" ? input.text.trim() : "";
       if (!text || text.length > 8000) return send(res, 400, { error: "Job text must be 1–8000 characters" });
       const time = stamp();
-      const job = { id: crypto.randomUUID(), text, time, status: "QUEUED", created_at: new Date().toISOString() };
+      const job = { id: randomUUID(), text, time, status: "QUEUED", created_at: new Date().toISOString() };
       state.jobs.push(job);
       ensureThread("orchestrator");
       state.messages.orchestrator.push(
