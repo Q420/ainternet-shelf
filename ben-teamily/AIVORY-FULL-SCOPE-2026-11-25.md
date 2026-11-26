@@ -5,8 +5,9 @@ Part A: the vision as ruled (VISION v5 — carries Ben's briefcase ruling,
 the office-is-the-role principle, and the name AIvory).
 Part B: the dashboard scope (Ben's words, the B2 layout, the live wire,
 the look, the acceptance).
-Part C: the examiner's UI design, as received.
 Nothing in this file is a summary. The parts follow.
+(Rebuilt 2026-11-25 19:11 MST at Ben's order: the examiner's UI design was
+removed — it was produced without this full scope and is not part of it.)
 
 ============================================================
 PART A — THE VISION (v5, whole)
@@ -359,60 +360,3 @@ Ben opens it, hands the Orchestrator a job in his own words, watches the
 office appear and the room work, posts in the chats like chats — and
 recognises his office, or he doesn't. A single run state found inside a
 chat view fails the build. A single invented figure fails the build.
-
-============================================================
-PART C — THE EXAMINER'S UI DESIGN (as received, whole)
-============================================================
-
-# VANE'S AIVORY UI DESIGN — 2026-11-25 (received via Pulse Bridge, PB-ID pb-mwwwvn49-v-el9w)
-
-Filed verbatim as received. Vane authored it from the shelved scope
-(ben-teamily/AIVORY-DASHBOARD-SCOPE-2026-11-25.md), the vision, and the live
-state feed. Status at filing: Ben halted all AIvory work the same evening;
-this design is UNBUILT and awaits his direction.
-
----
-
-AIvory · Dashboard — DESIGN BUILD, FEED INSPECTED
-
-"Ben, I've read all three shelf artifacts: the complete dashboard scope, the
-vision, and the actual live state feed. I'm treating the scope as the
-authority for this build, not an invitation to reinterpret the product. The
-central design decision: this is an operating dashboard for a real agent
-workforce, not a collection of chatbot windows and not a pretend office."
-
-Layout as she rendered it (text form):
-- Header: A I V O R Y / STATE FEED LOADED / HUMAN-DIRECTED WORKFORCE — CONTROL DESK
-- Left navigation: CHATS (Orchestrator, Collaboration Room); OFFICES ("No
-  office identities supplied by the current feed."); VIEWS (Shared
-  Briefcase, Output, Resources); DECISIONS ("No decisions waiting.");
-  footnote: "Local navigation prototype. No live dispatch or chat transport
-  connected."
-- Current workspace: "Standing brief / framework stock-take"
-- Work strip: the standing brief job text; stock-take.md 11.7 KB ·
-  a3-pass.md 4.6 KB · index-tail.md 40.0 KB; 17 RUNS; "Feed timestamp: not
-  supplied"
-- Orchestrator stage: SYSTEM COORDINATION / SYSTEM STATUS "Ready for
-  direction"; "No conversation transcript is supplied in the feed. Submit a
-  task to create a queued job request when application persistence is
-  connected."; input labelled "Direct the office — Draft task · Dispatch
-  not connected"; "This prototype does not submit or store the message. No
-  agent will be represented as started."
-- LIVE RUN RECORD: 17 RECORDS — 4 COMPLETED / 12 STALLED / 1 DECLINED, then
-  the run-by-run record with each run's true model, events and dispatches
-  (demo-glm1 46/3; demo-gptoss1 46/3; gptoss2 44/3; gptoss3 44/3; gptoss4
-  21/0; gptoss5 47/6; nemotron1 21/0; nemotron2 DECLINED 26/0; nemotron3
-  114/12; nemotron4 102/8; nemotron5 45/3; nemotron6 45/3; quinn1 62/5;
-  round10 COMPLETED 78/7; round6 COMPLETED 51/3; round7 COMPLETED 30/1;
-  round9 COMPLETED 53/2). SOURCE: AIVORY STATE FEED — READ-ONLY SNAPSHOT.
-- Her notes: the design follows B2 (left nav; persistent work strip; one
-  stage at a time; real chat surfaces separated from journals and records;
-  briefcase with measured source sizes; the run record exposing actual
-  outcomes). The figures are calculated from the shelf feed.
-- The implementation boundary she named: this is the interface prototype,
-  not a claim the production dashboard is wired. Next layer: server-side
-  feed retrieval on first open; manual + 15-minute refresh; real
-  aggregation and feed-unreachable behaviour; persisted human chat messages
-  and queued jobs; framework dispatch for actual agent generation; real
-  transcripts, office journals, records, resource telemetry. "A queued task
-  must never masquerade as a running agent."
