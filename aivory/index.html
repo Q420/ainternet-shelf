@@ -50,7 +50,7 @@
   <button class="navitem" data-view="output"><span class="navglyph">↗</span><span class="navname">Output</span></button>
   <button class="navitem" data-view="resources"><span class="navglyph">⌁</span><span class="navname">Resources</span></button>
  </nav>
- <div class="decision"><div class="decision-title">DECISIONS</div><div class="decision-empty" id="decisionState">No decisions waiting</div></div>
+ <div class="decision"><div class="decision-title">DECISIONS</div><div class="decision-empty" id="decisionState">Decision state not published by feed</div></div>
 </aside>
 <main class="main">
  <div class="mobilebar"><div class="mobilebrand">AI<span>V</span>ORY</div><select id="mobileSelect" aria-label="Select chat or view"></select></div>
@@ -139,7 +139,7 @@
    $("stage").innerHTML=stageHead("Orchestrator","The front door to the office. System replies report only actions this interface actually performs.","COORDINATION")+
    '<div class="columns">'+chatPanel(key,"Describe the work to assign…",false)+'<div class="stack"><section class="panel"><div class="panelhead"><div class="paneltitle">Assignment</div><div class="panelhint">FROM LIVE FEED</div></div><div class="panelbody">'+
    '<div class="recordname">'+esc(feed.job?.title||"No assignment published")+'</div><div class="recorddetail">Target: <b>'+(feed.job?.target_words==null?"Not published":fmt(feed.job.target_words)+" words")+'</b><br>Floor: <b>'+(feed.job?.floor_words==null?"Not published":fmt(feed.job.floor_words)+" words")+'</b></div></div></section>'+
-   '<section class="panel"><div class="panelhead"><div class="paneltitle">Queued requests</div><div class="panelhint">THIS BROWSER</div></div><div class="panelbody">'+(local.jobs.length?local.jobs.map(j=>'<div class="recordrow"><div class="recordname">QUEUED · '+esc(j.time)+'</div><div class="recorddetail">'+esc(j.text)+'</div></div>').join(""):'<div class="emptyfact">No job requests have been saved on the dashboard server.</div>')+'</div></section>'+
+   '<section class="panel"><div class="panelhead"><div class="paneltitle">Queued requests</div><div class="panelhint">SERVER PERSISTENCE</div></div><div class="panelbody">'+(local.jobs.length?local.jobs.map(j=>'<div class="recordrow"><div class="recordname">QUEUED · '+esc(j.time)+'</div><div class="recorddetail">'+esc(j.text)+'</div></div>').join(""):'<div class="emptyfact">No job requests have been saved on the dashboard server.</div>')+'</div></section>'+
    '<div class="smallnote">Dispatch wiring is the next layer. Saving a request here does not create or start a framework agent.</div></div></div>';
   }else if(key==="collaboration"){
    const merged=messages(key);
