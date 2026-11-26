@@ -28,8 +28,11 @@ export function validateFeed(data) {
     for (const office of data.offices) {
       if (!office || typeof office.id !== "string" || typeof office.role !== "string" || typeof office.status !== "string") return fail("current office identity/status is malformed");
       if (office.occupant !== undefined && office.occupant !== null && typeof office.occupant !== "string") return fail("office occupant is malformed");
-      if (office.journal !== undefined && !Array.isArray(office.journal)) return fail("office journal is malformed");
-      if (office.transcript !== undefined && !Array.isArray(office.transcript)) return fail("office transcript is malformed");
+      if (office.journal !== undefined && (!Array.isArray(office.journal) || !office.journal.every(entry => entry && typeof entry === "object" && !Array.isArray(entry)))) return fail("office journal is malformed");
+      if (office.transcript !== undefined && (!Array.isArray(office.transcript) || !office.transcript.every(message =>
+        message && typeof message === "object" && !Array.isArray(message) &&
+        ((typeof message.author === "string" && typeof message.text === "string") ||
+         (typeof message.role === "string" && typeof message.content === "string"))))) return fail("office transcript is malformed");
       if (office.record !== undefined && (!office.record || typeof office.record !== "object" || Array.isArray(office.record))) return fail("office record is malformed");
       for (const ref of ["journal_ref", "record_ref", "transcript_ref", "briefcase_folder"]) {
         if (office[ref] !== undefined && typeof office[ref] !== "string") return fail("office source reference is malformed: " + ref);
