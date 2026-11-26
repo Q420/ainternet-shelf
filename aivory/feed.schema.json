@@ -4,25 +4,58 @@
   "title": "AIvory State Feed v1",
   "type": "object",
   "additionalProperties": true,
-  "required": ["kind", "schema_version", "generated_at", "job", "offices", "historical_runs", "artifacts", "decisions"],
+  "required": [
+    "kind",
+    "schema_version",
+    "generated_at",
+    "job",
+    "offices",
+    "historical_runs",
+    "artifacts",
+    "decisions"
+  ],
   "properties": {
-    "kind": { "const": "aivory-state-feed" },
-    "schema_version": { "const": 1 },
-    "generated_at": { "type": "string", "format": "date-time" },
+    "kind": {
+      "const": "aivory-state-feed"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "job": {
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "target_words": { "type": "integer", "minimum": 0 },
-        "floor_words": { "type": "integer", "minimum": 0 },
+        "title": {
+          "type": "string"
+        },
+        "target_words": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "floor_words": {
+          "type": "integer",
+          "minimum": 0
+        },
         "sources": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["path", "bytes"],
+            "required": [
+              "path",
+              "bytes"
+            ],
             "properties": {
-              "path": { "type": "string", "minLength": 1 },
-              "bytes": { "type": "integer", "minimum": 0 }
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              }
             }
           }
         }
@@ -32,18 +65,95 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "role", "status"],
+        "required": [
+          "id",
+          "role",
+          "status"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "role": { "type": "string", "minLength": 1 },
-          "occupant": { "type": ["string", "null"] },
-          "assignment": { "type": "string" },
-          "status": { "type": "string", "minLength": 1 },
-          "run_id": { "type": "string" },
-          "journal_ref": { "type": "string" },
-          "record_ref": { "type": "string" },
-          "transcript_ref": { "type": "string" },
-          "briefcase_folder": { "type": "string" }
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "occupant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assignment": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "journal_ref": {
+            "type": "string"
+          },
+          "record_ref": {
+            "type": "string"
+          },
+          "transcript_ref": {
+            "type": "string"
+          },
+          "briefcase_folder": {
+            "type": "string"
+          },
+          "journal": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "transcript": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "author",
+                "text"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "record": {
+            "type": "object"
+          }
         }
       }
     },
@@ -51,19 +161,56 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["run", "outcome", "iterations", "events", "dispatches"],
+        "required": [
+          "run",
+          "outcome",
+          "iterations",
+          "events",
+          "dispatches"
+        ],
         "properties": {
-          "run": { "type": "string", "minLength": 1 },
-          "model": { "type": "string" },
-          "outcome": { "type": "string", "minLength": 1 },
-          "completed": { "type": "boolean" },
-          "iterations": { "type": "integer", "minimum": 0 },
-          "events": { "type": "integer", "minimum": 0 },
-          "dispatches": { "type": "integer", "minimum": 0 },
-          "brief_filed": { "type": "boolean" },
-          "brief_words": { "type": ["integer", "null"], "minimum": 0 },
-          "report_ref": { "type": "string" },
-          "transcript_ref": { "type": "string" }
+          "run": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "iterations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "events": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "dispatches": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "brief_filed": {
+            "type": "boolean"
+          },
+          "brief_words": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "report_ref": {
+            "type": "string"
+          },
+          "transcript_ref": {
+            "type": "string"
+          }
         }
       }
     },
@@ -71,12 +218,24 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["path"],
+        "required": [
+          "path"
+        ],
         "properties": {
-          "name": { "type": "string" },
-          "path": { "type": "string", "minLength": 1 },
-          "bytes": { "type": "integer", "minimum": 0 },
-          "source_ref": { "type": "string" }
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source_ref": {
+            "type": "string"
+          }
         }
       }
     },
@@ -84,12 +243,27 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "title", "status"],
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 },
-          "status": { "type": "string", "minLength": 1 },
-          "source_ref": { "type": "string" }
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_ref": {
+            "type": "string"
+          }
         }
       }
     }
