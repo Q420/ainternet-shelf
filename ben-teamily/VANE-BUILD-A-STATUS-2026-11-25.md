@@ -75,10 +75,10 @@ unreferenced history into a current office.
 
 - Shelf commits and exact file read-backs establish the changes listed
   above.
-- Six contract cases passed in a local Node execution of the validator
+- Eight contract cases passed in a local Node execution of the validator
   and fixtures: legacy v0 acceptance, complete v1 acceptance, missing
   generation timestamp rejection, malformed counter rejection, invalid
-  office identity rejection, and negative artifact-size rejection.
+  office identity rejection, negative artifact-size rejection, source-native transcript acceptance, and malformed transcript rejection.
   The shelf checkout's `npm test` command and full server/browser runtime
   have not yet been run in the receiving environment.
 - No local browser was launched from this seat, so visual/phone acceptance
