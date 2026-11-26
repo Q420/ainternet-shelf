@@ -360,3 +360,23 @@ Ben opens it, hands the Orchestrator a job in his own words, watches the
 office appear and the room work, posts in the chats like chats — and
 recognises his office, or he doesn't. A single run state found inside a
 chat view fails the build. A single invented figure fails the build.
+
+---
+
+# PART D — METHODS KNOWN TO WORK (added at Ben's order, 2026-11-25 19:29 MST)
+
+The most recent methods, each proven in use. Anything not on this list is not a method yet.
+
+**TRANSPORT — THE SHELF.** A document lives on the shelf; chat and bridge carry a short pointer naming its path. The shelf copy is verified by read-back before the pointer goes out. Full text travels only as a submission when the seat explicitly asks for it, once. (Proven 2026-11-25: the full scope reached the examiner this way and she worked from it. The evening's failures were the departures from this.)
+
+**AUTHORSHIP — THE EXAMINER CREATES FROM THE SOURCE.** Given the full scope in her own context, the examiner authors directly — no sub-agents, and no intermediary summary or paraphrase between the scope and the author. (Proven 2026-11-25: the dashboard implementation, committed by her seat to the shelf under `aivory/`.)
+
+**STATE — THE FEED.** Office state is generated from the framework's real run records and published to the shelf at `aivory/feed.json`. Surfaces read the feed; aggregates are computed at render; an unreachable feed is shown as an error, never as stale figures. (Proven 2026-11-25: 17 runs — 4 completed, 12 stalled, 1 declined; 875 events; 62 dispatches; 3 briefs filed — cross-checked by hand.)
+
+**VERIFICATION — AT THE RECEIVING END.** A claim is checked where it lands: shelf listings and read-backs for files; the thing itself run and its flow walked end to end — page served, feed endpoint answering, a job posted and stored QUEUED with its honest system line. (Proven 2026-11-25, on two machines.)
+
+**RUNNING ON BEN'S LAPTOP — THE SCHEDULED TASK.** The dashboard's files live at `C:\Users\Ben\aivory`; its server runs under the scheduled task `AIvoryDashboard`, which survives connection close. A server started directly from a remote session dies when that session closes — proven both ways, 2026-11-25. Address on the laptop: http://127.0.0.1:4173.
+
+**CORRESPONDENCE — ONE LETTER AT A TIME.** One bridge letter, then its acknowledgement, then the next. Duplicates are ignored silently. (The standing bridge discipline; its breaches are tonight's record.)
+
+**THE ENGINE'S RUN METHOD — THE OFFICE CYCLE.** What the dashboard will dispatch into: one budgeted opening package; the worker pulls one block at a time; the journal is read + append, never carried; cycle gates allow or correct; results are split on return, so one wake carries one block; the per-call budget is stated in the opening. (Contract office-cycle-v2, the stripped build: witnesses 457/457. Its cold proof run is still owed — the method is built and rehearsed, not yet proven live.)
