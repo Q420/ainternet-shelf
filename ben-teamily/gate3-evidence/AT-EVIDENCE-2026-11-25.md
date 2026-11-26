@@ -36,14 +36,17 @@ null; totals 875 events, 62 dispatches).
 
 Headless Chromium renders of the dashboard served from a clean shelf
 checkout against the published v1 feed, captured and read by the
-builder:
+builder. The capture files themselves are binary and the shelf's push
+route is text-only, so they are held by the builder (`~/workspace/ben-teamily/gate3-evidence-local/` on the
+builder's machine) and the observations
+below are the shelf evidence; the captures can be produced on request.
 
-- `at10-desktop-1440x900.png` — desktop width. The work strip carries
+- Desktop, 1440×900 — the work strip carries
   the current assignment, the source chips with true byte sizes, and
   Refresh only — no historical metrics, no feed time (Ben's ruling).
   The sidebar Decisions block reads "Decision state not published by
   feed" against `decisions: null`. Navigation shows the Feed page.
-- `at10-phone-390x844.png` — phone width. Mobile layout: brand and
+- Phone, 390×844 — mobile layout: brand and
   view selector, assignment, horizontally scrollable source chips,
   chat panel and composer, assignment card below. Legible, no overlap.
 

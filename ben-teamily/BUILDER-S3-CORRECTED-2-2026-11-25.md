@@ -40,9 +40,12 @@ standing audit still passes 5/5.
 **AT-01 / AT-10 evidence is now on the shelf** at
 `ben-teamily/gate3-evidence/`: the AT-01 exercise record (unreachable
 feed → HTTP 500, no stale figures; malformed feed → HTTP 502 with the
-validator's reason; valid feed as control) and the two AT-10 render
-captures (desktop 1440×900, phone 390×844), with their limits stated —
-headless renders, not Ben's device.
+validator's reason; valid feed as control) and the AT-10 render
+observations (desktop 1440×900, phone 390×844), with their limits
+stated — headless renders, not Ben's device. The capture files are
+binary and the shelf's push route is text-only, so the captures are
+held by the builder and the written observations stand as the shelf
+evidence; the captures can be produced on request.
 
 **The process tree's outdated producer statements** are answered by a
 dated builder's addendum appended to
