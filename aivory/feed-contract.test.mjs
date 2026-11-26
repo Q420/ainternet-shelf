@@ -23,6 +23,16 @@ test("accepts a complete version 1 feed", () => {
   assert.deepEqual(validateFeed(v1), { ok: true, version: 1, reason: null });
 });
 
+test("accepts version 1 with the decision inventory unavailable (null)", () => {
+  const unavailable = { ...v1, decisions: null };
+  assert.deepEqual(validateFeed(unavailable), { ok: true, version: 1, reason: null });
+});
+
+test("rejects version 1 with a malformed decisions value", () => {
+  const broken = { ...v1, decisions: "none" };
+  assert.equal(validateFeed(broken).ok, false);
+});
+
 test("rejects version 1 without its own generation timestamp", () => {
   const broken = { ...v1 };
   delete broken.generated_at;

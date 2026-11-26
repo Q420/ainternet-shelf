@@ -12,7 +12,10 @@ export function validateFeed(data) {
     if (!Array.isArray(data.offices)) return fail("offices collection is required");
     if (!Array.isArray(data.historical_runs)) return fail("historical_runs collection is required");
     if (!Array.isArray(data.artifacts)) return fail("artifacts collection is required");
-    if (!Array.isArray(data.decisions)) return fail("decisions collection is required");
+    // The decision inventory is either a published array or null, which
+    // means unavailable: no decision source exists. Null is never read
+    // as an empty queue (Gate 3 correction G3-05).
+    if (data.decisions !== null && !Array.isArray(data.decisions)) return fail("decisions must be an array or null (unavailable)");
   }
 
   const runs = version === 1 ? data.historical_runs : data.runs;
@@ -42,7 +45,7 @@ export function validateFeed(data) {
       if (!artifact || typeof artifact.path !== "string") return fail("artifact path is malformed");
       if (artifact.bytes !== undefined && (!Number.isFinite(artifact.bytes) || artifact.bytes < 0)) return fail("artifact byte size is malformed");
     }
-    for (const decision of data.decisions) {
+    for (const decision of data.decisions ?? []) {
       if (!decision || typeof decision.id !== "string" || typeof decision.title !== "string" || typeof decision.status !== "string") return fail("decision record is malformed");
     }
   }
