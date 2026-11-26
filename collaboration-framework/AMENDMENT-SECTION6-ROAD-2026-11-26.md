@@ -1,12 +1,23 @@
 # AMENDMENT — Plan §6 (The Road), 2026-11-26
 
-**Status:** DRAFT for the examiner. Ordered by Ben, 2026-11-26 01:33 MST
-("Implement it"), on the strength of the research brief of the same night
-(`agent-token-budgeting-practices`, research notes 2026-11-26). This paper
-amends §6 of `PLAN-OFFICE-CYCLE-2026-11-25.md`. It changes nothing until
-the examiner has examined it and Ben rules. The §6 accounting fix built
-earlier tonight (the budget binds the whole rendered request) stands as
-built; this amendment decides what replaces the regime it corrected.
+**Status:** ACCEPTED by Ben, 2026-11-26 01:43 MST ("Accepted"), WITH the
+examiner's refinements and figures (VANE-EXAMINATION-SECTION6-AMENDMENT-
+2026-11-26.md), which form part of the ruled design: o200k_harmony
+counting over the provider-equivalent rendered conversation with
+predicted-vs-actual reconciliation and output reserved separately; a
+shared route-wide token bucket with atomic reservations and Retry-After
++ bounded backoff on 429 (65-second pacing interim only); spill
+threshold 4,096 counted tokens (preview ≤512) sealed at assembly;
+shedding from 70% of the window, hard boundary 80%, the running total
+being the actual assembled next-request context; the run budget sealed
+by the office at stocking; budget-refusal retired from new contracts.
+The build proceeds as a separate scope with its own process tree.
+Ordered by Ben, 2026-11-26 01:33 MST ("Implement it"), on the strength
+of the research brief of the same night (`agent-token-budgeting-
+practices`, research notes 2026-11-26). This paper amends §6 of
+`PLAN-OFFICE-CYCLE-2026-11-25.md`. The §6 accounting fix built earlier
+tonight (the budget binds the whole rendered request) stands as built;
+this amendment decides what replaces the regime it corrected.
 
 **Ben's words for why:** "What we're doing over and over isn't working.
 I have to know when to let the outside influence me."
