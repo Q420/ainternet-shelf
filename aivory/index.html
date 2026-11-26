@@ -153,7 +153,7 @@
    '<section class="panel"><div class="panelhead"><div class="paneltitle">Journal</div><div class="panelhint">SOURCE ENTRIES</div></div><div class="panelbody">'+(Array.isArray(office.journal)&&office.journal.length?office.journal.map(j=>'<div class="recordrow"><div class="recordname">'+esc(j.title||j.date||"Journal entry")+'</div><div class="recorddetail">'+esc(j.text||j.summary||"")+'</div></div>').join(""):'<div class="emptyfact">No journal entries are published for this office.</div>')+'</div></section>'+
    '<section class="panel"><div class="panelhead"><div class="paneltitle">Record</div><div class="panelhint">AUTHORITATIVE RECORD</div></div><div class="panelbody">'+(office.record?'<div class="recorddetail">'+esc(JSON.stringify(office.record))+'</div>':'<div class="emptyfact">No record details are published for this office.</div>')+'</div></section>'+
    '<div class="smallnote">'+(Array.isArray(office.transcript)&&office.transcript.length?"A source transcript is available.":"No transcript is published for this office.")+'</div></div></div>';
-   const log=$("chatlog");if(log&&Array.isArray(office.transcript)&&office.transcript.length){log.innerHTML=office.transcript.map(m=>chatMessage({kind:m.kind,author:m.author||m.role,time:m.time,text:m.text||m.content})).join("")+log.innerHTML;}
+   const log=$("chatlog");if(log&&Array.isArray(office.transcript)&&office.transcript.length){log.innerHTML=office.transcript.map(m=>chatMessage({kind:m.kind,author:m.author||m.role,time:m.time,text:m.text||m.content})).join("")+messages(key).map(chatMessage).join("");}
 
   }
  }
