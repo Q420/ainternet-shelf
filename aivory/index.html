@@ -200,24 +200,12 @@
  document.addEventListener("submit",async e=>{
   const form=e.target.closest("[data-composer]");if(!form)return;
   e.preventDefault();const key=form.dataset.composer;const field=form.elements.message;const value=field.value.trim();if(!value)return;
-  const now=new Date().toLocaleString();const send=form.querySelector("button");send.disabled=true;
-  if(key==="orchestrator"){
-   const result=await serverPost("/api/jobs",{text:value});
-   if(result?.state){local=result.state;saveLocal()}
-   else{
-    const job={text:value,time:now,id:Date.now()};local.jobs.push(job);
-    pushMessage(key,{kind:"user",author:"BEN",time:now,text:value});
-    pushMessage(key,{kind:"system",author:"SYSTEM",time:now,text:"Server storage unavailable. Request saved in this browser only; it is not in the framework queue."});
-   }
-  }else{
-   const result=await serverPost("/api/messages",{key,text:value});
-   if(result?.state){local=result.state;saveLocal()}
-   else{
-    pushMessage(key,{kind:"user",author:"BEN",time:now,text:value});
-    if(key!=="collaboration")pushMessage(key,{kind:"system",author:"SYSTEM",time:now,text:"QUEUED · Message saved in this browser only. Live office conversation wiring is not connected."});
-   }
-  }
-  field.value="";render();
+  const send=form.querySelector("button");send.disabled=true;field.setCustomValidity("");
+  const result=key==="orchestrator"
+   ? await serverPost("/api/jobs",{text:value})
+   : await serverPost("/api/messages",{key,text:value});
+  if(!result?.state){send.disabled=false;field.setCustomValidity("Server storage failed. The message was not saved.");field.reportValidity();return}
+  local=result.state;stateReady=true;field.value="";render();
  });
  async function boot(){await loadPersisted();await loadFeed()}
  boot();
