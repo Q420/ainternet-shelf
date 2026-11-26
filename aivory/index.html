@@ -70,18 +70,14 @@
  const $ = (id) => document.getElementById(id);
  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const fmt = (n) => Number(n).toLocaleString("en-CA");
- let feed = null, feedError = false, updatedAt = null, active = "orchestrator";
- let local = loadLocal();
- let refreshTimer = null;
-
- function loadLocal(){try{return JSON.parse(localStorage.getItem(STORE_KEY)) || {messages:{},jobs:[]}}catch{return {messages:{},jobs:[]}}}
- function saveLocal(){try{localStorage.setItem(STORE_KEY,JSON.stringify(local))}catch{}}
- async function loadPersisted(){try{const r=await fetch("/api/state",{cache:"no-store"});if(!r.ok)throw new Error("state unavailable");const data=await r.json();if(data&&data.messages&&Array.isArray(data.jobs)){local=data;saveLocal()}}catch{}}
+ let feed = null, feedError = false, active = "orchestrator", stateReady = false, refreshTimer = null;
+ let local = {messages:{},jobs:[]};
+ async function loadPersisted(){try{const r=await fetch("/api/state",{cache:"no-store"});if(!r.ok)throw new Error("state unavailable");const data=await r.json();if(!data||!data.messages||!Array.isArray(data.jobs))throw new Error("invalid state");local=data;stateReady=true}catch{stateReady=false}}
  async function serverPost(path,payload){try{const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok)return null;return await r.json()}catch{return null}}
  function messages(key){return local.messages[key] || []}
- function pushMessage(key,msg){local.messages[key] ||= [];local.messages[key].push(msg);saveLocal()}
- function allRuns(){return Array.isArray(feed?.runs) ? feed.runs : []}
- function runFor(id){return allRuns().find(r=>r.run===id)}
+ function allRuns(){return Array.isArray(feed?.historical_runs)?feed.historical_runs:(Array.isArray(feed?.runs)?feed.runs:[])}
+ function allOffices(){return Array.isArray(feed?.offices)?feed.offices:[]}
+ function officeFor(id){return allOffices().find(o=>o.id===id)}
  function officeKey(id){return "office:"+id}
  function statusClass(v){return ["completed","stalled","declined"].includes(v)?v:""}
  function total(key){return allRuns().reduce((s,r)=>s+(Number(r[key])||0),0)}
