@@ -1,62 +1,43 @@
-# Gate 3 third re-examination — S3 (Build A)
+# Gate 3 — third corrected S3 re-examination
 
 Date: 2026-11-26
 Examiner: Vane
 Submission: `ben-teamily/BUILDER-S3-CORRECTED-3-2026-11-25.md`
-Pulse Bridge: `pb-mwx09oa3-a-daff`
-Basis: `VANE-GATE-3-REEXAMINATION-2-2026-11-26.md`
+PB-ID: `pb-mwx09oa3-a-daff`
+Basis: `VANE-GATE-3-REEXAMINATION-2-2026-11-26.md`, read-back SHA `f85bf825879bd568a82ee154267236354e1a245f`.
 
-## Result
+## Disposition
 
-**CORRECTION REQUIRED. Gate 3 is not recommended for passage yet. S3 remains open. S4 and S5 remain closed.**
+**CORRECTION REQUIRED. Gate 3 is not recommended for passage on this submission. S3 remains open; S4 and S5 remain closed.**
 
-The submission materially improves publication safety and adds the two requested failure-path tests. However, source read-back reveals two remaining gaps against the required immutable-artifact and standing-generation guarantees.
+The immutable, content-versioned artifact strategy is the correct architectural correction. The producer source implements digest-bearing artifact filenames, no-clobber reuse of matching existing artifacts, rejection of conflicting content, and feed rename last. This removes the prior-generation overwrite hazard for published artifact paths.
 
-## Verified improvements
+However, the required test of failure during a later artifact rename is not present in the submitted test source. The test titled “an occupied artifact destination blocks publication and leaves the standing generation byte-identical” creates a directory at the new artifact destination. In the producer, the destination is first read with `readFile(dest)`; that operation fails on the directory (EISDIR), and the producer fails before writing the temporary artifact and before calling `rename(dest + ".tmp", dest)`. It therefore tests a destination-inspection failure, not a failure during a later artifact rename after an earlier new artifact has been committed.
 
-1. Lifecycle validation remains fail-closed: `ok` must be boolean, outcome must be recognised, iterations must be a non-negative integer, and only the three observed consistent lifecycle pairs are classified.
-2. Artifact paths now include a filing-digest prefix, and the feed is renamed after staged artifacts.
-3. The later-artifact-rename test creates a changed round-7 artifact path that is blocked by a directory. It captures the standing feed and all referenced artifact bytes, induces failure, then verifies those bytes remain identical.
-4. The feed-rename test exercises a blocked feed destination and verifies its sentinel and standing artifact bytes.
-5. The submitted test suite contains 15 producer tests plus 10 feed-contract tests. The claimed clean-checkout result (25/25) is builder-reported; it was not independently rerun by the examiner.
-6. The published feed contains three digest-suffixed artifact paths and the reported historical totals remain 17 runs (4 completed, 12 stalled, 1 declined), 875 events, 62 dispatches, 80 iterations, and 3 filed briefs.
-7. The three older unversioned artifact files remain as unreferenced shelf leftovers, as disclosed by the builder. The current feed does not reference them.
+The final feed-rename failure test does exercise a failure at the final rename and verifies the old feed and its referenced artifact bytes remain unchanged. Its test is conditional on running as root so it can drop privileges; on non-root test runs it is skipped. The builder's claimed clean-checkout result should state whether this test ran or skipped.
 
-## Remaining findings
+## Verified
 
-### G3-06 — Versioned artifact paths are still replaceable
+1. Lifecycle validation remains fail-closed: `ok` must be boolean, outcome must be recognised, iterations must be a non-negative integer, and only the observed consistent lifecycle pairs are classified.
+2. Artifact names are content-versioned using the full filing SHA-256 digest.
+3. Existing artifact destinations are read and checked against the digest; matching files are reused without replacement, conflicting content fails closed.
+4. The feed is renamed after artifact publication.
+5. The feed-rename failure test captures the standing feed and artifact bytes, forces the final rename to fail using filesystem permissions and an unprivileged child process, then byte-compares the standing generation.
+6. The current published feed points to three versioned artifact paths. Its historical totals and source projection remain as described in the submission. The producer remains a projection from per-run `report.json` records, not the raw event stream.
+7. S4 and S5 remain closed; this submission does not add framework dispatch or live conversation transport.
 
-The producer names artifacts using only the first 12 hexadecimal characters of the SHA-256 digest:
+## Required return
 
-`<run>-brief-<digest.slice(0, 12)>.md`
+Add a real fault-injection test that causes a later artifact `rename(temp, destination)` to fail **after at least one earlier new artifact rename has succeeded**. Verify after the failure that:
+- the old feed is byte-identical;
+- every artifact referenced by that old feed is byte-identical;
+- the producer exits non-zero; and
+- the test proves the failure occurred at the intended later rename, rather than at destination inspection or staging.
 
-It then unconditionally calls `rename(tempPath, finalPath)` for every artifact on every generation. This replaces an existing destination on platforms with ordinary rename-overwrite semantics, even when the destination is already referenced by the standing feed. In the ordinary unchanged-generation case, the replacement bytes may be identical, but the path is not immutable. More importantly, a different content digest with the same 12-character prefix would target the same path and overwrite the old artifact, allowing an old feed to resolve to new bytes.
+A narrow injectable filesystem/rename seam or equivalent deterministic fault injection is acceptable. Preserve immutable content-versioned paths and feed-last publication.
 
-Required correction:
-- Use the full SHA-256 digest in the artifact filename.
-- Publish each versioned artifact without replacing an existing destination. If the exact destination already exists, verify its full content digest/bytes and leave it untouched; fail closed if it differs. Use a no-clobber publication primitive or equivalent race-safe approach rather than unconditional rename-overwrite.
-- Add tests proving a second generation does not replace an existing same-content artifact, and that an occupied versioned destination with different bytes is not overwritten and causes publication to fail without changing the standing generation.
+There is also a test-count discrepancy to reconcile. The submitted `producer.test.mjs` contains 17 actual `test(...)` declarations (lines 76–282); `feed-contract.test.mjs` contains 10. That is 27 declared tests, not the submission's stated 15 producer + 10 contract = 25. One producer test is conditional and may be skipped on non-root runs, but it remains a declared test. Report the actual clean-checkout test summary, including skips, and reconcile the claimed count.
 
-### G3-07 — Feed-rename failure test does not preserve the prior feed
+## Gate state
 
-The feed-rename test first executes `rm(standing.out)`, then creates a directory at that path containing a sentinel. This removes the previously published feed before the producer is run. The test subsequently checks the sentinel and artifact bytes, but it cannot assert that the previous feed remains byte-identical because that feed has already been deleted.
-
-Required correction:
-- Inject failure specifically at the final feed-rename operation while leaving the existing feed file in place.
-- After failure, compare the prior feed bytes and every artifact referenced by that feed byte-for-byte against their pre-run captures.
-- Keep the failure injection isolated to the test harness; do not simulate the failure by deleting or replacing the standing feed before the producer starts.
-
-## Other boundaries and evidence
-
-- Feed values remain explicitly described as projections from per-run `report.json` records, not raw event exports.
-- `decisions: null` continues to mean unavailable, not an empty queue.
-- Empty current-office inventory remains distinct from historical runs.
-- No framework dispatch, worker execution, or live conversation transport was added.
-- The AT-01/AT-10 written evidence remains builder-observed with the previously stated limitations; underlying captures are not independently inspectable on the shelf. Ben retains the sufficiency ruling.
-- The process-tree addendum remains a factual update to the accepted baseline, not a rewrite of it.
-
-## Return required
-
-Remmy should correct G3-06 and G3-07, add the specified tests, publish the revised source and test evidence, and submit for another examination. No implementation or stage-opening authority is implied by this examination.
-
-**Disposition: Gate 3 not passed. S3 open. S4/S5 closed pending Ben's explicit ruling.**
+S3 remains open pending the later-artifact-rename fault-injection test and accurate test-run accounting. S4 and S5 remain closed. Ben retains the Gate 3 ruling, including disposition of the previously submitted AT-01/AT-10 builder-observed evidence.
