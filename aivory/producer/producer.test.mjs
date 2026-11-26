@@ -279,10 +279,12 @@ test("a conflicting occupied artifact destination fails closed", async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-test("failure at the final feed rename leaves the original feed and its artifacts byte-identical", async (t) => {
-  if (process.getuid?.() !== 0) { t.skip("requires root to drop privileges for the failing run"); return; }
+async function privilegedFixture() {
+  // A fixture tree plus a world-readable copy of the producer inside it,
+  // with the feed and artifacts in separate directories, for tests that
+  // run the producer as an unprivileged user (uid 65534) to force real
+  // filesystem failures at exact publication steps.
   const { root, records } = await fixtureRecords();
-  // Run a world-readable copy of the producer inside the fixture tree.
   const prodDir = path.join(root, "producer");
   await mkdir(prodDir, { recursive: true });
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -295,6 +297,12 @@ test("failure at the final feed rename leaves the original feed and its artifact
   const runAs = (uid) => spawnSync(process.execPath,
     [path.join(prodDir, "producer.mjs"), "--records", records, "--out", out, "--artifacts-dir", artifactsDir],
     { encoding: "utf8", ...(uid ? { uid, gid: uid } : {}) });
+  return { root, records, prodDir, feedDir, artifactsDir, out, runAs };
+}
+
+test("failure at the final feed rename leaves the original feed and its artifacts byte-identical", async (t) => {
+  if (process.getuid?.() !== 0) { t.skip("requires root to drop privileges for the failing run"); return; }
+  const { root, records, prodDir, feedDir, artifactsDir, out, runAs } = await privilegedFixture();
   // Generation 1 publishes normally.
   const gen1 = runAs(0);
   assert.equal(gen1.status, 0, gen1.stderr);
@@ -324,6 +332,51 @@ test("failure at the final feed rename leaves the original feed and its artifact
   assert.ok(!/ERR_MODULE_NOT_FOUND|Cannot find module/.test(gen2.stderr), gen2.stderr);
   assert.equal(await readFile(out, "utf8"), feedBytes);
   for (const [p, bytes] of Object.entries(artifactBytes)) {
+    assert.equal(await readFile(path.join(artifactsDir, path.basename(p)), "utf8"), bytes);
+  }
+  await rm(root, { recursive: true, force: true });
+});
+
+test("failure at a later artifact rename, after an earlier artifact has landed, leaves the standing generation byte-identical", async (t) => {
+  if (process.getuid?.() !== 0) { t.skip("requires root to drop privileges for the failing run"); return; }
+  const { root, records, artifactsDir, out, runAs } = await privilegedFixture();
+  // Generation 1 publishes normally; capture the standing generation.
+  const gen1 = runAs(0);
+  assert.equal(gen1.status, 0, gen1.stderr);
+  const feedBytes = await readFile(out, "utf8");
+  const gen1Feed = JSON.parse(feedBytes);
+  const standingArtifacts = {};
+  for (const a of gen1Feed.artifacts) {
+    standingArtifacts[a.path] = await readFile(path.join(artifactsDir, path.basename(a.path)), "utf8");
+  }
+  // Generation 2: BOTH briefs change, so both artifacts are new.
+  const BRIEF6B = "one two three four five six seven eight";
+  const BRIEF7B = "alpha beta gamma delta epsilon";
+  await writeFile(path.join(records, "demo-round6", "brief.md"), BRIEF6B);
+  await mutateReport(records, "demo-round6", r => { r.brief_filed.sha256 = sha256(BRIEF6B); });
+  await writeFile(path.join(records, "demo-round7", "brief.md"), BRIEF7B);
+  await mutateReport(records, "demo-round7", r => { r.brief_filed.sha256 = sha256(BRIEF7B); });
+  // World-readable tree; the artifacts directory becomes sticky (mode
+  // 1777, like /tmp): an unprivileged user may rename only files it
+  // owns. Generation 2's demo-round7 temp file is pre-created owned by
+  // root but world-writable — the producer can write it, but the
+  // rename itself is refused (EPERM) at the rename call. Demo-round6's
+  // artifact is staged first (run order is alphabetical) and lands.
+  spawnSync("chmod", ["-R", "a+rX", root]);
+  await chmod(artifactsDir, 0o1777);
+  const blockedTmp = path.join(artifactsDir, `demo-round7-brief-${sha256(BRIEF7B)}.md.tmp`);
+  await writeFile(blockedTmp, "");
+  await chmod(blockedTmp, 0o666);
+  const gen2 = runAs(65534);
+  assert.notEqual(gen2.status, 0, "the later rename must fail");
+  assert.ok(!/ERR_MODULE_NOT_FOUND|Cannot find module/.test(gen2.stderr), gen2.stderr);
+  assert.match(gen2.stderr, /EPERM|operation not permitted/i);
+  // The earlier artifact genuinely landed under its new versioned name…
+  const landed = path.join(artifactsDir, `demo-round6-brief-${sha256(BRIEF6B)}.md`);
+  assert.equal(await readFile(landed, "utf8"), BRIEF6B);
+  // …and the standing generation is byte-identical throughout.
+  assert.equal(await readFile(out, "utf8"), feedBytes);
+  for (const [p, bytes] of Object.entries(standingArtifacts)) {
     assert.equal(await readFile(path.join(artifactsDir, path.basename(p)), "utf8"), bytes);
   }
   await rm(root, { recursive: true, force: true });
