@@ -2,6 +2,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { readFile, mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { validateFeed } from "./feed-contract.mjs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -47,29 +48,6 @@ async function bodyJson(req) {
 const stamp = () => new Date().toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "medium" });
 function ensureThread(key) { state.messages[key] ||= []; }
 
-function validFeed(data) {
-  if (!data || typeof data !== "object" || data.kind !== "aivory-state-feed") return false;
-  const runs = Array.isArray(data.historical_runs) ? data.historical_runs : data.runs;
-  if (!Array.isArray(runs)) return false;
-  if (!runs.every(r => r && typeof r.run === "string" &&
-      typeof r.outcome === "string" &&
-      Number.isFinite(r.iterations) && r.iterations >= 0 &&
-      Number.isFinite(r.events) && r.events >= 0 &&
-      Number.isFinite(r.dispatches) && r.dispatches >= 0)) return false;
-  if (data.schema_version !== undefined && data.schema_version !== 1) return false;
-  if (data.generated_at !== undefined &&
-      (typeof data.generated_at !== "string" || Number.isNaN(Date.parse(data.generated_at)))) return false;
-  if (data.offices !== undefined &&
-      (!Array.isArray(data.offices) || !data.offices.every(o =>
-        o && typeof o.id === "string" && typeof o.role === "string" &&
-        typeof o.status === "string"))) return false;
-  if (data.job?.sources !== undefined &&
-      (!Array.isArray(data.job.sources) || !data.job.sources.every(s =>
-        s && typeof s.path === "string" && Number.isFinite(s.bytes) && s.bytes >= 0))) return false;
-  if (data.decisions !== undefined && !Array.isArray(data.decisions)) return false;
-  return true;
-}
-
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://localhost");
   try {
@@ -82,7 +60,8 @@ const server = http.createServer(async (req, res) => {
       const upstream = await fetch(FEED_URL, { cache: "no-store", headers: { "Accept": "application/json" } });
       if (!upstream.ok) return send(res, 502, { error: "State feed unreachable", upstream_status: upstream.status });
       const data = await upstream.json();
-      if (!validFeed(data)) return send(res, 502, { error: "State feed failed schema validation" });
+      const validation = validateFeed(data);
+      if (!validation.ok) return send(res, 502, { error: "State feed failed schema validation", reason: validation.reason });
       return send(res, 200, data);
     }
     if (req.method === "POST" && url.pathname === "/api/jobs") {
