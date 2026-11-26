@@ -104,7 +104,7 @@
   $("jobTitle").textContent=feed.job?.title || "No current assignment published";
   $("sourceChips").innerHTML=(feed.job?.sources||[]).map(s=>'<span class="chip">'+esc(s.path)+'<span class="bytes">'+fmt(s.bytes)+' B</span></span>').join("");
   $("stripMetrics").innerHTML=metric("HISTORICAL RUNS",allRuns().length)+metric("EVENTS",total("events"))+metric("DISPATCHES",total("dispatches"));
-  $("feedTime").textContent=feed.generated_at ? "FEED "+esc(feed.generated_at) : "FEED TIME NOT PUBLISHED";
+  $("feedTime").textContent=feed.generated_at ? "FEED "+esc(feed.generated_at) : "LEGACY FEED · TIME NOT PUBLISHED";
   $("decisionState").textContent=Array.isArray(feed.decisions) ? (feed.decisions.length ? feed.decisions.length+" decisions pending" : "No decisions waiting") : "Decision state not published by feed";
  }
  async function loadFeed(){
